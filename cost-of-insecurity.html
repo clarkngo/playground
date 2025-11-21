@@ -1,0 +1,616 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>The Cost of Insecurity — Playground</title>
+  <style>
+    :root{--bg:#0b1220;--card:#07121a;--muted:#9aa4b2;--accent:#60a5fa;--glass:rgba(255,255,255,0.03)}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial;background:linear-gradient(180deg,#05111a,#07121a);color:#e6eef8;padding:28px}
+    header{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;margin-bottom:18px;position:sticky;top:0;z-index:1000;backdrop-filter:blur(6px);background:linear-gradient(180deg,rgba(0,0,0,0.35),rgba(0,0,0,0.15));padding:14px;border-bottom:1px solid rgba(255,255,255,0.02)}
+    h1{margin:0;font-size:20px}
+    .sub{color:var(--muted);margin-top:4px}
+    main{display:grid;grid-template-columns:1fr 360px;gap:18px}
+    .panel{background:linear-gradient(180deg,var(--card),rgba(255,255,255,0.01));padding:14px;border-radius:12px;border:1px solid var(--glass);margin-bottom:16px}
+    .panel h2{margin:0 0 8px 0;font-size:15px}
+    .small{font-size:13px;color:var(--muted)}
+    .row{display:flex;gap:10px;align-items:center}
+    label{font-size:13px}
+    input[type=range]{width:100%}
+    .result{background:#06121a;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.02);font-weight:700}
+
+    /* CIA sorter */
+    .d-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+    .drop{min-height:90px;padding:8px;border-radius:8px;border:1px dashed rgba(255,255,255,0.04);background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent)}
+    .item{padding:8px;margin:6px 0;background:rgba(255,255,255,0.02);border-radius:6px;cursor:grab}
+
+    /* mini-game */
+    .bar{height:12px;background:#05212b;border-radius:8px;overflow:hidden}
+    .bar > i{display:block;height:100%;background:linear-gradient(90deg,#60a5fa,#4f46e5)}
+
+    /* quiz and checklist */
+    .code{background:#061216;padding:10px;border-radius:6px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px}
+    .line{padding:6px;border-radius:4px}
+    .line:hover{background:rgba(255,255,255,0.02);cursor:pointer}
+    .line.selected{background:rgba(96,165,250,0.12);outline:1px solid rgba(96,165,250,0.18)}
+
+    .ai-prompt{margin-top:8px;padding:8px;background:linear-gradient(180deg,rgba(96,165,250,0.02),transparent);border-radius:6px;border:1px solid rgba(96,165,250,0.06);font-size:13px;color:var(--muted)}
+      .ai-prompt{margin-top:8px;padding:8px;background:linear-gradient(180deg,rgba(96,165,250,0.02),transparent);border-radius:6px;border:1px solid rgba(96,165,250,0.06);font-size:13px;color:var(--muted);display:none}
+      .beginner .ai-prompt{display:block}
+    /* Tooltip moved to aside; header floating tooltip rules removed to prevent overlap and click issues. */
+    /* Light mode overrides */
+    body.light{background:linear-gradient(180deg,#f7fbff,#f3f6fb);color:#0b1220}
+    body.light{--card:#ffffff;--muted:#4b5563;--accent:#2563eb;--glass:rgba(0,0,0,0.04)}
+    body.light .panel{background:linear-gradient(180deg,var(--card),rgba(0,0,0,0.01));border:1px solid rgba(16,24,40,0.04)}
+    body.light .result{background:#f3f6fb;color:#0b1220;border:1px solid rgba(16,24,40,0.04)}
+    body.light .code{background:#f6f8fb;color:#0b1220}
+    body.light .ai-prompt{background:linear-gradient(180deg,rgba(37,99,235,0.04),transparent);color:#334155;border:1px solid rgba(37,99,235,0.06)}
+    /* sticky header light-mode tweak */
+    body.light header{background:linear-gradient(180deg,rgba(255,255,255,0.9),rgba(255,255,255,0.95));border-bottom:1px solid rgba(16,24,40,0.04)}
+    footer{margin-top:18px;color:var(--muted);font-size:13px}
+    @media (max-width:980px){main{grid-template-columns:1fr} }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>The Cost of Insecurity</h1>
+      <div class="sub">Interactive lesson: why security must be integrated early. Try the scenarios below to see trade-offs and risks.</div>
+    </div>
+    <div style="margin-left:auto;align-self:center;display:flex;gap:12px;align-items:center;position:relative">
+      <a href="index.html" style="color:var(--accent);text-decoration:none">← Back to Playground</a>
+      <label id="beginnerToggleLabel" style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)"><input id="beginnerToggle" type="checkbox" style="width:14px;height:14px"/> Beginner mode</label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)"><input id="lightToggle" type="checkbox" style="width:14px;height:14px"/> Light mode</label>
+      <button id="exportPdf" style="background:transparent;border:1px solid rgba(96,165,250,0.18);color:var(--accent);padding:6px 10px;border-radius:8px;cursor:pointer">Export PDF</button>
+    </div>
+  </header>
+
+  <main>
+    <section>
+      <!-- 1: Cost Curve Calculator -->
+      <div class="panel" id="costCurve">
+        <h2>1. Cost Curve Calculator</h2>
+        <div class="small">Move the slider to choose when a bug is found and see how cost grows exponentially as fixes are delayed. This demonstrates the "shift-left" principle: the earlier bugs are found, the cheaper they are to fix (Chung et al., 2014).</div>
+        <div style="margin-top:10px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+          <div style="flex:1;min-width:240px">
+            <label for="phase">Phase: <strong id="phaseName">Requirements</strong></label>
+            <input id="phase" type="range" min="0" max="5" value="0" />
+          </div>
+          <div style="width:220px">
+            <label for="bugType" class="small">Bug type</label>
+            <select id="bugType" style="width:100%;padding:6px;border-radius:6px">
+              <option value="logic">Business logic bug</option>
+              <option value="auth">Authentication/Authorization</option>
+              <option value="secrets">Secrets exposed</option>
+              <option value="perf">Performance regression</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="margin-top:12px;display:flex;gap:10px;align-items:center">
+          <div style="flex:1">
+            <div class="small">Estimated fix cost (illustrative)</div>
+            <div class="result" id="costValue">$1,000</div>
+            <div class="small" style="margin-top:8px;color:var(--muted)">Tip: choose different bug types to see relative severity and remediation effort.</div>
+          </div>
+          <div style="width:220px">
+            <div class="small">Relative multiplier</div>
+            <div class="result" id="mult">x1</div>
+          </div>
+        </div>
+
+        <div style="margin-top:12px">
+          <div class="small">Cost curve across phases</div>
+          <div id="costChart" style="display:flex;gap:6px;margin-top:8px;align-items:end">
+            <!-- bars generated by JS -->
+          </div>
+        </div>
+
+        <div class="small" style="margin-top:8px;color:var(--muted)">Note: numbers are illustrative to emphasise the exponential relationship between discovery timing and remediation cost.</div>
+        <div class="ai-prompt"><strong>Research prompt:</strong> "Explain why defect remediation cost grows across development phases and examples of effective 'shift-left' testing practices."</div>
+      </div>
+
+      <!-- 2: CIA Triad Sorter -->
+      <div class="panel" style="margin-top:14px">
+        <h2>2. CIA Triad Sorter</h2>
+        <div class="small">Drag each breach example into the correct pillar: Confidentiality, Integrity, or Availability.</div>
+        <div style="display:flex;gap:12px;margin-top:10px;align-items:flex-start">
+          <div style="flex:1">
+            <div id="items">
+              <div class="item" draggable="true" data-id="a">Customer emails leaked from backup</div>
+              <div class="item" draggable="true" data-id="b">Database records corrupted after bad migration</div>
+              <div class="item" draggable="true" data-id="c">DDoS attack bringing site offline</div>
+              <div class="item" draggable="true" data-id="d">Unauthorized price changes in DB</div>
+              <div class="item" draggable="true" data-id="e">Exposed API key in public repo</div>
+              <div class="item" draggable="true" data-id="f">Ransomware encrypted backups</div>
+            </div>
+          </div>
+          <div style="flex:2">
+            <div class="d-grid">
+              <div>
+                <div class="small">Confidentiality</div>
+                <div class="drop" data-target="C" id="dropC"></div>
+              </div>
+              <div>
+                <div class="small">Integrity</div>
+                <div class="drop" data-target="I" id="dropI"></div>
+              </div>
+              <div>
+                <div class="small">Availability</div>
+                <div class="drop" data-target="A" id="dropA"></div>
+              </div>
+            </div>
+            <div style="margin-top:8px"><button id="checkCIA">Check answers</button> <button id="resetCIA" style="margin-left:8px">Reset</button> <span id="ciaMsg" class="small" style="margin-left:10px;color:var(--muted)"></span></div>
+            <div class="ai-prompt"><strong>Research prompt:</strong> "How do confidentiality, integrity, and availability incidents differ? Give real-world breach examples for each and mitigation strategies."</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3: Security vs. Functionality Balance -->
+      <div class="panel" style="margin-top:14px">
+        <h2>3. Security vs. Functionality Balance</h2>
+        <div class="small">Allocate a budget between 'New Features' and 'Security Audits' and run a simulated stability test.</div>
+        <div style="display:flex;gap:12px;margin-top:10px;align-items:center">
+          <div style="flex:1">
+            <label class="small">Security Budget: <strong id="secPct">50%</strong></label>
+            <input id="secRange" type="range" min="0" max="100" value="50" />
+            <div style="margin-top:8px" class="small">Stability</div>
+            <div class="bar" aria-hidden><i id="stabBar" style="width:50%"></i></div>
+            <div class="small" style="margin-top:8px;color:var(--muted)">Adjust the expected user base to see how exposure increases operational risk.</div>
+            <div style="margin-top:8px">
+              <label class="small">Simulated active users: <strong id="usersPct">1,000</strong></label>
+              <input id="usersRange" type="range" min="100" max="10000" step="100" value="1000" />
+            </div>
+          </div>
+          <div style="width:160px">
+            <button id="runSim">Run simulation</button>
+            <div class="small" style="margin-top:8px">Result:<div id="simResult" class="result" style="margin-top:6px">Balanced</div></div>
+          </div>
+        </div>
+        <div class="small" style="margin-top:8px;color:var(--muted)">Hint: too low security produces fragile products; too little feature investment may hurt competitiveness.</div>
+        <div class="ai-prompt"><strong>Research prompt:</strong> "Describe approaches to balance security investment and feature velocity; include cost models and org patterns (e.g., SRE, security champions)."</div>
+      </div>
+
+      <!-- 4: Vulnerability Quiz -->
+      <div class="panel" style="margin-top:14px">
+        <h2>4. Vulnerability Quiz</h2>
+        <div class="small">Click the line that looks suspicious (example: SQL injection risk).</div>
+        <pre class="code" id="quiz">
+      1: const user = req.query.user;
+      2: const q = `SELECT * FROM users WHERE name = '${user}'`;
+      3: db.query(q, (err, rows) => res.json(rows));
+        </pre>
+        <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
+          <button id="quizReset">Reset</button>
+          <button id="quizExplain" style="background:transparent;border:1px solid rgba(255,255,255,0.04);padding:6px;border-radius:6px">Explain lines</button>
+          <button id="quizAnswer" style="background:transparent;border:1px solid rgba(255,255,255,0.04);padding:6px;border-radius:6px">Show answer</button>
+          <button id="showMit" style="background:transparent;border:1px solid rgba(255,255,255,0.04);padding:6px;border-radius:6px">Show mitigation</button>
+          <span id="quizMsg" class="small" style="margin-left:8px;color:var(--muted)"></span>
+        </div>
+        <div id="mitigation" class="small" style="margin-top:8px;color:var(--muted);display:none"></div>
+        <div class="ai-prompt"><strong>Research prompt:</strong> "What is SQL injection, how can it appear in Node.js code, and how do parameterized queries prevent it? Provide example fixes."</div>
+      </div>
+
+      <!-- 5: Case Study Analysis -->
+      <div class="panel" style="margin-top:14px">
+        <h2>5. Case Study Analysis</h2>
+        <div class="small">Read the scenario and select which security steps the startup skipped.</div>
+        <div style="margin-top:8px"> <strong>Scenario</strong>
+          <p class="small">Startup Launchly shipped an MVP quickly. They stored production secrets in plaintext, delayed setting up TLS, and only had one developer with admin access. After growth, attackers accessed keys and exfiltrated customer data.</p>
+        </div>
+        <div style="margin-top:8px">
+          <label><input type="checkbox" value="1" /> Use TLS for production</label><br/>
+          <label><input type="checkbox" value="2" /> Rotate and store secrets safely</label><br/>
+          <label><input type="checkbox" value="3" /> Limit admin access (principle of least privilege)</label><br/>
+          <label><input type="checkbox" value="4" /> Regular security audits</label><br/>
+          <label><input type="checkbox" value="5" /> Use a key management service (KMS)</label><br/>
+          <label><input type="checkbox" value="6" /> Implement logging and alerting for access</label>
+        </div>
+        <div style="margin-top:8px"><button id="caseCheck">Evaluate</button> <button id="caseRec" style="margin-left:8px">Show recommendations</button> <span id="caseMsg" class="small" style="margin-left:10px;color:var(--muted)"></span></div>
+        <div id="caseRecBox" class="small" style="margin-top:8px;display:none;color:var(--muted)"></div>
+      </div>
+    </section>
+
+    <aside>
+      <div class="panel">
+        <h2>Learning Goals</h2>
+        <ul class="small">
+          <li>Understand exponential cost growth when fixing bugs late.</li>
+          <li>Identify impacts on Confidentiality, Integrity, Availability.</li>
+          <li>See trade-offs between feature velocity and security.</li>
+          <li>Spot simple vulnerabilities in code.</li>
+          <li>Recognize foundational security practices for startups.</li>
+        </ul>
+        <div style="margin-top:12px"><strong class="small">References</strong>
+          <div class="small" style="margin-top:6px;color:var(--muted)">Chung et al., 2014 — emphasize early security integration and cost effects.</div>
+        </div>
+      </div>
+      <div class="panel" style="margin-top:12px">
+        <h2>Quick Tips</h2>
+        <ul class="small">
+          <li>Shift-left security: include reviews early.</li>
+          <li>Automate basic checks (linting, dependency scanning).</li>
+          <li>Use least privilege and rotate secrets.</li>
+        </ul>
+      </div>
+      <div class="panel" style="margin-top:12px">
+        <h2>Beginner Tips</h2>
+        <div class="small">
+          Beginner mode reveals explanations and helpful hints for each activity. Toggle the "Beginner mode" checkbox in the header to expand per-section guidance and example mitigations.
+        </div>
+        <div class="small" style="margin-top:8px;color:var(--muted)">
+          When enabled the page will auto-open brief explanations, mitigation suggestions, and friendly recommendations to help newcomers understand the trade-offs in each activity.
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <script>
+    // Export to PDF: open a print-friendly snapshot in a new window including timestamp and metadata
+    (function(){
+      const btn = document.getElementById('exportPdf');
+      if(!btn) return;
+      btn.addEventListener('click', ()=>{
+        const now = new Date();
+        const ts = now.toLocaleString();
+
+        // Collect interactive state to include as metadata
+        const phaseIndex = +document.getElementById('phase').value;
+        const phaseName = document.getElementById('phaseName').textContent;
+        const costText = document.getElementById('costValue').textContent;
+        const multText = document.getElementById('mult').textContent;
+
+        // CIA sorter: where each item is placed
+        const ciaItems = Array.from(document.querySelectorAll('.item')).map(el=>{
+          const zone = el.closest('.drop');
+          return { id: el.dataset.id, text: el.textContent.trim(), zone: zone ? zone.dataset.target : 'unplaced' };
+        });
+        // Score the CIA mapping quickly (full set of sample items)
+        const correctMap = {a:'C', b:'I', c:'A', d:'I', e:'C', f:'A'};
+        let ciaScore = 0; Object.entries(correctMap).forEach(([id, target])=>{
+          const it = ciaItems.find(x=>x.id===id); if(it && it.zone===target) ciaScore++;
+        });
+
+        // Security vs functionality
+        const sec = document.getElementById('secRange').value;
+        const simResultText = document.getElementById('simResult').textContent;
+
+        // Vulnerability quiz: selected line and message
+        const selectedLineEl = document.querySelector('.line[data-selected="true"]');
+        const quizSelected = selectedLineEl ? selectedLineEl.dataset.line : null;
+        const quizMsg = document.getElementById('quizMsg').textContent || '';
+
+        // Case study selections
+        const checks = Array.from(document.querySelectorAll('input[type=checkbox]')).map(c=>({label: c.parentElement.textContent.trim(), checked: c.checked}));
+        const caseMsg = document.getElementById('caseMsg').textContent || '';
+
+        // Build metadata HTML
+        const metaHtml = `
+          <div class="panel">
+            <h2>Export Metadata</h2>
+            <div><strong>Exported:</strong> ${ts}</div>
+            <div><strong>Cost Curve:</strong> Phase ${phaseIndex} (${phaseName}), Cost ${costText}, Multiplier ${multText}</div>
+            <div><strong>CIA Sorter:</strong> Score ${ciaScore}/${Object.keys(correctMap).length}</div>
+            <ul>${ciaItems.map(i=>`<li>${i.text} → ${i.zone}</li>`).join('')}</ul>
+            <div><strong>Security Budget:</strong> ${sec}% — Simulation: ${simResultText}</div>
+            <div><strong>Vulnerability Quiz:</strong> Selected line: ${quizSelected || 'none'} — ${quizMsg}</div>
+            <div><strong>Case Study:</strong> ${caseMsg || 'No evaluation yet'}</div>
+            <div style="margin-top:8px;color:#666;font-size:12px">Generated by Playground — The Cost of Insecurity</div>
+          </div>
+        `;
+
+        // Print-friendly styles
+        const styles = `
+          body{font-family:Arial,Helvetica,sans-serif;color:#111;margin:20px}
+          h1{font-size:20px}
+          .meta{color:#444;margin-bottom:8px}
+          .panel{border:1px solid #ddd;padding:12px;border-radius:6px;margin-bottom:12px}
+          pre{background:#f7f7f7;padding:8px;border-radius:6px}
+          ul{margin:8px 0 0 18px}
+        `;
+
+        // Include a simplified snapshot of the main content (titles and panels)
+        // We'll include the textual headings and current values rather than exact DOM
+        const contentSnapshot = `
+          <h2>Lesson Snapshot</h2>
+          <div class="panel"><strong>1. Cost Curve</strong><div>${phaseName} — ${costText} (${multText})</div></div>
+          <div class="panel"><strong>2. CIA Sorter</strong><div>Score ${ciaScore}/${Object.keys(correctMap).length}</div>${ciaItems.map(i=>`<div>${i.text} → ${i.zone}</div>`).join('')}</div>
+          <div class="panel"><strong>3. Security vs Functionality</strong><div>Security budget: ${sec}%; Simulation: ${simResultText}</div></div>
+          <div class="panel"><strong>4. Vulnerability Quiz</strong><div>Selected line: ${quizSelected || 'none'}</div><div>${quizMsg}</div></div>
+          <div class="panel"><strong>5. Case Study</strong><div>${caseMsg || 'No evaluation yet'}</div><div>${checks.filter(c=>c.checked).map(c=>c.label).join('<br/>') || 'No items checked'}</div></div>
+        `;
+
+        // Open a new window/tab. Some browsers return null when popups are blocked
+        let win = null;
+        try { win = window.open('', '_blank'); } catch(e){ win = null; }
+        if(!win){
+          alert('Popup blocked. Please allow popups for this page or disable your blocker, then try Export PDF again.');
+          return;
+        }
+        // remove opener for safety when supported
+        try{ win.opener = null; }catch(e){}
+        const title = document.title || 'Playground Lesson';
+        const html = `<!doctype html><html><head><meta charset="utf-8"><title>${title}</title><style>${styles}</style></head><body>
+          <h1>${title}</h1>
+          <div class="meta">Exported: ${ts}</div>
+          ${metaHtml}
+          ${contentSnapshot}
+        </body></html>`;
+
+        try{
+          win.document.open(); win.document.write(html); win.document.close();
+          setTimeout(()=>{ try{ win.focus(); win.print(); }catch(e){ /* ignore */ } }, 500);
+        }catch(e){
+          // If writing fails, notify the user
+          alert('Unable to generate export in a new tab. Please try disabling strict popup/security settings in your browser.');
+        }
+      });
+    })();
+
+    // Mode toggles: Beginner mode (auto show explanations/mitigation) and Light mode (theme)
+    (function(){
+      const beginnerToggle = document.getElementById('beginnerToggle');
+      const lightToggle = document.getElementById('lightToggle');
+
+      function applyLightMode(enabled){
+        if(enabled) document.body.classList.add('light'); else document.body.classList.remove('light');
+      }
+
+      function applyBeginnerMode(enabled){
+        // show/hide line explanations
+        document.querySelectorAll('.explain').forEach(e=>{ e.style.display = enabled ? 'block' : 'none'; });
+        // show a helpful mitigation summary for learners
+        const mit = document.getElementById('mitigation');
+        if(enabled){
+          mit.style.display = 'block';
+          if(!mit.textContent || mit.textContent.indexOf('Mitigation:')===-1){
+            mit.innerHTML = 'Helpful hint: The primary risk here is SQL injection. Use parameterized queries / prepared statements and input validation to prevent it.';
+          }
+        } else {
+          // hide mitigation only if it was the default helper (leave user content alone)
+          if(mit && mit.textContent && mit.textContent.indexOf('Helpful hint:')===0){ mit.style.display='none'; mit.textContent=''; }
+        }
+
+        // expand case recommendations in beginner mode for guidance
+        const recBox = document.getElementById('caseRecBox');
+        if(enabled && recBox && recBox.style.display!=='block'){
+          // trigger generation (simulate click on Show recommendations)
+          const btn = document.getElementById('caseRec'); if(btn) btn.click();
+        }
+      
+          // show beginner class on body so per-section prompts appear
+          try{ document.body.classList.toggle('beginner', !!enabled); }catch(e){}
+      }
+
+      // initialize from localStorage
+      try{
+        // default to light mode when preference is not set
+        const bRaw = localStorage.getItem('playground.beginner');
+        const lRaw = localStorage.getItem('playground.light');
+        const b = bRaw === 'true';
+        const l = lRaw === null ? true : (lRaw === 'true');
+        if(beginnerToggle) { beginnerToggle.checked = b; applyBeginnerMode(b); }
+        if(lightToggle) { lightToggle.checked = l; applyLightMode(l); }
+      }catch(e){ /* ignore storage errors */ }
+
+      if(beginnerToggle) beginnerToggle.addEventListener('change', (e)=>{ const v = e.target.checked; try{ localStorage.setItem('playground.beginner', v); }catch(_){}; applyBeginnerMode(v); });
+      if(lightToggle) lightToggle.addEventListener('change', (e)=>{ const v = e.target.checked; try{ localStorage.setItem('playground.light', v); }catch(_){}; applyLightMode(v); });
+      
+    })();
+
+    // Utility
+    const $ = sel => document.querySelector(sel);
+
+    // 1: Cost Curve
+    (function(){
+      const phase = $('#phase');
+      const phaseName = $('#phaseName');
+      const costValue = $('#costValue');
+      const mult = $('#mult');
+      const bugType = $('#bugType');
+      const costChart = $('#costChart');
+      const phases = ['Requirements','Design','Implementation','Testing','Deployment','Maintenance'];
+
+      function computeMultiplier(index, type){
+        // baseline exponential curve
+        const baseExp = Math.pow(10, index*0.4);
+        // adjust by bug type severity
+        const typeFactor = {logic:1, auth:1.8, secrets:3, perf:1.2}[type] || 1;
+        return Math.round(baseExp * typeFactor);
+      }
+
+      function renderChart(type){
+        costChart.innerHTML = '';
+        const max = 5; // index max
+        const values = [];
+        for(let i=0;i<=max;i++){ values.push(computeMultiplier(i,type)); }
+        const maxVal = Math.max(...values);
+        values.forEach((v,i)=>{
+          const bar = document.createElement('div');
+          const pct = Math.round((v / maxVal) * 100);
+          bar.style.width = (pct*1.2) + 'px';
+          bar.style.height = (20 + i*6) + 'px';
+          bar.style.background = i === +phase.value ? 'linear-gradient(90deg,#60a5fa,#4f46e5)' : 'rgba(255,255,255,0.03)';
+          bar.title = `${phases[i]}: x${v}`;
+          bar.style.borderRadius = '4px';
+          bar.style.display = 'inline-block';
+          bar.style.padding = '2px';
+          costChart.appendChild(bar);
+        });
+      }
+
+      function update(){
+        const i = +phase.value; const type = bugType.value;
+        phaseName.textContent = phases[i];
+        const base = 1000; const multiplier = computeMultiplier(i,type);
+        costValue.textContent = `$${(base*multiplier).toLocaleString()}`;
+        mult.textContent = `x${multiplier}`;
+        renderChart(type);
+      }
+
+      phase.addEventListener('input', update);
+      bugType.addEventListener('change', update);
+      update();
+    })();
+
+    // 2: CIA Triad Drag & Drop
+    (function(){
+      let dragged = null;
+      document.querySelectorAll('.item').forEach(it=>{
+        it.addEventListener('dragstart', e=>{ dragged = it; e.dataTransfer.setData('text/plain', it.dataset.id); });
+      });
+      document.querySelectorAll('.drop').forEach(d=>{
+        d.addEventListener('dragover', e=>{ e.preventDefault(); d.style.borderColor = '#60a5fa'; });
+        d.addEventListener('dragleave', e=>{ d.style.borderColor = 'rgba(255,255,255,0.04)'; });
+        d.addEventListener('drop', e=>{
+          e.preventDefault(); d.style.borderColor = 'rgba(255,255,255,0.04)'; if(dragged){ d.appendChild(dragged); dragged=null; }
+        });
+      });
+      const correct = {a:'C', b:'I', c:'A', d:'I', e:'C', f:'A'};
+      $('#checkCIA').addEventListener('click', ()=>{
+        let score = 0; const total = Object.keys(correct).length;
+        Object.entries(correct).forEach(([id, target])=>{
+          const el = document.querySelector(`[data-id="${id}"]`);
+          const parent = el && el.parentElement; if(!parent) return;
+          const zone = parent.closest('.drop');
+          if(zone && zone.dataset.target === target) {
+            score++; el.style.background = 'rgba(126,252,155,0.12)';
+          } else {
+            el.style.background = 'rgba(247,178,103,0.08)';
+          }
+        });
+        const msg = $('#ciaMsg'); msg.textContent = `${score}/${total} correct`;
+        msg.style.color = score===total? '#7efc9b' : '#f7b267';
+      });
+      $('#resetCIA').addEventListener('click', ()=>{
+        const pool = $('#items');
+        // Move any items back to pool and clear styles
+        document.querySelectorAll('.drop .item').forEach(it=>{ pool.appendChild(it); it.style.background = ''; });
+        document.querySelectorAll('.item').forEach(it=>it.style.background='');
+        $('#ciaMsg').textContent = '';
+      });
+    })();
+
+    // 3: Security vs Functionality
+    (function(){
+      const secRange = $('#secRange'); const secPct = $('#secPct'); const stabBar = $('#stabBar'); const simResult = $('#simResult');
+      const usersRange = $('#usersRange'); const usersPct = $('#usersPct');
+      function updateBar(){ secPct.textContent = secRange.value + '%'; stabBar.style.width = secRange.value + '%'; }
+      function updateUsers(){ usersPct.textContent = parseInt(usersRange.value).toLocaleString(); }
+      secRange.addEventListener('input', updateBar); updateBar();
+      usersRange.addEventListener('input', updateUsers); updateUsers();
+
+      // Run a Monte Carlo simulation to estimate incident probability
+      $('#runSim').addEventListener('click', ()=>{
+        const s = +secRange.value; const users = +usersRange.value;
+        const trials = 200; let incidents = 0;
+        for(let t=0;t<trials;t++){
+          // basic risk model: base risk increases with users, decreases with security investment
+          const baseRisk = Math.min(0.95, (users/10000) * 0.8 + (100 - s)/150);
+          // small random variation
+          if(Math.random() < baseRisk) incidents++;
+        }
+        const prob = Math.round((incidents / trials) * 100);
+        simResult.textContent = `${prob}% chance of security incident (sim)`;
+        simResult.style.background = prob < 20 ? '#043927' : (prob < 50 ? '#4f2d12' : '#3a0710');
+      });
+    })();
+
+      // 4: Vulnerability Quiz (improved with explanations and answer reveal)
+    (function(){
+      const quiz = $('#quiz');
+      const rawLines = quiz.textContent.trim().split('\n').map(l=>l.trim());
+      // Explanations for learners without background
+      const explanations = {
+        '1': 'Line 1 reads user input from the request query. Unsanitized input can be a source of tainted data.',
+        '2': 'Line 2 concatenates the user input into an SQL string — this is a direct SQL injection vector.',
+        '3': 'Line 3 executes the query and returns results. Lack of parameterization and error handling increases risk of data leakage.'
+      };
+
+      // render lines with hidden explanation blocks
+      quiz.innerHTML = rawLines.map(l=>{
+        const num = l.split(':')[0];
+        return `<div class="line" data-line="${num}"><div class="code-line">${l}</div><div class="explain small" style="display:none;margin-top:6px;color:var(--muted)">${explanations[num]||''}</div></div>`;
+      }).join('');
+
+      const msg = $('#quizMsg');
+
+      function clearSelection(){
+        quiz.querySelectorAll('.line').forEach(x=>{ x.classList.remove('selected'); x.removeAttribute('data-selected'); });
+      }
+
+      quiz.querySelectorAll('.line').forEach(li=>{
+        li.addEventListener('click', ()=>{
+          clearSelection();
+          li.classList.add('selected'); li.setAttribute('data-selected','true');
+          const n = li.dataset.line;
+          if(n === '2'){
+            msg.textContent = 'Correct — line 2 concatenates user input into SQL (SQL injection).'; msg.style.color = '#7efc9b';
+          } else {
+            msg.textContent = 'Not the main injection point — look for concatenated SQL strings (line 2).'; msg.style.color = '#f7b267';
+          }
+        });
+      });
+
+      $('#quizReset').addEventListener('click', ()=>{ msg.textContent = ''; clearSelection(); $('#mitigation').style.display='none'; $('#mitigation').textContent=''; quiz.querySelectorAll('.explain').forEach(e=>e.style.display='none'); });
+
+      // Toggle explanations for each line
+      $('#quizExplain').addEventListener('click', ()=>{
+        const shown = quiz.querySelector('.explain[style*="display:block"]');
+        quiz.querySelectorAll('.explain').forEach(e=>{ e.style.display = shown ? 'none' : 'block'; });
+      });
+
+      // Reveal the correct answer and show explanation
+      $('#quizAnswer').addEventListener('click', ()=>{
+        clearSelection();
+        const correct = quiz.querySelector('.line[data-line="2"]');
+        if(correct){ correct.classList.add('selected'); correct.setAttribute('data-selected','true'); const expl = correct.querySelector('.explain'); if(expl) expl.style.display='block'; msg.textContent = 'Answer revealed: line 2 is the injection risk.'; msg.style.color = '#7efc9b'; }
+      });
+
+      $('#showMit').addEventListener('click', ()=>{
+        const sel = quiz.querySelector('.line.selected');
+        const box = $('#mitigation');
+        if(!sel){ box.style.display='block'; box.textContent = 'Select a suspicious line first to see mitigation suggestions.'; return; }
+        const n = sel.dataset.line;
+        if(n === '2'){
+          box.style.display='block'; box.innerHTML = 'Mitigation: use parameterized queries / prepared statements. Example:<pre style="background:#f6f8fa;padding:8px;border-radius:6px">const q = "SELECT * FROM users WHERE name = ?"; db.query(q, [user], ...);</pre>';
+        } else {
+          box.style.display='block'; box.textContent = 'This line alone is not the primary injection risk. Review concatenated SQL and unsanitized inputs.';
+        }
+      });
+    })();
+
+      // 5: Case Study Analysis (more flexible evaluation)
+    (function(){
+      const checkBtn = $('#caseCheck'); const msg = $('#caseMsg');
+      checkBtn.addEventListener('click', ()=>{
+        // limit to checkboxes inside the case study panel only
+        const panel = document.querySelector('div.panel:nth-of-type(5)') || document.querySelector('#caseRecBox')?.closest('.panel');
+        const boxes = panel ? Array.from(panel.querySelectorAll('input[type=checkbox]')) : Array.from(document.querySelectorAll('input[type=checkbox]'));
+        const checks = boxes.filter(c=>c.checked).map(c=>c.value);
+        // Core recommended steps (audits are important but treated as ongoing practice)
+        const expected = ['1','2','3','5','6'];
+        const missed = expected.filter(e=>!checks.includes(e));
+        if(missed.length===0){ msg.textContent = 'Good: you identified the core skipped steps. Consider regular audits (item 4) as ongoing practice.'; msg.style.color = '#7efc9b'; }
+        else { msg.textContent = `Identified ${checks.length} step(s). Missed core steps: ${missed.join(', ')}.`; msg.style.color = '#f7b267'; }
+      });
+      $('#caseRec').addEventListener('click', ()=>{
+        const panel = document.querySelector('div.panel:nth-of-type(5)') || document.querySelector('#caseRecBox')?.closest('.panel');
+        const boxes = panel ? Array.from(panel.querySelectorAll('input[type=checkbox]')) : Array.from(document.querySelectorAll('input[type=checkbox]'));
+        const checked = boxes.filter(c=>c.checked).map(c=>c.parentElement.textContent.trim());
+        const recBox = $('#caseRecBox');
+        const recs = [];
+        if(!checked.some(t=>/TLS|TLS for production/i.test(t))) recs.push('Enable TLS for all production traffic to protect confidentiality in transit.');
+        if(!checked.some(t=>/Rotate|secrets/i.test(t))) recs.push('Move secrets to a KMS and rotate keys regularly.');
+        if(!checked.some(t=>/Limit admin/i.test(t))) recs.push('Apply least privilege: remove unnecessary admin access and use role-based access control.');
+        if(!checked.some(t=>/audit/i.test(t))) recs.push('Add regular security audits and automated checks into CI.');
+        if(!checked.some(t=>/KMS/i.test(t))) recs.push('Adopt a key management service (KMS) and avoid plaintext storage of secrets.');
+        if(!checked.some(t=>/logging|alert/i.test(t))) recs.push('Implement logging and alerting for suspicious access and automate responses where possible.');
+        if(recs.length===0) recBox.innerHTML = 'All recommended steps appear addressed. Consider making audits a recurring checklist.'; else recBox.innerHTML = `<strong>Recommendations:</strong><ul>${recs.map(r=>`<li>${r}</li>`).join('')}</ul>`;
+        recBox.style.display='block';
+      });
+    })();
+  </script>
+</body>
+</html>
