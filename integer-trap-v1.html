@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>The Integer Trap: Logic & Bounds Checking</title>
+  <style>
+    body{font-family:Inter,system-ui,Arial;margin:18px;background:#f6f8fb;color:#0b1220}
+    header{display:flex;align-items:baseline;gap:12px;margin-bottom:12px}
+    h1{margin:0;font-size:18px}
+    .panel{background:#fff;border:1px solid #e6edf3;padding:12px;border-radius:10px;margin-bottom:12px;box-shadow:0 6px 18px rgba(11,17,28,0.04)}
+    textarea{width:100%;height:220px;font-family:ui-monospace,Menlo,monospace;font-size:13px;padding:10px;border-radius:6px;border:1px solid #dfe8f3;background:#fbfdff}
+    button{padding:8px 12px;border-radius:8px;border:1px solid #c7ddff;background:#2563eb;color:#fff;cursor:pointer}
+    .muted{color:#64748b;font-size:13px}
+    pre.console{background:#0b1220;color:#e6eef8;padding:10px;border-radius:6px;white-space:pre-wrap}
+    .ok{color:#065f46;font-weight:700}
+    .bad{color:#7f1d1d;font-weight:700}
+    /* Chat-style conversation */
+    .chat{display:flex;flex-direction:column;gap:10px;margin-top:6px}
+    .bubble{max-width:78%;padding:10px;border-radius:12px;line-height:1.35}
+    .bubble .speaker{font-weight:700;margin-bottom:6px;font-size:13px}
+    .bubble.instructor{align-self:flex-start;background:linear-gradient(180deg,#eef2ff,#f8fbff);border:1px solid #c7ddff;color:#0b1220}
+    .bubble.student{align-self:flex-end;background:linear-gradient(180deg,#e6fff7,#f0fdfa);border:1px solid #a7f3d0;color:#064e3b}
+    .bubble small{display:block;color:#64748b;margin-top:6px;font-size:12px}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>The Integer Trap: Logic & Bounds Checking</h1>
+  </header>
+
+  <div class="panel">
+    <strong>Learning Objective</strong>
+    <div style="margin-top:8px;line-height:1.45">
+      By the end of this exercise you'll be able to:
+      <ul style="margin-top:8px">
+        <li>Identify where to apply input validation at the boundary of your code.</li>
+        <li>Check types and bounds: reject non-integers and negative quantities.</li>
+        <li>Fail loudly (raise clear exceptions), log anomalous input, and keep downstream code simple.</li>
+      </ul>
+      <div style="margin-top:6px">Why this matters: validating data early prevents attackers or accidental bad data from changing business results (for example, prices, refunds, or inventory counts). Use short, explicit checks near where data enters your system and complement them with monitoring and business-rule assertions.</div>
+    </div>
+  </div>
+
+  <div class="panel" id="caseStudy">
+    <h3>Real‑world Case Study</h3>
+    <div style="margin-top:8px;line-height:1.45">
+      <strong>Summary</strong>
+      <p style="margin-top:6px">A retailer's API accepted user-supplied order quantities without server-side validation. Attackers submitted negative or fractional quantities, which reduced order totals and in some cases triggered incorrect refunds. The issue persisted for weeks and caused measurable revenue loss.</p>
+
+      <strong>Root causes</strong>
+      <ul style="margin-top:6px">
+        <li>Assumed client-side checks are sufficient; missing server-side validation.</li>
+        <li>No explicit business-rule assertions after calculations.</li>
+        <li>Limited monitoring for unusual negative totals or refund spikes.</li>
+      </ul>
+
+      <strong>Mitigations & lessons</strong>
+      <ul style="margin-top:6px">
+        <li>Validate all external inputs on the server: types and allowed ranges (quantities must be integers ≥ 0).</li>
+        <li>Make checks explicit and fail fast with clear errors (raise exceptions for invalid input).</li>
+        <li>Log and alert on abnormal financial signals (sudden refunds, negative totals).</li>
+        <li>Apply defense‑in‑depth: client validation, server validation, and business-rule guards before modifying financial records.</li>
+      </ul>
+
+      <strong>Discussion questions</strong>
+      <ol style="margin-top:6px">
+        <li>Where in your stack should you validate values coming from third parties?</li>
+        <li>What simple invariants could you assert after computing totals?</li>
+        <li>Which monitoring signals would help detect this quickly?</li>
+      </ol>
+
+      <div style="margin-top:8px"><strong>Further reading:</strong> search for "business logic attacks" and OWASP guidance on validating business rules.</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>Scenario</h3>
+    <div class="chat">
+      <div class="bubble instructor">
+        <div class="speaker">Morgan</div>
+        We shipped fast. A reporter asked: "How does our cart handle unusual input? Could a negative quantity be used to reduce totals?"
+        <small>Context: quick releases often miss business-logic checks.</small>
+      </div>
+
+      <div class="bubble student">
+        <div class="speaker">Riley</div>
+        I thought quantities would always be positive integers — but the code accepts whatever is provided.
+        <small>Observation: missing input validation.</small>
+      </div>
+
+      <div class="bubble instructor">
+        <div class="speaker">Morgan</div>
+        Right — that oversight means an attacker (or a user error) can pass negative or fractional quantities and alter totals. It's a business-logic flaw: not low-level memory corruption, but it affects security and finances.
+        <small>Why it matters: financial impact and trust.</small>
+      </div>
+
+      <div class="bubble instructor" style="background:linear-gradient(180deg,#fff7ed,#fffdf7);border-color:#fde68a;color:#663c00">
+        <div class="speaker">Your task</div>
+        Edit the function below to validate inputs. Reject negative numbers and non-integer quantities (raise an exception). Remember: 'Security at the Source' — stop bad data at the boundary.
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="examplesPanel">
+    <h3>Interactive Examples (preview)</h3>
+    <div class="muted" style="margin-top:6px">
+      Try the short examples to see the unsafe behaviour and a validation pattern you can use when implementing your solution.
+    </div>
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <button id="runUnsafeExample">Run Unsafe example</button>
+      <button id="runValidateExample" style="background:#0ea5a2;border-color:rgba(13,148,136,0.2)">Run Validation pattern</button>
+      <button id="clearExamples" style="background:#f1f5f9;color:#0b1220;border:1px solid #e2e8f0">Clear</button>
+      <div class="muted" style="margin-left:6px">Outputs appear below.</div>
+    </div>
+    <div style="margin-top:10px">
+      <div style="font-weight:600;margin-bottom:6px">Unsafe example (code)</div>
+      <pre id="unsafeCode" style="background:#f3f6fb;color:#0b1220;padding:10px;border-radius:6px;white-space:pre-wrap;font-family:ui-monospace,Menlo,monospace;font-size:13px"></pre>
+      <button id="copyUnsafe" style="margin-top:6px;background:#fff;border:1px solid #cbd5e1;padding:6px;border-radius:6px;cursor:pointer">Copy to editor</button>
+
+      <div style="font-weight:600;margin:12px 0 6px 0">Validation pattern (code)</div>
+      <pre id="validateCode" style="background:#f3f6fb;color:#0b1220;padding:10px;border-radius:6px;white-space:pre-wrap;font-family:ui-monospace,Menlo,monospace;font-size:13px"></pre>
+      <button id="copyValidate" style="margin-top:6px;background:#fff;border:1px solid #cbd5e1;padding:6px;border-radius:6px;cursor:pointer">Copy to editor</button>
+    </div>
+    <div style="margin-top:12px">
+      <pre id="exampleConsole" class="console">Examples: ready.</pre>
+    </div>
+  </div>
+
+  
+
+  <div class="panel">
+    <h3>Broken code (editable)</h3>
+    <textarea id="codeArea" spellcheck="false">
+# Broken implementation: accepts negative and fractional quantities
+def total_cost(cart):
+    total = 0
+    for item in cart:
+        # item is a dict: {'price': <number>, 'qty': <number>}
+        total += item['price'] * item['qty']
+    return total
+
+# example usage:
+# cart = [{'price': 10, 'qty': 2}, {'price': 5, 'qty': -1}]
+# print(total_cost(cart))
+    </textarea>
+
+    <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
+      <button id="runBtn">Run/Test</button>
+      <button id="resetBtn" style="background:#e2e8f0;color:#0b1220;border:1px solid #cbd5e1">Reset</button>
+      <div id="status" class="muted" style="margin-left:12px">Pyodide: loading…</div>
+    </div>
+
+    <div style="margin-top:12px">
+      <div><strong>Console / Grading output</strong></div>
+      <pre id="console" class="console">Ready.</pre>
+    </div>
+  </div>
+
+  
+
+  <!-- Pyodide -->
+  <script src="https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js"></script>
+  <script>
+    // Load Pyodide
+    const status = document.getElementById('status');
+    const consoleEl = document.getElementById('console');
+    let pyodideReady = false;
+    (async () => {
+      try {
+        window.pyodide = await loadPyodide();
+        status.textContent = 'Pyodide: ready';
+        pyodideReady = true;
+      } catch (err) {
+        status.textContent = 'Pyodide load failed';
+        consoleEl.textContent = 'Error loading Pyodide: ' + String(err);
+      }
+    })();
+
+    // Helper to write to console area
+    function log(msg){
+      consoleEl.textContent = String(msg);
+    }
+
+    // Grading logic (JavaScript) — runs student's Python and checks two tests:
+    // 1) negative-quantity: calling total_cost([{price:10, qty:-5}]) must raise Exception
+    // 2) non-integer qty: calling total_cost([{price:10, qty:2.5}]) must raise Exception
+    // The grading considers PASS only if both tests raise an exception (i.e., the student's code rejects these inputs).
+    async function gradeStudentCode(codeStr){
+      if(!pyodideReady){
+        log('Pyodide not ready. Wait a moment and try again.');
+        return;
+      }
+
+      // Clear any previously loaded definitions in pyodide global scope for a clean run
+      try {
+        // Reset by creating a new globals dict for execution
+        await pyodide.runPythonAsync('globals().clear(); import builtins; globals()[\"builtins\"] = builtins');
+      } catch(e){
+        // ignore
+      }
+
+      // Execute student code
+      try {
+        await pyodide.runPythonAsync(codeStr);
+      } catch(err){
+        log('Error executing your code: ' + String(err));
+        return;
+      }
+
+      // Build test script in Python to run inside Pyodide
+      const testScript = `
+result = ''
+try:
+    # Ensure function exists
+    if 'total_cost' not in globals():
+        raise NameError('total_cost not defined')
+
+    # Negative quantity test
+    cart_neg = [{'price':10, 'qty':-5}]
+    neg_pass = False
+    try:
+        v = total_cost(cart_neg)
+        # If function returns without raising, fail if it produced a negative total
+        if isinstance(v, (int,float)) and v < 0:
+            raise AssertionError(f'Function returned negative total for negative qty: {v}')
+        # If returns non-negative value, still considered FAIL for this exercise (we expect explicit rejection)
+        raise AssertionError('Function did not reject negative quantity (expected exception)')
+    except Exception as e:
+        # expected: function raises on invalid input
+        neg_pass = True
+
+    # Non-integer quantity test
+    cart_non = [{'price':10, 'qty':2.5}]
+    non_pass = False
+    try:
+        v2 = total_cost(cart_non)
+        # If no exception -> fail (exercise expects rejection of non-integer qty)
+        raise AssertionError('Function accepted non-integer quantity (expected exception)')
+    except Exception as e:
+        non_pass = True
+
+    if neg_pass and non_pass:
+        result = 'PASS: both negative and non-integer inputs were rejected.'
+    else:
+        result = 'FAIL: validation did not satisfy both checks (neg_pass=' + str(neg_pass) + ', non_pass=' + str(non_pass) + ')'
+except AssertionError as ae:
+    result = 'FAIL: ' + str(ae)
+except Exception as e:
+    result = 'FAIL: ' + str(e)
+
+result
+`;
+
+      // Run the test script
+      try {
+        const pyResult = await pyodide.runPythonAsync(testScript);
+        log(pyResult);
+      } catch(err){
+        log('Error during grading: ' + String(err));
+      }
+    }
+
+    // Wire buttons
+    document.getElementById('runBtn').addEventListener('click', async ()=>{
+      log('Running tests…');
+      const code = document.getElementById('codeArea').value;
+      // Grade
+      await gradeStudentCode(code);
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', ()=>{
+      document.getElementById('codeArea').value = `# Broken implementation: accepts negative and fractional quantities
+def total_cost(cart):
+    total = 0
+    for item in cart:
+        # item is a dict: {'price': <number>, 'qty': <number>}
+        total += item['price'] * item['qty']
+    return total
+
+# example usage:
+# cart = [{'price': 10, 'qty': 2}, {'price': 5, 'qty': -1}]
+# print(total_cost(cart))`;
+      log('Reset broken code.'); 
+    });
+
+      // --- Interactive example handlers ---
+      const exampleConsole = document.getElementById('exampleConsole');
+      function logExample(msg){ exampleConsole.textContent = String(msg); }
+
+      // example code strings reused for display and execution
+      const unsafeExampleCode = `# Unsafe example: the broken total_cost computes negative totals if qty is negative
+    def total_cost(cart):
+      total = 0
+      for item in cart:
+        total += item['price'] * item['qty']
+      return total
+
+    try:
+      v = total_cost([{'price':10,'qty':-3}])
+      out = f'Result (unsafe): {v}'
+    except Exception as e:
+      out = f'Error: {e}'
+    out
+    `;
+
+      const validateExampleCode = `# Validation pattern example (checks type and bounds)
+    def validate_qty(q):
+      if not isinstance(q, int):
+        raise ValueError('Quantity must be integer')
+      if q < 0:
+        raise ValueError('Quantity must be >= 0')
+      return True
+
+    out = ''
+    try:
+      validate_qty(-1)
+      out += 'validate(-1) -> OK (unexpected)\\n'
+    except Exception as e:
+      out += 'validate(-1) -> ERROR: ' + str(e) + '\\n'
+
+    try:
+      validate_qty(2.5)
+      out += 'validate(2.5) -> OK (unexpected)\\n'
+    except Exception as e:
+      out += 'validate(2.5) -> ERROR: ' + str(e) + '\\n'
+
+    try:
+      validate_qty(3)
+      out += 'validate(3) -> OK\\n'
+    except Exception as e:
+      out += 'validate(3) -> ERROR: ' + str(e) + '\\n'
+
+    out
+    `;
+
+      // populate visible snippets
+      const unsafeCodeEl = document.getElementById('unsafeCode');
+      const validateCodeEl = document.getElementById('validateCode');
+      if(unsafeCodeEl) unsafeCodeEl.innerText = unsafeExampleCode;
+      if(validateCodeEl) validateCodeEl.innerText = validateExampleCode;
+
+      document.getElementById('clearExamples').addEventListener('click', ()=>{ exampleConsole.textContent = 'Examples: ready.'; });
+
+      document.getElementById('runUnsafeExample').addEventListener('click', async ()=>{
+        if(!pyodideReady){ logExample('Pyodide not ready.'); return; }
+        try{
+        const res = await pyodide.runPythonAsync(unsafeExampleCode);
+        logExample(String(res));
+        }catch(err){ logExample('Execution error: ' + String(err)); }
+      });
+
+      document.getElementById('runValidateExample').addEventListener('click', async ()=>{
+        if(!pyodideReady){ logExample('Pyodide not ready.'); return; }
+        try{
+        const res = await pyodide.runPythonAsync(validateExampleCode);
+        logExample(String(res));
+        }catch(err){ logExample('Execution error: ' + String(err)); }
+      });
+
+      // copy-to-editor buttons
+      const copyUnsafeBtn = document.getElementById('copyUnsafe');
+      const copyValidateBtn = document.getElementById('copyValidate');
+      const editor = document.getElementById('codeArea');
+      if(copyUnsafeBtn){ copyUnsafeBtn.addEventListener('click', ()=>{ if(editor) editor.value = unsafeExampleCode; }); }
+      if(copyValidateBtn){ copyValidateBtn.addEventListener('click', ()=>{ if(editor) editor.value = validateExampleCode; }); }
+  </script>
+</body>
+</html>
