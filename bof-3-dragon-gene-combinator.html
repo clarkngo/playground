@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BoF III Dragon Gene Combiner (Fandom Rules)</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: #252526;
+            padding: 20px;
+            border: 2px solid #565656;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        h1 {
+            color: #7ce039;
+            text-align: center;
+            border-bottom: 2px solid #565656;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .gene-selection {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .gene-slot {
+            flex-basis: 30%;
+            background-color: #333333;
+            padding: 15px;
+            border-radius: 6px;
+        }
+
+        .gene-slot label {
+            display: block;
+            font-weight: bold;
+            color: #ff9900;
+            margin-bottom: 8px;
+        }
+
+        select {
+            width: 100%;
+            padding: 8px;
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            border: 1px solid #565656;
+            border-radius: 4px;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            cursor: pointer;
+        }
+        
+        select:focus {
+            outline: 1px solid #7ce039;
+        }
+
+        .result-panel {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .dragon-preview {
+            flex-basis: 40%;
+            text-align: center;
+            padding: 15px;
+            border: 1px dashed #565656;
+            border-radius: 6px;
+        }
+
+        .dragon-name {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #39e07c;
+            margin-bottom: 10px;
+        }
+
+        .dragon-name-example {
+            color: #fff;
+            background-color: #4b4b4b;
+            padding: 5px 10px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+
+        .stat-block {
+            flex-basis: 60%;
+            background-color: #333333;
+            padding: 15px;
+            border-radius: 6px;
+        }
+
+        .stat-block h2 {
+            color: #e0397c;
+            margin-top: 0;
+            border-bottom: 1px dotted #565656;
+            padding-bottom: 5px;
+            margin-bottom: 10px;
+        }
+
+        .stat-line {
+            display: flex;
+            justify-content: space-between;
+            padding: 3px 0;
+        }
+
+        .stat-label {
+            color: #d4d4d4;
+        }
+
+        .stat-value {
+            font-weight: bold;
+            color: #ff9900;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>BoF III Dragon Gene Combiner</h1>
+    <p style="text-align: center; color: #a0a0a0;">*Transformation and stat multipliers based on Fandom Wiki data.*</p>
+
+    <div class="gene-selection">
+        <div class="gene-slot">
+            <label for="gene1">Gene Slot 1</label>
+            <select id="gene1" onchange="calculateDragon()">
+                <option value="none">-- None --</option>
+                <option value="Flame">Flame (Ability)</option>
+                <option value="Frost">Frost (Ability)</option>
+                <option value="Thunder">Thunder (Ability)</option>
+                <option value="Shadow">Shadow (Ability)</option>
+                <option value="Radiance">Radiance (Ability)</option>
+                <option value="Force">Force (Forbidden)</option>
+                <option value="Miracle">Miracle (Forbidden)</option>
+                <option value="Infinity">Infinity (Forbidden)</option>
+            </select>
+        </div>
+        <div class="gene-slot">
+            <label for="gene2">Gene Slot 2</label>
+            <select id="gene2" onchange="calculateDragon()">
+                <option value="none">-- None --</option>
+                <option value="Defender">Defender (Ability)</option>
+                <option value="Eldritch">Eldritch (Ability)</option>
+                <option value="Thorn">Thorn (Non-Ability)</option>
+                <option value="Gross">Gross (Non-Ability)</option>
+                <option value="Mutant">Mutant (Non-Ability)</option>
+                <option value="Reverse">Reverse (Non-Ability)</option>
+                <option value="Trance">Trance (Non-Ability)</option>
+                <option value="Failure">Failure (Forbidden)</option>
+            </select>
+        </div>
+        <div class="gene-slot">
+            <label for="gene3" title="Note: Fusion and ??? (QQQ) genes are complex and not fully simulated.">Gene Slot 3 (Simple/Stat)</label>
+            <select id="gene3" onchange="calculateDragon()">
+                <option value="none">-- None --</option>
+                <option value="Flame">Flame (Ability)</option>
+                <option value="Frost">Frost (Ability)</option>
+                <option value="Shadow">Shadow (Ability)</option>
+                <option value="Defender">Defender (Ability)</option>
+                <option value="Thorn">Thorn (Non-Ability)</option>
+                <option value="Reverse">Reverse (Non-Ability)</option>
+                <option value="Trance">Trance (Non-Ability)</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="result-panel">
+        <div class="dragon-preview">
+            <div class="dragon-name">Resulting Form:</div>
+            <div class="dragon-name-example" id="dragonFormName">Base Ryu</div>
+            <div style="margin-top: 10px; color: #a0a0a0;">[Dragon Form Visualization Placeholder]</div>
+            <p id="dragonComment">Select up to three genes to see the resulting form and stat multipliers.</p>
+        </div>
+
+        <div class="stat-block">
+            <h2>Calculated Multipliers (Ryu's Base = 1.0x)</h2>
+            <div class="stat-line"><span class="stat-label">HP Multiplier:</span> <span class="stat-value" id="hpMulti">x1.00</span></div>
+            <div class="stat-line"><span class="stat-label">AP Multiplier:</span> <span class="stat-value" id="apMulti">x1.00</span></div>
+            <div class="stat-line"><span class="stat-label">Power Multiplier:</span> <span class="stat-value" id="pwrMulti">x1.00</span></div>
+            <div class="stat-line"><span class="stat-label">Defense Multiplier:</span> <span class="stat-value" id="defMulti">x1.00</span></div>
+            <div class="stat-line"><span class="stat-label">Agility Multiplier:</span> <span class="stat-value" id="aglMulti">x1.00</span></div>
+            <div class="stat-line"><span class="stat-label">Intelligence Multiplier:</span> <span class="stat-value" id="intMulti">x1.00</span></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- Configuration: Dragon Gene Data (Based on Fandom Wiki Single Combos) ---
+    // Multipliers are based on the single-gene combination table (e.g., 120% = 1.2)
+    const BASE_STATS = { HP: 1.00, AP: 1.00, Pwr: 1.00, Def: 1.00, Agl: 1.00, Int: 1.00 };
+    const GENE_DATA = {
+        // Gene Stat Multipliers (for single gene use) and Type
+        "Flame":    { type: "Ability", HP: 1.20, Pwr: 1.30, Def: 1.20, Agl: 1.20, Int: 1.00, AP: 1.00 },
+        "Frost":    { type: "Ability", HP: 1.20, Pwr: 1.30, Def: 1.20, Agl: 1.20, Int: 1.00, AP: 1.00 },
+        "Thunder":  { type: "Ability", HP: 1.20, Pwr: 1.30, Def: 1.20, Agl: 1.20, Int: 1.00, AP: 1.00 },
+        "Shadow":   { type: "Ability", HP: 1.20, Pwr: 1.30, Def: 1.20, Agl: 1.20, Int: 1.00, AP: 1.00 },
+        "Radiance": { type: "Ability", HP: 1.20, Pwr: 1.30, Def: 1.20, Agl: 1.20, Int: 1.00, AP: 1.00 },
+        "Defender": { type: "Ability", HP: 1.50, Pwr: 1.30, Def: 1.50, Agl: 1.00, Int: 1.00, AP: 1.00 },
+        "Eldritch": { type: "Ability", HP: 1.20, Pwr: 1.10, Def: 1.20, Agl: 1.20, Int: 1.30, AP: 1.00 },
+        
+        // Forbidden/Body/Non-Ability Genes
+        "Force":    { type: "Forbidden", HP: 1.30, Pwr: 2.30, Def: 1.20, Agl: 1.80, Int: 1.00, AP: 1.00 }, // Forms Warrior
+        "Miracle":  { type: "Forbidden", HP: 3.30, Pwr: 2.30, Def: 2.30, Agl: 0.60, Int: 1.00, AP: 1.00 }, // Forms Behemoth
+        "Mutant":   { type: "Non-Ability", HP: 1.80, Pwr: 1.50, Def: 1.50, Agl: 1.20, Int: 1.00, AP: 1.00 }, // Forms Pygmy (HP 1.8x, Pwr/Def 1.5x is for Dragon form, Mutant is Random)
+        "Gross":    { type: "Non-Ability", HP: 1.50, Pwr: 1.60, Def: 1.50, Agl: 1.50, Int: 1.00, AP: 1.00 },
+        "Thorn":    { type: "Non-Ability", HP: 1.20, Pwr: 1.30, Def: 1.20, Agl: 1.20, Int: 1.00, AP: 1.00 },
+        "Reverse":  { type: "Non-Ability", HP: 1.20, Pwr: 1.30, Def: 1.20, Agl: 1.20, Int: 1.00, AP: 1.00 },
+        "Trance":   { type: "Non-Ability", HP: 1.20, Pwr: 1.30, Def: 1.20, Agl: 1.20, Int: 1.00, AP: 1.00 },
+        "Failure":  { type: "Forbidden", HP: 1.00, Pwr: 1.00, Def: 1.00, Agl: 1.00, Int: 1.00, AP: 1.00 }, // Failure Whelp
+        "Infinity": { type: "Kaiser", HP: 3.00, Pwr: 2.50, Def: 2.50, Agl: 1.50, Int: 1.50, AP: 1.00 }, // Berserk Kaiser
+        
+        "none":     { type: "none", HP: 1.00, Pwr: 1.00, Def: 1.00, Agl: 1.00, Int: 1.00, AP: 1.00 }
+    };
+
+    // --- Core Calculation Function ---
+    function calculateDragon() {
+        const g1 = document.getElementById('gene1').value;
+        const g2 = document.getElementById('gene2').value;
+        const g3 = document.getElementById('gene3').value;
+        const selectedGenes = [g1, g2, g3].filter(g => g !== 'none');
+
+        let currentStats = { ...BASE_STATS };
+        let dragonForm = "Ryuu (Base)";
+        let comment = "No transformation (0 genes selected).";
+        
+        // Multipliers are calculated by summing the *differences* from 1.0 (Ryu's base)
+        let totalHPDiff = 0;
+        let totalAPDiff = 0;
+        let totalPwrDiff = 0;
+        let totalDefDiff = 0;
+        let totalAglDiff = 0;
+        let totalIntDiff = 0;
+
+        const abilityCount = selectedGenes.filter(g => GENE_DATA[g].type === 'Ability').length;
+        const hasThorn = selectedGenes.includes('Thorn');
+
+        // --- Step 1: Check for Overrides (Kaiser, Failure) ---
+        if (selectedGenes.includes('Infinity')) {
+            // Infinity always results in some form of Kaiser (Berserk or Complete)
+            dragonForm = "Berserk Kaiser";
+            comment = "!!! **Berserk Kaiser** !!! Formed by the Infinity Gene. Max/Chaotic power. Stats shown are base Berserk Kaiser.";
+            showKaiser(GENE_DATA['Infinity']);
+            return;
+        }
+
+        if (selectedGenes.includes('Failure')) {
+            // Failure Whelp has 100% stats across the board.
+            dragonForm = "Failure Whelp";
+            comment = "Formed by using the **Failure** gene. All stats revert to 100% (1.0x).";
+            showFixedStats(GENE_DATA['Failure']);
+            return;
+        }
+
+        // --- Step 2: Determine Base Form and Calculate Combined Multipliers ---
+
+        // 2a. Determine Base Form (for specific multiplier rules)
+        if (selectedGenes.includes('Miracle')) {
+            dragonForm = "Behemoth";
+            comment = "Formed by **Miracle** gene. Very high HP/Defense, low Agility.";
+            // If Behemoth is the base form, we start calculations from its base stats (3.3 HP, 2.3 Pwr/Def, 0.6 Agl)
+            currentStats.HP = 3.30;
+            currentStats.Pwr = 2.30;
+            currentStats.Def = 2.30;
+            currentStats.Agl = 0.60;
+
+            // Only sum the *additive* effects of the other genes (subtracting the base Behemoth/Ryu difference)
+            totalHPDiff = -2.30; // 3.3 - 1.0
+            totalPwrDiff = -1.30; // 2.3 - 1.0
+            totalDefDiff = -1.30; // 2.3 - 1.0
+            totalAglDiff = 0.40; // 0.6 - 1.0 (negative bonus)
+        } 
+        else if (selectedGenes.includes('Force')) {
+            dragonForm = "Warrior";
+            comment = "Formed by **Force** gene. High Power and Agility.";
+            // If Warrior is the base form, we start calculations from its base stats
+            currentStats.HP = 1.30;
+            currentStats.Pwr = 2.30;
+            currentStats.Def = 1.20;
+            currentStats.Agl = 1.80;
+            
+            // Only sum the *additive* effects of the other genes (subtracting the base Warrior/Ryu difference)
+            totalHPDiff = -0.30;
+            totalPwrDiff = -1.30;
+            totalDefDiff = -0.20;
+            totalAglDiff = -0.80;
+        }
+        else if (abilityCount >= 2 || (abilityCount === 1 && hasThorn)) {
+            dragonForm = "Dragon";
+            comment = "Formed by two Ability genes or one Ability + **Thorn**. 1.8x HP base.";
+            // Dragon form base stats (from single Mutant/Double Combos)
+            currentStats.HP = 1.80;
+            currentStats.Pwr = 1.50;
+            currentStats.Def = 1.50;
+            currentStats.Agl = 1.20;
+            currentStats.Int = 1.00;
+
+            totalHPDiff = -0.80;
+            totalPwrDiff = -0.50;
+            totalDefDiff = -0.50;
+            totalAglDiff = -0.20;
+        } 
+        else if (selectedGenes.length > 0) {
+            dragonForm = "Whelp";
+            comment = "Formed by a single gene or a simple mixed combination (Whelp base). 1.2x HP base.";
+            // Whelp form base stats (from elemental single genes)
+            currentStats.HP = 1.20;
+            currentStats.Pwr = 1.30;
+            currentStats.Def = 1.20;
+            currentStats.Agl = 1.20;
+            currentStats.Int = 1.00;
+            
+            totalHPDiff = -0.20;
+            totalPwrDiff = -0.30;
+            totalDefDiff = -0.20;
+            totalAglDiff = -0.20;
+        }
+
+
+        // 2b. Sum the Gene Differences from Ryu's Base (1.0x)
+        for (const geneName of selectedGenes) {
+            const data = GENE_DATA[geneName];
+            // Add the multiplier difference (Multiplier - 1.0)
+            totalHPDiff += (data.HP - 1.0);
+            totalAPDiff += (data.AP - 1.0); 
+            totalPwrDiff += (data.Pwr - 1.0);
+            totalDefDiff += (data.Def - 1.0);
+            totalAglDiff += (data.Agl - 1.0);
+            totalIntDiff += (data.Int - 1.0);
+        }
+
+        // 2c. Apply the final multipliers
+        currentStats.HP = 1.0 + totalHPDiff;
+        currentStats.AP = 1.0 + totalAPDiff;
+        currentStats.Pwr = 1.0 + totalPwrDiff;
+        currentStats.Def = 1.0 + totalDefDiff;
+        currentStats.Agl = 1.0 + totalAglDiff;
+        currentStats.Int = 1.0 + totalIntDiff;
+
+        // --- Final Display Update ---
+        document.getElementById('dragonFormName').textContent = dragonForm;
+        document.getElementById('dragonComment').innerHTML = comment;
+        
+        document.getElementById('hpMulti').textContent = `x${Math.max(1.0, currentStats.HP).toFixed(2)}`;
+        document.getElementById('apMulti').textContent = `x${Math.max(1.0, currentStats.AP).toFixed(2)}`;
+        document.getElementById('pwrMulti').textContent = `x${Math.max(1.0, currentStats.Pwr).toFixed(2)}`;
+        document.getElementById('defMulti').textContent = `x${Math.max(1.0, currentStats.Def).toFixed(2)}`;
+        document.getElementById('aglMulti').textContent = `x${Math.max(0.6, currentStats.Agl).toFixed(2)}`;
+        document.getElementById('intMulti').textContent = `x${Math.max(1.0, currentStats.Int).toFixed(2)}`;
+    }
+
+    // Special handler for fixed stat forms (like Kaiser or Failure)
+    function showFixedStats(data) {
+        document.getElementById('hpMulti').textContent = `x${data.HP.toFixed(2)}`;
+        document.getElementById('apMulti').textContent = `x${data.AP.toFixed(2)}`;
+        document.getElementById('pwrMulti').textContent = `x${data.Pwr.toFixed(2)}`;
+        document.getElementById('defMulti').textContent = `x${data.Def.toFixed(2)}`;
+        document.getElementById('aglMulti').textContent = `x${data.Agl.toFixed(2)}`;
+        document.getElementById('intMulti').textContent = `x${data.Int.toFixed(2)}`;
+    }
+
+    // Special handler for Kaiser form (uses the Infinity data)
+    function showKaiser(data) {
+        showFixedStats(data);
+        document.getElementById('hpMulti').textContent = `x9.99`;
+        document.getElementById('pwrMulti').textContent = `x9.99`;
+        document.getElementById('defMulti').textContent = `x9.99`;
+        document.getElementById('aglMulti').textContent = `x9.99`;
+        document.getElementById('intMulti').textContent = `x9.99`;
+    }
+
+
+    // Run on page load to set initial state
+    document.addEventListener('DOMContentLoaded', calculateDragon);
+</script>
+
+</body>
+</html>

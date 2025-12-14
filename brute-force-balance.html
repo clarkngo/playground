@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Coding Exercise: The Brute Force Balance</title>
+    
+    <link rel="stylesheet" href="https://pyscript.net/releases/2023.05.1/pyscript.css" />
+    <script defer src="https://pyscript.net/releases/2023.05.1/pyscript.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+
+    <style>
+        /* General Layout */
+        body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; height: 100vh; overflow: hidden; background-color: #1e1e1e; }
+        
+        .panel-left { width: 40%; background-color: #f4f4f4; padding: 30px; overflow-y: auto; border-right: 2px solid #ddd; box-sizing: border-box; color: #333; }
+        h1 { color: #2c3e50; font-size: 24px; }
+        h2 { color: #e74c3c; font-size: 18px; margin-top: 20px; }
+        .scenario-box { background: #e8f6f3; border-left: 5px solid #1abc9c; padding: 15px; margin: 15px 0; }
+        .learning-obj { font-style: italic; color: #555; font-size: 0.9em; margin-bottom: 20px; }
+        
+        .panel-right { width: 60%; display: flex; flex-direction: column; padding: 20px; box-sizing: border-box; }
+        
+        /* --- EDITOR CONTAINER --- */
+        .editor-container {
+            display: flex;
+            height: 50%;
+            border: 1px solid #3c3c3c;
+            background-color: #252526;
+            position: relative;
+        }
+
+        /* Line Numbers */
+        .line-numbers {
+            width: 40px;
+            background-color: #1e1e1e;
+            color: #858585;
+            text-align: right;
+            padding: 10px 5px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 20px;
+            border-right: 1px solid #3c3c3c;
+            box-sizing: border-box;
+            user-select: none;
+            overflow: hidden;
+            white-space: pre;
+        }
+
+        /* Syntax Highlighting Wrapper */
+        .code-editor-wrapper {
+            position: relative;
+            flex-grow: 1;
+            overflow: hidden; 
+        }
+
+        /* === NUCLEAR CSS ALIGNMENT FIX === */
+        textarea#code-editor, 
+        pre[class*="language-"], 
+        code[class*="language-"] {
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace !important;
+            font-size: 14px !important;
+            line-height: 20px !important;
+            letter-spacing: 0px !important; 
+            word-spacing: 0px !important;   
+            tab-size: 4 !important;
+            padding: 10px !important;
+            margin: 0 !important;
+            box-sizing: border-box !important;
+            white-space: pre !important;
+            border: none !important;
+            overflow: auto !important;
+            text-shadow: none !important;
+            direction: ltr !important;
+            text-align: left !important;
+        }
+
+        /* 1. Visible Code Layer (Prism) */
+        pre[class*="language-"] {
+            position: absolute !important;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: transparent !important;
+            z-index: 1;
+            pointer-events: none; 
+            scrollbar-width: none; 
+        }
+        pre[class*="language-"]::-webkit-scrollbar { display: none; } 
+
+        /* 2. Invisible Input Layer (Textarea) */
+        textarea#code-editor {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            color: transparent; 
+            caret-color: #fff; 
+            z-index: 2;
+            resize: none;
+            outline: none;
+        }
+
+        /* Toolbar */
+        .toolbar { padding: 10px 0; display: flex; gap: 10px; align-items: center; }
+        button { padding: 10px 20px; border: none; cursor: pointer; font-weight: bold; border-radius: 4px; transition: 0.2s; }
+        
+        .btn-run { background-color: #27ae60; color: white; }
+        .btn-run:hover { background-color: #2ecc71; }
+        
+        .btn-reset { background-color: #7f8c8d; color: white; }
+        .btn-reset:hover { background-color: #95a5a6; }
+
+        .btn-export { background-color: #8e44ad; color: white; }
+        .btn-export:hover { background-color: #9b59b6; }
+        
+        .save-status { color: #888; font-style: italic; font-size: 0.9em; margin-left: auto; }
+
+        /* Output Console */
+        .editor-label { color: #aaa; font-size: 0.9em; margin-bottom: 5px; margin-top: 10px;}
+        #console-output {
+            flex-grow: 1;
+            background-color: #000;
+            color: #0f0;
+            font-family: 'Consolas', 'Courier New', monospace;
+            padding: 15px;
+            border: 1px solid #333;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        
+        /* Loading Screen */
+        #loading { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: #0d0d0d; z-index: 999; 
+            display: flex; flex-direction: column; justify-content: flex-start;
+            padding: 40px; box-sizing: border-box;
+            font-family: 'Courier New', monospace;
+            color: #00ff00;
+            font-size: 16px;
+            overflow: hidden;
+        }
+        .boot-msg { margin-bottom: 5px; opacity: 0; animation: fadeIn 0.1s forwards; }
+        .cursor { display: inline-block; width: 10px; height: 18px; background: #00ff00; animation: blink 0.8s infinite; margin-left: 5px; }
+        @keyframes fadeIn { to { opacity: 1; } }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+    </style>
+</head>
+<body>
+
+    <div id="loading">
+        <div id="boot-log"></div>
+        <div>> <span class="cursor"></span></div>
+    </div>
+
+    <script>
+        const bootMessages = [
+            "Initializing Authentication Module...",
+            "Loading User Database...",
+            "Detecting Brute Force Patterns...",
+            "Checking Password Hash Algorithms... [ARGON2]",
+            "Simulating Login Requests...",
+            "Loading Python 3.11 Kernel...",
+            "Mounting Secure Sandbox...",
+            "Connecting to Virtual Identity Provider...",
+            "Authentication Environment Ready."
+        ];
+        const logContainer = document.getElementById("boot-log");
+        let msgIndex = 0;
+        function typeWriter() {
+            if (msgIndex < bootMessages.length) {
+                const div = document.createElement("div");
+                div.className = "boot-msg";
+                div.textContent = `[SYSTEM] ${bootMessages[msgIndex]}`;
+                logContainer.appendChild(div);
+                msgIndex++;
+                setTimeout(typeWriter, 300); 
+            }
+        }
+        typeWriter();
+    </script>
+
+    <div class="panel-left">
+        <div class="learning-obj">Software Security Training</div>
+        <h1>Exercise: The Brute Force Balance</h1>
+        <p>In this activity, you will balance <strong>Security</strong> (stopping attackers) vs. <strong>Usability</strong> (allowing user mistakes) by implementing a lockout policy.</p>
+        
+        <div class="scenario-box">
+            <strong>Scenario:</strong> 
+            Attackers are running a "Brute Force" script against your login page, trying thousands of passwords per second. Your current code allows infinite attempts.
+        </div>
+
+        <h2>Your Task</h2>
+        <p>Modify the <code>check_login</code> function to enforce these rules:</p>
+        <ol>
+            <li><strong>Check History:</strong> If the user has 3 or more failed attempts, return <code>"LOCKED"</code> immediately.</li>
+            <li><strong>On Fail:</strong> If the password is wrong, increment the failure count and return <code>"FAIL"</code>.</li>
+            <li><strong>On Success:</strong> If the password is correct, <strong>reset the failure count to 0</strong> (Usability!) and return <code>"SUCCESS"</code>.</li>
+        </ol>
+
+        <h2>Why This Matters</h2>
+        <p>If you don't reset the count on success, a valid user who made a typo yesterday might get locked out today. This illustrates the syllabus goal of "balancing usability and security."</p>
+    </div>
+
+    <div class="panel-right">
+        <div class="editor-label">PYTHON EDITOR (auth_module.py)</div>
+        
+        <div class="editor-container">
+            <div class="line-numbers" id="line-numbers">1</div>
+            
+            <div class="code-editor-wrapper">
+                <textarea id="code-editor" spellcheck="false" oninput="handleInput()" onscroll="syncScroll()" onkeydown="handleTab(event)">def check_login(input_password, real_password, user_data):
+    """
+    Validates login and handles lockout logic.
+    Args:
+      input_password (str): What the user typed.
+      real_password (str): The correct password.
+      user_data (dict): A dictionary containing:
+                        {'failed_attempts': 0}
+    
+    Returns: "SUCCESS", "FAIL", or "LOCKED"
+    """
+    
+    # 1. SECURITY CHECK: Is the account already locked?
+    # TODO: Check if user_data['failed_attempts'] >= 3
+    
+    
+    
+    # 2. PASSWORD CHECK
+    if input_password == real_password:
+        # TODO: USABILITY - Reset the counter on success!
+        
+        return "SUCCESS"
+    else:
+        # TODO: SECURITY - Increment the counter on failure
+        
+        return "FAIL"
+</textarea>
+                
+                <pre id="code-display" class="language-python"><code id="code-highlight" class="language-python"></code></pre>
+            </div>
+        </div>
+
+        <div class="toolbar">
+            <button class="btn-run" id="run-btn" py-click="run_tests()">Run Login Tests</button>
+            <button class="btn-reset" onclick="resetCode()">Reset Code</button>
+            <button class="btn-export" onclick="exportPDF()">Export PDF</button>
+            
+            <span class="save-status" id="save-status"></span>
+        </div>
+
+        <div class="editor-label">SECURITY CONSOLE OUTPUT</div>
+        <div id="console-output">Ready... Waiting for login simulation.</div>
+    </div>
+
+    <py-script>
+        from js import document, window
+        import sys
+
+        def setup():
+            loading = document.getElementById("loading")
+            if loading:
+                loading.style.display = "none"
+        
+        setup()
+
+        class ConsoleOutput:
+            def write(self, text):
+                if text.strip():
+                    log(text.strip(), "normal")
+            def flush(self):
+                pass
+
+        sys.stdout = ConsoleOutput()
+        sys.stderr = ConsoleOutput()
+
+        def log(message, type="normal"):
+            console = document.getElementById("console-output")
+            if type == "clear":
+                console.innerHTML = ""
+                return
+            
+            color = "#ffffff" 
+            if type == "pass": color = "#2ecc71" 
+            if type == "fail": color = "#e74c3c" 
+            if type == "info": color = "#3498db" 
+            if type == "system": color = "#d4d4d4" 
+
+            safe_message = message.replace("<", "&lt;").replace(">", "&gt;")
+            console.innerHTML += f'<div style="color:{color}; margin-bottom: 5px;">{safe_message}</div>'
+            console.scrollTop = console.scrollHeight
+
+        # --- TEST RUNNER ---
+        def run_tests(*args):
+            log("", "clear")
+            log("[SYSTEM] Starting Authentication Simulator...", "system")
+            
+            user_code = document.getElementById("code-editor").value
+            
+            # Helper to create fresh user for each test run
+            def get_fresh_user():
+                return {'failed_attempts': 0}
+
+            test_env = {}
+            window.submissionStatus = "INCOMPLETE / FAILED"
+            
+            try:
+                # Execute in test_env 
+                exec(user_code, test_env)
+                
+                if "check_login" not in test_env:
+                    log("[!] Error: Function 'check_login' not found.", "fail")
+                    return
+
+                check_login = test_env["check_login"]
+                
+                # --- TEST 1: Normal Login ---
+                log("--- TEST 1: Valid Login ---", "system")
+                u1 = get_fresh_user()
+                res1 = check_login("secret123", "secret123", u1)
+                if res1 == "SUCCESS":
+                    log("   -> PASS: Login successful.", "pass")
+                else:
+                    log(f"   -> FAIL: Expected 'SUCCESS', got '{res1}'", "fail")
+                    return
+
+                # --- TEST 2: Lockout Logic ---
+                log("--- TEST 2: Brute Force Simulation ---", "system")
+                u2 = get_fresh_user()
+                
+                check_login("wrong1", "secret", u2)
+                if u2['failed_attempts'] != 1:
+                    log("   -> FAIL: You didn't increment failed_attempts.", "fail")
+                    return
+                log("   -> Attempt 1 Failed (Count: 1)")
+
+                check_login("wrong2", "secret", u2)
+                log("   -> Attempt 2 Failed (Count: 2)")
+
+                check_login("wrong3", "secret", u2)
+                log("   -> Attempt 3 Failed (Count: 3)")
+
+                res_locked = check_login("wrong4", "secret", u2)
+                if res_locked == "LOCKED":
+                    log("   -> PASS: Account successfully locked.", "pass")
+                else:
+                    log(f"   -> FAIL: Security hole! Expected 'LOCKED', got '{res_locked}'", "fail")
+                    window.submissionStatus = "FAILED - Vulnerable"
+                    return
+
+                # --- TEST 3: Usability ---
+                log("--- TEST 3: Usability (Reset on Success) ---", "system")
+                u3 = get_fresh_user()
+                u3['failed_attempts'] = 2 
+                
+                check_login("secret", "secret", u3)
+                if u3['failed_attempts'] == 0:
+                    log("   -> PASS: Failure count reset to 0.", "pass")
+                    log("   SUCCESS: Security and Usability balanced.", "pass")
+                    window.submissionStatus = "PASSED - Secure"
+                else:
+                    log(f"   -> FAIL: Bad Usability! Count is {u3['failed_attempts']}.", "fail")
+                    window.submissionStatus = "FAILED - Poor Usability"
+
+            except Exception as e:
+                # --- SMART HINT SYSTEM ---
+                # Catches the specific error for 'failed_attempts'
+                error_msg = str(e)
+                if "name 'failed_attempts' is not defined" in error_msg:
+                    log(f"[!] HINT: 'failed_attempts' is not a variable.", "info")
+                    log(f"    It is inside the dictionary 'user_data'.", "info")
+                    log(f"    Try this: user_data['failed_attempts']", "info")
+                else:
+                    log(f"[!] Runtime Error: {e}", "fail")
+                
+                window.submissionStatus = "ERROR - Syntax/Runtime"
+
+    </py-script>
+
+    <script>
+        const editor = document.getElementById("code-editor");
+        const lineNumbers = document.getElementById("line-numbers");
+        const saveStatus = document.getElementById("save-status");
+        
+        const STORAGE_KEY = 'secure_coding_ex_3_auth'; 
+        const AUTOSAVE_DELAY_MS = 3000;
+        
+        window.submissionStatus = "Not Started"; 
+
+        const originalCode = editor.value; 
+        let saveTimer;
+
+        // --- SYNTAX HIGHLIGHTING ---
+        function updateSyntaxHighlighting() {
+            const codeText = editor.value;
+            const codeHighlight = document.getElementById("code-highlight");
+            codeHighlight.textContent = codeText;
+            Prism.highlightElement(codeHighlight);
+            updateLineNumbers();
+        }
+
+        // --- PDF EXPORT ---
+        async function exportPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            let studentName = prompt("Please enter your name for the report:", "Student");
+            if (studentName === null) return; 
+
+            const timestamp = new Date().toLocaleString();
+            const codeContent = editor.value;
+            const status = window.submissionStatus;
+
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(18);
+            doc.text("Secure Coding Report", 20, 20);
+
+            doc.setFontSize(12);
+            doc.setFont("helvetica", "normal");
+            // UPDATED: Removed "Week 3" from PDF Title
+            doc.text(`Exercise: The Brute Force Balance`, 20, 30);
+            
+            doc.setDrawColor(0);
+            doc.setFillColor(240, 240, 240);
+            doc.rect(20, 35, 170, 25, 'F'); 
+
+            doc.text(`Student Name: ${studentName}`, 25, 42);
+            doc.text(`Date: ${timestamp}`, 25, 49);
+            
+            doc.text(`Status: `, 25, 56);
+            if (status.includes("PASSED")) {
+                doc.setTextColor(0, 150, 0); 
+            } else {
+                doc.setTextColor(200, 0, 0); 
+            }
+            doc.text(status, 45, 56);
+
+            doc.setTextColor(0, 0, 0); 
+            doc.text("Submitted Code:", 20, 70);
+
+            doc.setFont("courier", "normal"); 
+            doc.setFontSize(10);
+            
+            const splitCode = doc.splitTextToSize(codeContent, 170);
+            doc.text(splitCode, 20, 77);
+
+            // UPDATED: Renamed Export File
+            doc.save(`${studentName.replace(/\s/g, '_')}_Brute_Force_Balance.pdf`);
+        }
+
+        // --- INITIALIZATION ---
+        window.onload = function() {
+            const savedCode = localStorage.getItem(STORAGE_KEY);
+            if (savedCode) {
+                editor.value = savedCode;
+                saveStatus.innerText = "Restored from autosave";
+            }
+            updateSyntaxHighlighting(); 
+        };
+
+        // --- INPUT HANDLING ---
+        function handleInput() {
+            updateSyntaxHighlighting(); 
+            saveStatus.innerText = "Typing...";
+            clearTimeout(saveTimer);
+            saveTimer = setTimeout(() => {
+                saveToLocal();
+            }, AUTOSAVE_DELAY_MS);
+        }
+
+        function saveToLocal() {
+            localStorage.setItem(STORAGE_KEY, editor.value);
+            const now = new Date();
+            saveStatus.innerText = `Autosaved at ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+        }
+
+        function syncScroll() {
+            lineNumbers.scrollTop = editor.scrollTop;
+            document.getElementById("code-display").scrollTop = editor.scrollTop;
+            document.getElementById("code-display").scrollLeft = editor.scrollLeft;
+        }
+
+        function handleTab(e) {
+            if (e.key == 'Tab') {
+                e.preventDefault();
+                const start = editor.selectionStart;
+                const end = editor.selectionEnd;
+                const value = editor.value;
+                const scrollTop = editor.scrollTop;
+
+                if (e.shiftKey) {
+                    let lineStart = value.lastIndexOf('\n', start - 1) + 1;
+                    if (value.substring(lineStart, lineStart + 4) === "    ") {
+                        editor.value = value.substring(0, lineStart) + value.substring(lineStart + 4);
+                        editor.selectionStart = Math.max(lineStart, start - 4);
+                        editor.selectionEnd = Math.max(lineStart, end - 4);
+                    }
+                } else {
+                    editor.value = value.substring(0, start) + "    " + value.substring(end);
+                    editor.selectionStart = editor.selectionEnd = start + 4;
+                }
+                editor.scrollTop = scrollTop;
+                handleInput();
+            }
+        }
+
+        function updateLineNumbers() {
+            const lines = editor.value.split('\n').length;
+            lineNumbers.innerHTML = Array(lines).fill(0).map((_, i) => i + 1).join('\n');
+        }
+
+        function resetCode() {
+            if(confirm("Are you sure? This will delete your current code.")) {
+                editor.value = originalCode;
+                updateSyntaxHighlighting();
+                saveToLocal();
+                document.getElementById("console-output").innerHTML = "Code reset.";
+                window.submissionStatus = "Not Started";
+            }
+        }
+    </script>
+
+</body>
+</html>

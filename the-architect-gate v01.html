@@ -3,12 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Secure Coding Exercise: The Integer Trap</title>
+    <title>Secure Coding Exercise: The Architect's Gate</title>
     
     <link rel="stylesheet" href="https://pyscript.net/releases/2023.05.1/pyscript.css" />
     <script defer src="https://pyscript.net/releases/2023.05.1/pyscript.js"></script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
 
     <style>
         /* General Layout */
@@ -24,15 +28,13 @@
         /* Right Panel: Workbench */
         .panel-right { width: 60%; display: flex; flex-direction: column; padding: 20px; box-sizing: border-box; }
         
-        /* EDITOR CONTAINER */
+        /* --- EDITOR CONTAINER (Cursor Fix Applied) --- */
         .editor-container {
             display: flex;
             height: 50%;
             border: 1px solid #3c3c3c;
             background-color: #252526;
-            font-family: 'Consolas', 'Courier New', monospace;
-            font-size: 14px;
-            line-height: 20px;
+            position: relative;
         }
 
         /* Line Numbers Sidebar */
@@ -42,6 +44,9 @@
             color: #858585;
             text-align: right;
             padding: 10px 5px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 20px;
             border-right: 1px solid #3c3c3c;
             box-sizing: border-box;
             user-select: none;
@@ -49,19 +54,59 @@
             white-space: pre;
         }
 
-        /* The Code Area */
-        textarea#code-editor {
+        /* Syntax Highlighting Wrapper */
+        .code-editor-wrapper {
+            position: relative;
             flex-grow: 1;
-            background-color: #252526;
-            color: #d4d4d4;
-            border: none;
-            padding: 10px;
-            box-sizing: border-box;
+            overflow: hidden; /* Container clips the content */
+        }
+
+        /* SHARED STYLES FOR BOTH LAYERS (Crucial for alignment) */
+        textarea#code-editor, pre[class*="language-"], code[class*="language-"] {
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace !important;
+            font-size: 14px !important;
+            line-height: 20px !important;
+            tab-size: 4 !important;
+            padding: 10px !important;
+            margin: 0 !important;
+            box-sizing: border-box !important;
+            white-space: pre !important;
+            border: none !important;
+            overflow: auto !important; /* Both must have scroll capability */
+            text-shadow: none !important;
+        }
+
+        /* 1. Visible Code Layer (Prism) */
+        pre[class*="language-"] {
+            position: absolute !important;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: transparent !important;
+            z-index: 1;
+            pointer-events: none; /* Clicks pass through to textarea */
+            
+            /* Hide scrollbars on the visual layer so they don't show double */
+            scrollbar-width: none; /* Firefox */
+        }
+        pre[class*="language-"]::-webkit-scrollbar {
+            display: none; /* Chrome/Safari */
+        }
+
+        /* 2. Invisible Input Layer (Textarea) */
+        textarea#code-editor {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            color: transparent; /* Text is invisible */
+            caret-color: #fff; /* Cursor is visible */
+            z-index: 2;
             resize: none;
             outline: none;
-            white-space: pre;
-            overflow: auto;
-            tab-size: 4;
         }
 
         /* Toolbar */
@@ -93,7 +138,7 @@
             white-space: pre-wrap;
         }
         
-        /* --- NEW LOADING SCREEN STYLES --- */
+        /* --- HACKER LOADING SCREEN STYLES --- */
         #loading { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background: #0d0d0d; z-index: 999; 
@@ -104,11 +149,7 @@
             font-size: 16px;
             overflow: hidden;
         }
-        .boot-msg {
-            margin-bottom: 5px;
-            opacity: 0;
-            animation: fadeIn 0.1s forwards;
-        }
+        .boot-msg { margin-bottom: 5px; opacity: 0; animation: fadeIn 0.1s forwards; }
         .cursor { display: inline-block; width: 10px; height: 18px; background: #00ff00; animation: blink 0.8s infinite; margin-left: 5px; }
         @keyframes fadeIn { to { opacity: 1; } }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
@@ -123,16 +164,14 @@
 
     <script>
         const bootMessages = [
-            "Initializing Secure Enclave...",
+            "Initializing Access Control Matrix...",
+            "Loading User Roles & Permissions...",
+            "Scanning for Privilege Escalation...",
+            "Checking Authorization Headers... [OK]",
             "Loading Python 3.11 Kernel...",
-            "Mounting Virtual Filesystem (VFS)...",
-            "Checking Memory Integrity... [OK]",
-            "Sanitizing Input Buffers... [OK]",
-            "Encrypting Transport Layer...",
-            "Loading PyScript Modules...",
-            "Establishing Connection to LocalStorage...",
-            "Scanning for Logic Bombs...",
-            "Environment Secure. Launching Interface..."
+            "Mounting Secure Enclave...",
+            "Establishing RBAC Policy...",
+            "Architecture Security Module Ready."
         ];
 
         const logContainer = document.getElementById("boot-log");
@@ -145,58 +184,69 @@
                 div.textContent = `[SYSTEM] ${bootMessages[msgIndex]}`;
                 logContainer.appendChild(div);
                 msgIndex++;
-                setTimeout(typeWriter, 300); // Speed of new messages
+                setTimeout(typeWriter, 300); 
             }
         }
-        // Start animation immediately
         typeWriter();
     </script>
 
     <div class="panel-left">
         <div class="learning-obj">Software Security Training</div>
-        <h1>Exercise: The Integer Trap</h1>
-        <p>In this activity, you will identify and fix a business logic vulnerability related to input validation.</p>
+        <h1>Exercise: The Architect's Gate</h1>
+        <p>In this activity, you will enforce the <strong>Principle of Least Privilege</strong> by fixing a broken Role-Based Access Control (RBAC) check.</p>
         
         <div class="scenario-box">
             <strong>Scenario:</strong> 
-            You are a backend developer for an e-commerce site. A user discovered that if they enter a <strong>negative quantity</strong> for an item, the website calculates a negative price—effectively paying the user to "buy" the item!
+            You are auditing a "Delete User" API endpoint. The current code allows anyone with the role <code>"USER"</code> or <code>"MANAGER"</code> to delete accounts. This is dangerous! Only an <code>"ADMIN"</code> should have this power.
         </div>
 
         <h2>Your Task</h2>
+        <p>Modify the <code>delete_account</code> function to restrict access:</p>
         <ol>
-            <li>Examine the code in the editor.</li>
-            <li>Click <strong>"Run Security Test"</strong> to see the vulnerability output in the console.</li>
-            <li>Modify the <code>calculate_total</code> function to <strong>reject negative numbers</strong>.</li>
-            <li>If input < 0, return <code>0</code> or print an error.</li>
-            <li>When finished, click <strong>"Export PDF"</strong> to submit your work.</li>
+            <li><strong>Identify the Flaw:</strong> Look at the <code>if</code> statement. It currently checks if the role is <em>not</em> "GUEST". This is too permissive.</li>
+            <li><strong>Fix the Logic:</strong> Change the check to explicitly require the role to be <code>"ADMIN"</code>.</li>
+            <li><strong>Handle Rejection:</strong> If the user is not an Admin, return <code>"ACCESS_DENIED"</code>.</li>
+            <li><strong>Handle Success:</strong> If they are an Admin, return <code>"ACCOUNT_DELETED"</code>.</li>
         </ol>
 
         <h2>Why This Matters</h2>
-        <p>Input validation is the first line of defense. Ensuring that data conforms to expected bounds prevents logic errors that attackers can exploit for financial gain.</p>
+        <p><strong>Least Privilege</strong> states that a user should only have the bare minimum permissions necessary to do their job. Permissive checks (like "anyone but Guest") often accidentally grant sensitive powers to lower-level users.</p>
     </div>
 
     <div class="panel-right">
-        <div class="editor-label">PYTHON EDITOR (main.py)</div>
+        <div class="editor-label">PYTHON EDITOR (access_control.py)</div>
         
         <div class="editor-container">
             <div class="line-numbers" id="line-numbers">1</div>
-            <textarea id="code-editor" spellcheck="false" oninput="handleInput()" onscroll="syncScroll()" onkeydown="handleTab(event)">def calculate_total(price, quantity):
+            
+            <div class="code-editor-wrapper">
+                <textarea id="code-editor" spellcheck="false" oninput="handleInput()" onscroll="syncScroll()" onkeydown="handleTab(event)">def delete_account(requester_role):
     """
-    Calculates the total price of an order.
-    TODO: Add input validation to prevent negative quantities.
+    Simulates an API endpoint to delete a user account.
+    Args:
+      requester_role (str): The role of the user asking to delete data.
+                            Values: "ADMIN", "MANAGER", "USER", "GUEST"
+    
+    Returns: "ACCOUNT_DELETED" or "ACCESS_DENIED"
     """
     
-    # --- WRITE YOUR SECURITY CHECK BELOW THIS LINE ---
+    # --- CURRENT VULNERABLE LOGIC ---
+    # This logic is flawed! It allows Managers and regular Users to delete data.
     
+    if requester_role != "GUEST":
+        # TODO: Fix this check. Only "ADMIN" should be allowed.
+        return "ACCOUNT_DELETED"
     
-    # -------------------------------------------------
-    
-    total_cost = price * quantity
-    return total_cost</textarea>
+    else:
+        return "ACCESS_DENIED"
+</textarea>
+                
+                <pre id="code-display" class="language-python"><code id="code-highlight" class="language-python"></code></pre>
+            </div>
         </div>
 
         <div class="toolbar">
-            <button class="btn-run" id="run-btn" py-click="run_tests()">Run Security Test</button>
+            <button class="btn-run" id="run-btn" py-click="run_tests()">Run RBAC Tests</button>
             <button class="btn-reset" onclick="resetCode()">Reset Code</button>
             <button class="btn-export" onclick="exportPDF()">Export PDF</button>
             
@@ -204,14 +254,13 @@
         </div>
 
         <div class="editor-label">SECURITY CONSOLE OUTPUT</div>
-        <div id="console-output">Ready... Waiting for code execution.</div>
+        <div id="console-output">Ready... Waiting for access control simulation.</div>
     </div>
 
     <py-script>
         from js import document, window
         import sys
 
-        # 1. Remove the loading screen
         def setup():
             loading = document.getElementById("loading")
             if loading:
@@ -219,7 +268,6 @@
         
         setup()
 
-        # 2. HELPER: Custom Output Class to capture "print()"
         class ConsoleOutput:
             def write(self, text):
                 if text.strip():
@@ -230,7 +278,6 @@
         sys.stdout = ConsoleOutput()
         sys.stderr = ConsoleOutput()
 
-        # 3. The Log Function
         def log(message, type="normal"):
             console = document.getElementById("console-output")
             if type == "clear":
@@ -247,50 +294,63 @@
             console.innerHTML += f'<div style="color:{color}; margin-bottom: 5px;">{safe_message}</div>'
             console.scrollTop = console.scrollHeight
 
-        # 4. The Test Runner
+        # --- TEST RUNNER ---
         def run_tests(*args):
             log("", "clear")
-            log("[*] Compiling your code...", "system")
+            log("[SYSTEM] Starting Privilege Escalation Tests...", "system")
             
             user_code = document.getElementById("code-editor").value
+            
             test_env = {}
             window.submissionStatus = "INCOMPLETE / FAILED"
-
+            
             try:
+                # Load student code
                 exec(user_code, {}, test_env)
                 
-                if "calculate_total" not in test_env:
-                    log("[!] Error: Function 'calculate_total' not found.", "fail")
+                if "delete_account" not in test_env:
+                    log("[!] Error: Function 'delete_account' not found.", "fail")
                     return
 
-                calc_func = test_env["calculate_total"]
-
-                log("[*] Running Test Case 1: Normal Purchase (10, 2)...", "system")
-                if calc_func(10, 2) == 20:
-                    log("   -> PASS", "pass")
+                delete_account = test_env["delete_account"]
+                
+                # --- TEST 1: ADMIN Access (Should Allow) ---
+                log("--- TEST 1: Authorized Access (ADMIN) ---", "system")
+                res1 = delete_account("ADMIN")
+                if res1 == "ACCOUNT_DELETED":
+                    log("   -> PASS: Admin allowed.", "pass")
                 else:
-                    log(f"   -> FAIL", "fail")
+                    log(f"   -> FAIL: Admin was blocked! Expected 'ACCOUNT_DELETED', got '{res1}'", "fail")
                     return
 
-                log("[*] Running Test Case 2: ATTACK (50, -10)...", "system")
-                result2 = calc_func(50, -10)
+                # --- TEST 2: MANAGER Access (The Exploit) ---
+                log("--- TEST 2: Unauthorized Access (MANAGER) ---", "system")
+                res2 = delete_account("MANAGER")
+                
+                if res2 == "ACCESS_DENIED":
+                    log("   -> PASS: Manager blocked correctly.", "pass")
+                else:
+                    log(f"   -> FAIL: Privilege Escalation! Manager deleted the account.", "fail")
+                    log("      [HINT] Change the check to: if requester_role == 'ADMIN':", "info")
+                    window.submissionStatus = "FAILED - Too Permissive"
+                    return
 
-                if result2 == -500:
-                    log("   -> VULNERABILITY DETECTED!", "fail")
-                    log("      The system calculated a refund of $500.", "fail")
-                    window.submissionStatus = "FAILED - Vulnerable"
-                elif result2 == 0 or result2 is None:
-                    log("   -> SECURE: Attack blocked!", "pass")
-                    log("   SUCCESS: Challenge Complete.", "pass")
+                # --- TEST 3: USER Access (The Exploit) ---
+                log("--- TEST 3: Unauthorized Access (USER) ---", "system")
+                res3 = delete_account("USER")
+                
+                if res3 == "ACCESS_DENIED":
+                    log("   -> PASS: User blocked correctly.", "pass")
+                    log("   SUCCESS: Least Privilege Enforced.", "pass")
                     window.submissionStatus = "PASSED - Secure"
                 else:
-                    log(f"   -> SECURE: Attack blocked! Output: {result2}", "pass")
-                    log("   SUCCESS: Challenge Complete.", "pass")
-                    window.submissionStatus = "PASSED - Secure"
+                    log(f"   -> FAIL: User deleted the account.", "fail")
+                    window.submissionStatus = "FAILED - Too Permissive"
 
             except Exception as e:
                 log(f"[!] Runtime Error: {e}", "fail")
                 window.submissionStatus = "ERROR - Syntax/Runtime"
+
     </py-script>
 
     <script>
@@ -298,7 +358,8 @@
         const lineNumbers = document.getElementById("line-numbers");
         const saveStatus = document.getElementById("save-status");
         
-        const STORAGE_KEY = 'secure_coding_ex_1'; 
+        // UNIQUE KEY FOR WEEK 4
+        const STORAGE_KEY = 'secure_coding_ex_4_rbac'; 
         const AUTOSAVE_DELAY_MS = 3000;
         
         window.submissionStatus = "Not Started"; 
@@ -306,6 +367,20 @@
         const originalCode = editor.value; 
         let saveTimer;
 
+        // --- NEW: SYNTAX HIGHLIGHTING ---
+        function updateSyntaxHighlighting() {
+            const codeText = editor.value;
+            const codeHighlight = document.getElementById("code-highlight");
+            const codeDisplay = document.getElementById("code-display");
+
+            // Update content and re-highlight
+            codeHighlight.textContent = codeText;
+            Prism.highlightElement(codeHighlight);
+            
+            updateLineNumbers();
+        }
+
+        // --- PDF EXPORT ---
         async function exportPDF() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
@@ -323,7 +398,7 @@
 
             doc.setFontSize(12);
             doc.setFont("helvetica", "normal");
-            doc.text(`Exercise: The Integer Trap`, 20, 30);
+            doc.text(`Exercise: The Architect's Gate (Week 4)`, 20, 30);
             
             doc.setDrawColor(0);
             doc.setFillColor(240, 240, 240);
@@ -349,20 +424,23 @@
             const splitCode = doc.splitTextToSize(codeContent, 170);
             doc.text(splitCode, 20, 77);
 
-            doc.save(`${studentName.replace(/\s/g, '_')}_Exercise_Report.pdf`);
+            doc.save(`${studentName.replace(/\s/g, '_')}_RBAC_Report.pdf`);
         }
 
+        // --- INITIALIZATION ---
         window.onload = function() {
             const savedCode = localStorage.getItem(STORAGE_KEY);
             if (savedCode) {
                 editor.value = savedCode;
                 saveStatus.innerText = "Restored from autosave";
             }
-            updateLineNumbers();
+            updateSyntaxHighlighting(); // Initial Render
         };
 
+        // --- INPUT HANDLING ---
         function handleInput() {
-            updateLineNumbers();
+            updateSyntaxHighlighting(); // Update colors on type
+            
             saveStatus.innerText = "Typing...";
             clearTimeout(saveTimer);
             saveTimer = setTimeout(() => {
@@ -376,6 +454,16 @@
             saveStatus.innerText = `Autosaved at ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
         }
 
+        // --- SCROLL SYNC ---
+        function syncScroll() {
+            // Scroll line numbers
+            lineNumbers.scrollTop = editor.scrollTop;
+            // Scroll the syntax highlighted layer
+            document.getElementById("code-display").scrollTop = editor.scrollTop;
+            document.getElementById("code-display").scrollLeft = editor.scrollLeft;
+        }
+
+        // --- TAB HANDLING ---
         function handleTab(e) {
             if (e.key == 'Tab') {
                 e.preventDefault();
@@ -396,7 +484,7 @@
                     editor.selectionStart = editor.selectionEnd = start + 4;
                 }
                 editor.scrollTop = scrollTop;
-                handleInput();
+                handleInput(); // Re-highlight after tab
             }
         }
 
@@ -405,21 +493,15 @@
             lineNumbers.innerHTML = Array(lines).fill(0).map((_, i) => i + 1).join('\n');
         }
 
-        function syncScroll() {
-            lineNumbers.scrollTop = editor.scrollTop;
-        }
-
         function resetCode() {
             if(confirm("Are you sure? This will delete your current code.")) {
                 editor.value = originalCode;
-                updateLineNumbers();
+                updateSyntaxHighlighting();
                 saveToLocal();
                 document.getElementById("console-output").innerHTML = "Code reset.";
                 window.submissionStatus = "Not Started";
             }
         }
-
-        updateLineNumbers();
     </script>
 
 </body>
