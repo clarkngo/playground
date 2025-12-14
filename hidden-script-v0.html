@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Coding Exercise: The Hidden Script</title>
+    
+    <link rel="stylesheet" href="https://pyscript.net/releases/2023.05.1/pyscript.css" />
+    <script defer src="https://pyscript.net/releases/2023.05.1/pyscript.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+
+    <style>
+        /* General Layout */
+        body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; height: 100vh; overflow: hidden; background-color: #1e1e1e; }
+        
+        .panel-left { width: 40%; background-color: #f4f4f4; padding: 30px; overflow-y: auto; border-right: 2px solid #ddd; box-sizing: border-box; color: #333; }
+        h1 { color: #2c3e50; font-size: 24px; }
+        h2 { color: #e74c3c; font-size: 18px; margin-top: 20px; }
+        .scenario-box { background: #e8f6f3; border-left: 5px solid #1abc9c; padding: 15px; margin: 15px 0; }
+        .learning-obj { font-style: italic; color: #555; font-size: 0.9em; margin-bottom: 20px; }
+        
+        .panel-right { width: 60%; display: flex; flex-direction: column; padding: 20px; box-sizing: border-box; }
+        
+        /* --- EDITOR CONTAINER --- */
+        .editor-container {
+            display: flex;
+            height: 50%;
+            border: 1px solid #3c3c3c;
+            background-color: #252526;
+            position: relative;
+        }
+
+        /* Line Numbers */
+        .line-numbers {
+            width: 40px;
+            background-color: #1e1e1e;
+            color: #858585;
+            text-align: right;
+            padding: 10px 5px;
+            font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+            font-size: 14px;
+            line-height: 21px; /* Locked Height */
+            border-right: 1px solid #3c3c3c;
+            box-sizing: border-box;
+            user-select: none;
+            overflow: hidden;
+            white-space: pre;
+        }
+
+        /* Syntax Highlighting Wrapper */
+        .code-editor-wrapper {
+            position: relative;
+            flex-grow: 1;
+            overflow: hidden; 
+        }
+
+        /* === PIXEL-LOCKED ALIGNMENT FIX === */
+        textarea#code-editor, 
+        pre[class*="language-"], 
+        code[class*="language-"],
+        code[class*="language-"] span {
+            font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace !important;
+            font-size: 14px !important;
+            line-height: 21px !important; 
+            direction: ltr !important;
+            text-align: left !important;
+            tab-size: 4 !important;
+            letter-spacing: 0px !important;
+            word-spacing: 0px !important;
+            font-weight: normal !important; 
+            font-style: normal !important;
+            box-sizing: border-box !important;
+            white-space: pre !important; 
+        }
+
+        textarea#code-editor,
+        pre[class*="language-"] {
+            padding: 10px !important;
+            margin: 0 !important;
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            border: none !important;
+            overflow: auto !important; 
+        }
+
+        code[class*="language-"] {
+            padding: 0 !important;
+            margin: 0 !important;
+            background: transparent !important;
+            text-shadow: none !important;
+        }
+
+        pre[class*="language-"] {
+            z-index: 1;
+            pointer-events: none; 
+            color: transparent; 
+        }
+        
+        pre[class*="language-"]::-webkit-scrollbar {
+            width: 14px;
+            height: 14px;
+        }
+        pre[class*="language-"]::-webkit-scrollbar-thumb {
+            background-color: transparent; 
+        }
+
+        textarea#code-editor {
+            z-index: 2;
+            background: transparent;
+            color: transparent; 
+            caret-color: #fff; 
+            resize: none;
+            outline: none;
+        }
+
+        /* Toolbar */
+        .toolbar { padding: 10px 0; display: flex; gap: 10px; align-items: center; }
+        button { padding: 10px 20px; border: none; cursor: pointer; font-weight: bold; border-radius: 4px; transition: 0.2s; }
+        .btn-run { background-color: #27ae60; color: white; }
+        .btn-run:hover { background-color: #2ecc71; }
+        .btn-reset { background-color: #7f8c8d; color: white; }
+        .btn-reset:hover { background-color: #95a5a6; }
+        .btn-export { background-color: #8e44ad; color: white; }
+        .btn-export:hover { background-color: #9b59b6; }
+        .save-status { color: #888; font-style: italic; font-size: 0.9em; margin-left: auto; }
+
+        /* Output Console */
+        .editor-label { color: #aaa; font-size: 0.9em; margin-bottom: 5px; margin-top: 10px;}
+        #console-output {
+            flex-grow: 1;
+            background-color: #000;
+            color: #0f0;
+            font-family: 'Consolas', 'Courier New', monospace;
+            padding: 15px;
+            border: 1px solid #333;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        
+        #loading { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: #0d0d0d; z-index: 999; 
+            display: flex; flex-direction: column; justify-content: flex-start;
+            padding: 40px; box-sizing: border-box;
+            font-family: 'Courier New', monospace;
+            color: #00ff00;
+            font-size: 16px;
+            overflow: hidden;
+        }
+        .boot-msg { margin-bottom: 5px; opacity: 0; animation: fadeIn 0.1s forwards; }
+        .cursor { display: inline-block; width: 10px; height: 18px; background: #00ff00; animation: blink 0.8s infinite; margin-left: 5px; }
+        @keyframes fadeIn { to { opacity: 1; } }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+    </style>
+</head>
+<body>
+
+    <div id="loading">
+        <div id="boot-log"></div>
+        <div>> <span class="cursor"></span></div>
+    </div>
+
+    <script>
+        const bootMessages = [
+            "Initializing Virtual Browser Engine...",
+            "Loading DOM Parser...",
+            "Injecting Comment Rendering Module...",
+            "Detecting Unsanitized Inputs...",
+            "Loading Python 3.11 Kernel...",
+            "Ready."
+        ];
+        const logContainer = document.getElementById("boot-log");
+        let msgIndex = 0;
+        function typeWriter() {
+            if (msgIndex < bootMessages.length) {
+                const div = document.createElement("div");
+                div.className = "boot-msg";
+                div.textContent = `[SYSTEM] ${bootMessages[msgIndex]}`;
+                logContainer.appendChild(div);
+                msgIndex++;
+                setTimeout(typeWriter, 300); 
+            }
+        }
+        typeWriter();
+    </script>
+
+    <div class="panel-left">
+        <div class="learning-obj">Software Security Training</div>
+        <h1>Exercise: The Hidden Script</h1>
+        <p>In this activity, you will prevent <strong>Cross-Site Scripting (XSS)</strong> by sanitizing user input.</p>
+        
+        <div class="scenario-box">
+            <strong>Scenario:</strong> 
+            A user posted this comment: <code>&lt;script&gt;alert('HACKED')&lt;/script&gt;</code>. Because your code blindly returns it, the browser thinks it is real code and executes it!
+        </div>
+
+        <h2>Your Task</h2>
+        <p>Modify the <code>render_comment</code> function to make the input safe:</p>
+        <ol>
+            <li><strong>Import HTML:</strong> Import the python library <code>html</code>.</li>
+            <li><strong>Escape the Input:</strong> Use <code>html.escape(comment)</code> to convert special characters into safe text (e.g., <code>&lt;</code> becomes <code>&amp;lt;</code>).</li>
+            <li><strong>Return Safe Text:</strong> Return the escaped string.</li>
+        </ol>
+
+        <h2>Why This Matters</h2>
+        <p>Escaping ensures the browser treats data as <strong>content</strong>, not <strong>executable code</strong>. This is the primary defense against XSS attacks.</p>
+    </div>
+
+    <div class="panel-right">
+        <div class="editor-label">PYTHON EDITOR (view_module.py)</div>
+        
+        <div class="editor-container">
+            <div class="line-numbers" id="line-numbers">1</div>
+            
+            <div class="code-editor-wrapper">
+                <textarea id="code-editor" spellcheck="false" oninput="handleInput()" onscroll="syncScroll()" onkeydown="handleTab(event)">import html
+
+def render_comment(user_comment):
+    """
+     prepares a user comment for display on the webpage.
+    """
+    
+    # --- VULNERABLE CODE ---
+    # This returns the exact string the user typed.
+    # If they typed a script, the browser runs it!
+    
+    return user_comment
+    
+    # TODO: sanitize the input using html.escape()
+    
+    
+</textarea>
+                <pre id="code-display" class="language-python"><code id="code-highlight" class="language-python"></code></pre>
+            </div>
+        </div>
+
+        <div class="toolbar">
+            <button class="btn-run" id="run-btn" py-click="run_tests()">Run Browser Test</button>
+            <button class="btn-reset" onclick="resetCode()">Reset Code</button>
+            <button class="btn-export" onclick="exportPDF()">Export PDF</button>
+            <span class="save-status" id="save-status"></span>
+        </div>
+
+        <div class="editor-label">BROWSER CONSOLE OUTPUT</div>
+        <div id="console-output">Ready... Waiting for rendering simulation.</div>
+    </div>
+
+    <py-script>
+        from js import document, window
+        import sys
+        import html
+
+        def setup():
+            loading = document.getElementById("loading")
+            if loading:
+                loading.style.display = "none"
+        
+        setup()
+
+        class ConsoleOutput:
+            def write(self, text):
+                if text.strip():
+                    log(text.strip(), "normal")
+            def flush(self):
+                pass
+
+        sys.stdout = ConsoleOutput()
+        sys.stderr = ConsoleOutput()
+
+        def log(message, type="normal"):
+            console = document.getElementById("console-output")
+            if type == "clear":
+                console.innerHTML = ""
+                return
+            
+            color = "#ffffff" 
+            if type == "pass": color = "#2ecc71" 
+            if type == "fail": color = "#e74c3c" 
+            if type == "info": color = "#3498db" 
+            if type == "system": color = "#d4d4d4" 
+
+            safe_message = message.replace("<", "&lt;").replace(">", "&gt;")
+            console.innerHTML += f'<div style="color:{color}; margin-bottom: 5px;">{safe_message}</div>'
+            console.scrollTop = console.scrollHeight
+
+        # --- TEST RUNNER ---
+        def run_tests(*args):
+            log("", "clear")
+            log("[SYSTEM] Starting Browser Render Engine...", "system")
+            
+            user_code = document.getElementById("code-editor").value
+            
+            test_env = {
+                'html': html
+            }
+            window.submissionStatus = "INCOMPLETE / FAILED"
+            
+            try:
+                exec(user_code, test_env)
+                
+                if "render_comment" not in test_env:
+                    log("[!] Error: Function 'render_comment' not found.", "fail")
+                    return
+                
+                render_comment = test_env["render_comment"]
+                
+                # --- TEST 1: Normal Text ---
+                log("--- TEST 1: Rendering Normal Text ---", "system")
+                input_1 = "Hello World"
+                output_1 = render_comment(input_1)
+                
+                if output_1 == "Hello World":
+                    log("   -> [BROWSER] Displaying: Hello World", "pass")
+                else:
+                    log(f"   -> FAIL: Expected 'Hello World', got '{output_1}'", "fail")
+                    return
+
+                # --- TEST 2: The XSS Attack ---
+                log("--- TEST 2: XSS Attack Simulation ---", "system")
+                evil_input = "<script>alert('Pwnd')</script>"
+                
+                log(f"   [INPUT] User posted: {evil_input}", "info")
+                
+                output_2 = render_comment(evil_input)
+                
+                # Check 1: Did it stay exactly the same? (VULNERABLE)
+                if output_2 == evil_input:
+                    log("   -> [BROWSER] Executing Script...", "fail")
+                    log("   -> ALERT: 'Pwnd'", "fail")
+                    log("   FAIL: You allowed raw HTML tags to pass through!", "fail")
+                    window.submissionStatus = "FAILED - Vulnerable to XSS"
+                    return
+                
+                # --- DYNAMIC VALIDATION FIX ---
+                # We use the html library in the testing scope to see exactly
+                # how THIS version of Python escapes strings.
+                # This fixes the "quote escaping mismatch" bug.
+                expected_dynamic = html.escape(evil_input)
+                
+                if output_2 == expected_dynamic:
+                    log(f"   -> [BROWSER] Displaying Text: {evil_input}", "pass")
+                    log("   -> PASS: Script tags were neutralized.", "pass")
+                    log("   SUCCESS: Input Sanitization Implemented.", "pass")
+                    window.submissionStatus = "PASSED - Secure"
+                else:
+                    log(f"   -> FAIL: Output was changed, but not correctly.", "fail")
+                    log(f"      Got: {output_2}", "fail")
+                    log(f"      Exp: {expected_dynamic}", "info")
+                    log("      Hint: Use html.escape()", "info")
+                    window.submissionStatus = "FAILED - Incorrect Output"
+
+            except Exception as e:
+                log(f"[!] Runtime Error: {e}", "fail")
+                window.submissionStatus = "ERROR - Syntax/Runtime"
+
+    </py-script>
+
+    <script>
+        const editor = document.getElementById("code-editor");
+        const lineNumbers = document.getElementById("line-numbers");
+        const saveStatus = document.getElementById("save-status");
+        
+        const STORAGE_KEY = 'secure_coding_ex_6_xss'; 
+        const AUTOSAVE_DELAY_MS = 3000;
+        
+        window.submissionStatus = "Not Started"; 
+
+        const originalCode = editor.value; 
+        let saveTimer;
+
+        function updateSyntaxHighlighting() {
+            const codeText = editor.value;
+            const codeHighlight = document.getElementById("code-highlight");
+            codeHighlight.textContent = codeText;
+            Prism.highlightElement(codeHighlight);
+            updateLineNumbers();
+        }
+
+        async function exportPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            let studentName = prompt("Please enter your name for the report:", "Student");
+            if (studentName === null) return; 
+
+            const timestamp = new Date().toLocaleString();
+            const codeContent = editor.value;
+            const status = window.submissionStatus;
+
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(18);
+            doc.text("Secure Coding Report", 20, 20);
+
+            doc.setFontSize(12);
+            doc.setFont("helvetica", "normal");
+            doc.text(`Exercise: The Hidden Script (XSS)`, 20, 30);
+            
+            doc.setDrawColor(0);
+            doc.setFillColor(240, 240, 240);
+            doc.rect(20, 35, 170, 25, 'F'); 
+
+            doc.text(`Student Name: ${studentName}`, 25, 42);
+            doc.text(`Date: ${timestamp}`, 25, 49);
+            
+            doc.text(`Status: `, 25, 56);
+            if (status.includes("PASSED")) {
+                doc.setTextColor(0, 150, 0); 
+            } else {
+                doc.setTextColor(200, 0, 0); 
+            }
+            doc.text(status, 45, 56);
+
+            doc.setTextColor(0, 0, 0); 
+            doc.text("Submitted Code:", 20, 70);
+
+            doc.setFont("courier", "normal"); 
+            doc.setFontSize(10);
+            
+            const splitCode = doc.splitTextToSize(codeContent, 170);
+            doc.text(splitCode, 20, 77);
+
+            doc.save(`${studentName.replace(/\s/g, '_')}_The_Hidden_Script.pdf`);
+        }
+
+        window.onload = function() {
+            const savedCode = localStorage.getItem(STORAGE_KEY);
+            if (savedCode) {
+                editor.value = savedCode;
+                saveStatus.innerText = "Restored from autosave";
+            }
+            updateSyntaxHighlighting(); 
+        };
+
+        function handleInput() {
+            updateSyntaxHighlighting(); 
+            saveStatus.innerText = "Typing...";
+            clearTimeout(saveTimer);
+            saveTimer = setTimeout(() => {
+                saveToLocal();
+            }, AUTOSAVE_DELAY_MS);
+        }
+
+        function saveToLocal() {
+            localStorage.setItem(STORAGE_KEY, editor.value);
+            const now = new Date();
+            saveStatus.innerText = `Autosaved at ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+        }
+
+        function syncScroll() {
+            lineNumbers.scrollTop = editor.scrollTop;
+            document.getElementById("code-display").scrollTop = editor.scrollTop;
+            document.getElementById("code-display").scrollLeft = editor.scrollLeft;
+        }
+
+        function handleTab(e) {
+            if (e.key == 'Tab') {
+                e.preventDefault();
+                const start = editor.selectionStart;
+                const end = editor.selectionEnd;
+                const value = editor.value;
+                const scrollTop = editor.scrollTop;
+
+                if (e.shiftKey) {
+                    let lineStart = value.lastIndexOf('\n', start - 1) + 1;
+                    if (value.substring(lineStart, lineStart + 4) === "    ") {
+                        editor.value = value.substring(0, lineStart) + value.substring(lineStart + 4);
+                        editor.selectionStart = Math.max(lineStart, start - 4);
+                        editor.selectionEnd = Math.max(lineStart, end - 4);
+                    }
+                } else {
+                    editor.value = value.substring(0, start) + "    " + value.substring(end);
+                    editor.selectionStart = editor.selectionEnd = start + 4;
+                }
+                editor.scrollTop = scrollTop;
+                handleInput();
+            }
+        }
+
+        function updateLineNumbers() {
+            const lines = editor.value.split('\n').length;
+            lineNumbers.innerHTML = Array(lines).fill(0).map((_, i) => i + 1).join('\n');
+        }
+
+        function resetCode() {
+            if(confirm("Are you sure? This will delete your current code.")) {
+                editor.value = originalCode;
+                updateSyntaxHighlighting();
+                saveToLocal();
+                document.getElementById("console-output").innerHTML = "Code reset.";
+                window.submissionStatus = "Not Started";
+            }
+        }
+    </script>
+
+</body>
+</html>

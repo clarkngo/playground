@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Coding Exercise: The Salted Vault</title>
+    
+    <link rel="stylesheet" href="https://pyscript.net/releases/2023.05.1/pyscript.css" />
+    <script defer src="https://pyscript.net/releases/2023.05.1/pyscript.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+
+    <style>
+        /* General Layout */
+        body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; height: 100vh; overflow: hidden; background-color: #1e1e1e; }
+        
+        .panel-left { width: 40%; background-color: #f4f4f4; padding: 30px; overflow-y: auto; border-right: 2px solid #ddd; box-sizing: border-box; color: #333; }
+        h1 { color: #2c3e50; font-size: 24px; }
+        h2 { color: #e74c3c; font-size: 18px; margin-top: 20px; }
+        .scenario-box { background: #e8f6f3; border-left: 5px solid #1abc9c; padding: 15px; margin: 15px 0; }
+        .learning-obj { font-style: italic; color: #555; font-size: 0.9em; margin-bottom: 20px; }
+        
+        .panel-right { width: 60%; display: flex; flex-direction: column; padding: 20px; box-sizing: border-box; }
+        
+        /* --- EDITOR CONTAINER --- */
+        .editor-container {
+            display: flex;
+            height: 50%;
+            border: 1px solid #3c3c3c;
+            background-color: #252526;
+            position: relative;
+        }
+
+        /* Line Numbers */
+        .line-numbers {
+            width: 40px;
+            background-color: #1e1e1e;
+            color: #858585;
+            text-align: right;
+            padding: 10px 5px;
+            font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+            font-size: 14px;
+            line-height: 21px; /* Locked Height */
+            border-right: 1px solid #3c3c3c;
+            box-sizing: border-box;
+            user-select: none;
+            overflow: hidden;
+            white-space: pre;
+        }
+
+        /* Syntax Highlighting Wrapper */
+        .code-editor-wrapper {
+            position: relative;
+            flex-grow: 1;
+            overflow: hidden; 
+        }
+
+        /* === PIXEL-LOCKED ALIGNMENT FIX === */
+        textarea#code-editor, 
+        pre[class*="language-"], 
+        code[class*="language-"],
+        code[class*="language-"] span {
+            font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace !important;
+            font-size: 14px !important;
+            line-height: 21px !important; 
+            direction: ltr !important;
+            text-align: left !important;
+            tab-size: 4 !important;
+            letter-spacing: 0px !important;
+            word-spacing: 0px !important;
+            font-weight: normal !important; 
+            font-style: normal !important;
+            box-sizing: border-box !important;
+            white-space: pre !important; 
+        }
+
+        textarea#code-editor,
+        pre[class*="language-"] {
+            padding: 10px !important;
+            margin: 0 !important;
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            border: none !important;
+            overflow: auto !important; 
+        }
+
+        code[class*="language-"] {
+            padding: 0 !important;
+            margin: 0 !important;
+            background: transparent !important;
+            text-shadow: none !important;
+        }
+
+        pre[class*="language-"] {
+            z-index: 1;
+            pointer-events: none; 
+            color: transparent; 
+        }
+        
+        pre[class*="language-"]::-webkit-scrollbar {
+            width: 14px;
+            height: 14px;
+        }
+        pre[class*="language-"]::-webkit-scrollbar-thumb {
+            background-color: transparent; 
+        }
+
+        textarea#code-editor {
+            z-index: 2;
+            background: transparent;
+            color: transparent; 
+            caret-color: #fff; 
+            resize: none;
+            outline: none;
+        }
+
+        /* Toolbar */
+        .toolbar { padding: 10px 0; display: flex; gap: 10px; align-items: center; }
+        button { padding: 10px 20px; border: none; cursor: pointer; font-weight: bold; border-radius: 4px; transition: 0.2s; }
+        .btn-run { background-color: #27ae60; color: white; }
+        .btn-run:hover { background-color: #2ecc71; }
+        .btn-reset { background-color: #7f8c8d; color: white; }
+        .btn-reset:hover { background-color: #95a5a6; }
+        .btn-export { background-color: #8e44ad; color: white; }
+        .btn-export:hover { background-color: #9b59b6; }
+        .save-status { color: #888; font-style: italic; font-size: 0.9em; margin-left: auto; }
+
+        /* Output Console */
+        .editor-label { color: #aaa; font-size: 0.9em; margin-bottom: 5px; margin-top: 10px;}
+        #console-output {
+            flex-grow: 1;
+            background-color: #000;
+            color: #0f0;
+            font-family: 'Consolas', 'Courier New', monospace;
+            padding: 15px;
+            border: 1px solid #333;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        
+        #loading { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: #0d0d0d; z-index: 999; 
+            display: flex; flex-direction: column; justify-content: flex-start;
+            padding: 40px; box-sizing: border-box;
+            font-family: 'Courier New', monospace;
+            color: #00ff00;
+            font-size: 16px;
+            overflow: hidden;
+        }
+        .boot-msg { margin-bottom: 5px; opacity: 0; animation: fadeIn 0.1s forwards; }
+        .cursor { display: inline-block; width: 10px; height: 18px; background: #00ff00; animation: blink 0.8s infinite; margin-left: 5px; }
+        @keyframes fadeIn { to { opacity: 1; } }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+    </style>
+</head>
+<body>
+
+    <div id="loading">
+        <div id="boot-log"></div>
+        <div>> <span class="cursor"></span></div>
+    </div>
+
+    <script>
+        const bootMessages = [
+            "Initializing Cryptographic Module...",
+            "Loading Hashing Algorithms (SHA-256)...",
+            "Loading Random Number Generator (secrets)...",
+            "Checking Database Integrity... [OK]",
+            "Detecting Plaintext Storage...",
+            "Loading Python 3.11 Kernel...",
+            "Ready."
+        ];
+        const logContainer = document.getElementById("boot-log");
+        let msgIndex = 0;
+        function typeWriter() {
+            if (msgIndex < bootMessages.length) {
+                const div = document.createElement("div");
+                div.className = "boot-msg";
+                div.textContent = `[SYSTEM] ${bootMessages[msgIndex]}`;
+                logContainer.appendChild(div);
+                msgIndex++;
+                setTimeout(typeWriter, 300); 
+            }
+        }
+        typeWriter();
+    </script>
+
+    <div class="panel-left">
+        <div class="learning-obj">Software Security Training</div>
+        <h1>Exercise: The Salted Vault</h1>
+        <p>In this activity, you will defeat <strong>Rainbow Table attacks</strong> by implementing <strong>Salted Hashing</strong>.</p>
+        
+        <div class="scenario-box">
+            <strong>Scenario:</strong> 
+            A simple hash (SHA-256) is not enough! Attackers use pre-computed tables (Rainbow Tables) to crack common passwords instantly. You must add a unique "Salt" to every password before hashing it.
+        </div>
+
+        <h2>Your Task</h2>
+        <p>Modify the <code>save_user</code> function to secure the data:</p>
+        <ol>
+            <li><strong>Generate a Salt:</strong> Use <code>secrets.token_hex(16)</code> to create a random string.</li>
+            <li><strong>Combine:</strong> Create a new string: <code>salt + password</code>.</li>
+            <li><strong>Hash It:</strong> Hash that combined string using SHA-256.</li>
+            <li><strong>Store Both:</strong> Save a dictionary into the database: <code>{'salt': salt, 'hash': hashed_value}</code>.</li>
+        </ol>
+
+        <h2>Why This Matters</h2>
+        <p>By adding a random salt, two users with the same password ("password123") will have completely different hashes. This makes Rainbow Tables useless.</p>
+    </div>
+
+    <div class="panel-right">
+        <div class="editor-label">PYTHON EDITOR (storage_module.py)</div>
+        
+        <div class="editor-container">
+            <div class="line-numbers" id="line-numbers">1</div>
+            
+            <div class="code-editor-wrapper">
+                <textarea id="code-editor" spellcheck="false" oninput="handleInput()" onscroll="syncScroll()" onkeydown="handleTab(event)">import hashlib
+import secrets
+
+def save_user(username, password):
+    """
+    Saves a user with a SALTED hash.
+    Returns: A dictionary {'salt': ..., 'hash': ...}
+    """
+    
+    # 1. Generate a random salt (16 hex chars)
+    # Hint: use secrets.token_hex(16)
+    
+    
+    # 2. Combine Salt + Password and Hash it
+    # Hint: (salt + password).encode()
+    # Don't forget to use hashlib.sha256(...).hexdigest()
+    
+    
+    # 3. Return the storage dictionary
+    # return {'salt': my_salt, 'hash': my_hash}
+    return {}
+</textarea>
+                <pre id="code-display" class="language-python"><code id="code-highlight" class="language-python"></code></pre>
+            </div>
+        </div>
+
+        <div class="toolbar">
+            <button class="btn-run" id="run-btn" py-click="run_tests()">Run Crypto Test</button>
+            <button class="btn-reset" onclick="resetCode()">Reset Code</button>
+            <button class="btn-export" onclick="exportPDF()">Export PDF</button>
+            <span class="save-status" id="save-status"></span>
+        </div>
+
+        <div class="editor-label">SECURITY CONSOLE OUTPUT</div>
+        <div id="console-output">Ready... Waiting for registration simulation.</div>
+    </div>
+
+    <py-script>
+        from js import document, window
+        import sys
+        import hashlib
+        import secrets
+
+        def setup():
+            loading = document.getElementById("loading")
+            if loading:
+                loading.style.display = "none"
+        
+        setup()
+
+        class ConsoleOutput:
+            def write(self, text):
+                if text.strip():
+                    log(text.strip(), "normal")
+            def flush(self):
+                pass
+
+        sys.stdout = ConsoleOutput()
+        sys.stderr = ConsoleOutput()
+
+        def log(message, type="normal"):
+            console = document.getElementById("console-output")
+            if type == "clear":
+                console.innerHTML = ""
+                return
+            
+            color = "#ffffff" 
+            if type == "pass": color = "#2ecc71" 
+            if type == "fail": color = "#e74c3c" 
+            if type == "info": color = "#3498db" 
+            if type == "system": color = "#d4d4d4" 
+
+            safe_message = message.replace("<", "&lt;").replace(">", "&gt;")
+            console.innerHTML += f'<div style="color:{color}; margin-bottom: 5px;">{safe_message}</div>'
+            console.scrollTop = console.scrollHeight
+
+        # --- TEST RUNNER ---
+        def run_tests(*args):
+            log("", "clear")
+            log("[SYSTEM] Verifying Crypto Implementation...", "system")
+            
+            user_code = document.getElementById("code-editor").value
+            
+            # Pass required modules to the student's scope
+            test_env = {
+                'hashlib': hashlib,
+                'secrets': secrets
+            }
+            window.submissionStatus = "INCOMPLETE / FAILED"
+            
+            try:
+                exec(user_code, test_env)
+                
+                if "save_user" not in test_env:
+                    log("[!] Error: Function 'save_user' not found.", "fail")
+                    return
+                
+                save_user = test_env["save_user"]
+                
+                # --- TEST 1: Functional Check ---
+                log("--- TEST 1: Saving User 'Bob' ---", "system")
+                password_input = "securePass!@#"
+                result = save_user("Bob", password_input)
+                
+                if not isinstance(result, dict):
+                    log("   -> FAIL: Function must return a dictionary.", "fail")
+                    return
+                
+                if 'salt' not in result or 'hash' not in result:
+                    log("   -> FAIL: Dictionary must contain keys 'salt' and 'hash'.", "fail")
+                    return
+                
+                log("   -> PASS: Data structure is correct.", "pass")
+
+                # --- TEST 2: Salt Randomness ---
+                log("--- TEST 2: Checking Salt Uniqueness ---", "system")
+                result2 = save_user("Bob", password_input)
+                
+                if result['salt'] == result2['salt']:
+                    log("   -> FAIL: Salt is not random! It didn't change on the second run.", "fail")
+                    log("      Did you hardcode the salt?", "fail")
+                    window.submissionStatus = "FAILED - Static Salt"
+                    return
+                
+                log("   -> PASS: Salt is random and unique.", "pass")
+
+                # --- TEST 3: Cryptographic Verification ---
+                log("--- TEST 3: Verifying Hash Integrity ---", "system")
+                
+                stored_salt = result['salt']
+                stored_hash = result['hash']
+                
+                # Calculate expected hash
+                expected_hash = hashlib.sha256((stored_salt + password_input).encode()).hexdigest()
+                
+                # Check for "Encoding Only" mistake
+                encoded_only = (stored_salt + password_input).encode()
+                
+                if stored_hash == encoded_only:
+                    log("   -> FAIL: You encoded the bytes but forgot to HASH them!", "fail")
+                    log("      [HINT] Wrap your code in hashlib.sha256(...).hexdigest()", "info")
+                    window.submissionStatus = "FAILED - Not Hashed"
+                    return
+
+                if stored_hash == expected_hash:
+                    log("   -> PASS: Hash matches SHA-256(salt + password).", "pass")
+                    log("   SUCCESS: Salted Hashing Implemented Correctly!", "pass")
+                    window.submissionStatus = "PASSED - Secure"
+                else:
+                    log("   -> FAIL: Hash mismatch.", "fail")
+                    log("      Ensure you are hashing (salt + password).", "fail")
+                    window.submissionStatus = "FAILED - Bad Hash"
+
+            except Exception as e:
+                log(f"[!] Runtime Error: {e}", "fail")
+                window.submissionStatus = "ERROR - Syntax/Runtime"
+
+    </py-script>
+
+    <script>
+        const editor = document.getElementById("code-editor");
+        const lineNumbers = document.getElementById("line-numbers");
+        const saveStatus = document.getElementById("save-status");
+        
+        const STORAGE_KEY = 'secure_coding_ex_5_crypto_salted'; 
+        const AUTOSAVE_DELAY_MS = 3000;
+        
+        window.submissionStatus = "Not Started"; 
+
+        const originalCode = editor.value; 
+        let saveTimer;
+
+        function updateSyntaxHighlighting() {
+            const codeText = editor.value;
+            const codeHighlight = document.getElementById("code-highlight");
+            codeHighlight.textContent = codeText;
+            Prism.highlightElement(codeHighlight);
+            updateLineNumbers();
+        }
+
+        async function exportPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            let studentName = prompt("Please enter your name for the report:", "Student");
+            if (studentName === null) return; 
+
+            const timestamp = new Date().toLocaleString();
+            const codeContent = editor.value;
+            const status = window.submissionStatus;
+
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(18);
+            doc.text("Secure Coding Report", 20, 20);
+
+            doc.setFontSize(12);
+            doc.setFont("helvetica", "normal");
+            doc.text(`Exercise: The Salted Vault`, 20, 30);
+            
+            doc.setDrawColor(0);
+            doc.setFillColor(240, 240, 240);
+            doc.rect(20, 35, 170, 25, 'F'); 
+
+            doc.text(`Student Name: ${studentName}`, 25, 42);
+            doc.text(`Date: ${timestamp}`, 25, 49);
+            
+            doc.text(`Status: `, 25, 56);
+            if (status.includes("PASSED")) {
+                doc.setTextColor(0, 150, 0); 
+            } else {
+                doc.setTextColor(200, 0, 0); 
+            }
+            doc.text(status, 45, 56);
+
+            doc.setTextColor(0, 0, 0); 
+            doc.text("Submitted Code:", 20, 70);
+
+            doc.setFont("courier", "normal"); 
+            doc.setFontSize(10);
+            
+            const splitCode = doc.splitTextToSize(codeContent, 170);
+            doc.text(splitCode, 20, 77);
+
+            doc.save(`${studentName.replace(/\s/g, '_')}_The_Salted_Vault.pdf`);
+        }
+
+        window.onload = function() {
+            const savedCode = localStorage.getItem(STORAGE_KEY);
+            if (savedCode) {
+                editor.value = savedCode;
+                saveStatus.innerText = "Restored from autosave";
+            }
+            updateSyntaxHighlighting(); 
+        };
+
+        function handleInput() {
+            updateSyntaxHighlighting(); 
+            saveStatus.innerText = "Typing...";
+            clearTimeout(saveTimer);
+            saveTimer = setTimeout(() => {
+                saveToLocal();
+            }, AUTOSAVE_DELAY_MS);
+        }
+
+        function saveToLocal() {
+            localStorage.setItem(STORAGE_KEY, editor.value);
+            const now = new Date();
+            saveStatus.innerText = `Autosaved at ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+        }
+
+        function syncScroll() {
+            lineNumbers.scrollTop = editor.scrollTop;
+            document.getElementById("code-display").scrollTop = editor.scrollTop;
+            document.getElementById("code-display").scrollLeft = editor.scrollLeft;
+        }
+
+        function handleTab(e) {
+            if (e.key == 'Tab') {
+                e.preventDefault();
+                const start = editor.selectionStart;
+                const end = editor.selectionEnd;
+                const value = editor.value;
+                const scrollTop = editor.scrollTop;
+
+                if (e.shiftKey) {
+                    let lineStart = value.lastIndexOf('\n', start - 1) + 1;
+                    if (value.substring(lineStart, lineStart + 4) === "    ") {
+                        editor.value = value.substring(0, lineStart) + value.substring(lineStart + 4);
+                        editor.selectionStart = Math.max(lineStart, start - 4);
+                        editor.selectionEnd = Math.max(lineStart, end - 4);
+                    }
+                } else {
+                    editor.value = value.substring(0, start) + "    " + value.substring(end);
+                    editor.selectionStart = editor.selectionEnd = start + 4;
+                }
+                editor.scrollTop = scrollTop;
+                handleInput();
+            }
+        }
+
+        function updateLineNumbers() {
+            const lines = editor.value.split('\n').length;
+            lineNumbers.innerHTML = Array(lines).fill(0).map((_, i) => i + 1).join('\n');
+        }
+
+        function resetCode() {
+            if(confirm("Are you sure? This will delete your current code.")) {
+                editor.value = originalCode;
+                updateSyntaxHighlighting();
+                saveToLocal();
+                document.getElementById("console-output").innerHTML = "Code reset.";
+                window.submissionStatus = "Not Started";
+            }
+        }
+    </script>
+
+</body>
+</html>
