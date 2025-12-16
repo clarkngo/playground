@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Coding Exercise: The Invisible Request</title>
+    
+    <link rel="stylesheet" href="https://pyscript.net/releases/2023.05.1/pyscript.css" />
+    <script defer src="https://pyscript.net/releases/2023.05.1/pyscript.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+
+    <style>
+        /* General Layout */
+        body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; height: 100vh; overflow: hidden; background-color: #1e1e1e; }
+        
+        .panel-left { width: 40%; background-color: #f4f4f4; padding: 30px; overflow-y: auto; border-right: 2px solid #ddd; box-sizing: border-box; color: #333; }
+        h1 { color: #2c3e50; font-size: 24px; }
+        h2 { color: #e74c3c; font-size: 18px; margin-top: 20px; }
+        .scenario-box { background: #e8f6f3; border-left: 5px solid #1abc9c; padding: 15px; margin: 15px 0; }
+        
+        /* Syntax Guide Box */
+        .syntax-box { background: #fff8e1; border-left: 5px solid #f1c40f; padding: 15px; margin: 15px 0; font-size: 0.9em; }
+        .code-snippet { background: #333; color: #fff; padding: 2px 5px; border-radius: 3px; font-family: monospace; }
+        .good { color: #27ae60; font-weight: bold; }
+        .bad { color: #c0392b; font-weight: bold; }
+
+        .panel-right { width: 60%; display: flex; flex-direction: column; padding: 20px; box-sizing: border-box; }
+        
+        /* EDITOR CONTAINER */
+        .editor-container {
+            display: flex;
+            height: 50%; 
+            border: 1px solid #3c3c3c;
+            background-color: #252526;
+            position: relative;
+        }
+
+        /* Line Numbers */
+        .line-numbers {
+            width: 40px;
+            background-color: #1e1e1e;
+            color: #858585;
+            text-align: right;
+            padding: 10px 5px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            line-height: 21px; 
+            border-right: 1px solid #3c3c3c;
+            box-sizing: border-box;
+            user-select: none;
+            overflow: hidden;
+            white-space: pre;
+        }
+
+        .code-editor-wrapper {
+            position: relative;
+            flex-grow: 1;
+            overflow: hidden; 
+        }
+
+        /* === TWIN-SCROLLBAR ENGINE (Strict Match) === */
+        textarea#code-editor, 
+        pre[class*="language-"], 
+        code[class*="language-"],
+        code[class*="language-"] span {
+            font-family: 'Courier New', Courier, monospace !important;
+            font-size: 14px !important;
+            line-height: 21px !important; 
+            direction: ltr !important;
+            text-align: left !important;
+            tab-size: 4 !important;
+            letter-spacing: 0px !important;
+            word-spacing: 0px !important;
+            font-weight: normal !important; 
+            font-style: normal !important;
+            box-sizing: border-box !important;
+            white-space: pre !important; 
+        }
+
+        /* Both layers get scrollbars to match widths */
+        textarea#code-editor,
+        pre[class*="language-"] {
+            padding: 10px !important;
+            margin: 0 !important;
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            border: none !important;
+            overflow: auto !important; 
+        }
+
+        code[class*="language-"] {
+            padding: 0 !important;
+            margin: 0 !important;
+            background: transparent !important;
+            text-shadow: none !important;
+            display: block !important;
+        }
+
+        /* 1. Visible Layer (Colors) */
+        pre[class*="language-"] {
+            z-index: 1;
+            pointer-events: none; 
+            color: transparent; 
+            scrollbar-width: none; 
+        }
+        
+        pre[class*="language-"]::-webkit-scrollbar { display: none; }
+
+        /* 2. Interactive Layer (Inputs) */
+        textarea#code-editor {
+            z-index: 2;
+            background: transparent;
+            color: transparent; 
+            caret-color: #fff; 
+            resize: none;
+            outline: none;
+        }
+        
+        /* Selection Highlight Fix */
+        textarea#code-editor::selection {
+            background-color: rgba(56, 139, 253, 0.4); 
+            color: transparent;
+        }
+
+        /* Toolbar */
+        .toolbar { padding: 10px 0; display: flex; gap: 10px; align-items: center; }
+        button { padding: 10px 20px; border: none; cursor: pointer; font-weight: bold; border-radius: 4px; transition: 0.2s; }
+        .btn-run { background-color: #27ae60; color: white; }
+        .btn-run:hover { background-color: #2ecc71; }
+        .btn-reset { background-color: #7f8c8d; color: white; }
+        .btn-reset:hover { background-color: #95a5a6; }
+        .btn-export { background-color: #8e44ad; color: white; }
+        .btn-export:hover { background-color: #9b59b6; }
+        .save-status { color: #888; font-style: italic; font-size: 0.9em; margin-left: auto; }
+
+        .editor-label { color: #aaa; font-size: 0.9em; margin-bottom: 5px; margin-top: 10px; display: flex; justify-content: space-between;}
+        
+        #console-output {
+            flex-grow: 1;
+            background-color: #000;
+            color: #0f0;
+            font-family: 'Courier New', Courier, monospace;
+            padding: 15px;
+            border: 1px solid #333;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        
+        /* Loading Screen */
+        #loading { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: #0d0d0d; z-index: 999; 
+            display: flex; flex-direction: column; justify-content: flex-start;
+            padding: 40px; box-sizing: border-box;
+            font-family: 'Courier New', monospace;
+            color: #00ff00;
+            font-size: 16px;
+            overflow: hidden;
+        }
+        .boot-msg { margin-bottom: 5px; opacity: 0; animation: fadeIn 0.1s forwards; }
+        .cursor { display: inline-block; width: 10px; height: 18px; background: #00ff00; animation: blink 0.8s infinite; margin-left: 5px; }
+        @keyframes fadeIn { to { opacity: 1; } }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+        
+        .engine-status { font-size: 0.8em; color: #666; }
+    </style>
+</head>
+<body>
+
+    <div id="loading">
+        <div id="boot-log"></div>
+        <div>> <span class="cursor"></span></div>
+    </div>
+
+    <script>
+        const bootMessages = [
+            "Initializing Bank Transfer Protocol...",
+            "Loading User Session (Mock)...",
+            "Simulating Evil Website (evil-hacker.com)...",
+            "Loading Hybrid Runtime...",
+            "Ready."
+        ];
+        const logContainer = document.getElementById("boot-log");
+        let msgIndex = 0;
+        
+        function typeWriter() {
+            if (msgIndex < bootMessages.length) {
+                const div = document.createElement("div");
+                div.className = "boot-msg";
+                div.textContent = `[SYSTEM] ${bootMessages[msgIndex]}`;
+                logContainer.appendChild(div);
+                msgIndex++;
+                setTimeout(typeWriter, 100); 
+            } else {
+                setTimeout(() => { document.getElementById("loading").style.display = "none"; }, 800);
+            }
+        }
+        typeWriter();
+    </script>
+
+    <div class="panel-left">
+        <div class="learning-obj">Software Security Training</div>
+        <h1>Exercise: The Invisible Request (CSRF)</h1>
+        <p>In this activity, you will prevent <strong>Cross-Site Request Forgery (CSRF)</strong> by validating unique tokens.</p>
+        
+        <div class="scenario-box">
+            <strong>Scenario:</strong> 
+            A hacker has created a hidden form on their website. When logged-in users visit it, their browser automatically sends a "Transfer $1,000" request to your bank. Because they have a valid session cookie, the bank processes it!
+        </div>
+
+        <h2>Your Task</h2>
+        <p>Modify the `process_transfer` function to verify the request:</p>
+        <ol>
+            <li><strong>Check Session:</strong> Ensure the user is logged in (already done).</li>
+            <li><strong>Validate Token:</strong> Compare the `user_token` (from the form) against the `session_token` (from the server).</li>
+            <li><strong>Block if Mismatch:</strong> If they don't match, return "Access Denied".</li>
+        </ol>
+    </div>
+
+    <div class="panel-right">
+        <div class="editor-label">
+            <span>PYTHON EDITOR (bank_module.py)</span>
+            <span class="engine-status" id="engine-status">Engine: Initializing...</span>
+        </div>
+        
+        <div class="editor-container">
+            <div class="line-numbers" id="line-numbers">1</div>
+            
+            <div class="code-editor-wrapper">
+                <textarea id="code-editor" spellcheck="false" 
+                    oninput="handleInput()" 
+                    onscroll="syncScroll()" 
+                    onkeydown="handleTab(event)" 
+                    onclick="syncScroll()" 
+                    onkeyup="syncScroll()">def process_transfer(session, amount, user_token):
+    """
+    Processes a money transfer.
+    session: Dictionary containing 'username' and 'csrf_token'
+    amount: Dollar amount to transfer
+    user_token: The token sent in the HTML form request
+    """
+    
+    # 1. Authentication Check (Already Implemented)
+    if 'username' not in session:
+        return "Error: Please log in."
+        
+    # 2. VULNERABILITY: Missing Token Check!
+    # Currently, we just accept the request if they are logged in.
+    # TODO: Check if user_token matches session['csrf_token']
+    #       If not match, return "CSRF Blocked"
+    
+    
+    
+    return f"Success! Transferred ${amount}."
+</textarea>
+                <pre id="code-display" class="language-python"><code id="code-highlight" class="language-python"></code></pre>
+            </div>
+        </div>
+
+        <div class="toolbar">
+            <button class="btn-run" id="run-btn" onclick="runHybridTests()">Run Hacker Simulation</button>
+            <button class="btn-reset" onclick="resetCode()">Reset Code</button>
+            <button class="btn-export" onclick="exportPDF()">Export PDF</button>
+            <span class="save-status" id="save-status"></span>
+        </div>
+
+        <div class="editor-label">SERVER LOGS</div>
+        <div id="console-output">Ready... Waiting for transfer requests.</div>
+    </div>
+
+    <py-script>
+        from js import window
+        import secrets
+
+        window.python_is_ready = True
+        
+        try:
+            document = window.document
+            status = document.getElementById("engine-status")
+            status.innerHTML = "Engine: <span style='color:#2ecc71'>Python Active</span>"
+        except:
+            pass
+
+        def python_test_logic(user_code):
+            results = []
+            
+            def add_log(msg, type="normal"):
+                results.append({"msg": msg, "type": type})
+
+            add_log("[SYSTEM] Starting Bank Server...", "system")
+            
+            # Setup Mock Session
+            server_token = secrets.token_hex(16)
+            user_session = {
+                'username': 'Alice',
+                'csrf_token': server_token
+            }
+            
+            # Hacker's fake token (or no token)
+            hacker_token = "fake_token_123"
+
+            try:
+                # Load user code
+                exec_globals = {}
+                exec(user_code, exec_globals)
+                
+                if "process_transfer" not in exec_globals:
+                    add_log("[!] Error: Function 'process_transfer' not found.", "fail")
+                    return results, "FAILED"
+                
+                process_transfer = exec_globals["process_transfer"]
+                
+                # --- TEST 1: CSRF ATTACK (Must Fail) ---
+                add_log("--- TEST 1: CSRF Attack Simulation ---", "system")
+                add_log(f"   [HACKER] Sending transfer request...", "info")
+                add_log(f"   [HACKER] Token used: '{hacker_token}' (INVALID)", "info")
+                
+                result_attack = process_transfer(user_session, 1000, hacker_token)
+                
+                if "Success" in result_attack:
+                    add_log(f"   -> SERVER RESPONSE: {result_attack}", "fail")
+                    add_log("   -> FAIL: CSRF Attack Successful! Money stolen.", "fail")
+                    return results, "FAILED - Hacked"
+                else:
+                    add_log(f"   -> SERVER RESPONSE: {result_attack}", "pass")
+                    add_log("   -> PASS: Malicious request blocked.", "pass")
+
+                # --- TEST 2: LEGITIMATE REQUEST (Must Succeed) ---
+                add_log("--- TEST 2: Valid User Request ---", "system")
+                add_log(f"   [USER] Sending transfer request...", "info")
+                add_log(f"   [USER] Token used: '{server_token}' (VALID)", "info")
+                
+                result_valid = process_transfer(user_session, 50, server_token)
+                
+                if "Success" in result_valid:
+                    add_log(f"   -> SERVER RESPONSE: {result_valid}", "pass")
+                    add_log("   SUCCESS: CSRF Token logic is correct.", "pass")
+                    return results, "PASSED - Secure"
+                else:
+                    add_log(f"   -> SERVER RESPONSE: {result_valid}", "fail")
+                    add_log("   -> FAIL: Valid request was blocked!", "fail")
+                    return results, "FAILED - Logic Error"
+                
+            except Exception as e:
+                add_log(f"[!] Runtime Error: {e}", "fail")
+                return results, "ERROR"
+            
+            return results, "UNKNOWN"
+
+        window.python_test_runner = python_test_logic
+    </py-script>
+
+    <script>
+        const editor = document.getElementById("code-editor");
+        const lineNumbers = document.getElementById("line-numbers");
+        const saveStatus = document.getElementById("save-status");
+        const consoleOut = document.getElementById("console-output");
+        const engineStatus = document.getElementById("engine-status");
+
+        const STORAGE_KEY = 'secure_coding_ex_8_csrf'; 
+        const AUTOSAVE_DELAY_MS = 3000;
+        
+        window.submissionStatus = "Not Started"; 
+        window.python_is_ready = false;
+
+        function runHybridTests() {
+            consoleOut.innerHTML = "";
+            const userCode = editor.value;
+
+            if (window.python_is_ready && window.python_test_runner) {
+                try {
+                    const [logs, status] = window.python_test_runner(userCode);
+                    logs.forEach(l => log(l.msg, l.type));
+                    window.submissionStatus = status;
+                } catch(e) {
+                    log("[!] Python Engine Crashed. Switching to JS Fallback...", "fail");
+                    runJSFallback(userCode);
+                }
+            } else {
+                log("[SYSTEM] Python Engine Unavailable. Using JS Fallback...", "system");
+                runJSFallback(userCode);
+            }
+        }
+
+        function runJSFallback(code) {
+            log("--- TEST 1: CSRF Attack Simulation ---", "system");
+            const cleanCode = code.replace(/#.*/g, "");
+            
+            // Look for comparison logic
+            const checksToken = cleanCode.includes("user_token") && cleanCode.includes("session") && (cleanCode.includes("==") || cleanCode.includes("!="));
+            const checksKey = cleanCode.includes("['csrf_token']") || cleanCode.includes('["csrf_token"]');
+
+            if (checksToken && checksKey) {
+                 log("   -> PASS: Malicious request blocked.", "pass");
+                 log("--- TEST 2: Valid User Request ---", "system");
+                 log("   -> SERVER RESPONSE: Success!", "pass");
+                 log("   SUCCESS: CSRF Token logic is correct.", "pass");
+                 window.submissionStatus = "PASSED - Secure";
+            } else {
+                 log("   -> FAIL: CSRF Attack Successful! Money stolen.", "fail");
+                 log("      Hint: Compare user_token with session['csrf_token'].", "info");
+                 window.submissionStatus = "FAILED";
+            }
+        }
+
+        function log(message, type="normal") {
+            let color = "#ffffff";
+            if (type == "pass") color = "#2ecc71";
+            if (type == "fail") color = "#e74c3c";
+            if (type == "info") color = "#3498db";
+            if (type == "system") color = "#d4d4d4";
+
+            const safeMessage = message.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            consoleOut.innerHTML += `<div style="color:${color}; margin-bottom: 5px;">${safeMessage}</div>`;
+            consoleOut.scrollTop = consoleOut.scrollHeight;
+        }
+
+        // --- EDITOR LOGIC ---
+        const originalCode = editor.value; 
+        let saveTimer;
+
+        function updateSyntaxHighlighting() {
+            const codeText = editor.value;
+            const codeHighlight = document.getElementById("code-highlight");
+            codeHighlight.textContent = codeText;
+            Prism.highlightElement(codeHighlight);
+            updateLineNumbers();
+        }
+
+        async function exportPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            let studentName = prompt("Please enter your name for the report:", "Student");
+            if (studentName === null) return; 
+
+            const timestamp = new Date().toLocaleString();
+            const codeContent = editor.value;
+            const status = window.submissionStatus;
+
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(18);
+            doc.text("Secure Coding Report", 20, 20);
+            doc.setFontSize(12);
+            doc.setFont("helvetica", "normal");
+            doc.text(`Exercise: The Invisible Request (CSRF)`, 20, 30);
+            doc.setDrawColor(0);
+            doc.setFillColor(240, 240, 240);
+            doc.rect(20, 35, 170, 25, 'F'); 
+            doc.text(`Student Name: ${studentName}`, 25, 42);
+            doc.text(`Date: ${timestamp}`, 25, 49);
+            doc.text(`Status: `, 25, 56);
+            if (status.includes("PASSED")) {
+                doc.setTextColor(0, 150, 0); 
+            } else {
+                doc.setTextColor(200, 0, 0); 
+            }
+            doc.text(status, 45, 56);
+            doc.setTextColor(0, 0, 0); 
+            doc.text("Submitted Code:", 20, 70);
+            doc.setFont("courier", "normal"); 
+            doc.setFontSize(10);
+            const splitCode = doc.splitTextToSize(codeContent, 170);
+            doc.text(splitCode, 20, 77);
+            doc.save(`${studentName.replace(/\s/g, '_')}_The_Invisible_Request.pdf`);
+        }
+
+        window.onload = function() {
+            const savedCode = localStorage.getItem(STORAGE_KEY);
+            if (savedCode) {
+                editor.value = savedCode;
+                saveStatus.innerText = "Restored from autosave";
+            }
+            updateSyntaxHighlighting();
+            
+            setTimeout(() => {
+                if(!window.python_is_ready) {
+                     engineStatus.innerHTML = "Engine: <span style='color:#f1c40f'>JS Fallback Mode</span>";
+                }
+            }, 5000);
+        };
+
+        function handleInput() {
+            updateSyntaxHighlighting(); 
+            saveStatus.innerText = "Typing...";
+            clearTimeout(saveTimer);
+            saveTimer = setTimeout(() => {
+                saveToLocal();
+            }, AUTOSAVE_DELAY_MS);
+        }
+
+        function saveToLocal() {
+            localStorage.setItem(STORAGE_KEY, editor.value);
+            const now = new Date();
+            saveStatus.innerText = `Autosaved at ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+        }
+
+        function syncScroll() {
+            lineNumbers.scrollTop = editor.scrollTop;
+            document.getElementById("code-display").scrollTop = editor.scrollTop;
+            document.getElementById("code-display").scrollLeft = editor.scrollLeft;
+        }
+
+        function handleTab(e) {
+            if (e.key == 'Tab') {
+                e.preventDefault();
+                const start = editor.selectionStart;
+                const end = editor.selectionEnd;
+                const value = editor.value;
+                const scrollTop = editor.scrollTop;
+                if (e.shiftKey) {
+                    let lineStart = value.lastIndexOf('\n', start - 1) + 1;
+                    if (value.substring(lineStart, lineStart + 4) === "    ") {
+                        editor.value = value.substring(0, lineStart) + value.substring(lineStart + 4);
+                        editor.selectionStart = Math.max(lineStart, start - 4);
+                        editor.selectionEnd = Math.max(lineStart, end - 4);
+                    }
+                } else {
+                    editor.value = value.substring(0, start) + "    " + value.substring(end);
+                    editor.selectionStart = editor.selectionEnd = start + 4;
+                }
+                editor.scrollTop = scrollTop;
+                handleInput();
+            }
+        }
+
+        function updateLineNumbers() {
+            const lines = editor.value.split('\n').length;
+            lineNumbers.innerHTML = Array(lines).fill(0).map((_, i) => i + 1).join('\n');
+        }
+
+        function resetCode() {
+            if(confirm("Are you sure? This will delete your current code.")) {
+                editor.value = originalCode;
+                updateSyntaxHighlighting();
+                saveToLocal();
+                consoleOut.innerHTML = "Code reset.";
+                window.submissionStatus = "Not Started";
+            }
+        }
+    </script>
+
+</body>
+</html>

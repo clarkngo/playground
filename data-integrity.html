@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Week 9: Data Integrity (HMAC)</title>
+    
+    <link rel="stylesheet" href="https://pyscript.net/releases/2023.05.1/pyscript.css" />
+    <script defer src="https://pyscript.net/releases/2023.05.1/pyscript.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+
+    <style>
+        /* CORE STYLES (Hybrid Template) */
+        body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; height: 100vh; overflow: hidden; background-color: #1e1e1e; }
+        .panel-left { width: 40%; background-color: #f4f4f4; padding: 30px; overflow-y: auto; border-right: 2px solid #ddd; box-sizing: border-box; color: #333; }
+        h1 { color: #2c3e50; font-size: 24px; }
+        h2 { color: #8e44ad; font-size: 18px; margin-top: 20px; }
+        .scenario-box { background: #e8f6f3; border-left: 5px solid #1abc9c; padding: 15px; margin: 15px 0; }
+        .learning-obj { font-style: italic; color: #555; font-size: 0.9em; margin-bottom: 20px; }
+        .panel-right { width: 60%; display: flex; flex-direction: column; padding: 20px; box-sizing: border-box; }
+        
+        .editor-container { display: flex; height: 50%; border: 1px solid #3c3c3c; background-color: #252526; position: relative; }
+        .line-numbers { width: 40px; background-color: #1e1e1e; color: #858585; text-align: right; padding: 10px 5px; font-family: 'Consolas', monospace; font-size: 14px; line-height: 21px; border-right: 1px solid #3c3c3c; box-sizing: border-box; user-select: none; }
+        .code-editor-wrapper { position: relative; flex-grow: 1; overflow: hidden; }
+        
+        textarea#code-editor, pre[class*="language-"] { font-family: 'Consolas', monospace !important; font-size: 14px !important; line-height: 21px !important; padding: 10px !important; margin: 0 !important; box-sizing: border-box !important; border: none !important; white-space: pre !important; }
+        pre[class*="language-"] { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; color: transparent; }
+        textarea#code-editor { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; background: transparent; color: transparent; caret-color: #fff; resize: none; outline: none; }
+
+        .toolbar { padding: 10px 0; display: flex; gap: 10px; align-items: center; }
+        button { padding: 10px 20px; border: none; cursor: pointer; font-weight: bold; border-radius: 4px; transition: 0.2s; }
+        .btn-run { background-color: #27ae60; color: white; }
+        .btn-reset { background-color: #7f8c8d; color: white; }
+        .btn-export { background-color: #8e44ad; color: white; }
+        .save-status { color: #888; font-style: italic; font-size: 0.9em; margin-left: auto; }
+        .editor-label { color: #aaa; font-size: 0.9em; margin-bottom: 5px; margin-top: 10px; display: flex; justify-content: space-between;}
+        
+        #console-output { flex-grow: 1; background-color: #000; color: #0f0; font-family: 'Consolas', monospace; padding: 15px; border: 1px solid #333; overflow-y: auto; white-space: pre-wrap; }
+        
+        #loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0d0d0d; z-index: 999; display: flex; flex-direction: column; padding: 40px; box-sizing: border-box; font-family: 'Courier New', monospace; color: #00ff00; font-size: 16px; }
+        .engine-status { font-size: 0.8em; color: #666; }
+    </style>
+</head>
+<body>
+
+    <div id="loading">
+        <div id="boot-log"></div>
+    </div>
+
+    <script>
+        const bootMessages = [
+            "Initializing Cryptography Module...",
+            "Loading HMAC Library...",
+            "Establishing Secret Keys...",
+            "Verifying Integrity Protocols...",
+            "System Ready."
+        ];
+        const logContainer = document.getElementById("boot-log");
+        let msgIndex = 0;
+        function typeWriter() {
+            if (msgIndex < bootMessages.length) {
+                const div = document.createElement("div");
+                div.textContent = `[SYSTEM] ${bootMessages[msgIndex]}`;
+                logContainer.appendChild(div);
+                msgIndex++;
+                setTimeout(typeWriter, 150); 
+            } else { setTimeout(() => { document.getElementById("loading").style.display = "none"; }, 1000); }
+        }
+        typeWriter();
+    </script>
+
+    <div class="panel-left">
+        <div class="learning-obj">Cryptography Training</div>
+        <h1>Exercise: API Request Signing</h1>
+        <p>In this activity, you will use <strong>HMAC (Hash-based Message Authentication Code)</strong> to ensure data integrity.</p>
+        
+        <div class="scenario-box">
+            <strong>Scenario:</strong> 
+            You are building a secure payment API. When a user sends a payment request (e.g., "Pay $100"), you need to prove that a hacker didn't intercept it and change it to "Pay $1000".
+        </div>
+
+        <h2>The Difference</h2>
+        <p>Unlike <strong>Hashing</strong> (which just scrambles data), <strong>HMAC</strong> uses a <strong>Secret Key</strong>. Only someone with the key can generate a valid signature.</p>
+
+        <h2>Your Task</h2>
+        <p>Complete the <code>sign_message</code> function:</p>
+        <ol>
+            <li><strong>Encode Data:</strong> Ensure both the <code>secret_key</code> and <code>message</code> are bytes (use <code>.encode()</code>).</li>
+            <li><strong>Generate HMAC:</strong> Use <code>hmac.new(key, msg, hashlib.sha256)</code>.</li>
+            <li><strong>Return Hex:</strong> Return the <code>.hexdigest()</code> of the HMAC object.</li>
+        </ol>
+    </div>
+
+    <div class="panel-right">
+        <div class="editor-label">
+            <span>PYTHON EDITOR (security_signer.py)</span>
+            <span class="engine-status" id="engine-status">Engine: Initializing...</span>
+        </div>
+        
+        <div class="editor-container">
+            <div class="line-numbers" id="line-numbers">1</div>
+            <div class="code-editor-wrapper">
+                <textarea id="code-editor" spellcheck="false" oninput="handleInput()" onscroll="syncScroll()" onkeydown="handleTab(event)">import hmac
+import hashlib
+
+def sign_message(secret_key, message):
+    """
+    Generates an HMAC signature for a message.
+    Returns: The hex signature string.
+    """
+    
+    # 1. Convert inputs to bytes
+    # Hint: key_bytes = secret_key.encode()
+    
+    
+    # 2. Create the HMAC object
+    # Use: hmac.new(key_bytes, msg_bytes, hashlib.sha256)
+    
+    
+    # 3. Return the hex digest
+    # return my_hmac.hexdigest()
+    return ""
+</textarea>
+                <pre id="code-display" class="language-python"><code id="code-highlight" class="language-python"></code></pre>
+            </div>
+        </div>
+
+        <div class="toolbar">
+            <button class="btn-run" onclick="runHybridTests()">Run Integrity Check</button>
+            <button class="btn-reset" onclick="resetCode()">Reset</button>
+            <button class="btn-export" onclick="exportPDF()">Export PDF</button>
+            <span class="save-status" id="save-status"></span>
+        </div>
+        <div class="editor-label">SECURITY CONSOLE</div>
+        <div id="console-output">Ready...</div>
+    </div>
+
+    <py-script>
+        from js import window, document
+        import hashlib
+        import hmac
+        
+        window.python_is_ready = True
+        try: document.getElementById("engine-status").innerHTML = "Engine: <span style='color:#2ecc71'>Python Active</span>"
+        except: pass
+
+        def python_test_logic(user_code):
+            results = []
+            def add_log(msg, type="normal"): results.append({"msg": msg, "type": type})
+
+            add_log("[SYSTEM] Verifying Signature Logic...", "system")
+            test_env = {'hashlib': hashlib, 'hmac': hmac}
+            
+            try:
+                exec(user_code, test_env)
+                if "sign_message" not in test_env:
+                    add_log("[!] Error: Function 'sign_message' not found.", "fail")
+                    return results, "FAILED"
+                
+                func = test_env["sign_message"]
+                
+                # TEST 1: Basic Signature Generation
+                add_log("--- TEST 1: Generating Signature ---", "system")
+                key = "mySecretKey"
+                msg = "Transfer $100"
+                
+                try:
+                    user_sig = func(key, msg)
+                except TypeError:
+                    add_log("   -> FAIL: Type Error. Did you forget .encode()?", "fail")
+                    return results, "FAILED"
+
+                if not isinstance(user_sig, str):
+                    add_log(f"   -> FAIL: Expected string return, got {type(user_sig)}", "fail")
+                    return results, "FAILED"
+                
+                # Calculate Correct HMAC
+                correct_sig = hmac.new(key.encode(), msg.encode(), hashlib.sha256).hexdigest()
+                
+                if user_sig == correct_sig:
+                    add_log("   -> PASS: Signature generated correctly.", "pass")
+                else:
+                    add_log("   -> FAIL: Signature mismatch.", "fail")
+                    add_log(f"      Exp: {correct_sig}", "fail")
+                    add_log(f"      Got: {user_sig}", "fail")
+                    return results, "FAILED"
+
+                # TEST 2: Integrity Check (Tampering)
+                add_log("--- TEST 2: Tamper Detection ---", "system")
+                tampered_msg = "Transfer $1000" # Hacker added a zero
+                tampered_sig = hmac.new(key.encode(), tampered_msg.encode(), hashlib.sha256).hexdigest()
+                
+                if user_sig != tampered_sig:
+                    add_log("   -> PASS: Changed message produced different signature.", "pass")
+                    add_log("   SUCCESS: Integrity mechanism is working.", "pass")
+                    return results, "PASSED - Secure"
+                else:
+                    add_log("   -> FAIL: Tampered message has same signature!", "fail")
+                    return results, "FAILED"
+
+            except Exception as e:
+                add_log(f"[!] Runtime Error: {e}", "fail")
+                return results, "ERROR"
+            
+            return results, "UNKNOWN"
+        window.python_test_runner = python_test_logic
+    </py-script>
+
+    <script>
+        const editor = document.getElementById("code-editor");
+        const lineNumbers = document.getElementById("line-numbers");
+        const consoleOut = document.getElementById("console-output");
+        const saveStatus = document.getElementById("save-status");
+        window.submissionStatus = "Not Started";
+        window.python_is_ready = false;
+
+        function runHybridTests() {
+            consoleOut.innerHTML = "";
+            const userCode = editor.value;
+            if (window.python_is_ready && window.python_test_runner) {
+                try {
+                    const [logs, status] = window.python_test_runner(userCode);
+                    logs.forEach(l => log(l.msg, l.type));
+                    window.submissionStatus = status;
+                } catch(e) { runJSFallback(userCode); }
+            } else { runJSFallback(userCode); }
+        }
+
+function runJSFallback(code) {
+            log("[SYSTEM] JS Fallback Mode (Python Engine Offline)...", "system");
+
+            // 1. STRIP COMMENTS: Remove lines starting with # so we don't grade the hints
+            const cleanCode = code.replace(/#.*/g, "");
+
+            // 2. STRICT REGEX CHECKS on the CLEAN code
+            const hasEncode = /\.encode\(/.test(cleanCode);
+            const hasHmac = /hmac\.new\(/.test(cleanCode);
+            const hasSha = /hashlib\.sha256/.test(cleanCode);
+            const hasHex = /\.hexdigest\(/.test(cleanCode);
+            
+            if (hasEncode && hasHmac && hasSha && hasHex) {
+                log("   -> PASS: Encoding detected.", "pass");
+                log("   -> PASS: HMAC Object creation detected.", "pass");
+                log("   -> PASS: Hex digest generation detected.", "pass");
+                window.submissionStatus = "PASSED - Secure";
+            } else {
+                log("   -> FAIL: Validation checks failed.", "fail");
+                // Only show hints for things actually missing in the CODE (not comments)
+                if(!hasEncode) log("      Hint: Inputs must be .encode() to bytes.", "fail");
+                if(!hasHmac)   log("      Hint: Use hmac.new(...)", "fail");
+                if(!hasHex)    log("      Hint: Return .hexdigest()", "fail");
+                window.submissionStatus = "FAILED";
+            }
+        }
+
+        function log(message, type="normal") {
+            let color = "#fff";
+            if (type == "pass") color = "#2ecc71";
+            if (type == "fail") color = "#e74c3c";
+            if (type == "system") color = "#888";
+            const safeMsg = message.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            consoleOut.innerHTML += `<div style="color:${color}; margin-bottom: 5px;">${safeMsg}</div>`;
+        }
+
+        /* --- Editor Utils --- */
+        const STORAGE_KEY = 'week9_hmac_v1';
+        const originalCode = editor.value; 
+        let saveTimer;
+
+        function updateSyntaxHighlighting() {
+            document.getElementById("code-highlight").textContent = editor.value;
+            Prism.highlightElement(document.getElementById("code-highlight"));
+            lineNumbers.innerHTML = Array(editor.value.split('\n').length).fill(0).map((_, i) => i + 1).join('\n');
+        }
+        function handleInput() { updateSyntaxHighlighting(); clearTimeout(saveTimer); saveTimer = setTimeout(() => { localStorage.setItem(STORAGE_KEY, editor.value); saveStatus.innerText = "Autosaved"; }, 3000); }
+        function handleTab(e) { if(e.key == 'Tab') { e.preventDefault(); editor.setRangeText("    ", editor.selectionStart, editor.selectionEnd, "end"); handleInput(); }}
+        function syncScroll() { lineNumbers.scrollTop = editor.scrollTop; document.getElementById("code-display").scrollTop = editor.scrollTop; }
+        
+        window.onload = function() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if(saved) editor.value = saved;
+            updateSyntaxHighlighting();
+            setTimeout(() => { 
+                if(!window.python_is_ready) {
+                    document.getElementById("engine-status").innerHTML = "Engine: <span style='color:#f39c12'>JS Fallback</span>";
+                }
+            }, 3000);
+        }
+        
+        async function exportPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.text("Cryptography (HMAC) Report", 20, 20);
+            doc.text(`Status: ${window.submissionStatus}`, 20, 30);
+            const splitCode = doc.splitTextToSize(editor.value, 170);
+            doc.text(splitCode, 20, 40);
+            doc.save("HMAC_Report.pdf");
+        }
+        function resetCode() { editor.value = originalCode; updateSyntaxHighlighting(); }
+    </script>
+</body>
+</html>

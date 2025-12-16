@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Security Exercise</title>
+    
+    <link rel="stylesheet" href="https://pyscript.net/releases/2023.05.1/pyscript.css" />
+    <script defer src="https://pyscript.net/releases/2023.05.1/pyscript.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+
+    <style>
+        /* CORE STYLES (Hybrid Template) */
+        body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; height: 100vh; overflow: hidden; background-color: #1e1e1e; }
+        .panel-left { width: 40%; background-color: #f4f4f4; padding: 30px; overflow-y: auto; border-right: 2px solid #ddd; box-sizing: border-box; color: #333; }
+        h1 { color: #2c3e50; font-size: 24px; }
+        h2 { color: #8e44ad; font-size: 18px; margin-top: 20px; }
+        .scenario-box { background: #e8f6f3; border-left: 5px solid #1abc9c; padding: 15px; margin: 15px 0; }
+        .learning-obj { font-style: italic; color: #555; font-size: 0.9em; margin-bottom: 20px; }
+        .panel-right { width: 60%; display: flex; flex-direction: column; padding: 20px; box-sizing: border-box; }
+        
+        .editor-container { display: flex; height: 50%; border: 1px solid #3c3c3c; background-color: #252526; position: relative; }
+        .line-numbers { width: 40px; background-color: #1e1e1e; color: #858585; text-align: right; padding: 10px 5px; font-family: 'Consolas', monospace; font-size: 14px; line-height: 21px; border-right: 1px solid #3c3c3c; box-sizing: border-box; user-select: none; }
+        .code-editor-wrapper { position: relative; flex-grow: 1; overflow: hidden; }
+        
+        textarea#code-editor, pre[class*="language-"] { font-family: 'Consolas', monospace !important; font-size: 14px !important; line-height: 21px !important; padding: 10px !important; margin: 0 !important; box-sizing: border-box !important; border: none !important; white-space: pre !important; }
+        pre[class*="language-"] { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; color: transparent; }
+        textarea#code-editor { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; background: transparent; color: transparent; caret-color: #fff; resize: none; outline: none; }
+
+        .toolbar { padding: 10px 0; display: flex; gap: 10px; align-items: center; }
+        button { padding: 10px 20px; border: none; cursor: pointer; font-weight: bold; border-radius: 4px; transition: 0.2s; }
+        .btn-run { background-color: #27ae60; color: white; }
+        .btn-reset { background-color: #7f8c8d; color: white; }
+        .btn-export { background-color: #8e44ad; color: white; }
+        .save-status { color: #888; font-style: italic; font-size: 0.9em; margin-left: auto; }
+        .editor-label { color: #aaa; font-size: 0.9em; margin-bottom: 5px; margin-top: 10px; display: flex; justify-content: space-between;}
+        
+        #console-output { flex-grow: 1; background-color: #000; color: #0f0; font-family: 'Consolas', monospace; padding: 15px; border: 1px solid #333; overflow-y: auto; white-space: pre-wrap; }
+        
+        #loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0d0d0d; z-index: 999; display: flex; flex-direction: column; padding: 40px; box-sizing: border-box; font-family: 'Courier New', monospace; color: #00ff00; font-size: 16px; }
+        .engine-status { font-size: 0.8em; color: #666; }
+    </style>
+</head>
+<body>
+
+    <div id="loading">
+        <div id="boot-log"></div>
+    </div>
+
+    <script>
+        const bootMessages = [
+            "Initializing API Gateway...",
+            "Loading Header Policy Module...",
+            "Simulating Browser XSS Attack...",
+            "Connecting to Python Logic...",
+            "Gateway Active."
+        ];
+        const logContainer = document.getElementById("boot-log");
+        let msgIndex = 0;
+        function typeWriter() {
+            if (msgIndex < bootMessages.length) {
+                const div = document.createElement("div");
+                div.textContent = `[SYSTEM] ${bootMessages[msgIndex]}`;
+                logContainer.appendChild(div);
+                msgIndex++;
+                setTimeout(typeWriter, 150); 
+            } else { setTimeout(() => { document.getElementById("loading").style.display = "none"; }, 1000); }
+        }
+        typeWriter();
+    </script>
+
+    <div class="panel-left">
+        <div class="learning-obj">API Security Training</div>
+        <h1>Exercise: The Secure Header</h1>
+        <p>In this activity, you will configure <strong>Content Security Policy (CSP)</strong> headers to prevent unauthorized scripts from executing.</p>
+        
+        <div class="scenario-box">
+            <strong>Scenario:</strong> 
+            Your API is returning a webpage that has a Cross-Site Scripting (XSS) bug. We cannot fix the code bug right now, so we must block the attack at the <strong>Browser Level</strong>.
+            <br><br>
+            An attacker is trying to load: <code>&lt;script src="http://evil.com/hack.js"&gt;</code>.
+        </div>
+
+        <h2>Your Task</h2>
+        <p>Update the <code>get_security_headers</code> function:</p>
+        <ol>
+            <li>Add a new key: <code>"Content-Security-Policy"</code>.</li>
+            <li>Set the value to: <code>"default-src 'self'"</code>.</li>
+            <li>This instructs the browser to <strong>only</strong> trust scripts coming from your own domain.</li>
+        </ol>
+
+        <h2>Why Headers?</h2>
+        <p>Modern security is often about "Defense in Depth". Even if your code has bugs, good headers can prevent the bugs from being exploited.</p>
+    </div>
+
+    <div class="panel-right">
+        <div class="editor-label">
+            <span>PYTHON EDITOR (middleware.py)</span>
+            <span class="engine-status" id="engine-status">Engine: Initializing...</span>
+        </div>
+        
+        <div class="editor-container">
+            <div class="line-numbers" id="line-numbers">1</div>
+            <div class="code-editor-wrapper">
+                <textarea id="code-editor" spellcheck="false" oninput="handleInput()" onscroll="syncScroll()" onkeydown="handleTab(event)">def get_security_headers():
+    """
+    Returns a dictionary of HTTP Headers.
+    """
+    
+    headers = {
+        "Content-Type": "text/html",
+        "X-Powered-By": "Python"
+    }
+    
+    # 1. Add 'Content-Security-Policy'
+    # Hint: headers["..."] = "..."
+    
+    
+    # 2. Set value to: "default-src 'self'"
+    
+    
+    
+    return headers
+</textarea>
+                <pre id="code-display" class="language-python"><code id="code-highlight" class="language-python"></code></pre>
+            </div>
+        </div>
+
+        <div class="toolbar">
+            <button class="btn-run" onclick="runHybridTests()">Run Header Check</button>
+            <button class="btn-reset" onclick="resetCode()">Reset</button>
+            <button class="btn-export" onclick="exportPDF()">Export PDF</button>
+            <span class="save-status" id="save-status"></span>
+        </div>
+        <div class="editor-label">BROWSER CONSOLE SIMULATION</div>
+        <div id="console-output">Waiting for server headers...</div>
+    </div>
+
+    <py-script>
+        from js import window, document
+        
+        window.python_is_ready = True
+        try: document.getElementById("engine-status").innerHTML = "Engine: <span style='color:#2ecc71'>Python Active</span>"
+        except: pass
+
+        def python_test_logic(user_code):
+            results = []
+            def add_log(msg, type="normal"): results.append({"msg": msg, "type": type})
+
+            add_log("[SYSTEM] Inspecting HTTP Headers...", "system")
+            test_env = {}
+            
+            try:
+                exec(user_code, test_env)
+                if "get_security_headers" not in test_env:
+                    add_log("[!] Error: Function 'get_security_headers' not found.", "fail")
+                    return results, "FAILED"
+                
+                headers = test_env["get_security_headers"]()
+                
+                if not isinstance(headers, dict):
+                    add_log("[!] Error: Function must return a dictionary.", "fail")
+                    return results, "FAILED"
+
+                # Normalize keys to lowercase for checking
+                headers_lower = {k.lower(): v for k, v in headers.items()}
+                
+                # TEST 1: Check for CSP Key
+                add_log("--- TEST 1: Header Presence ---", "system")
+                if "content-security-policy" not in headers_lower:
+                    add_log("   -> FAIL: CSP Header missing entirely.", "fail")
+                    add_log("   [Browser] Script from 'evil.com' executed!", "fail")
+                    return results, "FAILED"
+                else:
+                    add_log("   -> PASS: CSP Header found.", "pass")
+
+                # TEST 2: Check Value
+                add_log("--- TEST 2: Policy Strength ---", "system")
+                val = headers_lower["content-security-policy"]
+                
+                if "default-src 'self'" in val:
+                    add_log(f"   -> PASS: Policy '{val}' allows self only.", "pass")
+                    add_log("   [Browser] Blocked loading resource from 'http://evil.com/hack.js'", "pass")
+                    add_log("   SUCCESS: Attack Mitigated.", "pass")
+                    return results, "PASSED - Secure"
+                elif "'none'" in val:
+                    add_log("   -> PASS: Strict 'none' policy detected.", "pass")
+                    return results, "PASSED - Secure"
+                else:
+                    add_log(f"   -> FAIL: Policy '{val}' is too weak or incorrect.", "fail")
+                    add_log("   [Browser] 'evil.com' might still be allowed.", "fail")
+                    return results, "FAILED"
+
+            except Exception as e:
+                add_log(f"[!] Runtime Error: {e}", "fail")
+                return results, "ERROR"
+            
+            return results, "UNKNOWN"
+        window.python_test_runner = python_test_logic
+    </py-script>
+
+    <script>
+        const editor = document.getElementById("code-editor");
+        const lineNumbers = document.getElementById("line-numbers");
+        const consoleOut = document.getElementById("console-output");
+        const saveStatus = document.getElementById("save-status");
+        window.submissionStatus = "Not Started";
+        window.python_is_ready = false;
+
+        function runHybridTests() {
+            consoleOut.innerHTML = "";
+            const userCode = editor.value;
+            
+            // Check if Python loaded successfully
+            if (window.python_is_ready && window.python_test_runner) {
+                try {
+                    const [logs, status] = window.python_test_runner(userCode);
+                    logs.forEach(l => log(l.msg, l.type));
+                    window.submissionStatus = status;
+                } catch(e) { runJSFallback(userCode); }
+            } else { 
+                runJSFallback(userCode); 
+            }
+        }
+
+        function runJSFallback(code) {
+            log("[SYSTEM] JS Fallback Mode (Python Engine Offline)...", "system");
+            
+            // STRICT REGEX: Looks for headers["Key"] = "Value"
+            // ignoring spaces and quote types (' or ")
+            const cspRegex = /headers\[\s*['"]Content-Security-Policy['"]\s*\]\s*=\s*['"]default-src 'self'['"]/;
+            
+            if (cspRegex.test(code)) {
+                log("   -> PASS: CSP detected.", "pass");
+                log("   -> PASS: Policy set to self.", "pass");
+                window.submissionStatus = "PASSED - Secure";
+            } else {
+                log("   -> FAIL: CSP Header missing or incorrect.", "fail");
+                log("      Expected: headers['Content-Security-Policy'] = \"default-src 'self'\"", "fail");
+                window.submissionStatus = "FAILED";
+            }
+        }
+
+        function log(message, type="normal") {
+            let color = "#fff";
+            if (type == "pass") color = "#2ecc71";
+            if (type == "fail") color = "#e74c3c";
+            if (type == "system") color = "#888";
+            // Sanitize input to prevent actual HTML injection in the log
+            const safeMsg = message.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            consoleOut.innerHTML += `<div style="color:${color}; margin-bottom: 5px;">${safeMsg}</div>`;
+        }
+
+        /* --- Editor Utils --- */
+        const STORAGE_KEY = 'week10_headers_v4';
+        const originalCode = editor.value; 
+        let saveTimer;
+
+        function updateSyntaxHighlighting() {
+            document.getElementById("code-highlight").textContent = editor.value;
+            Prism.highlightElement(document.getElementById("code-highlight"));
+            lineNumbers.innerHTML = Array(editor.value.split('\n').length).fill(0).map((_, i) => i + 1).join('\n');
+        }
+        function handleInput() { updateSyntaxHighlighting(); clearTimeout(saveTimer); saveTimer = setTimeout(() => { localStorage.setItem(STORAGE_KEY, editor.value); saveStatus.innerText = "Autosaved"; }, 3000); }
+        function handleTab(e) { if(e.key == 'Tab') { e.preventDefault(); editor.setRangeText("    ", editor.selectionStart, editor.selectionEnd, "end"); handleInput(); }}
+        function syncScroll() { lineNumbers.scrollTop = editor.scrollTop; document.getElementById("code-display").scrollTop = editor.scrollTop; }
+        
+        window.onload = function() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if(saved) editor.value = saved;
+            updateSyntaxHighlighting();
+            
+            // Wait 3 seconds to see if Python loads, otherwise update status
+            setTimeout(() => { 
+                if(!window.python_is_ready) {
+                    document.getElementById("engine-status").innerHTML = "Engine: <span style='color:#f39c12'>JS Fallback</span>";
+                }
+            }, 3000);
+        }
+        
+        async function exportPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.text("API Security Report", 20, 20);
+            doc.text(`Status: ${window.submissionStatus}`, 20, 30);
+            
+            const splitCode = doc.splitTextToSize(editor.value, 170);
+            doc.text(splitCode, 20, 40);
+            doc.save("API_Security_Report.pdf");
+        }
+        function resetCode() { editor.value = originalCode; updateSyntaxHighlighting(); }
+    </script>
+</body>
+</html>
