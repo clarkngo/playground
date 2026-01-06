@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Design Architect Game</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        .drop-zone { min-height: 400px; border: 2px dashed #cbd5e1; transition: background 0.3s; }
+        .drop-zone.drag-over { background-color: #f1f5f9; border-color: #3b82f6; }
+        .component { cursor: grab; user-select: none; }
+        .component:active { cursor: grabbing; }
+    </style>
+</head>
+<body class="bg-gray-50 p-8">
+
+    <div id="game-container" class="max-w-5xl mx-auto bg-white p-6 rounded-xl shadow-lg">
+        <header class="mb-6 border-b pb-4">
+            <h1 class="text-3xl font-bold text-slate-800">System Design Architect</h1>
+            <p class="text-slate-600">Scenario: Build a Scalable Web Application. Drag components to the canvas below.</p>
+        </header>
+
+        <div class="grid grid-cols-4 gap-6">
+            <div class="col-span-1 space-y-4">
+                <h3 class="font-bold text-lg text-blue-600">Toolbox</h3>
+                <div id="toolbox" class="space-y-2">
+                    <div draggable="true" class="component bg-blue-100 p-3 rounded border border-blue-300" data-type="Client">📱 User Client</div>
+                    <div draggable="true" class="component bg-purple-100 p-3 rounded border border-purple-300" data-type="Load Balancer">⚖️ Load Balancer</div>
+                    <div draggable="true" class="component bg-green-100 p-3 rounded border border-green-300" data-type="Web Server">🖥️ Web Server</div>
+                    <div draggable="true" class="component bg-amber-100 p-3 rounded border border-amber-300" data-type="Database">🗄️ Database</div>
+                </div>
+                <button onclick="checkSystem()" class="w-full bg-indigo-600 text-white py-2 rounded font-bold hover:bg-indigo-700">Validate Architecture</button>
+                <button onclick="exportPDF()" class="w-full bg-slate-800 text-white py-2 rounded font-bold hover:bg-slate-900">Export PDF</button>
+            </div>
+
+            <div class="col-span-3">
+                <h3 class="font-bold text-lg mb-2">Design Canvas</h3>
+                <div id="canvas" class="drop-zone rounded-lg flex flex-col items-center justify-start p-4 gap-4">
+                    <p class="text-gray-400 mt-20" id="placeholder">Drop components here in order...</p>
+                </div>
+                <div id="feedback" class="mt-4 p-4 rounded hidden"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const components = document.querySelectorAll('.component');
+        const placeholder = document.getElementById('placeholder');
+
+        // Drag and Drop Logic
+        components.forEach(comp => {
+            comp.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text/plain', e.target.innerText);
+                e.dataTransfer.setData('type', e.target.dataset.type);
+            });
+        });
+
+        canvas.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            canvas.classList.add('drag-over');
+        });
+
+        canvas.addEventListener('dragleave', () => {
+            canvas.classList.remove('drag-over');
+        });
+
+        canvas.addEventListener('drop', (e) => {
+            e.preventDefault();
+            canvas.classList.remove('drag-over');
+            placeholder.style.display = 'none';
+
+            const type = e.dataTransfer.getData('type');
+            const label = e.dataTransfer.getData('text/plain');
+
+            const newElement = document.createElement('div');
+            newElement.className = 'bg-white shadow-md border-2 border-slate-200 p-4 rounded-lg w-64 text-center font-bold text-slate-700 flex justify-between items-center';
+            newElement.innerHTML = `<span>${label}</span> <button onclick="this.parentElement.remove()" class="text-red-400 text-sm">✖</button>`;
+            newElement.dataset.type = type;
+            
+            canvas.appendChild(newElement);
+        });
+
+        // Validation Logic
+        function checkSystem() {
+            const currentNodes = Array.from(canvas.querySelectorAll('[data-type]')).map(n => n.dataset.type);
+            const feedback = document.getElementById('feedback');
+            feedback.classList.remove('hidden', 'bg-red-100', 'bg-green-100');
+
+            const correctOrder = ["Client", "Load Balancer", "Web Server", "Database"];
+            const isCorrect = JSON.stringify(currentNodes) === JSON.stringify(correctOrder);
+
+            if (isCorrect) {
+                feedback.innerHTML = "✅ <strong>Success!</strong> You've built a scalable 3-tier architecture. The Load Balancer effectively distributes traffic from the Client to the Servers, which interact with the Database.";
+                feedback.classList.add('bg-green-100', 'text-green-800');
+            } else {
+                feedback.innerHTML = "❌ <strong>Architecture Error:</strong> The flow is incorrect. Hint: Data usually flows from the User to a Balancer, then to the Server, and finally to Storage.";
+                feedback.classList.add('bg-red-100', 'text-red-800');
+            }
+        }
+
+        // PDF Export Logic
+        function exportPDF() {
+            const element = document.getElementById('game-container');
+            const opt = {
+                margin: 0.5,
+                filename: 'System_Design_Architecture.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' }
+            };
+            html2pdf().set(opt).from(element).save();
+        }
+    </script>
+</body>
+</html>
