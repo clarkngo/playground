@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wild Rift Smite Trainer - Share Edition</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Wild Rift Smite Trainer</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         body {
@@ -13,43 +13,44 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
             overflow: hidden;
             transition: background-color 0.1s ease;
+            touch-action: manipulation; /* Prevents zooming on fast taps */
         }
 
         body.smite-flash { background-color: #f5d061; }
 
-        #main-layout { display: flex; gap: 20px; align-items: flex-start; }
+        #main-layout { display: flex; gap: 15px; align-items: flex-start; flex-wrap: wrap; justify-content: center; padding: 10px; }
 
         #game-container {
             text-align: center;
             border: 2px solid #005a82;
-            padding: 30px;
+            padding: 20px;
             background: linear-gradient(180deg, #091428 0%, #050a15 100%);
             border-radius: 12px;
             box-shadow: 0 0 40px rgba(0, 207, 188, 0.3);
-            width: 400px;
-            position: relative;
+            width: 340px;
+            cursor: pointer; /* Indicates it's tappable */
         }
 
         .side-panel {
-            width: 220px;
+            width: 200px;
             background: rgba(9, 20, 40, 0.95);
             border: 2px solid #c8aa6e;
             padding: 15px;
             border-radius: 8px;
-            height: 520px;
+            max-height: 500px;
             display: flex;
             flex-direction: column;
         }
 
         #baron-img {
-            width: 160px;
-            height: 160px;
+            width: 140px;
+            height: 140px;
             object-fit: contain;
-            margin-bottom: 10px;
+            pointer-events: none; /* Let clicks pass through to container */
             filter: drop-shadow(0 0 15px rgba(0, 207, 188, 0.4));
         }
 
@@ -61,14 +62,9 @@
         .low-hp-shake { animation: shake 0.1s infinite; }
 
         .hp-container {
-            width: 100%;
-            height: 30px;
-            background-color: #1e2328;
-            border: 2px solid #c8aa6e;
-            position: relative;
-            margin-bottom: 15px;
-            border-radius: 4px;
-            overflow: hidden;
+            width: 100%; height: 30px; background-color: #1e2328;
+            border: 2px solid #c8aa6e; position: relative;
+            margin-bottom: 15px; border-radius: 4px; overflow: hidden;
         }
 
         #hp-fill { width: 100%; height: 100%; background: linear-gradient(90deg, #8a1a1a, #e62222); }
@@ -81,46 +77,49 @@
             width: 50px; height: 50px; border: 2px solid #c8aa6e;
             border-radius: 8px; margin: 10px auto; display: flex;
             align-items: center; justify-content: center; font-size: 24px;
-            font-weight: bold; background-color: #004a6e;
+            font-weight: bold; background-color: #004a6e; pointer-events: none;
         }
 
-        #message { margin-top: 15px; font-weight: bold; font-size: 1.4rem; min-height: 1.5em; }
-        #rank-display { font-size: 1.2rem; font-weight: bold; margin-bottom: 5px; text-transform: uppercase; }
+        #message { margin-top: 10px; font-weight: bold; font-size: 1.2rem; min-height: 1.5em; }
+        #rank-display { font-size: 1.4rem; font-weight: bold; margin-bottom: 5px; text-transform: uppercase; }
         #stats { color: #a09b8c; font-size: 0.85rem; margin-bottom: 15px; }
 
         .btn-group { display: flex; flex-direction: column; gap: 10px; }
-        
         button {
-            padding: 10px 25px; border: none; font-weight: bold;
+            padding: 12px; border: none; font-weight: bold;
             cursor: pointer; border-radius: 4px; text-transform: uppercase;
         }
-
         .restart-btn { background-color: #c8aa6e; color: #091428; }
         .share-btn { background-color: #00cfbc; color: #050a15; display: none; }
 
         ul { padding: 0; margin: 0; list-style: none; overflow-y: auto; flex-grow: 1; }
-        li { margin-bottom: 8px; font-size: 0.75rem; border-bottom: 1px solid #333; padding-bottom: 4px; }
+        li { margin-bottom: 6px; font-size: 0.7rem; border-bottom: 1px solid #333; padding-bottom: 3px; }
         .rank-tag { font-weight: bold; margin-right: 5px; }
-        h4 { margin: 10px 0 5px 0; color: #c8aa6e; text-align: center; border-bottom: 1px solid #c8aa6e; font-size: 0.9rem;}
+        h4 { margin: 8px 0 4px 0; color: #c8aa6e; text-align: center; border-bottom: 1px solid #c8aa6e; font-size: 0.8rem;}
+
+        @media (max-width: 600px) {
+            #main-layout { flex-direction: column; align-items: center; overflow-y: auto; height: 100vh; }
+            .side-panel { width: 340px; height: auto; max-height: 300px; }
+        }
     </style>
 </head>
 <body>
 
     <div id="main-layout">
-        <div id="game-container">
+        <div id="game-container" onmousedown="triggerSmite(event)" ontouchstart="triggerSmite(event)">
             <img id="baron-img" src="baron_nashor.png" alt="Baron">
             <div class="hp-container">
                 <div id="hp-fill"></div>
                 <div id="hp-text">13000 / 13000</div>
             </div>
             <div class="smite-icon">D</div>
-            <div id="message">CHALLENGER OR WOOD?</div>
+            <div id="message">TAP TO SMITE</div>
             <div id="rank-display"></div>
-            <div id="stats">Threshold: 1000 HP</div>
+            <div id="stats">Target: 1000 HP</div>
             
             <div class="btn-group">
-                <button class="restart-btn" onclick="resetGame()">Start Encounter</button>
-                <button id="share-btn" class="share-btn" onclick="shareAsImage()">Copy Result to Clipboard</button>
+                <button class="restart-btn" onmousedown="event.stopPropagation(); resetGame()" ontouchstart="event.stopPropagation(); resetGame()">Start Practice</button>
+                <button id="share-btn" class="share-btn" onmousedown="event.stopPropagation(); shareAsImage()" ontouchstart="event.stopPropagation(); shareAsImage()">Save Result Image</button>
             </div>
         </div>
 
@@ -150,21 +149,9 @@
         const stats = document.getElementById('stats');
         const baronImg = document.getElementById('baron-img');
         const sfx = document.getElementById('smiteSound');
-        const lbList = document.getElementById('leaderboard-list');
-        const logList = document.getElementById('recent-logs');
         const shareBtn = document.getElementById('share-btn');
 
         const WOOD_RANK = { name: "WOOD", color: "#8B4513" };
-
-        function getRank(hp, secured) {
-            if (!secured) return WOOD_RANK;
-            if (hp <= 50) return { name: "CHALLENGER", color: "#f5d061" };
-            if (hp <= 200) return { name: "GRANDMASTER", color: "#ff4e50" };
-            if (hp <= 400) return { name: "MASTER", color: "#d161ff" };
-            if (hp <= 600) return { name: "DIAMOND", color: "#61a0ff" };
-            if (hp <= 800) return { name: "PLATINUM", color: "#61ffcc" };
-            return { name: "GOLD", color: "#e1ad42" };
-        }
 
         function updateUI() {
             const percent = (health / maxHP) * 100;
@@ -174,23 +161,41 @@
             else baronImg.classList.remove('low-hp-shake');
         }
 
-        function startGame() {
-            isGameOver = false;
-            startTime = null;
-            health = maxHP;
-            shareBtn.style.display = "none";
-            loop = setInterval(() => {
-                health -= (Math.random() * 220 + 80);
-                if (health <= threshold && !startTime) startTime = Date.now();
-                if (health <= 0) { health = 0; endGame(false, 0); }
-                updateUI();
-            }, 80);
+        function triggerSmite(e) {
+            if (isGameOver) return;
+            if (e) e.preventDefault(); // Prevents ghost clicks on mobile
+
+            sfx.currentTime = 0; 
+            sfx.play().catch(()=>{});
+            document.body.classList.add('smite-flash');
+            setTimeout(() => document.body.classList.remove('smite-flash'), 100);
+
+            if (health <= threshold) {
+                const finalHP = health;
+                health = 0; updateUI(); endGame(true, finalHP);
+            } else {
+                const earlyHP = health;
+                isGameOver = true;
+                clearInterval(loop);
+                msg.innerText = "TOO EARLY!";
+                msg.style.color = "#ff4e50";
+                rankDiv.innerText = "WOOD";
+                rankDiv.style.color = WOOD_RANK.color;
+                stats.innerText = `Smote at ${Math.floor(earlyHP)} HP.`;
+                shareBtn.style.display = "block";
+                addLog(WOOD_RANK, earlyHP);
+            }
         }
+
+        // Keep keyboard support
+        window.addEventListener('keydown', (e) => {
+            if (e.key.toLowerCase() === 'd') triggerSmite();
+        });
 
         function endGame(secured, hpAtSmite) {
             isGameOver = true;
             clearInterval(loop);
-            const rank = getRank(hpAtSmite, secured);
+            const rank = secured ? calculateRank(hpAtSmite) : WOOD_RANK;
             
             if (secured) {
                 const reaction = Date.now() - startTime;
@@ -210,52 +215,57 @@
             addLog(rank, hpAtSmite);
         }
 
-        window.addEventListener('keydown', (e) => {
-            if (e.key.toLowerCase() === 'd' && !isGameOver) {
-                sfx.currentTime = 0; sfx.play().catch(()=>{});
-                document.body.classList.add('smite-flash');
-                setTimeout(() => document.body.classList.remove('smite-flash'), 100);
-
-                if (health <= threshold) {
-                    endGame(true, health);
-                    health = 0; updateUI(); 
-                } else {
-                    const earlyHP = health;
-                    isGameOver = true;
-                    clearInterval(loop);
-                    msg.innerText = "TOO EARLY!";
-                    msg.style.color = "#ff4e50";
-                    rankDiv.innerText = WOOD_RANK.name;
-                    rankDiv.style.color = WOOD_RANK.color;
-                    stats.innerText = `Smote at ${Math.floor(earlyHP)} HP.`;
-                    shareBtn.style.display = "block";
-                    addLog(WOOD_RANK, earlyHP);
-                }
-            }
-        });
+        function calculateRank(hp) {
+            if (hp <= 50) return { name: "CHALLENGER", color: "#f5d061" };
+            if (hp <= 200) return { name: "GRANDMASTER", color: "#ff4e50" };
+            if (hp <= 400) return { name: "MASTER", color: "#d161ff" };
+            if (hp <= 600) return { name: "DIAMOND", color: "#61a0ff" };
+            if (hp <= 800) return { name: "PLATINUM", color: "#61ffcc" };
+            return { name: "GOLD", color: "#e1ad42" };
+        }
 
         async function shareAsImage() {
             const container = document.getElementById('game-container');
             const originalBtnDisplay = shareBtn.style.display;
-            shareBtn.style.display = "none"; // Hide button in the screenshot
+            shareBtn.style.display = "none"; 
 
             try {
-                const canvas = await html2canvas(container, {
-                    backgroundColor: "#050a15",
-                    scale: 2 // Higher quality
-                });
-                
-                canvas.toBlob(async (blob) => {
-                    const item = new ClipboardItem({ "image/png": blob });
-                    await navigator.clipboard.write([item]);
-                    alert("Result image copied to clipboard! Paste it into Discord/Chat.");
-                    shareBtn.style.display = originalBtnDisplay;
-                });
-            } catch (err) {
-                console.error("Failed to copy image: ", err);
-                alert("Browser blocked clipboard access. Try again or check settings.");
+                const canvas = await html2canvas(container, { backgroundColor: "#050a15", scale: 2 });
+                const image = canvas.toDataURL("image/png");
+                const link = document.createElement('a');
+                link.download = `Smite_Result_${rankDiv.innerText}.png`;
+                link.href = image;
+                link.click();
                 shareBtn.style.display = originalBtnDisplay;
+            } catch (err) {
+                shareBtn.style.display = originalBtnDisplay;
+                alert("Capture failed. Try taking a normal screenshot!");
             }
+        }
+
+        function startGame() {
+            isGameOver = false; health = maxHP; startTime = null; shareBtn.style.display = "none";
+            loop = setInterval(() => {
+                health -= (Math.random() * 220 + 80);
+                if (health <= threshold && !startTime) startTime = Date.now();
+                if (health <= 0) { health = 0; endGame(false, 0); }
+                updateUI();
+            }, 80);
+        }
+
+        function resetGame() {
+            clearInterval(loop);
+            msg.innerText = "FOCUS..."; msg.style.color = "#f0e6d2";
+            rankDiv.innerText = ""; stats.innerText = "Threshold: 1000 HP";
+            updateUI(); startGame();
+        }
+
+        function addLog(rank, hp) {
+            logs.unshift({ rank: rank.name, color: rank.color, hp: Math.floor(hp) });
+            if (logs.length > 10) logs.pop();
+            document.getElementById('recent-logs').innerHTML = logs.map(l => 
+                `<li><span class="rank-tag" style="color:${l.color}">${l.rank}</span> <span style="float:right">${l.hp} HP</span></li>`
+            ).join('');
         }
 
         function saveHallOfFame(hp, rank) {
@@ -264,36 +274,16 @@
             scores.sort((a, b) => a.hp - b.hp);
             scores = scores.slice(0, 5);
             localStorage.setItem('smiteScoresFinal', JSON.stringify(scores));
-            displayHallOfFame();
-        }
-
-        function displayHallOfFame() {
-            const scores = JSON.parse(localStorage.getItem('smiteScoresFinal') || '[]');
-            lbList.innerHTML = scores.map(s => 
+            document.getElementById('leaderboard-list').innerHTML = scores.map(s => 
                 `<li><span class="rank-tag" style="color:${s.color}">${s.rank}</span> ${s.hp} HP</li>`
             ).join('');
         }
 
-        function addLog(rank, hp) {
-            logs.unshift({ rank: rank.name, color: rank.color, hp: Math.floor(hp) });
-            if (logs.length > 10) logs.pop();
-            logList.innerHTML = logs.map(l => 
-                `<li><span class="rank-tag" style="color:${l.color}">${l.rank}</span> <span style="float:right">${l.hp} HP</span></li>`
-            ).join('');
-        }
-
-        function resetGame() {
-            clearInterval(loop);
-            msg.innerText = "FOCUS...";
-            msg.style.color = "#f0e6d2";
-            rankDiv.innerText = "";
-            stats.innerText = "Threshold: 1000 HP";
-            shareBtn.style.display = "none";
-            updateUI();
-            startGame();
-        }
-
-        displayHallOfFame();
+        // Load Initial Hall of Fame
+        const scores = JSON.parse(localStorage.getItem('smiteScoresFinal') || '[]');
+        document.getElementById('leaderboard-list').innerHTML = scores.map(s => 
+            `<li><span class="rank-tag" style="color:${s.color}">${s.rank}</span> ${s.hp} HP</li>`
+        ).join('');
     </script>
 </body>
 </html>
