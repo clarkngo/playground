@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>STC Physical AI Lab: LiDAR Sim</title>
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: sans-serif; background: #1a1a1a; color: white; }
+        #ui { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.8); padding: 15px; border-radius: 8px; width: 350px; }
+        textarea { width: 100%; height: 150px; background: #2d2d2d; color: #a6e22e; border: 1px solid #555; font-family: monospace; }
+        button { background: #007bff; color: white; border: none; padding: 10px; cursor: pointer; width: 100%; margin-top: 10px; }
+        #telemetry { font-size: 0.8em; margin-top: 10px; color: #00ff00; }
+    </style>
+</head>
+<body>
+
+<div id="ui">
+    <h3>Physical AI: Navigation Lab</h3>
+    <p>Edit the Python logic to avoid the wall:</p>
+    <textarea id="code">
+def control_loop(front_dist):
+    # front_dist is distance to wall
+    if front_dist < 2.0:
+        return 0.0  # Stop
+    else:
+        return 0.05 # Move forward
+    </textarea>
+    <button onclick="runPython()">Update Robot Brain</button>
+    <div id="telemetry">Distance to Wall: <span id="dist-val">0</span></div>
+</div>
+
+<script>
+    // --- THREE.JS SETUP (The Physical World) ---
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    // Robot (The Body)
+    const robotGeom = new THREE.BoxGeometry(1, 0.5, 1);
+    const robotMat = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+    const robot = new THREE.Mesh(robotGeom, robotMat);
+    scene.add(robot);
+
+    // Wall (The Obstacle)
+    const wallGeom = new THREE.BoxGeometry(1, 5, 20);
+    const wallMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+    const wall = new THREE.Mesh(wallGeom, wallMat);
+    wall.position.x = 10;
+    scene.add(wall);
+
+    camera.position.z = 15;
+    camera.position.y = 10;
+    camera.lookAt(robot.position);
+
+    // --- PYODIDE SETUP (The AI Brain) ---
+    let pyodide;
+    let velocity = 0;
+
+    async function setupPyodide() {
+        pyodide = await loadPyodide();
+        console.log("Brain Ready");
+    }
+    setupPyodide();
+
+    async function runPython() {
+        const code = document.getElementById('code').value;
+        await pyodide.runPythonAsync(code);
+    }
+
+    // --- SIMULATION LOOP ---
+    function animate() {
+        requestAnimationFrame(animate);
+
+        // 1. SENSE: Calculate distance to wall (Simple LiDAR)
+        const dist = wall.position.x - robot.position.x;
+        document.getElementById('dist-val').innerText = dist.toFixed(2);
+
+        // 2. THINK: Run Python logic
+        if (pyodide) {
+            try {
+                // Pass sensing data into Python function
+                velocity = pyodide.runPython(`control_loop(${dist})`);
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        // 3. ACT: Apply movement
+        robot.position.x += velocity;
+        
+        renderer.render(scene, camera);
+    }
+    animate();
+</script>
+</body>
+</html>

@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wild Rift Smite Trainer</title>
+    <style>
+        body {
+            background-color: #050a15;
+            color: #f0e6d2;
+            font-family: 'Segoe UI', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            transition: background-color 0.1s ease;
+        }
+
+        body.smite-flash { background-color: #f5d061; }
+
+        #main-layout {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+
+        #game-container {
+            text-align: center;
+            border: 2px solid #005a82;
+            padding: 30px;
+            background: linear-gradient(180deg, #091428 0%, #050a15 100%);
+            border-radius: 12px;
+            box-shadow: 0 0 40px rgba(0, 207, 188, 0.3);
+            width: 400px;
+        }
+
+        #leaderboard-container {
+            width: 200px;
+            background: rgba(9, 20, 40, 0.9);
+            border: 2px solid #c8aa6e;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        #baron-img {
+            width: 180px;
+            height: 180px;
+            object-fit: contain;
+            margin-bottom: 10px;
+            filter: drop-shadow(0 0 15px rgba(0, 207, 188, 0.4));
+        }
+
+        @keyframes shake {
+            0% { transform: translate(1px, 1px); }
+            50% { transform: translate(-2px, -1px); }
+            100% { transform: translate(1px, 1px); }
+        }
+        .low-hp-shake { animation: shake 0.1s infinite; }
+
+        .hp-container {
+            width: 100%;
+            height: 30px;
+            background-color: #1e2328;
+            border: 2px solid #c8aa6e;
+            position: relative;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        #hp-fill {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, #8a1a1a, #e62222);
+        }
+
+        #hp-text {
+            position: absolute;
+            width: 100%;
+            top: 4px;
+            left: 0;
+            font-weight: bold;
+            font-size: 18px;
+            text-shadow: 1px 1px 2px black;
+        }
+
+        .smite-icon {
+            width: 50px;
+            height: 50px;
+            border: 2px solid #c8aa6e;
+            border-radius: 8px;
+            margin: 10px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            background-color: #004a6e;
+        }
+
+        #message { margin-top: 15px; font-weight: bold; min-height: 1.5em; }
+        #stats { color: #a09b8c; font-size: 0.85rem; margin-bottom: 10px; }
+
+        .restart-btn {
+            padding: 8px 20px;
+            background-color: #c8aa6e;
+            border: none;
+            color: #091428;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+
+        ol { padding-left: 25px; margin-top: 10px; text-align: left; }
+        li { margin-bottom: 5px; color: #f0e6d2; }
+    </style>
+</head>
+<body>
+
+    <div id="main-layout">
+        <div id="game-container">
+            <img id="baron-img" src="baron_nashor.png" alt="Baron">
+            
+            <div class="hp-container">
+                <div id="hp-fill"></div>
+                <div id="hp-text">13000 / 13000</div>
+            </div>
+
+            <div class="smite-icon">D</div>
+            <div id="message">Focus Up!</div>
+            <div id="stats">Wait for 1000 HP</div>
+            
+            <button class="restart-btn" onclick="resetGame()">Smite Again</button>
+        </div>
+
+        <div id="leaderboard-container">
+            <h3 style="margin-top: 0; color: #c8aa6e; text-align: center;">TOP SMITES</h3>
+            <div style="font-size: 0.7rem; text-align: center; color: #a09b8c;">(Closest to 0 HP)</div>
+            <ol id="leaderboard-list"></ol>
+            <button onclick="clearScores()" style="font-size: 0.6rem; background: none; border: 1px solid #555; color: #888; cursor: pointer; width: 100%;">Clear Scores</button>
+        </div>
+    </div>
+
+    <audio id="smiteSound" src="smite_sound.mp3" preload="auto"></audio>
+
+    <script>
+        let maxHP = 13000;
+        let health = maxHP;
+        const threshold = 1000;
+        let isGameOver = false;
+        let loop;
+        let startTime;
+
+        const hpFill = document.getElementById('hp-fill');
+        const hpText = document.getElementById('hp-text');
+        const msg = document.getElementById('message');
+        const stats = document.getElementById('stats');
+        const baronImg = document.getElementById('baron-img');
+        const sfx = document.getElementById('smiteSound');
+        const lbList = document.getElementById('leaderboard-list');
+
+        function updateUI() {
+            const percent = (health / maxHP) * 100;
+            hpFill.style.width = percent + "%";
+            hpText.innerText = `${Math.max(0, Math.floor(health))} HP`;
+            if (health < 3000 && health > 0) baronImg.classList.add('low-hp-shake');
+            else baronImg.classList.remove('low-hp-shake');
+        }
+
+        function startGame() {
+            loop = setInterval(() => {
+                health -= (Math.random() * 200 + 70);
+                if (health <= threshold && !startTime) startTime = Date.now();
+                if (health <= 0) { health = 0; endGame(false); }
+                updateUI();
+            }, 80);
+        }
+
+        function saveScore(hp) {
+            let scores = JSON.parse(localStorage.getItem('smiteScores') || '[]');
+            scores.push(Math.floor(hp));
+            scores.sort((a, b) => a - b);
+            scores = scores.slice(0, 5);
+            localStorage.setItem('smiteScores', JSON.stringify(scores));
+            displayLeaderboard();
+        }
+
+        function displayLeaderboard() {
+            const scores = JSON.parse(localStorage.getItem('smiteScores') || '[]');
+            lbList.innerHTML = scores.map(s => `<li>${s} HP Smite</li>`).join('');
+        }
+
+        function clearScores() {
+            localStorage.removeItem('smiteScores');
+            displayLeaderboard();
+        }
+
+        function endGame(secured, hpAtSmite) {
+            isGameOver = true;
+            clearInterval(loop);
+            if (secured) {
+                const reaction = Date.now() - startTime;
+                msg.innerText = "SECURED!";
+                msg.style.color = "#00ffcc";
+                stats.innerText = `Left with: ${Math.floor(hpAtSmite)} HP | ${reaction}ms`;
+                saveScore(hpAtSmite);
+            } else {
+                msg.innerText = "STOLEN!";
+                msg.style.color = "#ff4e50";
+                stats.innerText = "Too slow on the trigger.";
+            }
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key.toLowerCase() === 'd' && !isGameOver) {
+                sfx.currentTime = 0; sfx.play().catch(()=>{});
+                document.body.classList.add('smite-flash');
+                setTimeout(() => document.body.classList.remove('smite-flash'), 100);
+
+                if (health <= threshold) {
+                    const finalHP = health;
+                    health = 0; updateUI(); endGame(true, finalHP);
+                } else {
+                    msg.innerText = "TOO EARLY!";
+                    msg.style.color = "#ff4e50";
+                    stats.innerText = `Missed by ${Math.floor(health - threshold)} HP.`;
+                    isGameOver = true; clearInterval(loop);
+                }
+            }
+        });
+
+        function resetGame() {
+            clearInterval(loop);
+            health = maxHP; isGameOver = false; startTime = null;
+            msg.innerText = "Focus Up!"; msg.style.color = "#f0e6d2";
+            stats.innerText = "Wait for 1000 HP";
+            updateUI(); startGame();
+        }
+
+        displayLeaderboard();
+        startGame();
+    </script>
+</body>
+</html>

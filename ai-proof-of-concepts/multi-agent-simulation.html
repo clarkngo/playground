@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Brainstorm Loop - Prototype</title>
+    <style>
+        :root { --bg: #f4f7f6; --card: #ffffff; --primary: #4a90e2; --text: #333; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); padding: 2rem; display: flex; flex-direction: column; align-items: center; }
+        .container { max-width: 900px; width: 100%; }
+        .input-section { background: var(--card); padding: 1.5rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 2rem; }
+        textarea { width: 100%; height: 80px; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; box-sizing: border-box; }
+        button { background: var(--primary); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 1rem; margin-top: 10px; transition: opacity 0.2s; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        
+        .agent-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 2rem; }
+        .agent-card { background: var(--card); padding: 1rem; border-radius: 12px; border-top: 5px solid #ccc; min-height: 150px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .agent-card.active { border-top-color: var(--primary); }
+        .agent-name { font-weight: bold; font-size: 0.9rem; color: #666; margin-bottom: 8px; text-transform: uppercase; }
+        
+        .summary-section { background: #eef2f7; padding: 1.5rem; border-radius: 12px; border: 2px dashed #4a90e2; display: none; }
+        .typing { font-style: italic; color: #888; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🧠 AI-in-the-Loop Brainstorm</h2>
+    
+    <div class="input-section">
+        <label>Enter Meeting Context / Idea:</label>
+        <textarea id="contextInput">Create a neighborhood app for sharing power tools and gardening equipment.</textarea>
+        <button id="runBtn" onclick="startBrainstorm()">Run Multi-Agent Session</button>
+    </div>
+
+    <div class="agent-grid">
+        <div class="agent-card" id="visionary">
+            <div class="agent-name">🚀 The Visionary</div>
+            <div class="content">Waiting...</div>
+        </div>
+        <div class="agent-card" id="realist">
+            <div class="agent-name">⚖️ The Realist</div>
+            <div class="content">Waiting...</div>
+        </div>
+        <div class="agent-card" id="advocate">
+            <div class="agent-name">👤 User Advocate</div>
+            <div class="content">Waiting...</div>
+        </div>
+    </div>
+
+    <div class="summary-section" id="summary">
+        <div class="agent-name">📋 Final Summary Agent</div>
+        <div class="content" id="summaryContent"></div>
+    </div>
+</div>
+
+<script>
+const agentData = {
+    visionary: "This isn't just about tools; it's about rebuilding social capital. We could implement a 'Community Trust Score' and expand to shared micro-grids for energy sharing next.",
+    realist: "The primary risks are liability for broken equipment and the cost of verifying users. We need a robust 'Terms of Service' and a small deposit system to ensure tool return.",
+    advocate: "Users will worry about convenience. If I have to drive 20 minutes to get a drill, I'll just buy one. The UI must emphasize proximity and real-time availability.",
+    summary: "Strategic Move: Launch a hyper-local pilot. Focus on 'Proximity' (Advocate's point) with a 'Deposit' safety net (Realist's point) to build the 'Trust Score' (Visionary's point)."
+};
+
+function typeWriter(elementId, text, delay = 30) {
+    let i = 0;
+    const element = document.querySelector(`#${elementId} .content`);
+    element.innerHTML = "";
+    return new Promise(resolve => {
+        function type() {
+            if (i < text.length) {
+                element.innerHTML += text.charAt(i);
+                i++;
+                setTimeout(type, delay);
+            } else {
+                resolve();
+            }
+        }
+        type();
+    });
+}
+
+async function startBrainstorm() {
+    const btn = document.getElementById('runBtn');
+    btn.disabled = true;
+    
+    // Reset and show active status
+    document.querySelectorAll('.agent-card').forEach(c => c.classList.add('active'));
+    document.querySelectorAll('.agent-card .content').forEach(c => c.innerHTML = "<span class='typing'>Thinking...</span>");
+    document.getElementById('summary').style.display = "none";
+
+    // Run persona agents in parallel
+    await Promise.all([
+        typeWriter('visionary', agentData.visionary),
+        typeWriter('realist', agentData.realist),
+        typeWriter('advocate', agentData.advocate)
+    ]);
+
+    // Trigger Summarizer after personas are done
+    document.getElementById('summary').style.display = "block";
+    document.getElementById('summaryContent').innerHTML = "<span class='typing'>Synthesizing agent outputs...</span>";
+    await typeWriter('summary', agentData.summary, 20);
+    
+    btn.disabled = false;
+}
+</script>
+
+</body>
+</html>
