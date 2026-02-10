@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Lee Sin Insec Trainer</title>
+    <style>
+        body { margin: 0; background: #010a13; color: #cdbe91; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
+        #game-ui { position: absolute; bottom: 20px; display: flex; gap: 15px; }
+        .ability { width: 60px; height: 60px; border: 2px solid #937341; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: #05141c; font-weight: bold; position: relative; }
+        .cooldown { position: absolute; bottom: -20px; font-size: 12px; color: #f0e6d2; }
+        canvas { border: 2px solid #3c3c41; background: #1e2328; cursor: crosshair; border-radius: 8px; box-shadow: 0 0 50px rgba(0,0,0,0.8); }
+        .msg { position: absolute; top: 50px; font-size: 24px; text-transform: uppercase; letter-spacing: 2px; height: 30px; }
+    </style>
+</head>
+<body>
+
+<div class="msg" id="feedback">Land the Sonic Wave (Q)!</div>
+<canvas id="game"></canvas>
+
+<div id="game-ui">
+    <div class="ability" id="q-btn">Q<div class="cooldown">Sonic</div></div>
+    <div class="ability" id="f-btn">F<div class="cooldown">Flash</div></div>
+    <div class="ability" id="r-btn">R<div class="cooldown">Kick</div></div>
+</div>
+
+<script>
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const feedback = document.getElementById('feedback');
+canvas.width = 700; canvas.height = 500;
+
+// Game Objects
+let player = { x: 100, y: 250, r: 15, state: 'IDLE' };
+let dummy = { x: 500, y: 250, r: 20, hit: false };
+let projectile = null;
+let comboStep = 0; // 0: Need Q, 1: Q hit (need Q2), 2: Flying (need Flash), 3: Behind (need R)
+
+function reset() {
+    player = { x: 100, y: 250, r: 15, state: 'IDLE' };
+    dummy = { x: 500 + (Math.random()*100 - 50), y: 250 + (Math.random()*100 - 50), r: 20, hit: false };
+    projectile = null;
+    comboStep = 0;
+    feedback.innerText = "Land the Sonic Wave (Q)!";
+    feedback.style.color = "#cdbe91";
+}
+
+window.addEventListener('keydown', (e) => {
+    const key = e.key.toLowerCase();
+
+    // STEP 1: Fire Q
+    if (key === 'q' && comboStep === 0) {
+        projectile = { x: player.x, y: player.y, vx: 8, vy: 0 };
+        feedback.innerText = "Nice! Hit the dummy!";
+    }
+
+    // STEP 2: Dash to Q
+    if (key === 'q' && comboStep === 1) {
+        player.state = 'DASHING';
+        comboStep = 2;
+        feedback.innerText = "FLASH BEHIND NOW!";
+        feedback.style.color = "#00ffff";
+    }
+
+    // STEP 3: Flash behind
+    if (key === 'f' && comboStep === 2) {
+        // Flash to the right side of the dummy
+        player.x = dummy.x + 40;
+        player.y = dummy.y;
+        comboStep = 3;
+        feedback.innerText = "DRAGON'S RAGE (R)!";
+        feedback.style.color = "#ffcc00";
+    }
+
+    // STEP 4: The Kick
+    if (key === 'r' && comboStep === 3) {
+        dummy.vx = -15; // Fly backwards
+        feedback.innerText = "INSEC COMPLETE!";
+        feedback.style.color = "#00ff00";
+        setTimeout(reset, 2000);
+    }
+});
+
+function update() {
+    // Projectile movement
+    if (projectile) {
+        projectile.x += projectile.vx;
+        let d = Math.hypot(projectile.x - dummy.x, projectile.y - dummy.y);
+        if (d < dummy.r) {
+            dummy.hit = true;
+            comboStep = 1;
+            projectile = null;
+            feedback.innerText = "RECAST Q TO DASH!";
+        }
+        if (projectile && projectile.x > canvas.width) {
+            projectile = null;
+            feedback.innerText = "MISSED! Try again.";
+            setTimeout(reset, 1000);
+        }
+    }
+
+    // Player dash movement
+    if (player.state === 'DASHING') {
+        let dx = dummy.x - player.x;
+        let dy = dummy.y - player.y;
+        let dist = Math.hypot(dx, dy);
+        if (dist > 10) {
+            player.x += (dx / dist) * 12;
+            player.y += (dy / dist) * 12;
+        } else {
+            player.state = 'IDLE';
+            if (comboStep === 2) { 
+                feedback.innerText = "TOO SLOW! Flash before you land!";
+                setTimeout(reset, 1000);
+            }
+        }
+    }
+
+    // Dummy knockback
+    if (dummy.vx) {
+        dummy.x += dummy.vx;
+        dummy.vx *= 0.95;
+    }
+}
+
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw Ground Grid
+    ctx.strokeStyle = '#2a2f35';
+    for(let i=0; i<canvas.width; i+=40) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,canvas.height); ctx.stroke(); }
+
+    // Draw Dummy
+    ctx.fillStyle = dummy.hit ? '#44ccff' : '#ff4444';
+    ctx.beginPath(); ctx.arc(dummy.x, dummy.y, dummy.radius || 20, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = 'white'; ctx.stroke();
+
+    // Draw Player
+    ctx.fillStyle = '#cdbe91';
+    ctx.shadowBlur = 15; ctx.shadowColor = '#cdbe91';
+    ctx.beginPath(); ctx.arc(player.x, player.y, player.r, 0, Math.PI*2); ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // Draw Q Projectile
+    if (projectile) {
+        ctx.fillStyle = '#44ccff';
+        ctx.beginPath(); ctx.arc(projectile.x, projectile.y, 8, 0, Math.PI*2); ctx.fill();
+    }
+
+    update();
+    requestAnimationFrame(draw);
+}
+
+draw();
+</script>
+</body>
+</html>
