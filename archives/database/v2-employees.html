@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CS445 Database Lab Simulator</title>
+    <style>
+        :root { --adminer-blue: #2980b9; --adminer-bg: #f4f7f6; --success-green: #2d5a27; --text-gray: #555; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--adminer-bg); margin: 0; padding: 15px; display: flex; justify-content: center; }
+        .wrapper { display: flex; max-width: 1450px; width: 100%; gap: 15px; align-items: flex-start; }
+        
+        /* Layout Columns */
+        .col-left { flex: 1.2; background: white; border: 1px solid #ccc; padding: 15px; box-shadow: 2px 2px 8px rgba(0,0,0,0.05); }
+        .col-mid { flex: 2.5; background: white; border: 1px solid #999; box-shadow: 5px 5px 15px rgba(0,0,0,0.15); min-height: 850px; }
+        .col-right { flex: 1.2; background: #fff; border: 1px solid #ccc; padding: 15px; box-shadow: 2px 2px 8px rgba(0,0,0,0.05); font-size: 0.9em; }
+
+        h2 { margin-top: 0; font-size: 1.1em; color: #333; border-bottom: 2px solid var(--adminer-blue); padding-bottom: 5px; text-transform: uppercase; }
+        h4 { margin: 0; font-size: 0.95em; color: var(--adminer-blue); }
+        
+        /* Guide Styles */
+        .query-step { margin-bottom: 12px; border-left: 3px solid var(--adminer-blue); padding-left: 10px; }
+        pre { background: #f8f8f8; padding: 8px; font-size: 0.75em; border-radius: 4px; overflow-x: auto; cursor: pointer; border: 1px solid #ddd; margin-top: 5px; }
+        pre:hover { background: #f0f0f0; }
+
+        /* Simulator Styles */
+        .header { background: #eee; border-bottom: 1px solid #ccc; padding: 10px; display: flex; justify-content: space-between; font-size: 0.85em; }
+        .sidebar { width: 160px; border-right: 1px solid #ccc; padding: 15px; float: left; min-height: 800px; background: #fafafa; }
+        .content { margin-left: 190px; padding: 20px; }
+        .status-path { font-size: 0.8em; color: #777; margin-bottom: 15px; font-style: italic; }
+        .success-banner { background: #e7efed; border: 1px solid #c3d9cf; color: var(--success-green); padding: 10px; margin-bottom: 15px; display: none; font-size: 0.85em; }
+        textarea { width: 100%; height: 110px; font-family: 'Courier New', Courier, monospace; border: 1px solid #bbb; padding: 10px; box-sizing: border-box; }
+        button { background: #e1e1e1; border: 1px solid #999; padding: 6px 15px; cursor: pointer; margin-top: 10px; font-weight: bold; }
+        
+        /* Table Styles */
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.82em; }
+        th, td { border: 1px solid #ccc; padding: 6px; text-align: left; }
+        th { background: #f2f2f2; }
+
+        /* Explanation Styles */
+        .desc-item { margin-bottom: 18px; line-height: 1.4; color: var(--text-gray); }
+        .desc-item strong { color: #333; display: block; margin-bottom: 3px; border-bottom: 1px solid #eee; }
+    </style>
+</head>
+<body>
+
+<div class="wrapper">
+    <div class="col-left">
+        <h2>SQL Guide</h2>
+        <div class="query-step">
+            <h4>1. Create Table</h4>
+            <pre onclick="copy(this)">CREATE TABLE employee (
+    id int NOT NULL PRIMARY KEY,
+    name varchar(255) NOT NULL,
+    email varchar(255),
+    gender varchar(255),
+    designation varchar(255)
+);</pre>
+        </div>
+        <div class="query-step">
+            <h4>2. Insert Data</h4>
+            <pre onclick="copy(this)">INSERT INTO employee (id, name, email, gender, designation) VALUES
+(1, 'Alice', 'alice@xyz.com', 'M', 'Software Developer'),
+(2, 'John', 'john@xyz.com', 'M', 'Software Manager'),
+(3, 'Ajay', 'ajay@xyz.com', 'M', 'Software Developer'),
+(4, 'Polina', 'polina@xyz.com', 'F', 'Sales Manager'),
+(5, 'Henry', 'henry@xyz.com', 'M', 'Senior Software Manager');</pre>
+        </div>
+        <div class="query-step">
+            <h4>3. Read Data</h4>
+            <pre onclick="copy(this)">SELECT * FROM employee 
+WHERE designation = 'Software Developer';</pre>
+        </div>
+        <div class="query-step">
+            <h4>4. Update Data</h4>
+            <pre onclick="copy(this)">UPDATE employee 
+SET designation = 'Senior Software Developer' 
+WHERE id = 1;</pre>
+        </div>
+        <div class="query-step">
+            <h4>5. Find One</h4>
+            <pre onclick="copy(this)">SELECT * FROM employee 
+WHERE id = 1;</pre>
+        </div>
+        <div class="query-step">
+            <h4>6. Delete One</h4>
+            <pre onclick="copy(this)">DELETE FROM employee 
+WHERE id = 3;</pre>
+        </div>
+        <div class="query-step">
+            <h4>7. Verify</h4>
+            <pre onclick="copy(this)">SELECT * FROM employee;</pre>
+        </div>
+    </div>
+
+    <div class="col-mid">
+        <div class="header">
+            <strong>Adminer 5.2.1</strong>
+            <span id="user-display">Not logged in</span>
+        </div>
+        <div class="sidebar">
+            <strong>DB:</strong> <span id="db-sidebar">None</span>
+            <hr>
+            <div id="nav" style="display:none; font-size: 0.8em;">
+                <p style="color:blue; cursor:pointer;" onclick="view('sql')">SQL command</p>
+                <div id="tbl-link" style="display:none; margin-top:10px;">
+                    <strong>Tables:</strong><br>employee
+                </div>
+            </div>
+            <button onclick="location.reload()" style="margin-top:250px; font-size: 0.7em; width: 100%;">Reset Simulation</button>
+        </div>
+        <div class="content">
+            <div id="v-login">
+                <h1>Login</h1>
+                <table style="width: auto;">
+                    <tr><td>Server</td><td><input type="text" id="srv" value="mysql-dev-container"></td></tr>
+                    <tr><td>Username</td><td><input type="text" id="usr" value="root"></td></tr>
+                    <tr><td>Password</td><td><input type="password" value="root"></td></tr>
+                </table>
+                <button onclick="doLogin()">Login</button>
+            </div>
+            <div id="v-db" style="display:none;">
+                <h1>Create database</h1>
+                <input type="text" id="db-name" value="dbe">
+                <button onclick="doDB()">Save</button>
+            </div>
+            <div id="v-sql" style="display:none;">
+                <div class="status-path">MySQL » mysql-dev-container » dbe » SQL command</div>
+                <div id="banner" class="success-banner"></div>
+                <textarea id="sql-in"></textarea>
+                <button onclick="run()">Execute</button>
+                <div id="res-tbl" style="display:none;">
+                    <h3>Selected Records</h3>
+                    <table id="main-table">
+                        <thead><tr><th>id</th><th>name</th><th>email</th><th>gender</th><th>designation</th></tr></thead>
+                        <tbody id="tbl-body"></tbody>
+                    </table>
+                    <p id="count" style="font-weight:bold;"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-right">
+        <h2>Command Explanations</h2>
+        <div class="desc-item">
+            <strong>CREATE TABLE</strong>
+            Defines the table schema. <code>id</code> is the Primary Key, ensuring every employee has a unique identifier.
+        </div>
+        <div class="desc-item">
+            <strong>INSERT INTO</strong>
+            Adds new records (rows) to the table. This populates your database with initial data for Alice, John, Ajay, Polina, and Henry.
+        </div>
+        <div class="desc-item">
+            <strong>SELECT (READ)</strong>
+            The <code>WHERE</code> clause filters data. Step 3 retrieves only "Software Developers," while Step 5 targets a specific <code>id</code>.
+        </div>
+        <div class="desc-item">
+            <strong>UPDATE</strong>
+            Modifies existing data. In Step 4, we change Alice's designation to promote her to a Senior role.
+        </div>
+        <div class="desc-item">
+            <strong>DELETE</strong>
+            Permanently removes a record. Step 6 removes Ajay from the table using his unique <code>id</code>.
+        </div>
+        <div class="desc-item">
+            <strong>VERIFY</strong>
+            A final <code>SELECT *</code> (Select All) shows the final state of the table after all your CRUD modifications.
+        </div>
+    </div>
+</div>
+
+<script>
+    let dbState = { data: [] };
+    const initialData = [
+        {id: 1, name: 'Alice', email: 'alice@xyz.com', gender: 'M', designation: 'Software Developer'},
+        {id: 2, name: 'John', email: 'john@xyz.com', gender: 'M', designation: 'Software Manager'},
+        {id: 3, name: 'Ajay', email: 'ajay@xyz.com', gender: 'M', designation: 'Software Developer'},
+        {id: 4, name: 'Polina', email: 'polina@xyz.com', gender: 'F', designation: 'Sales Manager'},
+        {id: 5, name: 'Henry', email: 'henry@xyz.com', gender: 'M', designation: 'Senior Software Manager'}
+    ];
+    function copy(el) { navigator.clipboard.writeText(el.innerText); el.style.background = "#d4edda"; setTimeout(() => el.style.background = "#f8f8f8", 400); }
+    function view(v) { ['v-login', 'v-db', 'v-sql'].forEach(x => document.getElementById(x).style.display = 'none'); document.getElementById('v-' + v).style.display = 'block'; }
+    function doLogin() { document.getElementById('user-display').innerText = "Logged as: root@172.19.0.3"; view('db'); }
+    function doDB() { document.getElementById('db-sidebar').innerText = 'dbe'; document.getElementById('nav').style.display = 'block'; view('sql'); }
+    function run() {
+        const sql = document.getElementById('sql-in').value.toUpperCase().trim();
+        const banner = document.getElementById('banner');
+        const res = document.getElementById('res-tbl');
+        banner.style.display = 'block'; res.style.display = 'none';
+        if(sql.includes("CREATE TABLE")) { document.getElementById('tbl-link').style.display = 'block'; banner.innerText = "Query executed OK, 0 rows affected."; }
+        else if(sql.includes("INSERT INTO")) { dbState.data = JSON.parse(JSON.stringify(initialData)); banner.innerText = "Query executed OK, 5 rows affected."; }
+        else if(sql.includes("SELECT")) {
+            let filtered = dbState.data;
+            if(sql.includes("WHERE DESIGNATION")) filtered = dbState.data.filter(d => d.designation.toUpperCase().includes('SOFTWARE DEVELOPER'));
+            else if(sql.includes("WHERE ID=1") || sql.includes("WHERE ID = 1")) filtered = dbState.data.filter(d => d.id === 1);
+            banner.innerText = "Query executed OK."; render(filtered);
+        }
+        else if(sql.includes("UPDATE")) { dbState.data = dbState.data.map(d => d.id === 1 ? {...d, designation: 'Senior Software Developer'} : d); banner.innerText = "Query executed OK, 1 row affected."; }
+        else if(sql.includes("DELETE")) { dbState.data = dbState.data.filter(d => d.id !== 3); banner.innerText = "Query executed OK, 1 row affected."; }
+    }
+    function render(rows) { document.getElementById('res-tbl').style.display = 'block'; document.getElementById('tbl-body').innerHTML = rows.map(r => `<tr><td>${r.id}</td><td>${r.name}</td><td>${r.email}</td><td>${r.gender}</td><td>${r.designation}</td></tr>`).join(''); document.getElementById('count').innerText = rows.length + " row(s)"; }
+</script>
+</body>
+</html>
