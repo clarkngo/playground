@@ -1,0 +1,2162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>System Design Masterclass — 10-Week Course</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@400;600&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface2: #1a1a26;
+    --border: #2a2a3a;
+    --text: #e8e6f0;
+    --text-muted: #8887a0;
+    --accent: #ff6b35;
+    --accent2: #00d4aa;
+    --accent3: #7c6cff;
+    --accent4: #ff4081;
+    --code-bg: #0d0d15;
+    --week-gradient: linear-gradient(135deg, #ff6b35 0%, #ff4081 100%);
+    --glow: 0 0 40px rgba(255,107,53,0.15);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Outfit', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  ::selection {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  /* ═══════ HERO ═══════ */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background:
+      radial-gradient(ellipse at 30% 20%, rgba(255,107,53,0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 70% 80%, rgba(124,108,255,0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 50%, rgba(0,212,170,0.04) 0%, transparent 60%);
+    animation: drift 20s ease-in-out infinite;
+  }
+
+  @keyframes drift {
+    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+    33% { transform: translate(2%, -1%) rotate(1deg); }
+    66% { transform: translate(-1%, 2%) rotate(-1deg); }
+  }
+
+  .hero-badge {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1.25rem;
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 2rem;
+    animation: fadeUp 1s ease both;
+  }
+
+  .hero-badge .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .hero h1 {
+    position: relative;
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(3rem, 8vw, 7rem);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin-bottom: 1.5rem;
+    animation: fadeUp 1s 0.15s ease both;
+  }
+
+  .hero h1 .gradient-text {
+    background: var(--week-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero p {
+    position: relative;
+    font-size: 1.2rem;
+    color: var(--text-muted);
+    max-width: 600px;
+    margin-bottom: 3rem;
+    animation: fadeUp 1s 0.3s ease both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .hero-stats {
+    position: relative;
+    display: flex;
+    gap: 3rem;
+    animation: fadeUp 1s 0.45s ease both;
+  }
+
+  .hero-stats .stat {
+    text-align: center;
+  }
+
+  .hero-stats .stat-num {
+    font-family: 'DM Serif Display', serif;
+    font-size: 2.5rem;
+    color: var(--accent2);
+  }
+
+  .hero-stats .stat-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-muted);
+  }
+
+  .scroll-cue {
+    position: absolute;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    animation: bob 2s ease-in-out infinite;
+  }
+
+  @keyframes bob {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    50% { transform: translateX(-50%) translateY(8px); }
+  }
+
+  .scroll-cue .arrow {
+    width: 20px;
+    height: 20px;
+    border-right: 2px solid var(--text-muted);
+    border-bottom: 2px solid var(--text-muted);
+    transform: rotate(45deg);
+  }
+
+  /* ═══════ NAV ═══════ */
+  .week-nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(10,10,15,0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 0.75rem 1rem;
+    overflow-x: auto;
+    display: flex;
+    gap: 0.25rem;
+    scrollbar-width: none;
+  }
+  .week-nav::-webkit-scrollbar { display: none; }
+
+  .week-nav a {
+    flex-shrink: 0;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: all 0.3s;
+    white-space: nowrap;
+  }
+
+  .week-nav a:hover, .week-nav a.active {
+    color: var(--text);
+    background: var(--surface2);
+  }
+
+  .week-nav a.active {
+    color: var(--accent);
+    background: rgba(255,107,53,0.1);
+  }
+
+  /* ═══════ PROGRESS BAR ═══════ */
+  .progress-container {
+    position: fixed;
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 0.6rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  .progress-bar {
+    width: 120px;
+    height: 4px;
+    background: var(--surface2);
+    border-radius: 100px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--week-gradient);
+    border-radius: 100px;
+    transition: width 0.3s;
+  }
+
+  /* ═══════ WEEK SECTIONS ═══════ */
+  .week-section {
+    padding: 6rem 1.5rem;
+    max-width: 960px;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  .week-header {
+    margin-bottom: 3rem;
+    position: relative;
+  }
+
+  .week-number {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(5rem, 12vw, 9rem);
+    position: absolute;
+    top: -2rem;
+    left: -1rem;
+    opacity: 0.04;
+    line-height: 1;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .week-label {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    padding: 0.35rem 0.85rem;
+    border: 1px solid rgba(255,107,53,0.3);
+    border-radius: 4px;
+    margin-bottom: 1rem;
+  }
+
+  .week-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(2rem, 4vw, 3rem);
+    line-height: 1.15;
+    margin-bottom: 0.75rem;
+  }
+
+  .week-subtitle {
+    font-size: 1.05rem;
+    color: var(--text-muted);
+    max-width: 700px;
+  }
+
+  /* ═══════ CONTENT CARDS ═══════ */
+  .content-grid {
+    display: grid;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2rem;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card:hover {
+    border-color: rgba(255,107,53,0.3);
+    box-shadow: var(--glow);
+    transform: translateY(-2px);
+  }
+
+  .card-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 1rem;
+    padding: 0.25rem 0.6rem;
+    border-radius: 4px;
+  }
+
+  .card-tag.concept { color: var(--accent3); background: rgba(124,108,255,0.1); }
+  .card-tag.reading { color: var(--accent2); background: rgba(0,212,170,0.1); }
+  .card-tag.code { color: var(--accent); background: rgba(255,107,53,0.1); }
+  .card-tag.visual { color: var(--accent4); background: rgba(255,64,129,0.1); }
+  .card-tag.exercise { color: #ffd740; background: rgba(255,215,64,0.1); }
+
+  .card h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+  }
+
+  .card p, .card li {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    line-height: 1.8;
+  }
+
+  .card ul {
+    list-style: none;
+    padding: 0;
+  }
+
+  .card ul li {
+    padding-left: 1.2rem;
+    position: relative;
+    margin-bottom: 0.35rem;
+  }
+
+  .card ul li::before {
+    content: '→';
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+  }
+
+  /* ═══════ CODE BLOCKS ═══════ */
+  .code-block {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-top: 1rem;
+  }
+
+  .code-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.6rem 1rem;
+    background: rgba(255,255,255,0.02);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .code-dots {
+    display: flex;
+    gap: 6px;
+  }
+
+  .code-dots span {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--border);
+  }
+
+  .code-dots span:first-child { background: #ff5f57; }
+  .code-dots span:nth-child(2) { background: #febc2e; }
+  .code-dots span:nth-child(3) { background: #28c840; }
+
+  .code-lang {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .code-body {
+    padding: 1.25rem;
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
+
+  .code-body pre {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    line-height: 1.7;
+    color: #c4c0d8;
+    white-space: pre;
+    tab-size: 2;
+  }
+
+  .code-body .kw { color: var(--accent3); }
+  .code-body .fn { color: #82aaff; }
+  .code-body .str { color: var(--accent2); }
+  .code-body .cm { color: #555570; font-style: italic; }
+  .code-body .num { color: var(--accent); }
+  .code-body .type { color: #ffd740; }
+  .code-body .op { color: var(--accent4); }
+
+  .copy-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 0.25rem 0.65rem;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    cursor: pointer;
+    font-family: 'Outfit', sans-serif;
+    transition: all 0.2s;
+  }
+
+  .copy-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  /* ═══════ DIAGRAM / VISUAL ═══════ */
+  .diagram-container {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2rem;
+    margin-top: 1rem;
+    overflow-x: auto;
+  }
+
+  .arch-diagram {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    min-height: 120px;
+  }
+
+  .d-box {
+    padding: 0.8rem 1.2rem;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-align: center;
+    min-width: 100px;
+    position: relative;
+    transition: transform 0.2s;
+  }
+
+  .d-box:hover { transform: scale(1.05); }
+
+  .d-box.client { background: rgba(124,108,255,0.15); border: 1px solid rgba(124,108,255,0.3); color: var(--accent3); }
+  .d-box.server { background: rgba(255,107,53,0.15); border: 1px solid rgba(255,107,53,0.3); color: var(--accent); }
+  .d-box.db { background: rgba(0,212,170,0.15); border: 1px solid rgba(0,212,170,0.3); color: var(--accent2); }
+  .d-box.cache { background: rgba(255,64,129,0.15); border: 1px solid rgba(255,64,129,0.3); color: var(--accent4); }
+  .d-box.queue { background: rgba(255,215,64,0.15); border: 1px solid rgba(255,215,64,0.3); color: #ffd740; }
+  .d-box.lb { background: rgba(100,200,255,0.15); border: 1px solid rgba(100,200,255,0.3); color: #64c8ff; }
+  .d-box.cdn { background: rgba(200,150,255,0.15); border: 1px solid rgba(200,150,255,0.3); color: #c896ff; }
+
+  .d-arrow {
+    color: var(--text-muted);
+    font-size: 1.2rem;
+    flex-shrink: 0;
+  }
+
+  .d-arrow.down {
+    transform: rotate(90deg);
+  }
+
+  .d-label {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    display: block;
+    margin-top: 0.25rem;
+    font-weight: 400;
+  }
+
+  .d-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .d-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .d-vertical {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  /* ═══════ READING LIST ═══════ */
+  .reading-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+
+  .reading-item:last-child { border: none; }
+
+  .reading-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+    background: rgba(0,212,170,0.1);
+    color: var(--accent2);
+  }
+
+  .reading-info h4 {
+    font-size: 0.95rem;
+    font-weight: 500;
+    margin-bottom: 0.15rem;
+  }
+
+  .reading-info span {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  /* ═══════ ACCORDIONS ═══════ */
+  .accordion {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 0.75rem;
+  }
+
+  .accordion-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.1rem 1.5rem;
+    cursor: pointer;
+    background: var(--surface);
+    transition: background 0.3s;
+    user-select: none;
+  }
+
+  .accordion-header:hover { background: var(--surface2); }
+
+  .accordion-header h3 {
+    font-size: 1rem;
+    font-weight: 500;
+  }
+
+  .accordion-chevron {
+    width: 20px;
+    height: 20px;
+    transition: transform 0.3s;
+    color: var(--text-muted);
+  }
+
+  .accordion.open .accordion-chevron { transform: rotate(180deg); }
+
+  .accordion-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease;
+  }
+
+  .accordion.open .accordion-body {
+    max-height: 3000px;
+  }
+
+  .accordion-content {
+    padding: 0 1.5rem 1.5rem;
+  }
+
+  /* ═══════ CHECKLIST ═══════ */
+  .checklist {
+    list-style: none;
+    padding: 0;
+  }
+
+  .checklist li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.5rem 0;
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+
+  .checklist li.checked { color: rgba(136,135,160,0.4); text-decoration: line-through; }
+
+  .check-box {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border);
+    border-radius: 4px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    margin-top: 2px;
+  }
+
+  .checklist li.checked .check-box {
+    background: var(--accent2);
+    border-color: var(--accent2);
+  }
+
+  .checklist li.checked .check-box::after {
+    content: '✓';
+    color: #000;
+    font-size: 0.7rem;
+    font-weight: 700;
+  }
+
+  /* ═══════ DIVIDER ═══════ */
+  .section-divider {
+    border: none;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+    margin: 0 auto;
+    max-width: 960px;
+  }
+
+  /* ═══════ CALLOUT ═══════ */
+  .callout {
+    border-left: 3px solid var(--accent3);
+    background: rgba(124,108,255,0.05);
+    padding: 1.25rem 1.5rem;
+    border-radius: 0 8px 8px 0;
+    margin: 1rem 0;
+  }
+
+  .callout.tip { border-left-color: var(--accent2); background: rgba(0,212,170,0.05); }
+  .callout.warning { border-left-color: var(--accent); background: rgba(255,107,53,0.05); }
+
+  .callout-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.4rem;
+    color: var(--accent3);
+  }
+
+  .callout.tip .callout-title { color: var(--accent2); }
+  .callout.warning .callout-title { color: var(--accent); }
+
+  .callout p {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    line-height: 1.7;
+  }
+
+  /* ═══════ TABS ═══════ */
+  .tabs {
+    margin-top: 1rem;
+  }
+
+  .tab-headers {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 1.25rem;
+  }
+
+  .tab-btn {
+    padding: 0.6rem 1.25rem;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    position: relative;
+    transition: color 0.2s;
+  }
+
+  .tab-btn.active {
+    color: var(--accent);
+  }
+
+  .tab-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--accent);
+    border-radius: 2px 2px 0 0;
+  }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ═══════ TABLE ═══════ */
+  .comparison-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    margin-top: 1rem;
+  }
+
+  .comparison-table th {
+    text-align: left;
+    padding: 0.75rem 1rem;
+    border-bottom: 2px solid var(--border);
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+  }
+
+  .comparison-table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    color: var(--text-muted);
+  }
+
+  .comparison-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+  /* ═══════ RESPONSIVE ═══════ */
+  @media (max-width: 768px) {
+    .week-section { padding: 4rem 1rem; }
+    .hero-stats { gap: 1.5rem; }
+    .progress-container { display: none; }
+    .d-row { flex-wrap: wrap; justify-content: center; }
+  }
+
+  /* ═══════ ANIMATIONS ═══════ */
+  .fade-in {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+
+  .fade-in.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+</style>
+</head>
+<body>
+
+<!-- ╔═══════════════════════════════════════╗ -->
+<!-- ║              HERO SECTION              ║ -->
+<!-- ╚═══════════════════════════════════════╝ -->
+<section class="hero">
+  <div class="hero-badge"><span class="dot"></span> Self-Paced Interactive Course</div>
+  <h1>System Design<br><span class="gradient-text">Masterclass</span></h1>
+  <p>A 10-week deep dive into distributed systems, scalability patterns, and real-world architecture — with interactive visuals, code labs, and curated readings.</p>
+  <div class="hero-stats">
+    <div class="stat"><div class="stat-num">10</div><div class="stat-label">Weeks</div></div>
+    <div class="stat"><div class="stat-num">40+</div><div class="stat-label">Concepts</div></div>
+    <div class="stat"><div class="stat-num">20+</div><div class="stat-label">Code Labs</div></div>
+  </div>
+  <div class="scroll-cue">
+    Scroll to begin
+    <div class="arrow"></div>
+  </div>
+</section>
+
+<!-- ═══════ STICKY NAV ═══════ -->
+<nav class="week-nav" id="weekNav">
+  <a href="#week1" class="active">Week 1</a>
+  <a href="#week2">Week 2</a>
+  <a href="#week3">Week 3</a>
+  <a href="#week4">Week 4</a>
+  <a href="#week5">Week 5</a>
+  <a href="#week6">Week 6</a>
+  <a href="#week7">Week 7</a>
+  <a href="#week8">Week 8</a>
+  <a href="#week9">Week 9</a>
+  <a href="#week10">Week 10</a>
+</nav>
+
+<!-- ╔══════════════════════════════════════════╗ -->
+<!-- ║              WEEK 1                       ║ -->
+<!-- ╚══════════════════════════════════════════╝ -->
+<section class="week-section" id="week1">
+  <div class="week-header">
+    <span class="week-number">01</span>
+    <div class="week-label">Week 1</div>
+    <h2 class="week-title">Foundations of System Design</h2>
+    <p class="week-subtitle">Understand why system design matters, learn the vocabulary, and master the structured approach to designing scalable systems.</p>
+  </div>
+
+  <div class="content-grid">
+    <!-- Concept Card -->
+    <div class="card fade-in">
+      <div class="card-tag concept">◆ Core Concepts</div>
+      <h3>What Is System Design?</h3>
+      <p>System design is the process of defining the architecture, components, modules, interfaces, and data flows for a system to satisfy specified requirements. It bridges the gap between requirements and implementation.</p>
+      <div class="callout" style="margin-top:1rem">
+        <div class="callout-title">Key Principles</div>
+        <p>Every system design balances trade-offs across: <strong>scalability</strong> (handle growth), <strong>availability</strong> (stay online), <strong>consistency</strong> (correct data), <strong>latency</strong> (fast response), and <strong>cost</strong> (efficient resources).</p>
+      </div>
+      <ul style="margin-top:1rem">
+        <li>Functional vs. non-functional requirements</li>
+        <li>Back-of-the-envelope estimation</li>
+        <li>The design interview framework: Requirements → High-Level Design → Deep Dive → Trade-offs</li>
+      </ul>
+    </div>
+
+    <!-- Visual: Basic Architecture -->
+    <div class="card fade-in">
+      <div class="card-tag visual">◈ Architecture Visual</div>
+      <h3>Basic Web Architecture</h3>
+      <p>Every system starts from this fundamental pattern — clients talk to servers, which talk to databases.</p>
+      <div class="diagram-container">
+        <div class="arch-diagram">
+          <div class="d-box client">Client<span class="d-label">Browser / App</span></div>
+          <div class="d-arrow">→</div>
+          <div class="d-box lb">DNS<span class="d-label">Name Resolution</span></div>
+          <div class="d-arrow">→</div>
+          <div class="d-box server">Web Server<span class="d-label">Application Logic</span></div>
+          <div class="d-arrow">→</div>
+          <div class="d-box db">Database<span class="d-label">Persistent Storage</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Code: Estimation -->
+    <div class="card fade-in">
+      <div class="card-tag code">⟨/⟩ Code Lab</div>
+      <h3>Back-of-the-Envelope Estimation</h3>
+      <p>Practice quick math that drives system design decisions. How many servers do you need? How much storage?</p>
+      <div class="code-block">
+        <div class="code-header">
+          <div class="code-dots"><span></span><span></span><span></span></div>
+          <div class="code-lang">Python</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre><span class="cm"># Back-of-the-envelope: Twitter-like service</span>
+
+<span class="cm"># Users &amp; activity</span>
+<span class="kw">daily_active_users</span> = <span class="num">300_000_000</span>     <span class="cm"># 300M DAU</span>
+<span class="kw">tweets_per_user_day</span> = <span class="num">2</span>
+<span class="kw">reads_per_user_day</span> = <span class="num">100</span>
+
+<span class="cm"># Write throughput</span>
+<span class="kw">writes_per_sec</span> = (daily_active_users * tweets_per_user_day) / <span class="num">86400</span>
+<span class="fn">print</span>(<span class="str">f"Write QPS: <span class="kw">{writes_per_sec:,.0f}</span>"</span>)  <span class="cm"># ~6,944 QPS</span>
+
+<span class="cm"># Read throughput</span>
+<span class="kw">reads_per_sec</span> = (daily_active_users * reads_per_user_day) / <span class="num">86400</span>
+<span class="fn">print</span>(<span class="str">f"Read QPS: <span class="kw">{reads_per_sec:,.0f}</span>"</span>)   <span class="cm"># ~347,222 QPS</span>
+
+<span class="cm"># Storage per year (avg tweet ~300 bytes)</span>
+<span class="kw">daily_tweets</span> = daily_active_users * tweets_per_user_day
+<span class="kw">storage_per_day</span> = daily_tweets * <span class="num">300</span>  <span class="cm"># bytes</span>
+<span class="kw">storage_per_year_tb</span> = (storage_per_day * <span class="num">365</span>) / (<span class="num">1024</span>**<span class="num">4</span>)
+<span class="fn">print</span>(<span class="str">f"Storage/year: <span class="kw">{storage_per_year_tb:,.1f}</span> TB"</span>)  <span class="cm"># ~60 TB</span>
+
+<span class="cm"># Read:Write ratio = 50:1 → read-heavy → caching critical!</span></pre></div>
+      </div>
+    </div>
+
+    <!-- Readings -->
+    <div class="card fade-in">
+      <div class="card-tag reading">◇ Readings</div>
+      <h3>Week 1 Reading List</h3>
+      <div class="reading-item">
+        <div class="reading-icon">📖</div>
+        <div class="reading-info">
+          <h4>"Designing Data-Intensive Applications" — Ch. 1</h4>
+          <span>Martin Kleppmann · Foundations of data systems</span>
+        </div>
+      </div>
+      <div class="reading-item">
+        <div class="reading-icon">📄</div>
+        <div class="reading-info">
+          <h4>"System Design Interview" — Ch. 1-2</h4>
+          <span>Alex Xu · Framework and estimation techniques</span>
+        </div>
+      </div>
+      <div class="reading-item">
+        <div class="reading-icon">🔗</div>
+        <div class="reading-info">
+          <h4>The System Design Primer (GitHub)</h4>
+          <span>donnemartin · Comprehensive open-source reference</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Checklist -->
+    <div class="card fade-in">
+      <div class="card-tag exercise">★ Weekly Exercises</div>
+      <h3>Week 1 Checklist</h3>
+      <ul class="checklist">
+        <li onclick="this.classList.toggle('checked')"><span class="check-box"></span>Define functional & non-functional requirements for a URL shortener</li>
+        <li onclick="this.classList.toggle('checked')"><span class="check-box"></span>Estimate QPS and storage for an Instagram-like service</li>
+        <li onclick="this.classList.toggle('checked')"><span class="check-box"></span>Draw a basic architecture diagram for a blog platform</li>
+        <li onclick="this.classList.toggle('checked')"><span class="check-box"></span>Read DDIA Chapter 1 and write 3 key takeaways</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<hr class="section-divider">
+
+<!-- ╔══════════════════════════════════════════╗ -->
+<!-- ║              WEEK 2                       ║ -->
+<!-- ╚══════════════════════════════════════════╝ -->
+<section class="week-section" id="week2">
+  <div class="week-header">
+    <span class="week-number">02</span>
+    <div class="week-label">Week 2</div>
+    <h2 class="week-title">Networking & Communication</h2>
+    <p class="week-subtitle">DNS, HTTP, WebSockets, RPC, and the protocols that connect every distributed system.</p>
+  </div>
+
+  <div class="content-grid">
+    <div class="card fade-in">
+      <div class="card-tag concept">◆ Core Concepts</div>
+      <h3>Communication Protocols</h3>
+      <p>Understanding how services communicate is fundamental to system design. Each protocol has different trade-offs in latency, complexity, and use cases.</p>
+      <table class="comparison-table">
+        <thead>
+          <tr><th>Protocol</th><th>Pattern</th><th>Best For</th><th>Latency</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>HTTP/REST</strong></td><td>Request/Response</td><td>CRUD APIs, web</td><td>Medium</td></tr>
+          <tr><td><strong>gRPC</strong></td><td>RPC, Streaming</td><td>Microservices</td><td>Low</td></tr>
+          <tr><td><strong>WebSocket</strong></td><td>Bidirectional</td><td>Real-time apps</td><td>Very Low</td></tr>
+          <tr><td><strong>GraphQL</strong></td><td>Query Language</td><td>Flexible frontends</td><td>Medium</td></tr>
+          <tr><td><strong>SSE</strong></td><td>Server → Client</td><td>Notifications</td><td>Low</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card fade-in">
+      <div class="card-tag visual">◈ Architecture Visual</div>
+      <h3>DNS Resolution Flow</h3>
+      <div class="diagram-container">
+        <div class="arch-diagram">
+          <div class="d-box client">Browser<span class="d-label">user types URL</span></div>
+          <div class="d-arrow">→</div>
+          <div class="d-box cache">Local Cache<span class="d-label">OS / Browser</span></div>
+          <div class="d-arrow">→</div>
+          <div class="d-box lb">Recursive<br>Resolver<span class="d-label">ISP DNS</span></div>
+          <div class="d-arrow">→</div>
+          <div class="d-box server">Root → TLD<br>→ Auth NS<span class="d-label">Hierarchical</span></div>
+          <div class="d-arrow">→</div>
+          <div class="d-box db">IP Address<span class="d-label">93.184.216.34</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card fade-in">
+      <div class="card-tag code">⟨/⟩ Code Lab</div>
+      <h3>REST vs WebSocket</h3>
+      <div class="tabs">
+        <div class="tab-headers">
+          <button class="tab-btn active" onclick="switchTab(this, 'tab-rest')">REST API</button>
+          <button class="tab-btn" onclick="switchTab(this, 'tab-ws')">WebSocket</button>
+        </div>
+        <div class="tab-panel active" id="tab-rest">
+          <div class="code-block">
+            <div class="code-header">
+              <div class="code-dots"><span></span><span></span><span></span></div>
+              <div class="code-lang">Python — Flask</div>
+              <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+            </div>
+            <div class="code-body"><pre><span class="kw">from</span> flask <span class="kw">import</span> Flask, jsonify, request
+
+app = Flask(__name__)
+messages = []
+
+<span class="cm"># REST: Client polls for new messages</span>
+@app.<span class="fn">route</span>(<span class="str">'/api/messages'</span>, methods=[<span class="str">'GET'</span>])
+<span class="kw">def</span> <span class="fn">get_messages</span>():
+    since = request.args.get(<span class="str">'since'</span>, <span class="num">0</span>, <span class="kw">type</span>=<span class="type">int</span>)
+    new = [m <span class="kw">for</span> m <span class="kw">in</span> messages <span class="kw">if</span> m[<span class="str">'id'</span>] > since]
+    <span class="kw">return</span> <span class="fn">jsonify</span>(new)
+
+@app.<span class="fn">route</span>(<span class="str">'/api/messages'</span>, methods=[<span class="str">'POST'</span>])
+<span class="kw">def</span> <span class="fn">post_message</span>():
+    data = request.json
+    msg = {<span class="str">'id'</span>: <span class="fn">len</span>(messages)+<span class="num">1</span>, <span class="str">'text'</span>: data[<span class="str">'text'</span>]}
+    messages.append(msg)
+    <span class="kw">return</span> <span class="fn">jsonify</span>(msg), <span class="num">201</span>
+
+<span class="cm"># Problem: clients must poll → wasted requests + latency</span></pre></div>
+          </div>
+        </div>
+        <div class="tab-panel" id="tab-ws">
+          <div class="code-block">
+            <div class="code-header">
+              <div class="code-dots"><span></span><span></span><span></span></div>
+              <div class="code-lang">Python — WebSocket</div>
+              <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+            </div>
+            <div class="code-body"><pre><span class="kw">import</span> asyncio
+<span class="kw">import</span> websockets
+
+connected = <span class="fn">set</span>()
+
+<span class="kw">async def</span> <span class="fn">handler</span>(websocket):
+    connected.add(websocket)
+    <span class="kw">try</span>:
+        <span class="kw">async for</span> message <span class="kw">in</span> websocket:
+            <span class="cm"># Broadcast to all connected clients instantly</span>
+            <span class="kw">await</span> asyncio.<span class="fn">gather</span>(
+                *[client.<span class="fn">send</span>(message)
+                  <span class="kw">for</span> client <span class="kw">in</span> connected
+                  <span class="kw">if</span> client != websocket]
+            )
+    <span class="kw">finally</span>:
+        connected.discard(websocket)
+
+<span class="cm"># Advantage: real-time push, no polling overhead</span>
+asyncio.<span class="fn">run</span>(
+    websockets.<span class="fn">serve</span>(handler, <span class="str">"localhost"</span>, <span class="num">8765</span>)
+)</pre></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card fade-in">
+      <div class="card-tag reading">◇ Readings</div>
+      <h3>Week 2 Reading List</h3>
+      <div class="reading-item">
+        <div class="reading-icon">📖</div>
+        <div class="reading-info">
+          <h4>"High Performance Browser Networking" — Ch. 1-4</h4>
+          <span>Ilya Grigorik · TCP, UDP, TLS fundamentals</span>
+        </div>
+      </div>
+      <div class="reading-item">
+        <div class="reading-icon">📄</div>
+        <div class="reading-info">
+          <h4>gRPC Documentation — Core Concepts</h4>
+          <span>grpc.io · Protocol buffers, streaming patterns</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="section-divider">
+
+<!-- ╔══════════════════════════════════════════╗ -->
+<!-- ║              WEEK 3                       ║ -->
+<!-- ╚══════════════════════════════════════════╝ -->
+<section class="week-section" id="week3">
+  <div class="week-header">
+    <span class="week-number">03</span>
+    <div class="week-label">Week 3</div>
+    <h2 class="week-title">Databases & Storage</h2>
+    <p class="week-subtitle">SQL vs NoSQL, indexing, replication, partitioning, and choosing the right database for the job.</p>
+  </div>
+
+  <div class="content-grid">
+    <div class="card fade-in">
+      <div class="card-tag concept">◆ Core Concepts</div>
+      <h3>SQL vs NoSQL Decision Matrix</h3>
+      <table class="comparison-table">
+        <thead>
+          <tr><th>Factor</th><th>SQL (Relational)</th><th>NoSQL (Document/KV)</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Schema</strong></td><td>Rigid, predefined</td><td>Flexible, schema-on-read</td></tr>
+          <tr><td><strong>Scaling</strong></td><td>Vertical (mostly)</td><td>Horizontal (sharding)</td></tr>
+          <tr><td><strong>Consistency</strong></td><td>Strong (ACID)</td><td>Eventual (BASE)</td></tr>
+          <tr><td><strong>Joins</strong></td><td>Native, efficient</td><td>App-level, costly</td></tr>
+          <tr><td><strong>Use Case</strong></td><td>Financial, relational data</td><td>High throughput, flexible data</td></tr>
+        </tbody>
+      </table>
+      <div class="callout tip" style="margin-top:1rem">
+        <div class="callout-title">Pro Tip</div>
+        <p>Many real systems use both — SQL for transactional data (orders, users) and NoSQL for analytics, sessions, or content. This is called <strong>polyglot persistence</strong>.</p>
+      </div>
+    </div>
+
+    <div class="card fade-in">
+      <div class="card-tag visual">◈ Architecture Visual</div>
+      <h3>Database Replication Patterns</h3>
+      <div class="diagram-container">
+        <div class="arch-diagram" style="flex-direction:column; gap:1.5rem">
+          <div class="d-row">
+            <div class="d-box server">App Server</div>
+            <div class="d-arrow">→</div>
+            <div class="d-box db" style="border-width:2px">Primary DB<span class="d-label">Writes go here</span></div>
+          </div>
+          <div style="color:var(--text-muted); font-size:0.75rem">↓ Replication Stream ↓</div>
+          <div class="d-row">
+            <div class="d-box db" style="opacity:0.7">Replica 1<span class="d-label">Read-only</span></div>
+            <div class="d-box db" style="opacity:0.7">Replica 2<span class="d-label">Read-only</span></div>
+            <div class="d-box db" style="opacity:0.7">Replica 3<span class="d-label">Read-only</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card fade-in">
+      <div class="card-tag code">⟨/⟩ Code Lab</div>
+      <h3>Database Indexing Impact</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <div class="code-dots"><span></span><span></span><span></span></div>
+          <div class="code-lang">SQL</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre><span class="cm">-- Without index: Full table scan → O(n)</span>
+<span class="kw">EXPLAIN ANALYZE</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> users <span class="kw">WHERE</span> email = <span class="str">'alice@example.com'</span>;
+<span class="cm">-- Seq Scan on users  (cost=0.00..25000.00 rows=1)</span>
+<span class="cm">-- Execution Time: 142.305 ms  ← SLOW with 1M rows</span>
+
+<span class="cm">-- Create a B-tree index on email</span>
+<span class="kw">CREATE UNIQUE INDEX</span> idx_users_email <span class="kw">ON</span> users(email);
+
+<span class="cm">-- With index: B-tree lookup → O(log n)</span>
+<span class="kw">EXPLAIN ANALYZE</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> users <span class="kw">WHERE</span> email = <span class="str">'alice@example.com'</span>;
+<span class="cm">-- Index Scan using idx_users_email (cost=0.42..8.44 rows=1)</span>
+<span class="cm">-- Execution Time: 0.052 ms  ← 2700x FASTER</span>
+
+<span class="cm">-- Composite index for multi-column queries</span>
+<span class="kw">CREATE INDEX</span> idx_orders_user_date
+<span class="kw">ON</span> orders(user_id, created_at <span class="kw">DESC</span>);
+
+<span class="cm">-- Covers: WHERE user_id = ? ORDER BY created_at DESC</span>
+<span class="cm">-- Trade-off: indexes speed reads but slow writes</span></pre></div>
+      </div>
+    </div>
+
+    <div class="card fade-in">
+      <div class="card-tag reading">◇ Readings</div>
+      <h3>Week 3 Reading List</h3>
+      <div class="reading-item">
+        <div class="reading-icon">📖</div>
+        <div class="reading-info">
+          <h4>"DDIA" — Ch. 3: Storage and Retrieval</h4>
+          <span>Kleppmann · LSM trees, B-trees, column stores</span>
+        </div>
+      </div>
+      <div class="reading-item">
+        <div class="reading-icon">📖</div>
+        <div class="reading-info">
+          <h4>"DDIA" — Ch. 5-6: Replication & Partitioning</h4>
+          <span>Kleppmann · Leader-follower, sharding strategies</span>
+        </div>
+      </div>
+      <div class="reading-item">
+        <div class="reading-icon">🔗</div>
+        <div class="reading-info">
+          <h4>"Dynamo: Amazon's Key-Value Store" (2007)</h4>
+          <span>DeCandia et al. · The paper that launched NoSQL</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="section-divider">
+
+<!-- ╔══════════════════════════════════════════╗ -->
+<!-- ║              WEEK 4                       ║ -->
+<!-- ╚══════════════════════════════════════════╝ -->
+<section class="week-section" id="week4">
+  <div class="week-header">
+    <span class="week-number">04</span>
+    <div class="week-label">Week 4</div>
+    <h2 class="week-title">Caching Strategies</h2>
+    <p class="week-subtitle">From CPU caches to CDNs — reduce latency, lower database load, and handle traffic spikes gracefully.</p>
+  </div>
+
+  <div class="content-grid">
+    <div class="card fade-in">
+      <div class="card-tag concept">◆ Core Concepts</div>
+      <h3>The Caching Hierarchy</h3>
+      <p>Caching exists at every layer of a system. Understanding where to cache — and when to invalidate — is one of the hardest problems in computer science.</p>
+      <table class="comparison-table">
+        <thead><tr><th>Layer</th><th>Technology</th><th>TTL</th><th>Hit Latency</th></tr></thead>
+        <tbody>
+          <tr><td>Browser</td><td>HTTP Cache-Control</td><td>Minutes-Days</td><td>~0ms</td></tr>
+          <tr><td>CDN</td><td>CloudFront, Fastly</td><td>Minutes-Hours</td><td>1-20ms</td></tr>
+          <tr><td>Application</td><td>Redis, Memcached</td><td>Seconds-Hours</td><td>0.5-2ms</td></tr>
+          <tr><td>Database</td><td>Query cache, buffer pool</td><td>Automatic</td><td>1-5ms</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card fade-in">
+      <div class="card-tag visual">◈ Architecture Visual</div>
+      <h3>Cache-Aside (Lazy Loading) Pattern</h3>
+      <div class="diagram-container">
+        <div class="arch-diagram" style="flex-direction:column; gap:1.5rem">
+          <div class="d-row">
+            <div class="d-box server">App Server</div>
+            <div class="d-arrow">→</div>
+            <div class="d-box cache">Redis Cache<span class="d-label">1. Check cache first</span></div>
+          </div>
+          <div style="color:var(--text-muted); font-size:0.75rem">↓ Cache miss? ↓</div>
+          <div class="d-row">
+            <div class="d-box server">App Server</div>
+            <div class="d-arrow">→</div>
+            <div class="d-box db">Database<span class="d-label">2. Query DB</span></div>
+            <div class="d-arrow">→</div>
+            <div class="d-box cache">Redis Cache<span class="d-label">3. Populate cache</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card fade-in">
+      <div class="card-tag code">⟨/⟩ Code Lab</div>
+      <h3>Implementing Cache-Aside with Redis</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <div class="code-dots"><span></span><span></span><span></span></div>
+          <div class="code-lang">Python</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre><span class="kw">import</span> redis, json, hashlib
+
+r = redis.Redis(host=<span class="str">'localhost'</span>, port=<span class="num">6379</span>, decode_responses=<span class="num">True</span>)
+
+<span class="kw">def</span> <span class="fn">get_user_profile</span>(user_id: <span class="type">str</span>) -> <span class="type">dict</span>:
+    cache_key = <span class="str">f"user:<span class="kw">{user_id}</span>"</span>
+
+    <span class="cm"># Step 1: Try cache first</span>
+    cached = r.<span class="fn">get</span>(cache_key)
+    <span class="kw">if</span> cached:
+        <span class="fn">print</span>(<span class="str">"✓ Cache HIT"</span>)
+        <span class="kw">return</span> json.<span class="fn">loads</span>(cached)
+
+    <span class="cm"># Step 2: Cache miss → query database</span>
+    <span class="fn">print</span>(<span class="str">"✗ Cache MISS → querying DB"</span>)
+    user = db.<span class="fn">query</span>(<span class="str">"SELECT * FROM users WHERE id = %s"</span>, user_id)
+
+    <span class="cm"># Step 3: Populate cache with TTL</span>
+    r.<span class="fn">setex</span>(
+        cache_key,
+        <span class="num">3600</span>,  <span class="cm"># TTL: 1 hour</span>
+        json.<span class="fn">dumps</span>(user)
+    )
+    <span class="kw">return</span> user
+
+<span class="kw">def</span> <span class="fn">update_user_profile</span>(user_id: <span class="type">str</span>, data: <span class="type">dict</span>):
+    <span class="cm"># Write-through: update DB, then invalidate cache</span>
+    db.<span class="fn">execute</span>(<span class="str">"UPDATE users SET ... WHERE id = %s"</span>, user_id)
+    r.<span class="fn">delete</span>(<span class="str">f"user:<span class="kw">{user_id}</span>"</span>)  <span class="cm"># Invalidate!</span></pre></div>
+      </div>
+    </div>
+
+    <div class="card fade-in">
+      <div class="card-tag reading">◇ Readings</div>
+      <h3>Week 4 Reading List</h3>
+      <div class="reading-item">
+        <div class="reading-icon">📄</div>
+        <div class="reading-info">
+          <h4>"Scaling Memcache at Facebook" (2013)</h4>
+          <span>Nishtala et al. · Operating memcache at massive scale</span>
+        </div>
+      </div>
+      <div class="reading-item">
+        <div class="reading-icon">🔗</div>
+        <div class="reading-info">
+          <h4>Redis Documentation — Caching Patterns</h4>
+          <span>redis.io · Write-behind, read-through, refresh-ahead</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="section-divider">
+
+<!-- ╔══════════════════════════════════════════╗ -->
+<!-- ║              WEEK 5                       ║ -->
+<!-- ╚══════════════════════════════════════════╝ -->
+<section class="week-section" id="week5">
+  <div class="week-header">
+    <span class="week-number">05</span>
+    <div class="week-label">Week 5</div>
+    <h2 class="week-title">Load Balancing & Scaling</h2>
+    <p class="week-subtitle">Horizontal vs vertical scaling, load balancer algorithms, auto-scaling, and reverse proxies.</p>
+  </div>
+
+  <div class="content-grid">
+    <div class="card fade-in">
+      <div class="card-tag concept">◆ Core Concepts</div>
+      <h3>Load Balancing Algorithms</h3>
+      <p>The load balancer distributes incoming requests across a pool of servers, enabling horizontal scaling and improving availability.</p>
+      <table class="comparison-table">
+        <thead><tr><th>Algorithm</th><th>How It Works</th><th>Best For</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Round Robin</strong></td><td>Rotates sequentially</td><td>Equal-capacity servers</td></tr>
+          <tr><td><strong>Weighted RR</strong></td><td>Weighted rotation</td><td>Mixed-capacity servers</td></tr>
+          <tr><td><strong>Least Connections</strong></td><td>Picks least-busy server</td><td>Varied request durations</td></tr>
+          <tr><td><strong>IP Hash</strong></td><td>Hash client IP to server</td><td>Session affinity</td></tr>
+          <tr><td><strong>Consistent Hashing</strong></td><td>Ring-based distribution</td><td>Caches, sharded stores</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card fade-in">
+      <div class="card-tag visual">◈ Architecture Visual</div>
+      <h3>Horizontally Scaled Architecture</h3>
+      <div class="diagram-container">
+        <div class="arch-diagram" style="flex-direction:column; gap:1.5rem">
+          <div class="d-row">
+            <div class="d-box client">Clients</div>
+            <div class="d-arrow">→</div>
+            <div class="d-box cdn">CDN<span class="d-label">Static assets</span></div>
+            <div class="d-arrow">→</div>
+            <div class="d-box lb">Load Balancer<span class="d-label">L7 / NGINX</span></div>
+          </div>
+          <div style="display:flex;gap:2rem;flex-wrap:wrap;justify-content:center">
+            <div class="d-vertical">
+              <div style="color:var(--text-muted);font-size:.7rem">↓</div>
+              <div class="d-box server">Server 1</div>
+            </div>
+            <div class="d-vertical">
+              <div style="color:var(--text-muted);font-size:.7rem">↓</div>
+              <div class="d-box server">Server 2</div>
+            </div>
+            <div class="d-vertical">
+              <div style="color:var(--text-muted);font-size:.7rem">↓</div>
+              <div class="d-box server">Server N</div>
+            </div>
+          </div>
+          <div class="d-row">
+            <div class="d-box cache">Redis Cluster</div>
+            <div class="d-box db">Primary DB</div>
+            <div class="d-box db" style="opacity:0.6">Read Replicas</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card fade-in">
+      <div class="card-tag code">⟨/⟩ Code Lab</div>
+      <h3>Consistent Hashing Implementation</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <div class="code-dots"><span></span><span></span><span></span></div>
+          <div class="code-lang">Python</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre><span class="kw">import</span> hashlib
+<span class="kw">from</span> bisect <span class="kw">import</span> bisect_right
+
+<span class="kw">class</span> <span class="type">ConsistentHash</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, nodes=<span class="num">None</span>, replicas=<span class="num">150</span>):
+        self.replicas = replicas  <span class="cm"># Virtual nodes per server</span>
+        self.ring = {}
+        self.sorted_keys = []
+        <span class="kw">for</span> node <span class="kw">in</span> (nodes <span class="kw">or</span> []):
+            self.<span class="fn">add_node</span>(node)
+
+    <span class="kw">def</span> <span class="fn">_hash</span>(self, key: <span class="type">str</span>) -> <span class="type">int</span>:
+        <span class="kw">return</span> <span class="fn">int</span>(hashlib.<span class="fn">md5</span>(key.encode()).<span class="fn">hexdigest</span>(), <span class="num">16</span>)
+
+    <span class="kw">def</span> <span class="fn">add_node</span>(self, node: <span class="type">str</span>):
+        <span class="cm">"""Add a server with virtual nodes spread across the ring."""</span>
+        <span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(self.replicas):
+            key = self.<span class="fn">_hash</span>(<span class="str">f"<span class="kw">{node}</span>:<span class="kw">{i}</span>"</span>)
+            self.ring[key] = node
+            self.sorted_keys.append(key)
+        self.sorted_keys.sort()
+
+    <span class="kw">def</span> <span class="fn">get_node</span>(self, item: <span class="type">str</span>) -> <span class="type">str</span>:
+        <span class="cm">"""Find which server handles this key."""</span>
+        h = self.<span class="fn">_hash</span>(item)
+        idx = <span class="fn">bisect_right</span>(self.sorted_keys, h) % <span class="fn">len</span>(self.sorted_keys)
+        <span class="kw">return</span> self.ring[self.sorted_keys[idx]]
+
+<span class="cm"># Usage: adding/removing a server only remaps ~1/N keys!</span>
+ch = <span class="type">ConsistentHash</span>([<span class="str">"server-A"</span>, <span class="str">"server-B"</span>, <span class="str">"server-C"</span>])
+<span class="fn">print</span>(ch.<span class="fn">get_node</span>(<span class="str">"user:42"</span>))   <span class="cm"># → "server-B"</span>
+<span class="fn">print</span>(ch.<span class="fn">get_node</span>(<span class="str">"user:99"</span>))   <span class="cm"># → "server-A"</span></pre></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="section-divider">
+
+<!-- ╔══════════════════════════════════════════╗ -->
+<!-- ║              WEEK 6                       ║ -->
+<!-- ╚══════════════════════════════════════════╝ -->
+<section class="week-section" id="week6">
+  <div class="week-header">
+    <span class="week-number">06</span>
+    <div class="week-label">Week 6</div>
+    <h2 class="week-title">Message Queues & Async Processing</h2>
+    <p class="week-subtitle">Decouple services, handle traffic bursts, and build resilient event-driven architectures with Kafka, RabbitMQ, and SQS.</p>
+  </div>
+
+  <div class="content-grid">
+    <div class="card fade-in">
+      <div class="card-tag concept">◆ Core Concepts</div>
+      <h3>Why Asynchronous?</h3>
+      <p>Synchronous processing creates tight coupling and cascading failures. Message queues act as buffers — producers push work, consumers process at their own pace. Benefits include: decoupled services, absorbing traffic spikes, retry semantics, and enabling event-driven architectures.</p>
+      <div class="callout warning" style="margin-top:1rem">
+        <div class="callout-title">Key Trade-off</div>
+        <p>Async adds eventual consistency and operational complexity. Use it when the work can tolerate delay (email, analytics, image processing) — not when users need an instant response (payment confirmation).</p>
+      </div>
+    </div>
+
+    <div class="card fade-in">
+      <div class="card-tag visual">◈ Architecture Visual</div>
+      <h3>Event-Driven Architecture</h3>
+      <div class="diagram-container">
+        <div class="arch-diagram" style="flex-direction:column; gap:1.5rem">
+          <div class="d-row">
+            <div class="d-box server">Order Service<span class="d-label">Producer</span></div>
+            <div class="d-arrow">→</div>
+            <div class="d-box queue">Kafka<span class="d-label">Event Bus</span></div>
+          </div>
+          <div style="display:flex;gap:2rem;flex-wrap:wrap;justify-content:center">
+            <div class="d-vertical">
+              <div style="color:var(--text-muted);font-size:.7rem">↓ order.placed</div>
+              <div class="d-box server" style="font-size:.75rem">Payment<br>Service</div>
+            </div>
+            <div class="d-vertical">
+              <div style="color:var(--text-muted);font-size:.7rem">↓ order.placed</div>
+              <div class="d-box server" style="font-size:.75rem">Inventory<br>Service</div>
+            </div>
+            <div class="d-vertical">
+              <div style="color:var(--text-muted);font-size:.7rem">↓ order.placed</div>
+              <div class="d-box server" style="font-size:.75rem">Notification<br>Service</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card fade-in">
+      <div class="card-tag code">⟨/⟩ Code Lab</div>
+      <h3>Kafka Producer & Consumer</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <div class="code-dots"><span></span><span></span><span></span></div>
+          <div class="code-lang">Python — kafka-python</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre><span class="kw">from</span> kafka <span class="kw">import</span> KafkaProducer, KafkaConsumer
+<span class="kw">import</span> json
+
+<span class="cm"># ── Producer: publish order events ──</span>
+producer = <span class="type">KafkaProducer</span>(
+    bootstrap_servers=[<span class="str">'localhost:9092'</span>],
+    value_serializer=<span class="kw">lambda</span> v: json.<span class="fn">dumps</span>(v).encode()
+)
+
+<span class="kw">def</span> <span class="fn">place_order</span>(order):
+    <span class="cm"># Save to DB, then publish event</span>
+    db.<span class="fn">save</span>(order)
+    producer.<span class="fn">send</span>(
+        <span class="str">'order.placed'</span>,
+        value={<span class="str">'order_id'</span>: order.id, <span class="str">'user_id'</span>: order.user_id,
+               <span class="str">'total'</span>: order.total, <span class="str">'items'</span>: order.items}
+    )
+
+<span class="cm"># ── Consumer: process events independently ──</span>
+consumer = <span class="type">KafkaConsumer</span>(
+    <span class="str">'order.placed'</span>,
+    bootstrap_servers=[<span class="str">'localhost:9092'</span>],
+    group_id=<span class="str">'notification-service'</span>,
+    value_deserializer=<span class="kw">lambda</span> m: json.<span class="fn">loads</span>(m.decode())
+)
+
+<span class="kw">for</span> msg <span class="kw">in</span> consumer:
+    order = msg.value
+    <span class="fn">send_confirmation_email</span>(order[<span class="str">'user_id'</span>], order[<span class="str">'order_id'</span>])
+    <span class="fn">print</span>(<span class="str">f"✓ Notified user <span class="kw">{order['user_id']}</span>"</span>)</pre></div>
+      </div>
+    </div>
+
+    <div class="card fade-in">
+      <div class="card-tag reading">◇ Readings</div>
+      <h3>Week 6 Reading List</h3>
+      <div class="reading-item">
+        <div class="reading-icon">📖</div>
+        <div class="reading-info">
+          <h4>"DDIA" — Ch. 11: Stream Processing</h4>
+          <span>Kleppmann · Event sourcing, stream-table duality</span>
+        </div>
+      </div>
+      <div class="reading-item">
+        <div class="reading-icon">📄</div>
+        <div class="reading-info">
+          <h4>"Kafka: A Distributed Messaging System" (LinkedIn, 2011)</h4>
+          <span>Kreps et al. · Original Kafka paper</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="section-divider">
+
+<!-- ╔══════════════════════════════════════════╗ -->
+<!-- ║              WEEK 7                       ║ -->
+<!-- ╚══════════════════════════════════════════╝ -->
+<section class="week-section" id="week7">
+  <div class="week-header">
+    <span class="week-number">07</span>
+    <div class="week-label">Week 7</div>
+    <h2 class="week-title">Distributed Systems Fundamentals</h2>
+    <p class="week-subtitle">CAP theorem, consensus protocols, distributed transactions, and handling failure in distributed systems.</p>
+  </div>
+
+  <div class="content-grid">
+    <div class="card fade-in">
+      <div class="card-tag concept">◆ Core Concepts</div>
+      <h3>The CAP Theorem</h3>
+      <p>In a distributed system, when a network partition occurs, you must choose between <strong>Consistency</strong> (every read gets the most recent write) and <strong>Availability</strong> (every request gets a response). You cannot have both during a partition.</p>
+      <table class="comparison-table">
+        <thead><tr><th>Choice</th><th>System Type</th><th>Example</th><th>Behavior During Partition</th></tr></thead>
+        <tbody>
+          <tr><td><strong>CP</strong></td><td>Consistent</td><td>ZooKeeper, HBase</td><td>Rejects requests until consistent</td></tr>
+          <tr><td><strong>AP</strong></td><td>Available</td><td>Cassandra, DynamoDB</td><td>Serves stale data, reconciles later</td></tr>
+        </tbody>
+      </table>
+      <div class="callout" style="margin-top:1rem">
+        <div class="callout-title">Beyond CAP</div>
+        <p>Modern systems often use <strong>PACELC</strong>: if Partition → choose A or C; Else (normal operation) → choose Latency or Consistency. DynamoDB is PA/EL, while ZooKeeper is PC/EC.</p>
+      </div>
+    </div>
+
+    <div class="card fade-in">
+      <div class="card-tag code">⟨/⟩ Code Lab</div>
+      <h3>Implementing a Simple Raft-like Leader Election</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <div class="code-dots"><span></span><span></span><span></span></div>
+          <div class="code-lang">Python — Conceptual</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre><span class="kw">import</span> random, time
+
+<span class="kw">class</span> <span class="type">RaftNode</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, node_id, peers):
+        self.id = node_id
+        self.peers = peers
+        self.state = <span class="str">"follower"</span>   <span class="cm"># follower | candidate | leader</span>
+        self.current_term = <span class="num">0</span>
+        self.voted_for = <span class="num">None</span>
+        self.votes_received = <span class="num">0</span>
+        self.election_timeout = random.<span class="fn">uniform</span>(<span class="num">1.5</span>, <span class="num">3.0</span>)  <span class="cm"># seconds</span>
+
+    <span class="kw">def</span> <span class="fn">start_election</span>(self):
+        <span class="cm">"""Transition to candidate, request votes from peers."""</span>
+        self.state = <span class="str">"candidate"</span>
+        self.current_term += <span class="num">1</span>
+        self.voted_for = self.id
+        self.votes_received = <span class="num">1</span>  <span class="cm"># Vote for self</span>
+        <span class="fn">print</span>(<span class="str">f"Node {self.id}: starting election for term {self.current_term}"</span>)
+
+        <span class="kw">for</span> peer <span class="kw">in</span> self.peers:
+            vote = peer.<span class="fn">request_vote</span>(self.current_term, self.id)
+            <span class="kw">if</span> vote:
+                self.votes_received += <span class="num">1</span>
+
+        <span class="cm"># Majority = quorum</span>
+        <span class="kw">if</span> self.votes_received > (<span class="fn">len</span>(self.peers) + <span class="num">1</span>) / <span class="num">2</span>:
+            self.state = <span class="str">"leader"</span>
+            <span class="fn">print</span>(<span class="str">f"✓ Node {self.id}: elected LEADER (term {self.current_term})"</span>)
+
+    <span class="kw">def</span> <span class="fn">request_vote</span>(self, term, candidate_id) -> <span class="type">bool</span>:
+        <span class="cm">"""Grant vote if term is newer and haven't voted yet."""</span>
+        <span class="kw">if</span> term > self.current_term <span class="kw">and</span> self.voted_for <span class="kw">is</span> <span class="num">None</span>:
+            self.current_term = term
+            self.voted_for = candidate_id
+            <span class="kw">return</span> <span class="num">True</span>
+        <span class="kw">return</span> <span class="num">False</span></pre></div>
+      </div>
+    </div>
+
+    <div class="card fade-in">
+      <div class="card-tag reading">◇ Readings</div>
+      <h3>Week 7 Reading List</h3>
+      <div class="reading-item">
+        <div class="reading-icon">📖</div>
+        <div class="reading-info">
+          <h4>"DDIA" — Ch. 8-9: Trouble with Distributed Systems / Consistency</h4>
+          <span>Kleppmann · Unreliable clocks, Byzantine faults, linearizability</span>
+        </div>
+      </div>
+      <div class="reading-item">
+        <div class="reading-icon">📄</div>
+        <div class="reading-info">
+          <h4>"In Search of an Understandable Consensus Algorithm" (Raft)</h4>
+          <span>Ongaro & Ousterhout, 2014 · The Raft paper</span>
+        </div>
+      </div>
+      <div class="reading-item">
+        <div class="reading-icon">📄</div>
+        <div class="reading-info">
+          <h4>"Time, Clocks, and the Ordering of Events" (Lamport, 1978)</h4>
+          <span>Lamport · The foundational distributed systems paper</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="section-divider">
+
+<!-- ╔══════════════════════════════════════════╗ -->
+<!-- ║              WEEK 8                       ║ -->
+<!-- ╚══════════════════════════════════════════╝ -->
+<section class="week-section" id="week8">
+  <div class="week-header">
+    <span class="week-number">08</span>
+    <div class="week-label">Week 8</div>
+    <h2 class="week-title">Microservices & API Gateway</h2>
+    <p class="week-subtitle">Service decomposition, API gateways, service mesh, circuit breakers, and when monoliths make more sense.</p>
+  </div>
+
+  <div class="content-grid">
+    <div class="card fade-in">
+      <div class="card-tag concept">◆ Core Concepts</div>
+      <h3>Monolith → Microservices Evolution</h3>
+      <p>Microservices decompose a system into independent, deployable services that communicate over the network. Each service owns its data and can be scaled independently. But they introduce complexity: distributed transactions, network failures, and operational overhead.</p>
+      <div class="callout tip" style="margin-top:1rem">
+        <div class="callout-title">The Golden Rule</div>
+        <p>Start with a monolith. Extract microservices only when you have a clear scaling bottleneck or organizational need (separate teams). Premature decomposition is the root of much suffering.</p>
+      </div>
+    </div>
+
+    <div class="card fade-in">
+      <div class="card-tag visual">◈ Architecture Visual</div>
+      <h3>API Gateway Pattern</h3>
+      <div class="diagram-container">
+        <div class="arch-diagram" style="flex-direction:column;gap:1.5rem">
+          <div class="d-row">
+            <div class="d-box client">Mobile App</div>
+            <div class="d-box client">Web App</div>
+            <div class="d-box client">3rd Party</div>
+          </div>
+          <div style="color:var(--text-muted);font-size:.7rem">↓ Single entry point ↓</div>
+          <div class="d-box lb" style="min-width:240px">API Gateway<span class="d-label">Auth · Rate Limit · Routing · Logging</span></div>
+          <div style="display:flex;gap:1rem;flex-wrap:wrap;justify-content:center">
+            <div class="d-box server" style="font-size:.75rem">User<br>Service</div>
+            <div class="d-box server" style="font-size:.75rem">Product<br>Service</div>
+            <div class="d-box server" style="font-size:.75rem">Order<br>Service</div>
+            <div class="d-box server" style="font-size:.75rem">Payment<br>Service</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card fade-in">
+      <div class="card-tag code">⟨/⟩ Code Lab</div>
+      <h3>Circuit Breaker Pattern</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <div class="code-dots"><span></span><span></span><span></span></div>
+          <div class="code-lang">Python</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre><span class="kw">import</span> time
+
+<span class="kw">class</span> <span class="type">CircuitBreaker</span>:
+    <span class="cm">"""Prevents cascading failures across microservices."""</span>
+
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, failure_threshold=<span class="num">5</span>, recovery_timeout=<span class="num">30</span>):
+        self.failure_count = <span class="num">0</span>
+        self.failure_threshold = failure_threshold
+        self.recovery_timeout = recovery_timeout
+        self.state = <span class="str">"CLOSED"</span>      <span class="cm"># CLOSED → OPEN → HALF_OPEN</span>
+        self.last_failure_time = <span class="num">None</span>
+
+    <span class="kw">def</span> <span class="fn">call</span>(self, func, *args):
+        <span class="kw">if</span> self.state == <span class="str">"OPEN"</span>:
+            <span class="kw">if</span> time.<span class="fn">time</span>() - self.last_failure_time > self.recovery_timeout:
+                self.state = <span class="str">"HALF_OPEN"</span>  <span class="cm"># Allow one test request</span>
+            <span class="kw">else</span>:
+                <span class="kw">raise</span> <span class="type">Exception</span>(<span class="str">"Circuit OPEN — service unavailable"</span>)
+
+        <span class="kw">try</span>:
+            result = <span class="fn">func</span>(*args)
+            self.<span class="fn">_on_success</span>()
+            <span class="kw">return</span> result
+        <span class="kw">except</span> <span class="type">Exception</span> <span class="kw">as</span> e:
+            self.<span class="fn">_on_failure</span>()
+            <span class="kw">raise</span> e
+
+    <span class="kw">def</span> <span class="fn">_on_success</span>(self):
+        self.failure_count = <span class="num">0</span>
+        self.state = <span class="str">"CLOSED"</span>
+
+    <span class="kw">def</span> <span class="fn">_on_failure</span>(self):
+        self.failure_count += <span class="num">1</span>
+        self.last_failure_time = time.<span class="fn">time</span>()
+        <span class="kw">if</span> self.failure_count >= self.failure_threshold:
+            self.state = <span class="str">"OPEN"</span>
+            <span class="fn">print</span>(<span class="str">"⚠ Circuit breaker OPENED"</span>)
+
+<span class="cm"># Usage</span>
+cb = <span class="type">CircuitBreaker</span>(failure_threshold=<span class="num">3</span>)
+<span class="kw">try</span>:
+    result = cb.<span class="fn">call</span>(payment_service.<span class="fn">charge</span>, order)
+<span class="kw">except</span>:
+    <span class="cm"># Fallback: queue for retry, return pending status</span>
+    queue.<span class="fn">enqueue</span>(<span class="str">"retry_payment"</span>, order)</pre></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="section-divider">
+
+<!-- ╔══════════════════════════════════════════╗ -->
+<!-- ║              WEEK 9                       ║ -->
+<!-- ╚══════════════════════════════════════════╝ -->
+<section class="week-section" id="week9">
+  <div class="week-header">
+    <span class="week-number">09</span>
+    <div class="week-label">Week 9</div>
+    <h2 class="week-title">Search, Monitoring & Observability</h2>
+    <p class="week-subtitle">Full-text search with Elasticsearch, metrics and alerting, distributed tracing, and logging at scale.</p>
+  </div>
+
+  <div class="content-grid">
+    <div class="card fade-in">
+      <div class="card-tag concept">◆ Core Concepts</div>
+      <h3>The Three Pillars of Observability</h3>
+      <p>You can't fix what you can't see. Observability gives you insight into the internal state of your system through external outputs.</p>
+      <table class="comparison-table">
+        <thead><tr><th>Pillar</th><th>Purpose</th><th>Tools</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Metrics</strong></td><td>Aggregate numerical measurements over time</td><td>Prometheus, Datadog, CloudWatch</td></tr>
+          <tr><td><strong>Logs</strong></td><td>Discrete event records for debugging</td><td>ELK Stack, Loki, Splunk</td></tr>
+          <tr><td><strong>Traces</strong></td><td>Request flow across services</td><td>Jaeger, Zipkin, OpenTelemetry</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card fade-in">
+      <div class="card-tag code">⟨/⟩ Code Lab</div>
+      <h3>Elasticsearch Search Pipeline</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <div class="code-dots"><span></span><span></span><span></span></div>
+          <div class="code-lang">Python — elasticsearch-py</div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body"><pre><span class="kw">from</span> elasticsearch <span class="kw">import</span> Elasticsearch
+
+es = <span class="type">Elasticsearch</span>([<span class="str">"http://localhost:9200"</span>])
+
+<span class="cm"># Index a document</span>
+es.<span class="fn">index</span>(index=<span class="str">"products"</span>, id=<span class="num">1</span>, document={
+    <span class="str">"name"</span>: <span class="str">"Wireless Noise-Canceling Headphones"</span>,
+    <span class="str">"description"</span>: <span class="str">"Premium over-ear headphones with ANC"</span>,
+    <span class="str">"category"</span>: <span class="str">"electronics"</span>,
+    <span class="str">"price"</span>: <span class="num">299.99</span>,
+    <span class="str">"rating"</span>: <span class="num">4.7</span>
+})
+
+<span class="cm"># Full-text search with relevance scoring</span>
+results = es.<span class="fn">search</span>(index=<span class="str">"products"</span>, query={
+    <span class="str">"bool"</span>: {
+        <span class="str">"must"</span>: [{
+            <span class="str">"multi_match"</span>: {
+                <span class="str">"query"</span>: <span class="str">"wireless headphones"</span>,
+                <span class="str">"fields"</span>: [<span class="str">"name^3"</span>, <span class="str">"description"</span>]  <span class="cm"># Boost name</span>
+            }
+        }],
+        <span class="str">"filter"</span>: [
+            {<span class="str">"range"</span>: {<span class="str">"price"</span>: {<span class="str">"lte"</span>: <span class="num">400</span>}}},
+            {<span class="str">"term"</span>:  {<span class="str">"category"</span>: <span class="str">"electronics"</span>}}
+        ]
+    }
+})
+
+<span class="kw">for</span> hit <span class="kw">in</span> results[<span class="str">"hits"</span>][<span class="str">"hits"</span>]:
+    <span class="fn">print</span>(<span class="str">f"Score: {hit['_score']:.2f} — {hit['_source']['name']}"</span>)</pre></div>
+      </div>
+    </div>
+
+    <div class="card fade-in">
+      <div class="card-tag visual">◈ Architecture Visual</div>
+      <h3>Observability Stack</h3>
+      <div class="diagram-container">
+        <div class="arch-diagram" style="flex-direction:column;gap:1.5rem">
+          <div class="d-row" style="flex-wrap:wrap;justify-content:center">
+            <div class="d-box server" style="font-size:.75rem">Service A</div>
+            <div class="d-box server" style="font-size:.75rem">Service B</div>
+            <div class="d-box server" style="font-size:.75rem">Service C</div>
+          </div>
+          <div style="color:var(--text-muted);font-size:.7rem">↓ OpenTelemetry SDK ↓</div>
+          <div class="d-row" style="flex-wrap:wrap;justify-content:center">
+            <div class="d-box cache" style="font-size:.75rem">Prometheus<span class="d-label">Metrics</span></div>
+            <div class="d-box db" style="font-size:.75rem">Elasticsearch<span class="d-label">Logs</span></div>
+            <div class="d-box queue" style="font-size:.75rem">Jaeger<span class="d-label">Traces</span></div>
+          </div>
+          <div style="color:var(--text-muted);font-size:.7rem">↓</div>
+          <div class="d-box lb" style="min-width:200px">Grafana Dashboard<span class="d-label">Unified View + Alerting</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="section-divider">
+
+<!-- ╔══════════════════════════════════════════╗ -->
+<!-- ║              WEEK 10                      ║ -->
+<!-- ╚══════════════════════════════════════════╝ -->
+<section class="week-section" id="week10">
+  <div class="week-header">
+    <span class="week-number">10</span>
+    <div class="week-label">Week 10 — Capstone</div>
+    <h2 class="week-title">Design Practice: Real-World Systems</h2>
+    <p class="week-subtitle">Put it all together. Design end-to-end systems for real products — URL shortener, news feed, chat app, and more.</p>
+  </div>
+
+  <div class="content-grid">
+    <div class="card fade-in">
+      <div class="card-tag concept">◆ Design Methodology</div>
+      <h3>The 4-Step Framework</h3>
+      <p>Every system design interview or real architecture review follows this structure. Master it.</p>
+      <ol style="padding-left:1.5rem;color:var(--text-muted);line-height:2.2">
+        <li><strong style="color:var(--accent)">Requirements</strong> — Clarify functional & non-functional. Estimate scale (QPS, storage, bandwidth).</li>
+        <li><strong style="color:var(--accent2)">High-Level Design</strong> — Draw core components. Identify APIs. Choose data model.</li>
+        <li><strong style="color:var(--accent3)">Deep Dive</strong> — Detail critical components. Discuss data flow, schema, algorithms.</li>
+        <li><strong style="color:var(--accent4)">Trade-offs & Bottlenecks</strong> — Identify single points of failure. Discuss alternatives.</li>
+      </ol>
+    </div>
+
+    <!-- Accordion: Practice Problems -->
+    <div class="card fade-in" style="padding:0;overflow:hidden">
+      <div style="padding:1.5rem 2rem 0">
+        <div class="card-tag exercise">★ Capstone Problems</div>
+        <h3 style="margin-bottom:1rem">End-to-End Design Exercises</h3>
+      </div>
+
+      <div class="accordion open">
+        <div class="accordion-header" onclick="toggleAccordion(this)">
+          <h3>🔗 Design a URL Shortener (like bit.ly)</h3>
+          <svg class="accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="accordion-body">
+          <div class="accordion-content">
+            <p style="color:var(--text-muted);margin-bottom:1rem"><strong>Requirements:</strong> 100M URLs/day writes, 10:1 read:write, 10 year retention, custom aliases, analytics.</p>
+            <div class="code-block">
+              <div class="code-header">
+                <div class="code-dots"><span></span><span></span><span></span></div>
+                <div class="code-lang">Python — URL Shortening</div>
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+              </div>
+              <div class="code-body"><pre><span class="kw">import</span> hashlib, base64
+
+<span class="kw">class</span> <span class="type">URLShortener</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self):
+        self.counter = <span class="num">0</span>  <span class="cm"># Auto-incrementing ID</span>
+
+    <span class="kw">def</span> <span class="fn">encode</span>(self, long_url: <span class="type">str</span>) -> <span class="type">str</span>:
+        <span class="cm">"""Generate a unique short code.</span>
+<span class="cm">        Strategy: base62 encode an auto-incrementing ID.</span>
+<span class="cm">        7 chars in base62 → 62^7 = 3.5 trillion unique URLs."""</span>
+        self.counter += <span class="num">1</span>
+        <span class="kw">return</span> self.<span class="fn">_to_base62</span>(self.counter)
+
+    <span class="kw">def</span> <span class="fn">_to_base62</span>(self, num: <span class="type">int</span>) -> <span class="type">str</span>:
+        chars = <span class="str">"0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"</span>
+        result = []
+        <span class="kw">while</span> num > <span class="num">0</span>:
+            result.append(chars[num % <span class="num">62</span>])
+            num //= <span class="num">62</span>
+        <span class="kw">return</span> <span class="str">""</span>.join(<span class="fn">reversed</span>(result)).zfill(<span class="num">7</span>)
+
+<span class="cm"># Architecture: Client → LB → App Server → Redis (cache)</span>
+<span class="cm">#                                         → Cassandra (persistent)</span>
+<span class="cm"># Reads: Check Redis first, fallback to Cassandra</span>
+<span class="cm"># Writes: Generate ID → Write to both</span></pre></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="accordion">
+        <div class="accordion-header" onclick="toggleAccordion(this)">
+          <h3>💬 Design a Real-Time Chat System (like Slack)</h3>
+          <svg class="accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="accordion-body">
+          <div class="accordion-content">
+            <p style="color:var(--text-muted);margin-bottom:1rem"><strong>Key decisions:</strong> WebSocket for real-time, fan-out on read vs write, message ordering, read receipts, presence.</p>
+            <div class="diagram-container">
+              <div class="arch-diagram" style="flex-direction:column;gap:1rem">
+                <div class="d-row">
+                  <div class="d-box client">Client A</div>
+                  <div class="d-arrow">⇄</div>
+                  <div class="d-box lb">WS Gateway<span class="d-label">WebSocket Connections</span></div>
+                  <div class="d-arrow">⇄</div>
+                  <div class="d-box client">Client B</div>
+                </div>
+                <div style="color:var(--text-muted);font-size:.7rem">↕</div>
+                <div class="d-row">
+                  <div class="d-box server">Chat Service</div>
+                  <div class="d-arrow">→</div>
+                  <div class="d-box queue">Kafka<span class="d-label">Message Queue</span></div>
+                  <div class="d-arrow">→</div>
+                  <div class="d-box db">Cassandra<span class="d-label">Messages DB</span></div>
+                </div>
+                <div class="d-row">
+                  <div class="d-box cache">Redis<span class="d-label">Presence / Sessions</span></div>
+                  <div class="d-box server" style="font-size:.75rem">Push Notification<span class="d-label">Offline users</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="accordion">
+        <div class="accordion-header" onclick="toggleAccordion(this)">
+          <h3>📰 Design a News Feed (like Twitter/X)</h3>
+          <svg class="accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="accordion-body">
+          <div class="accordion-content">
+            <p style="color:var(--text-muted);margin-bottom:1rem"><strong>The core trade-off:</strong> Fan-out on Write (pre-compute feeds at post time — fast reads, expensive for celebrities) vs Fan-out on Read (assemble feed at read time — slower reads, simpler writes). Most systems use a hybrid.</p>
+            <div class="code-block">
+              <div class="code-header">
+                <div class="code-dots"><span></span><span></span><span></span></div>
+                <div class="code-lang">Python — Hybrid Feed</div>
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+              </div>
+              <div class="code-body"><pre><span class="kw">CELEBRITY_THRESHOLD</span> = <span class="num">100_000</span>  <span class="cm"># followers</span>
+
+<span class="kw">def</span> <span class="fn">publish_post</span>(user, post):
+    db.<span class="fn">save</span>(post)
+
+    <span class="kw">if</span> user.follower_count < CELEBRITY_THRESHOLD:
+        <span class="cm"># Fan-out on Write: push to all followers' feeds</span>
+        <span class="kw">for</span> follower_id <span class="kw">in</span> user.followers:
+            redis.<span class="fn">lpush</span>(<span class="str">f"feed:{follower_id}"</span>, post.id)
+            redis.<span class="fn">ltrim</span>(<span class="str">f"feed:{follower_id}"</span>, <span class="num">0</span>, <span class="num">999</span>)
+    <span class="kw">else</span>:
+        <span class="cm"># Celebrity: skip fan-out, merge at read time</span>
+        <span class="kw">pass</span>
+
+<span class="kw">def</span> <span class="fn">get_feed</span>(user_id, page=<span class="num">0</span>):
+    <span class="cm"># Step 1: Get pre-computed feed from cache</span>
+    post_ids = redis.<span class="fn">lrange</span>(<span class="str">f"feed:{user_id}"</span>, page*<span class="num">20</span>, (page+<span class="num">1</span>)*<span class="num">20</span>)
+
+    <span class="cm"># Step 2: Merge in celebrity posts (fan-out on read)</span>
+    celeb_posts = db.<span class="fn">query</span>(<span class="str">"""
+        SELECT * FROM posts
+        WHERE user_id IN (followed celebrities)
+        ORDER BY created_at DESC LIMIT 20
+    """</span>)
+
+    <span class="cm"># Step 3: Merge, rank, return</span>
+    <span class="kw">return</span> <span class="fn">merge_and_rank</span>(post_ids, celeb_posts)</pre></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="accordion">
+        <div class="accordion-header" onclick="toggleAccordion(this)">
+          <h3>🗺️ Design a Rate Limiter</h3>
+          <svg class="accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="accordion-body">
+          <div class="accordion-content">
+            <p style="color:var(--text-muted);margin-bottom:1rem"><strong>Algorithms:</strong> Token bucket, sliding window log, sliding window counter, fixed window counter.</p>
+            <div class="code-block">
+              <div class="code-header">
+                <div class="code-dots"><span></span><span></span><span></span></div>
+                <div class="code-lang">Python — Sliding Window</div>
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+              </div>
+              <div class="code-body"><pre><span class="kw">import</span> time
+
+<span class="kw">class</span> <span class="type">SlidingWindowRateLimiter</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, redis_client, max_requests=<span class="num">100</span>, window_sec=<span class="num">60</span>):
+        self.redis = redis_client
+        self.max_requests = max_requests
+        self.window = window_sec
+
+    <span class="kw">def</span> <span class="fn">allow_request</span>(self, client_id: <span class="type">str</span>) -> <span class="type">bool</span>:
+        key = <span class="str">f"ratelimit:{client_id}"</span>
+        now = time.<span class="fn">time</span>()
+        pipe = self.redis.<span class="fn">pipeline</span>()
+
+        <span class="cm"># Remove entries outside the window</span>
+        pipe.<span class="fn">zremrangebyscore</span>(key, <span class="num">0</span>, now - self.window)
+        <span class="cm"># Count remaining entries</span>
+        pipe.<span class="fn">zcard</span>(key)
+        <span class="cm"># Add current request</span>
+        pipe.<span class="fn">zadd</span>(key, {<span class="fn">str</span>(now): now})
+        <span class="cm"># Set TTL for cleanup</span>
+        pipe.<span class="fn">expire</span>(key, self.window)
+
+        _, count, _, _ = pipe.<span class="fn">execute</span>()
+        <span class="kw">return</span> count < self.max_requests</pre></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Final Checklist -->
+    <div class="card fade-in">
+      <div class="card-tag exercise">★ Course Completion</div>
+      <h3>Final Mastery Checklist</h3>
+      <ul class="checklist">
+        <li onclick="this.classList.toggle('checked')"><span class="check-box"></span>Can estimate QPS, storage, and bandwidth for any system</li>
+        <li onclick="this.classList.toggle('checked')"><span class="check-box"></span>Understand when to use SQL vs NoSQL vs graph databases</li>
+        <li onclick="this.classList.toggle('checked')"><span class="check-box"></span>Can design a caching strategy and handle invalidation</li>
+        <li onclick="this.classList.toggle('checked')"><span class="check-box"></span>Know how to horizontally scale with load balancing</li>
+        <li onclick="this.classList.toggle('checked')"><span class="check-box"></span>Can design event-driven architectures with message queues</li>
+        <li onclick="this.classList.toggle('checked')"><span class="check-box"></span>Understand CAP theorem and its practical implications</li>
+        <li onclick="this.classList.toggle('checked')"><span class="check-box"></span>Can decompose a monolith into microservices with clear boundaries</li>
+        <li onclick="this.classList.toggle('checked')"><span class="check-box"></span>Can design observability into a system from day one</li>
+        <li onclick="this.classList.toggle('checked')"><span class="check-box"></span>Completed at least 3 end-to-end system design exercises</li>
+        <li onclick="this.classList.toggle('checked')"><span class="check-box"></span>Can articulate trade-offs confidently for any design decision</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ PROGRESS BAR ═══════ -->
+<div class="progress-container">
+  <span id="progressLabel">Week 1 / 10</span>
+  <div class="progress-bar">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+</div>
+
+<!-- ═══════ SCRIPTS ═══════ -->
+<script>
+// ── Tab Switching ──
+function switchTab(btn, panelId) {
+  const tabs = btn.closest('.tabs');
+  tabs.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  tabs.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(panelId).classList.add('active');
+}
+
+// ── Accordion Toggle ──
+function toggleAccordion(header) {
+  const acc = header.closest('.accordion');
+  acc.classList.toggle('open');
+}
+
+// ── Copy Code ──
+function copyCode(btn) {
+  const pre = btn.closest('.code-block').querySelector('pre');
+  const text = pre.textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy', 2000);
+  });
+}
+
+// ── Intersection Observer: Fade-In ──
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+    }
+  });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+// ── Scroll Progress + Active Nav ──
+const sections = document.querySelectorAll('.week-section');
+const navLinks = document.querySelectorAll('.week-nav a');
+const progressFill = document.getElementById('progressFill');
+const progressLabel = document.getElementById('progressLabel');
+
+window.addEventListener('scroll', () => {
+  const scrollTop = window.scrollY;
+  const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+  const progress = Math.min((scrollTop / docHeight) * 100, 100);
+  progressFill.style.width = progress + '%';
+
+  let currentWeek = 1;
+  sections.forEach((section, i) => {
+    const rect = section.getBoundingClientRect();
+    if (rect.top < window.innerHeight / 2) {
+      currentWeek = i + 1;
+    }
+  });
+
+  progressLabel.textContent = `Week ${currentWeek} / 10`;
+
+  navLinks.forEach((link, i) => {
+    link.classList.toggle('active', i === currentWeek - 1);
+  });
+});
+</script>
+
+</body>
+</html>

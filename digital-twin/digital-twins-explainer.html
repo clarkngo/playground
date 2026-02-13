@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Twins Explained</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Simple SVG icon components
+        const ActivityIcon = ({ className = "w-5 h-5" }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+        );
+
+        const ThermometerIcon = ({ className = "w-5 h-5" }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+        );
+
+        const SettingsIcon = ({ className = "w-6 h-6" }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+        );
+
+        const ZapIcon = ({ className = "w-6 h-6" }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+        );
+
+        function DigitalTwinExplainer() {
+            const [temperature, setTemperature] = useState(65);
+            const [speed, setSpeed] = useState(1200);
+            const [isRunning, setIsRunning] = useState(true);
+            const [activeSection, setActiveSection] = useState('concept');
+
+            // Simulate real-time data changes
+            useEffect(() => {
+                if (!isRunning) return;
+                
+                const interval = setInterval(() => {
+                    setTemperature(prev => Math.min(95, prev + Math.random() * 2 - 0.5));
+                    setSpeed(prev => Math.max(800, Math.min(1500, prev + Math.random() * 40 - 20)));
+                }, 1000);
+
+                return () => clearInterval(interval);
+            }, [isRunning]);
+
+            const getHealthStatus = () => {
+                if (temperature > 85 || speed > 1400) return { status: 'Warning', color: 'text-orange-500' };
+                if (temperature > 75 || speed > 1350) return { status: 'Monitor', color: 'text-yellow-500' };
+                return { status: 'Healthy', color: 'text-green-500' };
+            };
+
+            const health = getHealthStatus();
+
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
+                    <div className="max-w-6xl mx-auto">
+                        {/* Header */}
+                        <div className="text-center mb-8">
+                            <h1 className="text-4xl font-bold text-gray-800 mb-3">Digital Twins Explained</h1>
+                            <p className="text-lg text-gray-600">A virtual replica that mirrors a real-world object in real-time</p>
+                        </div>
+
+                        {/* Navigation */}
+                        <div className="flex gap-2 mb-6 justify-center flex-wrap">
+                            <button
+                                onClick={() => setActiveSection('concept')}
+                                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                                    activeSection === 'concept' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'
+                                }`}
+                            >
+                                The Concept
+                            </button>
+                            <button
+                                onClick={() => setActiveSection('demo')}
+                                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                                    activeSection === 'demo' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'
+                                }`}
+                            >
+                                Live Demo
+                            </button>
+                            <button
+                                onClick={() => setActiveSection('examples')}
+                                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                                    activeSection === 'examples' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'
+                                }`}
+                            >
+                                Real Examples
+                            </button>
+                        </div>
+
+                        {/* Content Sections */}
+                        {activeSection === 'concept' && (
+                            <div className="bg-white rounded-2xl shadow-xl p-8">
+                                <h2 className="text-2xl font-bold text-gray-800 mb-6">What is a Digital Twin?</h2>
+                                
+                                <div className="space-y-6">
+                                    <div className="flex items-start gap-4">
+                                        <div className="flex-shrink-0 w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                                            <span className="text-2xl">🏭</span>
+                                        </div>
+                                        <div>
+                                            <h3 className="font-semibold text-lg mb-2">Think of it like...</h3>
+                                            <p className="text-gray-600">Imagine having a video game version of your car that updates in real-time. If your real car's engine temperature rises, the virtual car shows it too. If you simulate a problem in the virtual car, you can fix the real one before it breaks down.</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-start gap-4">
+                                        <div className="flex-shrink-0 w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                                            <ActivityIcon className="w-6 h-6 text-green-600" />
+                                        </div>
+                                        <div>
+                                            <h3 className="font-semibold text-lg mb-2">How it works</h3>
+                                            <p className="text-gray-600">Sensors on the real object (machine, building, etc.) constantly send data to the digital version. The digital twin uses this data to match the real thing exactly, allowing you to monitor, test, and predict without touching the physical object.</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-start gap-4">
+                                        <div className="flex-shrink-0 w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                                            <ZapIcon className="w-6 h-6 text-purple-600" />
+                                        </div>
+                                        <div>
+                                            <h3 className="font-semibold text-lg mb-2">Why it matters</h3>
+                                            <p className="text-gray-600">Instead of waiting for things to break, you can predict problems, test solutions safely, optimize performance, and save money. It's like having a crystal ball for your equipment.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {activeSection === 'demo' && (
+                            <div className="bg-white rounded-2xl shadow-xl p-8">
+                                <h2 className="text-2xl font-bold text-gray-800 mb-2">Interactive Demo: Factory Machine</h2>
+                                <p className="text-gray-600 mb-6">Watch how real-world sensor data updates the digital twin in real-time</p>
+                                
+                                <div className="grid md:grid-cols-2 gap-8">
+                                    {/* Physical Object */}
+                                    <div className="border-4 border-blue-500 rounded-xl p-6 bg-blue-50">
+                                        <h3 className="text-xl font-bold text-blue-800 mb-4 flex items-center gap-2">
+                                            <span>🏭</span> Physical Machine
+                                        </h3>
+                                        <div className="bg-white rounded-lg p-6 mb-4">
+                                            <div className="w-32 h-32 mx-auto bg-gradient-to-br from-gray-700 to-gray-900 rounded-lg relative overflow-hidden">
+                                                {isRunning && (
+                                                    <>
+                                                        <div className="absolute inset-0 bg-blue-400 opacity-20 animate-pulse"></div>
+                                                        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                                                            <SettingsIcon className="w-16 h-16 text-blue-300 animate-spin" style={{ animationDuration: '2s' }} />
+                                                        </div>
+                                                    </>
+                                                )}
+                                            </div>
+                                            <p className="text-center mt-4 font-medium text-gray-700">
+                                                {isRunning ? 'Running' : 'Stopped'}
+                                            </p>
+                                        </div>
+                                        
+                                        <div className="space-y-3">
+                                            <div className="bg-white rounded-lg p-4">
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <span className="text-sm font-medium text-gray-600">Sensors:</span>
+                                                </div>
+                                                <div className="flex items-center gap-2 text-orange-600">
+                                                    <ThermometerIcon className="w-5 h-5" />
+                                                    <span className="font-mono text-lg">{temperature.toFixed(1)}°F</span>
+                                                </div>
+                                                <div className="flex items-center gap-2 mt-2 text-blue-600">
+                                                    <ActivityIcon className="w-5 h-5" />
+                                                    <span className="font-mono text-lg">{speed.toFixed(0)} RPM</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Digital Twin */}
+                                    <div className="border-4 border-purple-500 rounded-xl p-6 bg-purple-50">
+                                        <h3 className="text-xl font-bold text-purple-800 mb-4 flex items-center gap-2">
+                                            <span>💻</span> Digital Twin
+                                        </h3>
+                                        <div className="bg-white rounded-lg p-6 mb-4">
+                                            <div className="w-32 h-32 mx-auto bg-gradient-to-br from-purple-600 to-indigo-600 rounded-lg relative overflow-hidden">
+                                                {isRunning && (
+                                                    <>
+                                                        <div className="absolute inset-0 bg-white opacity-20 animate-pulse"></div>
+                                                        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                                                            <SettingsIcon className="w-16 h-16 text-purple-200 animate-spin" style={{ animationDuration: '2s' }} />
+                                                        </div>
+                                                    </>
+                                                )}
+                                            </div>
+                                            <p className="text-center mt-4 font-medium text-gray-700">
+                                                Mirroring Physical State
+                                            </p>
+                                        </div>
+                                        
+                                        <div className="space-y-3">
+                                            <div className="bg-white rounded-lg p-4">
+                                                <div className="flex items-center justify-between mb-3">
+                                                    <span className="text-sm font-medium text-gray-600">Analytics:</span>
+                                                    <span className={`text-sm font-bold ${health.color}`}>{health.status}</span>
+                                                </div>
+                                                <div className="space-y-2 text-sm text-gray-600">
+                                                    <div className="flex justify-between">
+                                                        <span>Temp Status:</span>
+                                                        <span className={temperature > 80 ? 'text-orange-600 font-medium' : 'text-green-600'}>
+                                                            {temperature > 80 ? 'High' : 'Normal'}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex justify-between">
+                                                        <span>Speed Status:</span>
+                                                        <span className={speed > 1350 ? 'text-orange-600 font-medium' : 'text-green-600'}>
+                                                            {speed > 1350 ? 'Fast' : 'Normal'}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex justify-between">
+                                                        <span>Predicted Issue:</span>
+                                                        <span className="text-blue-600">
+                                                            {temperature > 85 ? '2 hours' : 'None'}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="mt-6 flex justify-center">
+                                    <button
+                                        onClick={() => setIsRunning(!isRunning)}
+                                        className="px-6 py-3 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors"
+                                    >
+                                        {isRunning ? 'Stop Machine' : 'Start Machine'}
+                                    </button>
+                                </div>
+
+                                <div className="mt-6 bg-blue-50 rounded-lg p-4">
+                                    <p className="text-sm text-gray-700">
+                                        <strong>See it in action:</strong> The physical machine's sensors send data (temperature & speed) to the digital twin. 
+                                        The twin analyzes this data in real-time to detect issues and predict failures before they happen.
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+
+                        {activeSection === 'examples' && (
+                            <div className="bg-white rounded-2xl shadow-xl p-8">
+                                <h2 className="text-2xl font-bold text-gray-800 mb-6">Real-World Examples</h2>
+                                
+                                <div className="grid md:grid-cols-2 gap-6">
+                                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6">
+                                        <div className="text-3xl mb-3">🏢</div>
+                                        <h3 className="font-bold text-lg mb-2">Smart Buildings</h3>
+                                        <p className="text-gray-700 text-sm">Companies like Microsoft use digital twins of their buildings to optimize heating, cooling, and energy usage, saving millions in costs.</p>
+                                    </div>
+
+                                    <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6">
+                                        <div className="text-3xl mb-3">🏭</div>
+                                        <h3 className="font-bold text-lg mb-2">Manufacturing</h3>
+                                        <p className="text-gray-700 text-sm">Tesla creates digital twins of their factory lines to test changes virtually before implementing them, reducing downtime and increasing efficiency.</p>
+                                    </div>
+
+                                    <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6">
+                                        <div className="text-3xl mb-3">✈️</div>
+                                        <h3 className="font-bold text-lg mb-2">Aircraft Engines</h3>
+                                        <p className="text-gray-700 text-sm">GE monitors jet engines with digital twins, predicting maintenance needs before parts fail, keeping planes safely in the air.</p>
+                                    </div>
+
+                                    <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-6">
+                                        <div className="text-3xl mb-3">🏙️</div>
+                                        <h3 className="font-bold text-lg mb-2">Smart Cities</h3>
+                                        <p className="text-gray-700 text-sm">Singapore created a digital twin of the entire city to plan infrastructure, manage traffic, and respond to emergencies more effectively.</p>
+                                    </div>
+
+                                    <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-xl p-6">
+                                        <div className="text-3xl mb-3">🏥</div>
+                                        <h3 className="font-bold text-lg mb-2">Healthcare</h3>
+                                        <p className="text-gray-700 text-sm">Hospitals use digital twins to model patient flow, optimize operating rooms, and even create personalized treatment plans.</p>
+                                    </div>
+
+                                    <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-xl p-6">
+                                        <div className="text-3xl mb-3">🚗</div>
+                                        <h3 className="font-bold text-lg mb-2">Autonomous Vehicles</h3>
+                                        <p className="text-gray-700 text-sm">Car companies test self-driving systems in digital twin environments, running millions of virtual miles before real-world deployment.</p>
+                                    </div>
+                                </div>
+
+                                <div className="mt-8 bg-indigo-50 rounded-lg p-6">
+                                    <h3 className="font-bold text-lg mb-3 text-indigo-900">The Bottom Line</h3>
+                                    <p className="text-gray-700">
+                                        Digital twins let you monitor, test, and optimize real-world things in a risk-free virtual environment. 
+                                        It's like having a save point in a video game—you can try things out without consequences, then apply what works to reality.
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<DigitalTwinExplainer />);
+    </script>
+</body>
+</html>
