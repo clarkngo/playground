@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Design Architect | IoT Lab</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* UI Styling */
+        .drop-zone { min-height: 420px; border: 2px dashed #cbd5e1; transition: background 0.3s; }
+        .drop-zone.drag-over { background-color: #f1f5f9; border-color: #3b82f6; }
+        .component { cursor: grab; user-select: none; transition: transform 0.2s; }
+        .component:hover { transform: scale(1.02); }
+        .error-ring { border: 2px solid #ef4444 !important; background-color: #fef2f2; }
+
+        /* PRINT STYLING - The "Simple Save" Logic */
+        @media print {
+            body { background: white; padding: 0; margin: 0; }
+            #toolbox-container, .no-pdf, button, #prompt-guide { display: none !important; }
+            #game-container { border: none; box-shadow: none; width: 100%; max-width: 100%; margin: 0; padding: 0; }
+            .drop-zone { border: 1px solid #e2e8f0; min-height: auto; padding: 20px; }
+            #placeholder { display: none !important; }
+            #feedback { display: block !important; border: 1px solid #cbd5e1; margin-top: 20px; }
+            @page { size: portrait; margin: 0.5in; }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 p-8">
+
+    <div id="game-container" class="max-w-5xl mx-auto bg-white p-8 rounded-xl shadow-xl border border-slate-200">
+        
+        <div class="mb-6 grid grid-cols-2 gap-6 bg-slate-100 p-5 rounded-lg border border-slate-200">
+            <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Student Name <span class="text-red-500">*</span></label>
+                <input type="text" id="student-name" placeholder="Enter Full Name" class="w-full p-2 border rounded border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none">
+                <p id="name-error" class="text-red-500 text-xs mt-1 hidden font-semibold">Name required for submission.</p>
+            </div>
+            <div class="text-right">
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">System Timestamp</label>
+                <p id="display-date" class="text-slate-700 font-medium py-2 italic font-mono text-sm"></p>
+            </div>
+        </div>
+
+        <header class="mb-8 border-b pb-6">
+            <h1 class="text-4xl font-extrabold text-slate-800 tracking-tight">Real-Time IoT Architecture</h1>
+            <div class="mt-4 p-5 bg-indigo-50 rounded-xl border-l-4 border-indigo-500 shadow-sm">
+                <h3 class="font-bold text-indigo-800 text-lg mb-2 flex items-center">
+                    <span class="mr-2">📡</span> The Objective
+                </h3>
+                <p class="text-indigo-900 text-md leading-relaxed">
+                    Design a high-throughput pipeline for thousands of campus sensors. The flow must follow: <strong>Data Generation</strong> → <strong>Asynchronous Ingestion</strong> → <strong>Stream Processing</strong> → <strong>Persistent Storage</strong> → <strong>Live Push Update.</strong>
+                </p>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-4 gap-8">
+            <div class="col-span-1 space-y-6" id="toolbox-container">
+                <h3 class="font-bold text-lg text-indigo-600 flex items-center">
+                    <span class="mr-2">🛠️</span> Toolbox
+                </h3>
+                <div id="toolbox" class="space-y-3"></div>
+                <div class="pt-4 space-y-3">
+                    <button onclick="checkSystem()" class="w-full bg-indigo-600 text-white py-3 rounded-lg font-bold hover:bg-indigo-700 transition shadow-md">Validate Architecture</button>
+                    <button onclick="exportSimplePDF()" class="w-full bg-slate-800 text-white py-3 rounded-lg font-bold hover:bg-slate-900 transition shadow-md">Export PDF</button>
+                </div>
+            </div>
+
+            <div class="col-span-3 space-y-6">
+                <div>
+                    <h3 class="font-bold text-xl text-slate-700 mb-3">Design Canvas</h3>
+                    <div id="canvas" class="drop-zone rounded-2xl flex flex-col items-center justify-start p-8 gap-4 bg-slate-50/50">
+                        <p class="text-gray-400 mt-32 italic text-lg" id="placeholder">Drag IoT components here in flow order...</p>
+                    </div>
+                    <div id="feedback" class="mt-6 p-6 rounded-xl border-2 hidden transition-all duration-300">
+                        <div id="feedback-status" class="font-black text-xl mb-2 uppercase tracking-tighter"></div>
+                        <div id="feedback-content" class="text-sm"></div>
+                    </div>
+                </div>
+
+                <div id="prompt-guide" class="p-5 bg-amber-50 rounded-xl border border-amber-200 shadow-sm">
+                    <div class="flex items-center mb-3">
+                        <span class="text-2xl mr-3">🤖</span>
+                        <div>
+                            <h4 class="text-sm font-bold text-amber-800">AI IoT Architect Prompt Guide</h4>
+                            <p class="text-[11px] text-amber-700">Consult an LLM (Gemini/ChatGPT) to refine your streaming strategy:</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 text-[11px] text-amber-900 italic leading-relaxed">
+                        <div class="bg-white/50 p-3 rounded border border-amber-100">
+                            "Why is a <strong>Message Queue</strong> (like Kafka) essential when handling thousands of IoT sensors? What happens if it is removed?"
+                        </div>
+                        <div class="bg-white/50 p-3 rounded border border-amber-100">
+                            "Explain the difference between <strong>Polling</strong> and <strong>WebSockets</strong> for updating a real-time dashboard."
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const placeholder = document.getElementById('placeholder');
+        const nameInput = document.getElementById('student-name');
+        const toolbox = document.getElementById('toolbox');
+
+        // 1. IoT DATA
+        const toolData = [
+            { type: "Sensors", label: "📟 IoT Sensors", color: "bg-slate-50 border-slate-200" },
+            { type: "Queue", label: "📬 Message Queue (Kafka)", color: "bg-orange-50 border-orange-200" },
+            { type: "Processor", label: "⚙️ Stream Processor", color: "bg-indigo-50 border-indigo-200" },
+            { type: "NoSQL", label: "📊 NoSQL Database", color: "bg-amber-50 border-amber-200" },
+            { type: "WebSocket", label: "🔌 WebSocket Server", color: "bg-emerald-50 border-emerald-200" }
+        ];
+
+        const LAB_CONFIG = {
+            correctOrder: ["Sensors", "Queue", "Processor", "NoSQL", "WebSocket"],
+            clues: {
+                "Sensors": "The process begins with the physical generation of data.",
+                "Queue": "High-volume data must be buffered in an asynchronous queue to prevent system overload.",
+                "Processor": "Raw data must be filtered, aggregated, or transformed before storage.",
+                "NoSQL": "Fast-moving IoT data is best stored in a high-write NoSQL database.",
+                "WebSocket": "Finally, the processed data is pushed to users instantly via a persistent connection."
+            }
+        };
+
+        // 2. SHUFFLE TOOLBOX
+        function init() {
+            document.getElementById('display-date').innerText = new Date().toLocaleString();
+            [...toolData].sort(() => Math.random() - 0.5).forEach(tool => {
+                const div = document.createElement('div');
+                div.draggable = true;
+                div.className = `component ${tool.color} p-4 rounded-lg border-2 shadow-sm font-semibold text-sm flex items-center justify-center text-center`;
+                div.dataset.type = tool.type;
+                div.innerText = tool.label;
+                div.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('type', tool.type);
+                    e.dataTransfer.setData('label', tool.label);
+                });
+                toolbox.appendChild(div);
+            });
+        }
+
+        // 3. DRAG & DROP
+        canvas.addEventListener('dragover', (e) => e.preventDefault());
+        canvas.addEventListener('drop', (e) => {
+            e.preventDefault();
+            placeholder.style.display = 'none';
+
+            const type = e.dataTransfer.getData('type');
+            const label = e.dataTransfer.getData('label');
+
+            const el = document.createElement('div');
+            el.className = `flex items-center justify-between w-full max-w-lg p-4 rounded-xl shadow-md border bg-white font-bold text-slate-700 transition hover:scale-[1.01]`;
+            el.innerHTML = `
+                <span>${canvas.querySelectorAll('[data-type]').length + 1}. ${label}</span>
+                <button onclick="this.parentElement.remove(); if(document.querySelectorAll('[data-type]').length===0) document.getElementById('placeholder').style.display='block';" class="text-slate-300 hover:text-red-500 no-pdf">✖</button>
+            `;
+            el.dataset.type = type;
+            canvas.appendChild(el);
+        });
+
+        // 4. VALIDATE & EXPORT
+        function checkSystem() {
+            const nodes = Array.from(canvas.querySelectorAll('[data-type]'));
+            const current = nodes.map(n => n.dataset.type);
+            const isPass = JSON.stringify(current) === JSON.stringify(LAB_CONFIG.correctOrder);
+            
+            const feedback = document.getElementById('feedback');
+            const status = document.getElementById('feedback-status');
+            const content = document.getElementById('feedback-content');
+
+            feedback.className = `mt-6 p-6 rounded-xl border-2 block ${isPass ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-800'}`;
+            status.innerText = isPass ? "STATUS: PASS / COMPLETED" : "STATUS: FAIL / ATTEMPTED";
+            
+            if (isPass) {
+                content.innerText = "Architecture verified. The use of a message broker for backpressure and WebSockets for real-time delivery is optimal for IoT.";
+            } else {
+                let hint = "The stream processing flow is inefficient or broken.";
+                for (let i = 0; i < LAB_CONFIG.correctOrder.length; i++) {
+                    if (current[i] !== LAB_CONFIG.correctOrder[i]) {
+                        hint = `Issue at Step ${i + 1}: ${LAB_CONFIG.clues[LAB_CONFIG.correctOrder[i]]}`;
+                        break;
+                    }
+                }
+                content.innerHTML = `<strong>${hint}</strong>`;
+            }
+        }
+
+        function exportSimplePDF() {
+            if (!nameInput.value.trim()) {
+                nameInput.classList.add('error-ring');
+                document.getElementById('name-error').classList.remove('hidden');
+                nameInput.focus();
+                return;
+            }
+            if (document.getElementById('feedback').classList.contains('hidden')) {
+                alert("Please click 'Validate Architecture' before exporting.");
+                return;
+            }
+            window.print();
+        }
+
+        init();
+    </script>
+</body>
+</html>

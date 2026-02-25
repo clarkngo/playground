@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Architectural Lab: Environment & Containers</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .terminal-glow { text-shadow: 0 0 5px #4ade80; }
+        .strikethrough { text-decoration: line-through; opacity: 0.5; }
+        .tab-active { border-bottom: 2px solid #3b82f6; color: #3b82f6; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans min-h-screen p-4 flex flex-col">
+
+    <header class="mb-6 border-b border-slate-700 pb-4 flex justify-between items-center">
+        <div>
+            <h1 class="text-xl font-bold tracking-tight">System Architecture Lab 01</h1>
+            <p class="text-xs text-slate-500 uppercase tracking-widest">Environment Parity & Containerization</p>
+        </div>
+        <div class="flex gap-4">
+            <div id="status-badge" class="px-3 py-1 rounded-full bg-slate-800 text-[10px] font-bold border border-slate-700">SYSTEM: OFFLINE</div>
+        </div>
+    </header>
+
+    <main class="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-grow">
+        
+        <div class="lg:col-span-3 bg-slate-800/40 border border-slate-700 rounded-lg p-5">
+            <h3 class="text-xs font-bold text-slate-400 mb-4 uppercase">Lab Tasks</h3>
+            <ul class="space-y-4 text-sm">
+                <li id="task1" class="flex items-center gap-3">
+                    <input type="checkbox" id="check1" class="w-4 h-4 rounded border-slate-600 bg-slate-700" onclick="updateProgress('task1')">
+                    <label for="check1">Configure Script in IDE</label>
+                </li>
+                <li id="task2" class="flex items-center gap-3">
+                    <input type="checkbox" id="check2" class="w-4 h-4 rounded border-slate-600 bg-slate-700" onclick="updateProgress('task2')">
+                    <label for="check2">Verify Local Runtime</label>
+                </li>
+                <li id="task3" class="flex items-center gap-3">
+                    <input type="checkbox" id="check-docker" class="w-4 h-4 rounded border-slate-600 bg-slate-700" disabled>
+                    <label for="check-docker">Build Docker Image</label>
+                </li>
+                <li id="task4" class="flex items-center gap-3">
+                    <input type="checkbox" id="check4" class="w-4 h-4 rounded border-slate-600 bg-slate-700" onclick="updateProgress('task4')">
+                    <label for="check4">Export System Logs</label>
+                </li>
+            </ul>
+            <div class="mt-8 pt-6 border-t border-slate-700">
+                <div class="text-[10px] text-slate-500 mb-1">COMPLETION PROGRESS</div>
+                <div class="w-full bg-slate-700 h-1 rounded-full overflow-hidden">
+                    <div id="progressBar" class="bg-blue-500 h-full w-0 transition-all duration-500"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="lg:col-span-5 bg-slate-800 rounded-xl shadow-2xl overflow-hidden flex flex-col border border-slate-700">
+            <div class="bg-slate-700/50 px-4 py-2 flex items-center justify-between">
+                <div class="flex gap-2">
+                    <span class="px-3 py-1 bg-slate-900 rounded text-[10px] text-blue-400 font-mono">app.py</span>
+                </div>
+                <button onclick="runLocal()" class="text-[10px] font-bold bg-blue-600 hover:bg-blue-500 px-3 py-1 rounded transition">RUN LOCAL</button>
+            </div>
+            <textarea id="editor" class="flex-grow bg-slate-900 p-6 font-mono text-sm text-slate-300 focus:outline-none resize-none leading-relaxed" spellcheck="false">
+# System Architecture Simulation
+# Step 1: Define a generic processing service
+
+def process_data(input_val):
+    print(f"Service received: {input_val}")
+    return {"status": "success", "engine": "Docker-Sim-01"}
+
+if __name__ == "__main__":
+    response = process_data("Lab-Test-Payload")
+    print(response)
+            </textarea>
+        </div>
+
+        <div class="lg:col-span-4 flex flex-col gap-6">
+            <div class="bg-slate-800 border border-slate-700 rounded-lg p-4 flex-grow">
+                <h3 class="text-xs font-bold text-slate-500 mb-4 uppercase">Architecture Visualization</h3>
+                <div id="viz-area" class="h-48 flex flex-col items-center justify-center border border-slate-700 rounded bg-slate-900/50">
+                    <div id="viz-icon" class="text-slate-700 text-4xl mb-2">⬢</div>
+                    <div id="viz-text" class="text-[10px] text-slate-500 uppercase tracking-tighter">No Image Detected</div>
+                </div>
+            </div>
+
+            <div class="bg-black border border-slate-700 rounded-lg p-4 h-48 overflow-hidden flex flex-col font-mono text-xs">
+                <div id="terminal" class="flex-grow overflow-y-auto text-green-500 space-y-1 scrollbar-hide">
+                    <div class="text-slate-500 italic">-- System Terminal Initialized --</div>
+                </div>
+                <div class="flex mt-2 border-t border-slate-800 pt-2">
+                    <span class="text-blue-400 mr-2">$</span>
+                    <input id="input" type="text" class="bg-transparent focus:outline-none flex-grow text-white" placeholder="Type 'docker build'..." autocomplete="off">
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const terminal = document.getElementById('terminal');
+        const input = document.getElementById('input');
+        const bar = document.getElementById('progressBar');
+        let progress = 0;
+
+        function log(msg, color='text-green-500') {
+            const line = document.createElement('div');
+            line.className = color;
+            line.textContent = `> ${msg}`;
+            terminal.appendChild(line);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        function updateProgress(id) {
+            const el = document.getElementById(id);
+            el.classList.toggle('strikethrough');
+            const checks = document.querySelectorAll('input[type="checkbox"]:checked').length;
+            bar.style.width = (checks / 4 * 100) + '%';
+        }
+
+        function runLocal() {
+            log("Spinning up local Python runtime...", "text-blue-400");
+            setTimeout(() => {
+                log("Executing app.py...");
+                log("{status: 'success', engine: 'Native-OS'}", "text-white");
+                if(!document.getElementById('check2').checked) {
+                    document.getElementById('check2').click();
+                }
+            }, 600);
+        }
+
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const val = input.value.trim().toLowerCase();
+                log(val, "text-slate-400");
+                input.value = '';
+
+                if (val === 'docker build') {
+                    log("Step 1/3: Reading Dockerfile...", "text-yellow-500");
+                    document.getElementById('viz-text').innerText = "Building Image...";
+                    setTimeout(() => {
+                        log("Step 2/3: Bundling Python 3.11-slim runtime...", "text-yellow-500");
+                    }, 800);
+                    setTimeout(() => {
+                        log("Step 3/3: Pushing to local registry...", "text-yellow-500");
+                        log("IMAGE BUILT: lab-service:v1", "text-white font-bold");
+                        document.getElementById('status-badge').innerText = "SYSTEM: READY";
+                        document.getElementById('status-badge').className = "px-3 py-1 rounded-full bg-green-900/30 text-[10px] font-bold border border-green-500 text-green-400";
+                        document.getElementById('viz-area').className = "h-48 flex flex-col items-center justify-center border border-green-500/30 rounded bg-blue-900/10";
+                        document.getElementById('viz-icon').innerHTML = "📦";
+                        document.getElementById('viz-icon').className = "text-4xl mb-2 drop-shadow-[0_0_10px_rgba(59,130,246,0.5)]";
+                        document.getElementById('viz-text').innerText = "lab-service:v1";
+                        document.getElementById('check-docker').checked = true;
+                        updateProgress('task3');
+                    }, 2000);
+                } else if (val === 'help') {
+                    log("Available commands: docker build, clear, run local");
+                } else if (val === 'clear') {
+                    terminal.innerHTML = '';
+                }
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI System Design Lab | PASS-FAIL</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'neutral' });</script>
+    <style>
+        :root { --success: #22c55e; --fail: #ef4444; --primary: #2563eb; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; display: flex; height: 100vh; background: #f1f5f9; }
+        
+        /* Sidebar Controls */
+        #controls { width: 350px; background: white; padding: 20px; border-right: 1px solid #cbd5e1; overflow-y: auto; }
+        #canvas { flex: 1; padding: 40px; display: flex; flex-direction: column; align-items: center; }
+        
+        .component-group { margin-bottom: 20px; border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px; }
+        h3 { margin-top: 0; font-size: 1rem; color: #64748b; text-transform: uppercase; }
+        
+        .checkbox-wrapper { display: flex; align-items: center; margin-bottom: 8px; cursor: pointer; }
+        .checkbox-wrapper input { margin-right: 10px; }
+
+        /* Assessment Box */
+        #assessment { margin-top: 20px; padding: 20px; border-radius: 8px; text-align: center; width: 100%; max-width: 600px; display: none; }
+        .pass { background: #dcfce7; border: 2px solid var(--success); color: #166534; }
+        .fail { background: #fee2e2; border: 2px solid var(--fail); color: #991b1b; }
+
+        #diagram-container { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); width: 100%; min-height: 300px; display: flex; justify-content: center; }
+        button { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        button:hover { opacity: 0.9; }
+    </style>
+</head>
+<body>
+
+<div id="controls">
+    <h2>Lab Scenario</h2>
+    <select id="scenario-select" onchange="resetLab()">
+        <option value="1">Scenario 1: Global AI Research Agent</option>
+        <option value="2">Scenario 2: Real-time Ride Sharing</option>
+    </select>
+    <p id="scenario-desc" style="font-size: 0.9rem; color: #475569;"></p>
+    <hr>
+
+    <div class="component-group">
+        <h3>User Interface</h3>
+        <label class="checkbox-wrapper"><input type="checkbox" class="comp" value="MobileApp"> Mobile App</label>
+        <label class="checkbox-wrapper"><input type="checkbox" class="comp" value="WebPortal"> Web Portal</label>
+    </div>
+
+    <div class="component-group">
+        <h3>Processing</h3>
+        <label class="checkbox-wrapper"><input type="checkbox" class="comp" value="LoadBalancer"> Load Balancer</label>
+        <label class="checkbox-wrapper"><input type="checkbox" class="comp" value="Orchestrator"> AI Agent Orchestrator</label>
+        <label class="checkbox-wrapper"><input type="checkbox" class="comp" value="Worker"> Worker Nodes (GPU)</label>
+    </div>
+
+    <div class="component-group">
+        <h3>Storage & Memory</h3>
+        <label class="checkbox-wrapper"><input type="checkbox" class="comp" value="VectorDB"> Vector DB (Memory)</label>
+        <label class="checkbox-wrapper"><input type="checkbox" class="comp" value="RelationalDB"> SQL Database</label>
+        <label class="checkbox-wrapper"><input type="checkbox" class="comp" value="Cache"> Redis Cache</label>
+    </div>
+
+    <button onclick="checkDesign()">Submit Design for Assessment</button>
+</div>
+
+<div id="canvas">
+    <div id="assessment"></div>
+    <div id="diagram-container">
+        <div id="mermaid-render" class="mermaid">
+            graph TD
+            Start[Select Components to Start Design]
+        </div>
+    </div>
+</div>
+
+<script>
+    const scenarios = {
+        "1": {
+            desc: "Build a system that researches questions, stores long-term 'memory' of facts, and handles thousands of concurrent users.",
+            required: ["WebPortal", "LoadBalancer", "Orchestrator", "VectorDB"],
+            forbidden: [],
+            feedback: "A Research AI requires an Orchestrator and a Vector DB for long-term memory!"
+        },
+        "2": {
+            desc: "Build a real-time ride-matching service where latency must be under 100ms and driver locations change every second.",
+            required: ["MobileApp", "LoadBalancer", "RelationalDB", "Cache"],
+            forbidden: ["VectorDB"],
+            feedback: "Ride sharing needs high-speed Caching and SQL for transactional integrity. Vector DB is overkill here!"
+        }
+    };
+
+    function resetLab() {
+        const id = document.getElementById('scenario-select').value;
+        document.getElementById('scenario-desc').innerText = scenarios[id].desc;
+        document.getElementById('assessment').style.display = 'none';
+        // Clear checkboxes
+        document.querySelectorAll('.comp').forEach(c => c.checked = false);
+        updateDiagram();
+    }
+
+    function updateDiagram() {
+        const selected = Array.from(document.querySelectorAll('.comp:checked')).map(c => c.value);
+        let graphDefinition = "graph TD\n";
+        
+        if (selected.length === 0) {
+            graphDefinition += "Start[Select Components]";
+        } else {
+            // Simple auto-linking logic
+            if (selected.includes("WebPortal")) graphDefinition += "WebPortal --> LoadBalancer\n";
+            if (selected.includes("MobileApp")) graphDefinition += "MobileApp --> LoadBalancer\n";
+            if (selected.includes("LoadBalancer")) graphDefinition += "LoadBalancer --> Orchestrator\n";
+            if (selected.includes("Orchestrator")) {
+                if (selected.includes("VectorDB")) graphDefinition += "Orchestrator --- VectorDB\n";
+                if (selected.includes("Worker")) graphDefinition += "Orchestrator --> Worker\n";
+            }
+            if (selected.includes("RelationalDB")) graphDefinition += "LoadBalancer --> RelationalDB\n";
+            if (selected.includes("Cache")) graphDefinition += "RelationalDB --- Cache\n";
+        }
+
+        const element = document.getElementById('mermaid-render');
+        element.removeAttribute('data-processed');
+        element.innerHTML = graphDefinition;
+        mermaid.draw('mermaid-render', graphDefinition, (svgCode) => {
+            element.innerHTML = svgCode;
+        });
+    }
+
+    function checkDesign() {
+        const id = document.getElementById('scenario-select').value;
+        const selected = Array.from(document.querySelectorAll('.comp:checked')).map(c => c.value);
+        const scenario = scenarios[id];
+        
+        const hasAllRequired = scenario.required.every(item => selected.includes(item));
+        const hasNoForbidden = scenario.forbidden.every(item => !selected.includes(item));
+        
+        const resultDiv = document.getElementById('assessment');
+        resultDiv.style.display = 'block';
+
+        if (hasAllRequired && hasNoForbidden) {
+            resultDiv.className = 'pass';
+            resultDiv.innerHTML = "<h2>✅ PASS</h2><p>Excellent! Your architecture meets all functional requirements for this scenario.</p>";
+        } else {
+            resultDiv.className = 'fail';
+            resultDiv.innerHTML = `<h2>❌ FAIL</h2><p>${scenario.feedback}</p>`;
+        }
+    }
+
+    // Initialize
+    document.querySelectorAll('.comp').forEach(item => {
+        item.addEventListener('change', updateDiagram);
+    });
+    resetLab();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CS445: AI-Infused Workbench Prototype</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .terminal-glow { text-shadow: 0 0 5px #4ade80; }
+        .cursor { display: inline-block; width: 10px; height: 20px; background: #4ade80; animation: blink 1s infinite; }
+        @keyframes blink { 50% { opacity: 0; } }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans min-h-screen p-4">
+
+    <header class="mb-6 border-b border-slate-700 pb-4">
+        <h1 class="text-2xl font-bold text-blue-400">CS445: Software Engineering for AI</h1>
+        <p class="text-sm text-slate-400">Module 1: Writing, Building, and Engineering Software </p>
+    </header>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <div class="lg:col-span-7 bg-slate-800 rounded-lg shadow-xl overflow-hidden flex flex-col border border-slate-700">
+            <div class="bg-slate-700 px-4 py-2 flex justify-between items-center">
+                <span class="text-xs font-mono uppercase tracking-widest text-slate-300 italic">main.py - Cloud IDE Simulation</span>
+                <div class="flex space-x-2">
+                    <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                    <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                    <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                </div>
+            </div>
+            <textarea id="codeEditor" class="flex-grow bg-slate-900 p-4 font-mono text-sm text-blue-300 focus:outline-none resize-none h-64" spellcheck="false">
+# Module 1 Exercise: Create a simple AI wrapper
+import os
+
+def ai_inference(prompt):
+    print(f"Processing: {prompt}")
+    return "AI Response: Success! Container is running."
+
+if __name__ == "__main__":
+    result = ai_inference("Test Docker Build")
+    print(result)
+            </textarea>
+            <div class="p-3 bg-slate-800 border-t border-slate-700 flex justify-end">
+                <button onclick="runCode()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-1 rounded text-sm font-bold transition">RUN SCRIPT</button>
+            </div>
+        </div>
+
+        <div class="lg:col-span-5 space-y-6">
+            <div class="bg-blue-900/30 border border-blue-500/50 p-4 rounded-lg">
+                <h3 class="text-blue-400 font-bold mb-2 flex items-center">
+                    <span class="mr-2">🤖</span> AI Mentor (Loubser, 2021)
+                </h3>
+                <p id="mentorText" class="text-sm leading-relaxed text-slate-300">
+                    Welcome! In Module 1, we focus on **Editors and Containers**.  Try running your script to see how it behaves in a virtual container.
+                </p>
+            </div>
+
+            <div class="bg-slate-800 border border-slate-700 p-4 rounded-lg">
+                <h3 class="text-sm font-bold text-slate-400 mb-3 uppercase tracking-tighter">Docker Visualizer</h3>
+                <div id="visualizer" class="h-32 border-2 border-dashed border-slate-600 rounded flex items-center justify-center text-slate-500 italic">
+                    Container Status: Stopped
+                </div>
+            </div>
+        </div>
+
+        <div class="lg:col-span-12 bg-black rounded-lg p-4 font-mono text-green-400 border-2 border-slate-700 shadow-2xl">
+            <div id="terminalOutput" class="h-48 overflow-y-auto mb-2 text-sm">
+                <div>> Initializing Virtual Environment...</div>
+                <div>> Ready. Type 'docker build' to containerize.</div>
+            </div>
+            <div class="flex">
+                <span class="mr-2 terminal-glow">root@cs445:~$</span>
+                <input id="terminalInput" type="text" class="bg-transparent focus:outline-none flex-grow text-green-400 terminal-glow" autofocus>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const terminalInput = document.getElementById('terminalInput');
+        const terminalOutput = document.getElementById('terminalOutput');
+        const mentorText = document.getElementById('mentorText');
+        const visualizer = document.getElementById('visualizer');
+
+        function addToTerminal(text) {
+            const div = document.createElement('div');
+            div.textContent = `> ${text}`;
+            terminalOutput.appendChild(div);
+            terminalOutput.scrollTop = terminalOutput.scrollHeight;
+        }
+
+        function runCode() {
+            addToTerminal("Executing main.py...");
+            setTimeout(() => {
+                addToTerminal("AI Response: Success! Container is running.");
+                mentorText.innerHTML = "Great! You just executed code in a simulated environment. According to Loubser (2021), using an **IDE** provides benefits like syntax highlighting and integrated debugging. ";
+            }, 500);
+        }
+
+        terminalInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const cmd = terminalInput.value.toLowerCase().trim();
+                addToTerminal(terminalInput.value);
+                terminalInput.value = '';
+
+                if (cmd === 'docker build') {
+                    visualizer.innerHTML = '<div class="text-yellow-400 font-bold animate-pulse">BUILDING IMAGE...</div>';
+                    addToTerminal("Sending build context to Docker daemon...");
+                    setTimeout(() => {
+                        visualizer.innerHTML = '<div class="bg-green-600 text-white p-2 rounded shadow-lg">IMAGE: ai-app:latest</div>';
+                        addToTerminal("Successfully built image. (Loubser Ch 2) [cite: 3]");
+                    }, 2000);
+                } else if (cmd === 'ls') {
+                    addToTerminal("main.py  Dockerfile  requirements.txt");
+                } else {
+                    addToTerminal(`Command '${cmd}' not found. Try 'docker build'.`);
+                }
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Architecture Lab: Containerization</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .terminal-glow { text-shadow: 0 0 5px #4ade80; }
+        .strikethrough { text-decoration: line-through; opacity: 0.5; color: #64748b; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        @keyframes pulse-fast { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        .animate-pulse-fast { animation: pulse-fast 0.8s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans min-h-screen p-4 flex flex-col relative">
+
+    <header class="mb-6 border-b border-slate-700 pb-4 flex justify-between items-center">
+        <div>
+            <h1 class="text-xl font-bold tracking-tight">System Architecture Lab</h1>
+            <p class="text-xs text-slate-500 uppercase tracking-widest italic">Module: Runtime Isolation & Containerization</p>
+        </div>
+        <div id="status-badge" class="px-3 py-1 rounded-full bg-slate-800 text-[10px] font-bold border border-slate-700 uppercase">System: Idle</div>
+    </header>
+
+    <main class="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-grow">
+        
+        <div class="lg:col-span-3 bg-slate-800/40 border border-slate-700 rounded-lg p-5">
+            <h3 class="text-xs font-bold text-slate-400 mb-4 uppercase tracking-widest">Lab Tasks</h3>
+            <ul class="space-y-4 text-sm">
+                <li id="task1" class="flex items-center gap-3">
+                    <input type="checkbox" id="check1" class="w-4 h-4 rounded border-slate-600 bg-slate-700 pointer-events-none">
+                    <label>01: Verify Local Runtime</label>
+                </li>
+                <li id="task2" class="flex items-center gap-3">
+                    <input type="checkbox" id="check2" class="w-4 h-4 rounded border-slate-600 bg-slate-700 pointer-events-none">
+                    <label>02: Build Docker Image</label>
+                </li>
+                <li id="task3" class="flex items-center gap-3">
+                    <input type="checkbox" id="check3" class="w-4 h-4 rounded border-slate-600 bg-slate-700 pointer-events-none">
+                    <label>03: Confirm Image Registry</label>
+                </li>
+                <li id="task4" class="flex items-center gap-3">
+                    <input type="checkbox" id="check4" class="w-4 h-4 rounded border-slate-600 bg-slate-700 pointer-events-none">
+                    <label>04: Execute Isolated Container</label>
+                </li>
+            </ul>
+            <div class="mt-8 pt-6 border-t border-slate-700">
+                <div class="text-[10px] text-slate-500 mb-1 uppercase">Completion Progress</div>
+                <div class="w-full bg-slate-700 h-1 rounded-full overflow-hidden">
+                    <div id="progressBar" class="bg-blue-500 h-full w-0 transition-all duration-500"></div>
+                </div>
+            </div>
+
+            <div class="mt-8">
+                <h3 class="text-[10px] font-bold text-blue-400 mb-3 uppercase tracking-widest">Architectural Prompts</h3>
+                <div class="space-y-2">
+                    <button onclick="sendPrompt('layer')" class="text-left w-full p-2 bg-slate-900 border border-slate-700 rounded text-[10px] hover:border-blue-500 transition text-slate-400">
+                        "Explain why images use a layered structure..."
+                    </button>
+                    <button onclick="sendPrompt('isolation')" class="text-left w-full p-2 bg-slate-900 border border-slate-700 rounded text-[10px] hover:border-blue-500 transition text-slate-400">
+                        "What is the difference between an Image and a Container?"
+                    </button>
+                    <button onclick="sendPrompt('root')" class="text-left w-full p-2 bg-slate-900 border border-slate-700 rounded text-[10px] hover:border-blue-500 transition text-slate-400">
+                        "Is it safe to run a container as a root user?"
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="lg:col-span-5 bg-slate-800 rounded-xl shadow-2xl overflow-hidden flex flex-col border border-slate-700">
+            <div class="bg-slate-700/50 px-4 py-2 flex items-center justify-between">
+                <span class="px-3 py-1 bg-slate-900 rounded text-[10px] text-blue-400 font-mono italic">app.py</span>
+                <button onclick="runLocal()" class="text-[10px] font-bold bg-blue-600 hover:bg-blue-500 px-3 py-1 rounded transition uppercase tracking-tighter">Execute Script</button>
+            </div>
+            <textarea id="editor" class="flex-grow bg-slate-900 p-6 font-mono text-sm text-slate-300 focus:outline-none resize-none leading-relaxed" spellcheck="false">
+# Task 01: Verify Local Environment
+# Prototyping: Test the logic before containerization.
+
+def system_check():
+    return "Status: Native OS Runtime Verified."
+
+if __name__ == "__main__":
+    print(system_check())
+            </textarea>
+        </div>
+
+        <div class="lg:col-span-4 flex flex-col gap-6">
+            <div class="bg-slate-800 border border-slate-700 rounded-lg p-4 flex-grow relative">
+                <h3 class="text-xs font-bold text-slate-500 mb-4 uppercase tracking-tighter">System Visualizer</h3>
+                <div id="viz-area" class="h-40 flex flex-col items-center justify-center border border-slate-700 rounded bg-slate-900/50 transition-all duration-700">
+                    <div id="viz-icon" class="text-slate-700 text-4xl mb-2">⬢</div>
+                    <div id="viz-text" class="text-[10px] text-slate-500 uppercase tracking-tighter font-mono text-center">No Image Blueprint<br>In Registry</div>
+                </div>
+                
+                <div class="mt-4 p-3 bg-blue-900/20 border border-blue-500/30 rounded text-center">
+                    <button onclick="openRealGemini('')" class="text-[10px] font-bold text-blue-400 hover:text-blue-300 flex items-center justify-center gap-2 w-full uppercase tracking-widest">
+                        ✨ Open Real Gemini 🚀
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-black border border-slate-700 rounded-lg p-4 h-64 overflow-hidden flex flex-col font-mono text-xs shadow-2xl">
+                <div id="terminal" class="flex-grow overflow-y-auto text-green-500 space-y-1 scrollbar-hide pb-2">
+                    <div class="text-slate-500 italic">-- Terminal Initialized --</div>
+                    <div class="text-slate-500 italic text-[10px]">Type 'docker build -t app .' to start.</div>
+                </div>
+                <div class="flex mt-2 border-t border-slate-800 pt-2 items-center">
+                    <span id="prompt-label" class="text-blue-400 mr-2">$</span>
+                    <input id="terminal-input" type="text" class="bg-transparent focus:outline-none flex-grow text-white" placeholder="..." autocomplete="off">
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const terminal = document.getElementById('terminal');
+        const input = document.getElementById('terminal-input');
+        const progressBar = document.getElementById('progressBar');
+        const vizArea = document.getElementById('viz-area');
+        const vizText = document.getElementById('viz-text');
+        const vizIcon = document.getElementById('viz-icon');
+        const statusBadge = document.getElementById('status-badge');
+        const promptLabel = document.getElementById('prompt-label');
+
+        let isContainerActive = false;
+        let isImageBuilt = false;
+
+        function log(msg, color='text-green-500') {
+            const line = document.createElement('div');
+            line.className = color;
+            line.innerHTML = `> ${msg}`;
+            terminal.appendChild(line);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        function completeTask(num) {
+            const checkbox = document.getElementById(`check${num}`);
+            const listItem = document.getElementById(`task${num}`);
+            if (!checkbox.checked) {
+                checkbox.checked = true;
+                listItem.classList.add('strikethrough', 'text-blue-400');
+                const checks = document.querySelectorAll('input[type="checkbox"]:checked').length;
+                progressBar.style.width = `${(checks / 4) * 100}%`;
+            }
+        }
+
+        function runLocal() {
+            log("Executing local runtime verification...", "text-blue-400 italic");
+            setTimeout(() => {
+                log("OUTPUT: Status: Native OS Runtime Verified.", "text-white font-bold");
+                completeTask(1);
+            }, 600);
+        }
+
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const cmd = input.value.trim();
+                log(cmd, "text-slate-400 font-bold");
+                input.value = '';
+                handleTerminal(cmd.toLowerCase());
+            }
+        });
+
+        function handleTerminal(cmd) {
+            if (isContainerActive && cmd !== 'exit') {
+                if (cmd === 'ls') log("usr/ src/ bin/ app/");
+                else if (cmd === 'whoami') log("root");
+                else log(`sh: ${cmd}: command not found`);
+                return;
+            }
+
+            if (cmd === 'help') {
+                log("CMDS: docker build -t [name] ., docker image ls, docker run -it [id] /bin/bash, clear", "text-slate-500");
+            } else if (cmd === 'clear') {
+                terminal.innerHTML = '';
+            } else if (cmd.includes('docker build')) {
+                log("Building executable package image...", "text-yellow-500");
+                vizText.innerText = "Building Image Layer...";
+                setTimeout(() => {
+                    log("[1/3] FROM ubuntu:20.04 (Base blueprint layer)");
+                    log("[2/3] RUN apt update && install system tools");
+                    log("[3/3] WORKDIR /usr/src (Setting runtime path)");
+                    log("SUCCESS: Built image lab-service:v1 (3d4284ea5b3d)", "text-green-400 font-bold");
+                    isImageBuilt = true;
+                    statusBadge.innerText = "State: Image Built";
+                    statusBadge.className = "px-3 py-1 rounded-full bg-blue-900 text-[10px] font-bold border border-blue-500 text-blue-400";
+                    vizIcon.innerHTML = "📦";
+                    vizIcon.className = "text-4xl mb-2 text-blue-400";
+                    vizText.innerText = "ID: 3d4284ea5b3d";
+                    completeTask(2);
+                }, 1800);
+            } else if (cmd === 'docker image ls') {
+                if (!isImageBuilt) log("Error: Image registry empty.", "text-red-400");
+                else {
+                    log("REPOSITORY   TAG       IMAGE ID       SIZE", "text-blue-300");
+                    log("lab-service  latest    3d4284ea5b3d   173MB", "text-blue-300");
+                    completeTask(3);
+                }
+            } else if (cmd.includes('docker run')) {
+                if (!isImageBuilt) {
+                    log("Error: No image template found. Build blueprint first.", "text-red-400");
+                    return;
+                }
+                log("Instantiating isolated runtime container...", "text-yellow-500 italic");
+                setTimeout(() => {
+                    isContainerActive = true;
+                    promptLabel.innerText = "root@3d4284ea:/usr/src#";
+                    log("CONNECTED: Isolated container shell active.", "text-white font-bold underline");
+                    statusBadge.innerText = "State: Container Active";
+                    statusBadge.className = "px-3 py-1 rounded-full bg-green-900 text-[10px] font-bold border border-green-500 text-green-400";
+                    vizArea.classList.add('animate-pulse-fast', 'border-green-500/50');
+                    completeTask(4);
+                }, 900);
+            } else if (cmd === 'exit') {
+                isContainerActive = false;
+                promptLabel.innerText = "$";
+                log("Closed container connection.", "text-slate-500");
+                vizArea.classList.remove('animate-pulse-fast', 'border-green-500/50');
+            } else {
+                log(`Command '${cmd}' unknown.`);
+            }
+        }
+
+        // Deep-Link Prompt Logic
+        function sendPrompt(type) {
+            let pText = "";
+            if (type === 'layer') pText = "Can you explain why Docker images use a layered structure and how each instruction creates a new layer?";
+            if (type === 'isolation') pText = "What is the primary difference between a Docker Image (template) and a Docker Container (instance)?";
+            if (type === 'root') pText = "I noticed my container shell runs as 'root'. What are the security risks and how can I fix this in my architecture?";
+            openRealGemini(pText);
+        }
+
+        function openRealGemini(customPrompt) {
+            const code = document.getElementById('editor').value;
+            const badge = statusBadge.innerText;
+            
+            let basePrompt = `I am working on a System Architecture Lab. 
+Current System State: ${badge}.
+My Current Script:
+${code}
+
+`;
+            const finalPrompt = customPrompt ? basePrompt + customPrompt : basePrompt + "Can you provide an architectural review of this script and explain how it would be containerized?";
+            window.open(`https://gemini.google.com/app?q=${encodeURIComponent(finalPrompt)}`, '_blank');
+        }
+    </script>
+</body>
+</html>

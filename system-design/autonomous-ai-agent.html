@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Design Architect | AI Agent Lab</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Drag and Drop Styling */
+        .drop-zone { min-height: 420px; border: 2px dashed #cbd5e1; transition: background 0.3s; }
+        .drop-zone.drag-over { background-color: #f1f5f9; border-color: #3b82f6; }
+        .component { cursor: grab; user-select: none; transition: transform 0.2s; }
+        .component:hover { transform: scale(1.02); }
+        .error-ring { border: 2px solid #ef4444 !important; background-color: #fef2f2; }
+
+        /* PRINT STYLING - This handles the "Simple Save" */
+        @media print {
+            body { background: white; p: 0; margin: 0; }
+            #toolbox-container, .no-pdf, button, #prompt-guide { display: none !important; }
+            #game-container { border: none; shadow: none; width: 100%; max-width: 100%; margin: 0; padding: 0; }
+            .drop-zone { border: 1px solid #e2e8f0; min-height: auto; padding: 20px; }
+            #placeholder { display: none !important; }
+            #feedback { display: block !important; border: 1px solid #cbd5e1; }
+            /* Force portrait or landscape depending on preference */
+            @page { size: portrait; margin: 0.5in; }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 p-8">
+
+    <div id="game-container" class="max-w-5xl mx-auto bg-white p-8 rounded-xl shadow-xl border border-slate-200">
+        
+        <div class="mb-6 grid grid-cols-2 gap-6 bg-slate-100 p-5 rounded-lg border border-slate-200">
+            <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Student Name <span class="text-red-500">*</span></label>
+                <input type="text" id="student-name" placeholder="Enter Full Name" class="w-full p-2 border rounded border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none">
+                <p id="name-error" class="text-red-500 text-xs mt-1 hidden font-semibold">Name required for submission.</p>
+            </div>
+            <div class="text-right">
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">System Timestamp</label>
+                <p id="display-date" class="text-slate-700 font-medium py-2 italic font-mono text-sm"></p>
+            </div>
+        </div>
+
+        <header class="mb-8 border-b pb-6">
+            <h1 class="text-4xl font-extrabold text-slate-800">Autonomous AI Agent Architecture</h1>
+            <div class="mt-4 p-5 bg-indigo-50 rounded-xl border-l-4 border-indigo-500">
+                <h3 class="font-bold text-indigo-800 text-lg mb-2">🎯 The Objective</h3>
+                <p class="text-indigo-900 text-md">Input → Control → Gathering → Memory → Synthesis.</p>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-4 gap-8">
+            <div class="col-span-1 space-y-6" id="toolbox-container">
+                <h3 class="font-bold text-lg text-indigo-600">🛠️ Toolbox</h3>
+                <div id="toolbox" class="space-y-3"></div>
+                <div class="pt-4 space-y-3">
+                    <button onclick="checkSystem()" class="w-full bg-indigo-600 text-white py-3 rounded-lg font-bold hover:bg-indigo-700 shadow-md">Validate Architecture</button>
+                    <button onclick="exportSimplePDF()" class="w-full bg-slate-800 text-white py-3 rounded-lg font-bold hover:bg-slate-900 shadow-md">Export PDF</button>
+                </div>
+            </div>
+
+            <div class="col-span-3 space-y-6">
+                <div id="canvas" class="drop-zone rounded-2xl flex flex-col items-center justify-start p-8 gap-4 bg-slate-50/50">
+                    <p class="text-gray-400 mt-32 italic" id="placeholder">Drag components here...</p>
+                </div>
+                
+                <div id="feedback" class="mt-6 p-6 rounded-xl border-2 hidden">
+                    <div id="feedback-status" class="font-black text-xl mb-2 uppercase tracking-tighter"></div>
+                    <div id="feedback-content" class="text-sm"></div>
+                </div>
+
+                <div id="prompt-guide" class="p-5 bg-amber-50 rounded-xl border border-amber-200 shadow-sm">
+                    <h4 class="text-sm font-bold text-amber-800 mb-2">🤖 AI Senior Architect Prompt Guide</h4>
+                    <p class="text-[11px] text-amber-700 italic">"Explain the logical dependency between an <strong>Orchestrator</strong> and a <strong>Vector DB</strong>."</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const nameInput = document.getElementById('student-name');
+        const toolbox = document.getElementById('toolbox');
+
+        // 1. DATA
+        const toolData = [
+            { type: "UserQuery", label: "👤 User Query", color: "bg-sky-50 border-sky-200" },
+            { type: "Orchestrator", label: "🧠 Agent Orchestrator", color: "bg-violet-50 border-violet-200" },
+            { type: "SearchTool", label: "🔍 Web Search Tool", color: "bg-emerald-50 border-emerald-200" },
+            { type: "VectorDB", label: "📚 Vector DB (Memory)", color: "bg-amber-50 border-amber-200" },
+            { type: "FinalReport", label: "📄 Final Cited Report", color: "bg-rose-50 border-rose-200" }
+        ];
+
+        const LAB_CONFIG = {
+            correctOrder: ["UserQuery", "Orchestrator", "SearchTool", "VectorDB", "FinalReport"],
+            clues: {
+                "UserQuery": "Initial data entry point.",
+                "Orchestrator": "The decision brain.",
+                "SearchTool": "External research.",
+                "VectorDB": "Memory storage.",
+                "FinalReport": "Output generation."
+            }
+        };
+
+        // 2. INIT
+        function init() {
+            document.getElementById('display-date').innerText = new Date().toLocaleString();
+            [...toolData].sort(() => Math.random() - 0.5).forEach(tool => {
+                const div = document.createElement('div');
+                div.draggable = true;
+                div.className = `component ${tool.color} p-4 rounded-lg border-2 shadow-sm font-semibold text-sm`;
+                div.dataset.type = tool.type;
+                div.innerText = tool.label;
+                div.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('type', tool.type);
+                    e.dataTransfer.setData('label', tool.label);
+                });
+                toolbox.appendChild(div);
+            });
+        }
+
+        // 3. DRAG & DROP
+        canvas.addEventListener('dragover', (e) => e.preventDefault());
+        canvas.addEventListener('drop', (e) => {
+            e.preventDefault();
+            document.getElementById('placeholder').style.display = 'none';
+            const type = e.dataTransfer.getData('type');
+            const label = e.dataTransfer.getData('label');
+
+            const el = document.createElement('div');
+            el.className = `flex items-center justify-between w-full max-w-lg p-4 rounded-xl shadow-md border bg-white font-bold text-slate-700`;
+            el.innerHTML = `<span>${canvas.querySelectorAll('[data-type]').length + 1}. ${label}</span><button onclick="this.parentElement.remove()" class="text-slate-300 no-pdf">✖</button>`;
+            el.dataset.type = type;
+            canvas.appendChild(el);
+        });
+
+        // 4. VALIDATE & EXPORT
+        function checkSystem() {
+            const nodes = Array.from(canvas.querySelectorAll('[data-type]'));
+            const current = nodes.map(n => n.dataset.type);
+            const isPass = JSON.stringify(current) === JSON.stringify(LAB_CONFIG.correctOrder);
+            
+            const feedback = document.getElementById('feedback');
+            const status = document.getElementById('feedback-status');
+            const content = document.getElementById('feedback-content');
+
+            feedback.className = `mt-6 p-6 rounded-xl border-2 block ${isPass ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-800'}`;
+            status.innerText = isPass ? "STATUS: PASS / COMPLETED" : "STATUS: FAIL / ATTEMPTED";
+            content.innerText = isPass ? "Excellent architectural logic." : "The sequence is flawed. Check the logical flow of data.";
+        }
+
+        function exportSimplePDF() {
+            if (!nameInput.value.trim()) {
+                nameInput.classList.add('error-ring');
+                document.getElementById('name-error').classList.remove('hidden');
+                return;
+            }
+            if (document.getElementById('feedback').classList.contains('hidden')) {
+                alert("Please 'Validate Architecture' first.");
+                return;
+            }
+            window.print(); // Simple, native, and fits to 1 page
+        }
+
+        init();
+    </script>
+</body>
+</html>

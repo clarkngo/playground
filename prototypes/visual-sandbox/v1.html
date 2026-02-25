@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Design Lab: Visual Logic & Events</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .drop-zone-active { border: 2px dashed #3b82f6; background: rgba(59, 130, 246, 0.1); }
+        .draggable-item { cursor: grab; transition: transform 0.2s; }
+        .draggable-item:active { cursor: grabbing; transform: scale(1.05); }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans min-h-screen p-4 flex flex-col">
+
+    <header class="mb-6 border-b border-slate-700 pb-4 flex justify-between items-center">
+        <div>
+            <h1 class="text-xl font-bold tracking-tight">System Design Lab 02</h1>
+            <p class="text-xs text-slate-500 uppercase tracking-widest">Interface Modeling & Event Flow</p>
+        </div>
+    </header>
+
+    <main class="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-grow">
+        
+        <div class="lg:col-span-3 bg-slate-800/40 border border-slate-700 rounded-lg p-5">
+            <h3 class="text-xs font-bold text-slate-400 mb-4 uppercase tracking-widest text-blue-400">Design Milestones</h3>
+            <ul class="space-y-4 text-xs">
+                <li id="task1" class="flex items-center gap-3">
+                    <input type="checkbox" id="check1" class="pointer-events-none">
+                    <label>01: Model "Pickup" Event</label>
+                </li>
+                <li id="task2" class="flex items-center gap-3">
+                    <input type="checkbox" id="check2" class="pointer-events-none">
+                    <label>02: Configure JSON Payload</label>
+                </li>
+                <li id="task3" class="flex items-center gap-3">
+                    <input type="checkbox" id="check3" class="pointer-events-none">
+                    <label>03: Validate Drop Logic</label>
+                </li>
+                <li id="task4" class="flex items-center gap-3">
+                    <input type="checkbox" id="check4" class="pointer-events-none">
+                    <label>04: Sync to Mock Database</label>
+                </li>
+            </ul>
+        </div>
+
+        <div class="lg:col-span-6 bg-slate-800 rounded-xl border border-slate-700 overflow-hidden flex flex-col p-6">
+            <h3 class="text-sm font-bold mb-4">Interactive Activity Diagram (Mockboard)</h3>
+            
+            <div class="flex gap-4 h-64">
+                <div id="source-col" class="flex-1 bg-slate-900 rounded p-4 border border-slate-700" ondragover="allowDrop(event)" ondrop="drop(event)">
+                    <span class="text-[10px] uppercase text-slate-500 block mb-4">Pending Tasks</span>
+                    <div id="drag1" draggable="true" ondragstart="drag(event)" class="draggable-item bg-blue-600 p-3 rounded text-xs font-bold shadow-lg mb-2">
+                        System API Config
+                    </div>
+                </div>
+
+                <div id="target-col" class="flex-1 bg-slate-900 rounded p-4 border border-slate-700 transition-all" ondragover="allowDrop(event)" ondrop="drop(event)">
+                    <span class="text-[10px] uppercase text-slate-500 block mb-4">Production</span>
+                </div>
+            </div>
+
+            <div class="mt-8 p-4 bg-slate-900 rounded border border-slate-700">
+                <h4 class="text-[10px] font-bold text-slate-400 uppercase mb-2">Live State (JSON Transmission)</h4>
+                <pre id="json-view" class="text-[10px] text-green-400 font-mono">{}</pre>
+            </div>
+        </div>
+
+        <div class="lg:col-span-3 space-y-6">
+            <div class="bg-blue-900/20 border border-blue-500/30 p-4 rounded-lg">
+                <h3 class="text-xs font-bold text-blue-400 mb-2 uppercase">Design Mentor</h3>
+                <p id="mentor-text" class="text-[11px] leading-relaxed text-slate-400">
+                    To start, **Drag** the 'System API Config' task. Watch the JSON window to see how we model the transition from <i>Pending</i> to <i>Production</i>.
+                </p>
+            </div>
+
+            <div class="bg-slate-800 border border-slate-700 p-4 rounded-lg text-center">
+                <button onclick="openRealGemini()" class="w-full py-2 bg-blue-600 text-white text-[10px] font-bold rounded uppercase tracking-widest hover:bg-blue-500 transition">
+                    ✨ Design Review with Gemini
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const jsonView = document.getElementById('json-view');
+        const mentorText = document.getElementById('mentor-text');
+
+        function allowDrop(ev) {
+            ev.preventDefault();
+            ev.currentTarget.classList.add('drop-zone-active');
+        }
+
+        function drag(ev) {
+            ev.dataTransfer.setData("text", ev.target.id);
+            const payload = {
+                event: "DRAG_START",
+                itemID: ev.target.id,
+                source: "Pending",
+                timestamp: new Date().toISOString()
+            };
+            jsonView.innerText = JSON.stringify(payload, null, 2);
+            document.getElementById('check1').checked = true;
+        }
+
+        function drop(ev) {
+            ev.preventDefault();
+            ev.currentTarget.classList.remove('drop-zone-active');
+            const data = ev.dataTransfer.getData("text");
+            ev.currentTarget.appendChild(document.getElementById(data));
+            
+            const payload = {
+                event: "DROP_COMPLETE",
+                itemID: data,
+                target: "Production",
+                status: "DB_SYNC_PENDING"
+            };
+            jsonView.innerText = JSON.stringify(payload, null, 2);
+            
+            mentorText.innerHTML = "<b>Success!</b> You just performed a state transition. In a real system, this would trigger a <b>Database Diagram</b> update to reflect the new position.";
+            document.getElementById('check2').checked = true;
+            document.getElementById('check3').checked = true;
+            document.getElementById('check4').checked = true;
+        }
+
+        function openRealGemini() {
+            const prompt = `I am designing a drag-and-drop system architecture. I've modeled a transition where a task moves columns. 
+            Can you explain the 'Activity Diagram' for a drop event? 
+            Include what happens if the 'Persistence Layer' fails to update the database.`;
+            window.open(`https://gemini.google.com/app?q=${encodeURIComponent(prompt)}`, '_blank');
+        }
+    </script>
+</body>
+</html>

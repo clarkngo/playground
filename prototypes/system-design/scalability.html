@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Design Architect | Scalability Lab</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        .drop-zone { min-height: 420px; border: 2px dashed #cbd5e1; transition: background 0.3s; }
+        .drop-zone.drag-over { background-color: #f1f5f9; border-color: #3b82f6; }
+        .component { cursor: grab; user-select: none; transition: transform 0.2s; }
+        .component:hover { transform: scale(1.02); }
+        .error-ring { border: 2px solid #ef4444 !important; background-color: #fef2f2; }
+    </style>
+</head>
+<body class="bg-slate-50 p-8">
+
+    <div id="game-container" class="max-w-6xl mx-auto bg-white p-8 rounded-xl shadow-xl border border-slate-200">
+        
+        <div class="mb-6 grid grid-cols-2 gap-6 bg-slate-100 p-5 rounded-lg border border-slate-200">
+            <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Student Name <span class="text-red-500">*</span></label>
+                <input type="text" id="student-name" placeholder="Enter Full Name" class="w-full p-2 border rounded border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+                <p id="name-error" class="text-red-500 text-xs mt-1 hidden font-semibold italic">A name is required to export your submission.</p>
+            </div>
+            <div class="text-right">
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">System Timestamp</label>
+                <p id="display-date" class="text-slate-700 font-medium py-2 italic font-mono text-sm"></p>
+            </div>
+        </div>
+
+        <header class="mb-8 border-b pb-6">
+            <h1 class="text-4xl font-extrabold text-slate-800 tracking-tight">E-Commerce Scalability Architecture</h1>
+            <div class="mt-4 p-5 bg-indigo-50 rounded-xl border-l-4 border-indigo-500 shadow-sm">
+                <h3 class="font-bold text-indigo-800 text-lg mb-2 flex items-center">
+                    <span class="mr-2">🚀</span> The Objective
+                </h3>
+                <p class="text-indigo-900 text-md leading-relaxed">
+                    Design a system that can handle a 500% traffic spike during a global product launch. 
+                    The logical process flow must follow: <strong>Traffic Origin</strong> → <strong>Edge Content Offloading</strong> → <strong>Request Distribution</strong> → <strong>Elastic Compute</strong> → <strong>Data Persistence.</strong>
+                </p>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-4 gap-8">
+            
+            <div class="col-span-1 space-y-6">
+                <div>
+                    <h3 class="font-bold text-lg text-indigo-600 flex items-center mb-3">
+                        <span class="mr-2">🛠️</span> Toolbox
+                    </h3>
+                    <div id="toolbox" class="space-y-3">
+                        </div>
+                </div>
+                
+                <div class="pt-4 space-y-3">
+                    <button onclick="checkSystem()" class="w-full bg-indigo-600 text-white py-3 rounded-lg font-bold hover:bg-indigo-700 transition shadow-md">Validate Architecture</button>
+                    <button onclick="exportPDF()" class="w-full bg-slate-800 text-white py-3 rounded-lg font-bold hover:bg-slate-900 transition shadow-md">Export PDF Submission</button>
+                    <button onclick="location.reload()" class="w-full text-slate-400 text-xs hover:text-slate-600 hover:underline">Reset Lab State</button>
+                </div>
+            </div>
+
+            <div class="col-span-3 space-y-6">
+                <div>
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="font-bold text-xl text-slate-700">Design Canvas</h3>
+                        <span class="text-[10px] font-mono text-slate-400 uppercase tracking-widest bg-slate-100 px-2 py-1 rounded">Request Flow Sequence</span>
+                    </div>
+                    <div id="canvas" class="drop-zone rounded-2xl flex flex-col items-center justify-start p-8 gap-4 bg-slate-50/50">
+                        <p class="text-gray-400 mt-32 italic text-lg" id="placeholder">Drag and drop components to handle the surge...</p>
+                    </div>
+                    <div id="feedback" class="mt-6 p-6 rounded-xl border-2 hidden transition-all duration-300"></div>
+                </div>
+
+                <div class="p-5 bg-amber-50 rounded-xl border border-amber-200 shadow-sm no-pdf">
+                    <div class="flex items-center mb-3">
+                        <span class="text-2xl mr-3">🤖</span>
+                        <div>
+                            <h4 class="text-sm font-bold text-amber-800">AI Senior Architect Prompt Guide</h4>
+                            <p class="text-[11px] text-amber-700">Consult an LLM (Gemini/ChatGPT) to refine your infrastructure strategy:</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-white/50 p-3 rounded border border-amber-100 italic text-[11px] text-amber-900">
+                            "Explain why a <strong>CDN</strong> is placed before a <strong>Load Balancer</strong> in a high-traffic software architecture. How does this reduce server costs?"
+                        </div>
+                        <div class="bg-white/50 p-3 rounded border border-amber-100 italic text-[11px] text-amber-900">
+                            "What is the relationship between a <strong>Load Balancer</strong> and an <strong>Auto-Scaling Group</strong> during a flash sale?"
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const placeholder = document.getElementById('placeholder');
+        const nameInput = document.getElementById('student-name');
+        const toolbox = document.getElementById('toolbox');
+
+        // 1. TOOL DATA (Scalability)
+        const toolData = [
+            { type: "Traffic", label: "🌐 Global Traffic", color: "bg-sky-50 border-sky-200 text-sky-800" },
+            { type: "CDN", label: "🚀 Content Delivery (CDN)", color: "bg-orange-50 border-orange-200 text-orange-800" },
+            { type: "LoadBalancer", label: "⚖️ Load Balancer", color: "bg-purple-50 border-purple-200 text-purple-800" },
+            { type: "AutoScaling", label: "📈 Auto-Scaling Group", color: "bg-emerald-50 border-emerald-200 text-emerald-800" },
+            { type: "Database", label: "🗄️ Primary Database", color: "bg-amber-50 border-amber-200 text-amber-800" }
+        ];
+
+        // 2. SHUFFLE TOOLBOX
+        function initToolbox() {
+            const shuffled = [...toolData].sort(() => Math.random() - 0.5);
+            shuffled.forEach(tool => {
+                const div = document.createElement('div');
+                div.draggable = true;
+                div.className = `component ${tool.color} p-4 rounded-lg border-2 shadow-sm font-semibold text-sm flex items-center justify-center`;
+                div.dataset.type = tool.type;
+                div.innerText = tool.label;
+                div.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('text/plain', tool.label);
+                    e.dataTransfer.setData('type', tool.type);
+                });
+                toolbox.appendChild(div);
+            });
+        }
+
+        // 3. LOGIC CONFIG (Scalability)
+        const LAB_CONFIG = {
+            correctOrder: ["Traffic", "CDN", "LoadBalancer", "AutoScaling", "Database"],
+            clues: {
+                "Traffic": "The software process begins at the source—where is the traffic coming from?",
+                "CDN": "To protect your core infrastructure, you must serve static assets from the 'edge' before they hit your data center.",
+                "LoadBalancer": "Once traffic enters your data center, you need a mechanism to distribute the load evenly across servers.",
+                "AutoScaling": "The requests are processed by a fleet of servers that must be able to grow or shrink based on demand.",
+                "Database": "The final stage of the request process is writing the transaction to persistent, centralized storage."
+            }
+        };
+
+        // UI Timestamp
+        document.getElementById('display-date').innerText = new Date().toLocaleString();
+
+        // 4. DRAG & DROP HANDLERS
+        canvas.addEventListener('dragover', (e) => { e.preventDefault(); canvas.classList.add('drag-over'); });
+        canvas.addEventListener('dragleave', () => canvas.classList.remove('drag-over'));
+        canvas.addEventListener('drop', (e) => {
+            e.preventDefault();
+            canvas.classList.remove('drag-over');
+            placeholder.style.display = 'none';
+
+            const type = e.dataTransfer.getData('type');
+            const label = e.dataTransfer.getData('text/plain');
+
+            const newElement = document.createElement('div');
+            newElement.className = `flex items-center justify-between w-full max-w-lg p-5 rounded-xl shadow-md border-2 border-white bg-white font-bold text-slate-700 transform transition hover:scale-[1.01]`;
+            newElement.innerHTML = `
+                <div class="flex items-center">
+                    <span class="bg-indigo-600 text-white text-xs w-7 h-7 flex items-center justify-center rounded-full mr-4 shadow-sm">${canvas.querySelectorAll('[data-type]').length + 1}</span>
+                    <span class="text-lg">${label}</span>
+                </div>
+                <button onclick="removeNode(this)" class="text-slate-300 hover:text-red-500 transition-colors p-2 no-pdf">✖</button>
+            `;
+            newElement.dataset.type = type;
+            canvas.appendChild(newElement);
+        });
+
+        function removeNode(btn) {
+            btn.parentElement.remove();
+            if (canvas.querySelectorAll('[data-type]').length === 0) placeholder.style.display = 'block';
+            Array.from(canvas.querySelectorAll('[data-type]')).forEach((el, idx) => {
+                el.querySelector('span').innerText = idx + 1;
+            });
+        }
+
+        // 5. VALIDATION ENGINE
+        function checkSystem() {
+            const nodes = Array.from(canvas.querySelectorAll('[data-type]'));
+            const currentOrder = nodes.map(n => n.dataset.type);
+            const feedback = document.getElementById('feedback');
+            
+            feedback.classList.remove('hidden', 'bg-red-50', 'bg-green-50');
+
+            if (JSON.stringify(currentOrder) === JSON.stringify(LAB_CONFIG.correctOrder)) {
+                feedback.innerHTML = "<h3>✅ Scalability Pass</h3><p class='text-sm mt-2'>Excellent infrastructure design. By utilizing a CDN for edge caching and an Auto-Scaling Group behind a Load Balancer, you've created a resilient system capable of handling extreme volatility.</p>";
+                feedback.className = `mt-6 p-6 rounded-xl border-2 bg-green-50 border-green-200 text-green-800 block`;
+            } else {
+                let hint = "The request flow will likely cause a bottleneck or server crash.";
+                for (let i = 0; i < LAB_CONFIG.correctOrder.length; i++) {
+                    if (currentOrder[i] !== LAB_CONFIG.correctOrder[i]) {
+                        hint = `<strong>Issue at Step ${i + 1}:</strong> ${LAB_CONFIG.clues[LAB_CONFIG.correctOrder[i]]}`;
+                        break;
+                    }
+                }
+                feedback.innerHTML = `<h3>❌ Scalability Fail</h3><p class='text-sm mt-2'>${hint}</p>`;
+                feedback.className = `mt-6 p-6 rounded-xl border-2 bg-red-50 border-red-200 text-red-800 block`;
+            }
+            feedback.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // 6. PDF EXPORT WITH VALIDATION
+        function exportPDF() {
+            const nameVal = nameInput.value.trim();
+            const errorMsg = document.getElementById('name-error');
+
+            if (!nameVal) {
+                nameInput.classList.add('error-ring');
+                errorMsg.classList.remove('hidden');
+                nameInput.focus();
+                return;
+            } else {
+                nameInput.classList.remove('error-ring');
+                errorMsg.classList.add('hidden');
+            }
+
+            const timestamp = new Date().toLocaleString().replace(/[/,:]/g, '-');
+            const element = document.getElementById('game-container');
+            
+            const elementsToHide = document.querySelectorAll('.no-pdf, button, #toolbox');
+            elementsToHide.forEach(el => el.style.visibility = 'hidden');
+
+            const opt = {
+                margin: 0.3,
+                filename: `Lab2_Scalability_${nameVal.replace(/\s+/g, '_')}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' }
+            };
+
+            html2pdf().set(opt).from(element).save().then(() => {
+                elementsToHide.forEach(el => el.style.visibility = 'visible');
+            });
+        }
+
+        initToolbox();
+    </script>
+</body>
+</html>
