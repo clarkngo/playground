@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Link-Sequence</title>
+    <style>
+        :root {
+            --bg-color: #0e1117;
+            --card-bg: #262730;
+            --primary: #ff4b4b;
+            --border: #464855;
+            --text: #fafafa;
+            --accent: #1c83e1;
+        }
+
+        body {
+            font-family: "Source Sans Pro", sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text);
+            margin: 0;
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        h1 { margin-bottom: 0.5rem; }
+        p { opacity: 0.7; margin-bottom: 1.5rem; }
+
+        textarea {
+            width: 100%;
+            height: 150px;
+            background: #0e1117;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: white;
+            padding: 12px;
+            font-family: monospace;
+            box-sizing: border-box;
+        }
+
+        .controls {
+            margin: 1.5rem 0;
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.2s;
+        }
+
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-secondary { background: transparent; border: 1px solid var(--border); color: white; }
+        button:hover { opacity: 0.8; }
+
+        /* Table Styling */
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+            background: var(--card-bg);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            margin-top: 1rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            text-align: left;
+        }
+
+        th {
+            background: rgba(255,255,255,0.05);
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 10px 12px;
+            border-bottom: 1px dotted #444;
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .status-toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #2e7d32;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn { from { transform: translateY(100px); } to { transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>📑 Link-Sequence</h1>
+    <p>Generate 10-week sequences for HOS and TT patterns.</p>
+
+    <textarea id="linkInput" placeholder="Paste links (e.g., https://github.com/.../cs440-hos01-...)"></textarea>
+    
+    <div class="controls">
+        <button class="btn-primary" onclick="generateMatrix()">🚀 Generate Matrix</button>
+        <button class="btn-secondary" id="copyBtn" style="display:none;" onclick="copyToExcel()">📋 Copy for Excel (TSV)</button>
+    </div>
+
+    <div id="resultArea" class="table-container" style="display:none;">
+        <table id="matrixTable">
+            <thead><tr id="tableHeader"></tr></thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<div id="toast" class="status-toast">✅ Copied to clipboard!</div>
+
+<script>
+    let currentData = [];
+
+    function generateMatrix() {
+        const input = document.getElementById('linkInput').value;
+        const lines = input.split('\n').filter(l => l.trim() !== "");
+        
+        if (lines.length === 0) return alert("Please paste some links.");
+
+        currentData = lines.map(link => {
+            const row = {};
+            
+            // 1. Student Match
+            const studentMatch = link.match(/-([^-/]+)(?:\/tree\/main)?$/);
+            row.Student = studentMatch ? studentMatch[1] : "Unknown";
+
+            // 2. Pattern Match (hos01, tt1, etc.)
+            const patternMatch = link.match(/(hos|tt)(0?\d+)/i);
+            
+            if (patternMatch) {
+                const prefix = patternMatch[1];
+                const originalNumStr = patternMatch[2];
+                const isPadded = originalNumStr.startsWith('0') || originalNumStr.length > 1;
+
+                for (let i = 1; i <= 10; i++) {
+                    const newNum = isPadded ? i.toString().padStart(2, '0') : i.toString();
+                    const newVal = prefix + newNum;
+                    row[`Week ${i}`] = link.replace(new RegExp(prefix + originalNumStr, 'i'), newVal);
+                }
+            } else {
+                row.Error = "No HOS/TT pattern detected";
+            }
+            return row;
+        });
+
+        renderTable();
+    }
+
+    function renderTable() {
+        const headerRow = document.getElementById('tableHeader');
+        const tableBody = document.getElementById('tableBody');
+        const resultArea = document.getElementById('resultArea');
+        const copyBtn = document.getElementById('copyBtn');
+
+        headerRow.innerHTML = '';
+        tableBody.innerHTML = '';
+
+        if (currentData.length === 0) return;
+
+        // Get all unique keys for headers
+        const keys = ["Student", ...Array.from({length: 10}, (_, i) => `Week ${i+1}`)];
+        
+        keys.forEach(key => {
+            const th = document.createElement('th');
+            th.innerText = key;
+            headerRow.appendChild(th);
+        });
+
+        currentData.forEach(rowData => {
+            const tr = document.createElement('tr');
+            keys.forEach(key => {
+                const td = document.createElement('td');
+                td.innerText = rowData[key] || "";
+                td.title = rowData[key] || ""; // Show full link on hover
+                tr.appendChild(td);
+            });
+            tableBody.appendChild(tr);
+        });
+
+        resultArea.style.display = 'block';
+        copyBtn.style.display = 'inline-block';
+    }
+
+    function copyToExcel() {
+        if (currentData.length === 0) return;
+
+        const keys = ["Student", ...Array.from({length: 10}, (_, i) => `Week ${i+1}`)];
+        
+        // Create Header Row
+        let tsvContent = keys.join('\t') + '\n';
+
+        // Create Data Rows
+        currentData.forEach(row => {
+            const line = keys.map(key => row[key] || "").join('\t');
+            tsvContent += line + '\n';
+        });
+
+        navigator.clipboard.writeText(tsvContent).then(() => {
+            const toast = document.getElementById('toast');
+            toast.style.display = 'block';
+            setTimeout(() => toast.style.display = 'none', 2500);
+        });
+    }
+</script>
+
+</body>
+</html>
