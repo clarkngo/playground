@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CS445: SQL Injection Interactive Lab</title>
+    <style>
+        :root {
+            --bg-color: #f0f2f5;
+            --card-bg: #ffffff;
+            --primary-text: #1c1e21;
+            --accent-vulnerable: #dc3545;
+            --accent-secure: #198754;
+            --code-bg: #282c34;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--primary-text);
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .wrapper {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            padding-bottom: 30px;
+            border-bottom: 2px solid #ddd;
+            margin-bottom: 30px;
+        }
+
+        .guide {
+            background: #fff3cd;
+            border-left: 5px solid #ffc107;
+            padding: 15px 25px;
+            border-radius: 4px;
+            margin-bottom: 30px;
+        }
+
+        .lab-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card.vulnerable { border-top: 6px solid var(--accent-vulnerable); }
+        .card.secure { border-top: 6px solid var(--accent-secure); }
+
+        .input-group {
+            margin: 20px 0;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-family: 'Courier New', Courier, monospace;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: transform 0.1s;
+        }
+
+        button:active { transform: scale(0.98); }
+        .btn-v { background-color: var(--accent-vulnerable); }
+        .btn-s { background-color: var(--accent-secure); }
+
+        .console {
+            background: var(--code-bg);
+            color: #abb2bf;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.85rem;
+            margin-top: 20px;
+            min-height: 60px;
+            word-break: break-all;
+        }
+
+        .keyword { color: #c678dd; }
+        .string { color: #98c379; }
+        .comment { color: #5c6370; font-style: italic; }
+
+        .status-msg {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            text-align: center;
+            display: none;
+        }
+
+        @media (max-width: 800px) {
+            .lab-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="wrapper">
+    <header>
+        <h1>HOS07A – Security Lab</h1>
+        <p>Software Process Management: Experiencing & Managing SQL Injection</p>
+    </header>
+
+    <div class="guide">
+        <h3>Instructions:</h3>
+        <ol>
+            <li><strong>Normal Login:</strong> Enter username <code>alice</code> and password <code>alicepass</code> in both forms.</li>
+            <li><strong>The Attack:</strong> In the <em>Vulnerable</em> form, enter <code>admin' --</code> as the username and <code>anything</code> as the password.</li>
+            <li><strong>Observation:</strong> Watch the "Backend Query" box to see how the code is manipulated.</li>
+        </ol>
+    </div>
+
+    <div class="lab-grid">
+        <div class="card vulnerable">
+            <h2>app_vulnerable.py</h2>
+            <p>Uses string formatting (f-strings) to build queries. Highly susceptible to hacking.</p>
+            
+            <div class="input-group">
+                <input type="text" id="v-user" placeholder="Username" oninput="liveUpdate('v')">
+                <input type="password" id="v-pass" placeholder="Password">
+                <button class="btn-v" onclick="attemptLogin('v')">Test Vulnerable Login</button>
+            </div>
+
+            <div class="console" id="v-console">
+                <span class="keyword">SELECT</span> * <span class="keyword">FROM</span> users <span class="keyword">WHERE</span> user = <span class="string">''</span> <span class="keyword">AND</span> pass = <span class="string">''</span>;
+            </div>
+            <div id="v-status" class="status-msg"></div>
+        </div>
+
+        <div class="card secure">
+            <h2>app_secure.py</h2>
+            <p>Uses parameterized queries. This method treats user input strictly as data, not code.</p>
+            
+            <div class="input-group">
+                <input type="text" id="s-user" placeholder="Username" oninput="liveUpdate('s')">
+                <input type="password" id="s-pass" placeholder="Password">
+                <button class="btn-s" onclick="attemptLogin('s')">Test Secure Login</button>
+            </div>
+
+            <div class="console" id="s-console">
+                <span class="keyword">SELECT</span> * <span class="keyword">FROM</span> users <span class="keyword">WHERE</span> user = <span class="string">?</span> <span class="keyword">AND</span> pass = <span class="string">?</span>;
+            </div>
+            <div id="s-status" class="status-msg"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function liveUpdate(mode) {
+        const user = document.getElementById(mode + '-user').value;
+        const consoleEl = document.getElementById(mode + '-console');
+
+        if (mode === 'v') {
+            // Simulate string concatenation
+            let query = `<span class="keyword">SELECT</span> * <span class="keyword">FROM</span> users <span class="keyword">WHERE</span> user = <span class="string">'${user}'</span> <span class="keyword">AND</span> pass = <span class="string">'***'</span>;`;
+            
+            // Highlight the comment effect if injection detected
+            if (user.includes("' --")) {
+                query = `<span class="keyword">SELECT</span> * <span class="keyword">FROM</span> users <span class="keyword">WHERE</span> user = <span class="string">'${user.split("' --")[0]}'</span> <span class="comment">--' AND pass = '***';</span>`;
+            }
+            consoleEl.innerHTML = query;
+        } else {
+            // Parameterized preview remains clean
+            consoleEl.innerHTML = `<span class="keyword">SELECT</span> * <span class="keyword">FROM</span> users <span class="keyword">WHERE</span> user = <span class="string">?</span> <span class="keyword">AND</span> pass = <span class="string">?</span>;<br><span style="color:#777; font-size:0.75rem;">// Params: ["${user}", "***"]</span>`;
+        }
+    }
+
+    function attemptLogin(mode) {
+        const user = document.getElementById(mode + '-user').value;
+        const status = document.getElementById(mode + '-status');
+        status.style.display = "block";
+
+        if (mode === 'v') {
+            if (user === 'alice') {
+                status.style.background = "#d1e7dd";
+                status.style.color = "#0f5132";
+                status.innerText = "Access Granted: Logged in as Alice.";
+            } else if (user.includes("' --")) {
+                status.style.background = "#f8d7da";
+                status.style.color = "#842029";
+                status.innerText = "SYSTEM EXPLOITED: Logged in as Administrator! The password check was bypassed.";
+            } else {
+                status.style.background = "#e2e3e5";
+                status.style.color = "#41464b";
+                status.innerText = "Access Denied: Invalid credentials.";
+            }
+        } else {
+            if (user === 'alice') {
+                status.style.background = "#d1e7dd";
+                status.style.color = "#0f5132";
+                status.innerText = "Access Granted: Logged in securely.";
+            } else {
+                status.style.background = "#e2e3e5";
+                status.style.color = "#41464b";
+                status.innerText = "Access Denied: The system treated your input as a literal string.";
+            }
+        }
+    }
+</script>
+
+</body>
+</html>
