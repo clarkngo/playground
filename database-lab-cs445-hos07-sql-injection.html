@@ -6,16 +6,18 @@
     <title>CS445: SQL Injection Interactive Lab</title>
     <style>
         :root {
-            --bg-color: #f0f2f5;
+            --bg-color: #f8f9fa;
             --card-bg: #ffffff;
-            --primary-text: #1c1e21;
+            --primary-text: #212529;
             --accent-vulnerable: #dc3545;
             --accent-secure: #198754;
-            --code-bg: #282c34;
+            --code-bg: #1e1e1e;
+            --tab-inactive: #e9ecef;
+            --instruction-bg: #fff3cd;
         }
 
         body {
-            font-family: 'Segoe UI', system-ui, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: var(--bg-color);
             color: var(--primary-text);
             line-height: 1.6;
@@ -24,100 +26,134 @@
         }
 
         .wrapper {
-            max-width: 1100px;
+            max-width: 1200px;
             margin: 0 auto;
         }
 
         header {
             text-align: center;
-            padding-bottom: 30px;
-            border-bottom: 2px solid #ddd;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
         }
 
-        .guide {
-            background: #fff3cd;
+        .instructions {
+            background-color: var(--instruction-bg);
             border-left: 5px solid #ffc107;
             padding: 15px 25px;
             border-radius: 4px;
             margin-bottom: 30px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
+
+        .instructions h3 { margin-top: 0; }
+        .instructions ul { margin-bottom: 0; }
 
         .lab-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 25px;
+            gap: 20px;
+            margin-bottom: 40px;
         }
 
         .card {
             background: var(--card-bg);
-            border-radius: 12px;
-            padding: 25px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
-            display: flex;
-            flex-direction: column;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border-top: 5px solid #ddd;
         }
 
-        .card.vulnerable { border-top: 6px solid var(--accent-vulnerable); }
-        .card.secure { border-top: 6px solid var(--accent-secure); }
+        .vulnerable { border-color: var(--accent-vulnerable); }
+        .secure { border-color: var(--accent-secure); }
 
-        .input-group {
-            margin: 20px 0;
-        }
-
+        .input-group { margin: 15px 0; }
         input {
             width: 100%;
-            padding: 12px;
-            margin: 8px 0;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            font-family: 'Courier New', Courier, monospace;
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
             box-sizing: border-box;
+            font-family: monospace;
         }
 
         button {
             width: 100%;
-            padding: 12px;
+            padding: 10px;
             border: none;
-            border-radius: 6px;
+            border-radius: 4px;
             color: white;
             font-weight: bold;
             cursor: pointer;
-            font-size: 1rem;
-            transition: transform 0.1s;
+            margin-top: 10px;
+            transition: opacity 0.2s;
         }
 
-        button:active { transform: scale(0.98); }
+        button:hover { opacity: 0.9; }
         .btn-v { background-color: var(--accent-vulnerable); }
         .btn-s { background-color: var(--accent-secure); }
 
-        .console {
-            background: var(--code-bg);
-            color: #abb2bf;
-            padding: 15px;
-            border-radius: 6px;
-            font-family: 'Consolas', 'Monaco', monospace;
-            font-size: 0.85rem;
-            margin-top: 20px;
-            min-height: 60px;
-            word-break: break-all;
-        }
-
-        .keyword { color: #c678dd; }
-        .string { color: #98c379; }
-        .comment { color: #5c6370; font-style: italic; }
-
-        .status-msg {
-            margin-top: 15px;
-            padding: 10px;
+        .query-log {
+            background: #2d2d2d;
+            color: #dcdcdc;
+            padding: 12px;
             border-radius: 4px;
-            font-weight: bold;
-            text-align: center;
-            display: none;
+            font-family: 'Consolas', monospace;
+            font-size: 0.9em;
+            margin-top: 15px;
+            min-height: 40px;
         }
 
-        @media (max-width: 800px) {
-            .lab-grid { grid-template-columns: 1fr; }
+        .code-viewer {
+            background: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+
+        .tabs {
+            display: flex;
+            background: var(--tab-inactive);
+            border-bottom: 1px solid #ddd;
+        }
+
+        .tab-btn {
+            padding: 12px 20px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .tab-btn.active {
+            background: var(--card-bg);
+            color: #007bff;
+            border-bottom: 2px solid #007bff;
+        }
+
+        .code-block {
+            display: none;
+            background: var(--code-bg);
+            color: #d4d4d4;
+            padding: 20px;
+            margin: 0;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.95em;
+            overflow-x: auto;
+        }
+
+        .code-block.active { display: block; }
+        .keyword { color: #569cd6; }
+        .string { color: #ce9178; }
+        .comment { color: #6a9955; }
+        .func { color: #dcdcaa; }
+
+        kbd {
+            background: #eee;
+            border-radius: 3px;
+            border: 1px solid #b4b4b4;
+            padding: 1px 4px;
+            font-family: monospace;
         }
     </style>
 </head>
@@ -126,101 +162,131 @@
 <div class="wrapper">
     <header>
         <h1>HOS07A – Security Lab</h1>
-        <p>Software Process Management: Experiencing & Managing SQL Injection</p>
+        <p>Software Process Management: SQL Injection Simulation</p>
     </header>
 
-    <div class="guide">
+    <section class="instructions">
         <h3>Instructions:</h3>
-        <ol>
-            <li><strong>Normal Login:</strong> Enter username <code>alice</code> and password <code>alicepass</code> in both forms.</li>
-            <li><strong>The Attack:</strong> In the <em>Vulnerable</em> form, enter <code>admin' --</code> as the username and <code>anything</code> as the password.</li>
+        <ul>
+            <li><strong>Normal Login:</strong> Enter username <kbd>alice</kbd> and password <kbd>alicepass</kbd> in both forms[cite: 44, 45, 46].</li>
+            <li><strong>The Attack:</strong> In the <strong>Vulnerable</strong> form, enter <kbd>admin' --</kbd> as the username and <kbd>anything</kbd> as the password[cite: 47, 48, 49].</li>
             <li><strong>Observation:</strong> Watch the "Backend Query" box to see how the code is manipulated.</li>
-        </ol>
-    </div>
+        </ul>
+    </section>
 
     <div class="lab-grid">
         <div class="card vulnerable">
-            <h2>app_vulnerable.py</h2>
-            <p>Uses string formatting (f-strings) to build queries. Highly susceptible to hacking.</p>
-            
+            <h3>app_vulnerable.py</h3>
+            <p><small>Uses string formatting to build queries[cite: 42].</small></p>
             <div class="input-group">
-                <input type="text" id="v-user" placeholder="Username" oninput="liveUpdate('v')">
+                <input type="text" id="v-user" placeholder="Username" oninput="updateLiveQuery('v')">
                 <input type="password" id="v-pass" placeholder="Password">
-                <button class="btn-v" onclick="attemptLogin('v')">Test Vulnerable Login</button>
+                <button class="btn-v" onclick="runLogin('v')">Login (Vulnerable)</button>
             </div>
-
-            <div class="console" id="v-console">
-                <span class="keyword">SELECT</span> * <span class="keyword">FROM</span> users <span class="keyword">WHERE</span> user = <span class="string">''</span> <span class="keyword">AND</span> pass = <span class="string">''</span>;
+            <div class="query-log" id="v-log">
+                Backend Query: SELECT * FROM users WHERE user = '' AND pass = '';
             </div>
-            <div id="v-status" class="status-msg"></div>
         </div>
 
         <div class="card secure">
-            <h2>app_secure.py</h2>
-            <p>Uses parameterized queries. This method treats user input strictly as data, not code.</p>
-            
+            <h3>app_secure.py</h3>
+            <p><small>Uses parameterized queries to manage effects[cite: 20, 50].</small></p>
             <div class="input-group">
-                <input type="text" id="s-user" placeholder="Username" oninput="liveUpdate('s')">
+                <input type="text" id="s-user" placeholder="Username" oninput="updateLiveQuery('s')">
                 <input type="password" id="s-pass" placeholder="Password">
-                <button class="btn-s" onclick="attemptLogin('s')">Test Secure Login</button>
+                <button class="btn-s" onclick="runLogin('s')">Login (Secure)</button>
             </div>
-
-            <div class="console" id="s-console">
-                <span class="keyword">SELECT</span> * <span class="keyword">FROM</span> users <span class="keyword">WHERE</span> user = <span class="string">?</span> <span class="keyword">AND</span> pass = <span class="string">?</span>;
+            <div class="query-log" id="s-log">
+                Backend Query: SELECT * FROM users WHERE user = ? AND pass = ?;
             </div>
-            <div id="s-status" class="status-msg"></div>
         </div>
+    </div>
+
+    <div class="code-viewer">
+        <div class="tabs">
+            <button class="tab-btn active" onclick="showTab('setup')">setup_db.py</button>
+            <button class="tab-btn" onclick="showTab('vulnerable')">app_vulnerable.py</button>
+            <button class="tab-btn" onclick="showTab('secure')">app_secure.py</button>
+        </div>
+
+        <pre id="setup" class="code-block active">
+<span class="keyword">import</span> sqlite3
+
+<span class="keyword">def</span> <span class="func">init_db</span>():
+    <span class="comment"># Generates demo.db [cite: 40]</span>
+    conn = sqlite3.connect(<span class="string">'demo.db'</span>)
+    cursor = conn.cursor()
+    cursor.execute(<span class="string">'CREATE TABLE users (id INT, username TEXT, password TEXT)'</span>)
+    <span class="comment"># Normal credentials [cite: 45, 46]</span>
+    cursor.execute(<span class="string">"INSERT INTO users VALUES (1, 'alice', 'alicepass')"</span>)
+    cursor.execute(<span class="string">"INSERT INTO users VALUES (2, 'admin', 'hidden_admin_pass')"</span>)
+    conn.commit()
+    conn.close()</pre>
+
+        <pre id="vulnerable" class="code-block">
+<span class="keyword">import</span> sqlite3
+
+<span class="comment"># Vulnerable login using f-strings [cite: 42]</span>
+<span class="keyword">def</span> <span class="func">login</span>(username, password):
+    conn = sqlite3.connect(<span class="string">'demo.db'</span>)
+    cursor = conn.cursor()
+    <span class="comment"># VULNERABLE: Direct string interpolation</span>
+    query = <span class="string">f"SELECT * FROM users WHERE username = '{username}' AND password = '{password}'"</span>
+    cursor.execute(query)
+    <span class="keyword">return</span> cursor.fetchone()</pre>
+
+        <pre id="secure" class="code-block">
+<span class="keyword">import</span> sqlite3
+
+<span class="comment"># Secure login using parameters [cite: 50]</span>
+<span class="keyword">def</span> <span class="func">login</span>(username, password):
+    conn = sqlite3.connect(<span class="string">'demo.db'</span>)
+    cursor = conn.cursor()
+    <span class="comment"># SECURE: '?' placeholders block malicious actors [cite: 23]</span>
+    query = <span class="string">"SELECT * FROM users WHERE username = ? AND password = ?"</span>
+    cursor.execute(query, (username, password))
+    <span class="keyword">return</span> cursor.fetchone()</pre>
     </div>
 </div>
 
 <script>
-    function liveUpdate(mode) {
-        const user = document.getElementById(mode + '-user').value;
-        const consoleEl = document.getElementById(mode + '-console');
+    function showTab(tabId) {
+        document.querySelectorAll('.code-block').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        event.currentTarget.classList.add('active');
+    }
 
+    function updateLiveQuery(mode) {
+        const user = document.getElementById(mode + '-user').value;
+        const log = document.getElementById(mode + '-log');
         if (mode === 'v') {
-            // Simulate string concatenation
-            let query = `<span class="keyword">SELECT</span> * <span class="keyword">FROM</span> users <span class="keyword">WHERE</span> user = <span class="string">'${user}'</span> <span class="keyword">AND</span> pass = <span class="string">'***'</span>;`;
-            
-            // Highlight the comment effect if injection detected
+            log.innerHTML = `Backend Query: SELECT * FROM users WHERE user = <span style="color:#ce9178">'${user}'</span> AND pass = <span style="color:#ce9178">'***'</span>;`;
             if (user.includes("' --")) {
-                query = `<span class="keyword">SELECT</span> * <span class="keyword">FROM</span> users <span class="keyword">WHERE</span> user = <span class="string">'${user.split("' --")[0]}'</span> <span class="comment">--' AND pass = '***';</span>`;
+                log.style.border = "1px solid #dc3545";
+            } else {
+                log.style.border = "none";
             }
-            consoleEl.innerHTML = query;
         } else {
-            // Parameterized preview remains clean
-            consoleEl.innerHTML = `<span class="keyword">SELECT</span> * <span class="keyword">FROM</span> users <span class="keyword">WHERE</span> user = <span class="string">?</span> <span class="keyword">AND</span> pass = <span class="string">?</span>;<br><span style="color:#777; font-size:0.75rem;">// Params: ["${user}", "***"]</span>`;
+            log.innerHTML = `Backend Query: SELECT * FROM users WHERE user = <span style="color:#ce9178">?</span> AND pass = <span style="color:#ce9178">?</span>;<br><small style="color:#888">// Safe parameters: ["${user}", "***"]</small>`;
         }
     }
 
-    function attemptLogin(mode) {
+    function runLogin(mode) {
         const user = document.getElementById(mode + '-user').value;
-        const status = document.getElementById(mode + '-status');
-        status.style.display = "block";
-
         if (mode === 'v') {
-            if (user === 'alice') {
-                status.style.background = "#d1e7dd";
-                status.style.color = "#0f5132";
-                status.innerText = "Access Granted: Logged in as Alice.";
-            } else if (user.includes("' --")) {
-                status.style.background = "#f8d7da";
-                status.style.color = "#842029";
-                status.innerText = "SYSTEM EXPLOITED: Logged in as Administrator! The password check was bypassed.";
+            if (user.includes("' --")) {
+                alert("🔓 EXPLOITED!\nYour input 'admin' --' commented out the password check.\nYou are logged in as admin without knowing the password.");
+            } else if (user === 'alice') {
+                alert("✅ Normal Login: Welcome, Alice.");
             } else {
-                status.style.background = "#e2e3e5";
-                status.style.color = "#41464b";
-                status.innerText = "Access Denied: Invalid credentials.";
+                alert("❌ Login Failed: User not found.");
             }
         } else {
             if (user === 'alice') {
-                status.style.background = "#d1e7dd";
-                status.style.color = "#0f5132";
-                status.innerText = "Access Granted: Logged in securely.";
+                alert("✅ Secure Login: Welcome, Alice.");
             } else {
-                status.style.background = "#e2e3e5";
-                status.style.color = "#41464b";
-                status.innerText = "Access Denied: The system treated your input as a literal string.";
+                alert("🛡️ SECURE: The attack failed. The database looked for a user literally named \"admin' --\" and didn't find one.");
             }
         }
     }
