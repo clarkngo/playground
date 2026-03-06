@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Activity 8: What-If Scenario Builder</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .nav-btn { transition: background 0.2s; }
+    input[type=range] { accent-color: #6366f1; }
+    .bar-t { transition: width 0.7s ease, background-color 0.5s; }
+    .scenario-card { transition: border-color 0.2s, background-color 0.2s, transform 0.15s; cursor:pointer; }
+    .scenario-card:hover { transform: translateY(-2px); }
+    .scenario-card.active { border-color: #6366f1 !important; background-color: rgba(99,102,241,0.1) !important; }
+    @keyframes simulate { 0%{opacity:0.3} 50%{opacity:1} 100%{opacity:0.3} }
+    .simulating { animation: simulate 0.5s ease-in-out 6; }
+    .outcome-row { transition: all 0.4s; }
+  </style>
+</head>
+<body class="bg-gray-950 text-white min-h-screen font-sans">
+
+  <nav class="bg-gray-900 border-b border-gray-700 px-6 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-sm font-bold">DT</div>
+      <span class="text-gray-300 text-sm font-medium">Digital Twin Activity Series</span>
+    </div>
+    <div class="flex gap-2 flex-wrap justify-end">
+      <a href="01-intro.html" class="nav-btn bg-gray-700 hover:bg-gray-600 text-xs px-3 py-1 rounded-full">1 · Intro</a>
+      <a href="02-factory.html" class="nav-btn bg-gray-700 hover:bg-gray-600 text-xs px-3 py-1 rounded-full">2 · Factory</a>
+      <a href="03-building.html" class="nav-btn bg-gray-700 hover:bg-gray-600 text-xs px-3 py-1 rounded-full">3 · Building</a>
+      <a href="04-maintenance.html" class="nav-btn bg-gray-700 hover:bg-gray-600 text-xs px-3 py-1 rounded-full">4 · Maintenance</a>
+      <a href="05-city.html" class="nav-btn bg-gray-700 hover:bg-gray-600 text-xs px-3 py-1 rounded-full">5 · City</a>
+      <a href="06-health.html" class="nav-btn bg-gray-700 hover:bg-gray-600 text-xs px-3 py-1 rounded-full">6 · Health</a>
+      <a href="07-sync.html" class="nav-btn bg-gray-700 hover:bg-gray-600 text-xs px-3 py-1 rounded-full">7 · Sync</a>
+      <span class="bg-indigo-700 text-white text-xs px-3 py-1 rounded-full font-semibold">8 · Scenarios</span>
+      <a href="09-quiz.html" class="nav-btn bg-gray-700 hover:bg-gray-600 text-xs px-3 py-1 rounded-full">9 · Quiz</a>
+      <a href="10-design.html" class="nav-btn bg-gray-700 hover:bg-gray-600 text-xs px-3 py-1 rounded-full">10 · Design</a>
+    </div>
+  </nav>
+
+  <main class="max-w-5xl mx-auto px-6 py-10">
+    <div class="text-center mb-8">
+      <div class="text-indigo-400 text-sm font-semibold uppercase tracking-widest mb-2">Activity 8 of 10</div>
+      <h1 class="text-3xl font-bold mb-2">What-If Scenario Builder</h1>
+      <p class="text-gray-400">Use the digital twin to safely test dangerous scenarios. No real equipment at risk — just pure simulation.</p>
+    </div>
+
+    <!-- SYSTEM SELECTOR -->
+    <div class="bg-gray-900 border border-gray-700 rounded-2xl p-5 mb-6">
+      <div class="text-sm font-semibold text-gray-300 mb-3 uppercase tracking-wide">Choose a System to Simulate</div>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div class="scenario-card active bg-gray-800 border border-indigo-600 rounded-xl p-4 text-center" onclick="setSystem('turbine', this)">
+          <div class="text-3xl mb-2">⚙️</div>
+          <div class="text-sm font-semibold">Wind Turbine</div>
+          <div class="text-xs text-gray-400 mt-1">Energy production</div>
+        </div>
+        <div class="scenario-card bg-gray-800 border border-gray-700 rounded-xl p-4 text-center" onclick="setSystem('pipeline', this)">
+          <div class="text-3xl mb-2">🛢️</div>
+          <div class="text-sm font-semibold">Oil Pipeline</div>
+          <div class="text-xs text-gray-400 mt-1">Flow & pressure</div>
+        </div>
+        <div class="scenario-card bg-gray-800 border border-gray-700 rounded-xl p-4 text-center" onclick="setSystem('bridge', this)">
+          <div class="text-3xl mb-2">🌉</div>
+          <div class="text-sm font-semibold">City Bridge</div>
+          <div class="text-xs text-gray-400 mt-1">Structural load</div>
+        </div>
+        <div class="scenario-card bg-gray-800 border border-gray-700 rounded-xl p-4 text-center" onclick="setSystem('datacenter', this)">
+          <div class="text-3xl mb-2">🖥️</div>
+          <div class="text-sm font-semibold">Data Center</div>
+          <div class="text-xs text-gray-400 mt-1">Cooling & power</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+      <!-- CONTROLS -->
+      <div class="bg-gray-900 border border-gray-700 rounded-2xl p-6">
+        <div class="text-sm font-semibold text-gray-300 mb-4 uppercase tracking-wide">⚙️ Scenario Parameters</div>
+        <div id="paramControls" class="space-y-4 mb-5"></div>
+        <button id="runBtn" onclick="runSimulation()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-sm py-3 rounded-xl font-semibold transition flex items-center justify-center gap-2">
+          <span>▶ Run Simulation</span>
+        </button>
+        <div id="runningMsg" class="text-xs text-indigo-400 text-center mt-2 hidden">⚡ Simulating 1,000 iterations...</div>
+
+        <!-- Quick presets -->
+        <div class="mt-4 border-t border-gray-700 pt-4">
+          <div class="text-xs text-gray-400 mb-2 font-semibold uppercase tracking-wide">Quick Presets</div>
+          <div id="presetBtns" class="space-y-2"></div>
+        </div>
+      </div>
+
+      <!-- TWIN VISUALIZATION -->
+      <div class="bg-gray-900 border border-indigo-700/50 rounded-2xl p-6">
+        <div class="text-sm font-semibold text-indigo-300 mb-4 uppercase tracking-wide">🖥️ Digital Twin State</div>
+        <div id="twinViz" class="text-center mb-4">
+          <div id="twinEmoji" class="text-7xl mb-3">⚙️</div>
+          <div id="twinLabel" class="font-bold text-gray-200">Wind Turbine</div>
+          <div id="twinStatus" class="text-sm text-green-400 mt-1">● Nominal Operation</div>
+        </div>
+        <!-- Metrics -->
+        <div id="twinMetrics" class="space-y-3"></div>
+      </div>
+
+      <!-- OUTCOMES -->
+      <div class="bg-gray-900 border border-gray-700 rounded-2xl p-6">
+        <div class="text-sm font-semibold text-gray-300 mb-4 uppercase tracking-wide">📊 Simulation Outcomes</div>
+        <div id="outcomes" class="space-y-3 text-sm">
+          <div class="text-gray-500 text-center py-8">Run a simulation to see predicted outcomes</div>
+        </div>
+        <div id="riskScore" class="hidden mt-4 rounded-xl p-4 text-center">
+          <div class="text-xs text-gray-400 mb-1">Risk Level</div>
+          <div id="riskLabel" class="text-2xl font-bold font-mono"></div>
+          <div id="riskDesc" class="text-xs text-gray-400 mt-1"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HISTORY -->
+    <div class="bg-gray-900 border border-gray-700 rounded-2xl p-6 mb-8">
+      <h2 class="font-bold mb-3 text-gray-200">📜 Simulation History</h2>
+      <div id="historyLog" class="space-y-2 text-sm">
+        <div class="text-gray-500 text-sm">No simulations run yet.</div>
+      </div>
+      <div class="mt-4 bg-gray-800 rounded-lg p-4 text-sm text-gray-400">
+        <span class="text-indigo-300 font-semibold">💡 Why does this matter?</span> Digital twins let engineers run thousands of "what-if" scenarios — simulating earthquakes, equipment failures, storms, and overloads — without any real-world risk. This leads to safer designs, better disaster preparedness, and optimized operations.
+      </div>
+    </div>
+
+    <div class="flex justify-between">
+      <a href="07-sync.html" class="bg-gray-700 hover:bg-gray-600 text-white px-5 py-3 rounded-xl font-semibold transition">← Back</a>
+      <a href="09-quiz.html" class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-3 rounded-xl font-semibold transition">Next: Knowledge Quiz →</a>
+    </div>
+  </main>
+
+  <script>
+    const systems = {
+      turbine: {
+        emoji: '⚙️', label: 'Wind Turbine',
+        params: [
+          { id: 'windSpeed', label: '💨 Wind Speed', min: 0, max: 30, value: 12, unit: 'm/s' },
+          { id: 'bladeAngle', label: '📐 Blade Pitch', min: 0, max: 45, value: 15, unit: '°' },
+          { id: 'ambientTemp', label: '🌡️ Ambient Temp', min: -20, max: 45, value: 20, unit: '°C' },
+          { id: 'humidity', label: '💧 Humidity', min: 0, max: 100, value: 60, unit: '%' }
+        ],
+        presets: [
+          { label: '🌪️ Storm (25 m/s)', values: { windSpeed: 25, bladeAngle: 5, ambientTemp: 10, humidity: 95 } },
+          { label: '🌞 Optimal Operation', values: { windSpeed: 13, bladeAngle: 15, ambientTemp: 18, humidity: 55 } },
+          { label: '🥶 Arctic Winter', values: { windSpeed: 20, bladeAngle: 20, ambientTemp: -15, humidity: 30 } }
+        ],
+        metrics: ['Power Output', 'RPM', 'Blade Stress', 'Gearbox Temp'],
+        simulate: (p) => {
+          const ws = p.windSpeed, ba = p.bladeAngle, at = p.ambientTemp, h = p.humidity;
+          const power = Math.max(0, Math.min(100, (ws / 30) * 100 * Math.sin((ba + 10) * Math.PI / 90)));
+          const rpm = Math.round(ws * 2.5);
+          const stress = ws > 20 ? 'HIGH' : ws > 15 ? 'MEDIUM' : 'LOW';
+          const gearTemp = 40 + (rpm / 75) * 50 - (at < 0 ? 10 : 0);
+          const risk = ws > 22 || gearTemp > 85 ? 'HIGH' : ws > 18 ? 'MEDIUM' : 'LOW';
+          return {
+            metricValues: [Math.round(power * 2) + ' kW', rpm + ' RPM', stress, Math.round(gearTemp) + '°C'],
+            outcomes: [
+              { label: 'Energy Generated', value: (power * 0.24).toFixed(1) + ' MWh/day', good: power > 40 },
+              { label: 'Mechanical Wear Rate', value: ws > 20 ? '3.2× normal' : '1.0× normal', good: ws <= 20 },
+              { label: 'Est. Next Maintenance', value: ws > 22 ? 'In 2 days' : 'In 3 months', good: ws <= 22 },
+              { label: 'Shutdown Risk', value: ws > 25 ? 'Immediate cutout' : 'None', good: ws <= 25 }
+            ],
+            risk, status: risk === 'HIGH' ? '⚠️ High-Wind Stress Mode' : '● Nominal Operation'
+          };
+        }
+      },
+      pipeline: {
+        emoji: '🛢️', label: 'Oil Pipeline',
+        params: [
+          { id: 'pressure', label: '💥 Inlet Pressure', min: 0, max: 150, value: 80, unit: 'bar' },
+          { id: 'flowRate', label: '🌊 Flow Rate', min: 0, max: 500, value: 250, unit: 'L/min' },
+          { id: 'pipeTemp', label: '🌡️ Fluid Temp', min: 0, max: 120, value: 60, unit: '°C' },
+          { id: 'corrosion', label: '🔩 Corrosion Level', min: 0, max: 100, value: 20, unit: '%' }
+        ],
+        presets: [
+          { label: '⚡ Max Throughput', values: { pressure: 140, flowRate: 480, pipeTemp: 80, corrosion: 20 } },
+          { label: '🔩 Aged Pipe Failure', values: { pressure: 100, flowRate: 300, pipeTemp: 70, corrosion: 85 } },
+          { label: '🧊 Cold Shutdown', values: { pressure: 20, flowRate: 50, pipeTemp: 5, corrosion: 10 } }
+        ],
+        metrics: ['Wall Stress', 'Leak Risk', 'Flow Efficiency', 'RUL'],
+        simulate: (p) => {
+          const wallStress = (p.pressure / 150 * 80) + (p.corrosion / 100 * 40);
+          const leakRisk = p.corrosion > 70 ? 'HIGH' : p.pressure > 120 ? 'MEDIUM' : 'LOW';
+          const eff = Math.round(100 - (p.corrosion * 0.3) - (p.pipeTemp > 90 ? 10 : 0));
+          const rul = Math.max(0, Math.round(730 * (1 - p.corrosion / 100)));
+          const risk = leakRisk === 'HIGH' || wallStress > 90 ? 'HIGH' : leakRisk === 'MEDIUM' ? 'MEDIUM' : 'LOW';
+          return {
+            metricValues: [Math.round(wallStress) + ' MPa', leakRisk, eff + '%', rul + ' days'],
+            outcomes: [
+              { label: 'Pipe Wall Integrity', value: wallStress > 90 ? 'CRITICAL' : wallStress > 60 ? 'Degraded' : 'Good', good: wallStress <= 60 },
+              { label: 'Leak Probability', value: p.corrosion > 70 ? '34% in 30 days' : '<1% in 30 days', good: p.corrosion <= 70 },
+              { label: 'Recommended Action', value: p.corrosion > 70 ? 'Replace segment NOW' : 'Continue monitoring', good: p.corrosion <= 70 },
+              { label: 'Financial Loss Risk', value: leakRisk === 'HIGH' ? '$2.4M spill cost' : '$0 (no incident)', good: leakRisk !== 'HIGH' }
+            ],
+            risk, status: risk === 'HIGH' ? '⚠️ Failure Risk Detected' : '● Operating Normally'
+          };
+        }
+      },
+      bridge: {
+        emoji: '🌉', label: 'City Bridge',
+        params: [
+          { id: 'traffic', label: '🚗 Traffic Load', min: 0, max: 100, value: 40, unit: '% capacity' },
+          { id: 'windLoad', label: '💨 Wind Load', min: 0, max: 200, value: 50, unit: 'km/h' },
+          { id: 'temperature', label: '🌡️ Temperature', min: -30, max: 50, value: 20, unit: '°C' },
+          { id: 'age', label: '🏗️ Bridge Age', min: 0, max: 100, value: 25, unit: 'years' }
+        ],
+        presets: [
+          { label: '🚛 Overloaded (Trucks)', values: { traffic: 100, windLoad: 60, temperature: 30, age: 25 } },
+          { label: '🌪️ Severe Storm', values: { traffic: 20, windLoad: 180, temperature: 5, age: 25 } },
+          { label: '🏗️ Aging + Load', values: { traffic: 75, windLoad: 80, temperature: 35, age: 80 } }
+        ],
+        metrics: ['Deck Stress', 'Deflection', 'Fatigue Level', 'Safety Factor'],
+        simulate: (p) => {
+          const stress = (p.traffic * 0.5) + (p.windLoad * 0.2) + (p.age * 0.3) + (Math.abs(p.temperature - 20) * 0.5);
+          const deflection = (stress / 100 * 120).toFixed(1);
+          const fatigue = Math.min(100, p.age * 0.8 + p.traffic * 0.2);
+          const safety = Math.max(1.0, 4.0 - (stress / 100) * 2.5);
+          const risk = safety < 1.5 ? 'HIGH' : safety < 2.5 ? 'MEDIUM' : 'LOW';
+          return {
+            metricValues: [Math.round(stress) + ' MPa', deflection + ' mm', Math.round(fatigue) + '%', safety.toFixed(1) + 'x'],
+            outcomes: [
+              { label: 'Structural Integrity', value: risk === 'HIGH' ? 'CRITICAL — Close bridge' : risk === 'MEDIUM' ? 'Monitor closely' : 'Within safe limits', good: risk === 'LOW' },
+              { label: 'Estimated Deflection', value: deflection + ' mm (max 100mm)', good: deflection < 100 },
+              { label: 'Time to Failure', value: risk === 'HIGH' ? '< 48 hours' : 'No failure predicted', good: risk !== 'HIGH' },
+              { label: 'Recommendation', value: safety < 2.0 ? 'Weight restriction needed' : 'No action required', good: safety >= 2.0 }
+            ],
+            risk, status: risk === 'HIGH' ? '🚨 UNSAFE — Emergency Alert' : '● Structurally Sound'
+          };
+        }
+      },
+      datacenter: {
+        emoji: '🖥️', label: 'Data Center',
+        params: [
+          { id: 'serverLoad', label: '💻 Server Load', min: 0, max: 100, value: 60, unit: '%' },
+          { id: 'coolingPower', label: '❄️ Cooling Power', min: 0, max: 100, value: 70, unit: '%' },
+          { id: 'outsideTemp', label: '🌡️ Outside Temp', min: -10, max: 45, value: 25, unit: '°C' },
+          { id: 'redundancy', label: '🔋 UPS Level', min: 0, max: 100, value: 85, unit: '%' }
+        ],
+        presets: [
+          { label: '🔥 Cooling Failure', values: { serverLoad: 80, coolingPower: 0, outsideTemp: 35, redundancy: 85 } },
+          { label: '⚡ Power Outage', values: { serverLoad: 60, coolingPower: 70, outsideTemp: 25, redundancy: 10 } },
+          { label: '📈 Black Friday Spike', values: { serverLoad: 98, coolingPower: 90, outsideTemp: 20, redundancy: 90 } }
+        ],
+        metrics: ['Inlet Temp', 'PUE', 'Uptime Risk', 'Power Draw'],
+        simulate: (p) => {
+          const inletTemp = 18 + (p.serverLoad * 0.2) - (p.coolingPower * 0.15) + (p.outsideTemp * 0.1);
+          const pue = 1.0 + (p.coolingPower / p.serverLoad || 0) * 0.3;
+          const uptimeRisk = inletTemp > 35 ? 'HIGH' : p.redundancy < 30 ? 'MEDIUM' : 'LOW';
+          const power = Math.round(p.serverLoad * 8 + p.coolingPower * 4);
+          const risk = inletTemp > 35 || p.redundancy < 20 ? 'HIGH' : uptimeRisk;
+          return {
+            metricValues: [Math.round(inletTemp) + '°C', pue.toFixed(2), uptimeRisk, power + ' kW'],
+            outcomes: [
+              { label: 'Server Inlet Temp', value: inletTemp > 35 ? `${Math.round(inletTemp)}°C — OVERHEATING` : `${Math.round(inletTemp)}°C — Safe`, good: inletTemp <= 35 },
+              { label: 'Downtime Risk', value: risk === 'HIGH' ? 'Shutdown in ~15 min' : 'No downtime predicted', good: risk !== 'HIGH' },
+              { label: 'Energy Efficiency', value: pue < 1.5 ? 'Excellent' : pue < 2.0 ? 'Average' : 'Poor', good: pue < 1.5 },
+              { label: 'Revenue at Risk', value: risk === 'HIGH' ? '$180K/hour downtime' : '$0 (stable)', good: risk !== 'HIGH' }
+            ],
+            risk, status: inletTemp > 35 ? '🔥 Thermal Emergency' : '● All Systems Normal'
+          };
+        }
+      }
+    };
+
+    let currentSystem = 'turbine';
+    let historyEntries = [];
+
+    function setSystem(key, el) {
+      document.querySelectorAll('.scenario-card').forEach(c => c.classList.remove('active'));
+      el.classList.add('active');
+      currentSystem = key;
+      renderSystem();
+      document.getElementById('outcomes').innerHTML = '<div class="text-gray-500 text-center py-8">Run a simulation to see predicted outcomes</div>';
+      document.getElementById('riskScore').classList.add('hidden');
+    }
+
+    function renderSystem() {
+      const sys = systems[currentSystem];
+      document.getElementById('twinEmoji').textContent = sys.emoji;
+      document.getElementById('twinLabel').textContent = sys.label;
+      document.getElementById('twinStatus').textContent = '● Nominal Operation';
+      document.getElementById('twinStatus').className = 'text-sm text-green-400 mt-1';
+
+      // Params
+      document.getElementById('paramControls').innerHTML = sys.params.map(p => `
+        <div>
+          <div class="flex justify-between text-sm mb-1">
+            <span class="text-gray-400">${p.label}</span>
+            <span id="lbl-${p.id}" class="text-indigo-300 font-mono">${p.value} ${p.unit}</span>
+          </div>
+          <input id="param-${p.id}" type="range" min="${p.min}" max="${p.max}" value="${p.value}" class="w-full"
+            oninput="document.getElementById('lbl-${p.id}').textContent=this.value+' ${p.unit}'; liveUpdate()">
+        </div>`).join('');
+
+      // Presets
+      document.getElementById('presetBtns').innerHTML = sys.presets.map(pr => `
+        <button onclick='applyPreset(${JSON.stringify(pr.values)})' class="w-full bg-gray-800 hover:bg-gray-700 border border-gray-600 text-xs py-2 px-3 rounded-lg text-left transition">${pr.label}</button>`).join('');
+
+      // Metrics
+      document.getElementById('twinMetrics').innerHTML = sys.metrics.map((m, i) => `
+        <div class="bg-gray-800 rounded-lg p-2 flex justify-between text-sm">
+          <span class="text-gray-400">${m}</span>
+          <span id="metric-${i}" class="font-mono text-gray-200">--</span>
+        </div>`).join('');
+
+      liveUpdate();
+    }
+
+    function getParams() {
+      const sys = systems[currentSystem];
+      const p = {};
+      sys.params.forEach(param => {
+        p[param.id] = parseFloat(document.getElementById('param-' + param.id).value);
+      });
+      return p;
+    }
+
+    function liveUpdate() {
+      const sys = systems[currentSystem];
+      const result = sys.simulate(getParams());
+      result.metricValues.forEach((v, i) => {
+        const el = document.getElementById('metric-' + i);
+        if (el) { el.textContent = v; el.className = `font-mono ${v.includes('HIGH') || v.includes('CRITICAL') ? 'text-red-400' : v.includes('MEDIUM') ? 'text-yellow-400' : 'text-green-300'}`; }
+      });
+      document.getElementById('twinStatus').textContent = result.status;
+      document.getElementById('twinStatus').className = `text-sm mt-1 ${result.risk === 'HIGH' ? 'text-red-400' : result.risk === 'MEDIUM' ? 'text-yellow-400' : 'text-green-400'}`;
+    }
+
+    function applyPreset(values) {
+      const sys = systems[currentSystem];
+      sys.params.forEach(p => {
+        if (values[p.id] !== undefined) {
+          document.getElementById('param-' + p.id).value = values[p.id];
+          document.getElementById('lbl-' + p.id).textContent = values[p.id] + ' ' + p.unit;
+        }
+      });
+      liveUpdate();
+    }
+
+    function runSimulation() {
+      const btn = document.getElementById('runBtn');
+      const msg = document.getElementById('runningMsg');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="animate-spin">⚙️</span> Simulating...';
+      msg.classList.remove('hidden');
+
+      setTimeout(() => {
+        const sys = systems[currentSystem];
+        const result = sys.simulate(getParams());
+
+        document.getElementById('outcomes').innerHTML = result.outcomes.map(o => `
+          <div class="outcome-row flex justify-between items-center bg-gray-800 rounded-lg p-3">
+            <span class="text-gray-400">${o.label}</span>
+            <span class="font-semibold text-sm ${o.good ? 'text-green-400' : 'text-red-400'}">${o.value}</span>
+          </div>`).join('');
+
+        const riskEl = document.getElementById('riskScore');
+        riskEl.classList.remove('hidden');
+        riskEl.className = `rounded-xl p-4 text-center mt-4 ${result.risk === 'HIGH' ? 'bg-red-900/30 border border-red-700' : result.risk === 'MEDIUM' ? 'bg-yellow-900/30 border border-yellow-700' : 'bg-green-900/30 border border-green-700'}`;
+        document.getElementById('riskLabel').textContent = result.risk;
+        document.getElementById('riskLabel').className = `text-2xl font-bold font-mono ${result.risk === 'HIGH' ? 'text-red-400' : result.risk === 'MEDIUM' ? 'text-yellow-400' : 'text-green-400'}`;
+        document.getElementById('riskDesc').textContent = result.risk === 'HIGH' ? 'Immediate action required.' : result.risk === 'MEDIUM' ? 'Monitor and schedule maintenance.' : 'System operating safely.';
+
+        // History
+        const now = new Date().toLocaleTimeString();
+        historyEntries.unshift({ time: now, system: sys.label, risk: result.risk, status: result.status });
+        if (historyEntries.length > 5) historyEntries.pop();
+        document.getElementById('historyLog').innerHTML = historyEntries.map(h => `
+          <div class="flex items-center gap-3 bg-gray-800 rounded-lg p-3">
+            <span class="text-gray-500 text-xs">${h.time}</span>
+            <span class="text-gray-300 text-sm">${h.system}</span>
+            <span class="ml-auto text-xs font-semibold ${h.risk === 'HIGH' ? 'text-red-400' : h.risk === 'MEDIUM' ? 'text-yellow-400' : 'text-green-400'}">${h.risk} RISK</span>
+          </div>`).join('');
+
+        btn.disabled = false;
+        btn.innerHTML = '<span>▶ Run Simulation</span>';
+        msg.classList.add('hidden');
+      }, 2500);
+    }
+
+    renderSystem();
+  </script>
+</body>
+</html>

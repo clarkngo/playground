@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Activity 9: Digital Twin Quiz</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .nav-btn { transition: background 0.2s; }
+    .option-btn { transition: background-color 0.2s, border-color 0.2s, transform 0.1s; }
+    .option-btn:hover:not(:disabled) { transform: translateX(4px); }
+    .option-btn.correct { background-color: rgba(34,197,94,0.2) !important; border-color: #22c55e !important; color: #86efac !important; }
+    .option-btn.wrong { background-color: rgba(239,68,68,0.2) !important; border-color: #ef4444 !important; color: #fca5a5 !important; }
+    .option-btn.reveal { background-color: rgba(99,102,241,0.2) !important; border-color: #6366f1 !important; color: #a5b4fc !important; }
+    @keyframes slide-in { from{opacity:0;transform:translateX(30px)} to{opacity:1;transform:translateX(0)} }
+    .slide-in { animation: slide-in 0.35s ease-out; }
+    @keyframes pop { 0%{transform:scale(1)} 50%{transform:scale(1.2)} 100%{transform:scale(1)} }
+    .pop { animation: pop 0.3s ease; }
+    .progress-fill { transition: width 0.5s ease; }
+  </style>
+</head>
+<body class="bg-gray-950 text-white min-h-screen font-sans">
+
+  <nav class="bg-gray-900 border-b border-gray-700 px-6 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-sm font-bold">DT</div>
+      <span class="text-gray-300 text-sm font-medium">Digital Twin Activity Series</span>
+    </div>
+    <div class="flex gap-2 flex-wrap justify-end">
+      <a href="01-intro.html" class="nav-btn bg-gray-700 hover:bg-gray-600 text-xs px-3 py-1 rounded-full">1 · Intro</a>
+      <a href="02-factory.html" class="nav-btn bg-gray-700 hover:bg-gray-600 text-xs px-3 py-1 rounded-full">2 · Factory</a>
+      <a href="03-building.html" class="nav-btn bg-gray-700 hover:bg-gray-600 text-xs px-3 py-1 rounded-full">3 · Building</a>
+      <a href="04-maintenance.html" class="nav-btn bg-gray-700 hover:bg-gray-600 text-xs px-3 py-1 rounded-full">4 · Maintenance</a>
+      <a href="05-city.html" class="nav-btn bg-gray-700 hover:bg-gray-600 text-xs px-3 py-1 rounded-full">5 · City</a>
+      <a href="06-health.html" class="nav-btn bg-gray-700 hover:bg-gray-600 text-xs px-3 py-1 rounded-full">6 · Health</a>
+      <a href="07-sync.html" class="nav-btn bg-gray-700 hover:bg-gray-600 text-xs px-3 py-1 rounded-full">7 · Sync</a>
+      <a href="08-scenarios.html" class="nav-btn bg-gray-700 hover:bg-gray-600 text-xs px-3 py-1 rounded-full">8 · Scenarios</a>
+      <span class="bg-indigo-700 text-white text-xs px-3 py-1 rounded-full font-semibold">9 · Quiz</span>
+      <a href="10-design.html" class="nav-btn bg-gray-700 hover:bg-gray-600 text-xs px-3 py-1 rounded-full">10 · Design</a>
+    </div>
+  </nav>
+
+  <main class="max-w-3xl mx-auto px-6 py-10">
+    <div class="text-center mb-8">
+      <div class="text-indigo-400 text-sm font-semibold uppercase tracking-widest mb-2">Activity 9 of 10</div>
+      <h1 class="text-3xl font-bold mb-2">Digital Twin Knowledge Quiz</h1>
+      <p class="text-gray-400">10 questions covering everything you've experienced in this activity series.</p>
+    </div>
+
+    <!-- PROGRESS -->
+    <div class="bg-gray-900 border border-gray-700 rounded-2xl p-4 mb-6">
+      <div class="flex justify-between items-center mb-2 text-sm">
+        <span class="text-gray-400">Question <span id="qNum">1</span> of 10</span>
+        <span class="text-gray-400">Score: <span id="scoreDisplay" class="text-green-400 font-bold">0</span> / <span id="answeredDisplay">0</span></span>
+      </div>
+      <div class="h-2 bg-gray-700 rounded-full overflow-hidden">
+        <div id="progressBar" class="h-full progress-fill bg-indigo-500 rounded-full" style="width:0%"></div>
+      </div>
+    </div>
+
+    <!-- QUESTION CARD -->
+    <div id="quizCard" class="bg-gray-900 border border-gray-700 rounded-2xl p-8 mb-6 slide-in">
+      <div id="qCategory" class="text-xs text-indigo-400 uppercase tracking-widest mb-2 font-semibold"></div>
+      <h2 id="qText" class="text-xl font-bold mb-6 text-gray-100 leading-relaxed"></h2>
+      <div id="optionsContainer" class="space-y-3"></div>
+      <div id="explanation" class="mt-5 hidden bg-gray-800 border border-gray-600 rounded-xl p-4 text-sm text-gray-300"></div>
+    </div>
+
+    <!-- NEXT BUTTON -->
+    <div class="flex justify-between items-center">
+      <div id="feedbackBadge" class="hidden text-lg font-bold"></div>
+      <button id="nextBtn" onclick="nextQuestion()" class="hidden ml-auto bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-3 rounded-xl font-semibold transition">
+        Next Question →
+      </button>
+    </div>
+
+    <!-- RESULTS (hidden until done) -->
+    <div id="resultsPanel" class="hidden">
+      <div class="bg-gray-900 border border-gray-700 rounded-2xl p-8 text-center mb-6">
+        <div id="resultEmoji" class="text-6xl mb-4"></div>
+        <h2 class="text-2xl font-bold mb-2" id="resultTitle"></h2>
+        <div class="text-5xl font-bold font-mono mb-2" id="resultScore"></div>
+        <div class="text-gray-400 text-sm mb-6" id="resultMsg"></div>
+        <div class="grid grid-cols-3 gap-4 mb-6">
+          <div class="bg-gray-800 rounded-xl p-4">
+            <div class="text-2xl font-bold text-green-400" id="resCorrect">0</div>
+            <div class="text-xs text-gray-400 mt-1">Correct</div>
+          </div>
+          <div class="bg-gray-800 rounded-xl p-4">
+            <div class="text-2xl font-bold text-red-400" id="resWrong">0</div>
+            <div class="text-xs text-gray-400 mt-1">Incorrect</div>
+          </div>
+          <div class="bg-gray-800 rounded-xl p-4">
+            <div class="text-2xl font-bold text-indigo-400" id="resPercent">0%</div>
+            <div class="text-xs text-gray-400 mt-1">Accuracy</div>
+          </div>
+        </div>
+        <div class="flex gap-3 justify-center flex-wrap">
+          <button onclick="restart()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-3 rounded-xl font-semibold transition">🔄 Retake Quiz</button>
+          <a href="10-design.html" class="bg-green-700 hover:bg-green-600 text-white px-6 py-3 rounded-xl font-semibold transition">Final Activity →</a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const questions = [
+      {
+        category: 'Fundamentals',
+        q: 'What is a digital twin?',
+        options: [
+          'A backup copy of digital files stored in the cloud',
+          'A real-time virtual replica of a physical object or system',
+          'A 3D-printed model of a machine',
+          'A type of AI chatbot for engineering support'
+        ],
+        answer: 1,
+        explanation: 'A digital twin is a real-time virtual replica of a physical object or system. It mirrors the physical asset using live sensor data and can be used for monitoring, simulation, and prediction.'
+      },
+      {
+        category: 'Data & Sensors',
+        q: 'What technology primarily feeds live data into a digital twin?',
+        options: [
+          'Manual data entry by operators',
+          'Monthly inspection reports',
+          'IoT (Internet of Things) sensors',
+          'Blockchain transactions'
+        ],
+        answer: 2,
+        explanation: 'IoT sensors attached to the physical asset continuously stream real-time data — temperature, pressure, vibration, speed — into the digital twin, keeping it synchronized with reality.'
+      },
+      {
+        category: 'Applications',
+        q: 'A factory uses its digital twin to detect a bearing failure 3 days before it happens. This is an example of:',
+        options: [
+          'Reactive maintenance (fix after it breaks)',
+          'Scheduled maintenance (fixed calendar)',
+          'Predictive maintenance (predict before failure)',
+          'Preventive replacement (replace all parts annually)'
+        ],
+        answer: 2,
+        explanation: 'Predictive maintenance uses sensor trends and AI models in the digital twin to forecast failures before they occur, reducing downtime and repair costs significantly compared to reactive approaches.'
+      },
+      {
+        category: 'Smart Cities',
+        q: 'How can a city\'s digital twin help with traffic management?',
+        options: [
+          'By replacing all traffic lights with AI cameras',
+          'By simulating and optimizing signal timing based on real-time traffic flow',
+          'By automatically issuing speeding fines',
+          'By removing intersections and replacing them with roundabouts'
+        ],
+        answer: 1,
+        explanation: 'A city\'s digital twin can simulate thousands of signal timing configurations and apply the best one to reduce wait times, lower emissions from idling vehicles, and improve emergency response routes.'
+      },
+      {
+        category: 'Simulation',
+        q: 'What is the key benefit of running "what-if" scenarios in a digital twin?',
+        options: [
+          'It makes the physical machine run faster',
+          'It eliminates the need for real engineers',
+          'It allows dangerous scenarios to be tested without real-world risk',
+          'It automatically fixes any problems found during simulation'
+        ],
+        answer: 2,
+        explanation: 'Digital twins let engineers safely simulate extreme conditions — storms, overloads, failures — that would be dangerous, expensive, or impossible to test in the real world, enabling better design decisions.'
+      },
+      {
+        category: 'Healthcare',
+        q: 'A hospital creates a digital twin of a patient before surgery. What is the MOST useful application?',
+        options: [
+          'Replacing the surgeon with an AI robot',
+          'Predicting how the patient will respond to the procedure and optimize the surgical plan',
+          'Generating the patient\'s medical bill automatically',
+          'Scheduling the patient\'s post-op appointments'
+        ],
+        answer: 1,
+        explanation: 'Healthcare digital twins model individual patient physiology, allowing surgeons to simulate procedures, test drug interactions, and personalize treatment plans before touching the real patient.'
+      },
+      {
+        category: 'Data Synchronization',
+        q: 'If a digital twin\'s data becomes severely out of sync with the physical asset, what happens?',
+        options: [
+          'The physical machine automatically resets to match the twin',
+          'Nothing — digital twins don\'t need to be synchronized',
+          'The twin\'s predictions and decisions become unreliable or dangerous',
+          'The twin self-corrects using AI without any data'
+        ],
+        answer: 2,
+        explanation: 'Synchronization is critical. A digital twin is only useful as long as it accurately mirrors reality. Stale or incorrect data causes the twin\'s predictions to drift, potentially leading to wrong decisions about the real system.'
+      },
+      {
+        category: 'Real-World Impact',
+        q: 'NASA uses digital twins of spacecraft. What is the most likely use case?',
+        options: [
+          'Playing flight simulator games for training',
+          'Monitoring system health and simulating repairs remotely when a spacecraft is in space',
+          'Streaming telemetry data to social media',
+          'Automatically piloting spacecraft without human input'
+        ],
+        answer: 1,
+        explanation: 'NASA\'s digital twins mirror spacecraft systems in real time. Engineers can monitor anomalies, simulate repairs, and test procedures on Earth before issuing commands to a spacecraft millions of kilometers away.'
+      },
+      {
+        category: 'Architecture',
+        q: 'Which of these correctly describes the data flow in a digital twin system?',
+        options: [
+          'Digital Twin → Cloud Platform → Physical Asset (one-way only)',
+          'Physical Asset → Cloud Platform → Digital Twin (one-way only)',
+          'Physical Asset ↔ Cloud Platform ↔ Digital Twin (bidirectional)',
+          'Physical Asset → Digital Twin directly, no cloud needed'
+        ],
+        answer: 2,
+        explanation: 'Digital twin systems are bidirectional. Sensors send data from the physical asset to the cloud platform, which updates the digital twin. Insights and commands can also flow back to actuators on the physical asset — closing the control loop.'
+      },
+      {
+        category: 'Future of Digital Twins',
+        q: 'Which emerging technology will MOST enhance digital twin capabilities in the next decade?',
+        options: [
+          'Fax machines',
+          'VHS tape storage',
+          'AI and machine learning for improved prediction and anomaly detection',
+          'Printed paper reports distributed daily'
+        ],
+        answer: 2,
+        explanation: 'AI and machine learning dramatically improve digital twins by enabling them to learn from historical data, detect complex anomaly patterns, make proactive recommendations, and continuously improve their predictive models over time.'
+      }
+    ];
+
+    let currentQ = 0;
+    let score = 0;
+    let answered = 0;
+    let answered_flags = new Array(10).fill(false);
+
+    function renderQuestion() {
+      const q = questions[currentQ];
+      const card = document.getElementById('quizCard');
+      card.classList.remove('slide-in');
+      void card.offsetWidth;
+      card.classList.add('slide-in');
+
+      document.getElementById('qNum').textContent = currentQ + 1;
+      document.getElementById('qCategory').textContent = q.category;
+      document.getElementById('qText').textContent = q.q;
+      document.getElementById('progressBar').style.width = (currentQ / 10 * 100) + '%';
+      document.getElementById('explanation').classList.add('hidden');
+      document.getElementById('nextBtn').classList.add('hidden');
+      document.getElementById('feedbackBadge').classList.add('hidden');
+
+      const opts = document.getElementById('optionsContainer');
+      opts.innerHTML = q.options.map((opt, i) => `
+        <button onclick="selectAnswer(${i})" id="opt-${i}"
+          class="option-btn w-full text-left bg-gray-800 border border-gray-700 rounded-xl px-5 py-3 text-sm text-gray-200 flex items-center gap-3">
+          <span class="w-7 h-7 rounded-full bg-gray-700 flex items-center justify-center text-xs font-bold flex-shrink-0">${['A','B','C','D'][i]}</span>
+          <span>${opt}</span>
+        </button>`).join('');
+    }
+
+    function selectAnswer(i) {
+      if (answered_flags[currentQ]) return;
+      answered_flags[currentQ] = true;
+      answered++;
+
+      const q = questions[currentQ];
+      const correct = i === q.answer;
+      if (correct) score++;
+
+      document.getElementById('scoreDisplay').textContent = score;
+      document.getElementById('answeredDisplay').textContent = answered;
+
+      // Style buttons
+      q.options.forEach((_, j) => {
+        const btn = document.getElementById('opt-' + j);
+        btn.disabled = true;
+        if (j === q.answer) btn.classList.add('correct');
+        else if (j === i && !correct) btn.classList.add('wrong');
+        else btn.classList.add('reveal');
+      });
+
+      // Explanation
+      const expEl = document.getElementById('explanation');
+      expEl.classList.remove('hidden');
+      expEl.innerHTML = `<span class="${correct ? 'text-green-400' : 'text-red-400'} font-semibold">${correct ? '✅ Correct!' : '❌ Incorrect.'}</span> ${q.explanation}`;
+
+      // Feedback badge
+      const badge = document.getElementById('feedbackBadge');
+      badge.classList.remove('hidden');
+      badge.textContent = correct ? '+1 🎯' : '✗';
+      badge.className = `text-lg font-bold pop ${correct ? 'text-green-400' : 'text-red-400'}`;
+
+      // Next or finish
+      const nextBtn = document.getElementById('nextBtn');
+      nextBtn.classList.remove('hidden');
+      nextBtn.textContent = currentQ < 9 ? 'Next Question →' : 'See Results →';
+    }
+
+    function nextQuestion() {
+      currentQ++;
+      if (currentQ >= 10) {
+        showResults();
+      } else {
+        renderQuestion();
+      }
+    }
+
+    function showResults() {
+      document.getElementById('quizCard').classList.add('hidden');
+      document.getElementById('nextBtn').classList.add('hidden');
+      document.getElementById('feedbackBadge').classList.add('hidden');
+      document.getElementById('resultsPanel').classList.remove('hidden');
+      document.getElementById('progressBar').style.width = '100%';
+
+      const pct = Math.round(score / 10 * 100);
+      const emoji = pct >= 90 ? '🏆' : pct >= 70 ? '🎉' : pct >= 50 ? '📚' : '💪';
+      const title = pct >= 90 ? 'Digital Twin Expert!' : pct >= 70 ? 'Great Work!' : pct >= 50 ? 'Good Effort!' : 'Keep Learning!';
+      const msg = pct >= 90 ? 'Outstanding! You have mastered digital twin concepts.' : pct >= 70 ? 'You have a solid understanding of digital twins.' : pct >= 50 ? 'You\'re getting there — review the activities and try again.' : 'Digital twins are complex — go back through the activities for a refresher.';
+
+      document.getElementById('resultEmoji').textContent = emoji;
+      document.getElementById('resultTitle').textContent = title;
+      document.getElementById('resultScore').textContent = score + '/10';
+      document.getElementById('resultScore').className = `text-5xl font-bold font-mono mb-2 ${pct >= 70 ? 'text-green-400' : pct >= 50 ? 'text-yellow-400' : 'text-red-400'}`;
+      document.getElementById('resultMsg').textContent = msg;
+      document.getElementById('resCorrect').textContent = score;
+      document.getElementById('resWrong').textContent = 10 - score;
+      document.getElementById('resPercent').textContent = pct + '%';
+
+      localStorage.setItem('dt_quiz_score', score);
+      localStorage.setItem('dt_quiz_pct', pct);
+    }
+
+    function restart() {
+      currentQ = 0; score = 0; answered = 0;
+      answered_flags = new Array(10).fill(false);
+      document.getElementById('quizCard').classList.remove('hidden');
+      document.getElementById('resultsPanel').classList.add('hidden');
+      document.getElementById('scoreDisplay').textContent = '0';
+      document.getElementById('answeredDisplay').textContent = '0';
+      renderQuestion();
+    }
+
+    renderQuestion();
+  </script>
+</body>
+</html>
