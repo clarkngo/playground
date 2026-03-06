@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learn: Storage Estimation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', system-ui, sans-serif; }
+        .slider-track { -webkit-appearance: none; appearance: none; height: 6px; border-radius: 3px; outline: none; cursor: pointer; }
+        .slider-track::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: #0891b2; cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,0.2); }
+        .slider-track::-moz-range-thumb { width: 20px; height: 20px; border-radius: 50%; background: #0891b2; cursor: pointer; border: none; }
+        .bar-fill { transition: width 0.5s cubic-bezier(0.4,0,0.2,1); }
+        .year-bar { transition: height 0.4s ease; }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen">
+
+    <nav class="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between sticky top-0 z-10 shadow-sm">
+        <div class="flex items-center gap-3">
+            <span class="text-cyan-600 font-black text-lg">⚡ SysDesign Learn</span>
+            <span class="text-slate-300">|</span>
+            <span class="text-slate-600 font-semibold text-sm">Storage Estimation</span>
+        </div>
+        <div class="flex gap-2 text-xs">
+            <a href="01-rps-traffic.html" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold px-3 py-1 rounded-full">← Prev</a>
+            <span class="bg-cyan-100 text-cyan-700 font-bold px-3 py-1 rounded-full">02 / 10</span>
+            <a href="03-bandwidth.html" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold px-3 py-1 rounded-full">Next →</a>
+        </div>
+    </nav>
+
+    <div class="max-w-5xl mx-auto p-6 space-y-6">
+
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+            <div class="flex items-start gap-4">
+                <div class="text-5xl">💾</div>
+                <div>
+                    <h1 class="text-2xl font-black text-slate-800">Storage Estimation</h1>
+                    <p class="text-slate-500 mt-1 leading-relaxed">
+                        Storage seems cheap — until you're Instagram storing 100M photos a day. The trick is thinking in
+                        <em>multiples</em>: how much per user × how many users × how long you keep it × replication factor.
+                        That innocent 2 KB user profile becomes petabytes at scale.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+
+            <!-- Sliders (3/5) -->
+            <div class="lg:col-span-3 bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-6">
+                <h2 class="font-black text-slate-700 text-lg">🎛️ System Parameters</h2>
+
+                <div class="space-y-2">
+                    <div class="flex justify-between text-sm">
+                        <label class="font-semibold text-slate-600">Total Users</label>
+                        <span id="users-val" class="font-black text-cyan-600 font-mono">500M</span>
+                    </div>
+                    <input type="range" id="users" min="1" max="5000" value="500" class="slider-track w-full bg-slate-200">
+                    <div class="flex justify-between text-xs text-slate-400"><span>1M</span><span>5B</span></div>
+                </div>
+
+                <div class="space-y-2">
+                    <div class="flex justify-between text-sm">
+                        <label class="font-semibold text-slate-600">% of Users Who Post Per Day</label>
+                        <span id="post-pct-val" class="font-black text-cyan-600 font-mono">10%</span>
+                    </div>
+                    <input type="range" id="post-pct" min="1" max="100" value="10" class="slider-track w-full bg-slate-200">
+                    <div class="flex justify-between text-xs text-slate-400"><span>1%</span><span>100%</span></div>
+                </div>
+
+                <div class="space-y-2">
+                    <div class="flex justify-between text-sm">
+                        <label class="font-semibold text-slate-600">Average Content Size Per Post</label>
+                        <span id="size-val" class="font-black text-cyan-600 font-mono">2 MB</span>
+                    </div>
+                    <input type="range" id="size" min="1" max="500" value="20" class="slider-track w-full bg-slate-200">
+                    <div class="flex justify-between text-xs text-slate-400"><span>100 KB</span><span>25 MB</span></div>
+                </div>
+
+                <div class="space-y-2">
+                    <div class="flex justify-between text-sm">
+                        <label class="font-semibold text-slate-600">Replication Factor</label>
+                        <span id="rep-val" class="font-black text-cyan-600 font-mono">3×</span>
+                    </div>
+                    <input type="range" id="rep" min="1" max="5" value="3" step="1" class="slider-track w-full bg-slate-200">
+                    <div class="flex justify-between text-xs text-slate-400"><span>1× (no backup)</span><span>5×</span></div>
+                    <p class="text-xs text-slate-400 italic">Industry standard is 3×. AWS S3 uses 11 nines of durability via geo-replication.</p>
+                </div>
+
+                <div class="space-y-2">
+                    <div class="flex justify-between text-sm">
+                        <label class="font-semibold text-slate-600">Data Retention Period</label>
+                        <span id="years-val" class="font-black text-cyan-600 font-mono">5 years</span>
+                    </div>
+                    <input type="range" id="years" min="1" max="10" value="5" step="1" class="slider-track w-full bg-slate-200">
+                    <div class="flex justify-between text-xs text-slate-400"><span>1 yr</span><span>10 yr</span></div>
+                </div>
+            </div>
+
+            <!-- Metrics (2/5) -->
+            <div class="lg:col-span-2 space-y-4">
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+                    <div class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">New Posts Per Day</div>
+                    <div id="posts-day" class="text-3xl font-black text-slate-800 font-mono">–</div>
+                    <div class="text-xs text-slate-400 mt-1">Active posters × 1 post each</div>
+                </div>
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+                    <div class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Raw Data Per Day</div>
+                    <div id="raw-day" class="text-3xl font-black text-slate-800 font-mono">–</div>
+                    <div class="text-xs text-slate-400 mt-1">Before replication</div>
+                </div>
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+                    <div class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Stored Per Day (with replication)</div>
+                    <div id="stored-day" class="text-3xl font-black text-slate-800 font-mono">–</div>
+                    <div class="text-xs text-slate-400 mt-1">What you actually pay for</div>
+                </div>
+                <div id="total-card" class="bg-cyan-50 rounded-2xl p-5 shadow-sm border border-cyan-200">
+                    <div class="text-xs font-bold text-cyan-500 uppercase tracking-widest mb-1">Total Storage After Retention Period</div>
+                    <div id="total-storage" class="text-3xl font-black text-cyan-700 font-mono">–</div>
+                    <div id="total-note" class="text-xs text-cyan-600 mt-1">–</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Growth Chart -->
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+            <h3 class="font-bold text-slate-700 mb-4">📈 Storage Growth Over Time</h3>
+            <div class="flex items-end gap-2 h-40" id="chart-bars"></div>
+            <div class="flex gap-2 mt-2" id="chart-labels"></div>
+        </div>
+
+        <!-- Insight -->
+        <div class="bg-amber-50 border border-amber-200 rounded-2xl p-5">
+            <div class="flex gap-3 items-start">
+                <span class="text-2xl">💡</span>
+                <div>
+                    <div class="font-bold text-amber-800 mb-1">Live Insight</div>
+                    <div id="insight-text" class="text-amber-900 text-sm leading-relaxed">Adjust the sliders above to see insights here.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Concept Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+                <div class="text-2xl mb-2">🗂️</div>
+                <div class="font-bold text-slate-700 mb-1">Unit Ladder</div>
+                <div class="font-mono text-xs text-slate-600 bg-slate-50 p-3 rounded-lg space-y-1">
+                    <div>1 KB = 1,000 B</div>
+                    <div>1 MB = 1,000 KB</div>
+                    <div>1 GB = 1,000 MB</div>
+                    <div>1 TB = 1,000 GB</div>
+                    <div>1 PB = 1,000 TB</div>
+                    <div>1 EB = 1,000 PB</div>
+                </div>
+                <p class="text-xs text-slate-400 mt-2">Use powers of 10 (not 1024) for back-of-envelope estimates.</p>
+            </div>
+            <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+                <div class="text-2xl mb-2">📦</div>
+                <div class="font-bold text-slate-700 mb-1">Replication Factor</div>
+                <p class="text-sm text-slate-600">Data is never stored once. The industry standard is 3 copies (primary + 2 replicas). S3 uses 6+ copies across 3 AZs. More copies = higher durability + higher cost.</p>
+            </div>
+            <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+                <div class="text-2xl mb-2">🎬</div>
+                <div class="font-bold text-slate-700 mb-1">Metadata Matters</div>
+                <p class="text-sm text-slate-600">Don't forget metadata — IDs, timestamps, user references, indexes. A 2 MB photo also has ~500 B of metadata per entry. At 100M photos/day, that's 50 GB/day of metadata alone.</p>
+            </div>
+        </div>
+
+    </div>
+
+<script>
+    const fmtBytes = bytes => {
+        if (bytes >= 1e18) return (bytes/1e18).toFixed(2) + ' EB';
+        if (bytes >= 1e15) return (bytes/1e15).toFixed(2) + ' PB';
+        if (bytes >= 1e12) return (bytes/1e12).toFixed(2) + ' TB';
+        if (bytes >= 1e9)  return (bytes/1e9).toFixed(2) + ' GB';
+        if (bytes >= 1e6)  return (bytes/1e6).toFixed(2) + ' MB';
+        return (bytes/1e3).toFixed(2) + ' KB';
+    };
+
+    function update() {
+        const users   = parseInt(document.getElementById('users').value) * 1e6;
+        const postPct = parseInt(document.getElementById('post-pct').value) / 100;
+        const sizeRaw = parseInt(document.getElementById('size').value); // slider val
+        const sizeB   = sizeRaw * 100000; // 100KB per unit
+        const rep     = parseInt(document.getElementById('rep').value);
+        const years   = parseInt(document.getElementById('years').value);
+
+        document.getElementById('users-val').textContent    = users >= 1e9 ? (users/1e9).toFixed(1)+'B' : (users/1e6).toFixed(0)+'M';
+        document.getElementById('post-pct-val').textContent = (postPct*100).toFixed(0) + '%';
+        document.getElementById('size-val').textContent     = fmtBytes(sizeB);
+        document.getElementById('rep-val').textContent      = rep + '×';
+        document.getElementById('years-val').textContent    = years + ' year' + (years>1?'s':'');
+
+        const postsDay   = users * postPct;
+        const rawPerDay  = postsDay * sizeB;
+        const storedDay  = rawPerDay * rep;
+        const totalBytes = storedDay * 365 * years;
+
+        document.getElementById('posts-day').textContent   = postsDay >= 1e9 ? (postsDay/1e9).toFixed(1)+'B/day' : postsDay >= 1e6 ? (postsDay/1e6).toFixed(1)+'M/day' : (postsDay/1e3).toFixed(0)+'K/day';
+        document.getElementById('raw-day').textContent     = fmtBytes(rawPerDay) + '/day';
+        document.getElementById('stored-day').textContent  = fmtBytes(storedDay) + '/day';
+        document.getElementById('total-storage').textContent = fmtBytes(totalBytes);
+
+        const tc = document.getElementById('total-card');
+        const tn = document.getElementById('total-note');
+        if (totalBytes >= 1e18) {
+            tc.className = 'bg-red-50 rounded-2xl p-5 shadow-sm border border-red-200';
+            tn.className = 'text-xs text-red-600 mt-1';
+            tn.textContent = 'Exabyte-scale — only hyperscalers (Google, Meta, AWS) operate here';
+        } else if (totalBytes >= 1e15) {
+            tc.className = 'bg-orange-50 rounded-2xl p-5 shadow-sm border border-orange-200';
+            tn.className = 'text-xs text-orange-600 mt-1';
+            tn.textContent = 'Petabyte-scale — requires purpose-built distributed object storage (S3, GCS)';
+        } else if (totalBytes >= 1e12) {
+            tc.className = 'bg-amber-50 rounded-2xl p-5 shadow-sm border border-amber-200';
+            tn.className = 'text-xs text-amber-600 mt-1';
+            tn.textContent = 'Terabyte-scale — manageable with cloud object storage + a good backup strategy';
+        } else {
+            tc.className = 'bg-emerald-50 rounded-2xl p-5 shadow-sm border border-emerald-200';
+            tn.className = 'text-xs text-emerald-600 mt-1';
+            tn.textContent = 'Gigabyte-scale — a single cloud VM with attached SSD can handle this';
+        }
+
+        // Growth chart
+        const bars = document.getElementById('chart-bars');
+        const labels = document.getElementById('chart-labels');
+        const yearlyStorage = [];
+        for (let y = 1; y <= Math.min(years, 10); y++) {
+            yearlyStorage.push(storedDay * 365 * y);
+        }
+        const maxVal = yearlyStorage[yearlyStorage.length - 1];
+        bars.innerHTML = '';
+        labels.innerHTML = '';
+        const colors = ['bg-cyan-200','bg-cyan-300','bg-cyan-400','bg-cyan-500','bg-cyan-600','bg-cyan-700','bg-cyan-800','bg-cyan-900','bg-slate-700','bg-slate-800'];
+        const MAX_PX = 140;
+        yearlyStorage.forEach((v, i) => {
+            const heightPx = maxVal > 0 ? Math.max(4, (v / maxVal) * MAX_PX) : 4;
+            bars.innerHTML += `<div class="flex-1 flex flex-col items-center justify-end"><div class="${colors[i]} rounded-t-lg year-bar w-full" style="height:${heightPx}px"></div></div>`;
+            labels.innerHTML += `<div class="flex-1 text-center text-xs text-slate-400 font-mono">Yr ${i+1}<br>${fmtBytes(v)}</div>`;
+        });
+
+        // Insight
+        let insight = `Every day, <strong>${postsDay >= 1e9 ? (postsDay/1e9).toFixed(1)+'B' : (postsDay/1e6).toFixed(1)+'M'} posts</strong> generate <strong>${fmtBytes(rawPerDay)}</strong> of raw data. `;
+        if (rep > 1) insight += `With ${rep}× replication, you're actually storing <strong>${fmtBytes(storedDay)}/day</strong>. `;
+        if (totalBytes >= 1e15) {
+            insight += `After ${years} years, that's <strong>${fmtBytes(totalBytes)}</strong> — you'd need a dedicated distributed storage cluster. At AWS S3 pricing (~$0.023/GB/month), this costs approximately <strong>$${((totalBytes/1e9)*0.023/12).toLocaleString(undefined,{maximumFractionDigits:0})}/month</strong> just for storage.`;
+        } else if (totalBytes >= 1e12) {
+            const costPerMonth = (totalBytes/1e9) * 0.023 / 12;
+            insight += `After ${years} years: <strong>${fmtBytes(totalBytes)}</strong> total. At S3 pricing ($0.023/GB/month), you'd pay roughly <strong>$${Math.round(costPerMonth).toLocaleString()}/month</strong> for storage.`;
+        } else {
+            insight += `After ${years} years: <strong>${fmtBytes(totalBytes)}</strong> total — comfortably manageable with standard cloud storage.`;
+        }
+        document.getElementById('insight-text').innerHTML = insight;
+    }
+
+    ['users','post-pct','size','rep','years'].forEach(id => {
+        document.getElementById(id).addEventListener('input', update);
+    });
+    update();
+</script>
+</body>
+</html>

@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Design Metrics | Latency Budget Decomposition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .step-correct { border-color: #22c55e !important; background-color: #f0fdf4; }
+        .step-wrong   { border-color: #ef4444 !important; background-color: #fef2f2; }
+        .error-ring   { border: 2px solid #ef4444 !important; background-color: #fef2f2; }
+        @media print {
+            body { background: white; padding: 0; margin: 0; }
+            .no-pdf, button { display: none !important; }
+            #game-container { border: none; box-shadow: none; width: 100%; max-width: 100%; margin: 0; padding: 0; }
+            #feedback { display: block !important; }
+            #solution { display: block !important; }
+            @page { size: portrait; margin: 0.5in; }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 p-8">
+<div id="game-container" class="max-w-4xl mx-auto bg-white p-8 rounded-xl shadow-xl border border-slate-200">
+
+    <div class="mb-6 grid grid-cols-2 gap-6 bg-slate-100 p-5 rounded-lg border border-slate-200">
+        <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Student Name <span class="text-red-500">*</span></label>
+            <input type="text" id="student-name" placeholder="Enter Full Name" class="w-full p-2 border rounded border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none">
+            <p id="name-error" class="text-red-500 text-xs mt-1 hidden font-semibold">Name required for submission.</p>
+        </div>
+        <div class="text-right">
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">System Timestamp</label>
+            <p id="display-date" class="text-slate-700 font-medium py-2 italic font-mono text-sm"></p>
+        </div>
+    </div>
+
+    <header class="mb-8 border-b pb-6">
+        <h1 class="text-3xl font-extrabold text-slate-800 tracking-tight">Latency Budget Decomposition</h1>
+        <div class="mt-4 p-5 bg-indigo-50 rounded-xl border-l-4 border-indigo-500 shadow-sm">
+            <h3 class="font-bold text-indigo-800 text-lg mb-2">📋 Scenario</h3>
+            <p class="text-indigo-900 text-sm leading-relaxed">
+                Your product team has set a P99 SLA of <strong>300 ms end-to-end</strong> for the search API.
+                A request travels through the following fixed infrastructure costs that you cannot reduce:
+                <strong>DNS lookup (5 ms)</strong>, <strong>TLS handshake (15 ms)</strong>,
+                <strong>CDN edge processing (8 ms)</strong>, and <strong>network round-trip to origin (22 ms)</strong>.
+                The remaining budget must be split across three service layers: the
+                <strong>API Gateway</strong> gets 10% of remaining budget,
+                the <strong>Search Service</strong> gets 60%, and the
+                <strong>Cache/DB layer</strong> gets the remaining 30%.
+                Calculate each component's budget and flag whether each is realistic.
+            </p>
+        </div>
+    </header>
+
+    <!-- Given Values -->
+    <div class="mb-6 p-5 bg-slate-50 rounded-xl border border-slate-200">
+        <h3 class="font-bold text-slate-700 mb-3">📊 Given Values</h3>
+        <div class="grid grid-cols-4 gap-3 text-sm">
+            <div class="bg-white p-3 rounded-lg border border-slate-200">
+                <div class="text-xs text-slate-500 uppercase font-bold">Total SLA Budget</div>
+                <div class="text-2xl font-black text-indigo-600">300 ms</div>
+            </div>
+            <div class="bg-white p-3 rounded-lg border border-slate-200">
+                <div class="text-xs text-slate-500 uppercase font-bold">DNS Lookup</div>
+                <div class="text-xl font-black text-slate-700">5 ms</div>
+            </div>
+            <div class="bg-white p-3 rounded-lg border border-slate-200">
+                <div class="text-xs text-slate-500 uppercase font-bold">TLS Handshake</div>
+                <div class="text-xl font-black text-slate-700">15 ms</div>
+            </div>
+            <div class="bg-white p-3 rounded-lg border border-slate-200">
+                <div class="text-xs text-slate-500 uppercase font-bold">CDN Edge</div>
+                <div class="text-xl font-black text-slate-700">8 ms</div>
+            </div>
+            <div class="bg-white p-3 rounded-lg border border-slate-200">
+                <div class="text-xs text-slate-500 uppercase font-bold">Network RTT</div>
+                <div class="text-xl font-black text-slate-700">22 ms</div>
+            </div>
+            <div class="bg-white p-3 rounded-lg border border-slate-200">
+                <div class="text-xs text-slate-500 uppercase font-bold">API Gateway %</div>
+                <div class="text-xl font-black text-slate-700">10%</div>
+            </div>
+            <div class="bg-white p-3 rounded-lg border border-slate-200">
+                <div class="text-xs text-slate-500 uppercase font-bold">Search Service %</div>
+                <div class="text-xl font-black text-slate-700">60%</div>
+            </div>
+            <div class="bg-white p-3 rounded-lg border border-slate-200">
+                <div class="text-xs text-slate-500 uppercase font-bold">Cache/DB %</div>
+                <div class="text-xl font-black text-slate-700">30%</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Unit Reference -->
+    <div class="mb-6 p-4 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-900 no-pdf">
+        <strong>Key Formulas:</strong>
+        Fixed overhead = DNS + TLS + CDN + Network RTT |
+        Remaining budget = Total SLA − fixed overhead |
+        API Gateway = remaining × 10% |
+        Search Service = remaining × 60% |
+        Cache/DB = remaining × 30% |
+        Verify: all components + fixed overhead = Total SLA ✓
+    </div>
+
+    <!-- Steps -->
+    <div class="space-y-4 mb-8">
+        <h3 class="font-bold text-slate-700 text-lg">🧮 Step-by-Step Calculation</h3>
+
+        <div class="flex items-center gap-4 p-4 bg-white rounded-xl border-2 border-slate-200">
+            <div class="flex-1">
+                <div class="font-semibold text-slate-700 text-sm">Step 1 — Total fixed infrastructure overhead (ms)</div>
+                <div class="text-xs text-slate-500 mt-1">Formula: DNS + TLS + CDN Edge + Network RTT</div>
+            </div>
+            <div class="flex items-center gap-2">
+                <input id="s1" type="number" step="any" placeholder="?" class="w-36 p-2 border-2 border-slate-200 rounded-lg text-center font-mono font-bold text-lg outline-none transition">
+                <span class="text-slate-500 text-sm font-mono">ms</span>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-4 p-4 bg-white rounded-xl border-2 border-slate-200">
+            <div class="flex-1">
+                <div class="font-semibold text-slate-700 text-sm">Step 2 — Remaining budget for application services (ms)</div>
+                <div class="text-xs text-slate-500 mt-1">Formula: Total SLA (300 ms) − fixed overhead</div>
+            </div>
+            <div class="flex items-center gap-2">
+                <input id="s2" type="number" step="any" placeholder="?" class="w-36 p-2 border-2 border-slate-200 rounded-lg text-center font-mono font-bold text-lg outline-none transition">
+                <span class="text-slate-500 text-sm font-mono">ms</span>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-4 p-4 bg-white rounded-xl border-2 border-slate-200">
+            <div class="flex-1">
+                <div class="font-semibold text-slate-700 text-sm">Step 3 — API Gateway latency budget (ms)</div>
+                <div class="text-xs text-slate-500 mt-1">Formula: remaining budget × 10%</div>
+            </div>
+            <div class="flex items-center gap-2">
+                <input id="s3" type="number" step="any" placeholder="?" class="w-36 p-2 border-2 border-slate-200 rounded-lg text-center font-mono font-bold text-lg outline-none transition">
+                <span class="text-slate-500 text-sm font-mono">ms</span>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-4 p-4 bg-white rounded-xl border-2 border-slate-200">
+            <div class="flex-1">
+                <div class="font-semibold text-slate-700 text-sm">Step 4 — Search Service latency budget (ms)</div>
+                <div class="text-xs text-slate-500 mt-1">Formula: remaining budget × 60%</div>
+            </div>
+            <div class="flex items-center gap-2">
+                <input id="s4" type="number" step="any" placeholder="?" class="w-36 p-2 border-2 border-slate-200 rounded-lg text-center font-mono font-bold text-lg outline-none transition">
+                <span class="text-slate-500 text-sm font-mono">ms</span>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-4 p-4 bg-white rounded-xl border-2 border-slate-200">
+            <div class="flex-1">
+                <div class="font-semibold text-slate-700 text-sm">Step 5 — Cache / DB latency budget (ms)</div>
+                <div class="text-xs text-slate-500 mt-1">Formula: remaining budget × 30%</div>
+            </div>
+            <div class="flex items-center gap-2">
+                <input id="s5" type="number" step="any" placeholder="?" class="w-36 p-2 border-2 border-slate-200 rounded-lg text-center font-mono font-bold text-lg outline-none transition">
+                <span class="text-slate-500 text-sm font-mono">ms</span>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-4 p-4 bg-white rounded-xl border-2 border-slate-200">
+            <div class="flex-1">
+                <div class="font-semibold text-slate-700 text-sm">Step 6 — Sum of ALL components (verify = 300 ms)</div>
+                <div class="text-xs text-slate-500 mt-1">Formula: fixed overhead + API GW + Search + Cache/DB</div>
+            </div>
+            <div class="flex items-center gap-2">
+                <input id="s6" type="number" step="any" placeholder="?" class="w-36 p-2 border-2 border-slate-200 rounded-lg text-center font-mono font-bold text-lg outline-none transition">
+                <span class="text-slate-500 text-sm font-mono">ms total</span>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-4 p-4 bg-indigo-50 rounded-xl border-2 border-indigo-200">
+            <div class="flex-1">
+                <div class="font-semibold text-indigo-800 text-sm">Step 7 — What % of the total SLA does the fixed overhead consume?</div>
+                <div class="text-xs text-indigo-600 mt-1">Formula: (fixed overhead / 300) × 100</div>
+            </div>
+            <div class="flex items-center gap-2">
+                <input id="s7" type="number" step="any" placeholder="?" class="w-36 p-2 border-2 border-indigo-200 rounded-lg text-center font-mono font-bold text-lg outline-none transition">
+                <span class="text-indigo-600 text-sm font-mono">% of SLA</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Feedback -->
+    <div id="feedback" class="mb-6 p-5 rounded-xl border-2 hidden"></div>
+
+    <!-- Solution -->
+    <div id="solution" class="mb-6 p-5 bg-green-50 rounded-xl border border-green-200 hidden">
+        <h4 class="font-bold text-green-800 text-lg mb-3">✅ Worked Solution</h4>
+        <div class="space-y-2 text-sm text-green-900 font-mono">
+            <div>Fixed overhead  = 5 + 15 + 8 + 22 = <strong>50 ms</strong></div>
+            <div>Remaining       = 300 − 50 = <strong>250 ms</strong></div>
+            <div>API Gateway     = 250 × 0.10 = <strong>25 ms</strong></div>
+            <div>Search Service  = 250 × 0.60 = <strong>150 ms</strong></div>
+            <div>Cache / DB      = 250 × 0.30 = <strong>75 ms</strong></div>
+            <div>Verify sum      = 50 + 25 + 150 + 75 = <strong>300 ms ✓</strong></div>
+            <div>Fixed overhead% = (50 / 300) × 100 = <strong>16.7% of SLA</strong></div>
+        </div>
+        <div class="mt-4 p-3 bg-white rounded-lg border border-green-100 text-xs text-green-800">
+            <strong>Engineer's Takeaway:</strong> The fixed infrastructure overhead consumes ~17% of the total budget
+            before a single line of application code runs. The Search Service has 150 ms — enough for one Elasticsearch
+            query. The Cache/DB layer has 75 ms — Redis typically responds in &lt;1 ms, so this budget is generous for
+            a cache hit, but tight for a cache miss requiring a DB query + serialisation. This is why cache hit rate
+            matters so much: a cache miss on a 50ms DB query uses 67% of the Cache/DB budget in one call.
+        </div>
+    </div>
+
+    <!-- Buttons -->
+    <div class="flex gap-4 no-pdf">
+        <button onclick="validate()" class="flex-1 bg-indigo-600 text-white py-3 rounded-lg font-bold hover:bg-indigo-700 transition shadow-md">Validate Calculations</button>
+        <button onclick="exportPDF()" class="flex-1 bg-slate-800 text-white py-3 rounded-lg font-bold hover:bg-slate-900 transition shadow-md">Export PDF</button>
+    </div>
+
+    <!-- AI Prompt Guide -->
+    <div class="mt-8 p-5 bg-amber-50 rounded-xl border border-amber-200 shadow-sm no-pdf">
+        <div class="flex items-center mb-3">
+            <span class="text-2xl mr-3">🤖</span>
+            <div>
+                <h4 class="text-sm font-bold text-amber-800">AI Senior Architect Prompt Guide</h4>
+                <p class="text-[11px] text-amber-700">Explore latency measurement and optimisation:</p>
+            </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4 text-[11px] text-amber-900 italic leading-relaxed">
+            <div class="bg-white/50 p-3 rounded border border-amber-100">"Explain the difference between <strong>P50, P95, P99, and P999 latency percentiles</strong>. Why do SRE teams focus on P99 instead of average latency, and how does <strong>tail latency amplification</strong> cause P99 to degrade when microservices call each other in parallel?"</div>
+            <div class="bg-white/50 p-3 rounded border border-amber-100">"What is <strong>Little's Law</strong> (L = λW) and how does it relate latency to throughput and queue depth? How can you use it to predict when a system will tip into queuing behaviour as load increases?"</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('display-date').innerText = new Date().toLocaleString();
+
+    const fixed = 5 + 15 + 8 + 22; // 50 ms
+    const remaining = 300 - fixed;   // 250 ms
+
+    const answers = [
+        { id:'s1', correct: fixed,              tol:0.02, hint:'Step 1: 5 + 15 + 8 + 22 = 50 ms fixed infrastructure overhead.' },
+        { id:'s2', correct: remaining,          tol:0.02, hint:'Step 2: 300 − 50 = 250 ms remaining for application services.' },
+        { id:'s3', correct: remaining * 0.10,   tol:0.02, hint:'Step 3: 250 × 0.10 = 25 ms for the API Gateway.' },
+        { id:'s4', correct: remaining * 0.60,   tol:0.02, hint:'Step 4: 250 × 0.60 = 150 ms for the Search Service.' },
+        { id:'s5', correct: remaining * 0.30,   tol:0.02, hint:'Step 5: 250 × 0.30 = 75 ms for the Cache/DB layer.' },
+        { id:'s6', correct: 300,                tol:0.02, hint:'Step 6: 50 + 25 + 150 + 75 = 300 ms — must equal the total SLA.' },
+        { id:'s7', correct: (fixed / 300) * 100, tol:0.03, hint:'Step 7: (50 / 300) × 100 ≈ 16.67% of the SLA is fixed overhead.' },
+    ];
+
+    function within(val, target, tol) {
+        if (target === 0) return val === 0;
+        return Math.abs(val - target) / target <= tol;
+    }
+
+    function validate() {
+        const nameVal = document.getElementById('student-name').value.trim();
+        if (!nameVal) {
+            document.getElementById('student-name').classList.add('error-ring');
+            document.getElementById('name-error').classList.remove('hidden');
+            document.getElementById('student-name').focus();
+            return;
+        }
+        document.getElementById('student-name').classList.remove('error-ring');
+        document.getElementById('name-error').classList.add('hidden');
+
+        let firstError = null;
+        let allCorrect = true;
+
+        answers.forEach(a => {
+            const input = document.getElementById(a.id);
+            const val = parseFloat(input.value);
+            const ok = !isNaN(val) && within(val, a.correct, a.tol);
+            input.classList.remove('step-correct','step-wrong');
+            input.classList.add(ok ? 'step-correct' : 'step-wrong');
+            if (!ok && !firstError) firstError = a;
+            if (!ok) allCorrect = false;
+        });
+
+        const fb = document.getElementById('feedback');
+        const sol = document.getElementById('solution');
+        if (allCorrect) {
+            fb.className = 'mb-6 p-5 rounded-xl border-2 bg-green-50 border-green-200 text-green-800';
+            fb.innerHTML = '<div class="font-black text-xl mb-1">✅ STATUS: PASS / COMPLETED</div><div class="text-sm">Latency budget correct. You can now decompose an end-to-end SLA into concrete per-component targets and hold each service team accountable to their slice.</div>';
+            sol.classList.remove('hidden');
+        } else {
+            fb.className = 'mb-6 p-5 rounded-xl border-2 bg-red-50 border-red-200 text-red-800';
+            fb.innerHTML = `<div class="font-black text-xl mb-1">❌ STATUS: FAIL / ATTEMPTED</div><div class="text-sm"><strong>${firstError.hint}</strong></div>`;
+            sol.classList.add('hidden');
+        }
+        fb.classList.remove('hidden');
+    }
+
+    function exportPDF() {
+        if (!document.getElementById('student-name').value.trim()) {
+            document.getElementById('student-name').classList.add('error-ring');
+            document.getElementById('name-error').classList.remove('hidden');
+            return;
+        }
+        if (document.getElementById('feedback').classList.contains('hidden')) {
+            alert("Please click 'Validate Calculations' before exporting.");
+            return;
+        }
+        window.print();
+    }
+</script>
+</body>
+</html>

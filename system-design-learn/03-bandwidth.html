@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learn: Bandwidth & Data Flow</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', system-ui, sans-serif; }
+        .slider-track { -webkit-appearance: none; appearance: none; height: 6px; border-radius: 3px; outline: none; cursor: pointer; }
+        .slider-track::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: #0891b2; cursor: pointer; }
+        .slider-track::-moz-range-thumb { width: 20px; height: 20px; border-radius: 50%; background: #0891b2; cursor: pointer; border: none; }
+        .pipe-fill { transition: width 0.4s ease, background-color 0.4s ease; }
+        @keyframes flow { 0%{transform:translateX(-100%)} 100%{transform:translateX(400%)} }
+        .flow-dot { animation: flow 1.5s linear infinite; }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen">
+
+    <nav class="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between sticky top-0 z-10 shadow-sm">
+        <div class="flex items-center gap-3">
+            <span class="text-cyan-600 font-black text-lg">⚡ SysDesign Learn</span>
+            <span class="text-slate-300">|</span>
+            <span class="text-slate-600 font-semibold text-sm">Bandwidth & Data Flow</span>
+        </div>
+        <div class="flex gap-2 text-xs">
+            <a href="02-storage.html" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold px-3 py-1 rounded-full">← Prev</a>
+            <span class="bg-cyan-100 text-cyan-700 font-bold px-3 py-1 rounded-full">03 / 10</span>
+            <a href="04-availability.html" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold px-3 py-1 rounded-full">Next →</a>
+        </div>
+    </nav>
+
+    <div class="max-w-5xl mx-auto p-6 space-y-6">
+
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+            <div class="flex items-start gap-4">
+                <div class="text-5xl">🌊</div>
+                <div>
+                    <h1 class="text-2xl font-black text-slate-800">Bandwidth & Data Flow</h1>
+                    <p class="text-slate-500 mt-1 leading-relaxed">
+                        Bandwidth is the width of your data pipe — how many bits can flow per second.
+                        A 1 Gbps network link sounds fast until you have 10,000 concurrent users each streaming 4K video.
+                        Understanding ingress (data coming in) vs egress (data going out) is critical because
+                        cloud providers charge for egress — sometimes more than the compute itself.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+            <!-- Sliders -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-6">
+                <h2 class="font-black text-slate-700 text-lg">🎛️ Network Parameters</h2>
+
+                <div class="space-y-2">
+                    <div class="flex justify-between text-sm">
+                        <label class="font-semibold text-slate-600">Peak Concurrent Users</label>
+                        <span id="cu-val" class="font-black text-cyan-600 font-mono">100K</span>
+                    </div>
+                    <input type="range" id="cu" min="1" max="2000" value="100" class="slider-track w-full bg-slate-200">
+                    <div class="flex justify-between text-xs text-slate-400"><span>1K</span><span>2M</span></div>
+                </div>
+
+                <div class="space-y-2">
+                    <div class="flex justify-between text-sm">
+                        <label class="font-semibold text-slate-600">Upload (Ingress) per User</label>
+                        <span id="up-val" class="font-black text-cyan-600 font-mono">50 KB/s</span>
+                    </div>
+                    <input type="range" id="up" min="1" max="5000" value="50" class="slider-track w-full bg-slate-200">
+                    <div class="flex justify-between text-xs text-slate-400"><span>1 KB/s</span><span>5 MB/s</span></div>
+                </div>
+
+                <div class="space-y-2">
+                    <div class="flex justify-between text-sm">
+                        <label class="font-semibold text-slate-600">Download (Egress) per User</label>
+                        <span id="down-val" class="font-black text-cyan-600 font-mono">150 KB/s</span>
+                    </div>
+                    <input type="range" id="down" min="1" max="10000" value="150" class="slider-track w-full bg-slate-200">
+                    <div class="flex justify-between text-xs text-slate-400"><span>1 KB/s</span><span>10 MB/s</span></div>
+                </div>
+
+                <div class="space-y-2">
+                    <div class="flex justify-between text-sm">
+                        <label class="font-semibold text-slate-600">Active Hours Per Day</label>
+                        <span id="hrs-val" class="font-black text-cyan-600 font-mono">8 hrs</span>
+                    </div>
+                    <input type="range" id="hrs" min="1" max="24" value="8" class="slider-track w-full bg-slate-200">
+                    <div class="flex justify-between text-xs text-slate-400"><span>1 hr</span><span>24 hrs</span></div>
+                </div>
+
+                <div class="space-y-2">
+                    <div class="flex justify-between text-sm">
+                        <label class="font-semibold text-slate-600">Egress Cost ($/GB)</label>
+                        <span id="cost-val" class="font-black text-cyan-600 font-mono">$0.09</span>
+                    </div>
+                    <input type="range" id="cost" min="1" max="20" value="9" class="slider-track w-full bg-slate-200">
+                    <div class="flex justify-between text-xs text-slate-400"><span>$0.01</span><span>$0.20</span></div>
+                    <p class="text-xs text-slate-400 italic">AWS charges ~$0.09/GB. Cloudflare is free. Most CDNs are $0.01–0.08/GB.</p>
+                </div>
+            </div>
+
+            <!-- Live metrics + pipe viz -->
+            <div class="space-y-4">
+
+                <!-- Ingress -->
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+                    <div class="text-xs font-bold text-blue-400 uppercase tracking-widest mb-2">⬆ Ingress (Upload)</div>
+                    <div id="ingress-gbps" class="text-3xl font-black text-blue-700 font-mono">–</div>
+                    <div class="mt-3 h-4 bg-blue-50 rounded-full overflow-hidden border border-blue-100">
+                        <div id="ingress-bar" class="pipe-fill h-full bg-blue-400 rounded-full" style="width:0%"></div>
+                    </div>
+                    <div class="flex justify-between text-xs text-blue-300 mt-1"><span>0</span><span>100 Gbps</span></div>
+                </div>
+
+                <!-- Egress -->
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+                    <div class="text-xs font-bold text-emerald-400 uppercase tracking-widest mb-2">⬇ Egress (Download)</div>
+                    <div id="egress-gbps" class="text-3xl font-black text-emerald-700 font-mono">–</div>
+                    <div class="mt-3 h-4 bg-emerald-50 rounded-full overflow-hidden border border-emerald-100">
+                        <div id="egress-bar" class="pipe-fill h-full bg-emerald-400 rounded-full" style="width:0%"></div>
+                    </div>
+                    <div class="flex justify-between text-xs text-emerald-300 mt-1"><span>0</span><span>100 Gbps</span></div>
+                </div>
+
+                <!-- Daily Egress Volume -->
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+                    <div class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Daily Egress Volume</div>
+                    <div id="daily-egress" class="text-3xl font-black text-slate-800 font-mono">–</div>
+                    <div class="text-xs text-slate-400 mt-1" id="daily-egress-note">–</div>
+                </div>
+
+                <!-- Monthly Cost -->
+                <div id="cost-card" class="bg-cyan-50 rounded-2xl p-5 shadow-sm border border-cyan-200">
+                    <div class="text-xs font-bold text-cyan-500 uppercase tracking-widest mb-1">Monthly Egress Cost</div>
+                    <div id="monthly-cost" class="text-3xl font-black text-cyan-700 font-mono">–</div>
+                    <div id="cost-note" class="text-xs text-cyan-600 mt-1">–</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Insight -->
+        <div class="bg-amber-50 border border-amber-200 rounded-2xl p-5">
+            <div class="flex gap-3 items-start">
+                <span class="text-2xl">💡</span>
+                <div>
+                    <div class="font-bold text-amber-800 mb-1">Live Insight</div>
+                    <div id="insight-text" class="text-amber-900 text-sm leading-relaxed">Adjust sliders above.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reference Table -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+                <div class="font-bold text-slate-700 mb-3">🎬 Bandwidth by Content Type</div>
+                <table class="w-full text-xs">
+                    <thead><tr class="border-b border-slate-100"><th class="text-left py-1 text-slate-400">Content</th><th class="text-right py-1 text-slate-400">KB/s per user</th></tr></thead>
+                    <tbody class="divide-y divide-slate-50 text-slate-600">
+                        <tr><td class="py-1">Chat message (text)</td><td class="py-1 text-right font-mono">~0.1</td></tr>
+                        <tr><td class="py-1">Audio call</td><td class="py-1 text-right font-mono">~32</td></tr>
+                        <tr><td class="py-1">Video call (HD)</td><td class="py-1 text-right font-mono">~500</td></tr>
+                        <tr><td class="py-1">SD video stream</td><td class="py-1 text-right font-mono">~250</td></tr>
+                        <tr><td class="py-1">HD video stream (1080p)</td><td class="py-1 text-right font-mono">~500</td></tr>
+                        <tr><td class="py-1">4K video stream</td><td class="py-1 text-right font-mono">~2,000</td></tr>
+                        <tr><td class="py-1">Web page (cached)</td><td class="py-1 text-right font-mono">~50 burst</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+                <div class="font-bold text-slate-700 mb-3">💸 Unit Conversion Cheat Sheet</div>
+                <div class="font-mono text-xs text-slate-600 bg-slate-50 p-3 rounded-lg space-y-1">
+                    <div>KB/s → Mbps: KB/s × 0.008</div>
+                    <div>MB/s → Gbps: MB/s × 0.008</div>
+                    <div>GB/s → Tbps: GB/s × 0.008</div>
+                    <div class="border-t border-slate-200 pt-1 mt-1">1 Gbps = 125 MB/s</div>
+                    <div>1 TB/day = 11.6 MB/s = 92.6 Mbps</div>
+                    <div>1 PB/day = 11.6 GB/s = 92.6 Gbps</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+<script>
+    const fmtGB = b => {
+        if (b >= 1e6) return (b/1e6).toFixed(2) + ' PB';
+        if (b >= 1e3) return (b/1e3).toFixed(2) + ' TB';
+        return b.toFixed(2) + ' GB';
+    };
+    const fmtGbps = gbps => {
+        if (gbps >= 1000) return (gbps/1000).toFixed(2) + ' Tbps';
+        if (gbps >= 1) return gbps.toFixed(2) + ' Gbps';
+        return (gbps * 1000).toFixed(1) + ' Mbps';
+    };
+
+    function update() {
+        const cu   = parseInt(document.getElementById('cu').value) * 1000;
+        const upKB = parseInt(document.getElementById('up').value);
+        const dnKB = parseInt(document.getElementById('down').value);
+        const hrs  = parseInt(document.getElementById('hrs').value);
+        const cost = parseInt(document.getElementById('cost').value) / 100;
+
+        document.getElementById('cu-val').textContent   = cu >= 1e6 ? (cu/1e6).toFixed(1)+'M' : (cu/1e3).toFixed(0)+'K';
+        document.getElementById('up-val').textContent   = upKB >= 1000 ? (upKB/1000).toFixed(1)+' MB/s' : upKB+' KB/s';
+        document.getElementById('down-val').textContent = dnKB >= 1000 ? (dnKB/1000).toFixed(1)+' MB/s' : dnKB+' KB/s';
+        document.getElementById('hrs-val').textContent  = hrs + ' hrs';
+        document.getElementById('cost-val').textContent = '$' + cost.toFixed(2);
+
+        // Ingress: cu * upKB KB/s = cu * upKB * 8 / 1e6 Gbps
+        const ingressGbps  = (cu * upKB * 8) / 1e6;
+        const egressGbps   = (cu * dnKB * 8) / 1e6;
+        const egressGBperS = cu * dnKB / 1e6; // GB/s
+        const dailyEgressGB = egressGBperS * hrs * 3600;
+        const monthlyEgressGB = dailyEgressGB * 30;
+        const monthlyCost  = monthlyEgressGB * cost;
+
+        document.getElementById('ingress-gbps').textContent = fmtGbps(ingressGbps);
+        document.getElementById('egress-gbps').textContent  = fmtGbps(egressGbps);
+        document.getElementById('daily-egress').textContent = fmtGB(dailyEgressGB);
+        document.getElementById('daily-egress-note').textContent = `${hrs} active hours × ${(cu/1e3).toFixed(0)}K users × ${dnKB >= 1000 ? (dnKB/1000).toFixed(1)+' MB/s' : dnKB+' KB/s'} each`;
+
+        const MAX_GBPS = 100;
+        document.getElementById('ingress-bar').style.width = Math.min(100, (ingressGbps/MAX_GBPS)*100) + '%';
+        document.getElementById('egress-bar').style.width  = Math.min(100, (egressGbps/MAX_GBPS)*100)  + '%';
+
+        // Bar colors at thresholds
+        const ebar = document.getElementById('egress-bar');
+        if (egressGbps > 80) ebar.className = 'pipe-fill h-full bg-red-500 rounded-full';
+        else if (egressGbps > 40) ebar.className = 'pipe-fill h-full bg-amber-400 rounded-full';
+        else ebar.className = 'pipe-fill h-full bg-emerald-400 rounded-full';
+
+        document.getElementById('monthly-cost').textContent = '$' + Math.round(monthlyCost).toLocaleString();
+
+        const cc = document.getElementById('cost-card');
+        const cn = document.getElementById('cost-note');
+        if (monthlyCost > 1e6) {
+            cc.className = 'bg-red-50 rounded-2xl p-5 shadow-sm border border-red-200';
+            cn.className = 'text-xs text-red-600 mt-1';
+            cn.textContent = 'At this scale, egress cost alone could exceed engineering headcount — use a CDN';
+        } else if (monthlyCost > 100000) {
+            cc.className = 'bg-amber-50 rounded-2xl p-5 shadow-sm border border-amber-200';
+            cn.className = 'text-xs text-amber-600 mt-1';
+            cn.textContent = 'A CDN like Cloudflare (free egress) would eliminate most of this cost';
+        } else {
+            cc.className = 'bg-cyan-50 rounded-2xl p-5 shadow-sm border border-cyan-200';
+            cn.className = 'text-xs text-cyan-600 mt-1';
+            cn.textContent = 'Manageable — standard cloud egress pricing works at this scale';
+        }
+
+        // Insights
+        let insight = `Your system needs <strong>${fmtGbps(egressGbps)}</strong> of egress bandwidth at peak. `;
+        if (egressGbps > 100) {
+            insight += `This exceeds a single 100 Gbps network link — you'd need multiple bonded links or distributed PoPs. Netflix and YouTube use dedicated global fiber agreements at this scale. `;
+        } else if (egressGbps > 10) {
+            insight += `This is substantial — a multi-region CDN deployment is essential. Your ISP uplinks at a single datacenter won't cut it. `;
+        } else {
+            insight += `This is well within what a modern datacenter can handle on a single 10–40 Gbps uplink. `;
+        }
+        const cdnSaving = monthlyEgressGB * (cost - 0.01);
+        if (monthlyCost > 10000) {
+            insight += `A CDN dropping egress to $0.01/GB would save approximately <strong>$${Math.round(cdnSaving).toLocaleString()}/month</strong> — often a 10–50× ROI on the CDN subscription cost.`;
+        }
+        document.getElementById('insight-text').innerHTML = insight;
+    }
+
+    ['cu','up','down','hrs','cost'].forEach(id => {
+        document.getElementById(id).addEventListener('input', update);
+    });
+    update();
+</script>
+</body>
+</html>

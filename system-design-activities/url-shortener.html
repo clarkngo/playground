@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Design Architect | URL Shortener</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .drop-zone { min-height: 420px; border: 2px dashed #cbd5e1; transition: background 0.3s; }
+        .drop-zone.drag-over { background-color: #f1f5f9; border-color: #3b82f6; }
+        .component { cursor: grab; user-select: none; transition: transform 0.2s; }
+        .component:hover { transform: scale(1.02); }
+        .error-ring { border: 2px solid #ef4444 !important; background-color: #fef2f2; }
+        @media print {
+            body { background: white; padding: 0; margin: 0; }
+            #toolbox-container, .no-pdf, button, #prompt-guide { display: none !important; }
+            #game-container { border: none; box-shadow: none; width: 100%; max-width: 100%; margin: 0; padding: 0; }
+            .drop-zone { border: 1px solid #e2e8f0; min-height: auto; padding: 20px; }
+            #placeholder { display: none !important; }
+            #feedback { display: block !important; border: 1px solid #cbd5e1; margin-top: 20px; }
+            @page { size: portrait; margin: 0.5in; }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 p-8">
+<div id="game-container" class="max-w-5xl mx-auto bg-white p-8 rounded-xl shadow-xl border border-slate-200">
+
+    <div class="mb-6 grid grid-cols-2 gap-6 bg-slate-100 p-5 rounded-lg border border-slate-200">
+        <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Student Name <span class="text-red-500">*</span></label>
+            <input type="text" id="student-name" placeholder="Enter Full Name" class="w-full p-2 border rounded border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none">
+            <p id="name-error" class="text-red-500 text-xs mt-1 hidden font-semibold">Name required for submission.</p>
+        </div>
+        <div class="text-right">
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">System Timestamp</label>
+            <p id="display-date" class="text-slate-700 font-medium py-2 italic font-mono text-sm"></p>
+        </div>
+    </div>
+
+    <header class="mb-8 border-b pb-6">
+        <h1 class="text-4xl font-extrabold text-slate-800 tracking-tight">URL Shortener Architecture</h1>
+        <div class="mt-4 p-5 bg-indigo-50 rounded-xl border-l-4 border-indigo-500 shadow-sm">
+            <h3 class="font-bold text-indigo-800 text-lg mb-2 flex items-center"><span class="mr-2">🔗</span> The Objective</h3>
+            <p class="text-indigo-900 text-md leading-relaxed">
+                Your URL shortener serves billions of redirects per day. Most short links are clicked repeatedly — hitting a database on every request would be far too slow and expensive.
+                <br><br>
+                <strong>Think about:</strong> How does a user's request first reach your system at scale? What logic must run to look up the original URL from the short code? Where should you check <em>before</em> touching persistent storage? When that fast layer doesn't have the answer, where is the source of truth?
+            </p>
+        </div>
+    </header>
+
+    <div class="grid grid-cols-4 gap-8">
+        <div class="col-span-1 space-y-6" id="toolbox-container">
+            <h3 class="font-bold text-lg text-indigo-600 flex items-center"><span class="mr-2">🛠️</span> Toolbox</h3>
+            <div id="toolbox" class="space-y-3"></div>
+            <div class="pt-4 space-y-3">
+                <button onclick="checkSystem()" class="w-full bg-indigo-600 text-white py-3 rounded-lg font-bold hover:bg-indigo-700 transition shadow-md">Validate Architecture</button>
+                <button onclick="exportSimplePDF()" class="w-full bg-slate-800 text-white py-3 rounded-lg font-bold hover:bg-slate-900 transition shadow-md">Export PDF</button>
+            </div>
+        </div>
+
+        <div class="col-span-3 space-y-6">
+            <div>
+                <h3 class="font-bold text-xl text-slate-700 mb-3">Design Canvas</h3>
+                <div id="canvas" class="drop-zone rounded-2xl flex flex-col items-center justify-start p-8 gap-4 bg-slate-50/50">
+                    <p class="text-gray-400 mt-32 italic text-lg" id="placeholder">Drag components here in the correct order...</p>
+                </div>
+                <div id="feedback" class="mt-6 p-6 rounded-xl border-2 hidden transition-all duration-300">
+                    <div id="feedback-status" class="font-black text-xl mb-2 uppercase tracking-tighter"></div>
+                    <div id="feedback-content" class="text-sm"></div>
+                </div>
+            </div>
+
+            <div id="prompt-guide" class="p-5 bg-amber-50 rounded-xl border border-amber-200 shadow-sm">
+                <div class="flex items-center mb-3">
+                    <span class="text-2xl mr-3">🤖</span>
+                    <div>
+                        <h4 class="text-sm font-bold text-amber-800">AI Senior Architect Prompt Guide</h4>
+                        <p class="text-[11px] text-amber-700">Use these prompts to explore key design decisions:</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4 text-[11px] text-amber-900 italic leading-relaxed">
+                    <div class="bg-white/50 p-3 rounded border border-amber-100">"How would you generate unique short codes for a URL shortener? Compare <strong>MD5 hashing</strong> vs <strong>Base62 encoding</strong> of a counter vs <strong>random UUID</strong>. What are the tradeoffs?"</div>
+                    <div class="bg-white/50 p-3 rounded border border-amber-100">"Why is a <strong>cache</strong> (like Redis) critical in a URL shortener? What eviction policy (LRU, LFU) would you choose and why?"</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const canvas = document.getElementById('canvas');
+    const placeholder = document.getElementById('placeholder');
+    const nameInput = document.getElementById('student-name');
+    const toolbox = document.getElementById('toolbox');
+
+    const toolData = [
+        { type: "Client",      label: "👤 Client / Browser",        color: "bg-slate-50 border-slate-300" },
+        { type: "DNS_LB",      label: "🌐 DNS / Load Balancer",     color: "bg-sky-50 border-sky-300" },
+        { type: "AppServer",   label: "⚙️ App Server (Redirect)",   color: "bg-indigo-50 border-indigo-300" },
+        { type: "CacheLayer",  label: "⚡ Cache Layer (Redis)",      color: "bg-yellow-50 border-yellow-300" },
+        { type: "Database",    label: "🗄️ Database (URL Store)",    color: "bg-emerald-50 border-emerald-300" }
+    ];
+
+    const LAB_CONFIG = {
+        correctOrder: ["Client","DNS_LB","AppServer","CacheLayer","Database"],
+        clues: {
+            "Client":     "A user clicks a short link — this originates from the client (browser or mobile app).",
+            "DNS_LB":     "The request resolves via DNS to a Load Balancer, which distributes traffic across app server instances.",
+            "AppServer":  "The App Server extracts the short code from the URL and looks up the original long URL.",
+            "CacheLayer": "Before hitting the database, the App Server checks the Cache (Redis). Most popular links are served from here — sub-millisecond latency.",
+            "Database":   "On a cache miss, the App Server queries the Database to retrieve the original URL, then caches it for future requests."
+        },
+        passMessage: "URL shortener read path verified. The cache-first lookup pattern ensures low latency for the 80% of requests that are repeated lookups, keeping the database load minimal."
+    };
+
+    function init() {
+        document.getElementById('display-date').innerText = new Date().toLocaleString();
+        [...toolData].sort(() => Math.random() - 0.5).forEach(tool => {
+            const div = document.createElement('div');
+            div.draggable = true;
+            div.className = `component ${tool.color} p-4 rounded-lg border-2 shadow-sm font-semibold text-sm flex items-center justify-center text-center`;
+            div.dataset.type = tool.type;
+            div.innerText = tool.label;
+            div.addEventListener('dragstart', e => { e.dataTransfer.setData('type', tool.type); e.dataTransfer.setData('label', tool.label); });
+            toolbox.appendChild(div);
+        });
+    }
+
+    canvas.addEventListener('dragover', e => e.preventDefault());
+    canvas.addEventListener('dragenter', () => canvas.classList.add('drag-over'));
+    canvas.addEventListener('dragleave', () => canvas.classList.remove('drag-over'));
+    canvas.addEventListener('drop', e => {
+        e.preventDefault(); canvas.classList.remove('drag-over'); placeholder.style.display = 'none';
+        const type = e.dataTransfer.getData('type'), label = e.dataTransfer.getData('label');
+        const el = document.createElement('div');
+        el.className = `flex items-center justify-between w-full max-w-lg p-4 rounded-xl shadow-md border bg-white font-bold text-slate-700 transition hover:scale-[1.01]`;
+        el.innerHTML = `<span>${canvas.querySelectorAll('[data-type]').length + 1}. ${label}</span><button onclick="this.parentElement.remove(); if(!canvas.querySelectorAll('[data-type]').length) placeholder.style.display='block';" class="text-slate-300 hover:text-red-500 no-pdf text-lg">✖</button>`;
+        el.dataset.type = type; canvas.appendChild(el);
+    });
+
+    function checkSystem() {
+        const nameVal = nameInput.value.trim();
+        if (!nameVal) { nameInput.classList.add('error-ring'); document.getElementById('name-error').classList.remove('hidden'); nameInput.focus(); return; }
+        nameInput.classList.remove('error-ring'); document.getElementById('name-error').classList.add('hidden');
+        const nodes = Array.from(canvas.querySelectorAll('[data-type]'));
+        const current = nodes.map(n => n.dataset.type);
+        const isPass = JSON.stringify(current) === JSON.stringify(LAB_CONFIG.correctOrder);
+        const feedback = document.getElementById('feedback'), status = document.getElementById('feedback-status'), content = document.getElementById('feedback-content');
+        feedback.className = `mt-6 p-6 rounded-xl border-2 block ${isPass ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-800'}`;
+        status.innerText = isPass ? "✅ STATUS: PASS / COMPLETED" : "❌ STATUS: FAIL / ATTEMPTED";
+        if (isPass) { content.innerText = LAB_CONFIG.passMessage; }
+        else {
+            let hint = "The architecture sequence is incorrect.";
+            for (let i = 0; i < LAB_CONFIG.correctOrder.length; i++) { if (current[i] !== LAB_CONFIG.correctOrder[i]) { hint = `Issue at Step ${i + 1}: ${LAB_CONFIG.clues[LAB_CONFIG.correctOrder[i]]}`; break; } }
+            if (current.length < LAB_CONFIG.correctOrder.length) hint = `Incomplete: only ${current.length} of ${LAB_CONFIG.correctOrder.length} components placed.`;
+            content.innerHTML = `<strong>${hint}</strong>`;
+        }
+    }
+
+    function exportSimplePDF() {
+        if (!nameInput.value.trim()) { nameInput.classList.add('error-ring'); document.getElementById('name-error').classList.remove('hidden'); nameInput.focus(); return; }
+        if (document.getElementById('feedback').classList.contains('hidden')) { alert("Please click 'Validate Architecture' before exporting."); return; }
+        window.print();
+    }
+
+    init();
+</script>
+</body>
+</html>

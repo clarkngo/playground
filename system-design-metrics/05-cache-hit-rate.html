@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Design Metrics | Cache Hit Rate & DB Load</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .step-correct { border-color: #22c55e !important; background-color: #f0fdf4; }
+        .step-wrong   { border-color: #ef4444 !important; background-color: #fef2f2; }
+        .error-ring   { border: 2px solid #ef4444 !important; background-color: #fef2f2; }
+        @media print {
+            body { background: white; padding: 0; margin: 0; }
+            .no-pdf, button { display: none !important; }
+            #game-container { border: none; box-shadow: none; width: 100%; max-width: 100%; margin: 0; padding: 0; }
+            #feedback { display: block !important; }
+            #solution { display: block !important; }
+            @page { size: portrait; margin: 0.5in; }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 p-8">
+<div id="game-container" class="max-w-4xl mx-auto bg-white p-8 rounded-xl shadow-xl border border-slate-200">
+
+    <div class="mb-6 grid grid-cols-2 gap-6 bg-slate-100 p-5 rounded-lg border border-slate-200">
+        <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Student Name <span class="text-red-500">*</span></label>
+            <input type="text" id="student-name" placeholder="Enter Full Name" class="w-full p-2 border rounded border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none">
+            <p id="name-error" class="text-red-500 text-xs mt-1 hidden font-semibold">Name required for submission.</p>
+        </div>
+        <div class="text-right">
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">System Timestamp</label>
+            <p id="display-date" class="text-slate-700 font-medium py-2 italic font-mono text-sm"></p>
+        </div>
+    </div>
+
+    <header class="mb-8 border-b pb-6">
+        <h1 class="text-3xl font-extrabold text-slate-800 tracking-tight">Cache Hit Rate & Database Load</h1>
+        <div class="mt-4 p-5 bg-indigo-50 rounded-xl border-l-4 border-indigo-500 shadow-sm">
+            <h3 class="font-bold text-indigo-800 text-lg mb-2">📋 Scenario</h3>
+            <p class="text-indigo-900 text-sm leading-relaxed">
+                A social media platform's read API handles <strong>120,000 RPS</strong> at peak. The team introduces
+                a Redis cache layer with an expected hit rate of <strong>85%</strong>. Each database server can
+                handle <strong>5,000 read RPS</strong> before saturating. The team wants to know how many DB servers
+                are needed with the cache in place, and what the cache miss rate is — and compare that to the
+                no-cache scenario.
+            </p>
+        </div>
+    </header>
+
+    <!-- Given Values -->
+    <div class="mb-6 p-5 bg-slate-50 rounded-xl border border-slate-200">
+        <h3 class="font-bold text-slate-700 mb-3">📊 Given Values</h3>
+        <div class="grid grid-cols-4 gap-4 text-sm">
+            <div class="bg-white p-3 rounded-lg border border-slate-200">
+                <div class="text-xs text-slate-500 uppercase font-bold">Peak Read RPS</div>
+                <div class="text-2xl font-black text-indigo-600">120,000</div>
+            </div>
+            <div class="bg-white p-3 rounded-lg border border-slate-200">
+                <div class="text-xs text-slate-500 uppercase font-bold">Cache Hit Rate</div>
+                <div class="text-2xl font-black text-slate-700">85%</div>
+            </div>
+            <div class="bg-white p-3 rounded-lg border border-slate-200">
+                <div class="text-xs text-slate-500 uppercase font-bold">DB Capacity</div>
+                <div class="text-2xl font-black text-slate-700">5,000 RPS</div>
+            </div>
+            <div class="bg-white p-3 rounded-lg border border-slate-200">
+                <div class="text-xs text-slate-500 uppercase font-bold">Safety Buffer</div>
+                <div class="text-2xl font-black text-slate-700">20%</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Unit Reference -->
+    <div class="mb-6 p-4 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-900 no-pdf">
+        <strong>Key Formulas:</strong>
+        Cache misses RPS = Total RPS × (1 − hit rate) |
+        Cache miss % = 100 − hit% |
+        DB servers needed = ⌈DB RPS / capacity per server⌉ |
+        With buffer: divide by (1 − buffer%) before rounding up |
+        No-cache DB servers = ⌈Total RPS / capacity⌉
+    </div>
+
+    <!-- Steps -->
+    <div class="space-y-4 mb-8">
+        <h3 class="font-bold text-slate-700 text-lg">🧮 Step-by-Step Calculation</h3>
+
+        <div class="flex items-center gap-4 p-4 bg-white rounded-xl border-2 border-slate-200">
+            <div class="flex-1">
+                <div class="font-semibold text-slate-700 text-sm">Step 1 — Cache miss rate (%)</div>
+                <div class="text-xs text-slate-500 mt-1">Formula: 100% − cache hit rate%</div>
+            </div>
+            <div class="flex items-center gap-2">
+                <input id="s1" type="number" step="any" placeholder="?" class="w-36 p-2 border-2 border-slate-200 rounded-lg text-center font-mono font-bold text-lg outline-none transition">
+                <span class="text-slate-500 text-sm font-mono">%</span>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-4 p-4 bg-white rounded-xl border-2 border-slate-200">
+            <div class="flex-1">
+                <div class="font-semibold text-slate-700 text-sm">Step 2 — Cache hits served per second</div>
+                <div class="text-xs text-slate-500 mt-1">Formula: 120,000 RPS × 0.85</div>
+            </div>
+            <div class="flex items-center gap-2">
+                <input id="s2" type="number" step="any" placeholder="?" class="w-36 p-2 border-2 border-slate-200 rounded-lg text-center font-mono font-bold text-lg outline-none transition">
+                <span class="text-slate-500 text-sm font-mono">RPS</span>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-4 p-4 bg-white rounded-xl border-2 border-slate-200">
+            <div class="flex-1">
+                <div class="font-semibold text-slate-700 text-sm">Step 3 — Cache misses (reach the DB) per second</div>
+                <div class="text-xs text-slate-500 mt-1">Formula: 120,000 × (1 − 0.85) or 120,000 − Step 2</div>
+            </div>
+            <div class="flex items-center gap-2">
+                <input id="s3" type="number" step="any" placeholder="?" class="w-36 p-2 border-2 border-slate-200 rounded-lg text-center font-mono font-bold text-lg outline-none transition">
+                <span class="text-slate-500 text-sm font-mono">RPS</span>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-4 p-4 bg-white rounded-xl border-2 border-slate-200">
+            <div class="flex-1">
+                <div class="font-semibold text-slate-700 text-sm">Step 4 — Effective capacity per DB server with 20% buffer</div>
+                <div class="text-xs text-slate-500 mt-1">Formula: 5,000 × (1 − 0.20) — run each server at 80% max</div>
+            </div>
+            <div class="flex items-center gap-2">
+                <input id="s4" type="number" step="any" placeholder="?" class="w-36 p-2 border-2 border-slate-200 rounded-lg text-center font-mono font-bold text-lg outline-none transition">
+                <span class="text-slate-500 text-sm font-mono">RPS/srv</span>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-4 p-4 bg-white rounded-xl border-2 border-slate-200">
+            <div class="flex-1">
+                <div class="font-semibold text-slate-700 text-sm">Step 5 — DB servers needed WITH cache (round up)</div>
+                <div class="text-xs text-slate-500 mt-1">Formula: ⌈cache misses RPS / effective capacity per server⌉</div>
+            </div>
+            <div class="flex items-center gap-2">
+                <input id="s5" type="number" step="1" placeholder="?" class="w-36 p-2 border-2 border-slate-200 rounded-lg text-center font-mono font-bold text-lg outline-none transition">
+                <span class="text-slate-500 text-sm font-mono">servers</span>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-4 p-4 bg-white rounded-xl border-2 border-slate-200">
+            <div class="flex-1">
+                <div class="font-semibold text-slate-700 text-sm">Step 6 — DB servers needed WITHOUT any cache (round up)</div>
+                <div class="text-xs text-slate-500 mt-1">Formula: ⌈120,000 / 4,000 effective RPS per server⌉</div>
+            </div>
+            <div class="flex items-center gap-2">
+                <input id="s6" type="number" step="1" placeholder="?" class="w-36 p-2 border-2 border-slate-200 rounded-lg text-center font-mono font-bold text-lg outline-none transition">
+                <span class="text-slate-500 text-sm font-mono">servers</span>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-4 p-4 bg-indigo-50 rounded-xl border-2 border-indigo-200">
+            <div class="flex-1">
+                <div class="font-semibold text-indigo-800 text-sm">Step 7 — DB servers saved by adding the cache</div>
+                <div class="text-xs text-indigo-600 mt-1">Formula: servers without cache − servers with cache</div>
+            </div>
+            <div class="flex items-center gap-2">
+                <input id="s7" type="number" step="1" placeholder="?" class="w-36 p-2 border-2 border-indigo-200 rounded-lg text-center font-mono font-bold text-lg outline-none transition">
+                <span class="text-indigo-600 text-sm font-mono">servers saved</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Feedback -->
+    <div id="feedback" class="mb-6 p-5 rounded-xl border-2 hidden"></div>
+
+    <!-- Solution -->
+    <div id="solution" class="mb-6 p-5 bg-green-50 rounded-xl border border-green-200 hidden">
+        <h4 class="font-bold text-green-800 text-lg mb-3">✅ Worked Solution</h4>
+        <div class="space-y-2 text-sm text-green-900 font-mono">
+            <div>Cache miss rate  = 100 − 85 = <strong>15%</strong></div>
+            <div>Cache hits       = 120,000 × 0.85 = <strong>102,000 RPS</strong> (served by Redis)</div>
+            <div>Cache misses     = 120,000 × 0.15 = <strong>18,000 RPS</strong> (hit the DB)</div>
+            <div>Effective cap    = 5,000 × 0.80 = <strong>4,000 RPS/server</strong></div>
+            <div>DB servers (w/)  = ⌈18,000 / 4,000⌉ = <strong>5 servers</strong></div>
+            <div>DB servers (w/o) = ⌈120,000 / 4,000⌉ = <strong>30 servers</strong></div>
+            <div>Servers saved    = 30 − 5 = <strong>25 servers</strong></div>
+        </div>
+        <div class="mt-4 p-3 bg-white rounded-lg border border-green-100 text-xs text-green-800">
+            <strong>Engineer's Takeaway:</strong> An 85% cache hit rate reduces DB load from 120K to 18K RPS — an 85% reduction.
+            That translates from 30 DB servers down to just 5. A single Redis cluster often costs less than 1 DB server,
+            making caching one of the highest ROI architectural decisions you can make. This is why Twitter used to
+            cache ~95% of their timeline reads in Memcached.
+        </div>
+    </div>
+
+    <!-- Buttons -->
+    <div class="flex gap-4 no-pdf">
+        <button onclick="validate()" class="flex-1 bg-indigo-600 text-white py-3 rounded-lg font-bold hover:bg-indigo-700 transition shadow-md">Validate Calculations</button>
+        <button onclick="exportPDF()" class="flex-1 bg-slate-800 text-white py-3 rounded-lg font-bold hover:bg-slate-900 transition shadow-md">Export PDF</button>
+    </div>
+
+    <!-- AI Prompt Guide -->
+    <div class="mt-8 p-5 bg-amber-50 rounded-xl border border-amber-200 shadow-sm no-pdf">
+        <div class="flex items-center mb-3">
+            <span class="text-2xl mr-3">🤖</span>
+            <div>
+                <h4 class="text-sm font-bold text-amber-800">AI Senior Architect Prompt Guide</h4>
+                <p class="text-[11px] text-amber-700">Explore caching strategy and trade-offs:</p>
+            </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4 text-[11px] text-amber-900 italic leading-relaxed">
+            <div class="bg-white/50 p-3 rounded border border-amber-100">"What is the difference between <strong>cache-aside</strong>, <strong>write-through</strong>, and <strong>write-back</strong> caching strategies? When would you choose each, and what consistency guarantees do they offer?"</div>
+            <div class="bg-white/50 p-3 rounded border border-amber-100">"Explain <strong>cache stampede</strong> (thundering herd problem) — what happens when a popular cache key expires and thousands of requests hit the DB simultaneously? How do mutex locks, probabilistic early expiration, and background refresh solve it?"</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('display-date').innerText = new Date().toLocaleString();
+
+    const answers = [
+        { id:'s1', correct:15,     tol:0.02, hint:'Step 1: Cache miss rate = 100 − 85 = 15%.' },
+        { id:'s2', correct:102000, tol:0.02, hint:'Step 2: Cache hits = 120,000 × 0.85 = 102,000 RPS.' },
+        { id:'s3', correct:18000,  tol:0.02, hint:'Step 3: Cache misses = 120,000 × 0.15 = 18,000 RPS reaching the DB.' },
+        { id:'s4', correct:4000,   tol:0.02, hint:'Step 4: Effective capacity = 5,000 × 0.80 = 4,000 RPS per server.' },
+        { id:'s5', correct:5,      tol:0.01, hint:'Step 5: ⌈18,000 / 4,000⌉ = ⌈4.5⌉ = 5 DB servers with cache.' },
+        { id:'s6', correct:30,     tol:0.01, hint:'Step 6: ⌈120,000 / 4,000⌉ = 30 DB servers without cache.' },
+        { id:'s7', correct:25,     tol:0.01, hint:'Step 7: 30 − 5 = 25 servers saved by adding the cache layer.' },
+    ];
+
+    function within(val, target, tol) {
+        if (target === 0) return val === 0;
+        return Math.abs(val - target) / target <= tol;
+    }
+
+    function validate() {
+        const nameVal = document.getElementById('student-name').value.trim();
+        if (!nameVal) {
+            document.getElementById('student-name').classList.add('error-ring');
+            document.getElementById('name-error').classList.remove('hidden');
+            document.getElementById('student-name').focus();
+            return;
+        }
+        document.getElementById('student-name').classList.remove('error-ring');
+        document.getElementById('name-error').classList.add('hidden');
+
+        let firstError = null;
+        let allCorrect = true;
+
+        answers.forEach(a => {
+            const input = document.getElementById(a.id);
+            const val = parseFloat(input.value);
+            const ok = !isNaN(val) && within(val, a.correct, a.tol);
+            input.classList.remove('step-correct','step-wrong');
+            input.classList.add(ok ? 'step-correct' : 'step-wrong');
+            if (!ok && !firstError) firstError = a;
+            if (!ok) allCorrect = false;
+        });
+
+        const fb = document.getElementById('feedback');
+        const sol = document.getElementById('solution');
+        if (allCorrect) {
+            fb.className = 'mb-6 p-5 rounded-xl border-2 bg-green-50 border-green-200 text-green-800';
+            fb.innerHTML = '<div class="font-black text-xl mb-1">✅ STATUS: PASS / COMPLETED</div><div class="text-sm">Cache impact analysis correct. You can now quantify the infrastructure savings of a caching layer.</div>';
+            sol.classList.remove('hidden');
+        } else {
+            fb.className = 'mb-6 p-5 rounded-xl border-2 bg-red-50 border-red-200 text-red-800';
+            fb.innerHTML = `<div class="font-black text-xl mb-1">❌ STATUS: FAIL / ATTEMPTED</div><div class="text-sm"><strong>${firstError.hint}</strong></div>`;
+            sol.classList.add('hidden');
+        }
+        fb.classList.remove('hidden');
+    }
+
+    function exportPDF() {
+        if (!document.getElementById('student-name').value.trim()) {
+            document.getElementById('student-name').classList.add('error-ring');
+            document.getElementById('name-error').classList.remove('hidden');
+            return;
+        }
+        if (document.getElementById('feedback').classList.contains('hidden')) {
+            alert("Please click 'Validate Calculations' before exporting.");
+            return;
+        }
+        window.print();
+    }
+</script>
+</body>
+</html>

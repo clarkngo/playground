@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learn: Message Queues & Workers</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', system-ui, sans-serif; }
+        .slider-track { -webkit-appearance: none; appearance: none; height: 6px; border-radius: 3px; outline: none; cursor: pointer; }
+        .slider-track::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: #0891b2; cursor: pointer; }
+        .slider-track::-moz-range-thumb { width: 20px; height: 20px; border-radius: 50%; background: #0891b2; cursor: pointer; border: none; }
+        @keyframes slideRight { from{transform:translateX(-8px);opacity:0} to{transform:translateX(0);opacity:1} }
+        @keyframes fadeOut { from{opacity:1} to{opacity:0;transform:scale(0.8)} }
+        .msg-enter { animation: slideRight 0.2s ease; }
+        .msg-exit  { animation: fadeOut 0.2s ease forwards; }
+        .queue-msg { width: 28px; height: 28px; border-radius: 6px; font-size: 11px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen">
+
+    <nav class="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between sticky top-0 z-10 shadow-sm">
+        <div class="flex items-center gap-3">
+            <span class="text-cyan-600 font-black text-lg">⚡ SysDesign Learn</span>
+            <span class="text-slate-300">|</span>
+            <span class="text-slate-600 font-semibold text-sm">Message Queues & Workers</span>
+        </div>
+        <div class="flex gap-2 text-xs">
+            <a href="06-read-replicas.html" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold px-3 py-1 rounded-full">← Prev</a>
+            <span class="bg-cyan-100 text-cyan-700 font-bold px-3 py-1 rounded-full">07 / 10</span>
+            <a href="08-cdn.html" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold px-3 py-1 rounded-full">Next →</a>
+        </div>
+    </nav>
+
+    <div class="max-w-5xl mx-auto p-6 space-y-6">
+
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+            <div class="flex items-start gap-4">
+                <div class="text-5xl">📬</div>
+                <div>
+                    <h1 class="text-2xl font-black text-slate-800">Message Queues & Worker Sizing</h1>
+                    <p class="text-slate-500 mt-1 leading-relaxed">
+                        A queue decouples producers (who generate work) from consumers (workers who process it).
+                        If producers publish faster than workers can process, messages pile up — the queue depth grows.
+                        If workers are faster than producers, the queue drains and workers sit idle.
+                        Watch the live queue simulation react as you change rates.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            <!-- Controls -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-5">
+                <h2 class="font-black text-slate-700 text-lg">🎛️ Parameters</h2>
+
+                <div class="space-y-2">
+                    <div class="flex justify-between text-sm">
+                        <label class="font-semibold text-slate-600">Event Rate (messages/sec)</label>
+                        <span id="rate-val" class="font-black text-cyan-600 font-mono">1,000</span>
+                    </div>
+                    <input type="range" id="rate" min="100" max="10000" value="1000" step="100" class="slider-track w-full bg-slate-200">
+                    <div class="flex justify-between text-xs text-slate-400"><span>100/s</span><span>10K/s</span></div>
+                </div>
+
+                <div class="space-y-2">
+                    <div class="flex justify-between text-sm">
+                        <label class="font-semibold text-slate-600">Processing Time per Message</label>
+                        <span id="proc-val" class="font-black text-cyan-600 font-mono">200 ms</span>
+                    </div>
+                    <input type="range" id="proc" min="10" max="2000" value="200" step="10" class="slider-track w-full bg-slate-200">
+                    <div class="flex justify-between text-xs text-slate-400"><span>10 ms</span><span>2,000 ms</span></div>
+                </div>
+
+                <div class="space-y-2">
+                    <div class="flex justify-between text-sm">
+                        <label class="font-semibold text-slate-600">Number of Workers</label>
+                        <span id="workers-val" class="font-black text-cyan-600 font-mono">300</span>
+                    </div>
+                    <input type="range" id="workers" min="1" max="2000" value="300" step="1" class="slider-track w-full bg-slate-200">
+                    <div class="flex justify-between text-xs text-slate-400"><span>1</span><span>2,000</span></div>
+                </div>
+
+                <!-- Auto-size button -->
+                <button onclick="autoSize()" class="w-full bg-cyan-600 hover:bg-cyan-700 text-white py-2.5 rounded-xl font-bold text-sm transition">
+                    🎯 Auto-Size Workers
+                </button>
+                <p class="text-xs text-slate-400 text-center -mt-2">Sets exact workers needed to match event rate</p>
+
+                <!-- Derived metrics -->
+                <div class="pt-3 border-t border-slate-100 space-y-2 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-slate-500">Throughput/worker</span>
+                        <span id="tput" class="font-bold text-slate-700 font-mono">–</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-500">System throughput</span>
+                        <span id="sys-tput" class="font-bold text-slate-700 font-mono">–</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-500">Min workers needed</span>
+                        <span id="min-workers" class="font-bold text-slate-700 font-mono">–</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Live Simulation -->
+            <div class="lg:col-span-2 space-y-4">
+
+                <!-- Queue Visualization -->
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="font-bold text-slate-700">📥 Queue Depth</h3>
+                        <div class="flex items-center gap-2">
+                            <div id="queue-status-dot" class="w-3 h-3 rounded-full bg-emerald-400"></div>
+                            <span id="queue-status-text" class="text-sm font-semibold text-slate-600">–</span>
+                        </div>
+                    </div>
+                    <div id="queue-depth-num" class="text-4xl font-black text-slate-800 font-mono mb-2">0</div>
+                    <div class="h-4 bg-slate-100 rounded-full overflow-hidden">
+                        <div id="queue-bar" class="h-full bg-emerald-400 rounded-full transition-all duration-300" style="width:0%"></div>
+                    </div>
+                    <div class="flex justify-between text-xs text-slate-400 mt-1"><span>Empty</span><span>10,000 messages</span></div>
+
+                    <!-- Mini message queue visual -->
+                    <div class="mt-4 flex items-center gap-2 flex-wrap min-h-12" id="msg-visual">
+                        <span class="text-xs text-slate-300 italic">Queue is empty</span>
+                    </div>
+                </div>
+
+                <!-- Flow Rate Cards -->
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="bg-blue-50 rounded-xl p-4 border border-blue-100 text-center">
+                        <div class="text-xs font-bold text-blue-400 uppercase tracking-widest mb-1">Incoming</div>
+                        <div id="in-rate" class="text-xl font-black text-blue-700 font-mono">–</div>
+                        <div class="text-xs text-blue-400">msg/s produced</div>
+                    </div>
+                    <div id="out-card" class="bg-emerald-50 rounded-xl p-4 border border-emerald-100 text-center">
+                        <div class="text-xs font-bold text-emerald-500 uppercase tracking-widest mb-1">Processing</div>
+                        <div id="out-rate" class="text-xl font-black text-emerald-700 font-mono">–</div>
+                        <div class="text-xs text-emerald-500">msg/s consumed</div>
+                    </div>
+                    <div id="net-card" class="bg-slate-50 rounded-xl p-4 border border-slate-200 text-center">
+                        <div class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Net Flow</div>
+                        <div id="net-rate" class="text-xl font-black text-slate-700 font-mono">–</div>
+                        <div class="text-xs text-slate-400">msg/s net change</div>
+                    </div>
+                </div>
+
+                <!-- Queue lag projection -->
+                <div id="lag-card" class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+                    <div class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Lag Projection</div>
+                    <div id="lag-text" class="text-sm text-slate-700 leading-relaxed">–</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Insight -->
+        <div class="bg-amber-50 border border-amber-200 rounded-2xl p-5">
+            <div class="flex gap-3 items-start">
+                <span class="text-2xl">💡</span>
+                <div>
+                    <div class="font-bold text-amber-800 mb-1">Live Insight</div>
+                    <div id="insight-text" class="text-amber-900 text-sm leading-relaxed">Adjust the sliders.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Concept Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+                <div class="font-bold text-slate-700 mb-2">🔑 Little's Law</div>
+                <p class="text-sm text-slate-600 mb-2">The fundamental law of queuing: <strong>L = λW</strong></p>
+                <ul class="text-xs text-slate-500 space-y-1 list-disc list-inside">
+                    <li><strong>L</strong> = average items in the system (queue + being processed)</li>
+                    <li><strong>λ</strong> = arrival rate (messages/second)</li>
+                    <li><strong>W</strong> = average time spent in system (queue wait + processing time)</li>
+                </ul>
+                <p class="text-xs text-slate-400 mt-2 italic">If 1,000 msg/s arrive and each takes 0.2s: L = 1,000 × 0.2 = 200 messages always "in flight"</p>
+            </div>
+            <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+                <div class="font-bold text-slate-700 mb-2">📊 When to Scale Workers</div>
+                <div class="space-y-2 text-sm text-slate-600">
+                    <div class="flex items-center gap-2"><span class="text-emerald-500 font-bold">Queue depth = 0:</span><span>Workers are keeping up perfectly — may be over-provisioned</span></div>
+                    <div class="flex items-center gap-2"><span class="text-amber-500 font-bold">Queue depth growing:</span><span>Add workers immediately — lag compounds quickly</span></div>
+                    <div class="flex items-center gap-2"><span class="text-red-500 font-bold">Queue depth unbounded:</span><span>Processing rate will never catch up — urgent scaling needed</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    const fmt = n => n >= 1e3 ? (n/1e3).toFixed(1)+'K' : n.toFixed(0);
+
+    let simDepth = 0;
+    let simInterval = null;
+
+    function autoSize() {
+        const rate = parseInt(document.getElementById('rate').value);
+        const proc = parseInt(document.getElementById('proc').value);
+        const tput = 1000 / proc; // msg/s per worker
+        const needed = Math.ceil(rate / tput);
+        document.getElementById('workers').value = Math.min(2000, needed);
+        update();
+    }
+
+    function update() {
+        const rate    = parseInt(document.getElementById('rate').value);
+        const procMs  = parseInt(document.getElementById('proc').value);
+        const workers = parseInt(document.getElementById('workers').value);
+
+        document.getElementById('rate-val').textContent    = rate.toLocaleString();
+        document.getElementById('proc-val').textContent    = procMs >= 1000 ? (procMs/1000).toFixed(1)+' s' : procMs+' ms';
+        document.getElementById('workers-val').textContent = workers.toLocaleString();
+
+        const tputPerWorker = 1000 / procMs; // msg/s per worker
+        const sysTput = workers * tputPerWorker;
+        const minWorkers = Math.ceil(rate / tputPerWorker);
+        const netFlow = rate - sysTput;
+
+        document.getElementById('tput').textContent       = tputPerWorker.toFixed(1) + ' msg/s';
+        document.getElementById('sys-tput').textContent   = fmt(sysTput) + ' msg/s';
+        document.getElementById('min-workers').textContent= minWorkers.toLocaleString();
+        document.getElementById('in-rate').textContent    = fmt(rate) + '/s';
+        document.getElementById('out-rate').textContent   = fmt(Math.min(sysTput, rate)) + '/s';
+
+        const netStr = netFlow > 0 ? '+' + fmt(netFlow) + '/s' : fmt(netFlow) + '/s';
+        document.getElementById('net-rate').textContent = netStr;
+
+        const nc = document.getElementById('net-card');
+        const netRateEl = document.getElementById('net-rate');
+        if (netFlow > 0) {
+            nc.className = 'bg-red-50 rounded-xl p-4 border border-red-200 text-center';
+            netRateEl.className = 'text-xl font-black text-red-700 font-mono';
+        } else if (netFlow === 0) {
+            nc.className = 'bg-emerald-50 rounded-xl p-4 border border-emerald-200 text-center';
+            netRateEl.className = 'text-xl font-black text-emerald-700 font-mono';
+        } else {
+            nc.className = 'bg-slate-50 rounded-xl p-4 border border-slate-200 text-center';
+            netRateEl.className = 'text-xl font-black text-slate-500 font-mono';
+        }
+
+        // Simulate queue depth
+        clearInterval(simInterval);
+        simDepth = Math.max(0, simDepth);
+
+        simInterval = setInterval(() => {
+            simDepth += netFlow / 10; // update 10x/sec
+            simDepth = Math.max(0, simDepth);
+
+            const cappedDepth = Math.min(simDepth, 10000);
+            const pct = (cappedDepth / 10000) * 100;
+
+            document.getElementById('queue-depth-num').textContent = Math.round(simDepth).toLocaleString();
+            document.getElementById('queue-bar').style.width = pct + '%';
+
+            const qbar = document.getElementById('queue-bar');
+            const qdot = document.getElementById('queue-status-dot');
+            const qtxt = document.getElementById('queue-status-text');
+            if (simDepth > 5000) {
+                qbar.className = 'h-full bg-red-500 rounded-full transition-all duration-300';
+                qdot.className = 'w-3 h-3 rounded-full bg-red-500';
+                qtxt.textContent = 'Critical — queue overflowing';
+                qtxt.className = 'text-sm font-semibold text-red-600';
+            } else if (simDepth > 500) {
+                qbar.className = 'h-full bg-amber-400 rounded-full transition-all duration-300';
+                qdot.className = 'w-3 h-3 rounded-full bg-amber-400';
+                qtxt.textContent = 'Warning — queue building';
+                qtxt.className = 'text-sm font-semibold text-amber-600';
+            } else if (simDepth > 0) {
+                qbar.className = 'h-full bg-cyan-400 rounded-full transition-all duration-300';
+                qdot.className = 'w-3 h-3 rounded-full bg-cyan-400';
+                qtxt.textContent = 'Normal — small buffer';
+                qtxt.className = 'text-sm font-semibold text-cyan-600';
+            } else {
+                qbar.className = 'h-full bg-emerald-400 rounded-full transition-all duration-300';
+                qdot.className = 'w-3 h-3 rounded-full bg-emerald-400';
+                qtxt.textContent = 'Empty — workers keeping up';
+                qtxt.className = 'text-sm font-semibold text-emerald-600';
+            }
+
+            // Mini message visual
+            const mv = document.getElementById('msg-visual');
+            if (simDepth <= 0) {
+                mv.innerHTML = '<span class="text-xs text-slate-300 italic">Queue is empty</span>';
+            } else {
+                const show = Math.min(Math.ceil(simDepth / 100), 30);
+                const colors = ['bg-blue-400','bg-violet-400','bg-cyan-400','bg-indigo-400'];
+                let html = '';
+                for (let i = 0; i < show; i++) {
+                    html += `<div class="queue-msg ${colors[i%4]} text-white msg-enter">${i+1}</div>`;
+                }
+                if (simDepth > 3000) html += `<span class="text-xs text-slate-400 font-bold">+${Math.round(simDepth - show*100)}...</span>`;
+                mv.innerHTML = html;
+            }
+        }, 100);
+
+        // Lag projection
+        const lt = document.getElementById('lag-text');
+        if (netFlow > 0) {
+            const secsTo1K = 1000 / netFlow;
+            const secsTo10K = 10000 / netFlow;
+            lt.innerHTML = `⚠️ Queue is growing at <strong>${fmt(netFlow)} messages/sec</strong>. Will hit 1,000 messages in <strong>${secsTo1K.toFixed(0)}s</strong>, 10,000 in <strong>${secsTo10K.toFixed(0)}s</strong>. You need <strong>${minWorkers - workers} more workers</strong> (total: ${minWorkers}) to stop the growth.`;
+            lt.parentElement.className = 'bg-red-50 rounded-2xl p-5 shadow-sm border border-red-200';
+        } else if (sysTput > rate * 1.5) {
+            lt.innerHTML = `Workers are consuming <strong>${fmt(sysTput - rate)} msg/s more</strong> than incoming — ${(((sysTput - rate) / rate) * 100).toFixed(0)}% over-provisioned. Consider scaling down to save cost.`;
+            lt.parentElement.className = 'bg-slate-50 rounded-2xl p-5 shadow-sm border border-slate-200';
+        } else {
+            lt.innerHTML = `✅ System is balanced. Workers consume messages as fast as they arrive. Queue depth stays near zero under steady load.`;
+            lt.parentElement.className = 'bg-emerald-50 rounded-2xl p-5 shadow-sm border border-emerald-200';
+        }
+
+        // Insight
+        let insight = '';
+        if (netFlow > 0) {
+            insight = `At <strong>${rate.toLocaleString()} events/s</strong> with ${workers} workers processing at ${tputPerWorker.toFixed(1)} msg/s each, your system processes <strong>${fmt(sysTput)} msg/s</strong> — but <strong>${fmt(netFlow)} msg/s overflow into the queue</strong>. Each minute, the queue grows by <strong>${fmt(netFlow * 60)} messages</strong>. Without intervention, the queue will grow unboundedly until the system falls over. You need at least <strong>${minWorkers} workers</strong>.`;
+        } else if (workers === minWorkers) {
+            insight = `Workers are perfectly sized — exactly matching the event rate. In production, add a 20–25% buffer (<strong>${Math.ceil(minWorkers * 1.25)} workers</strong>) to handle traffic spikes without queue buildup.`;
+        } else {
+            const excess = workers - minWorkers;
+            insight = `Workers have <strong>${fmt(sysTput - rate)} msg/s surplus capacity</strong> (${excess} workers over the minimum). The queue stays empty. A 20–25% buffer above minimum is healthy — you have ${((excess/minWorkers)*100).toFixed(0)}% buffer. ${excess > minWorkers * 0.5 ? 'You may be over-provisioned — consider autoscaling.' : 'Good sizing.'}`;
+        }
+        document.getElementById('insight-text').innerHTML = insight;
+    }
+
+    ['rate','proc','workers'].forEach(id => {
+        document.getElementById(id).addEventListener('input', update);
+    });
+    update();
+</script>
+</body>
+</html>

@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Design Metrics | Availability & The Nines</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .step-correct { border-color: #22c55e !important; background-color: #f0fdf4; }
+        .step-wrong   { border-color: #ef4444 !important; background-color: #fef2f2; }
+        .error-ring   { border: 2px solid #ef4444 !important; background-color: #fef2f2; }
+        @media print {
+            body { background: white; padding: 0; margin: 0; }
+            .no-pdf, button { display: none !important; }
+            #game-container { border: none; box-shadow: none; width: 100%; max-width: 100%; margin: 0; padding: 0; }
+            #feedback { display: block !important; }
+            #solution { display: block !important; }
+            @page { size: portrait; margin: 0.5in; }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 p-8">
+<div id="game-container" class="max-w-4xl mx-auto bg-white p-8 rounded-xl shadow-xl border border-slate-200">
+
+    <div class="mb-6 grid grid-cols-2 gap-6 bg-slate-100 p-5 rounded-lg border border-slate-200">
+        <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Student Name <span class="text-red-500">*</span></label>
+            <input type="text" id="student-name" placeholder="Enter Full Name" class="w-full p-2 border rounded border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none">
+            <p id="name-error" class="text-red-500 text-xs mt-1 hidden font-semibold">Name required for submission.</p>
+        </div>
+        <div class="text-right">
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">System Timestamp</label>
+            <p id="display-date" class="text-slate-700 font-medium py-2 italic font-mono text-sm"></p>
+        </div>
+    </div>
+
+    <header class="mb-8 border-b pb-6">
+        <h1 class="text-3xl font-extrabold text-slate-800 tracking-tight">Availability & The Nines</h1>
+        <div class="mt-4 p-5 bg-indigo-50 rounded-xl border-l-4 border-indigo-500 shadow-sm">
+            <h3 class="font-bold text-indigo-800 text-lg mb-2">📋 Scenario</h3>
+            <p class="text-indigo-900 text-sm leading-relaxed">
+                Your SRE team has signed an SLA with enterprise customers guaranteeing <strong>99.95% availability</strong>.
+                Before finalising the contract, the legal team needs to know exactly how much downtime that represents
+                per year, per month, per week, and per day — and what it would take to achieve an extra "nine" at 99.995%.
+                <br><br>
+                Convert the SLA percentage into concrete downtime budgets for each time horizon.
+            </p>
+        </div>
+    </header>
+
+    <!-- Given Values -->
+    <div class="mb-6 p-5 bg-slate-50 rounded-xl border border-slate-200">
+        <h3 class="font-bold text-slate-700 mb-3">📊 Given Values</h3>
+        <div class="grid grid-cols-3 gap-4 text-sm">
+            <div class="bg-white p-3 rounded-lg border border-slate-200">
+                <div class="text-xs text-slate-500 uppercase font-bold">SLA Uptime %</div>
+                <div class="text-2xl font-black text-indigo-600">99.95%</div>
+            </div>
+            <div class="bg-white p-3 rounded-lg border border-slate-200">
+                <div class="text-xs text-slate-500 uppercase font-bold">Minutes / Year</div>
+                <div class="text-2xl font-black text-slate-700">525,600</div>
+            </div>
+            <div class="bg-white p-3 rounded-lg border border-slate-200">
+                <div class="text-xs text-slate-500 uppercase font-bold">Minutes / Month</div>
+                <div class="text-2xl font-black text-slate-700">43,800</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Unit Reference -->
+    <div class="mb-6 p-4 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-900 no-pdf">
+        <strong>Unit Reference:</strong>
+        1 year = 525,600 min | 1 month ≈ 43,800 min | 1 week = 10,080 min | 1 day = 1,440 min |
+        Downtime % = (100 − SLA%) | Downtime min = Total min × (Downtime% / 100)
+    </div>
+
+    <!-- Steps -->
+    <div class="space-y-4 mb-8">
+        <h3 class="font-bold text-slate-700 text-lg">🧮 Step-by-Step Calculation</h3>
+
+        <div class="flex items-center gap-4 p-4 bg-white rounded-xl border-2 border-slate-200">
+            <div class="flex-1">
+                <div class="font-semibold text-slate-700 text-sm">Step 1 — Downtime percentage</div>
+                <div class="text-xs text-slate-500 mt-1">Formula: 100% − SLA% = downtime %</div>
+            </div>
+            <div class="flex items-center gap-2">
+                <input id="s1" type="number" step="any" placeholder="?" class="w-36 p-2 border-2 border-slate-200 rounded-lg text-center font-mono font-bold text-lg outline-none transition">
+                <span class="text-slate-500 text-sm font-mono">%</span>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-4 p-4 bg-white rounded-xl border-2 border-slate-200">
+            <div class="flex-1">
+                <div class="font-semibold text-slate-700 text-sm">Step 2 — Allowed downtime per year (minutes)</div>
+                <div class="text-xs text-slate-500 mt-1">Formula: 525,600 min/yr × (downtime% / 100)</div>
+            </div>
+            <div class="flex items-center gap-2">
+                <input id="s2" type="number" step="any" placeholder="?" class="w-36 p-2 border-2 border-slate-200 rounded-lg text-center font-mono font-bold text-lg outline-none transition">
+                <span class="text-slate-500 text-sm font-mono">min/yr</span>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-4 p-4 bg-white rounded-xl border-2 border-slate-200">
+            <div class="flex-1">
+                <div class="font-semibold text-slate-700 text-sm">Step 3 — Allowed downtime per month (minutes)</div>
+                <div class="text-xs text-slate-500 mt-1">Formula: 43,800 min/mo × (downtime% / 100)</div>
+            </div>
+            <div class="flex items-center gap-2">
+                <input id="s3" type="number" step="any" placeholder="?" class="w-36 p-2 border-2 border-slate-200 rounded-lg text-center font-mono font-bold text-lg outline-none transition">
+                <span class="text-slate-500 text-sm font-mono">min/mo</span>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-4 p-4 bg-white rounded-xl border-2 border-slate-200">
+            <div class="flex-1">
+                <div class="font-semibold text-slate-700 text-sm">Step 4 — Allowed downtime per week (minutes)</div>
+                <div class="text-xs text-slate-500 mt-1">Formula: 10,080 min/wk × (downtime% / 100)</div>
+            </div>
+            <div class="flex items-center gap-2">
+                <input id="s4" type="number" step="any" placeholder="?" class="w-36 p-2 border-2 border-slate-200 rounded-lg text-center font-mono font-bold text-lg outline-none transition">
+                <span class="text-slate-500 text-sm font-mono">min/wk</span>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-4 p-4 bg-white rounded-xl border-2 border-slate-200">
+            <div class="flex-1">
+                <div class="font-semibold text-slate-700 text-sm">Step 5 — Allowed downtime per day (minutes)</div>
+                <div class="text-xs text-slate-500 mt-1">Formula: 1,440 min/day × (downtime% / 100)</div>
+            </div>
+            <div class="flex items-center gap-2">
+                <input id="s5" type="number" step="any" placeholder="?" class="w-36 p-2 border-2 border-slate-200 rounded-lg text-center font-mono font-bold text-lg outline-none transition">
+                <span class="text-slate-500 text-sm font-mono">min/day</span>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-4 p-4 bg-white rounded-xl border-2 border-slate-200">
+            <div class="flex-1">
+                <div class="font-semibold text-slate-700 text-sm">Step 6 — 99.999% downtime per year (minutes)</div>
+                <div class="text-xs text-slate-500 mt-1">Formula: 525,600 × (100 − 99.999) / 100</div>
+            </div>
+            <div class="flex items-center gap-2">
+                <input id="s6" type="number" step="any" placeholder="?" class="w-36 p-2 border-2 border-slate-200 rounded-lg text-center font-mono font-bold text-lg outline-none transition">
+                <span class="text-slate-500 text-sm font-mono">min/yr</span>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-4 p-4 bg-indigo-50 rounded-xl border-2 border-indigo-200">
+            <div class="flex-1">
+                <div class="font-semibold text-indigo-800 text-sm">Step 7 — How many more 9s does 99.999% give vs 99.95%?</div>
+                <div class="text-xs text-indigo-600 mt-1">Count the decimal nines: 99.9<u>5</u>% has how many nines? 99.9<u>99</u>% has how many? Difference?</div>
+            </div>
+            <div class="flex items-center gap-2">
+                <input id="s7" type="number" step="1" placeholder="?" class="w-36 p-2 border-2 border-indigo-200 rounded-lg text-center font-mono font-bold text-lg outline-none transition">
+                <span class="text-indigo-600 text-sm font-mono">extra 9(s)</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Feedback -->
+    <div id="feedback" class="mb-6 p-5 rounded-xl border-2 hidden"></div>
+
+    <!-- Solution -->
+    <div id="solution" class="mb-6 p-5 bg-green-50 rounded-xl border border-green-200 hidden">
+        <h4 class="font-bold text-green-800 text-lg mb-3">✅ Worked Solution</h4>
+        <div class="space-y-2 text-sm text-green-900 font-mono">
+            <div>Downtime%  = 100 − 99.95 = <strong>0.05%</strong></div>
+            <div>Per year   = 525,600 × 0.0005 = <strong>262.8 min/yr</strong> (~4h 22m)</div>
+            <div>Per month  = 43,800 × 0.0005 = <strong>21.9 min/mo</strong></div>
+            <div>Per week   = 10,080 × 0.0005 = <strong>5.04 min/wk</strong></div>
+            <div>Per day    = 1,440 × 0.0005 = <strong>0.72 min/day</strong> (~43 sec)</div>
+            <div>99.999%/yr = 525,600 × 0.00001 = <strong>5.256 min/yr</strong> (~5 min)</div>
+            <div>Extra nines: 99.9<u>5</u>% = 3.something nines → 99.9<u>99</u>% = 5 nines → difference = <strong>2 extra nines</strong></div>
+        </div>
+        <div class="mt-4 p-3 bg-white rounded-lg border border-green-100 text-xs text-green-800">
+            <strong>Engineer's Takeaway:</strong> Each additional "nine" reduces your downtime budget by roughly 10×.
+            Going from three 9s (99.9% = 8.7 hr/yr) to four 9s (99.99% = 52 min/yr) is manageable with redundancy.
+            Five 9s (99.999% = 5.26 min/yr) demands active–active multi-region with automated failover — a fundamentally different architecture.
+        </div>
+    </div>
+
+    <!-- Buttons -->
+    <div class="flex gap-4 no-pdf">
+        <button onclick="validate()" class="flex-1 bg-indigo-600 text-white py-3 rounded-lg font-bold hover:bg-indigo-700 transition shadow-md">Validate Calculations</button>
+        <button onclick="exportPDF()" class="flex-1 bg-slate-800 text-white py-3 rounded-lg font-bold hover:bg-slate-900 transition shadow-md">Export PDF</button>
+    </div>
+
+    <!-- AI Prompt Guide -->
+    <div id="prompt-guide" class="mt-8 p-5 bg-amber-50 rounded-xl border border-amber-200 shadow-sm no-pdf">
+        <div class="flex items-center mb-3">
+            <span class="text-2xl mr-3">🤖</span>
+            <div>
+                <h4 class="text-sm font-bold text-amber-800">AI Senior Architect Prompt Guide</h4>
+                <p class="text-[11px] text-amber-700">Deepen your understanding of reliability engineering:</p>
+            </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4 text-[11px] text-amber-900 italic leading-relaxed">
+            <div class="bg-white/50 p-3 rounded border border-amber-100">"Explain the difference between <strong>availability</strong>, <strong>reliability</strong>, and <strong>durability</strong> in distributed systems. How does each metric drive different architectural decisions?"</div>
+            <div class="bg-white/50 p-3 rounded border border-amber-100">"What techniques does AWS use to achieve five-nines (99.999%) availability in services like S3? How do <strong>error budgets</strong> in SRE help teams balance reliability with feature velocity?"</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('display-date').innerText = new Date().toLocaleString();
+
+    // correctOrder values and tolerances
+    const answers = [
+        { id:'s1', correct:0.05,    tol:0.02, hint:'Step 1: Downtime% = 100 − 99.95 = 0.05%' },
+        { id:'s2', correct:262.8,   tol:0.02, hint:'Step 2: 525,600 × 0.0005 = 262.8 minutes per year.' },
+        { id:'s3', correct:21.9,    tol:0.02, hint:'Step 3: 43,800 × 0.0005 = 21.9 minutes per month.' },
+        { id:'s4', correct:5.04,    tol:0.02, hint:'Step 4: 10,080 × 0.0005 = 5.04 minutes per week.' },
+        { id:'s5', correct:0.72,    tol:0.02, hint:'Step 5: 1,440 × 0.0005 = 0.72 minutes per day (~43 seconds).' },
+        { id:'s6', correct:5.256,   tol:0.02, hint:'Step 6: 525,600 × (0.001/100) = 5.256 minutes per year for 99.999%.' },
+        { id:'s7', correct:2,       tol:0.01, hint:'Step 7: 99.95% ≈ 3 nines, 99.999% = 5 nines → 2 extra nines.' },
+    ];
+
+    function within(val, target, tol) {
+        if (target === 0) return val === 0;
+        return Math.abs(val - target) / target <= tol;
+    }
+
+    function validate() {
+        const nameVal = document.getElementById('student-name').value.trim();
+        if (!nameVal) {
+            document.getElementById('student-name').classList.add('error-ring');
+            document.getElementById('name-error').classList.remove('hidden');
+            document.getElementById('student-name').focus();
+            return;
+        }
+        document.getElementById('student-name').classList.remove('error-ring');
+        document.getElementById('name-error').classList.add('hidden');
+
+        let firstError = null;
+        let allCorrect = true;
+
+        answers.forEach(a => {
+            const input = document.getElementById(a.id);
+            const val = parseFloat(input.value);
+            const ok = !isNaN(val) && within(val, a.correct, a.tol);
+            input.classList.remove('step-correct','step-wrong');
+            input.classList.add(ok ? 'step-correct' : 'step-wrong');
+            if (!ok && !firstError) firstError = a;
+            if (!ok) allCorrect = false;
+        });
+
+        const fb = document.getElementById('feedback');
+        const sol = document.getElementById('solution');
+        if (allCorrect) {
+            fb.className = 'mb-6 p-5 rounded-xl border-2 bg-green-50 border-green-200 text-green-800';
+            fb.innerHTML = '<div class="font-black text-xl mb-1">✅ STATUS: PASS / COMPLETED</div><div class="text-sm">All downtime budgets correct. You understand what the SLA contract commits to in concrete minutes of downtime at each time horizon.</div>';
+            sol.classList.remove('hidden');
+        } else {
+            fb.className = 'mb-6 p-5 rounded-xl border-2 bg-red-50 border-red-200 text-red-800';
+            fb.innerHTML = `<div class="font-black text-xl mb-1">❌ STATUS: FAIL / ATTEMPTED</div><div class="text-sm"><strong>${firstError.hint}</strong></div>`;
+            sol.classList.add('hidden');
+        }
+        fb.classList.remove('hidden');
+    }
+
+    function exportPDF() {
+        if (!document.getElementById('student-name').value.trim()) {
+            document.getElementById('student-name').classList.add('error-ring');
+            document.getElementById('name-error').classList.remove('hidden');
+            return;
+        }
+        if (document.getElementById('feedback').classList.contains('hidden')) {
+            alert("Please click 'Validate Calculations' before exporting.");
+            return;
+        }
+        window.print();
+    }
+</script>
+</body>
+</html>

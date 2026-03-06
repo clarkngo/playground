@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learn: Latency Budget</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', system-ui, sans-serif; }
+        .slider-track { -webkit-appearance: none; appearance: none; height: 6px; border-radius: 3px; outline: none; cursor: pointer; }
+        .slider-track::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: #0891b2; cursor: pointer; }
+        .slider-track::-moz-range-thumb { width: 20px; height: 20px; border-radius: 50%; background: #0891b2; cursor: pointer; border: none; }
+        .budget-bar { transition: width 0.4s ease; }
+        .stack-seg { transition: flex 0.4s ease, background-color 0.3s; }
+        @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-4px)} 75%{transform:translateX(4px)} }
+        .shake { animation: shake 0.3s ease; }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen">
+
+    <nav class="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between sticky top-0 z-10 shadow-sm">
+        <div class="flex items-center gap-3">
+            <span class="text-cyan-600 font-black text-lg">⚡ SysDesign Learn</span>
+            <span class="text-slate-300">|</span>
+            <span class="text-slate-600 font-semibold text-sm">Latency Budget</span>
+        </div>
+        <div class="flex gap-2 text-xs">
+            <a href="09-sharding.html" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold px-3 py-1 rounded-full">← Prev</a>
+            <span class="bg-cyan-100 text-cyan-700 font-bold px-3 py-1 rounded-full">10 / 10</span>
+            <a href="01-rps-traffic.html" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold px-3 py-1 rounded-full">↩ Start</a>
+        </div>
+    </nav>
+
+    <div class="max-w-5xl mx-auto p-6 space-y-6">
+
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+            <div class="flex items-start gap-4">
+                <div class="text-5xl">⏱️</div>
+                <div>
+                    <h1 class="text-2xl font-black text-slate-800">Latency Budget Decomposition</h1>
+                    <p class="text-slate-500 mt-1 leading-relaxed">
+                        An SLA of "300ms P99" is easy to state, hard to guarantee. Every layer of your system
+                        consumes some of that budget. <em>Allocate it intentionally</em> — or discover too late
+                        that your database alone takes 250ms. Drag each slider to allocate time to each component
+                        and watch the budget meter fill up.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+
+            <!-- SLA + Fixed Costs -->
+            <div class="lg:col-span-2 space-y-4">
+
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+                    <h2 class="font-black text-slate-700 mb-4">🎯 SLA Target</h2>
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-sm">
+                            <label class="font-semibold text-slate-600">Total Latency Budget (P99)</label>
+                            <span id="sla-val" class="font-black text-cyan-600 font-mono">300 ms</span>
+                        </div>
+                        <input type="range" id="sla" min="50" max="2000" value="300" step="10" class="slider-track w-full bg-slate-200">
+                        <div class="flex justify-between text-xs text-slate-400"><span>50 ms</span><span>2,000 ms</span></div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+                    <h2 class="font-black text-slate-700 mb-4">🔒 Fixed Infrastructure Costs</h2>
+                    <p class="text-xs text-slate-400 mb-3 italic">These can't be reduced — they're physics and protocol overhead.</p>
+                    <div class="space-y-4">
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-sm">
+                                <label class="text-slate-600">DNS Lookup</label>
+                                <span id="dns-val" class="font-bold text-slate-600 font-mono">5 ms</span>
+                            </div>
+                            <input type="range" id="dns" min="1" max="50" value="5" class="slider-track w-full bg-slate-200">
+                        </div>
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-sm">
+                                <label class="text-slate-600">TLS Handshake</label>
+                                <span id="tls-val" class="font-bold text-slate-600 font-mono">15 ms</span>
+                            </div>
+                            <input type="range" id="tls" min="0" max="100" value="15" class="slider-track w-full bg-slate-200">
+                        </div>
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-sm">
+                                <label class="text-slate-600">Network RTT (client ↔ server)</label>
+                                <span id="rtt-val" class="font-bold text-slate-600 font-mono">20 ms</span>
+                            </div>
+                            <input type="range" id="rtt" min="1" max="300" value="20" class="slider-track w-full bg-slate-200">
+                        </div>
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-sm">
+                                <label class="text-slate-600">Load Balancer</label>
+                                <span id="lb-val" class="font-bold text-slate-600 font-mono">2 ms</span>
+                            </div>
+                            <input type="range" id="lb" min="0" max="20" value="2" class="slider-track w-full bg-slate-200">
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-100 flex justify-between">
+                        <span class="text-sm font-bold text-slate-500">Total Fixed</span>
+                        <span id="fixed-total" class="font-black text-slate-700 font-mono">– ms</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Application Budget Allocation -->
+            <div class="lg:col-span-3 space-y-4">
+
+                <!-- Budget Meter -->
+                <div id="budget-meter" class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="font-bold text-slate-700">📊 Budget Used</h3>
+                        <div class="text-sm font-mono">
+                            <span id="used-ms" class="font-black text-slate-800">–</span>
+                            <span class="text-slate-400"> / </span>
+                            <span id="budget-ms" class="text-slate-500">– ms</span>
+                        </div>
+                    </div>
+
+                    <!-- Stacked bar -->
+                    <div class="h-10 bg-slate-100 rounded-xl overflow-hidden flex" id="stacked-bar"></div>
+                    <div id="over-budget-msg" class="hidden mt-2 text-sm font-bold text-red-600">⛔ Over budget by <span id="over-amount">–</span> ms</div>
+                    <div id="under-budget-msg" class="mt-2 text-sm font-semibold text-emerald-600 hidden">✅ <span id="remaining-ms">–</span> ms spare budget</div>
+
+                    <!-- Legend -->
+                    <div class="flex flex-wrap gap-3 mt-3 text-xs" id="legend"></div>
+                </div>
+
+                <!-- Allocatable Components -->
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+                    <h3 class="font-bold text-slate-700 mb-4">⚙️ Allocate Application Budget</h3>
+                    <div class="space-y-4" id="app-sliders"></div>
+                </div>
+
+                <!-- Per-component tips -->
+                <div id="tips-area" class="space-y-2"></div>
+            </div>
+        </div>
+
+        <!-- Insight -->
+        <div class="bg-amber-50 border border-amber-200 rounded-2xl p-5">
+            <div class="flex gap-3 items-start">
+                <span class="text-2xl">💡</span>
+                <div>
+                    <div class="font-bold text-amber-800 mb-1">Live Insight</div>
+                    <div id="insight-text" class="text-amber-900 text-sm leading-relaxed">Adjust the sliders above.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Latency Reference Table -->
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+            <h3 class="font-bold text-slate-700 mb-4">📐 Latency Numbers Every Engineer Should Know</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div>
+                    <div class="font-semibold text-slate-500 uppercase text-xs mb-2">Storage & Cache</div>
+                    <div class="space-y-1 text-slate-600">
+                        <div class="flex justify-between"><span>L1 cache reference</span><span class="font-mono">~0.0005 ms</span></div>
+                        <div class="flex justify-between"><span>L3 cache reference</span><span class="font-mono">~0.01 ms</span></div>
+                        <div class="flex justify-between"><span>RAM read</span><span class="font-mono">~0.1 ms</span></div>
+                        <div class="flex justify-between"><span>Redis GET (local)</span><span class="font-mono">~0.1–1 ms</span></div>
+                        <div class="flex justify-between"><span>SSD random read</span><span class="font-mono">~0.1 ms</span></div>
+                        <div class="flex justify-between"><span>DB query (indexed)</span><span class="font-mono">~1–10 ms</span></div>
+                        <div class="flex justify-between"><span>DB query (full scan)</span><span class="font-mono">~100–1000 ms</span></div>
+                    </div>
+                </div>
+                <div>
+                    <div class="font-semibold text-slate-500 uppercase text-xs mb-2">Network</div>
+                    <div class="space-y-1 text-slate-600">
+                        <div class="flex justify-between"><span>Same datacenter RTT</span><span class="font-mono">~0.5 ms</span></div>
+                        <div class="flex justify-between"><span>Same city / CDN PoP</span><span class="font-mono">~5–10 ms</span></div>
+                        <div class="flex justify-between"><span>Cross-country (US)</span><span class="font-mono">~40–80 ms</span></div>
+                        <div class="flex justify-between"><span>US to Europe</span><span class="font-mono">~80–120 ms</span></div>
+                        <div class="flex justify-between"><span>US to Asia</span><span class="font-mono">~150–250 ms</span></div>
+                        <div class="flex justify-between"><span>TLS 1.3 handshake</span><span class="font-mono">~10–30 ms</span></div>
+                        <div class="flex justify-between"><span>DNS lookup (cached)</span><span class="font-mono">~0–5 ms</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    const components = [
+        { id: 'api-gw',   label: 'API Gateway',         default: 10,  max: 100,  color: 'bg-violet-400', desc: 'Auth check, rate limiting, request routing. Target: <15ms. Use JWT validation (avoid DB lookup per request).' },
+        { id: 'cache',    label: 'Cache Layer (Redis)',  default: 5,   max: 100,  color: 'bg-cyan-400',   desc: 'Redis GET/SET. Should be <1ms local, <5ms remote. If this is high, your cache key or network path needs fixing.' },
+        { id: 'app',      label: 'Application Logic',   default: 50,  max: 500,  color: 'bg-blue-400',   desc: 'Business logic, data transformation, computation. Aim to keep this under 50ms; profile and optimize hot paths.' },
+        { id: 'db',       label: 'Database Query',      default: 30,  max: 500,  color: 'bg-indigo-400', desc: 'Indexed query: 1–10ms. If spending 100ms+ here, check for missing indexes, N+1 queries, or full table scans.' },
+        { id: 'external', label: 'External API Calls',  default: 50,  max: 1000, color: 'bg-orange-400', desc: 'Third-party APIs (payment, maps, ML). Consider async/background processing for non-critical calls.' },
+        { id: 'render',   label: 'Response Serialization', default: 5, max: 100, color: 'bg-slate-400',  desc: 'JSON marshalling, compression. Usually negligible; becomes costly if returning large payloads.' },
+    ];
+
+    // Build sliders dynamically
+    const appSlidersEl = document.getElementById('app-sliders');
+    const tipsArea = document.getElementById('tips-area');
+    components.forEach(c => {
+        appSlidersEl.innerHTML += `
+            <div class="space-y-1">
+                <div class="flex justify-between text-sm">
+                    <label class="font-semibold text-slate-600 flex items-center gap-2">
+                        <span class="w-3 h-3 rounded-sm inline-block ${c.color}"></span>${c.label}
+                    </label>
+                    <span id="${c.id}-val" class="font-black text-slate-700 font-mono">– ms</span>
+                </div>
+                <input type="range" id="${c.id}" min="0" max="${c.max}" value="${c.default}" class="slider-track w-full bg-slate-200">
+                <div class="flex justify-between text-xs text-slate-400"><span>0 ms</span><span>${c.max} ms</span></div>
+            </div>`;
+    });
+
+    function update() {
+        const sla = parseInt(document.getElementById('sla').value);
+        const dns = parseInt(document.getElementById('dns').value);
+        const tls = parseInt(document.getElementById('tls').value);
+        const rtt = parseInt(document.getElementById('rtt').value);
+        const lb  = parseInt(document.getElementById('lb').value);
+        const fixed = dns + tls + rtt + lb;
+
+        document.getElementById('sla-val').textContent    = sla + ' ms';
+        document.getElementById('dns-val').textContent    = dns + ' ms';
+        document.getElementById('tls-val').textContent    = tls + ' ms';
+        document.getElementById('rtt-val').textContent    = rtt + ' ms';
+        document.getElementById('lb-val').textContent     = lb + ' ms';
+        document.getElementById('fixed-total').textContent= fixed + ' ms';
+
+        // App component values
+        const vals = {};
+        components.forEach(c => {
+            vals[c.id] = parseInt(document.getElementById(c.id).value);
+            document.getElementById(c.id + '-val').textContent = vals[c.id] + ' ms';
+        });
+
+        const appTotal = Object.values(vals).reduce((a, b) => a + b, 0);
+        const totalUsed = fixed + appTotal;
+        const remaining = sla - totalUsed;
+        const overBudget = totalUsed > sla;
+
+        document.getElementById('used-ms').textContent   = totalUsed + ' ms';
+        document.getElementById('budget-ms').textContent = sla + ' ms SLA';
+        document.getElementById('used-ms').className = 'font-black font-mono ' + (overBudget ? 'text-red-600' : 'text-slate-800');
+
+        const over = document.getElementById('over-budget-msg');
+        const under = document.getElementById('under-budget-msg');
+        if (overBudget) {
+            over.classList.remove('hidden');
+            under.classList.add('hidden');
+            document.getElementById('over-amount').textContent = (totalUsed - sla);
+            document.getElementById('budget-meter').classList.add('border-red-300');
+        } else {
+            over.classList.add('hidden');
+            under.classList.remove('hidden');
+            document.getElementById('under-budget-msg').classList.remove('hidden');
+            document.getElementById('remaining-ms').textContent = remaining;
+            document.getElementById('budget-meter').className = 'bg-white rounded-2xl p-5 shadow-sm border border-slate-200';
+        }
+
+        // Stacked bar
+        const bar = document.getElementById('stacked-bar');
+        bar.innerHTML = '';
+        const total = Math.max(sla, totalUsed);
+
+        // Fixed segment
+        const fixedPct = (fixed / total) * 100;
+        bar.innerHTML += `<div title="Fixed: ${fixed}ms" class="stack-seg bg-slate-400 h-full" style="flex:${fixedPct}"></div>`;
+
+        components.forEach(c => {
+            const pct = (vals[c.id] / total) * 100;
+            if (pct > 0) bar.innerHTML += `<div title="${c.label}: ${vals[c.id]}ms" class="stack-seg ${c.color} h-full" style="flex:${pct}"></div>`;
+        });
+
+        if (!overBudget) {
+            const remPct = (remaining / total) * 100;
+            bar.innerHTML += `<div class="stack-seg bg-slate-100 h-full border-l-2 border-dashed border-slate-300" style="flex:${remPct}"></div>`;
+        } else {
+            bar.innerHTML += `<div class="stack-seg bg-red-600 h-full" style="flex:${((totalUsed - sla)/total)*100}"></div>`;
+        }
+
+        // Legend
+        const leg = document.getElementById('legend');
+        leg.innerHTML = `<div class="flex items-center gap-1"><div class="w-3 h-3 rounded-sm bg-slate-400"></div><span>Fixed (${fixed}ms)</span></div>`;
+        components.forEach(c => {
+            if (vals[c.id] > 0) leg.innerHTML += `<div class="flex items-center gap-1"><div class="w-3 h-3 rounded-sm ${c.color}"></div><span>${c.label} (${vals[c.id]}ms)</span></div>`;
+        });
+
+        // Tips
+        tipsArea.innerHTML = '';
+        const expensiveComponents = components.filter(c => vals[c.id] > sla * 0.3);
+        expensiveComponents.forEach(c => {
+            tipsArea.innerHTML += `
+                <div class="bg-white rounded-xl p-4 border-l-4 border-${c.color.replace('bg-','')} shadow-sm text-sm">
+                    <div class="font-bold text-slate-700 mb-1">💬 ${c.label} is using ${((vals[c.id]/sla)*100).toFixed(0)}% of your SLA</div>
+                    <p class="text-slate-500">${c.desc}</p>
+                </div>`;
+        });
+
+        // Insight
+        const biggestComponent = components.reduce((a, b) => vals[a.id] > vals[b.id] ? a : b);
+        let insight = '';
+        if (overBudget) {
+            insight = `⛔ Your total latency is <strong>${totalUsed}ms</strong>, exceeding the <strong>${sla}ms SLA by ${totalUsed - sla}ms</strong>. The biggest consumer is <strong>${biggestComponent.label} at ${vals[biggestComponent.id]}ms (${((vals[biggestComponent.id]/sla)*100).toFixed(0)}% of budget)</strong>. Consider: async processing for non-critical steps, caching DB results, or increasing the SLA target.`;
+        } else if (remaining < sla * 0.1) {
+            insight = `⚠️ Only <strong>${remaining}ms of headroom</strong> (${((remaining/sla)*100).toFixed(0)}%) remaining. Your P99 will likely breach the SLA during peak load or when any component experiences a slow request. Add at least 20% buffer.`;
+        } else {
+            const fixedPctOfSla = ((fixed / sla) * 100).toFixed(0);
+            insight = `✅ Budget looks healthy — <strong>${remaining}ms spare</strong> (${((remaining/sla)*100).toFixed(0)}% buffer). Fixed infrastructure overhead consumes <strong>${fixedPctOfSla}% of your SLA</strong> before any application code runs. Your largest application cost is <strong>${biggestComponent.label} at ${vals[biggestComponent.id]}ms</strong> — make sure this is measured and monitored in production.`;
+        }
+        document.getElementById('insight-text').innerHTML = insight;
+    }
+
+    ['sla','dns','tls','rtt','lb', ...components.map(c => c.id)].forEach(id => {
+        document.getElementById(id).addEventListener('input', update);
+    });
+    update();
+</script>
+</body>
+</html>

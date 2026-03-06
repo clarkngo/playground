@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learn: Availability & The Nines</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', system-ui, sans-serif; }
+        .tier-btn { cursor: pointer; transition: all 0.2s ease; }
+        .tier-btn.active { transform: scale(1.02); }
+        .downtime-block { transition: all 0.3s; }
+        .calendar-cell { width: 14px; height: 14px; border-radius: 2px; transition: background 0.3s; }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen">
+
+    <nav class="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between sticky top-0 z-10 shadow-sm">
+        <div class="flex items-center gap-3">
+            <span class="text-cyan-600 font-black text-lg">⚡ SysDesign Learn</span>
+            <span class="text-slate-300">|</span>
+            <span class="text-slate-600 font-semibold text-sm">Availability & The Nines</span>
+        </div>
+        <div class="flex gap-2 text-xs">
+            <a href="03-bandwidth.html" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold px-3 py-1 rounded-full">← Prev</a>
+            <span class="bg-cyan-100 text-cyan-700 font-bold px-3 py-1 rounded-full">04 / 10</span>
+            <a href="05-caching.html" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold px-3 py-1 rounded-full">Next →</a>
+        </div>
+    </nav>
+
+    <div class="max-w-5xl mx-auto p-6 space-y-6">
+
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+            <div class="flex items-start gap-4">
+                <div class="text-5xl">🟢</div>
+                <div>
+                    <h1 class="text-2xl font-black text-slate-800">Availability & The Nines</h1>
+                    <p class="text-slate-500 mt-1 leading-relaxed">
+                        "We have 99% uptime" sounds great — until you realize that's <strong>3.65 days of downtime per year</strong>.
+                        Each additional "nine" represents a 10× improvement and requires fundamentally different architecture.
+                        Click a tier below to see what that SLA really means in practice.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tier Selector -->
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-3" id="tier-selector">
+            <button class="tier-btn active bg-red-100 border-2 border-red-400 rounded-xl p-4 text-center" data-tier="0" onclick="selectTier(0)">
+                <div class="font-black text-red-700 text-xl">99%</div>
+                <div class="text-xs text-red-500 font-semibold mt-1">Two Nines</div>
+            </button>
+            <button class="tier-btn bg-orange-50 border-2 border-orange-200 rounded-xl p-4 text-center" data-tier="1" onclick="selectTier(1)">
+                <div class="font-black text-orange-700 text-xl">99.9%</div>
+                <div class="text-xs text-orange-500 font-semibold mt-1">Three Nines</div>
+            </button>
+            <button class="tier-btn bg-amber-50 border-2 border-amber-200 rounded-xl p-4 text-center" data-tier="2" onclick="selectTier(2)">
+                <div class="font-black text-amber-700 text-xl">99.99%</div>
+                <div class="text-xs text-amber-500 font-semibold mt-1">Four Nines</div>
+            </button>
+            <button class="tier-btn bg-emerald-50 border-2 border-emerald-200 rounded-xl p-4 text-center" data-tier="3" onclick="selectTier(3)">
+                <div class="font-black text-emerald-700 text-xl">99.999%</div>
+                <div class="text-xs text-emerald-500 font-semibold mt-1">Five Nines</div>
+            </button>
+            <button class="tier-btn bg-cyan-50 border-2 border-cyan-200 rounded-xl p-4 text-center" data-tier="4" onclick="selectTier(4)">
+                <div class="font-black text-cyan-700 text-xl">99.9999%</div>
+                <div class="text-xs text-cyan-500 font-semibold mt-1">Six Nines</div>
+            </button>
+        </div>
+
+        <!-- Downtime Breakdown -->
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+            <h3 class="font-bold text-slate-700 mb-4">📅 Allowed Downtime per Period</h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-slate-50 rounded-xl p-4 text-center border border-slate-100">
+                    <div class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Per Year</div>
+                    <div id="dt-year" class="text-2xl font-black text-slate-800">–</div>
+                    <div id="dt-year-raw" class="text-xs text-slate-400 mt-1 font-mono">–</div>
+                </div>
+                <div class="bg-slate-50 rounded-xl p-4 text-center border border-slate-100">
+                    <div class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Per Month</div>
+                    <div id="dt-month" class="text-2xl font-black text-slate-800">–</div>
+                    <div id="dt-month-raw" class="text-xs text-slate-400 mt-1 font-mono">–</div>
+                </div>
+                <div class="bg-slate-50 rounded-xl p-4 text-center border border-slate-100">
+                    <div class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Per Week</div>
+                    <div id="dt-week" class="text-2xl font-black text-slate-800">–</div>
+                    <div id="dt-week-raw" class="text-xs text-slate-400 mt-1 font-mono">–</div>
+                </div>
+                <div class="bg-slate-50 rounded-xl p-4 text-center border border-slate-100">
+                    <div class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Per Day</div>
+                    <div id="dt-day" class="text-2xl font-black text-slate-800">–</div>
+                    <div id="dt-day-raw" class="text-xs text-slate-400 mt-1 font-mono">–</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Visual Calendar (year view - dots representing outage time) -->
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+            <h3 class="font-bold text-slate-700 mb-2">📊 Year Visualization <span class="text-sm font-normal text-slate-400">— each square = 1 day. Red = has some allowed downtime in it.</span></h3>
+            <div id="calendar" class="flex flex-wrap gap-1 mt-3"></div>
+        </div>
+
+        <!-- Architecture Required -->
+        <div id="arch-card" class="rounded-2xl p-6 shadow-sm border">
+            <h3 class="font-bold text-lg mb-3" id="arch-title">–</h3>
+            <div id="arch-content" class="text-sm leading-relaxed">–</div>
+        </div>
+
+        <!-- Insight -->
+        <div class="bg-amber-50 border border-amber-200 rounded-2xl p-5">
+            <div class="flex gap-3 items-start">
+                <span class="text-2xl">💡</span>
+                <div>
+                    <div class="font-bold text-amber-800 mb-1">Key Insight</div>
+                    <div id="insight-text" class="text-amber-900 text-sm leading-relaxed">Select an SLA tier above.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Comparison Table -->
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 overflow-x-auto">
+            <h3 class="font-bold text-slate-700 mb-4">📋 Full Comparison</h3>
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="border-b border-slate-100 text-left">
+                        <th class="py-2 text-slate-400 font-semibold">SLA</th>
+                        <th class="py-2 text-slate-400 font-semibold">Downtime/year</th>
+                        <th class="py-2 text-slate-400 font-semibold">Downtime/month</th>
+                        <th class="py-2 text-slate-400 font-semibold">Example services</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-50 text-slate-600">
+                    <tr><td class="py-2 font-mono font-bold text-red-600">99%</td><td class="py-2">87.6 hours</td><td class="py-2">7.3 hours</td><td class="py-2 text-slate-400">Basic VPS, hobby projects</td></tr>
+                    <tr><td class="py-2 font-mono font-bold text-orange-600">99.9%</td><td class="py-2">8.76 hours</td><td class="py-2">43.8 min</td><td class="py-2 text-slate-400">Most SaaS tools, GitHub (historically)</td></tr>
+                    <tr><td class="py-2 font-mono font-bold text-amber-600">99.99%</td><td class="py-2">52.6 min</td><td class="py-2">4.4 min</td><td class="py-2 text-slate-400">AWS EC2, Stripe, GCP VMs</td></tr>
+                    <tr><td class="py-2 font-mono font-bold text-emerald-600">99.999%</td><td class="py-2">5.26 min</td><td class="py-2">26 sec</td><td class="py-2 text-slate-400">AWS S3, Cloudflare, banking APIs</td></tr>
+                    <tr><td class="py-2 font-mono font-bold text-cyan-600">99.9999%</td><td class="py-2">31.5 sec</td><td class="py-2">2.6 sec</td><td class="py-2 text-slate-400">Telecom networks, power grid control</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+<script>
+    const tiers = [
+        {
+            sla: 99, label: '99% — Two Nines',
+            yearMin: 87.6 * 60, monthMin: 7.3 * 60, weekMin: 1.68 * 60, dayMin: 14.4,
+            archTitle: '⚠️ 99% — Basic Redundancy Only',
+            archColor: 'bg-red-50 border-red-200 text-red-900',
+            titleColor: 'text-red-700',
+            arch: `<ul class="space-y-2 list-disc list-inside text-red-800">
+                <li>Single-region deployment is sufficient</li>
+                <li>Regular scheduled maintenance windows are fine</li>
+                <li>A simple health check + manual restart process works</li>
+                <li>No on-call rotation needed — can respond during business hours</li>
+                <li><strong>Typical cost:</strong> Cheapest option. One server, manual ops.</li>
+            </ul>`,
+            insight: `At 99%, you have <strong>87.6 hours of downtime per year</strong> — nearly 4 full days. That's enough for 2–3 planned maintenance windows plus a few surprise incidents. Most side projects and internal tools live here. If your service is down for an hour, users are mildly annoyed but not angry.`
+        },
+        {
+            sla: 99.9, label: '99.9% — Three Nines',
+            yearMin: 8.76 * 60, monthMin: 43.8, weekMin: 10.1, dayMin: 1.44,
+            archTitle: '🔧 99.9% — Load Balancer + Health Checks',
+            archColor: 'bg-orange-50 border-orange-200 text-orange-900',
+            titleColor: 'text-orange-700',
+            arch: `<ul class="space-y-2 list-disc list-inside text-orange-800">
+                <li>Load balancer with 2+ application servers (auto-restart on crash)</li>
+                <li>Database with automated failover (primary + 1 replica)</li>
+                <li>Automated monitoring with alerting (PagerDuty, etc.)</li>
+                <li>Blue/green or rolling deployments — no full downtime deploys</li>
+                <li>On-call rotation needed for evenings/weekends</li>
+                <li><strong>Typical cost:</strong> 2–4× more than 99% due to redundancy</li>
+            </ul>`,
+            insight: `At 99.9%, you get about <strong>44 minutes of downtime per month</strong>. That sounds small, but one bad deployment or database failover can eat your monthly budget. GitHub sat at roughly this tier for years before investing in higher availability. This is the minimum for any B2C product.`
+        },
+        {
+            sla: 99.99, label: '99.99% — Four Nines',
+            yearMin: 52.6, monthMin: 4.4, weekMin: 1.01, dayMin: 0.144,
+            archTitle: '🏗️ 99.99% — Multi-AZ Active/Active',
+            archColor: 'bg-amber-50 border-amber-200 text-amber-900',
+            titleColor: 'text-amber-700',
+            arch: `<ul class="space-y-2 list-disc list-inside text-amber-800">
+                <li>Multi-AZ (availability zone) deployment — 3 AZs in one region</li>
+                <li>Auto-scaling groups with minimum instance counts enforced</li>
+                <li>Managed database (RDS Multi-AZ) with automatic failover in &lt;60s</li>
+                <li>Circuit breakers, retries with backoff, graceful degradation</li>
+                <li>Chaos engineering practice (randomly kill instances in staging)</li>
+                <li>Full on-call rotation with escalation policies</li>
+                <li><strong>Typical cost:</strong> 3–5× more than 99.9%</li>
+            </ul>`,
+            insight: `Four nines means only <strong>52 minutes of downtime per year</strong> — less than one hour. A single unplanned incident can blow your entire annual budget. At this tier, every deploy, migration, and config change needs a rollback plan. AWS EC2 and Stripe target this tier.`
+        },
+        {
+            sla: 99.999, label: '99.999% — Five Nines',
+            yearMin: 5.26, monthMin: 0.44, weekMin: 0.1, dayMin: 0.0144,
+            archTitle: '🌍 99.999% — Multi-Region Active/Active',
+            archColor: 'bg-emerald-50 border-emerald-200 text-emerald-900',
+            titleColor: 'text-emerald-700',
+            arch: `<ul class="space-y-2 list-disc list-inside text-emerald-800">
+                <li>Active/active multi-region deployment with global load balancing</li>
+                <li>Conflict-free replicated data types (CRDTs) or regional databases</li>
+                <li>Zero-downtime deployments with feature flags and canary releases</li>
+                <li>Automated failover that detects and routes around region failures in seconds</li>
+                <li>Immutable infrastructure — never patch in place, always redeploy</li>
+                <li>Extensive synthetic monitoring from multiple global locations</li>
+                <li><strong>Typical cost:</strong> 5–10× more infrastructure, plus significant engineering investment</li>
+            </ul>`,
+            insight: `Five nines = only <strong>5.26 minutes of downtime per year</strong>. That's less than a typical AWS console session. A single botched database migration or a cloud provider AZ outage can consume your entire budget. AWS S3, Cloudflare, and bank payment APIs target this. It requires years of reliability engineering investment.`
+        },
+        {
+            sla: 99.9999, label: '99.9999% — Six Nines',
+            yearMin: 0.525, monthMin: 0.044, weekMin: 0.01, dayMin: 0.00144,
+            archTitle: '🛸 99.9999% — Telecom / Critical Infrastructure Grade',
+            archColor: 'bg-cyan-50 border-cyan-200 text-cyan-900',
+            titleColor: 'text-cyan-700',
+            arch: `<ul class="space-y-2 list-disc list-inside text-cyan-800">
+                <li>Purpose-built hardware with full redundancy at every layer (power, network, compute)</li>
+                <li>Software-defined networking with sub-millisecond failover</li>
+                <li>Formal verification of critical code paths</li>
+                <li>Real-time global traffic steering with pre-positioned failover</li>
+                <li>No software deploys without extensive shadow testing and gradual traffic shifting</li>
+                <li>Dedicated SRE teams per component — not shared</li>
+                <li><strong>Typical cost:</strong> Only achievable by hyperscalers. Not economically viable for most companies.</li>
+            </ul>`,
+            insight: `Six nines = <strong>31 seconds of downtime per year</strong>. This is the realm of telephone networks, air traffic control, and power grid management. Very few software services claim this. Even if your code is perfect, a single fiber cut, DNS hiccup, or BGP route leak can consume your budget. Almost no internet service operates here.`
+        }
+    ];
+
+    let current = 0;
+
+    const fmtMin = m => {
+        if (m < 1/60) return (m * 60).toFixed(1) + ' sec';
+        if (m < 1) return (m * 60).toFixed(0) + ' sec';
+        if (m < 60) return m.toFixed(1) + ' min';
+        if (m < 60 * 24) return (m / 60).toFixed(1) + ' hrs';
+        return (m / 60 / 24).toFixed(1) + ' days';
+    };
+
+    function selectTier(idx) {
+        current = idx;
+        const t = tiers[idx];
+
+        // Update button states
+        document.querySelectorAll('.tier-btn').forEach((btn, i) => {
+            btn.classList.toggle('active', i === idx);
+        });
+
+        document.getElementById('dt-year').textContent   = fmtMin(t.yearMin);
+        document.getElementById('dt-month').textContent  = fmtMin(t.monthMin);
+        document.getElementById('dt-week').textContent   = fmtMin(t.weekMin);
+        document.getElementById('dt-day').textContent    = fmtMin(t.dayMin);
+
+        document.getElementById('dt-year-raw').textContent  = t.yearMin.toFixed(2) + ' min/yr';
+        document.getElementById('dt-month-raw').textContent = t.monthMin.toFixed(3) + ' min/mo';
+        document.getElementById('dt-week-raw').textContent  = t.weekMin.toFixed(3) + ' min/wk';
+        document.getElementById('dt-day-raw').textContent   = t.dayMin.toFixed(4) + ' min/day';
+
+        // Calendar — 365 days. Red dots for days that might have downtime.
+        // Approximate: if yearly downtime > N days, show N red cells
+        const cal = document.getElementById('calendar');
+        cal.innerHTML = '';
+        const yearMinutes = t.yearMin;
+        const minutesPerDay = yearMinutes / 365;
+        // Make it visual: cells that are "red" = number of days where you could experience the full downtime
+        // Simple visualization: first N days are red proportional to fraction of days impacted
+        const redDays = Math.ceil(yearMinutes / (24 * 60)); // days of full outage equivalent
+        for (let d = 0; d < 365; d++) {
+            const cell = document.createElement('div');
+            cell.className = 'calendar-cell ' + (d < Math.max(redDays, yearMinutes > 0.01 ? 1 : 0) ? 'bg-red-400' : 'bg-emerald-200');
+            cal.appendChild(cell);
+        }
+        if (redDays === 0 && yearMinutes > 0) {
+            // highlight just a sliver
+            cal.children[0].className = 'calendar-cell bg-amber-300';
+        }
+
+        const ac = document.getElementById('arch-card');
+        ac.className = 'rounded-2xl p-6 shadow-sm border ' + t.archColor;
+        document.getElementById('arch-title').className = 'font-bold text-lg mb-3 ' + t.titleColor;
+        document.getElementById('arch-title').textContent = t.archTitle;
+        document.getElementById('arch-content').innerHTML = t.arch;
+        document.getElementById('insight-text').innerHTML = t.insight;
+    }
+
+    selectTier(0);
+</script>
+</body>
+</html>

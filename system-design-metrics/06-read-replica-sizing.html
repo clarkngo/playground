@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Design Metrics | Read Replica Sizing</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .step-correct { border-color: #22c55e !important; background-color: #f0fdf4; }
+        .step-wrong   { border-color: #ef4444 !important; background-color: #fef2f2; }
+        .error-ring   { border: 2px solid #ef4444 !important; background-color: #fef2f2; }
+        @media print {
+            body { background: white; padding: 0; margin: 0; }
+            .no-pdf, button { display: none !important; }
+            #game-container { border: none; box-shadow: none; width: 100%; max-width: 100%; margin: 0; padding: 0; }
+            #feedback { display: block !important; }
+            #solution { display: block !important; }
+            @page { size: portrait; margin: 0.5in; }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 p-8">
+<div id="game-container" class="max-w-4xl mx-auto bg-white p-8 rounded-xl shadow-xl border border-slate-200">
+
+    <div class="mb-6 grid grid-cols-2 gap-6 bg-slate-100 p-5 rounded-lg border border-slate-200">
+        <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Student Name <span class="text-red-500">*</span></label>
+            <input type="text" id="student-name" placeholder="Enter Full Name" class="w-full p-2 border rounded border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none">
+            <p id="name-error" class="text-red-500 text-xs mt-1 hidden font-semibold">Name required for submission.</p>
+        </div>
+        <div class="text-right">
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">System Timestamp</label>
+            <p id="display-date" class="text-slate-700 font-medium py-2 italic font-mono text-sm"></p>
+        </div>
+    </div>
+
+    <header class="mb-8 border-b pb-6">
+        <h1 class="text-3xl font-extrabold text-slate-800 tracking-tight">Read Replica Sizing</h1>
+        <div class="mt-4 p-5 bg-indigo-50 rounded-xl border-l-4 border-indigo-500 shadow-sm">
+            <h3 class="font-bold text-indigo-800 text-lg mb-2">📋 Scenario</h3>
+            <p class="text-indigo-900 text-sm leading-relaxed">
+                An e-commerce platform generates <strong>80,000 total RPS</strong> at peak with a
+                <strong>90% read / 10% write</strong> ratio. A single PostgreSQL instance handles
+                <strong>8,000 RPS</strong> at 70% CPU utilisation. Reads can be distributed across
+                read replicas (which receive synchronous replication from one primary). Writes must
+                all go to the primary. The team wants to know how many total database nodes are
+                needed (primary + replicas), keeping each node below 70% utilisation.
+            </p>
+        </div>
+    </header>
+
+    <!-- Given Values -->
+    <div class="mb-6 p-5 bg-slate-50 rounded-xl border border-slate-200">
+        <h3 class="font-bold text-slate-700 mb-3">📊 Given Values</h3>
+        <div class="grid grid-cols-4 gap-4 text-sm">
+            <div class="bg-white p-3 rounded-lg border border-slate-200">
+                <div class="text-xs text-slate-500 uppercase font-bold">Total Peak RPS</div>
+                <div class="text-2xl font-black text-indigo-600">80,000</div>
+            </div>
+            <div class="bg-white p-3 rounded-lg border border-slate-200">
+                <div class="text-xs text-slate-500 uppercase font-bold">Read : Write Ratio</div>
+                <div class="text-2xl font-black text-slate-700">90 : 10</div>
+            </div>
+            <div class="bg-white p-3 rounded-lg border border-slate-200">
+                <div class="text-xs text-slate-500 uppercase font-bold">Node Max RPS</div>
+                <div class="text-2xl font-black text-slate-700">8,000</div>
+            </div>
+            <div class="bg-white p-3 rounded-lg border border-slate-200">
+                <div class="text-xs text-slate-500 uppercase font-bold">Max Utilisation</div>
+                <div class="text-2xl font-black text-slate-700">70%</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Unit Reference -->
+    <div class="mb-6 p-4 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-900 no-pdf">
+        <strong>Key Formulas:</strong>
+        Read RPS = Total RPS × read% |
+        Write RPS = Total RPS × write% |
+        Replicas needed = ⌈Read RPS / (node capacity × util%)⌉ |
+        Primary also handles all writes + some reads if under capacity |
+        Total nodes = replicas + 1 primary
+    </div>
+
+    <!-- Steps -->
+    <div class="space-y-4 mb-8">
+        <h3 class="font-bold text-slate-700 text-lg">🧮 Step-by-Step Calculation</h3>
+
+        <div class="flex items-center gap-4 p-4 bg-white rounded-xl border-2 border-slate-200">
+            <div class="flex-1">
+                <div class="font-semibold text-slate-700 text-sm">Step 1 — Total read RPS at peak</div>
+                <div class="text-xs text-slate-500 mt-1">Formula: 80,000 RPS × 90%</div>
+            </div>
+            <div class="flex items-center gap-2">
+                <input id="s1" type="number" step="any" placeholder="?" class="w-36 p-2 border-2 border-slate-200 rounded-lg text-center font-mono font-bold text-lg outline-none transition">
+                <span class="text-slate-500 text-sm font-mono">RPS</span>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-4 p-4 bg-white rounded-xl border-2 border-slate-200">
+            <div class="flex-1">
+                <div class="font-semibold text-slate-700 text-sm">Step 2 — Total write RPS at peak</div>
+                <div class="text-xs text-slate-500 mt-1">Formula: 80,000 RPS × 10%</div>
+            </div>
+            <div class="flex items-center gap-2">
+                <input id="s2" type="number" step="any" placeholder="?" class="w-36 p-2 border-2 border-slate-200 rounded-lg text-center font-mono font-bold text-lg outline-none transition">
+                <span class="text-slate-500 text-sm font-mono">RPS</span>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-4 p-4 bg-white rounded-xl border-2 border-slate-200">
+            <div class="flex-1">
+                <div class="font-semibold text-slate-700 text-sm">Step 3 — Effective RPS per node at 70% utilisation</div>
+                <div class="text-xs text-slate-500 mt-1">Formula: 8,000 RPS × 0.70</div>
+            </div>
+            <div class="flex items-center gap-2">
+                <input id="s3" type="number" step="any" placeholder="?" class="w-36 p-2 border-2 border-slate-200 rounded-lg text-center font-mono font-bold text-lg outline-none transition">
+                <span class="text-slate-500 text-sm font-mono">RPS/node</span>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-4 p-4 bg-white rounded-xl border-2 border-slate-200">
+            <div class="flex-1">
+                <div class="font-semibold text-slate-700 text-sm">Step 4 — Read replicas needed (round up)</div>
+                <div class="text-xs text-slate-500 mt-1">Formula: ⌈Read RPS / effective RPS per node⌉</div>
+            </div>
+            <div class="flex items-center gap-2">
+                <input id="s4" type="number" step="1" placeholder="?" class="w-36 p-2 border-2 border-slate-200 rounded-lg text-center font-mono font-bold text-lg outline-none transition">
+                <span class="text-slate-500 text-sm font-mono">replicas</span>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-4 p-4 bg-white rounded-xl border-2 border-slate-200">
+            <div class="flex-1">
+                <div class="font-semibold text-slate-700 text-sm">Step 5 — Write load on the primary as % of its capacity</div>
+                <div class="text-xs text-slate-500 mt-1">Formula: (Write RPS / 8,000) × 100</div>
+            </div>
+            <div class="flex items-center gap-2">
+                <input id="s5" type="number" step="any" placeholder="?" class="w-36 p-2 border-2 border-slate-200 rounded-lg text-center font-mono font-bold text-lg outline-none transition">
+                <span class="text-slate-500 text-sm font-mono">%</span>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-4 p-4 bg-white rounded-xl border-2 border-slate-200">
+            <div class="flex-1">
+                <div class="font-semibold text-slate-700 text-sm">Step 6 — Total database nodes (primary + replicas)</div>
+                <div class="text-xs text-slate-500 mt-1">Formula: 1 primary + replicas from Step 4</div>
+            </div>
+            <div class="flex items-center gap-2">
+                <input id="s6" type="number" step="1" placeholder="?" class="w-36 p-2 border-2 border-slate-200 rounded-lg text-center font-mono font-bold text-lg outline-none transition">
+                <span class="text-slate-500 text-sm font-mono">total nodes</span>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-4 p-4 bg-indigo-50 rounded-xl border-2 border-indigo-200">
+            <div class="flex-1">
+                <div class="font-semibold text-indigo-800 text-sm">Step 7 — Spare read capacity across all replicas (RPS)</div>
+                <div class="text-xs text-indigo-600 mt-1">Formula: (replicas × effective RPS per node) − actual Read RPS</div>
+            </div>
+            <div class="flex items-center gap-2">
+                <input id="s7" type="number" step="any" placeholder="?" class="w-36 p-2 border-2 border-indigo-200 rounded-lg text-center font-mono font-bold text-lg outline-none transition">
+                <span class="text-indigo-600 text-sm font-mono">spare RPS</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Feedback -->
+    <div id="feedback" class="mb-6 p-5 rounded-xl border-2 hidden"></div>
+
+    <!-- Solution -->
+    <div id="solution" class="mb-6 p-5 bg-green-50 rounded-xl border border-green-200 hidden">
+        <h4 class="font-bold text-green-800 text-lg mb-3">✅ Worked Solution</h4>
+        <div class="space-y-2 text-sm text-green-900 font-mono">
+            <div>Read RPS      = 80,000 × 0.90 = <strong>72,000 RPS</strong></div>
+            <div>Write RPS     = 80,000 × 0.10 = <strong>8,000 RPS</strong></div>
+            <div>Effective/node= 8,000 × 0.70 = <strong>5,600 RPS</strong></div>
+            <div>Replicas      = ⌈72,000 / 5,600⌉ = ⌈12.86⌉ = <strong>13 replicas</strong></div>
+            <div>Primary load  = (8,000 / 8,000) × 100 = <strong>100%</strong> → primary is fully loaded with writes</div>
+            <div>Total nodes   = 1 + 13 = <strong>14 nodes</strong></div>
+            <div>Spare cap     = (13 × 5,600) − 72,000 = 72,800 − 72,000 = <strong>800 spare RPS</strong></div>
+        </div>
+        <div class="mt-4 p-3 bg-white rounded-lg border border-green-100 text-xs text-green-800">
+            <strong>Engineer's Takeaway:</strong> Notice that the primary is at 100% write load — this signals the
+            primary is a potential bottleneck. Real systems would combine a write-optimised primary with a message
+            queue (async replication buffer) or switch to a write-scalable DB (Cassandra, DynamoDB) if writes
+            continue to grow. The 13 replicas also leave only 800 spare RPS — minimal buffer for traffic spikes.
+        </div>
+    </div>
+
+    <!-- Buttons -->
+    <div class="flex gap-4 no-pdf">
+        <button onclick="validate()" class="flex-1 bg-indigo-600 text-white py-3 rounded-lg font-bold hover:bg-indigo-700 transition shadow-md">Validate Calculations</button>
+        <button onclick="exportPDF()" class="flex-1 bg-slate-800 text-white py-3 rounded-lg font-bold hover:bg-slate-900 transition shadow-md">Export PDF</button>
+    </div>
+
+    <!-- AI Prompt Guide -->
+    <div class="mt-8 p-5 bg-amber-50 rounded-xl border border-amber-200 shadow-sm no-pdf">
+        <div class="flex items-center mb-3">
+            <span class="text-2xl mr-3">🤖</span>
+            <div>
+                <h4 class="text-sm font-bold text-amber-800">AI Senior Architect Prompt Guide</h4>
+                <p class="text-[11px] text-amber-700">Go deeper on database scaling patterns:</p>
+            </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4 text-[11px] text-amber-900 italic leading-relaxed">
+            <div class="bg-white/50 p-3 rounded border border-amber-100">"Compare <strong>synchronous vs asynchronous replication</strong> for read replicas. How does replication lag affect read-your-own-writes consistency, and what application-level strategies can mitigate this?"</div>
+            <div class="bg-white/50 p-3 rounded border border-amber-100">"When does a read-replica architecture stop being sufficient and you need to consider <strong>horizontal sharding</strong> (partitioning)? What are the cross-shard query challenges, and how do services like Vitess solve them?"</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('display-date').innerText = new Date().toLocaleString();
+
+    const answers = [
+        { id:'s1', correct:72000, tol:0.02, hint:'Step 1: Read RPS = 80,000 × 0.90 = 72,000 RPS.' },
+        { id:'s2', correct:8000,  tol:0.02, hint:'Step 2: Write RPS = 80,000 × 0.10 = 8,000 RPS.' },
+        { id:'s3', correct:5600,  tol:0.02, hint:'Step 3: Effective per node = 8,000 × 0.70 = 5,600 RPS.' },
+        { id:'s4', correct:13,    tol:0.01, hint:'Step 4: ⌈72,000 / 5,600⌉ = ⌈12.86⌉ = 13 read replicas.' },
+        { id:'s5', correct:100,   tol:0.02, hint:'Step 5: Primary write load = (8,000 / 8,000) × 100 = 100%.' },
+        { id:'s6', correct:14,    tol:0.01, hint:'Step 6: Total nodes = 1 primary + 13 replicas = 14.' },
+        { id:'s7', correct:800,   tol:0.05, hint:'Step 7: Spare = (13 × 5,600) − 72,000 = 72,800 − 72,000 = 800 RPS.' },
+    ];
+
+    function within(val, target, tol) {
+        if (target === 0) return val === 0;
+        return Math.abs(val - target) / target <= tol;
+    }
+
+    function validate() {
+        const nameVal = document.getElementById('student-name').value.trim();
+        if (!nameVal) {
+            document.getElementById('student-name').classList.add('error-ring');
+            document.getElementById('name-error').classList.remove('hidden');
+            document.getElementById('student-name').focus();
+            return;
+        }
+        document.getElementById('student-name').classList.remove('error-ring');
+        document.getElementById('name-error').classList.add('hidden');
+
+        let firstError = null;
+        let allCorrect = true;
+
+        answers.forEach(a => {
+            const input = document.getElementById(a.id);
+            const val = parseFloat(input.value);
+            const ok = !isNaN(val) && within(val, a.correct, a.tol);
+            input.classList.remove('step-correct','step-wrong');
+            input.classList.add(ok ? 'step-correct' : 'step-wrong');
+            if (!ok && !firstError) firstError = a;
+            if (!ok) allCorrect = false;
+        });
+
+        const fb = document.getElementById('feedback');
+        const sol = document.getElementById('solution');
+        if (allCorrect) {
+            fb.className = 'mb-6 p-5 rounded-xl border-2 bg-green-50 border-green-200 text-green-800';
+            fb.innerHTML = '<div class="font-black text-xl mb-1">✅ STATUS: PASS / COMPLETED</div><div class="text-sm">Read replica sizing complete. You can now design a database tier that scales reads horizontally without over-provisioning.</div>';
+            sol.classList.remove('hidden');
+        } else {
+            fb.className = 'mb-6 p-5 rounded-xl border-2 bg-red-50 border-red-200 text-red-800';
+            fb.innerHTML = `<div class="font-black text-xl mb-1">❌ STATUS: FAIL / ATTEMPTED</div><div class="text-sm"><strong>${firstError.hint}</strong></div>`;
+            sol.classList.add('hidden');
+        }
+        fb.classList.remove('hidden');
+    }
+
+    function exportPDF() {
+        if (!document.getElementById('student-name').value.trim()) {
+            document.getElementById('student-name').classList.add('error-ring');
+            document.getElementById('name-error').classList.remove('hidden');
+            return;
+        }
+        if (document.getElementById('feedback').classList.contains('hidden')) {
+            alert("Please click 'Validate Calculations' before exporting.");
+            return;
+        }
+        window.print();
+    }
+</script>
+</body>
+</html>
