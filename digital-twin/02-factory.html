@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Activity 2: Smart Factory Twin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @keyframes spin-gear { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    @keyframes spin-gear-r { from { transform: rotate(0deg); } to { transform: rotate(-360deg); } }
+    @keyframes conveyor { 0% { background-position: 0 0; } 100% { background-position: 40px 0; } }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    .gear-a { animation: spin-gear linear infinite; }
+    .gear-b { animation: spin-gear-r linear infinite; }
+    .belt { animation: conveyor 0.8s linear infinite; background: repeating-linear-gradient(90deg, #4B5563 0px, #4B5563 20px, #6B7280 20px, #6B7280 40px); }
+    .blink { animation: blink 1s infinite; }
+    .alert-ring { box-shadow: 0 0 0 4px rgba(239,68,68,0.4); }
+    .nav-btn { transition: background 0.2s; }
+    input[type=range] { accent-color: #6366f1; }
+  </style>
+</head>
+<body class="bg-gray-950 text-white min-h-screen font-sans">
+
+  <nav class="bg-gray-900 border-b border-gray-700 px-6 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-sm font-bold">DT</div>
+      <span class="text-gray-300 text-sm font-medium">Digital Twin Activity Series</span>
+    </div>
+    <div class="flex gap-2 flex-wrap justify-end">
+      <a href="01-intro.html" class="nav-btn bg-gray-700 hover:bg-gray-600 text-xs px-3 py-1 rounded-full">1 · Intro</a>
+      <span class="bg-indigo-700 text-white text-xs px-3 py-1 rounded-full font-semibold">2 · Factory</span>
+      <a href="03-building.html" class="nav-btn bg-gray-700 hover:bg-gray-600 text-xs px-3 py-1 rounded-full">3 · Building</a>
+      <a href="04-maintenance.html" class="nav-btn bg-gray-700 hover:bg-gray-600 text-xs px-3 py-1 rounded-full">4 · Maintenance</a>
+      <a href="05-city.html" class="nav-btn bg-gray-700 hover:bg-gray-600 text-xs px-3 py-1 rounded-full">5 · City</a>
+      <a href="06-health.html" class="nav-btn bg-gray-700 hover:bg-gray-600 text-xs px-3 py-1 rounded-full">6 · Health</a>
+      <a href="07-sync.html" class="nav-btn bg-gray-700 hover:bg-gray-600 text-xs px-3 py-1 rounded-full">7 · Sync</a>
+      <a href="08-scenarios.html" class="nav-btn bg-gray-700 hover:bg-gray-600 text-xs px-3 py-1 rounded-full">8 · Scenarios</a>
+      <a href="09-quiz.html" class="nav-btn bg-gray-700 hover:bg-gray-600 text-xs px-3 py-1 rounded-full">9 · Quiz</a>
+      <a href="10-design.html" class="nav-btn bg-gray-700 hover:bg-gray-600 text-xs px-3 py-1 rounded-full">10 · Design</a>
+    </div>
+  </nav>
+
+  <main class="max-w-5xl mx-auto px-6 py-10">
+    <div class="text-center mb-8">
+      <div class="text-indigo-400 text-sm font-semibold uppercase tracking-widest mb-2">Activity 2 of 10</div>
+      <h1 class="text-3xl font-bold mb-2">Smart Factory Digital Twin</h1>
+      <p class="text-gray-400">You are an engineer monitoring a production line. Adjust controls and watch the digital twin respond in real time.</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      <!-- PHYSICAL SIDE -->
+      <div class="bg-gray-900 border border-orange-700/50 rounded-2xl p-6">
+        <div class="flex items-center gap-2 mb-4">
+          <span class="text-orange-400 font-bold text-sm uppercase tracking-wide">🏭 Physical Factory</span>
+          <span id="factoryStatus" class="ml-auto text-xs bg-green-900 text-green-300 px-2 py-0.5 rounded-full">RUNNING</span>
+        </div>
+
+        <!-- Machine visualization -->
+        <div class="bg-gray-800 rounded-xl p-4 mb-4 relative overflow-hidden" style="height:140px;">
+          <div class="absolute left-4 top-6 flex flex-col items-center gap-1">
+            <div id="gearA" class="gear-a text-4xl" style="animation-duration:2s;">⚙️</div>
+            <div class="text-xs text-gray-400">Motor A</div>
+          </div>
+          <div class="absolute left-16 top-10 flex flex-col items-center gap-1">
+            <div id="gearB" class="gear-b text-3xl" style="animation-duration:1.5s;">⚙️</div>
+          </div>
+          <!-- Conveyor -->
+          <div class="absolute bottom-6 left-24 right-4 h-6 rounded belt opacity-70"></div>
+          <div class="absolute bottom-10 right-8 text-xl">📦</div>
+          <div class="absolute bottom-10 right-20 text-xl opacity-50">📦</div>
+
+          <!-- Alert overlay -->
+          <div id="alertOverlay" class="absolute inset-0 bg-red-900/20 rounded-xl hidden flex items-center justify-center">
+            <span class="blink text-red-400 font-bold text-sm">⚠️ CRITICAL TEMP</span>
+          </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="space-y-4">
+          <div>
+            <div class="flex justify-between text-sm mb-1">
+              <span class="text-gray-400">Motor Speed</span>
+              <span id="speedLabel" class="text-blue-300 font-mono">1200 RPM</span>
+            </div>
+            <input id="speedSlider" type="range" min="400" max="3000" value="1200" class="w-full" oninput="update()">
+          </div>
+          <div>
+            <div class="flex justify-between text-sm mb-1">
+              <span class="text-gray-400">Coolant Flow</span>
+              <span id="coolLabel" class="text-cyan-300 font-mono">50%</span>
+            </div>
+            <input id="coolSlider" type="range" min="0" max="100" value="50" class="w-full" oninput="update()">
+          </div>
+          <div class="flex gap-3">
+            <button onclick="setMode('normal')" id="btnNormal" class="flex-1 bg-green-700 hover:bg-green-600 text-sm py-2 rounded-lg transition">Normal</button>
+            <button onclick="setMode('boost')" id="btnBoost" class="flex-1 bg-yellow-700 hover:bg-yellow-600 text-sm py-2 rounded-lg transition">Boost</button>
+            <button onclick="setMode('stop')" id="btnStop" class="flex-1 bg-red-700 hover:bg-red-600 text-sm py-2 rounded-lg transition">E-Stop</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- DIGITAL TWIN SIDE -->
+      <div class="bg-gray-900 border border-indigo-700/50 rounded-2xl p-6">
+        <div class="flex items-center gap-2 mb-4">
+          <span class="text-indigo-400 font-bold text-sm uppercase tracking-wide">🖥️ Digital Twin Dashboard</span>
+          <span id="syncBadge" class="ml-auto text-xs bg-indigo-900 text-indigo-300 px-2 py-0.5 rounded-full">● SYNCED</span>
+        </div>
+
+        <!-- Gauges -->
+        <div class="grid grid-cols-2 gap-3 mb-4">
+          <div class="bg-gray-800 rounded-xl p-3 text-center">
+            <div class="text-xs text-gray-400 mb-1">Temperature</div>
+            <div id="gaugeTemp" class="text-2xl font-bold font-mono text-orange-400">68°C</div>
+            <div id="tempBar" class="h-2 bg-gray-700 rounded-full mt-2 overflow-hidden">
+              <div id="tempFill" class="h-full bg-orange-500 rounded-full transition-all duration-700" style="width:45%"></div>
+            </div>
+          </div>
+          <div class="bg-gray-800 rounded-xl p-3 text-center">
+            <div class="text-xs text-gray-400 mb-1">RPM (Twin)</div>
+            <div id="gaugeRPM" class="text-2xl font-bold font-mono text-blue-400">1200</div>
+            <div class="h-2 bg-gray-700 rounded-full mt-2 overflow-hidden">
+              <div id="rpmFill" class="h-full bg-blue-500 rounded-full transition-all duration-700" style="width:35%"></div>
+            </div>
+          </div>
+          <div class="bg-gray-800 rounded-xl p-3 text-center">
+            <div class="text-xs text-gray-400 mb-1">Output Rate</div>
+            <div id="gaugeOutput" class="text-2xl font-bold font-mono text-green-400">480/h</div>
+          </div>
+          <div class="bg-gray-800 rounded-xl p-3 text-center">
+            <div class="text-xs text-gray-400 mb-1">Efficiency</div>
+            <div id="gaugeEff" class="text-2xl font-bold font-mono text-purple-400">82%</div>
+          </div>
+        </div>
+
+        <!-- Log -->
+        <div class="bg-gray-800 rounded-xl p-3">
+          <div class="text-xs text-gray-400 mb-2 font-semibold">System Log</div>
+          <div id="log" class="space-y-1 h-28 overflow-y-auto text-xs font-mono"></div>
+        </div>
+
+        <!-- AI Recommendation -->
+        <div id="recommendation" class="mt-3 bg-indigo-900/30 border border-indigo-700 rounded-lg p-3 text-sm text-indigo-300 hidden">
+          <span class="font-semibold text-indigo-200">🤖 AI Recommendation: </span>
+          <span id="recText"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRODUCTION STATS -->
+    <div class="bg-gray-900 border border-gray-700 rounded-2xl p-6 mb-8">
+      <h2 class="font-bold mb-4 text-gray-200">📊 Production Analytics (Digital Twin View)</h2>
+      <div class="grid grid-cols-4 gap-4">
+        <div class="text-center">
+          <div class="text-3xl font-bold text-green-400" id="statOutput">480</div>
+          <div class="text-xs text-gray-400 mt-1">Units/Hour</div>
+        </div>
+        <div class="text-center">
+          <div class="text-3xl font-bold text-yellow-400" id="statDefects">2.1</div>
+          <div class="text-xs text-gray-400 mt-1">Defect Rate %</div>
+        </div>
+        <div class="text-center">
+          <div class="text-3xl font-bold text-blue-400" id="statEnergy">42</div>
+          <div class="text-xs text-gray-400 mt-1">kWh Used</div>
+        </div>
+        <div class="text-center">
+          <div class="text-3xl font-bold text-purple-400" id="statHealth">Good</div>
+          <div class="text-xs text-gray-400 mt-1">Machine Health</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex justify-between">
+      <a href="01-intro.html" class="bg-gray-700 hover:bg-gray-600 text-white px-5 py-3 rounded-xl font-semibold transition">← Back</a>
+      <a href="03-building.html" class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-3 rounded-xl font-semibold transition">Next: Smart Building →</a>
+    </div>
+  </main>
+
+  <script>
+    let mode = 'normal';
+    let logLines = [];
+    let ticks = 0;
+
+    function addLog(msg, color='text-gray-400') {
+      const now = new Date().toLocaleTimeString();
+      logLines.unshift(`<span class="${color}">[${now}] ${msg}</span>`);
+      if (logLines.length > 20) logLines.pop();
+      document.getElementById('log').innerHTML = logLines.join('<br>');
+    }
+
+    function setMode(m) {
+      mode = m;
+      ['btnNormal','btnBoost','btnStop'].forEach(id => {
+        document.getElementById(id).classList.remove('ring-2','ring-white');
+      });
+      if (m === 'normal') {
+        document.getElementById('speedSlider').value = 1200;
+        document.getElementById('coolSlider').value = 50;
+        document.getElementById('btnNormal').classList.add('ring-2','ring-white');
+        addLog('Mode set to NORMAL', 'text-green-400');
+      } else if (m === 'boost') {
+        document.getElementById('speedSlider').value = 2400;
+        document.getElementById('coolSlider').value = 80;
+        document.getElementById('btnBoost').classList.add('ring-2','ring-white');
+        addLog('Mode set to BOOST — monitoring closely', 'text-yellow-400');
+      } else {
+        document.getElementById('speedSlider').value = 0;
+        document.getElementById('coolSlider').value = 0;
+        document.getElementById('btnStop').classList.add('ring-2','ring-white');
+        addLog('EMERGENCY STOP activated!', 'text-red-400');
+      }
+      update();
+    }
+
+    function update() {
+      const speed = parseInt(document.getElementById('speedSlider').value);
+      const cool = parseInt(document.getElementById('coolSlider').value);
+
+      document.getElementById('speedLabel').textContent = speed + ' RPM';
+      document.getElementById('coolLabel').textContent = cool + '%';
+
+      // Temp = base from speed, reduced by coolant
+      const tempRaw = 40 + (speed / 3000) * 80 - (cool / 100) * 30;
+      const temp = Math.round(tempRaw + (Math.random() * 4 - 2));
+      const rpm = speed;
+      const output = Math.round((speed / 1200) * 480);
+      const defects = speed > 2500 ? (2.1 + (speed - 2500) / 100).toFixed(1) : 2.1;
+      const energy = Math.round(42 * speed / 1200);
+      const eff = temp > 100 ? 55 : temp > 85 ? 70 : 82;
+      const health = temp > 110 ? 'Critical' : temp > 90 ? 'Warning' : 'Good';
+
+      // Update twin display
+      document.getElementById('gaugeTemp').textContent = temp + '°C';
+      document.getElementById('gaugeTemp').className = `text-2xl font-bold font-mono ${temp>100?'text-red-400':temp>80?'text-yellow-400':'text-orange-400'}`;
+      document.getElementById('tempFill').style.width = Math.min(100, (temp/130)*100) + '%';
+      document.getElementById('tempFill').className = `h-full rounded-full transition-all duration-700 ${temp>100?'bg-red-500':temp>80?'bg-yellow-500':'bg-orange-500'}`;
+      document.getElementById('gaugeRPM').textContent = rpm;
+      document.getElementById('rpmFill').style.width = (rpm/3000*100) + '%';
+      document.getElementById('gaugeOutput').textContent = speed === 0 ? '0/h' : output + '/h';
+      document.getElementById('gaugeEff').textContent = speed === 0 ? '--' : eff + '%';
+      document.getElementById('statOutput').textContent = speed === 0 ? 0 : output;
+      document.getElementById('statDefects').textContent = defects;
+      document.getElementById('statEnergy').textContent = speed === 0 ? 0 : energy;
+      document.getElementById('statHealth').textContent = health;
+      document.getElementById('statHealth').className = `text-3xl font-bold ${health==='Critical'?'text-red-400':health==='Warning'?'text-yellow-400':'text-purple-400'}`;
+
+      // Gear animation speed
+      const gearDur = speed > 0 ? Math.max(0.5, 3 - speed/1500) + 's' : '99s';
+      document.getElementById('gearA').style.animationDuration = gearDur;
+      document.getElementById('gearB').style.animationDuration = (parseFloat(gearDur)*0.7)+'s';
+
+      // Alert
+      if (temp > 110) {
+        document.getElementById('alertOverlay').classList.remove('hidden');
+        document.getElementById('alertOverlay').classList.add('flex');
+        document.getElementById('factoryStatus').textContent = 'CRITICAL';
+        document.getElementById('factoryStatus').className = 'ml-auto text-xs bg-red-900 text-red-300 px-2 py-0.5 rounded-full blink';
+      } else if (speed === 0) {
+        document.getElementById('alertOverlay').classList.add('hidden');
+        document.getElementById('alertOverlay').classList.remove('flex');
+        document.getElementById('factoryStatus').textContent = 'STOPPED';
+        document.getElementById('factoryStatus').className = 'ml-auto text-xs bg-gray-700 text-gray-400 px-2 py-0.5 rounded-full';
+      } else {
+        document.getElementById('alertOverlay').classList.add('hidden');
+        document.getElementById('alertOverlay').classList.remove('flex');
+        document.getElementById('factoryStatus').textContent = 'RUNNING';
+        document.getElementById('factoryStatus').className = 'ml-auto text-xs bg-green-900 text-green-300 px-2 py-0.5 rounded-full';
+      }
+
+      // Recommendations
+      const rec = document.getElementById('recommendation');
+      const recText = document.getElementById('recText');
+      if (temp > 100) {
+        rec.classList.remove('hidden');
+        recText.textContent = 'Temperature critical. Increase coolant flow or reduce motor speed to prevent damage.';
+      } else if (speed > 2000 && cool < 60) {
+        rec.classList.remove('hidden');
+        recText.textContent = 'High speed with low coolant detected. Recommend increasing coolant to ≥70% to maintain safe temperature.';
+      } else if (eff < 75) {
+        rec.classList.remove('hidden');
+        recText.textContent = 'Efficiency dropping. Optimize speed-to-coolant ratio for peak performance.';
+      } else {
+        rec.classList.add('hidden');
+      }
+
+      document.getElementById('syncBadge').textContent = '● SYNCED';
+    }
+
+    // Periodic auto-fluctuation
+    setInterval(() => {
+      if (mode === 'normal') {
+        const s = document.getElementById('speedSlider');
+        s.value = Math.max(400, Math.min(3000, parseInt(s.value) + Math.round(Math.random()*40-20)));
+        update();
+      }
+      ticks++;
+      if (ticks % 5 === 0) {
+        const speed = parseInt(document.getElementById('speedSlider').value);
+        if (speed > 0) addLog(`Sensor ping — RPM: ${speed}, OK`, 'text-gray-500');
+      }
+    }, 2000);
+
+    addLog('Factory twin online', 'text-green-400');
+    addLog('All sensors nominal', 'text-gray-500');
+    update();
+    setMode('normal');
+  </script>
+</body>
+</html>

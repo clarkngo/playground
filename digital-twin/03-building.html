@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Activity 3: Smart Building Twin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .nav-btn { transition: background 0.2s; }
+    .room { transition: background-color 0.5s, border-color 0.5s; }
+    input[type=range] { accent-color: #6366f1; }
+    @keyframes hvac-spin { from{transform:rotate(0)} to{transform:rotate(360deg)} }
+    .hvac-on { animation: hvac-spin 2s linear infinite; }
+    .toggle-switch { position:relative; display:inline-block; width:44px; height:24px; }
+    .toggle-switch input { opacity:0; width:0; height:0; }
+    .slider-t { position:absolute; cursor:pointer; top:0;left:0;right:0;bottom:0; background:#374151; border-radius:24px; transition:0.3s; }
+    .slider-t:before { position:absolute; content:""; height:18px; width:18px; left:3px; bottom:3px; background:white; border-radius:50%; transition:0.3s; }
+    input:checked + .slider-t { background:#6366f1; }
+    input:checked + .slider-t:before { transform:translateX(20px); }
+  </style>
+</head>
+<body class="bg-gray-950 text-white min-h-screen font-sans">
+
+  <nav class="bg-gray-900 border-b border-gray-700 px-6 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-sm font-bold">DT</div>
+      <span class="text-gray-300 text-sm font-medium">Digital Twin Activity Series</span>
+    </div>
+    <div class="flex gap-2 flex-wrap justify-end">
+      <a href="01-intro.html" class="nav-btn bg-gray-700 hover:bg-gray-600 text-xs px-3 py-1 rounded-full">1 · Intro</a>
+      <a href="02-factory.html" class="nav-btn bg-gray-700 hover:bg-gray-600 text-xs px-3 py-1 rounded-full">2 · Factory</a>
+      <span class="bg-indigo-700 text-white text-xs px-3 py-1 rounded-full font-semibold">3 · Building</span>
+      <a href="04-maintenance.html" class="nav-btn bg-gray-700 hover:bg-gray-600 text-xs px-3 py-1 rounded-full">4 · Maintenance</a>
+      <a href="05-city.html" class="nav-btn bg-gray-700 hover:bg-gray-600 text-xs px-3 py-1 rounded-full">5 · City</a>
+      <a href="06-health.html" class="nav-btn bg-gray-700 hover:bg-gray-600 text-xs px-3 py-1 rounded-full">6 · Health</a>
+      <a href="07-sync.html" class="nav-btn bg-gray-700 hover:bg-gray-600 text-xs px-3 py-1 rounded-full">7 · Sync</a>
+      <a href="08-scenarios.html" class="nav-btn bg-gray-700 hover:bg-gray-600 text-xs px-3 py-1 rounded-full">8 · Scenarios</a>
+      <a href="09-quiz.html" class="nav-btn bg-gray-700 hover:bg-gray-600 text-xs px-3 py-1 rounded-full">9 · Quiz</a>
+      <a href="10-design.html" class="nav-btn bg-gray-700 hover:bg-gray-600 text-xs px-3 py-1 rounded-full">10 · Design</a>
+    </div>
+  </nav>
+
+  <main class="max-w-5xl mx-auto px-6 py-10">
+    <div class="text-center mb-8">
+      <div class="text-indigo-400 text-sm font-semibold uppercase tracking-widest mb-2">Activity 3 of 10</div>
+      <h1 class="text-3xl font-bold mb-2">Smart Building Digital Twin</h1>
+      <p class="text-gray-400">Manage energy across a 4-room building. Toggle lights & HVAC, then watch the digital twin calculate real-time energy consumption.</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+      <!-- BUILDING FLOOR PLAN -->
+      <div class="lg:col-span-2 bg-gray-900 border border-gray-700 rounded-2xl p-6">
+        <div class="text-sm font-semibold text-gray-300 mb-4 uppercase tracking-wide">🏢 Floor Plan — Digital Twin View</div>
+        <div class="grid grid-cols-2 gap-3">
+          <!-- Room A -->
+          <div id="roomA" class="room border-2 border-blue-700 bg-blue-900/20 rounded-xl p-4 cursor-pointer" onclick="selectRoom('A')">
+            <div class="flex justify-between items-start mb-2">
+              <span class="font-semibold text-sm">Office A</span>
+              <span id="lightA" class="text-lg">💡</span>
+            </div>
+            <div id="tempA" class="text-2xl font-bold font-mono text-blue-300">22°C</div>
+            <div id="occA" class="text-xs text-gray-400 mt-1">👥 4 people</div>
+            <div id="energyA" class="text-xs text-yellow-400 mt-1">⚡ 2.4 kWh</div>
+          </div>
+          <!-- Room B -->
+          <div id="roomB" class="room border-2 border-gray-600 bg-gray-800/40 rounded-xl p-4 cursor-pointer" onclick="selectRoom('B')">
+            <div class="flex justify-between items-start mb-2">
+              <span class="font-semibold text-sm">Meeting Room</span>
+              <span id="lightB" class="text-lg opacity-30">💡</span>
+            </div>
+            <div id="tempB" class="text-2xl font-bold font-mono text-gray-400">25°C</div>
+            <div id="occB" class="text-xs text-gray-400 mt-1">👥 0 people</div>
+            <div id="energyB" class="text-xs text-yellow-400 mt-1">⚡ 0.2 kWh</div>
+          </div>
+          <!-- Room C -->
+          <div id="roomC" class="room border-2 border-green-700 bg-green-900/20 rounded-xl p-4 cursor-pointer" onclick="selectRoom('C')">
+            <div class="flex justify-between items-start mb-2">
+              <span class="font-semibold text-sm">Lab C</span>
+              <span id="lightC" class="text-lg">💡</span>
+            </div>
+            <div id="tempC" class="text-2xl font-bold font-mono text-green-300">20°C</div>
+            <div id="occC" class="text-xs text-gray-400 mt-1">👥 2 people</div>
+            <div id="energyC" class="text-xs text-yellow-400 mt-1">⚡ 3.8 kWh</div>
+          </div>
+          <!-- Room D -->
+          <div id="roomD" class="room border-2 border-gray-600 bg-gray-800/40 rounded-xl p-4 cursor-pointer" onclick="selectRoom('D')">
+            <div class="flex justify-between items-start mb-2">
+              <span class="font-semibold text-sm">Server Room</span>
+              <span id="lightD" class="text-lg opacity-30">💡</span>
+            </div>
+            <div id="tempD" class="text-2xl font-bold font-mono text-red-300">28°C</div>
+            <div id="occD" class="text-xs text-gray-400 mt-1">👥 0 people</div>
+            <div id="energyD" class="text-xs text-yellow-400 mt-1">⚡ 5.1 kWh</div>
+          </div>
+        </div>
+
+        <!-- Total energy meter -->
+        <div class="mt-4 bg-gray-800 rounded-xl p-4">
+          <div class="flex justify-between items-center mb-2">
+            <span class="text-sm text-gray-300 font-semibold">Total Building Energy</span>
+            <span id="totalEnergy" class="text-xl font-bold font-mono text-yellow-400">11.5 kWh</span>
+          </div>
+          <div class="h-3 bg-gray-700 rounded-full overflow-hidden">
+            <div id="energyBar" class="h-full rounded-full transition-all duration-500 bg-gradient-to-r from-green-500 via-yellow-500 to-red-500" style="width:38%"></div>
+          </div>
+          <div class="flex justify-between text-xs text-gray-500 mt-1">
+            <span>0 kWh</span><span>Optimal: 8-12</span><span>30 kWh max</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ROOM CONTROL PANEL -->
+      <div class="bg-gray-900 border border-indigo-700/50 rounded-2xl p-6">
+        <div class="text-sm font-semibold text-indigo-300 mb-4 uppercase tracking-wide">🎛️ Room Controls</div>
+        <div id="panelLabel" class="text-sm text-gray-400 mb-3">Select a room to control it</div>
+
+        <div id="controlPanel" class="space-y-4">
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-gray-300">💡 Lights</span>
+            <label class="toggle-switch"><input type="checkbox" id="ctrlLight" onchange="applyControl()" checked><span class="slider-t"></span></label>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-gray-300">❄️ HVAC</span>
+            <label class="toggle-switch"><input type="checkbox" id="ctrlHVAC" onchange="applyControl()" checked><span class="slider-t"></span></label>
+          </div>
+          <div>
+            <div class="flex justify-between text-sm mb-1">
+              <span class="text-gray-300">🌡️ Set Temp</span>
+              <span id="ctrlTempLabel" class="text-blue-300 font-mono">22°C</span>
+            </div>
+            <input id="ctrlTemp" type="range" min="16" max="30" value="22" class="w-full" oninput="document.getElementById('ctrlTempLabel').textContent=this.value+'°C'; applyControl()">
+          </div>
+          <div>
+            <div class="flex justify-between text-sm mb-1">
+              <span class="text-gray-300">👥 Occupancy</span>
+              <span id="ctrlOccLabel" class="text-purple-300 font-mono">4</span>
+            </div>
+            <input id="ctrlOcc" type="range" min="0" max="20" value="4" class="w-full" oninput="document.getElementById('ctrlOccLabel').textContent=this.value; applyControl()">
+          </div>
+        </div>
+
+        <div class="mt-5 border-t border-gray-700 pt-4">
+          <div class="text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wide">AI Optimizer</div>
+          <button onclick="optimize()" class="w-full bg-purple-700 hover:bg-purple-600 text-sm py-2 rounded-lg transition mb-2">⚡ Auto-Optimize Building</button>
+          <div id="optMsg" class="text-xs text-green-400 hidden"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INSIGHTS -->
+    <div class="bg-gray-900 border border-gray-700 rounded-2xl p-6 mb-8">
+      <h2 class="font-bold mb-3 text-gray-200">💡 Digital Twin Insights</h2>
+      <div id="insights" class="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm"></div>
+    </div>
+
+    <div class="flex justify-between">
+      <a href="02-factory.html" class="bg-gray-700 hover:bg-gray-600 text-white px-5 py-3 rounded-xl font-semibold transition">← Back</a>
+      <a href="04-maintenance.html" class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-3 rounded-xl font-semibold transition">Next: Predictive Maintenance →</a>
+    </div>
+  </main>
+
+  <script>
+    const rooms = {
+      A: { name:'Office A', temp:22, setTemp:22, hvac:true, light:true, occ:4, baseEnergy:1.5 },
+      B: { name:'Meeting Room', temp:25, setTemp:25, hvac:false, light:false, occ:0, baseEnergy:0.2 },
+      C: { name:'Lab C', temp:20, setTemp:20, hvac:true, light:true, occ:2, baseEnergy:2.5 },
+      D: { name:'Server Room', temp:28, setTemp:26, hvac:true, light:false, occ:0, baseEnergy:4.5 }
+    };
+    let selectedRoom = 'A';
+
+    function calcEnergy(r) {
+      const room = rooms[r];
+      let e = room.baseEnergy;
+      if (room.light) e += 0.8;
+      if (room.hvac) e += 1.2 + Math.abs(room.temp - room.setTemp) * 0.1;
+      e += room.occ * 0.05;
+      return Math.round(e * 10) / 10;
+    }
+
+    function updateRoom(r) {
+      const room = rooms[r];
+      const energy = calcEnergy(r);
+      const isActive = room.light || room.hvac;
+      const color = { A:'blue', B:'gray', C:'green', D:'red' }[r];
+      const bg = isActive ? `bg-${color}-900/20 border-${color}-700` : 'bg-gray-800/40 border-gray-600';
+
+      document.getElementById('tempD').className = 'text-2xl font-bold font-mono text-red-300'; // keep server room red
+      const tempEl = document.getElementById('temp' + r);
+      tempEl.textContent = room.temp + '°C';
+      if (r !== 'D') {
+        tempEl.className = `text-2xl font-bold font-mono ${room.temp < 20 ? 'text-blue-300' : room.temp > 26 ? 'text-red-300' : 'text-green-300'}`;
+      }
+
+      document.getElementById('lightL' + r)?.remove();
+      const lightEl = document.getElementById('light' + r);
+      lightEl.style.opacity = room.light ? '1' : '0.2';
+
+      document.getElementById('occ' + r).textContent = `👥 ${room.occ} people`;
+      document.getElementById('energy' + r).textContent = `⚡ ${energy} kWh`;
+
+      const roomEl = document.getElementById('room' + r);
+      if (selectedRoom === r) {
+        roomEl.className = 'room border-2 border-indigo-400 bg-indigo-900/30 rounded-xl p-4 cursor-pointer ring-2 ring-indigo-500';
+      } else {
+        roomEl.className = `room border-2 rounded-xl p-4 cursor-pointer ${isActive ? `border-${color}-700 bg-${color}-900/20` : 'border-gray-600 bg-gray-800/40'}`;
+      }
+    }
+
+    function updateTotal() {
+      const total = Object.keys(rooms).reduce((s, r) => s + calcEnergy(r), 0);
+      const t = Math.round(total * 10) / 10;
+      document.getElementById('totalEnergy').textContent = t + ' kWh';
+      document.getElementById('energyBar').style.width = Math.min(100, (t / 30) * 100) + '%';
+      generateInsights(t);
+    }
+
+    function generateInsights(total) {
+      const ins = [];
+      if (!rooms.B.hvac && !rooms.B.light && rooms.B.occ === 0) ins.push({icon:'✅', text:'Meeting Room correctly powered down while empty.', color:'text-green-400'});
+      if (rooms.A.hvac && rooms.A.occ === 0) ins.push({icon:'⚠️', text:'Office A HVAC is on but room is empty — save energy!', color:'text-yellow-400'});
+      if (rooms.D.temp > 27) ins.push({icon:'🔥', text:'Server Room temperature high. Increase cooling urgently.', color:'text-red-400'});
+      if (total < 10) ins.push({icon:'🌱', text:'Excellent! Building energy use is optimal.', color:'text-green-400'});
+      if (total > 18) ins.push({icon:'📈', text:'High energy consumption detected. Review room settings.', color:'text-orange-400'});
+      if (ins.length === 0) ins.push({icon:'ℹ️', text:'Building operating within normal parameters.', color:'text-blue-400'});
+
+      document.getElementById('insights').innerHTML = ins.map(i =>
+        `<div class="bg-gray-800 rounded-lg p-3"><span class="${i.color} font-semibold">${i.icon} </span><span class="text-gray-300">${i.text}</span></div>`
+      ).join('');
+    }
+
+    function selectRoom(r) {
+      selectedRoom = r;
+      document.getElementById('panelLabel').textContent = `Controlling: ${rooms[r].name}`;
+      document.getElementById('ctrlLight').checked = rooms[r].light;
+      document.getElementById('ctrlHVAC').checked = rooms[r].hvac;
+      document.getElementById('ctrlTemp').value = rooms[r].setTemp;
+      document.getElementById('ctrlTempLabel').textContent = rooms[r].setTemp + '°C';
+      document.getElementById('ctrlOcc').value = rooms[r].occ;
+      document.getElementById('ctrlOccLabel').textContent = rooms[r].occ;
+      Object.keys(rooms).forEach(k => updateRoom(k));
+    }
+
+    function applyControl() {
+      const r = selectedRoom;
+      rooms[r].light = document.getElementById('ctrlLight').checked;
+      rooms[r].hvac = document.getElementById('ctrlHVAC').checked;
+      rooms[r].setTemp = parseInt(document.getElementById('ctrlTemp').value);
+      rooms[r].occ = parseInt(document.getElementById('ctrlOcc').value);
+      updateRoom(r);
+      updateTotal();
+    }
+
+    function optimize() {
+      Object.keys(rooms).forEach(r => {
+        if (rooms[r].occ === 0) { rooms[r].light = false; rooms[r].hvac = false; }
+        else { rooms[r].light = true; rooms[r].hvac = true; rooms[r].setTemp = 22; }
+      });
+      selectRoom(selectedRoom);
+      updateTotal();
+      const msg = document.getElementById('optMsg');
+      msg.classList.remove('hidden');
+      msg.textContent = '✓ Optimized! Empty rooms powered down, occupied rooms set to 22°C.';
+    }
+
+    // Temp drift simulation
+    setInterval(() => {
+      Object.keys(rooms).forEach(r => {
+        const room = rooms[r];
+        if (room.hvac) {
+          room.temp = room.temp + (room.setTemp - room.temp) * 0.1 + (Math.random() * 0.4 - 0.2);
+        } else {
+          room.temp += Math.random() * 0.3 - 0.1; // drift slowly toward ambient
+        }
+        room.temp = Math.round(room.temp * 10) / 10;
+        updateRoom(r);
+      });
+      updateTotal();
+    }, 2000);
+
+    // Init
+    selectRoom('A');
+    updateTotal();
+  </script>
+</body>
+</html>

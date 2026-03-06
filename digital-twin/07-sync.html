@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Activity 7: Real-Time Sync Challenge</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .nav-btn { transition: background 0.2s; }
+    @keyframes send-packet { 0%{left:0;opacity:1} 100%{left:100%;opacity:0} }
+    @keyframes recv-packet { 0%{right:0;opacity:1} 100%{right:100%;opacity:0} }
+    .packet { position:absolute; top:50%; transform:translateY(-50%); width:12px; height:12px; border-radius:50%; pointer-events:none; }
+    .packet-send { animation: send-packet 1.2s ease-in-out; }
+    .packet-recv { animation: recv-packet 1.2s ease-in-out; }
+    input[type=range] { accent-color: #6366f1; }
+    .match-glow { box-shadow: 0 0 0 3px rgba(34,197,94,0.5); border-color: rgb(34,197,94) !important; }
+    .mismatch-glow { box-shadow: 0 0 0 3px rgba(239,68,68,0.4); border-color: rgb(239,68,68) !important; }
+    .bar-t { transition: width 0.5s ease; }
+    @keyframes pulse-green { 0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,0.5)} 50%{box-shadow:0 0 0 8px rgba(34,197,94,0)} }
+    .pulse-green { animation: pulse-green 1s infinite; }
+  </style>
+</head>
+<body class="bg-gray-950 text-white min-h-screen font-sans">
+
+  <nav class="bg-gray-900 border-b border-gray-700 px-6 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-sm font-bold">DT</div>
+      <span class="text-gray-300 text-sm font-medium">Digital Twin Activity Series</span>
+    </div>
+    <div class="flex gap-2 flex-wrap justify-end">
+      <a href="01-intro.html" class="nav-btn bg-gray-700 hover:bg-gray-600 text-xs px-3 py-1 rounded-full">1 · Intro</a>
+      <a href="02-factory.html" class="nav-btn bg-gray-700 hover:bg-gray-600 text-xs px-3 py-1 rounded-full">2 · Factory</a>
+      <a href="03-building.html" class="nav-btn bg-gray-700 hover:bg-gray-600 text-xs px-3 py-1 rounded-full">3 · Building</a>
+      <a href="04-maintenance.html" class="nav-btn bg-gray-700 hover:bg-gray-600 text-xs px-3 py-1 rounded-full">4 · Maintenance</a>
+      <a href="05-city.html" class="nav-btn bg-gray-700 hover:bg-gray-600 text-xs px-3 py-1 rounded-full">5 · City</a>
+      <a href="06-health.html" class="nav-btn bg-gray-700 hover:bg-gray-600 text-xs px-3 py-1 rounded-full">6 · Health</a>
+      <span class="bg-indigo-700 text-white text-xs px-3 py-1 rounded-full font-semibold">7 · Sync</span>
+      <a href="08-scenarios.html" class="nav-btn bg-gray-700 hover:bg-gray-600 text-xs px-3 py-1 rounded-full">8 · Scenarios</a>
+      <a href="09-quiz.html" class="nav-btn bg-gray-700 hover:bg-gray-600 text-xs px-3 py-1 rounded-full">9 · Quiz</a>
+      <a href="10-design.html" class="nav-btn bg-gray-700 hover:bg-gray-600 text-xs px-3 py-1 rounded-full">10 · Design</a>
+    </div>
+  </nav>
+
+  <main class="max-w-5xl mx-auto px-6 py-10">
+    <div class="text-center mb-8">
+      <div class="text-indigo-400 text-sm font-semibold uppercase tracking-widest mb-2">Activity 7 of 10</div>
+      <h1 class="text-3xl font-bold mb-2">Real-Time Data Sync Challenge</h1>
+      <p class="text-gray-400">The physical machine is generating live data. Manually adjust the digital twin's sliders to keep it in sync. Score points for accuracy!</p>
+    </div>
+
+    <!-- SCORES -->
+    <div class="grid grid-cols-3 gap-4 mb-6">
+      <div class="bg-gray-900 border border-gray-700 rounded-xl p-4 text-center">
+        <div class="text-xs text-gray-400 mb-1">Sync Score</div>
+        <div id="syncScore" class="text-3xl font-bold font-mono text-green-400">100%</div>
+      </div>
+      <div class="bg-gray-900 border border-gray-700 rounded-xl p-4 text-center">
+        <div class="text-xs text-gray-400 mb-1">Points Earned</div>
+        <div id="points" class="text-3xl font-bold font-mono text-yellow-400">0</div>
+      </div>
+      <div class="bg-gray-900 border border-gray-700 rounded-xl p-4 text-center">
+        <div class="text-xs text-gray-400 mb-1">Time Elapsed</div>
+        <div id="timeElapsed" class="text-3xl font-bold font-mono text-blue-400">0:00</div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      <!-- PHYSICAL MACHINE (auto-changing) -->
+      <div class="bg-gray-900 border border-orange-700/50 rounded-2xl p-6">
+        <div class="flex items-center gap-2 mb-5">
+          <div class="w-3 h-3 rounded-full bg-orange-400 animate-pulse"></div>
+          <span class="text-orange-400 font-bold text-sm uppercase tracking-wide">Physical Machine</span>
+          <span class="ml-auto text-xs text-gray-500">Auto-updating</span>
+        </div>
+
+        <!-- Data channels -->
+        <div class="space-y-4">
+          <div class="bg-gray-800 rounded-lg p-3">
+            <div class="flex justify-between text-sm mb-2">
+              <span class="text-gray-400">🌡️ Temperature</span>
+              <span id="physTemp" class="font-mono text-orange-300 font-bold">72°C</span>
+            </div>
+            <div class="h-3 bg-gray-700 rounded-full overflow-hidden">
+              <div id="physTempBar" class="h-full bar-t bg-orange-500 rounded-full" style="width:48%"></div>
+            </div>
+          </div>
+          <div class="bg-gray-800 rounded-lg p-3">
+            <div class="flex justify-between text-sm mb-2">
+              <span class="text-gray-400">⚡ Power (kW)</span>
+              <span id="physPower" class="font-mono text-yellow-300 font-bold">42 kW</span>
+            </div>
+            <div class="h-3 bg-gray-700 rounded-full overflow-hidden">
+              <div id="physPowerBar" class="h-full bar-t bg-yellow-500 rounded-full" style="width:42%"></div>
+            </div>
+          </div>
+          <div class="bg-gray-800 rounded-lg p-3">
+            <div class="flex justify-between text-sm mb-2">
+              <span class="text-gray-400">🔄 Vibration</span>
+              <span id="physVib" class="font-mono text-blue-300 font-bold">1.4 mm/s</span>
+            </div>
+            <div class="h-3 bg-gray-700 rounded-full overflow-hidden">
+              <div id="physVibBar" class="h-full bar-t bg-blue-500 rounded-full" style="width:28%"></div>
+            </div>
+          </div>
+          <div class="bg-gray-800 rounded-lg p-3">
+            <div class="flex justify-between text-sm mb-2">
+              <span class="text-gray-400">💧 Flow Rate</span>
+              <span id="physFlow" class="font-mono text-cyan-300 font-bold">35 L/min</span>
+            </div>
+            <div class="h-3 bg-gray-700 rounded-full overflow-hidden">
+              <div id="physFlowBar" class="h-full bar-t bg-cyan-500 rounded-full" style="width:70%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Data link visualization -->
+        <div class="relative mt-4 h-8" id="linkViz">
+          <div class="absolute inset-0 flex items-center">
+            <div class="w-full h-0.5 bg-gray-700"></div>
+          </div>
+          <div id="packetContainer" class="absolute inset-0"></div>
+        </div>
+        <div class="text-xs text-gray-500 text-center">Data packets → Digital Twin</div>
+      </div>
+
+      <!-- DIGITAL TWIN (user controls) -->
+      <div class="bg-gray-900 border border-indigo-700/50 rounded-2xl p-6">
+        <div class="flex items-center gap-2 mb-5">
+          <div id="syncDot" class="w-3 h-3 rounded-full bg-green-400 pulse-green"></div>
+          <span class="text-indigo-400 font-bold text-sm uppercase tracking-wide">Your Digital Twin</span>
+          <span class="ml-auto text-xs text-gray-500">You control this →</span>
+        </div>
+
+        <div class="space-y-4">
+          <!-- Temp -->
+          <div id="rowTemp" class="bg-gray-800 border border-gray-700 rounded-lg p-3">
+            <div class="flex justify-between text-sm mb-2">
+              <span class="text-gray-400">🌡️ Temperature</span>
+              <span id="digTempVal" class="font-mono text-orange-300 font-bold">72°C</span>
+            </div>
+            <input id="digTemp" type="range" min="40" max="120" value="72" class="w-full" oninput="syncUpdate()">
+          </div>
+          <!-- Power -->
+          <div id="rowPower" class="bg-gray-800 border border-gray-700 rounded-lg p-3">
+            <div class="flex justify-between text-sm mb-2">
+              <span class="text-gray-400">⚡ Power (kW)</span>
+              <span id="digPowerVal" class="font-mono text-yellow-300 font-bold">42 kW</span>
+            </div>
+            <input id="digPower" type="range" min="0" max="100" value="42" class="w-full" oninput="syncUpdate()">
+          </div>
+          <!-- Vibration -->
+          <div id="rowVib" class="bg-gray-800 border border-gray-700 rounded-lg p-3">
+            <div class="flex justify-between text-sm mb-2">
+              <span class="text-gray-400">🔄 Vibration</span>
+              <span id="digVibVal" class="font-mono text-blue-300 font-bold">1.4 mm/s</span>
+            </div>
+            <input id="digVib" type="range" min="0" max="50" value="14" step="1" class="w-full" oninput="syncUpdate()">
+          </div>
+          <!-- Flow -->
+          <div id="rowFlow" class="bg-gray-800 border border-gray-700 rounded-lg p-3">
+            <div class="flex justify-between text-sm mb-2">
+              <span class="text-gray-400">💧 Flow Rate</span>
+              <span id="digFlowVal" class="font-mono text-cyan-300 font-bold">35 L/min</span>
+            </div>
+            <input id="digFlow" type="range" min="0" max="50" value="35" class="w-full" oninput="syncUpdate()">
+          </div>
+        </div>
+
+        <div class="mt-3 flex gap-2">
+          <button onclick="autoSync()" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-sm py-2 rounded-lg transition">⚡ Auto-Sync Once</button>
+          <button onclick="cheatSync()" class="flex-1 bg-gray-700 hover:bg-gray-600 text-sm py-2 rounded-lg transition">🔄 Enable Live Sync</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SYNC HISTORY -->
+    <div class="bg-gray-900 border border-gray-700 rounded-2xl p-6 mb-8">
+      <h2 class="font-bold mb-3 text-gray-200">📊 Sync History & Learning</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <div class="text-xs text-gray-400 mb-2 font-semibold uppercase tracking-wide">Why Sync Matters</div>
+          <div class="space-y-2 text-sm text-gray-400">
+            <div class="bg-gray-800 rounded p-2">✅ Perfect sync = Digital twin can make accurate predictions</div>
+            <div class="bg-gray-800 rounded p-2">⚠️ Lag = Predictions become unreliable over time</div>
+            <div class="bg-gray-800 rounded p-2">❌ Drift = Twin diverges — no longer a useful replica</div>
+          </div>
+        </div>
+        <div>
+          <div class="text-xs text-gray-400 mb-2 font-semibold uppercase tracking-wide">Your Sync Log</div>
+          <div id="syncLog" class="space-y-1 text-xs font-mono h-24 overflow-y-auto"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex justify-between">
+      <a href="06-health.html" class="bg-gray-700 hover:bg-gray-600 text-white px-5 py-3 rounded-xl font-semibold transition">← Back</a>
+      <a href="08-scenarios.html" class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-3 rounded-xl font-semibold transition">Next: Scenario Builder →</a>
+    </div>
+  </main>
+
+  <script>
+    // Physical machine state
+    let phys = { temp: 72, power: 42, vib: 14, flow: 35 };
+    let autoSyncing = false;
+    let totalPoints = 0;
+    let startTime = Date.now();
+    let syncLogs = [];
+
+    function physRand(v, min, max, step) {
+      return Math.min(max, Math.max(min, v + (Math.random() * step * 2 - step)));
+    }
+
+    // Update physical machine randomly
+    setInterval(() => {
+      phys.temp = Math.round(physRand(phys.temp, 50, 110, 5));
+      phys.power = Math.round(physRand(phys.power, 10, 95, 8));
+      phys.vib = Math.round(physRand(phys.vib, 2, 45, 3));
+      phys.flow = Math.round(physRand(phys.flow, 5, 50, 4));
+      updatePhysDisplay();
+      if (autoSyncing) { autoSync(); }
+      sendPacket();
+      syncUpdate();
+    }, 3000);
+
+    function updatePhysDisplay() {
+      document.getElementById('physTemp').textContent = phys.temp + '°C';
+      document.getElementById('physTempBar').style.width = ((phys.temp - 40) / 80 * 100) + '%';
+      document.getElementById('physPower').textContent = phys.power + ' kW';
+      document.getElementById('physPowerBar').style.width = phys.power + '%';
+      document.getElementById('physVib').textContent = (phys.vib / 10).toFixed(1) + ' mm/s';
+      document.getElementById('physVibBar').style.width = (phys.vib / 50 * 100) + '%';
+      document.getElementById('physFlow').textContent = phys.flow + ' L/min';
+      document.getElementById('physFlowBar').style.width = (phys.flow / 50 * 100) + '%';
+    }
+
+    function syncUpdate() {
+      const dig = {
+        temp: parseInt(document.getElementById('digTemp').value),
+        power: parseInt(document.getElementById('digPower').value),
+        vib: parseInt(document.getElementById('digVib').value),
+        flow: parseInt(document.getElementById('digFlow').value)
+      };
+      document.getElementById('digTempVal').textContent = dig.temp + '°C';
+      document.getElementById('digPowerVal').textContent = dig.power + ' kW';
+      document.getElementById('digVibVal').textContent = (dig.vib / 10).toFixed(1) + ' mm/s';
+      document.getElementById('digFlowVal').textContent = dig.flow + ' L/min';
+
+      const diffs = [
+        Math.abs(dig.temp - phys.temp) / 70,
+        Math.abs(dig.power - phys.power) / 90,
+        Math.abs(dig.vib - phys.vib) / 45,
+        Math.abs(dig.flow - phys.flow) / 50
+      ];
+      const avgDiff = diffs.reduce((a,b)=>a+b,0)/4;
+      const score = Math.max(0, Math.round((1 - avgDiff) * 100));
+
+      document.getElementById('syncScore').textContent = score + '%';
+      document.getElementById('syncScore').className = `text-3xl font-bold font-mono ${score > 85 ? 'text-green-400' : score > 60 ? 'text-yellow-400' : 'text-red-400'}`;
+
+      // Style rows
+      const rows = ['Temp','Power','Vib','Flow'];
+      const rowDiffs = diffs;
+      rows.forEach((r, i) => {
+        const el = document.getElementById('row' + r);
+        el.className = `border rounded-lg p-3 ${rowDiffs[i] < 0.08 ? 'bg-green-900/20 border-green-700 match-glow' : rowDiffs[i] < 0.2 ? 'bg-yellow-900/20 border-yellow-700' : 'bg-red-900/20 border-red-700 mismatch-glow'}`;
+      });
+
+      if (score > 85) totalPoints += 1;
+      document.getElementById('points').textContent = totalPoints;
+    }
+
+    function autoSync() {
+      document.getElementById('digTemp').value = phys.temp;
+      document.getElementById('digPower').value = phys.power;
+      document.getElementById('digVib').value = phys.vib;
+      document.getElementById('digFlow').value = phys.flow;
+      syncUpdate();
+      logSync('Auto-sync applied');
+    }
+
+    function cheatSync() {
+      autoSyncing = !autoSyncing;
+      logSync(autoSyncing ? 'Live sync ENABLED' : 'Live sync DISABLED');
+    }
+
+    function logSync(msg) {
+      const t = new Date().toLocaleTimeString();
+      syncLogs.unshift(`<span class="text-gray-400">[${t}]</span> <span class="text-indigo-300">${msg}</span>`);
+      if (syncLogs.length > 10) syncLogs.pop();
+      document.getElementById('syncLog').innerHTML = syncLogs.join('<br>');
+    }
+
+    function sendPacket() {
+      const pkt = document.createElement('div');
+      pkt.className = 'packet packet-send';
+      pkt.style.background = '#6366f1';
+      document.getElementById('packetContainer').appendChild(pkt);
+      setTimeout(() => pkt.remove(), 1300);
+    }
+
+    // Timer
+    setInterval(() => {
+      const elapsed = Math.floor((Date.now() - startTime) / 1000);
+      const m = Math.floor(elapsed / 60), s = elapsed % 60;
+      document.getElementById('timeElapsed').textContent = `${m}:${s.toString().padStart(2,'0')}`;
+    }, 1000);
+
+    updatePhysDisplay();
+    syncUpdate();
+    logSync('Session started — keep the twin in sync!');
+  </script>
+</body>
+</html>
