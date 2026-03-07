@@ -3,278 +3,703 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Playground — Interactive Prototypes</title>
+  <title>Playground</title>
   <style>
-    :root{--bg:#0f1724;--card:#0b1220;--muted:#9aa4b2;--accent:#60a5fa}
-    *{box-sizing:border-box}
-    html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial}
-    body{background:linear-gradient(180deg,#071022 0%, #081625 60%);color:#e6eef8;padding:32px}
-    header{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:20px}
-    h1{margin:0;font-size:20px}
-    p.lead{margin:0;color:var(--muted)}
-    .search-row{margin-left:auto;display:flex;gap:8px;align-items:center}
-    .search{background:var(--card);border:1px solid rgba(255,255,255,0.04);padding:8px 12px;border-radius:10px;color:inherit;min-width:240px}
-    .search:focus{outline:2px solid rgba(96,165,250,0.18)}
+    :root {
+      --bg: #0b1220;
+      --surface: #0f1a2e;
+      --card: #111c30;
+      --border: rgba(255,255,255,0.06);
+      --muted: #7a8899;
+      --text: #dde5f0;
+      --accent: #38bdf8;
+      --accent2: #818cf8;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, system-ui, -apple-system, sans-serif;
+      font-size: 14px;
+      line-height: 1.6;
+    }
 
-    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
-    .card{background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);padding:16px;border-radius:12px;border:1px solid rgba(255,255,255,0.03)}
-    .card h3{margin:0 0 8px 0;font-size:16px}
-    .meta{color:var(--muted);font-size:13px;margin-bottom:10px}
-    .tags{display:flex;gap:6px;flex-wrap:wrap}
-    .tag{background:rgba(255,255,255,0.02);color:var(--muted);padding:4px 8px;border-radius:999px;font-size:12px}
+    /* ── Layout ── */
+    .layout { display: flex; min-height: 100vh; }
 
-    /* Small interactive areas */
-    .mini{background:#07101a;border-radius:8px;padding:10px;border:1px solid rgba(255,255,255,0.02)}
-    .controls{display:flex;gap:8px;align-items:center}
-    button{background:transparent;border:1px solid rgba(255,255,255,0.06);color:inherit;padding:6px 8px;border-radius:8px;cursor:pointer}
+    /* ── Sidebar ── */
+    .sidebar {
+      width: 220px;
+      flex-shrink: 0;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 24px 0;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+    .sidebar-logo {
+      padding: 0 20px 20px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+    .sidebar-logo h1 { font-size: 15px; font-weight: 800; color: var(--accent); }
+    .sidebar-logo p  { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .nav-section { padding: 0 12px; margin-bottom: 6px; }
+    .nav-section-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      padding: 6px 8px 4px;
+    }
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 10px;
+      border-radius: 8px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      transition: background 0.15s, color 0.15s;
+      cursor: pointer;
+    }
+    .nav-link:hover, .nav-link.active { background: rgba(56,189,248,0.08); color: var(--accent); }
+    .nav-link .icon { font-size: 15px; width: 20px; text-align: center; flex-shrink: 0; }
+    .nav-badge {
+      margin-left: auto;
+      background: rgba(255,255,255,0.06);
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 999px;
+    }
 
-    .no-results{color:var(--muted);padding:20px;text-align:center}
+    /* ── Main content ── */
+    .main { flex: 1; padding: 32px; overflow-y: auto; max-width: 960px; }
 
-    footer{margin-top:20px;color:var(--muted);font-size:13px}
-    @media (max-width:420px){body{padding:16px}.search{min-width:140px}}
+    /* ── Search ── */
+    .search-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 28px;
+    }
+    .search-input {
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 9px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      width: 320px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .search-input:focus { border-color: rgba(56,189,248,0.4); }
+    .search-hint { font-size: 12px; color: var(--muted); }
+    kbd { background: rgba(255,255,255,0.06); border-radius: 4px; padding: 1px 5px; font-size: 11px; }
+
+    /* ── Sections ── */
+    .section { margin-bottom: 40px; }
+    .section-header {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .section-title { font-size: 16px; font-weight: 800; color: var(--text); }
+    .section-desc { font-size: 12px; color: var(--muted); }
+    .section-count {
+      margin-left: auto;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      background: rgba(255,255,255,0.04);
+      padding: 2px 8px;
+      border-radius: 999px;
+    }
+
+    /* ── Collection (folder) card ── */
+    .collection-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px 20px;
+      text-decoration: none;
+      display: block;
+      transition: border-color 0.2s, transform 0.15s;
+    }
+    .collection-card:hover { border-color: rgba(56,189,248,0.3); transform: translateY(-2px); }
+    .collection-card-top { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+    .collection-icon { font-size: 24px; }
+    .collection-name { font-size: 14px; font-weight: 700; color: var(--text); }
+    .collection-meta { font-size: 12px; color: var(--muted); }
+    .collection-desc { font-size: 12px; color: var(--muted); line-height: 1.5; margin-bottom: 10px; }
+    .tag-row { display: flex; flex-wrap: wrap; gap: 5px; }
+    .tag {
+      background: rgba(255,255,255,0.04);
+      color: var(--muted);
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 999px;
+    }
+    .tag.accent { background: rgba(56,189,248,0.1); color: var(--accent); }
+    .tag.purple { background: rgba(129,140,248,0.1); color: var(--accent2); }
+
+    /* ── Grid layouts ── */
+    .grid-3 { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+    .grid-2 { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 12px; }
+
+    /* ── Small (single file) cards ── */
+    .file-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      transition: border-color 0.2s, transform 0.15s;
+    }
+    .file-card:hover { border-color: rgba(56,189,248,0.3); transform: translateY(-2px); }
+    .file-icon { font-size: 20px; flex-shrink: 0; }
+    .file-name { font-size: 13px; font-weight: 600; color: var(--text); }
+    .file-desc { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .file-arrow { margin-left: auto; color: var(--muted); font-size: 16px; flex-shrink: 0; }
+
+    /* ── Interactive widget cards (existing) ── */
+    .widget-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+    }
+    .widget-card h3 { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+    .widget-meta { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+    .mini { background: #07101a; border-radius: 8px; padding: 10px; border: 1px solid rgba(255,255,255,0.03); }
+    .controls { display: flex; gap: 8px; align-items: center; }
+    button { background: transparent; border: 1px solid rgba(255,255,255,0.08); color: var(--text); padding: 5px 10px; border-radius: 8px; cursor: pointer; font-size: 12px; }
+    button:hover { background: rgba(255,255,255,0.05); }
+
+    /* ── No results ── */
+    .no-results { color: var(--muted); padding: 40px; text-align: center; display: none; }
+
+    /* ── Footer ── */
+    .footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--border); color: var(--muted); font-size: 12px; }
+
+    /* ── Hidden sections (for nav filtering) ── */
+    .section.hidden { display: none; }
+
+    @media (max-width: 700px) {
+      .sidebar { display: none; }
+      .main { padding: 16px; }
+      .search-input { width: 100%; }
+      .grid-2 { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
-  <header>
-    <div>
+<div class="layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
       <h1>Playground</h1>
-      <p class="lead">Small interactive apps and prototypes — search, open, and try.</p>
+      <p>Interactive prototypes</p>
     </div>
 
-    <div class="search-row">
-      <label for="q" style="display:none">Search playground</label>
-      <input id="q" class="search" placeholder="Search apps, tags, descriptions..." aria-label="Search playground" />
-    </div>
-  </header>
+    <nav>
+      <div class="nav-section">
+        <div class="nav-section-label">Browse</div>
+        <a class="nav-link active" data-filter="all" onclick="filterSection('all',this)">
+          <span class="icon">🏠</span> All
+        </a>
+      </div>
 
-  <main>
-    <div id="grid" class="grid">
-      <!-- Card: Color Mixer -->
-      <article class="card" data-title="Color Mixer" data-desc="Mix RGB channels and copy CSS color" data-tags="color,rgb,css">
-        <h3>Color Mixer</h3>
-        <div class="meta">Try mixing RGB and copy the hex color</div>
-        <div class="mini" aria-hidden="false">
-          <div class="controls" style="margin-bottom:8px">
-            <label style="font-size:13px">R <input type="range" min="0" max="255" value="120" data-role="r" /></label>
-            <label style="font-size:13px">G <input type="range" min="0" max="255" value="160" data-role="g" /></label>
-            <label style="font-size:13px">B <input type="range" min="0" max="255" value="200" data-role="b" /></label>
-          </div>
-          <div style="display:flex;gap:8px;align-items:center">
-            <div id="swatch" style="width:64px;height:38px;border-radius:6px;border:1px solid rgba(255,255,255,0.03)"></div>
-            <input id="hex" readonly style="background:transparent;border:none;color:inherit;font-weight:600" />
-            <button id="copyColor">Copy</button>
-          </div>
-        </div>
-        <div class="tags" aria-hidden="true">
-          <span class="tag">color</span><span class="tag">rgb</span><span class="tag">css</span>
-        </div>
-      </article>
+      <div class="nav-section">
+        <div class="nav-section-label">Collections</div>
+        <a class="nav-link" data-filter="system-design-learn" onclick="filterSection('system-design-learn',this)">
+          <span class="icon">⚡</span> SysDesign Learn
+          <span class="nav-badge">10</span>
+        </a>
+        <a class="nav-link" data-filter="system-design-metrics" onclick="filterSection('system-design-metrics',this)">
+          <span class="icon">📐</span> SysDesign Metrics
+          <span class="nav-badge">10</span>
+        </a>
+        <a class="nav-link" data-filter="system-design-activities" onclick="filterSection('system-design-activities',this)">
+          <span class="icon">🏗️</span> SysDesign Activities
+          <span class="nav-badge">10</span>
+        </a>
+        <a class="nav-link" data-filter="system-design" onclick="filterSection('system-design',this)">
+          <span class="icon">🗂️</span> SysDesign Games
+          <span class="nav-badge">10</span>
+        </a>
+        <a class="nav-link" data-filter="digital-twin" onclick="filterSection('digital-twin',this)">
+          <span class="icon">🤖</span> Digital Twin
+          <span class="nav-badge">10</span>
+        </a>
+        <a class="nav-link" data-filter="security" onclick="filterSection('security',this)">
+          <span class="icon">🔒</span> Security
+          <span class="nav-badge">18</span>
+        </a>
+        <a class="nav-link" data-filter="database" onclick="filterSection('database',this)">
+          <span class="icon">🗄️</span> Database Labs
+          <span class="nav-badge">3</span>
+        </a>
+      </div>
 
-      <!-- Card: Sketch Canvas -->
-      <article class="card" data-title="Sketch Canvas" data-desc="Small canvas sketchpad" data-tags="canvas,draw,sketch">
-        <h3>Sketch Canvas</h3>
-        <div class="meta">Draw with mouse or touch. Double-click to clear.</div>
-        <div class="mini">
-          <canvas id="sketch" width="400" height="200" style="width:100%;height:120px;border-radius:6px;display:block;background:#061016"></canvas>
-          <div style="display:flex;gap:8px;margin-top:8px"><button id="clearSketch">Clear</button><button id="toggleDraw">Toggle Draw</button></div>
-        </div>
-        <div class="tags"><span class="tag">canvas</span><span class="tag">draw</span></div>
-      </article>
+      <div class="nav-section">
+        <div class="nav-section-label">Standalone</div>
+        <a class="nav-link" data-filter="tools" onclick="filterSection('tools',this)">
+          <span class="icon">🛠️</span> Tools
+        </a>
+        <a class="nav-link" data-filter="widgets" onclick="filterSection('widgets',this)">
+          <span class="icon">🎮</span> Widgets
+        </a>
+      </div>
+    </nav>
+  </aside>
 
-      <!-- Card: Counter -->
-      <article class="card" data-title="Counter" data-desc="Simple increment/decrement counter" data-tags="counter,ui,small">
-        <h3>Counter</h3>
-        <div class="meta">Lightweight state demo with keyboard support.</div>
-        <div class="mini" style="display:flex;align-items:center;justify-content:space-between">
-          <div style="font-size:18px;font-weight:700" id="count">0</div>
-          <div style="display:flex;gap:8px">
-            <button id="dec">-</button>
-            <button id="inc">+</button>
-          </div>
-        </div>
-        <div class="tags"><span class="tag">counter</span><span class="tag">state</span></div>
-      </article>
+  <!-- Main -->
+  <main class="main">
 
-      <!-- Card: The Cost of Insecurity -->
-      <article class="card" data-title="The Cost of Insecurity" data-desc="Interactive lesson: why security must be integrated early" data-tags="security,education,cia">
-        <h3>The Cost of Insecurity</h3>
-        <div class="meta">Interactive educational module (cost curves, CIA sorter, mini-games)</div>
-        <div class="mini">
-          <div class="small" style="margin-bottom:8px">Click to open the full lesson in a new tab.</div>
-          <div style="display:flex;gap:8px"><a href="cost-of-insecurity.html" target="_blank" style="color:var(--accent);text-decoration:none">Open Lesson</a></div>
-        </div>
-        <div class="tags"><span class="tag">security</span><span class="tag">education</span><span class="tag">CIA</span></div>
-      </article>
-
-      <!-- Card: Integer Trap v1 -->
-      <article class="card" data-title="Integer Trap (v1)" data-desc="Secure-coding exercise: Integer validation (v1)" data-tags="security,exercise,python">
-        <h3>Integer Trap — v1</h3>
-        <div class="meta">Editable Python exercise: validate quantities (version 1)</div>
-        <div class="mini">
-          <div class="small" style="margin-bottom:8px">Open a runnable exercise in a new tab.</div>
-          <div style="display:flex;gap:8px"><a href="integer-trap-v1.html" target="_blank" style="color:var(--accent);text-decoration:none">Open v1</a></div>
-        </div>
-        <div class="tags"><span class="tag">security</span><span class="tag">python</span><span class="tag">exercise</span></div>
-      </article>
-
-      <!-- Card: Integer Trap v2 -->
-      <article class="card" data-title="Integer Trap (v2)" data-desc="Secure-coding exercise: Integer validation (v2)" data-tags="security,exercise,python">
-        <h3>Integer Trap — v2</h3>
-        <div class="meta">Editable Python exercise: alternative scaffold (version 2)</div>
-        <div class="mini">
-          <div class="small" style="margin-bottom:8px">Open a runnable exercise in a new tab.</div>
-          <div style="display:flex;gap:8px"><a href="integer-trap-v2.html" target="_blank" style="color:var(--accent);text-decoration:none">Open v2</a></div>
-        </div>
-        <div class="tags"><span class="tag">security</span><span class="tag">python</span><span class="tag">exercise</span></div>
-      </article>
-
-      <!-- Card: System Design Game -->
-      <article class="card" data-title="System Design Game" data-desc="Interactive system design challenge" data-tags="system-design,game,architecture">
-        <h3>System Design Game</h3>
-        <div class="meta">Practice system design with interactive scenarios.</div>
-        <div class="mini">
-          <div class="small" style="margin-bottom:8px">Open the interactive game in a new tab.</div>
-          <div style="display:flex;gap:8px"><a href="system-design/system-design-game.html" target="_blank" style="color:var(--accent);text-decoration:none">Open Game</a></div>
-        </div>
-        <div class="tags"><span class="tag">system-design</span><span class="tag">architecture</span><span class="tag">game</span></div>
-      </article>
-
-      <!-- Card: Secure Header -->
-      <article class="card" data-title="Secure Header" data-desc="Learn and test secure HTTP headers" data-tags="security,headers,web">
-        <h3>Secure Header</h3>
-        <div class="meta">Interactive lesson on secure HTTP response headers.</div>
-        <div class="mini">
-          <div class="small" style="margin-bottom:8px">Open the module in a new tab.</div>
-          <div style="display:flex;gap:8px"><a href="security/secure-header.html" target="_blank" style="color:var(--accent);text-decoration:none">Open Module</a></div>
-        </div>
-        <div class="tags"><span class="tag">security</span><span class="tag">headers</span><span class="tag">web</span></div>
-      </article>
-
-      <!-- Card: Buffer Overflow (BOF-3) -->
-      <article class="card" data-title="Buffer Overflow (BOF-3)" data-desc="Security exercise: buffer overflow series part 3" data-tags="security,bof,exercise">
-        <h3>Buffer Overflow — BOF-3</h3>
-        <div class="meta">Explore memory safety and buffer overflow concepts.</div>
-        <div class="mini">
-          <div class="small" style="margin-bottom:8px">Open the exercise in a new tab.</div>
-          <div style="display:flex;gap:8px"><a href="bof-3-dragon-gene-combinator.html" target="_blank" style="color:var(--accent);text-decoration:none">Open BOF-3</a></div>
-        </div>
-        <div class="tags"><span class="tag">security</span><span class="tag">bof</span><span class="tag">exercise</span></div>
-      </article>
+    <!-- Search -->
+    <div class="search-bar">
+      <input id="q" class="search-input" placeholder="Search everything…" aria-label="Search" autocomplete="off" />
+      <span class="search-hint">Press <kbd>/</kbd> to focus</span>
     </div>
 
-    <div id="noResults" class="no-results" hidden>No matching apps found.</div>
+    <div id="no-results" class="no-results">No matches found.</div>
+
+    <!-- ── SysDesign Learn ── -->
+    <div class="section" data-section="system-design-learn">
+      <div class="section-header">
+        <span class="section-title">⚡ System Design Learn</span>
+        <span class="section-desc">Interactive sliders — adjust parameters, see systems react</span>
+        <span class="section-count">10 modules</span>
+      </div>
+      <div class="grid-3">
+        <a href="system-design-learn/index.html" class="collection-card" data-search="system design learn interactive metrics rps storage bandwidth availability caching replicas queue cdn sharding latency">
+          <div class="collection-card-top">
+            <span class="collection-icon">⚡</span>
+            <div>
+              <div class="collection-name">Browse All 10 Modules →</div>
+              <div class="collection-meta">system-design-learn/</div>
+            </div>
+          </div>
+          <div class="collection-desc">Explore all interactive metrics modules from the collection index.</div>
+          <div class="tag-row"><span class="tag accent">index page</span></div>
+        </a>
+        <a href="system-design-learn/01-rps-traffic.html" class="collection-card" data-search="rps traffic peak load dau requests per second server count">
+          <div class="collection-card-top"><span class="collection-icon">📊</span><div><div class="collection-name">RPS & Traffic Scaling</div><div class="collection-meta">01</div></div></div>
+          <div class="collection-desc">Turn DAU into peak RPS. Watch server count change live.</div>
+          <div class="tag-row"><span class="tag">rps</span><span class="tag">traffic</span><span class="tag">scaling</span></div>
+        </a>
+        <a href="system-design-learn/02-storage.html" class="collection-card" data-search="storage estimation petabyte terabyte replication growth">
+          <div class="collection-card-top"><span class="collection-icon">💾</span><div><div class="collection-name">Storage Estimation</div><div class="collection-meta">02</div></div></div>
+          <div class="collection-desc">Watch storage grow from GB to PB as users and years increase.</div>
+          <div class="tag-row"><span class="tag">storage</span><span class="tag">estimation</span></div>
+        </a>
+        <a href="system-design-learn/03-bandwidth.html" class="collection-card" data-search="bandwidth egress ingress gbps cdn cost data flow">
+          <div class="collection-card-top"><span class="collection-icon">🌊</span><div><div class="collection-name">Bandwidth & Data Flow</div><div class="collection-meta">03</div></div></div>
+          <div class="collection-desc">From KB/s per user to Gbps totals and monthly egress cost.</div>
+          <div class="tag-row"><span class="tag">bandwidth</span><span class="tag">egress</span></div>
+        </a>
+        <a href="system-design-learn/04-availability.html" class="collection-card" data-search="availability nines sla uptime downtime 99.9 99.99">
+          <div class="collection-card-top"><span class="collection-icon">🟢</span><div><div class="collection-name">Availability & The Nines</div><div class="collection-meta">04</div></div></div>
+          <div class="collection-desc">Click SLA tiers to see real downtime budgets and architecture requirements.</div>
+          <div class="tag-row"><span class="tag">availability</span><span class="tag">sla</span></div>
+        </a>
+        <a href="system-design-learn/05-caching.html" class="collection-card" data-search="cache hit rate redis database load servers cost">
+          <div class="collection-card-top"><span class="collection-icon">⚡</span><div><div class="collection-name">Cache Performance</div><div class="collection-meta">05</div></div></div>
+          <div class="collection-desc">Slide hit rate 0→99% and watch DB servers disappear.</div>
+          <div class="tag-row"><span class="tag">cache</span><span class="tag">redis</span></div>
+        </a>
+        <a href="system-design-learn/06-read-replicas.html" class="collection-card" data-search="read replica database scaling primary replica read write ratio">
+          <div class="collection-card-top"><span class="collection-icon">🗄️</span><div><div class="collection-name">Read Replicas</div><div class="collection-meta">06</div></div></div>
+          <div class="collection-desc">Live architecture diagram that adds/removes replicas as you tune ratios.</div>
+          <div class="tag-row"><span class="tag">database</span><span class="tag">replicas</span></div>
+        </a>
+        <a href="system-design-learn/07-queues.html" class="collection-card" data-search="message queue kafka worker consumer producer event rate little law">
+          <div class="collection-card-top"><span class="collection-icon">📬</span><div><div class="collection-name">Message Queues & Workers</div><div class="collection-meta">07</div></div></div>
+          <div class="collection-desc">Watch a live queue fill or drain as you balance event rate vs workers.</div>
+          <div class="tag-row"><span class="tag">queue</span><span class="tag">kafka</span><span class="tag">workers</span></div>
+        </a>
+        <a href="system-design-learn/08-cdn.html" class="collection-card" data-search="cdn content delivery network origin offload cost savings cloudflare">
+          <div class="collection-card-top"><span class="collection-icon">🌐</span><div><div class="collection-name">CDN & Origin Offload</div><div class="collection-meta">08</div></div></div>
+          <div class="collection-desc">Compare monthly costs with and without a CDN. See ROI instantly.</div>
+          <div class="tag-row"><span class="tag">cdn</span><span class="tag">cost</span></div>
+        </a>
+        <a href="system-design-learn/09-sharding.html" class="collection-card" data-search="sharding database partition shard key hash range growth">
+          <div class="collection-card-top"><span class="collection-icon">🔀</span><div><div class="collection-name">Database Sharding</div><div class="collection-meta">09</div></div></div>
+          <div class="collection-desc">Drag a year timeline to watch shards split as data grows.</div>
+          <div class="tag-row"><span class="tag">sharding</span><span class="tag">database</span></div>
+        </a>
+        <a href="system-design-learn/10-latency.html" class="collection-card" data-search="latency budget p99 sla tls dns api gateway database response time">
+          <div class="collection-card-top"><span class="collection-icon">⏱️</span><div><div class="collection-name">Latency Budget</div><div class="collection-meta">10</div></div></div>
+          <div class="collection-desc">Allocate ms to each layer. See the stacked bar hit — or breach — your SLA.</div>
+          <div class="tag-row"><span class="tag">latency</span><span class="tag">p99</span><span class="tag">sla</span></div>
+        </a>
+      </div>
+    </div>
+
+    <!-- ── SysDesign Metrics ── -->
+    <div class="section" data-section="system-design-metrics">
+      <div class="section-header">
+        <span class="section-title">📐 System Design Metrics</span>
+        <span class="section-desc">Step-by-step calculation worksheets with validation</span>
+        <span class="section-count">10 worksheets</span>
+      </div>
+      <div class="grid-2">
+        <a href="system-design-metrics/01-rps-peak-load.html" class="file-card" data-search="rps peak load metrics worksheet twitter dau calculation">
+          <span class="file-icon">📊</span>
+          <div><div class="file-name">RPS & Peak Load</div><div class="file-desc">Twitter-scale: 300M DAU → 229K peak RPS</div></div>
+          <span class="file-arrow">→</span>
+        </a>
+        <a href="system-design-metrics/02-storage-estimation.html" class="file-card" data-search="storage estimation instagram petabyte calculation worksheet">
+          <span class="file-icon">💾</span>
+          <div><div class="file-name">Storage Estimation</div><div class="file-desc">Instagram-scale: 500M DAU photos → 547 PB</div></div>
+          <span class="file-arrow">→</span>
+        </a>
+        <a href="system-design-metrics/03-bandwidth-estimation.html" class="file-card" data-search="bandwidth estimation gaming egress gbps monthly cost calculation">
+          <span class="file-icon">🌊</span>
+          <div><div class="file-name">Bandwidth Estimation</div><div class="file-desc">Gaming platform: 200K concurrent → $4.86M/mo egress</div></div>
+          <span class="file-arrow">→</span>
+        </a>
+        <a href="system-design-metrics/04-availability-nines.html" class="file-card" data-search="availability nines uptime downtime 99.95 sla calculation">
+          <span class="file-icon">🟢</span>
+          <div><div class="file-name">Availability & The Nines</div><div class="file-desc">99.95% SLA → downtime per day/week/month/year</div></div>
+          <span class="file-arrow">→</span>
+        </a>
+        <a href="system-design-metrics/05-cache-hit-rate.html" class="file-card" data-search="cache hit rate db load redis servers saved calculation worksheet">
+          <span class="file-icon">⚡</span>
+          <div><div class="file-name">Cache Hit Rate & DB Load</div><div class="file-desc">85% hit rate → 30 DB servers reduced to 5</div></div>
+          <span class="file-arrow">→</span>
+        </a>
+        <a href="system-design-metrics/06-read-replica-sizing.html" class="file-card" data-search="read replica sizing database scaling calculation worksheet">
+          <span class="file-icon">🗄️</span>
+          <div><div class="file-name">Read Replica Sizing</div><div class="file-desc">90:10 read/write ratio → 13 replicas + 1 primary</div></div>
+          <span class="file-arrow">→</span>
+        </a>
+        <a href="system-design-metrics/07-message-queue-workers.html" class="file-card" data-search="message queue worker sizing kafka consumer calculation worksheet">
+          <span class="file-icon">📬</span>
+          <div><div class="file-name">Message Queue Workers</div><div class="file-desc">4,500 events/s → 1,200 workers, 2× spike planning</div></div>
+          <span class="file-arrow">→</span>
+        </a>
+        <a href="system-design-metrics/08-cdn-offload-cost.html" class="file-card" data-search="cdn offload cost savings calculation worksheet pageviews bandwidth">
+          <span class="file-icon">🌐</span>
+          <div><div class="file-name">CDN Offload & Cost</div><div class="file-desc">50M pageviews/day → $57K/month savings</div></div>
+          <span class="file-arrow">→</span>
+        </a>
+        <a href="system-design-metrics/09-sharding-plan.html" class="file-card" data-search="sharding plan database growth calculation worksheet messaging platform">
+          <span class="file-icon">🔀</span>
+          <div><div class="file-name">Sharding Plan</div><div class="file-desc">2B users, 3yr growth → 36 → 62 shards</div></div>
+          <span class="file-arrow">→</span>
+        </a>
+        <a href="system-design-metrics/10-latency-budget.html" class="file-card" data-search="latency budget p99 sla decomposition calculation worksheet">
+          <span class="file-icon">⏱️</span>
+          <div><div class="file-name">Latency Budget</div><div class="file-desc">300ms P99 SLA decomposed across all layers</div></div>
+          <span class="file-arrow">→</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- ── SysDesign Activities ── -->
+    <div class="section" data-section="system-design-activities">
+      <div class="section-header">
+        <span class="section-title">🏗️ System Design Activities</span>
+        <span class="section-desc">Drag-and-drop architecture sequencing challenges</span>
+        <span class="section-count">10 activities</span>
+      </div>
+      <div class="grid-2">
+        <a href="system-design-activities/rate-limiting-api-gateway.html" class="file-card" data-search="rate limiting api gateway token bucket drag drop activity">
+          <span class="file-icon">🚦</span><div><div class="file-name">Rate Limiting API Gateway</div><div class="file-desc">Token Bucket pattern ordering challenge</div></div><span class="file-arrow">→</span>
+        </a>
+        <a href="system-design-activities/url-shortener.html" class="file-card" data-search="url shortener cache aside redirect pipeline drag drop activity">
+          <span class="file-icon">🔗</span><div><div class="file-name">URL Shortener</div><div class="file-desc">Cache-first redirect pipeline</div></div><span class="file-arrow">→</span>
+        </a>
+        <a href="system-design-activities/push-notification-system.html" class="file-card" data-search="push notification async fanout message queue drag drop activity">
+          <span class="file-icon">🔔</span><div><div class="file-name">Push Notification System</div><div class="file-desc">Async fanout via message queue</div></div><span class="file-arrow">→</span>
+        </a>
+        <a href="system-design-activities/video-streaming-platform.html" class="file-card" data-search="video streaming transcoding cdn pipeline drag drop activity">
+          <span class="file-icon">🎬</span><div><div class="file-name">Video Streaming Platform</div><div class="file-desc">Upload → transcode → CDN pipeline</div></div><span class="file-arrow">→</span>
+        </a>
+        <a href="system-design-activities/distributed-cache.html" class="file-card" data-search="distributed cache cache aside read pattern drag drop activity">
+          <span class="file-icon">⚡</span><div><div class="file-name">Distributed Cache</div><div class="file-desc">Cache-aside read pattern</div></div><span class="file-arrow">→</span>
+        </a>
+        <a href="system-design-activities/search-autocomplete.html" class="file-card" data-search="search autocomplete trie ranking suggestions drag drop activity">
+          <span class="file-icon">🔍</span><div><div class="file-name">Search Autocomplete</div><div class="file-desc">Keystroke → Trie → Ranking → Suggestions</div></div><span class="file-arrow">→</span>
+        </a>
+        <a href="system-design-activities/payment-processing.html" class="file-card" data-search="payment processing fraud detection drag drop activity">
+          <span class="file-icon">💳</span><div><div class="file-name">Payment Processing</div><div class="file-desc">Fraud detection before payment processor</div></div><span class="file-arrow">→</span>
+        </a>
+        <a href="system-design-activities/social-media-news-feed.html" class="file-card" data-search="news feed fanout on write social media drag drop activity">
+          <span class="file-icon">📰</span><div><div class="file-name">Social Media News Feed</div><div class="file-desc">Fanout-on-write news feed architecture</div></div><span class="file-arrow">→</span>
+        </a>
+        <a href="system-design-activities/distributed-file-storage.html" class="file-card" data-search="distributed file storage dropbox chunk splitter metadata drag drop activity">
+          <span class="file-icon">📁</span><div><div class="file-name">Distributed File Storage</div><div class="file-desc">Dropbox-style chunking pipeline</div></div><span class="file-arrow">→</span>
+        </a>
+        <a href="system-design-activities/oauth2-authentication.html" class="file-card" data-search="oauth2 authentication authorization code flow drag drop activity">
+          <span class="file-icon">🔐</span><div><div class="file-name">OAuth 2.0 Authentication</div><div class="file-desc">Authorization Code grant flow</div></div><span class="file-arrow">→</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- ── SysDesign Games ── -->
+    <div class="section" data-section="system-design">
+      <div class="section-header">
+        <span class="section-title">🗂️ System Design Games</span>
+        <span class="section-desc">Scenario-based design challenges</span>
+        <span class="section-count">10 games</span>
+      </div>
+      <div class="grid-2">
+        <a href="system-design/autonomous-ai-agent.html" class="file-card" data-search="autonomous ai agent system design game"><span class="file-icon">🤖</span><div><div class="file-name">Autonomous AI Agent</div></div><span class="file-arrow">→</span></a>
+        <a href="system-design/collaborative-document-editor.html" class="file-card" data-search="collaborative document editor system design game"><span class="file-icon">📝</span><div><div class="file-name">Collaborative Document Editor</div></div><span class="file-arrow">→</span></a>
+        <a href="system-design/database-sharding-and-scaling.html" class="file-card" data-search="database sharding scaling system design game"><span class="file-icon">🔀</span><div><div class="file-name">Database Sharding & Scaling</div></div><span class="file-arrow">→</span></a>
+        <a href="system-design/e-commerce-scalability.html" class="file-card" data-search="e-commerce scalability system design game"><span class="file-icon">🛍️</span><div><div class="file-name">E-Commerce Scalability</div></div><span class="file-arrow">→</span></a>
+        <a href="system-design/global-cdn.html" class="file-card" data-search="global cdn content delivery system design game"><span class="file-icon">🌐</span><div><div class="file-name">Global CDN</div></div><span class="file-arrow">→</span></a>
+        <a href="system-design/message-queues-and-asynchronous-workers.html" class="file-card" data-search="message queues async workers system design game"><span class="file-icon">📬</span><div><div class="file-name">Message Queues & Async Workers</div></div><span class="file-arrow">→</span></a>
+        <a href="system-design/microservices-service-discovery.html" class="file-card" data-search="microservices service discovery system design game"><span class="file-icon">🔭</span><div><div class="file-name">Microservices & Service Discovery</div></div><span class="file-arrow">→</span></a>
+        <a href="system-design/multi-region-disastery-recovery.html" class="file-card" data-search="multi region disaster recovery system design game"><span class="file-icon">🌍</span><div><div class="file-name">Multi-Region Disaster Recovery</div></div><span class="file-arrow">→</span></a>
+        <a href="system-design/real-time-data-processing-and-iot.html" class="file-card" data-search="real time data processing iot system design game"><span class="file-icon">📡</span><div><div class="file-name">Real-Time Data Processing & IoT</div></div><span class="file-arrow">→</span></a>
+        <a href="system-design/secure-banking-transaction.html" class="file-card" data-search="secure banking transaction system design game"><span class="file-icon">🏦</span><div><div class="file-name">Secure Banking Transaction</div></div><span class="file-arrow">→</span></a>
+      </div>
+    </div>
+
+    <!-- ── Digital Twin ── -->
+    <div class="section" data-section="digital-twin">
+      <div class="section-header">
+        <span class="section-title">🤖 Digital Twin</span>
+        <span class="section-desc">Interactive simulations of physical-digital systems</span>
+        <span class="section-count">10 activities</span>
+      </div>
+      <div class="grid-2">
+        <a href="digital-twin/01-intro.html" class="file-card" data-search="digital twin intro introduction concept"><span class="file-icon">🌐</span><div><div class="file-name">Introduction to Digital Twins</div><div class="file-desc">Core concepts & live diagram</div></div><span class="file-arrow">→</span></a>
+        <a href="digital-twin/02-factory.html" class="file-card" data-search="digital twin factory motor rpm simulation"><span class="file-icon">🏭</span><div><div class="file-name">Smart Factory Simulation</div><div class="file-desc">Motor speed, coolant, gear animation</div></div><span class="file-arrow">→</span></a>
+        <a href="digital-twin/03-building.html" class="file-card" data-search="digital twin building hvac floor plan energy"><span class="file-icon">🏢</span><div><div class="file-name">Smart Building</div><div class="file-desc">Floor plan, HVAC, lighting control</div></div><span class="file-arrow">→</span></a>
+        <a href="digital-twin/04-maintenance.html" class="file-card" data-search="digital twin predictive maintenance failure sensor rul"><span class="file-icon">🔧</span><div><div class="file-name">Predictive Maintenance</div><div class="file-desc">Failure scenarios, RUL countdown</div></div><span class="file-arrow">→</span></a>
+        <a href="digital-twin/05-city.html" class="file-card" data-search="digital twin city traffic lights intersection simulation"><span class="file-icon">🏙️</span><div><div class="file-name">Smart City Traffic</div><div class="file-desc">Animated intersection & signal timing</div></div><span class="file-arrow">→</span></a>
+        <a href="digital-twin/06-health.html" class="file-card" data-search="digital twin health vitals ecg heart rate monitoring"><span class="file-icon">❤️</span><div><div class="file-name">Health Monitoring</div><div class="file-desc">Live vitals, ECG, health score</div></div><span class="file-arrow">→</span></a>
+        <a href="digital-twin/07-sync.html" class="file-card" data-search="digital twin sync physical digital synchronization challenge"><span class="file-icon">🔄</span><div><div class="file-name">Sync Challenge</div><div class="file-desc">Match physical machine state in real-time</div></div><span class="file-arrow">→</span></a>
+        <a href="digital-twin/08-scenarios.html" class="file-card" data-search="digital twin scenarios what-if simulation turbine bridge"><span class="file-icon">🎭</span><div><div class="file-name">What-If Scenarios</div><div class="file-desc">Turbine, pipeline, bridge, datacenter</div></div><span class="file-arrow">→</span></a>
+        <a href="digital-twin/09-quiz.html" class="file-card" data-search="digital twin quiz knowledge check assessment"><span class="file-icon">🧠</span><div><div class="file-name">Knowledge Quiz</div><div class="file-desc">10-question assessment with instant feedback</div></div><span class="file-arrow">→</span></a>
+        <a href="digital-twin/10-design.html" class="file-card" data-search="digital twin design wizard blueprint guided project"><span class="file-icon">✏️</span><div><div class="file-name">Design Your Twin</div><div class="file-desc">5-step guided design wizard → printable blueprint</div></div><span class="file-arrow">→</span></a>
+      </div>
+    </div>
+
+    <!-- ── Security ── -->
+    <div class="section" data-section="security">
+      <div class="section-header">
+        <span class="section-title">🔒 Security</span>
+        <span class="section-desc">Interactive lessons, exercises, and challenges</span>
+        <span class="section-count">18 files</span>
+      </div>
+      <div class="grid-2">
+        <a href="security/cost-of-insecurity.html" class="file-card" data-search="cost of insecurity cia triad security education interactive"><span class="file-icon">💸</span><div><div class="file-name">The Cost of Insecurity</div><div class="file-desc">CIA sorter, cost curves, mini-games</div></div><span class="file-arrow">→</span></a>
+        <a href="security/secure-header.html" class="file-card" data-search="secure header http response headers web security"><span class="file-icon">🛡️</span><div><div class="file-name">Secure HTTP Headers</div><div class="file-desc">Interactive lesson on security headers</div></div><span class="file-arrow">→</span></a>
+        <a href="security/architect-gate.html" class="file-card" data-search="architect gate security architecture challenge"><span class="file-icon">🏛️</span><div><div class="file-name">Architect Gate</div><div class="file-desc">Security architecture challenge</div></div><span class="file-arrow">→</span></a>
+        <a href="security/brute-force-balance.html" class="file-card" data-search="brute force balance password attack security"><span class="file-icon">⚔️</span><div><div class="file-name">Brute Force Balance</div><div class="file-desc">Password attack simulation</div></div><span class="file-arrow">→</span></a>
+        <a href="security/cryptography.html" class="file-card" data-search="cryptography encryption keys security lesson"><span class="file-icon">🔑</span><div><div class="file-name">Cryptography</div><div class="file-desc">Encryption & key management lesson</div></div><span class="file-arrow">→</span></a>
+        <a href="security/data-integrity.html" class="file-card" data-search="data integrity hashing checksum security"><span class="file-icon">✅</span><div><div class="file-name">Data Integrity</div><div class="file-desc">Hashing & checksum verification</div></div><span class="file-arrow">→</span></a>
+        <a href="security/integer-trap.html" class="file-card" data-search="integer trap validation python secure coding exercise"><span class="file-icon">🪤</span><div><div class="file-name">Integer Trap</div><div class="file-desc">Secure-coding: integer validation exercise</div></div><span class="file-arrow">→</span></a>
+        <a href="security/salted-vault.html" class="file-card" data-search="salted vault password hashing salt bcrypt security"><span class="file-icon">🧂</span><div><div class="file-name">Salted Vault</div><div class="file-desc">Password hashing & salting lesson</div></div><span class="file-arrow">→</span></a>
+        <a href="security/shattered-database.html" class="file-card" data-search="shattered database sql injection security exercise"><span class="file-icon">💥</span><div><div class="file-name">Shattered Database</div><div class="file-desc">SQL injection exploration</div></div><span class="file-arrow">→</span></a>
+        <a href="security/missing-gate.html" class="file-card" data-search="missing gate access control authorization security"><span class="file-icon">🚪</span><div><div class="file-name">Missing Gate</div><div class="file-desc">Access control & authorization exercise</div></div><span class="file-arrow">→</span></a>
+        <a href="security/malicious-link.html" class="file-card" data-search="malicious link phishing xss security"><span class="file-icon">🔗</span><div><div class="file-name">Malicious Link</div><div class="file-desc">Phishing & XSS awareness</div></div><span class="file-arrow">→</span></a>
+        <a href="security/invisible-request.html" class="file-card" data-search="invisible request csrf cross site request forgery security"><span class="file-icon">👻</span><div><div class="file-name">Invisible Request</div><div class="file-desc">CSRF cross-site request forgery</div></div><span class="file-arrow">→</span></a>
+        <a href="security/poisoned-script.html" class="file-card" data-search="poisoned script xss cross site scripting security"><span class="file-icon">☠️</span><div><div class="file-name">Poisoned Script</div><div class="file-desc">XSS / cross-site scripting exercise</div></div><span class="file-arrow">→</span></a>
+        <a href="security/hidden-script-v0.html" class="file-card" data-search="hidden script obfuscation security exercise"><span class="file-icon">🕵️</span><div><div class="file-name">Hidden Script</div><div class="file-desc">Script obfuscation & detection</div></div><span class="file-arrow">→</span></a>
+        <a href="security/integer-trap-v0.html" class="file-card" data-search="integer trap v0 validation python security exercise"><span class="file-icon">🪤</span><div><div class="file-name">Integer Trap v0</div><div class="file-desc">Earlier version of integer validation exercise</div></div><span class="file-arrow">→</span></a>
+        <a href="security/architect-gate-v0.html" class="file-card" data-search="architect gate v0 security architecture"><span class="file-icon">🏛️</span><div><div class="file-name">Architect Gate v0</div><div class="file-desc">Earlier version of architecture challenge</div></div><span class="file-arrow">→</span></a>
+        <a href="security/architect-gate v01.html" class="file-card" data-search="architect gate v01 security architecture"><span class="file-icon">🏛️</span><div><div class="file-name">Architect Gate v01</div><div class="file-desc">Alternate version of architecture challenge</div></div><span class="file-arrow">→</span></a>
+        <a href="bof-3-dragon-gene-combinator.html" class="file-card" data-search="buffer overflow bof3 dragon gene memory safety security"><span class="file-icon">🐉</span><div><div class="file-name">BOF-3 Dragon Gene Combinator</div><div class="file-desc">Buffer overflow / memory safety exploration</div></div><span class="file-arrow">→</span></a>
+      </div>
+    </div>
+
+    <!-- ── Database Labs ── -->
+    <div class="section" data-section="database">
+      <div class="section-header">
+        <span class="section-title">🗄️ Database Labs</span>
+        <span class="section-desc">CS445 hands-on labs and exercises</span>
+        <span class="section-count">3 labs</span>
+      </div>
+      <div class="grid-2">
+        <a href="database-lab-cs445-hos04.html" class="file-card" data-search="database lab cs445 hos04 sql exercise"><span class="file-icon">📋</span><div><div class="file-name">CS445 HOS-04</div><div class="file-desc">Database lab exercise</div></div><span class="file-arrow">→</span></a>
+        <a href="database-lab-cs445-hos07-sql-injection.html" class="file-card" data-search="database lab cs445 hos07 sql injection exercise"><span class="file-icon">💉</span><div><div class="file-name">CS445 HOS-07 — SQL Injection</div><div class="file-desc">SQL injection hands-on lab</div></div><span class="file-arrow">→</span></a>
+        <a href="database-lab-cs445-pe04.html" class="file-card" data-search="database lab cs445 pe04 practical exercise sql"><span class="file-icon">🧪</span><div><div class="file-name">CS445 PE-04</div><div class="file-desc">Practical database exercise</div></div><span class="file-arrow">→</span></a>
+      </div>
+    </div>
+
+    <!-- ── Tools ── -->
+    <div class="section" data-section="tools">
+      <div class="section-header">
+        <span class="section-title">🛠️ Tools & Standalone Pages</span>
+        <span class="section-desc">Utilities, prototypes, and one-off experiments</span>
+      </div>
+      <div class="grid-2">
+        <a href="cityu-tools/generate-links.html" class="file-card" data-search="cityu tools generate links utility"><span class="file-icon">🔗</span><div><div class="file-name">Generate Links</div><div class="file-desc">CityU Tools — link generator</div></div><span class="file-arrow">→</span></a>
+        <a href="cityu-tools/multi-tab-launcher.html" class="file-card" data-search="cityu tools multi tab launcher utility"><span class="file-icon">📑</span><div><div class="file-name">Multi-Tab Launcher</div><div class="file-desc">CityU Tools — open many tabs at once</div></div><span class="file-arrow">→</span></a>
+        <a href="physical-ai/virtual-lidar.html" class="file-card" data-search="physical ai virtual lidar simulation sensor"><span class="file-icon">📡</span><div><div class="file-name">Virtual LiDAR</div><div class="file-desc">Physical AI — LiDAR sensor simulation</div></div><span class="file-arrow">→</span></a>
+        <a href="reddit-prototype.html" class="file-card" data-search="reddit prototype ui frontend"><span class="file-icon">🟠</span><div><div class="file-name">Reddit Prototype</div><div class="file-desc">Frontend UI prototype</div></div><span class="file-arrow">→</span></a>
+        <a href="work-progress.html" class="file-card" data-search="work progress tracker"><span class="file-icon">📈</span><div><div class="file-name">Work Progress</div><div class="file-desc">Progress tracker page</div></div><span class="file-arrow">→</span></a>
+      </div>
+    </div>
+
+    <!-- ── Widgets ── -->
+    <div class="section" data-section="widgets">
+      <div class="section-header">
+        <span class="section-title">🎮 Interactive Widgets</span>
+        <span class="section-desc">Tiny self-contained demos</span>
+      </div>
+      <div class="grid-3">
+        <!-- Color Mixer -->
+        <div class="widget-card" data-search="color mixer rgb hex css">
+          <h3>🎨 Color Mixer</h3>
+          <div class="widget-meta">Mix RGB channels and copy hex</div>
+          <div class="mini">
+            <div class="controls" style="margin-bottom:8px;flex-wrap:wrap">
+              <label style="font-size:12px">R <input type="range" min="0" max="255" value="120" data-role="r" /></label>
+              <label style="font-size:12px">G <input type="range" min="0" max="255" value="160" data-role="g" /></label>
+              <label style="font-size:12px">B <input type="range" min="0" max="255" value="200" data-role="b" /></label>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <div id="swatch" style="width:52px;height:32px;border-radius:6px;border:1px solid rgba(255,255,255,0.06)"></div>
+              <input id="hex" readonly style="background:transparent;border:none;color:inherit;font-weight:600;font-size:13px;width:80px" />
+              <button id="copyColor">Copy</button>
+            </div>
+          </div>
+        </div>
+        <!-- Sketch Canvas -->
+        <div class="widget-card" data-search="sketch canvas draw mouse touch">
+          <h3>✏️ Sketch Canvas</h3>
+          <div class="widget-meta">Draw with mouse or touch. Double-click to clear.</div>
+          <div class="mini">
+            <canvas id="sketch" width="400" height="200" style="width:100%;height:100px;border-radius:6px;display:block;background:#061016"></canvas>
+            <div style="display:flex;gap:8px;margin-top:8px"><button id="clearSketch">Clear</button><button id="toggleDraw">Toggle Draw</button></div>
+          </div>
+        </div>
+        <!-- Counter -->
+        <div class="widget-card" data-search="counter increment decrement state ui">
+          <h3>🔢 Counter</h3>
+          <div class="widget-meta">State demo with keyboard support (+ / - keys)</div>
+          <div class="mini" style="display:flex;align-items:center;justify-content:space-between">
+            <div style="font-size:24px;font-weight:800" id="count">0</div>
+            <div style="display:flex;gap:8px"><button id="dec">−</button><button id="inc">+</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="no-results" class="no-results">No matches found.</div>
+    <div class="footer">Press <kbd>/</kbd> to search · Click a section in the sidebar to filter</div>
   </main>
+</div>
 
-  <footer>Tip: use <kbd>Tab</kbd> to focus the search and type to filter cards.</footer>
+<script>
+  // ── Search ──
+  function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
 
-  <script>
-    // Debounce helper
-    function debounce(fn, wait){let t;return (...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),wait)}}
+  const searchInput = document.getElementById('q');
+  const allItems = Array.from(document.querySelectorAll('[data-search]'));
+  const allSections = Array.from(document.querySelectorAll('.section'));
 
-    // Search/filtering
-    const q = document.getElementById('q');
-    const grid = document.getElementById('grid');
-    const cards = Array.from(grid.querySelectorAll('.card'));
-    const noResults = document.getElementById('noResults');
-
-    function normalize(s){return (s||'').toString().toLowerCase()}
-
-    function matches(card, term){
-      if(!term) return true;
-      const title = normalize(card.dataset.title);
-      const desc = normalize(card.dataset.desc);
-      const tags = normalize(card.dataset.tags);
-      return title.includes(term) || desc.includes(term) || tags.includes(term);
-    }
-
-    function applyFilter(){
-      const term = normalize(q.value.trim());
-      let shown = 0;
-      cards.forEach(c=>{
-        if(matches(c,term)) { c.style.display=''; shown++; }
-        else c.style.display='none';
-      });
-      noResults.hidden = shown>0;
-    }
-
-    q.addEventListener('input', debounce(applyFilter,120));
-
-    // Keyboard: focus search on /
-    window.addEventListener('keydown', (e)=>{
-      if(e.key === '/'){
-        const active = document.activeElement;
-        if(active && (active.tagName==='INPUT' || active.tagName==='TEXTAREA')) return;
-        e.preventDefault(); q.focus(); q.select();
-      }
+  function applySearch() {
+    const term = searchInput.value.trim().toLowerCase();
+    if (!term) { allItems.forEach(el => el.style.display = ''); allSections.forEach(s => s.classList.remove('hidden')); updateEmpty(); return; }
+    allItems.forEach(el => {
+      const hay = (el.dataset.search || '') + ' ' + (el.textContent || '');
+      el.style.display = hay.toLowerCase().includes(term) ? '' : 'none';
     });
+    allSections.forEach(s => {
+      const visible = Array.from(s.querySelectorAll('[data-search]')).some(el => el.style.display !== 'none');
+      s.classList.toggle('hidden', !visible);
+    });
+    updateEmpty();
+  }
 
-    // ---- Color Mixer logic ----
-    (function(){
-      const r = grid.querySelector('input[data-role="r"]');
-      const g = grid.querySelector('input[data-role="g"]');
-      const b = grid.querySelector('input[data-role="b"]');
-      const sw = document.getElementById('swatch');
-      const hexInput = document.getElementById('hex');
-      const copyBtn = document.getElementById('copyColor');
+  function updateEmpty() {
+    const anyVisible = allSections.some(s => !s.classList.contains('hidden'));
+    document.getElementById('no-results').style.display = anyVisible ? 'none' : 'block';
+  }
 
-      function toHex(v){return v.toString(16).padStart(2,'0')}
-      function update(){
-        const R=+r.value, G=+g.value, B=+b.value;
-        const hex = `#${toHex(R)}${toHex(G)}${toHex(B)}`;
-        sw.style.background = hex;
-        hexInput.value = hex;
-      }
-      [r,g,b].forEach(input=>input.addEventListener('input', update));
-      copyBtn.addEventListener('click', ()=>navigator.clipboard?.writeText(hexInput.value));
-      update();
-    })();
+  searchInput.addEventListener('input', debounce(applySearch, 120));
+  window.addEventListener('keydown', e => {
+    if (e.key === '/' && document.activeElement !== searchInput) { e.preventDefault(); searchInput.focus(); searchInput.select(); }
+    if (e.key === 'Escape') { searchInput.value = ''; applySearch(); }
+  });
 
-    // ---- Sketch Canvas logic ----
-    (function(){
-      const canvas = document.getElementById('sketch');
-      const ctx = canvas.getContext('2d');
-      let drawing = true;
-      let down = false;
-      ctx.strokeStyle = '#60a5fa'; ctx.lineWidth = 2; ctx.lineCap = 'round';
-      function resize(){
-        const ratio = window.devicePixelRatio || 1;
-        const w = canvas.clientWidth; const h = canvas.clientHeight;
-        canvas.width = Math.floor(w*ratio); canvas.height = Math.floor(h*ratio);
-        ctx.scale(ratio,ratio);
-      }
-      function pos(e){
-        const rect = canvas.getBoundingClientRect();
-        const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
-        const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
-        return {x,y};
-      }
-      function start(e){ if(!drawing) return; down=true; const p=pos(e); ctx.beginPath(); ctx.moveTo(p.x,p.y); e.preventDefault(); }
-      function move(e){ if(!down) return; const p=pos(e); ctx.lineTo(p.x,p.y); ctx.stroke(); }
-      function up(){ down=false }
-      document.getElementById('clearSketch').addEventListener('click', ()=>{ ctx.clearRect(0,0,canvas.width,canvas.height)});
-      document.getElementById('toggleDraw').addEventListener('click', ()=>{ drawing=!drawing; document.getElementById('toggleDraw').textContent = drawing? 'Toggle Draw' : 'Enable Draw' });
-      canvas.addEventListener('mousedown', start); canvas.addEventListener('mousemove', move); window.addEventListener('mouseup', up);
-      canvas.addEventListener('touchstart', start, {passive:false}); canvas.addEventListener('touchmove', move, {passive:false}); canvas.addEventListener('touchend', up);
-      canvas.addEventListener('dblclick', ()=>ctx.clearRect(0,0,canvas.width,canvas.height));
-      window.addEventListener('resize', debounce(resize,120)); resize();
-    })();
-
-    // ---- Counter ----
-    (function(){
-      const out = document.getElementById('count');
-      let v = 0; function render(){ out.textContent = v }
-      document.getElementById('inc').addEventListener('click', ()=>{ v++; render() });
-      document.getElementById('dec').addEventListener('click', ()=>{ v--; render() });
-      // keyboard: +/- when focused inside card
-      out.parentElement.parentElement.addEventListener('keydown',(e)=>{
-        if(e.key==='+'){ v++; render() }
-        if(e.key==='-'){ v--; render() }
+  // ── Sidebar filter ──
+  function filterSection(filter, linkEl) {
+    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+    linkEl.classList.add('active');
+    searchInput.value = '';
+    allItems.forEach(el => el.style.display = '');
+    if (filter === 'all') {
+      allSections.forEach(s => s.classList.remove('hidden'));
+    } else {
+      allSections.forEach(s => {
+        s.classList.toggle('hidden', s.dataset.section !== filter);
       });
-      render();
-    })();
+    }
+    updateEmpty();
+  }
 
-    // Accessibility: allow cards to be navigated via tab and be announced
-    cards.forEach(c=>{ c.tabIndex = 0; c.setAttribute('role','article'); });
-  </script>
+  // ── Color Mixer ──
+  (function () {
+    const r = document.querySelector('input[data-role="r"]');
+    const g = document.querySelector('input[data-role="g"]');
+    const b = document.querySelector('input[data-role="b"]');
+    const sw = document.getElementById('swatch');
+    const hexEl = document.getElementById('hex');
+    function toHex(v) { return (+v).toString(16).padStart(2, '0'); }
+    function update() { const hex = `#${toHex(r.value)}${toHex(g.value)}${toHex(b.value)}`; sw.style.background = hex; hexEl.value = hex; }
+    [r, g, b].forEach(i => i.addEventListener('input', update));
+    document.getElementById('copyColor').addEventListener('click', () => navigator.clipboard?.writeText(hexEl.value));
+    update();
+  })();
+
+  // ── Sketch Canvas ──
+  (function () {
+    const canvas = document.getElementById('sketch');
+    const ctx = canvas.getContext('2d');
+    let drawing = true, down = false;
+    ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 2; ctx.lineCap = 'round';
+    function resize() { const r = devicePixelRatio || 1, w = canvas.clientWidth, h = canvas.clientHeight; canvas.width = w * r; canvas.height = h * r; ctx.scale(r, r); }
+    function pt(e) { const rect = canvas.getBoundingClientRect(); return { x: (e.touches ? e.touches[0].clientX : e.clientX) - rect.left, y: (e.touches ? e.touches[0].clientY : e.clientY) - rect.top }; }
+    canvas.addEventListener('mousedown', e => { if (!drawing) return; down = true; const p = pt(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); });
+    canvas.addEventListener('mousemove', e => { if (!down) return; const p = pt(e); ctx.lineTo(p.x, p.y); ctx.stroke(); });
+    window.addEventListener('mouseup', () => down = false);
+    canvas.addEventListener('touchstart', e => { if (!drawing) return; down = true; const p = pt(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); e.preventDefault(); }, { passive: false });
+    canvas.addEventListener('touchmove', e => { if (!down) return; const p = pt(e); ctx.lineTo(p.x, p.y); ctx.stroke(); e.preventDefault(); }, { passive: false });
+    canvas.addEventListener('touchend', () => down = false);
+    canvas.addEventListener('dblclick', () => ctx.clearRect(0, 0, canvas.width, canvas.height));
+    document.getElementById('clearSketch').addEventListener('click', () => ctx.clearRect(0, 0, canvas.width, canvas.height));
+    document.getElementById('toggleDraw').addEventListener('click', () => { drawing = !drawing; document.getElementById('toggleDraw').textContent = drawing ? 'Toggle Draw' : 'Enable Draw'; });
+    window.addEventListener('resize', debounce(resize, 120));
+    resize();
+  })();
+
+  // ── Counter ──
+  (function () {
+    let v = 0;
+    const out = document.getElementById('count');
+    const render = () => out.textContent = v;
+    document.getElementById('inc').addEventListener('click', () => { v++; render(); });
+    document.getElementById('dec').addEventListener('click', () => { v--; render(); });
+    render();
+  })();
+</script>
 </body>
 </html>

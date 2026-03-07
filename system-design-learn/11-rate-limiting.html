@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learn: Rate Limiting</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', system-ui, sans-serif; }
+        .slider-track { -webkit-appearance: none; appearance: none; height: 6px; border-radius: 3px; outline: none; cursor: pointer; }
+        .slider-track::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: #0891b2; cursor: pointer; }
+        .slider-track::-moz-range-thumb { width: 20px; height: 20px; border-radius: 50%; background: #0891b2; cursor: pointer; border: none; }
+        .btn-active { background: #0891b2 !important; color: white !important; }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen">
+
+<nav class="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between sticky top-0 z-10 shadow-sm">
+    <div class="flex items-center gap-3">
+        <span class="text-cyan-600 font-black text-lg">⚡ SysDesign Learn</span>
+        <span class="text-slate-300">|</span>
+        <span class="text-slate-600 font-semibold text-sm">Rate Limiting</span>
+    </div>
+    <div class="flex gap-2 text-xs">
+        <a href="10-latency.html" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold px-3 py-1 rounded-full">← Prev</a>
+        <span class="bg-cyan-100 text-cyan-700 font-bold px-3 py-1 rounded-full">11 / 11</span>
+        <a href="01-rps-traffic.html" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold px-3 py-1 rounded-full">↩ Start</a>
+    </div>
+</nav>
+
+<div class="max-w-5xl mx-auto p-6 space-y-6">
+
+    <!-- Intro -->
+    <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+        <div class="flex items-start gap-4">
+            <div class="text-5xl">🚦</div>
+            <div>
+                <h1 class="text-2xl font-black text-slate-800">Rate Limiting Algorithms</h1>
+                <p class="text-slate-500 mt-1 leading-relaxed">
+                    Rate limiting protects your API from abuse and prevents cascading failures — but the <em>algorithm</em> you choose
+                    determines how your system behaves under bursts. A <strong>token bucket</strong> absorbs spikes gracefully.
+                    A <strong>fixed window</strong> has a critical boundary exploit. A <strong>leaky bucket</strong> smooths all
+                    traffic to a constant rate. Configure the traffic pattern and watch each algorithm respond differently.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+
+        <!-- Controls -->
+        <div class="lg:col-span-2 space-y-4">
+
+            <!-- Traffic Pattern -->
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+                <h2 class="font-black text-slate-700 mb-3">📈 Traffic Pattern</h2>
+                <div class="grid grid-cols-2 gap-2 mb-4">
+                    <button data-pattern="steady"  class="pattern-btn text-xs font-bold py-2 px-3 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 btn-active">Steady</button>
+                    <button data-pattern="spike"   class="pattern-btn text-xs font-bold py-2 px-3 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200">Spike</button>
+                    <button data-pattern="bursty"  class="pattern-btn text-xs font-bold py-2 px-3 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200">Bursty</button>
+                    <button data-pattern="exploit" class="pattern-btn text-xs font-bold py-2 px-3 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200">Boundary Exploit</button>
+                </div>
+                <div class="space-y-3">
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <label class="font-semibold text-slate-600">Avg RPS</label>
+                            <span id="avg-rps-val" class="font-black text-cyan-600 font-mono">100 req/s</span>
+                        </div>
+                        <input type="range" id="avg-rps" min="10" max="500" value="100" step="10" class="slider-track w-full bg-slate-200">
+                        <div class="flex justify-between text-xs text-slate-400"><span>10</span><span>500 req/s</span></div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <label class="font-semibold text-slate-600">Burst Multiplier</label>
+                            <span id="burst-mult-val" class="font-black text-cyan-600 font-mono">5×</span>
+                        </div>
+                        <input type="range" id="burst-mult" min="2" max="20" value="5" step="1" class="slider-track w-full bg-slate-200">
+                        <div class="flex justify-between text-xs text-slate-400"><span>2×</span><span>20×</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rate Limit Settings -->
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+                <h2 class="font-black text-slate-700 mb-4">⚙️ Rate Limit Settings</h2>
+                <div class="space-y-4">
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <label class="font-semibold text-slate-600">Rate Limit</label>
+                            <span id="rate-limit-val" class="font-black text-cyan-600 font-mono">150 req/s</span>
+                        </div>
+                        <input type="range" id="rate-limit" min="10" max="500" value="150" step="10" class="slider-track w-full bg-slate-200">
+                        <div class="flex justify-between text-xs text-slate-400"><span>10</span><span>500 req/s</span></div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <label class="font-semibold text-slate-600">Burst Capacity</label>
+                            <span id="burst-cap-val" class="font-black text-cyan-600 font-mono">300 req</span>
+                        </div>
+                        <input type="range" id="burst-cap" min="50" max="2000" value="300" step="50" class="slider-track w-full bg-slate-200">
+                        <div class="flex justify-between text-xs text-slate-400"><span>50</span><span>2,000 req</span></div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <label class="font-semibold text-slate-600">Window Size</label>
+                            <span id="window-size-val" class="font-black text-cyan-600 font-mono">3 sec</span>
+                        </div>
+                        <input type="range" id="window-size" min="1" max="10" value="3" step="1" class="slider-track w-full bg-slate-200">
+                        <div class="flex justify-between text-xs text-slate-400"><span>1 sec</span><span>10 sec</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 12-Second Summary -->
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+                <h2 class="font-black text-slate-700 mb-3">📊 12-Second Summary</h2>
+                <div class="text-sm text-slate-500 mb-1">Total incoming:</div>
+                <div id="total-incoming" class="text-2xl font-black text-slate-800 font-mono mb-3">–</div>
+                <div class="space-y-1 text-xs" id="summary-table"></div>
+            </div>
+        </div>
+
+        <!-- Visualization -->
+        <div class="lg:col-span-3 space-y-4">
+
+            <!-- Incoming Traffic -->
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="font-bold text-slate-700">Incoming Traffic <span class="text-slate-400 font-normal text-xs">(req/s per second)</span></h3>
+                    <div class="text-xs text-slate-400 font-mono">12-second window</div>
+                </div>
+                <div id="traffic-chart" style="display:flex;align-items:flex-end;gap:2px;height:70px;"></div>
+                <div class="flex justify-between text-xs text-slate-400 mt-1"><span>0s</span><span>6s</span><span>12s</span></div>
+            </div>
+
+            <!-- Algorithm Cards 2x2 -->
+            <div class="grid grid-cols-2 gap-4">
+
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
+                    <div class="flex items-center gap-2 mb-1">
+                        <div class="w-3 h-3 rounded-sm bg-emerald-500 flex-shrink-0"></div>
+                        <span class="font-black text-slate-700 text-sm">Token Bucket</span>
+                    </div>
+                    <p class="text-xs text-slate-400 mb-3">Allows bursts up to capacity, then refills at rate limit.</p>
+                    <div id="chart-token" style="display:flex;align-items:flex-end;gap:2px;height:55px;"></div>
+                    <div class="mt-3 space-y-1 text-xs" id="stats-token"></div>
+                </div>
+
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
+                    <div class="flex items-center gap-2 mb-1">
+                        <div class="w-3 h-3 rounded-sm bg-orange-500 flex-shrink-0"></div>
+                        <span class="font-black text-slate-700 text-sm">Fixed Window</span>
+                    </div>
+                    <p class="text-xs text-slate-400 mb-3">Resets counter every N seconds. Watch the boundary spike.</p>
+                    <div id="chart-fixed" style="display:flex;align-items:flex-end;gap:2px;height:55px;"></div>
+                    <div class="mt-3 space-y-1 text-xs" id="stats-fixed"></div>
+                </div>
+
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
+                    <div class="flex items-center gap-2 mb-1">
+                        <div class="w-3 h-3 rounded-sm bg-blue-500 flex-shrink-0"></div>
+                        <span class="font-black text-slate-700 text-sm">Leaky Bucket</span>
+                    </div>
+                    <p class="text-xs text-slate-400 mb-3">Fixed output rate. Queues bursts, drops when full.</p>
+                    <div id="chart-leaky" style="display:flex;align-items:flex-end;gap:2px;height:55px;"></div>
+                    <div class="mt-3 space-y-1 text-xs" id="stats-leaky"></div>
+                </div>
+
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
+                    <div class="flex items-center gap-2 mb-1">
+                        <div class="w-3 h-3 rounded-sm bg-violet-500 flex-shrink-0"></div>
+                        <span class="font-black text-slate-700 text-sm">Sliding Window</span>
+                    </div>
+                    <p class="text-xs text-slate-400 mb-3">Weighted approximation. No boundary exploit.</p>
+                    <div id="chart-sliding" style="display:flex;align-items:flex-end;gap:2px;height:55px;"></div>
+                    <div class="mt-3 space-y-1 text-xs" id="stats-sliding"></div>
+                </div>
+            </div>
+
+            <!-- Legend -->
+            <div class="flex gap-5 text-xs text-slate-500 pl-1">
+                <div class="flex items-center gap-1.5"><div class="w-3 h-3 rounded-sm bg-emerald-400"></div>Allowed</div>
+                <div class="flex items-center gap-1.5"><div class="w-3 h-3 rounded-sm bg-red-400"></div>Blocked</div>
+                <div class="flex items-center gap-1.5"><div class="w-3 h-3 rounded-sm bg-slate-300"></div>Incoming (reference)</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Insight -->
+    <div class="bg-amber-50 border border-amber-200 rounded-2xl p-5">
+        <div class="flex gap-3 items-start">
+            <span class="text-2xl">💡</span>
+            <div>
+                <div class="font-bold text-amber-800 mb-1">Live Insight</div>
+                <div id="insight-text" class="text-amber-900 text-sm leading-relaxed">Configure traffic and rate limits above.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reference Table -->
+    <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+        <h3 class="font-bold text-slate-700 mb-4">📐 Algorithm Comparison Guide</h3>
+        <div class="overflow-x-auto">
+            <table class="text-sm w-full">
+                <thead>
+                    <tr class="text-slate-500 text-xs uppercase border-b border-slate-100">
+                        <th class="text-left pb-3 pr-4 font-semibold">Algorithm</th>
+                        <th class="text-left pb-3 pr-4 font-semibold">Burst Handling</th>
+                        <th class="text-left pb-3 pr-4 font-semibold">Memory</th>
+                        <th class="text-left pb-3 pr-4 font-semibold">Boundary Issue</th>
+                        <th class="text-left pb-3 font-semibold">Best For</th>
+                    </tr>
+                </thead>
+                <tbody class="text-slate-600 divide-y divide-slate-100">
+                    <tr>
+                        <td class="py-2.5 pr-4 font-semibold text-emerald-700">Token Bucket</td>
+                        <td class="py-2.5 pr-4 text-emerald-600">✅ Allows controlled bursts</td>
+                        <td class="py-2.5 pr-4">O(1)</td>
+                        <td class="py-2.5 pr-4 text-emerald-600">None</td>
+                        <td class="py-2.5 text-slate-500">APIs, most common use cases. Used by AWS, Stripe.</td>
+                    </tr>
+                    <tr>
+                        <td class="py-2.5 pr-4 font-semibold text-orange-700">Fixed Window</td>
+                        <td class="py-2.5 pr-4 text-orange-600">⚠️ 2× burst at boundaries</td>
+                        <td class="py-2.5 pr-4">O(1)</td>
+                        <td class="py-2.5 pr-4 text-orange-600">Yes — boundary spike</td>
+                        <td class="py-2.5 text-slate-500">Simple counters where exact accuracy isn't critical.</td>
+                    </tr>
+                    <tr>
+                        <td class="py-2.5 pr-4 font-semibold text-blue-700">Leaky Bucket</td>
+                        <td class="py-2.5 pr-4 text-blue-600">🔵 Smooths all to constant rate</td>
+                        <td class="py-2.5 pr-4">O(1)</td>
+                        <td class="py-2.5 pr-4 text-emerald-600">None</td>
+                        <td class="py-2.5 text-slate-500">Protecting downstream services from any spike.</td>
+                    </tr>
+                    <tr>
+                        <td class="py-2.5 pr-4 font-semibold text-violet-700">Sliding Window Counter</td>
+                        <td class="py-2.5 pr-4 text-violet-600">✅ Smooth, approximated</td>
+                        <td class="py-2.5 pr-4">O(1)</td>
+                        <td class="py-2.5 pr-4 text-emerald-600">None</td>
+                        <td class="py-2.5 text-slate-500">Production APIs. Used by GitHub, Cloudflare.</td>
+                    </tr>
+                    <tr>
+                        <td class="py-2.5 pr-4 font-semibold text-slate-700">Sliding Window Log</td>
+                        <td class="py-2.5 pr-4 text-violet-600">✅ Perfectly accurate</td>
+                        <td class="py-2.5 pr-4 text-red-600">O(requests)</td>
+                        <td class="py-2.5 pr-4 text-emerald-600">None</td>
+                        <td class="py-2.5 text-slate-500">Low-volume APIs requiring exact enforcement.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="mt-4 p-4 bg-slate-50 rounded-xl text-xs text-slate-500 leading-relaxed">
+            <strong class="text-slate-700">Implementation note:</strong> In distributed systems (multiple API servers), all algorithms require a shared store like Redis for coordination.
+            Redis supports <code class="bg-white px-1 rounded border border-slate-200 text-slate-700">INCR</code> + <code class="bg-white px-1 rounded border border-slate-200 text-slate-700">EXPIRE</code> for fixed windows,
+            and sorted sets (<code class="bg-white px-1 rounded border border-slate-200 text-slate-700">ZRANGEBYSCORE</code>) for sliding window logs.
+            Token bucket state (current tokens) can be stored as a Redis float with a timestamp.
+        </div>
+    </div>
+</div>
+
+<script>
+    const SECONDS = 12;
+    let currentPattern = 'steady';
+
+    function generateTraffic(pattern, avgRPS, burstMult, windowSize, rateLimit) {
+        const t = [];
+        switch (pattern) {
+            case 'steady':
+                for (let i = 0; i < SECONDS; i++) t.push(avgRPS);
+                break;
+            case 'spike':
+                for (let i = 0; i < SECONDS; i++)
+                    t.push(i === 5 ? Math.round(avgRPS * burstMult) : avgRPS);
+                break;
+            case 'bursty':
+                for (let i = 0; i < SECONDS; i++)
+                    t.push(i % 3 === 2 ? Math.round(avgRPS * burstMult) : Math.round(avgRPS * 0.4));
+                break;
+            case 'exploit': {
+                // Flood the last second of window 1 AND first second of window 2
+                const wl = rateLimit * windowSize;
+                for (let i = 0; i < SECONDS; i++) {
+                    if (i === windowSize - 1 || i === windowSize) t.push(wl);
+                    else t.push(Math.round(avgRPS * 0.15));
+                }
+                break;
+            }
+            default:
+                for (let i = 0; i < SECONDS; i++) t.push(avgRPS);
+        }
+        return t;
+    }
+
+    function simTokenBucket(traffic, rateLimit, burstCap) {
+        let tokens = burstCap;
+        return traffic.map(rps => {
+            tokens = Math.min(burstCap, tokens + rateLimit);
+            const allowed = Math.min(rps, Math.floor(tokens));
+            tokens -= allowed;
+            return { allowed, blocked: rps - allowed };
+        });
+    }
+
+    function simFixedWindow(traffic, rateLimit, windowSize) {
+        const windowLimit = rateLimit * windowSize;
+        let windowCount = 0, windowStart = 0;
+        return traffic.map((rps, i) => {
+            if (i - windowStart >= windowSize) { windowCount = 0; windowStart = i; }
+            const canAllow = Math.max(0, windowLimit - windowCount);
+            const allowed = Math.min(rps, canAllow);
+            windowCount += allowed;
+            return { allowed, blocked: rps - allowed };
+        });
+    }
+
+    function simLeakyBucket(traffic, rateLimit, queueCap) {
+        let queue = 0;
+        return traffic.map(rps => {
+            const space = Math.max(0, queueCap - queue);
+            const enqueued = Math.min(rps, space);
+            const blocked = rps - enqueued;
+            queue += enqueued;
+            const processed = Math.min(queue, rateLimit);
+            queue -= processed;
+            return { allowed: processed, blocked };
+        });
+    }
+
+    function simSlidingWindow(traffic, rateLimit, windowSize) {
+        const windowLimit = rateLimit * windowSize;
+        let prevCount = 0, currCount = 0, windowStart = 0;
+        return traffic.map((rps, i) => {
+            if (i - windowStart >= windowSize) {
+                prevCount = currCount; currCount = 0; windowStart = i;
+            }
+            const elapsed = i - windowStart;
+            const overlap = Math.max(0, 1 - elapsed / windowSize);
+            const estimated = prevCount * overlap + currCount;
+            const remaining = Math.max(0, windowLimit - estimated);
+            const allowed = Math.min(rps, Math.floor(remaining));
+            currCount += allowed;
+            return { allowed, blocked: rps - allowed };
+        });
+    }
+
+    function renderChart(elId, traffic, results, maxVal) {
+        const el = document.getElementById(elId);
+        el.innerHTML = '';
+        traffic.forEach((rps, i) => {
+            const r = results[i];
+            const bh = maxVal > 0 ? (r.blocked / maxVal) * 100 : 0;
+            const ah = maxVal > 0 ? (r.allowed / maxVal) * 100 : 0;
+            el.innerHTML += `<div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;min-width:0;" title="s${i}: ${r.allowed} allowed / ${r.blocked} blocked">
+                <div style="height:${bh}%;background:#f87171;border-radius:2px 2px 0 0;${r.blocked>0?'min-height:1px':''}"></div>
+                <div style="height:${ah}%;background:#4ade80;${r.allowed>0?'min-height:1px':''}"></div>
+            </div>`;
+        });
+    }
+
+    function renderTrafficChart(traffic, maxVal) {
+        const el = document.getElementById('traffic-chart');
+        el.innerHTML = '';
+        traffic.forEach((rps, i) => {
+            const h = maxVal > 0 ? (rps / maxVal) * 100 : 0;
+            el.innerHTML += `<div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;min-width:0;" title="${rps} req/s at s${i}">
+                <div style="height:${h}%;background:#94a3b8;border-radius:2px 2px 0 0;${rps>0?'min-height:1px':''}"></div>
+            </div>`;
+        });
+    }
+
+    function renderStats(elId, results, colorClass) {
+        const totalAllowed = results.reduce((s, r) => s + r.allowed, 0);
+        const totalBlocked = results.reduce((s, r) => s + r.blocked, 0);
+        const total = totalAllowed + totalBlocked;
+        const pct = total > 0 ? ((totalAllowed / total) * 100).toFixed(0) : 0;
+        document.getElementById(elId).innerHTML = `
+            <div class="flex justify-between"><span class="text-slate-500">Allowed</span><span class="font-bold text-emerald-600">${totalAllowed.toLocaleString()}</span></div>
+            <div class="flex justify-between"><span class="text-slate-500">Blocked</span><span class="font-bold text-red-500">${totalBlocked.toLocaleString()}</span></div>
+            <div class="flex justify-between"><span class="text-slate-500">Pass rate</span><span class="font-bold ${colorClass}">${pct}%</span></div>`;
+    }
+
+    function update() {
+        const avgRPS      = parseInt(document.getElementById('avg-rps').value);
+        const burstMult   = parseInt(document.getElementById('burst-mult').value);
+        const rateLimit   = parseInt(document.getElementById('rate-limit').value);
+        const burstCap    = parseInt(document.getElementById('burst-cap').value);
+        const windowSize  = parseInt(document.getElementById('window-size').value);
+
+        document.getElementById('avg-rps-val').textContent    = avgRPS + ' req/s';
+        document.getElementById('burst-mult-val').textContent = burstMult + '×';
+        document.getElementById('rate-limit-val').textContent = rateLimit + ' req/s';
+        document.getElementById('burst-cap-val').textContent  = burstCap.toLocaleString() + ' req';
+        document.getElementById('window-size-val').textContent = windowSize + ' sec';
+
+        const traffic = generateTraffic(currentPattern, avgRPS, burstMult, windowSize, rateLimit);
+        const maxVal  = Math.max(...traffic);
+        const totalIn = traffic.reduce((a, b) => a + b, 0);
+
+        const tokenRes   = simTokenBucket(traffic, rateLimit, burstCap);
+        const fixedRes   = simFixedWindow(traffic, rateLimit, windowSize);
+        const leakyRes   = simLeakyBucket(traffic, rateLimit, burstCap);
+        const slidingRes = simSlidingWindow(traffic, rateLimit, windowSize);
+
+        renderTrafficChart(traffic, maxVal);
+        renderChart('chart-token',   traffic, tokenRes,   maxVal);
+        renderChart('chart-fixed',   traffic, fixedRes,   maxVal);
+        renderChart('chart-leaky',   traffic, leakyRes,   maxVal);
+        renderChart('chart-sliding', traffic, slidingRes, maxVal);
+
+        renderStats('stats-token',   tokenRes,   'text-emerald-600');
+        renderStats('stats-fixed',   fixedRes,   'text-orange-600');
+        renderStats('stats-leaky',   leakyRes,   'text-blue-600');
+        renderStats('stats-sliding', slidingRes, 'text-violet-600');
+
+        document.getElementById('total-incoming').textContent = totalIn.toLocaleString() + ' req';
+
+        const algos = [
+            { name: 'Token Bucket',   results: tokenRes,   color: 'text-emerald-600' },
+            { name: 'Fixed Window',   results: fixedRes,   color: 'text-orange-600' },
+            { name: 'Leaky Bucket',   results: leakyRes,   color: 'text-blue-600' },
+            { name: 'Sliding Window', results: slidingRes, color: 'text-violet-600' },
+        ];
+        document.getElementById('summary-table').innerHTML = algos.map(a => {
+            const allowed = a.results.reduce((s, r) => s + r.allowed, 0);
+            const pct = totalIn > 0 ? ((allowed / totalIn) * 100).toFixed(0) : 0;
+            return `<div class="flex justify-between items-center py-1 border-b border-slate-50 last:border-0">
+                <span class="font-semibold ${a.color}">${a.name}</span>
+                <span class="font-mono text-slate-600">${pct}% pass</span>
+            </div>`;
+        }).join('');
+
+        // Insight
+        let insight = '';
+        if (currentPattern === 'exploit') {
+            const boundary1 = fixedRes[windowSize - 1] ? fixedRes[windowSize - 1].allowed : 0;
+            const boundary2 = fixedRes[windowSize]     ? fixedRes[windowSize].allowed     : 0;
+            const maxThrough = boundary1 + boundary2;
+            const theoreticalMax = rateLimit * windowSize * 2;
+            insight = `⚠️ <strong>Boundary exploit in action!</strong> At seconds ${windowSize - 1}→${windowSize} (window boundary), Fixed Window allowed up to <strong>${maxThrough.toLocaleString()} requests</strong> across two seconds — potentially <strong>2× your rate limit</strong> (${theoreticalMax.toLocaleString()} theoretical max). Sliding Window avoids this by weighting the previous window's count, preventing the reset loophole.`;
+        } else if (maxVal <= rateLimit) {
+            insight = `✅ Traffic (max ${maxVal} req/s) is at or below the rate limit (${rateLimit} req/s), so all algorithms pass most requests. Try a higher burst multiplier or lower rate limit to see the differences between algorithms.`;
+        } else {
+            const mostPerm = algos.reduce((a, b) =>
+                b.results.reduce((s,r)=>s+r.allowed,0) > a.results.reduce((s,r)=>s+r.allowed,0) ? b : a);
+            const leastPerm = algos.reduce((a, b) =>
+                b.results.reduce((s,r)=>s+r.allowed,0) < a.results.reduce((s,r)=>s+r.allowed,0) ? b : a);
+            const moPct = totalIn > 0 ? ((mostPerm.results.reduce((s,r)=>s+r.allowed,0)/totalIn)*100).toFixed(0) : 0;
+            const lePct = totalIn > 0 ? ((leastPerm.results.reduce((s,r)=>s+r.allowed,0)/totalIn)*100).toFixed(0) : 0;
+            insight = `Under <strong>${currentPattern}</strong> traffic (${burstMult}× burst), <strong>${mostPerm.name}</strong> is most permissive at <strong>${moPct}% pass rate</strong>, while <strong>${leastPerm.name}</strong> is strictest at <strong>${lePct}%</strong>. Token Bucket with capacity ${burstCap} absorbs bursts up to ${burstCap} requests — great for accommodating legitimate short spikes. Leaky Bucket enforces a hard ${rateLimit} req/s ceiling, ideal for protecting a database or downstream service from any burst.`;
+        }
+        document.getElementById('insight-text').innerHTML = insight;
+    }
+
+    document.querySelectorAll('.pattern-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.pattern-btn').forEach(b => b.classList.remove('btn-active'));
+            btn.classList.add('btn-active');
+            currentPattern = btn.dataset.pattern;
+            update();
+        });
+    });
+
+    ['avg-rps', 'burst-mult', 'rate-limit', 'burst-cap', 'window-size'].forEach(id => {
+        document.getElementById(id).addEventListener('input', update);
+    });
+
+    update();
+</script>
+</body>
+</html>
