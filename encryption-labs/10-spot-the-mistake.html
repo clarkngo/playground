@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lab 10 – Spot the Mistake</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    button.submit-btn{margin-top:.75rem;padding:.5rem 1.25rem;background:#1f6feb;border:none;border-radius:6px;color:#fff;font-size:.92rem;cursor:pointer}
+    button.submit-btn:disabled{opacity:.4;cursor:default}
+    button.submit-btn:hover:not(:disabled){background:#388bfd}
+    .selected-info{font-size:.85rem;color:#8b949e;margin:.5rem 0}
+  </style>
+</head>
+<body>
+<nav class="navbar">
+  <a class="navbar-brand" href="index.html">🔐 Encryption Labs</a>
+  <div class="nav-actions">
+    <span class="nav-pill">Lab 10 / 10</span>
+    <a href="09-tls-certificates.html" class="btn-nav">← Lab 9</a>
+    <a href="index.html" class="btn-nav">🏠 Home</a>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="lab-header">
+    <div class="lab-badge">Lab 10 · Applied</div>
+    <h2>Spot the Mistake</h2>
+    <p>Common real-world cryptographic coding errors</p>
+  </div>
+
+  <div class="scenario-box">
+    <p><strong>Scenario:</strong> A security audit found this code in a production financial application. It contains <strong>multiple cryptographic vulnerabilities</strong>. The highlighted lines all have issues — but one is <strong>most critical</strong>. Click the line you believe is the single most catastrophic flaw.</p>
+  </div>
+
+  <div class="demo-box">
+    <div class="code-block" id="code-block"></div>
+    <p style="font-size:.78rem;color:#8b949e;margin:.4rem 0 0">
+      <span class="badge badge-yellow" style="font-size:.72rem">⚠</span> = highlighted vulnerable line. Click to inspect. Which one is most critical?
+    </p>
+  </div>
+
+  <div class="explain-panel" id="explain-panel"></div>
+
+  <div class="question-box">
+    <p class="question-text">❓ Click the <strong>most critical</strong> vulnerability above, then submit.</p>
+    <div class="selected-info" id="selected-info">No line selected yet.</div>
+    <button class="submit-btn" id="submit-btn" disabled onclick="submitAnswer()">Submit Answer</button>
+  </div>
+
+  <div id="feedback" class="feedback-box"></div>
+
+  <div id="why-matters" class="why-box">
+    <h6>💡 Why it matters</h6>
+    <p>In 2017 a single hardcoded AWS key in a public GitHub repository cost a startup $6,000 in unauthorized charges — discovered by a bot within 4 minutes. Thousands of active credentials have been found in public repos since. Key management is consistently the weakest link in real-world cryptographic deployments. Use a secrets manager: AWS Secrets Manager, HashiCorp Vault, Azure Key Vault, or at minimum environment variables never committed to source control.</p>
+  </div>
+
+  <div class="lab-footer">
+    <a href="09-tls-certificates.html" class="btn-nav">← Lab 9</a>
+    <a href="index.html" class="btn-nav">🏠 All Labs</a>
+  </div>
+</div>
+
+<script src="shared.js"></script>
+<script>
+const CODE = [
+  {n:1,  code:'import hashlib, hmac'},
+  {n:2,  code:'from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes'},
+  {n:3,  code:''},
+  {n:4,  code:'# ── Encryption ──────────────────────────────────────'},
+  {n:5,  code:"KEY = b'SUPERSECRETKEY16'   # AES-128 key",          bug:'critical', title:'Hardcoded Key'},
+  {n:6,  code:"IV  = b'\\x00' * 16          # initialization vector", bug:'high',     title:'Fixed IV'},
+  {n:7,  code:''},
+  {n:8,  code:'def encrypt(plaintext):'},
+  {n:9,  code:"    cipher = Cipher(algorithms.AES(KEY), modes.ECB())", bug:'high', title:'ECB Mode'},
+  {n:10, code:'    enc = cipher.encryptor()'},
+  {n:11, code:'    return enc.update(plaintext) + enc.finalize()'},
+  {n:12, code:''},
+  {n:13, code:'# ── Password hashing ─────────────────────────────────'},
+  {n:14, code:'def hash_password(pw):'},
+  {n:15, code:'    return hashlib.md5(pw.encode()).hexdigest()',       bug:'high', title:'MD5 Passwords'},
+  {n:16, code:''},
+  {n:17, code:'# ── Signature verification ───────────────────────────'},
+  {n:18, code:'def verify(data, sig):'},
+  {n:19, code:'    expected = hmac.new(KEY, data, hashlib.sha1).hexdigest()'},
+  {n:20, code:'    return sig == expected   # string comparison',     bug:'medium', title:'Timing Attack'},
+];
+
+const EXPLANATIONS = {
+  5:  { correct:true,  html:'<strong>Most Critical: Hardcoded Key.</strong> The encryption key is in source code. Anyone with repo access, a compiled binary, or a leaked Docker image has the key and can decrypt <em>all</em> data ever protected by it. Keys must come from environment variables, a secrets manager, or an HSM.' },
+  6:  { correct:false, html:'Line 6 (Fixed IV) is a real vulnerability — a constant IV leaks that identical plaintexts produce identical ciphertexts. But the hardcoded key on line 5 is worse: a leaked key breaks <em>all</em> encryption in this code.' },
+  9:  { correct:false, html:'Line 9 (ECB Mode) is a significant weakness — identical blocks produce identical ciphertext, leaking patterns. But the hardcoded key on line 5 is more critical: even a perfect mode can\'t help if the key is exposed.' },
+  15: { correct:false, html:'Line 15 (MD5 Passwords) is dangerous for users — GPUs crack MD5 in seconds. But the hardcoded key on line 5 is more immediately catastrophic: it enables decryption of every encrypted record in the system.' },
+  20: { correct:false, html:'Line 20 (Timing Attack) is a real vulnerability in high-security contexts — <code>==</code> short-circuits on the first differing byte. Use <code>hmac.compare_digest()</code>. But the hardcoded key on line 5 is the most devastating single flaw.' },
+};
+
+function renderCode() {
+  const block = document.getElementById('code-block');
+  block.innerHTML = CODE.map(line => {
+    const isBug = !!line.bug;
+    return `<div class="code-line ${isBug ? 'code-bug' : line.code==='' ? 'code-blank' : ''}" ${isBug ? `id="cline-${line.n}" onclick="clickLine(${line.n})"` : ''}>
+      <span class="ln">${String(line.n).padStart(2,' ')}</span>
+      <code>${escHtml(line.code)}</code>
+      ${isBug ? `<span class="bug-icon">⚠</span>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+let selectedLine = null;
+
+function clickLine(n) {
+  CODE.filter(l => l.bug).forEach(l => {
+    const el = document.getElementById('cline-'+l.n);
+    if (el) el.classList.remove('selected');
+  });
+  const el = document.getElementById('cline-'+n);
+  if (el) el.classList.add('selected');
+  selectedLine = n;
+
+  const info = CODE.find(l => l.n === n);
+  const sevColors = {critical:'badge-red', high:'badge-yellow', medium:'badge-gray'};
+  document.getElementById('selected-info').innerHTML =
+    `Selected: <strong>Line ${n}</strong> — <span class="badge ${sevColors[info.bug]}">${info.title} (${info.bug})</span>`;
+  document.getElementById('submit-btn').disabled = false;
+
+  // Show inline explanation immediately
+  const exp = EXPLANATIONS[n];
+  const panel = document.getElementById('explain-panel');
+  panel.className = 'explain-panel show ' + (exp.correct ? 'explain-correct' : 'explain-wrong');
+  panel.innerHTML = exp.html;
+  if (exp.correct) showFeedback(true, exp.html);
+}
+
+function submitAnswer() {
+  if (!selectedLine) return;
+  const exp = EXPLANATIONS[selectedLine];
+  if (exp) showFeedback(exp.correct, exp.html);
+}
+
+renderCode();
+</script>
+</body>
+</html>

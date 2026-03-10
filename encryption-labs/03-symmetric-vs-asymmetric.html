@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lab 3 – Symmetric vs Asymmetric</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    .scenarios-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+    @media(max-width:600px){.scenarios-grid{grid-template-columns:1fr}}
+    button.submit-btn{margin-top:1rem;padding:.55rem 1.5rem;background:#1f6feb;border:none;border-radius:6px;color:#fff;font-size:.95rem;cursor:pointer;transition:background .15s}
+    button.submit-btn:hover{background:#388bfd}
+    button.submit-btn:disabled{opacity:.5;cursor:default}
+  </style>
+</head>
+<body>
+<nav class="navbar">
+  <a class="navbar-brand" href="index.html">🔐 Encryption Labs</a>
+  <div class="nav-actions">
+    <span class="nav-pill">Lab 3 / 10</span>
+    <a href="02-secret-keys.html" class="btn-nav">← Lab 2</a>
+    <a href="04-block-ciphers-ecb.html" class="btn-nav">Lab 4 →</a>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="lab-header">
+    <div class="lab-badge">Lab 3 · Foundations</div>
+    <h2>Symmetric vs Asymmetric Encryption</h2>
+    <p>When to use each · The key distribution problem</p>
+  </div>
+
+  <div class="scenario-box">
+    <p><strong>Scenario:</strong> You're a security architect. Four teams need help choosing the right encryption type. <strong>Symmetric</strong> (e.g. AES) uses one shared secret key — fast, but both sides must already have the key. <strong>Asymmetric</strong> (e.g. RSA/ECDH) uses a public/private key pair — solves key exchange but is slower.</p>
+  </div>
+
+  <div class="demo-box">
+    <div class="scenarios-grid" id="scenarios-grid"></div>
+    <div style="text-align:center;margin-top:1rem">
+      <button class="submit-btn" id="submit-btn" onclick="submitAnswers()" disabled>Submit Answers</button>
+    </div>
+  </div>
+
+  <div id="feedback" class="feedback-box"></div>
+
+  <div id="why-matters" class="why-box">
+    <h6>💡 Why it matters</h6>
+    <p>In practice TLS uses <em>both</em>: asymmetric encryption (ECDH) to securely exchange a session key between strangers, then symmetric encryption (AES-256-GCM) for bulk data because it's ~100× faster. The best systems combine both to get the speed of symmetric and the key-exchange convenience of asymmetric.</p>
+  </div>
+
+  <div class="lab-footer">
+    <a href="02-secret-keys.html" class="btn-nav">← Lab 2</a>
+    <a href="04-block-ciphers-ecb.html" class="btn-nav">Lab 4 →</a>
+  </div>
+</div>
+
+<script src="shared.js"></script>
+<script>
+const SCENARIOS = [
+  { id:'S1', icon:'💻', text:'Encrypt files on your laptop hard drive',                          correct:'symmetric'  },
+  { id:'S2', icon:'🌐', text:'Establish a secure HTTPS connection to a site you\'ve never visited',correct:'asymmetric' },
+  { id:'S3', icon:'🗄️', text:'Encrypt a customer database stored on a server',                   correct:'symmetric'  },
+  { id:'S4', icon:'📧', text:'Send an encrypted email to a stranger for the first time',          correct:'asymmetric' },
+];
+
+const assignments = {};
+
+function renderScenarios() {
+  const grid = document.getElementById('scenarios-grid');
+  grid.innerHTML = SCENARIOS.map(s => `
+    <div class="scenario-card" id="card-${s.id}">
+      <div class="scenario-icon">${s.icon}</div>
+      <div class="scenario-text">${s.text}</div>
+      <div class="assign-group">
+        <button class="assign-btn" id="btn-${s.id}-sym" onclick="assign('${s.id}','symmetric')">🔑 Symmetric</button>
+        <button class="assign-btn" id="btn-${s.id}-asym" onclick="assign('${s.id}','asymmetric')">🔒 Asymmetric</button>
+      </div>
+    </div>`).join('');
+}
+
+function assign(id, type) {
+  assignments[id] = type;
+  const sym  = document.getElementById('btn-'+id+'-sym');
+  const asym = document.getElementById('btn-'+id+'-asym');
+  sym.className  = 'assign-btn' + (type==='symmetric'  ? ' active-sym'  : '');
+  asym.className = 'assign-btn' + (type==='asymmetric' ? ' active-asym' : '');
+  document.getElementById('card-'+id).classList.add('assigned');
+  document.getElementById('submit-btn').disabled = Object.keys(assignments).length < SCENARIOS.length;
+}
+
+function submitAnswers() {
+  const wrong = SCENARIOS.filter(s => assignments[s.id] !== s.correct);
+  if (wrong.length === 0) {
+    showFeedback(true, "Perfect! Symmetric encryption is fast and ideal when you already share a key. Asymmetric solves the key-distribution problem — you can encrypt for a stranger using their public key. TLS uses both: asymmetric for the handshake, then symmetric for the data.");
+  } else {
+    const hints = {
+      S1: "S1 (laptop files): <strong>Symmetric</strong> — you hold the key yourself, no exchange needed.",
+      S2: "S2 (website): <strong>Asymmetric</strong> — you've never met this server; their public certificate lets you negotiate securely.",
+      S3: "S3 (database): <strong>Symmetric</strong> — fast bulk encryption; the server manages the key.",
+      S4: "S4 (stranger email): <strong>Asymmetric</strong> — their public key lets you send a message only they can decrypt.",
+    };
+    showFeedback(false, "Not quite. Review: " + wrong.map(s => hints[s.id]).join(' | '));
+  }
+}
+
+renderScenarios();
+</script>
+</body>
+</html>

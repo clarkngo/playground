@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lab 8 – Authenticated Encryption (GCM)</title>
+  <link rel="stylesheet" href="shared.css">
+</head>
+<body>
+<nav class="navbar">
+  <a class="navbar-brand" href="index.html">🔐 Encryption Labs</a>
+  <div class="nav-actions">
+    <span class="nav-pill">Lab 8 / 10</span>
+    <a href="07-password-storage.html" class="btn-nav">← Lab 7</a>
+    <a href="09-tls-certificates.html" class="btn-nav">Lab 9 →</a>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="lab-header">
+    <div class="lab-badge">Lab 8 · Integrity</div>
+    <h2>Authenticated Encryption (GCM)</h2>
+    <p>Bit-flip detection · GCM vs CBC — using real browser cryptography (Web Crypto API)</p>
+  </div>
+
+  <div class="scenario-box">
+    <p><strong>Scenario:</strong> An attacker intercepts an encrypted wire transfer and flips one bit in the ciphertext before forwarding it. Does the receiving server notice? Flip a byte in each mode and see what happens.</p>
+  </div>
+
+  <div class="demo-box" id="demo-area">
+    <div style="text-align:center;color:#8b949e;padding:1rem">⏳ Generating keys and encrypting…</div>
+  </div>
+
+  <div class="question-box">
+    <p class="question-text">❓ Which mode detects the tampering and refuses to decrypt?</p>
+    <div class="options-grid">
+      <button class="opt-btn" onclick="check('gcm',this)"><span class="opt-id">A</span> GCM Mode</button>
+      <button class="opt-btn" onclick="check('cbc',this)"><span class="opt-id">B</span> CBC Mode</button>
+    </div>
+  </div>
+
+  <div id="feedback" class="feedback-box"></div>
+
+  <div id="why-matters" class="why-box">
+    <h6>💡 Why it matters</h6>
+    <p>The silent acceptance of tampered ciphertext in CBC is exploited by <strong>Padding Oracle attacks</strong> (POODLE, Lucky13) and <strong>CBC bit-flip attacks</strong>. GCM's authentication tag closes this gap entirely. The rule: if you need both confidentiality and integrity (which is almost always), use an AEAD cipher — <strong>AES-256-GCM</strong> or <strong>ChaCha20-Poly1305</strong>.</p>
+  </div>
+
+  <div class="lab-footer">
+    <a href="07-password-storage.html" class="btn-nav">← Lab 7</a>
+    <a href="09-tls-certificates.html" class="btn-nav">Lab 9 →</a>
+  </div>
+</div>
+
+<script src="shared.js"></script>
+<script>
+// ── Crypto state ──────────────────────────────────────────────────────────────
+let GCM = {}, CBC = {};
+
+function hexFrom(buf) {
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2,'0')).join('').toUpperCase();
+}
+
+async function setup() {
+  const PT = new TextEncoder().encode('TRANSFER $5000 TO ACC-1234');
+
+  // GCM
+  const gcmKey = await crypto.subtle.generateKey({name:'AES-GCM',length:128}, true, ['encrypt','decrypt']);
+  const gcmNonce = crypto.getRandomValues(new Uint8Array(12));
+  const gcmCtBuf = await crypto.subtle.encrypt({name:'AES-GCM',iv:gcmNonce,tagLength:128}, gcmKey, PT);
+  const gcmCtTag = new Uint8Array(gcmCtBuf);           // ct + tag
+  const gcmCt    = gcmCtTag.slice(0, gcmCtTag.length - 16);
+
+  GCM = { key: gcmKey, nonce: gcmNonce, ctTag: gcmCtTag, ctDisplay: gcmCt };
+
+  // CBC
+  const cbcKey = await crypto.subtle.generateKey({name:'AES-CBC',length:128}, true, ['encrypt','decrypt']);
+  const cbcIv  = crypto.getRandomValues(new Uint8Array(16));
+  const cbcCtBuf = await crypto.subtle.encrypt({name:'AES-CBC',iv:cbcIv}, cbcKey, PT);
+  const cbcCt    = new Uint8Array(cbcCtBuf);
+
+  CBC = { key: cbcKey, iv: cbcIv, ct: cbcCt, ctDisplay: cbcCt.slice(0,10) };
+
+  renderDemo();
+}
+
+function renderBytes(containerId, bytes, mode) {
+  const el = document.getElementById(containerId);
+  el.innerHTML = '';
+  bytes.forEach((b, i) => {
+    const span = document.createElement('span');
+    span.className = 'byte-cell';
+    span.textContent = b.toString(16).padStart(2,'0').toUpperCase();
+    span.title = `Byte ${i}`;
+    span.onclick = () => flipByte(mode, i, span);
+    el.appendChild(span);
+  });
+}
+
+function renderDemo() {
+  document.getElementById('demo-area').innerHTML = `
+    <div class="tab-row">
+      <button class="tab-btn active" id="tab-gcm" onclick="switchTab('gcm')">🔐 GCM Mode</button>
+      <button class="tab-btn"        id="tab-cbc" onclick="switchTab('cbc')">⚠️ CBC Mode</button>
+    </div>
+    <div id="panel-gcm">
+      <p style="font-size:.85rem;color:#8b949e;margin:0 0 .5rem">Plaintext: <code>TRANSFER $5000 TO ACC-1234</code></p>
+      <p style="font-size:.82rem;margin:0 0 .4rem">Click any byte to flip one bit, then attempt decryption:</p>
+      <div class="byte-grid" id="gcm-bytes"></div>
+      <div class="result-box" id="gcm-result" style="color:#8b949e">Flip a byte to test…</div>
+      <p style="font-size:.75rem;color:#8b949e;margin:.4rem 0 0">Showing first ${GCM.ctDisplay.length} ciphertext bytes (before tag). Fresh random key each page load.</p>
+    </div>
+    <div id="panel-cbc" style="display:none">
+      <p style="font-size:.85rem;color:#8b949e;margin:0 0 .5rem">Plaintext: <code>TRANSFER $5000 TO ACC-1234</code></p>
+      <p style="font-size:.82rem;margin:0 0 .4rem">Click any byte to flip one bit, then attempt decryption:</p>
+      <div class="byte-grid" id="cbc-bytes"></div>
+      <div class="result-box" id="cbc-result" style="color:#8b949e">Flip a byte to test…</div>
+      <p style="font-size:.75rem;color:#8b949e;margin:.4rem 0 0">Showing first ${CBC.ctDisplay.length} bytes of block 1. Flipping these bytes corrupts block 1 but leaves padding intact.</p>
+    </div>`;
+
+  renderBytes('gcm-bytes', GCM.ctDisplay, 'gcm');
+  renderBytes('cbc-bytes', CBC.ctDisplay, 'cbc');
+}
+
+async function flipByte(mode, idx, span) {
+  // Reset highlight
+  document.querySelectorAll(`#${mode}-bytes .byte-cell`).forEach(s => s.classList.remove('flipped'));
+  span.classList.add('flipped');
+
+  const resultEl = document.getElementById(mode + '-result');
+
+  if (mode === 'gcm') {
+    const modified = new Uint8Array(GCM.ctTag);
+    modified[idx] ^= 0x01;
+    try {
+      await crypto.subtle.decrypt({name:'AES-GCM',iv:GCM.nonce,tagLength:128}, GCM.key, modified);
+      resultEl.className = 'result-box result-ok';
+      resultEl.textContent = 'Decryption succeeded (unexpected — tag happened to match after flip?)';
+    } catch {
+      resultEl.className = 'result-box result-error';
+      resultEl.textContent = '🔴 InvalidTag — Authentication failed. Tampering detected! GCM rejected the message before decrypting a single byte.';
+    }
+  } else {
+    const modified = new Uint8Array(CBC.ct);
+    modified[idx] ^= 0x01;
+    try {
+      const plain = await crypto.subtle.decrypt({name:'AES-CBC',iv:CBC.iv}, CBC.key, modified);
+      const text = new TextDecoder().decode(plain);
+      resultEl.className = 'result-box result-ok';
+      resultEl.textContent = `🟡 Decryption 'succeeded' — No error raised. Output: "${text}"`;
+    } catch(e) {
+      resultEl.className = 'result-box result-ok';
+      resultEl.textContent = `🟡 Padding error (not authentication). CBC doesn't verify message integrity — this is padding luck, not a MAC check.`;
+    }
+  }
+}
+
+function switchTab(tab) {
+  ['gcm','cbc'].forEach(t => {
+    document.getElementById('panel-'+t).style.display = t===tab ? '' : 'none';
+    document.getElementById('tab-'+t).classList.toggle('active', t===tab);
+  });
+}
+
+let answered = false;
+function check(choice, btn) {
+  if (answered) return;
+  const correct = choice === 'gcm';
+  markBtn(btn, correct);
+  answered = correct;
+  if (correct) {
+    showFeedback(true, "Correct! <strong>GCM</strong> provides Authenticated Encryption — the 16-byte tag is a cryptographic MAC over the entire ciphertext. Any modification raises <code>InvalidTag</code> before any plaintext is returned. <br><br><strong>CBC</strong> has no built-in integrity check: a flipped bit corrupts one block silently. This is exploited by Padding Oracle and CBC bit-flip attacks.");
+  } else {
+    showFeedback(false, "Try flipping a byte in each tab and observe the result box. One mode raises an explicit authentication error; the other just returns garbled output without complaining.");
+  }
+}
+
+setup();
+</script>
+</body>
+</html>

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lab 9 – TLS/HTTPS & Certificates</title>
+  <link rel="stylesheet" href="shared.css">
+</head>
+<body>
+<nav class="navbar">
+  <a class="navbar-brand" href="index.html">🔐 Encryption Labs</a>
+  <div class="nav-actions">
+    <span class="nav-pill">Lab 9 / 10</span>
+    <a href="08-authenticated-encryption.html" class="btn-nav">← Lab 8</a>
+    <a href="10-spot-the-mistake.html" class="btn-nav">Lab 10 →</a>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="lab-header">
+    <div class="lab-badge">Lab 9 · Applied</div>
+    <h2>TLS/HTTPS &amp; Certificates</h2>
+    <p>Certificate chain · Handshake steps · What protects what</p>
+  </div>
+
+  <div class="scenario-box">
+    <p><strong>Scenario:</strong> You visit your bank's website (https://). In under 300 milliseconds, five security steps happen invisibly. Click through each step to understand what it does — then identify the step that prevents an impersonator from stealing your login.</p>
+  </div>
+
+  <div class="demo-box">
+    <div class="tls-steps" id="tls-steps"></div>
+  </div>
+
+  <div class="question-box">
+    <p class="question-text">❓ Which step verifies you're talking to the <em>real</em> server and not an impersonator?</p>
+    <div class="options-grid" id="step-options"></div>
+  </div>
+
+  <div id="feedback" class="feedback-box"></div>
+
+  <div id="why-matters" class="why-box">
+    <h6>💡 Why it matters</h6>
+    <p>Certificate verification is what makes HTTPS trustworthy. When it fails — expired cert, wrong domain, untrusted CA — browsers show a red warning. Without it, BGP hijacking or DNS spoofing lets attackers intercept your traffic with their own key. This is why certificate pinning, CAA DNS records, and Certificate Transparency logs matter for high-value targets.</p>
+  </div>
+
+  <div class="lab-footer">
+    <a href="08-authenticated-encryption.html" class="btn-nav">← Lab 8</a>
+    <a href="10-spot-the-mistake.html" class="btn-nav">Lab 10 →</a>
+  </div>
+</div>
+
+<script src="shared.js"></script>
+<script>
+const STEPS = [
+  { n:1, icon:'💻', title:'Client Hello',
+    short:'Browser announces capabilities',
+    desc:'Your browser sends: <em>"I speak TLS 1.3. Here are my supported cipher suites (AES-256-GCM, ChaCha20-Poly1305…) and a random nonce (Client Random)."</em> Nothing is encrypted yet — this is just negotiation.',
+    protects:'No protection yet. Just capability advertisement.' },
+  { n:2, icon:'🏦', title:'Server Hello + Certificate',
+    short:'Server picks a cipher and sends its identity',
+    desc:'The server picks a cipher suite and sends its <strong>TLS certificate</strong> (containing the server\'s public key and domain name), plus proves ownership of the matching private key via a digital signature.',
+    protects:'The certificate binds the server\'s public key to its domain name.' },
+  { n:3, icon:'🔍', title:'Certificate Verification',
+    short:'Browser confirms: are you really who you claim to be?',
+    desc:'Your browser checks:<br>✅ Is the certificate signed by a <strong>trusted CA</strong>?<br>✅ Does the domain name match (yourbank.com)?<br>✅ Is the certificate still valid?<br>✅ Has it been revoked?<br><br><strong>This step is what stops an impersonator.</strong>',
+    protects:'Prevents impersonation. Verifies you are talking to the real server.',
+    highlight: true },
+  { n:4, icon:'🔑', title:'Key Exchange (ECDH)',
+    short:'Both sides derive a shared secret — never transmitted',
+    desc:'Using the server\'s public key and Elliptic Curve Diffie-Hellman (ECDH), both sides independently compute the same <strong>session key</strong>. The session key never travels over the network — enabling <strong>forward secrecy</strong>.',
+    protects:'Establishes a shared secret without transmitting it. Enables forward secrecy.' },
+  { n:5, icon:'🔒', title:'Encrypted Channel',
+    short:'All data is now encrypted and authenticated',
+    desc:'All traffic is encrypted with <strong>AES-256-GCM</strong> using the session key. Each record has an authentication tag, so tampering is detected immediately. The padlock in your browser indicates this channel is active.',
+    protects:'Confidentiality (no eavesdropping) + Integrity (no tampering).' },
+];
+
+function renderSteps() {
+  document.getElementById('tls-steps').innerHTML = STEPS.map(s => `
+    <div class="tls-step ${s.highlight ? 'highlight' : ''}" id="step-${s.n}">
+      <div class="step-header" onclick="toggleStep(${s.n})">
+        <span class="step-num">Step ${s.n}</span>
+        <span class="step-icon">${s.icon}</span>
+        <span class="step-title">${s.title}</span>
+        <span class="step-short">— ${s.short}</span>
+        <span class="step-chevron ms-auto">▼</span>
+      </div>
+      <div class="step-body" id="body-${s.n}" style="display:none">
+        <p>${s.desc}</p>
+        <div class="step-protects"><strong>🛡️ Protects:</strong> ${s.protects}</div>
+      </div>
+    </div>`).join('');
+
+  document.getElementById('step-options').innerHTML = STEPS.map(s =>
+    `<button class="opt-btn" onclick="check(${s.n},this)"><span class="opt-id">${s.n}</span> ${s.title}</button>`
+  ).join('');
+}
+
+function toggleStep(n) {
+  const body = document.getElementById('body-'+n);
+  const step = document.getElementById('step-'+n);
+  const open = body.style.display !== 'none';
+  body.style.display = open ? 'none' : '';
+  step.classList.toggle('open', !open);
+}
+
+let answered = false;
+function check(n, btn) {
+  if (answered) return;
+  const correct = n === 3;
+  markBtn(btn, correct);
+  answered = correct;
+  if (correct) {
+    showFeedback(true, "Correct! <strong>Step 3 — Certificate Verification</strong> is what prevents a fake website from impersonating your bank. Your browser checks the certificate was issued by a trusted CA, the domain matches, and it hasn't expired or been revoked. Without this, an attacker who intercepts your traffic could present their own key and read everything. That's why browsers show red warnings for invalid certs.");
+  } else {
+    showFeedback(false, `Step ${n} handles part of the handshake, but think about which step answers: <em>"Is this really my bank, or could it be an impersonator?"</em> Which step verifies the server's <em>identity</em>?`);
+  }
+}
+
+renderSteps();
+toggleStep(1); // Auto-open first step
+</script>
+</body>
+</html>

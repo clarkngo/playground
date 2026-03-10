@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lab 1 – What is Encryption?</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    .cipher-scroll{overflow-x:auto;margin:.75rem 0}
+    .cipher-table{border-collapse:collapse;font-family:monospace;font-size:.78rem;margin:0 auto}
+    .cipher-table td{padding:3px 7px;border:1px solid #30363d;text-align:center;min-width:24px}
+    .cipher-table .row-plain{color:#3fb950}
+    .cipher-table .row-cipher{color:#f85149}
+    .cipher-table td.active{background:#1f6feb;color:#fff;border-color:#58a6ff}
+    .tryit-output{font-family:monospace;font-size:1.1rem;background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:.65rem 1rem;color:#58a6ff;word-break:break-all;min-height:2.8rem}
+    .enc-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:1rem;text-align:center;margin-bottom:1.5rem}
+    @media(max-width:600px){.enc-row{grid-template-columns:1fr;gap:.5rem}}
+    input[type=range]{width:100%;accent-color:#58a6ff}
+    input[type=text],input[type=number]{background:#21262d;border:1px solid #30363d;border-radius:6px;padding:.4rem .75rem;color:#e6edf3;font-size:.95rem;width:100%}
+    input:focus{outline:none;border-color:#58a6ff}
+    .try-grid{display:grid;grid-template-columns:1fr 80px 1fr;gap:.5rem;align-items:center}
+    @media(max-width:600px){.try-grid{grid-template-columns:1fr 60px;}.try-grid .tryit-output{grid-column:1/-1}}
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="navbar-brand" href="index.html">🔐 Encryption Labs</a>
+  <div class="nav-actions">
+    <span class="nav-pill">Lab 1 / 10</span>
+    <a href="02-secret-keys.html" class="btn-nav">Lab 2 →</a>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="lab-header">
+    <div class="lab-badge">Lab 1 · Foundations</div>
+    <h2>What is Encryption?</h2>
+    <p>Plaintext · Ciphertext · Keys — Caesar cipher hands-on</p>
+  </div>
+
+  <div class="scenario-box">
+    <p><strong>Scenario:</strong> A Roman general needs to send orders across enemy lines without the enemy understanding them. His solution — used by Julius Caesar around 58 BCE — is a simple <em>key-based cipher</em>. The same four concepts (plaintext, ciphertext, key, algorithm) power <strong>AES-256</strong> today.</p>
+  </div>
+
+  <!-- Encryption demo -->
+  <div class="demo-box">
+    <div class="enc-row">
+      <div>
+        <div class="demo-label">🔓 Plaintext</div>
+        <div class="demo-value" style="color:#3fb950" id="demo-plain">HELLO WORLD</div>
+      </div>
+      <div class="demo-arrow">
+        🔑 key = <strong id="demo-key-val">3</strong>
+        <span class="arrow">→</span>
+      </div>
+      <div>
+        <div class="demo-label">🔒 Ciphertext</div>
+        <div class="demo-value font-mono" style="color:#f85149" id="demo-cipher">KHOOR ZRUOG</div>
+      </div>
+    </div>
+
+    <!-- Alphabet table -->
+    <div class="cipher-scroll">
+      <table class="cipher-table" id="shift-table"></table>
+    </div>
+
+    <!-- Slider -->
+    <div style="margin-top:1rem">
+      <label style="font-size:.85rem;color:#8b949e">🎚️ Try different shift values (key): <strong id="slider-val" style="color:#e3b341">3</strong></label>
+      <input type="range" min="1" max="25" value="3" id="shift-slider" oninput="updateShift(this.value)" style="margin-top:.4rem">
+    </div>
+
+    <!-- Decryption row -->
+    <div class="enc-row" style="margin-top:1.25rem;margin-bottom:0">
+      <div>
+        <div class="demo-label">🔒 Ciphertext</div>
+        <div class="demo-value font-mono" style="color:#f85149" id="decrypt-in">KHOOR ZRUOG</div>
+      </div>
+      <div class="demo-arrow">
+        🔑 key = <strong id="decrypt-key">3</strong>
+        <span class="arrow">→</span>
+      </div>
+      <div>
+        <div class="demo-label">🔓 Decrypted</div>
+        <div class="demo-value" style="color:#3fb950" id="decrypt-out">HELLO WORLD</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Try it -->
+  <div class="demo-box" style="margin-bottom:1.5rem">
+    <p style="margin:0 0 .75rem;font-size:.88rem;color:#8b949e;font-weight:600">✏️ Try it — encrypt your own message</p>
+    <div class="try-grid">
+      <input type="text" id="custom-input" placeholder="Type a message…" value="CYBER SECURITY" maxlength="40" oninput="encryptCustom()">
+      <input type="number" id="custom-shift" min="1" max="25" value="3" placeholder="Key" oninput="encryptCustom()">
+      <div class="tryit-output" id="custom-output">FKEBO VHFXULWB</div>
+    </div>
+  </div>
+
+  <!-- Question -->
+  <div class="question-box">
+    <p class="question-text">❓ The message <code style="color:#f85149">KHOOR ZRUOG</code> was encrypted with a Caesar cipher (shift&nbsp;=&nbsp;3). What is the original message?</p>
+    <div class="options-grid">
+      <button class="opt-btn" onclick="check('A',this)"><span class="opt-id">A</span> IFMMP XPSME</button>
+      <button class="opt-btn" onclick="check('B',this)"><span class="opt-id">B</span> HELLO WORLD</button>
+      <button class="opt-btn" onclick="check('C',this)"><span class="opt-id">C</span> JGNNQ YQTNF</button>
+      <button class="opt-btn" onclick="check('D',this)"><span class="opt-id">D</span> GDKKN VNSKC</button>
+    </div>
+  </div>
+
+  <div id="feedback" class="feedback-box"></div>
+
+  <div id="why-matters" class="why-box">
+    <h6>💡 Why it matters</h6>
+    <p>Every encryption system — from Caesar to AES-256 — uses the same four concepts:</p>
+    <ul>
+      <li><strong>Plaintext</strong> — the original readable message</li>
+      <li><strong>Ciphertext</strong> — the scrambled output that hides the meaning</li>
+      <li><strong>Key</strong> — the secret that controls the transformation (shift = 3)</li>
+      <li><strong>Algorithm</strong> — the agreed-upon method (shift each letter)</li>
+    </ul>
+    <p>Without the key, ciphertext is meaningless noise. Modern encryption is exponentially harder to break — but the concept is identical.</p>
+  </div>
+
+  <div class="lab-footer">
+    <span class="text-muted">Interactive Encryption Labs</span>
+    <a href="02-secret-keys.html" class="btn-nav">Lab 2 – Key Strength →</a>
+  </div>
+</div>
+
+<script src="shared.js"></script>
+<script>
+const PLAIN = "HELLO WORLD";
+const ALPHA = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+function caesar(text, shift) {
+  return text.toUpperCase().split('').map(ch => {
+    const i = ALPHA.indexOf(ch);
+    return i >= 0 ? ALPHA[(i + shift + 26) % 26] : ch;
+  }).join('');
+}
+
+function buildTable(shift) {
+  const tbl = document.getElementById('shift-table');
+  const active = new Set(PLAIN.replace(/ /g,'').split(''));
+  let plainRow = '<tr>', cipherRow = '<tr>', arrowRow = '<tr>';
+  plainRow  += `<td style="color:#8b949e;font-size:.7rem">Plain</td>`;
+  cipherRow += `<td style="color:#8b949e;font-size:.7rem">Cipher</td>`;
+  arrowRow  += `<td></td>`;
+  ALPHA.split('').forEach((ch, i) => {
+    const enc = ALPHA[(i + shift) % 26];
+    const a = active.has(ch) ? ' class="active"' : '';
+    plainRow  += `<td class="row-plain"${a}>${ch}</td>`;
+    cipherRow += `<td class="row-cipher"${a}>${enc}</td>`;
+    arrowRow  += `<td style="color:#30363d;font-size:.55rem">↑</td>`;
+  });
+  tbl.innerHTML = arrowRow+'</tr>'+plainRow+'</tr>'+cipherRow+'</tr>';
+}
+
+function updateShift(v) {
+  v = parseInt(v);
+  document.getElementById('slider-val').textContent = v;
+  document.getElementById('demo-key-val').textContent = v;
+  document.getElementById('decrypt-key').textContent = v;
+  const ct = caesar(PLAIN, v);
+  document.getElementById('demo-cipher').textContent  = ct;
+  document.getElementById('decrypt-in').textContent   = ct;
+  document.getElementById('decrypt-out').textContent  = caesar(ct, -v);
+  buildTable(v);
+  encryptCustom();
+}
+
+function encryptCustom() {
+  const msg   = document.getElementById('custom-input').value || '';
+  const shift = parseInt(document.getElementById('custom-shift').value) || 3;
+  document.getElementById('custom-output').textContent = caesar(msg, shift) || '…';
+}
+
+let answered = false;
+const HINTS = {
+  A: "IFMMP is a shift-of-1 decode. Try shifting K back 3 positions: K→J→I→H = H.",
+  C: "JGNNQ shifts too far. K shifted back by 3: K→J→I→H = H, giving HELLO.",
+  D: "GDKKN overshoots. The cipher shifts forward by 3, so reverse with −3.",
+};
+
+function check(choice, btn) {
+  if (answered) return;
+  const correct = choice === 'B';
+  markBtn(btn, correct);
+  if (correct) {
+    answered = true;
+    showFeedback(true, "Correct! Shifting each letter back by 3 reverses the cipher: K→H, H→E, O→L, O→L, R→O = <strong>HELLO WORLD</strong>. The key (shift = 3) is what separates the sender from the eavesdropper.");
+  } else {
+    showFeedback(false, HINTS[choice]);
+  }
+}
+
+updateShift(3);
+encryptCustom();
+</script>
+</body>
+</html>

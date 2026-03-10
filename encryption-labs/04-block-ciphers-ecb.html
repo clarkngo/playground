@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lab 4 – ECB Weakness</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    .canvas-row{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;text-align:center}
+    @media(max-width:640px){.canvas-row{grid-template-columns:1fr}}
+    canvas{display:block;margin:0 auto}
+  </style>
+</head>
+<body>
+<nav class="navbar">
+  <a class="navbar-brand" href="index.html">🔐 Encryption Labs</a>
+  <div class="nav-actions">
+    <span class="nav-pill">Lab 4 / 10</span>
+    <a href="03-symmetric-vs-asymmetric.html" class="btn-nav">← Lab 3</a>
+    <a href="05-iv-nonce-reuse.html" class="btn-nav">Lab 5 →</a>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="lab-header">
+    <div class="lab-badge">Lab 4 · Symmetric</div>
+    <h2>Block Ciphers &amp; ECB Weakness</h2>
+    <p>The "Penguin Problem" · ECB mode vs CBC mode</p>
+  </div>
+
+  <div class="scenario-box">
+    <p><strong>Scenario:</strong> A developer encrypted a company logo before uploading it to the cloud. They used AES — which sounds secure. But the cipher <em>mode</em> they chose makes all the difference. Both images below use the same AES-128 key. Can you spot which mode leaked the original shape?</p>
+  </div>
+
+  <div class="demo-box">
+    <div class="canvas-row">
+      <div class="canvas-wrap">
+        <div class="demo-label">🖼️ Original</div>
+        <canvas id="c-orig" width="64" height="64"></canvas>
+        <div class="canvas-desc">Plaintext (2-tone)</div>
+      </div>
+      <div class="canvas-wrap">
+        <button class="canvas-btn" id="btn-A" onclick="pick('A')">
+          <div class="demo-label">🔒 Image A</div>
+          <canvas id="c-ecb" width="64" height="64"></canvas>
+          <div class="canvas-desc">AES — unknown mode</div>
+        </button>
+      </div>
+      <div class="canvas-wrap">
+        <button class="canvas-btn" id="btn-B" onclick="pick('B')">
+          <div class="demo-label">🔒 Image B</div>
+          <canvas id="c-cbc" width="64" height="64"></canvas>
+          <div class="canvas-desc">AES — unknown mode</div>
+        </button>
+      </div>
+    </div>
+    <p style="text-align:center;font-size:.82rem;color:#8b949e;margin-top:.75rem">
+      Same key, same plaintext — only the <em>mode</em> differs. Click the image that reveals the original pattern.
+    </p>
+  </div>
+
+  <div class="question-box">
+    <p class="question-text">❓ Which encrypted image still shows the original two-tone pattern? (Click the image above)</p>
+  </div>
+
+  <div id="feedback" class="feedback-box"></div>
+
+  <div id="why-matters" class="why-box">
+    <h6>💡 Why it matters</h6>
+    <p>ECB mode (Electronic Codebook) encrypts every 16-byte block independently with the same key. Identical plaintext blocks always produce identical ciphertext blocks — patterns leak through. This was famously demonstrated by encrypting the Linux mascot "Tux" — the encrypted image still clearly showed a penguin. <strong>ECB mode should never be used.</strong> Modern systems use AES-GCM or at minimum AES-CBC with a random IV.</p>
+  </div>
+
+  <div class="lab-footer">
+    <a href="03-symmetric-vs-asymmetric.html" class="btn-nav">← Lab 3</a>
+    <a href="05-iv-nonce-reuse.html" class="btn-nav">Lab 5 →</a>
+  </div>
+</div>
+
+<script src="shared.js"></script>
+<script>
+// Pre-generated AES-ECB and AES-CBC pixel data (64×64 grayscale, fixed key)
+const W = 64, H = 64;
+const ORIG_HEX = "ff".repeat(W * H / 2) + "00".repeat(W * H / 2);
+const ECB_HEX  = "11f88fb5105f2e9e71330949310dcf46".repeat(128) + "bd46a90408edbe9f835381e7715baa62".repeat(128);
+const CBC_HEX  = "f456add99e1728d8517721315527bb05c8d36e1b23c1984dd649373b487d4fca0085e10e1ce69e781be85dbfe14a394b941efc1e1ef2e1f03ebd359abf080a31058d9202e739fe3812e07e67e3768ac3379e57d0ebc60c1271e55255105a7a7c4508728500f6006888b8568d847a44d4fd790028278359ee5a661d03a82b5ad695192aa827c6439bd8afd0a14a9481c899f85d30987f7ca47a2210515f51d5bbd9092377876693e18ca718b833acca19cff421b00e9bf86c57fec73fd7b3737be65d1020cab1f67189c3fbe3bd7af86b1d9a4c0ebac9bd7c792e0f7002c767af976c5c2ada60316935157b62df4d4ff0f7061420370630e76e36296bd2d8ba3110fb225dd4a9f867d57a52d81dd050b86e743f273e939796980a2fde68f6fd2666c85170397abf2d4c611bfbcefe8afc78952f896c9bb10cd8392210abf5ba3d391ba165846ea6264546e2241f81b3658bae4c6ab227200ed7cbde14cd3acf1ef790be040f6caf1107a157bb1f278629ba4cb9d366005ba610d63cdbb59e58f7d61d43fe758785f04f306f959026cf44042e6a8117305be85414b870d13e98270bf7bdb3b2c7549462a3b58ed5d9cf9fb9a83d3ed5caef73d9e3f9daf8a33b949862d6f55882e271cf3767454ede51740978ffc3da031c5afab97709292c0fa04faf8f8fc620b8dcf454ac61b1067a3bc28045e4bff6dbc22b389230b0e018848e37282947743bdb01f421b5a209440f1c0530af754d89b994971d49d77b7a927de9b7f951eea8db942b9721b7753fefb2ab55b0dc326e405f31e11b5a43dd46249e75e004f3455e9b79117d6ca45e0b9de5736e2dcc41dea252f9214121d3b6496ce1c056b074d17e8f24772ec0ac5ed9aa530dc5f487744f91e157a01551bfc74bde836239b095c321692cb60372971a30bf57c94af8c9784e29f40214f5b5ccda6cad1db1851e823b931e897c53e2c1ff0d1c9fe0976b15139523e38e862b02492ed0a0ae693c33d2fef9221d97a91cc57e73881c5030c34f131da938c6ca749679e4ecf2c69ea15e72f7cd58de814f4a25b449c55ecc29f55b5d625f32b5bdc137e4039521eea3642eb2f66f8482bddace00145915581afe66b64265ea8ce306a8016700b80240d6ae88162053dd520bca6eb11e5361e1d3bf29baa3390f5cb4a237ad494bec3204ab58fc5635d3af90c8201a0c8049a09288ab21280b89ecac5031cbf0426ea64ef363c715ee9e58247f0fa26a242f06c2c56db5597d20526b2f06fd6ef14446ab15682b9e166cdaf42a64810e7c54c0c9d9bee7ae7ccc62e1154eb7fb13ab3cc380cb15f3c47038f6e097afbdac52dd6263efe273523053b5f5d129e53ad69ae509b7612a8943d57db19df8c14e540c989ce026c052a1c731c24eaee3eb68806b44cb78163be37250273d15e8a097d25fbe5d7f80842d44bbbb806babc7227f44a32284f5cc83fd958913f4869e40c7479ac981798d2375a283c46aacc9763bf8bb4f720bc35983c4dbd781333a4f421987f816cab27dc81fbd6e64031a77d5252badf728ae579b526435aefc7ac80a2de3e3b294931c43203c9abdd4d890fc69288f59e32c623c7a8334bea16d6736eea79bf05a5f4f56424273b9b5ccc41cceb8b756cebdb60b243daff09baffc47cc08068b3fd8ac761b5fddefbbb1591ecc86d680bdf0629a41dbf9e8841ede78a73fe50eedd8f0af38cd4b2cfe8801f66965cb21e77871efac34023d975debb3785882e7346743ef437f76f5b93f6b1b6ac14d5ad8dee2d25f08a0180cc18cf0c490d98b2b35e82f183d7970b2304d7c89d2469e7b51c30477a32e7e9e4f3ce79a88532cab6027a0919ec4e6f6686839d9435dd327aeef702ee682a3f70aae0fb75eade2f0dbac89c24f9fd8cd75299bb6eed4d0ab77061dfe916a14d0f29e44429518bb44c52006f858b384b96b1764754209e68cc0b20b66965e6d709c1f08fd2b7a4b33467238ea8f76014cc92bd1710bfe3822d7c996ab9d1f8f5a043ee8bd9c2c8d4a8c304204809635355ce2dd493eab8cc4da444b4fa0636b1f090aa333b6beb45f5c53d891265837fd8176a7af9a5d6af0400f9196a5aa9707061d6baa81fa0e1a3a6691561cdb7df28d887475fac6480d01b1256fafd44281b5c31a0755ef6a42b6d8b1fd1a392ec03d37b5f3714d7ccfa3fbd561d59c42348162d4ca5a5152c07059ed9060fc938ece23e3f9348ca2a567616b5110db4e6c34641566194630e486832b8612d3a71c5f2d2ca6b782f12dd8eb2733406c324942ebf791cd441d0b07f57358e96260d8fc17bf5147b5e31cb1cbbb4c346200d247cb772025e1dc080ccbf91d3186a501d906b3b44cd6f221d23fe3e23e29da8a8b7664ae12e86b28ac52f05f6d449c60ad3b7d99d062132e32262eb9228088bcce81d927bbd926904c34674db9faf27f0d450301f4cfd07c1c210d25d15e70747ff55fd4d7310bc19f16de32cc7eeb8515ca68517f4642591e2c32f26b5ee54e400a98e3a2f40f442273fb12baf2ab79ed59193fcbf53d92c93998ba2a53770aecee8ae1fe84a8084335223067de0ba10cebdb786d7b1181f8e4619757f59370ec3d7bd5c747fbdf047b073f71dc49ed464367b3f401250736066c397db0d906ff679ee1de9861a6a460b50335428ef28b91836328db3765311a8af9538403b67b57cb3655221b32828c6122f25dbdbc6687bd05fe57f7c19a1ea9a1471d9f3064e0f6cf9c4f4334f9ba2b1c498a82445303797d8b2bec73139176e648690856e4a12ed426f04a1f21de8a582879e4ac3c898ae8d7fa2ff2f6055a467d3ca84b45573ca9bfa297f76c9fdd83bbc58fd4b63659297865674a82720bff062cdf8ba72750882f7a31fea9764fc14acafbd5f6e6dd7d1a39a2bc3f51098590767fe74c8687cc3d5003089a85db1f236aa7c77926fe22636b84e2cc6412bddc1b9b2e429a58e8e76ee818f212dcfda79a3533cb2058fb293983151094f39cf01f9c5d561f4c33293905465d03b975f12db50829be6d8b5f6a5615c217401350205cf68ea15f1397d8852f4c71d3d5a1afe8c1ea332cd939d9a20290058b346085bd7e7e3402018dbefaa401a7295c4e2cd2b8fbb8636015a7334a79a911dc3e50191d68f3d53db33d3e0c5d918ae5eba72649074509cc871bc567a0d21359d2eeb37e8ed97554bd99454d7cc3ca278856519c3c575afd3c51592e60fba9e431e665d9ecd0620b8e22e0ab4b9f5dca07a75644867852469e757363ce0972d4785b3b4478ba64081ebdbe8b8a6198460d9b792029ba8130fc6c929148a573c8319247b0ae7dab0dae858009efb2e7d18a07cccd6dca8d2c1c981cd7d847b80a6d3fb7a4d4cd5818fd2877abfe1329a377263f6d1cef95249f6022866115c2a92b61b2636a44941f23e3596a720c24be46b5c82944df3ca26c24f5a82c5dc194b8200f2c7a936e982c344af6e68a759a240df8a02f4021549d817725390748beaf119a40cbdb97d7c6141efcdb41244a63698c5f8916f432cdae3398e078051e7bca7b4bbb7f860bf5eac99d4a57c3482858d0889a6351255fb11754c19deba05c6ede032af32da7fb6d3265919e33f58f04bc0fd349d5d2e6d77995d6b7a8e8c97db496932f2568925c3dafe037b33defd2801d4de38a0ed3d3551538b9ba3ea427a64a772cfc26f7d6b2e54240e028e799fa06edae70889fe990356ad1ef7b67eb8dd60a0dbc2a9249d634fa0d27a784f166adfe944bf0c61fa68f7747e2da43f2cafef22d7e8232dd629510e1ba1c73676177aa68e1a2a80c04672f70c604c25993bd1576f4a451d73b9a21091fb08854ef3ec8b062b44116c494a2ff6dad5d6496e1d1eb872774f441da8267c03ace81ee30f20145316f44d5f6aa207fe8a69fc6e1e020571273fae07e71903277a422d2c90938a51a72348d75553b6027f8b04a5b28afb0051872663654fe9977d5505cf1d7aa21fd140f469483a52ac6102a24118567da9e5daf1e15387398c0bcdfa61d139cdb802d8395bf2e5f26a582f516050b09be1081304017cfaed1027722d4983592cf800a214e722a836d725ae6b9800ad2c4a898c3bac1b66855230b620aef97ed70f4735e8f230919048331c385a72c697010a8e4ded5318eb5519ea761543a8ee8585fa84fa906dd2549c71ea948ac893b3150761884cd382a15327f6deb7ca8fcbf6713467888657a8e4c9245437939f97da9adaf593b5335ce5d3fe12ff5e0fb4825f3b4ae1b9c052ad1cf4921a7a76de2f2592e2e8a563afe4336ba2e7e38c55413c4e55917b5aaa51d53529d699bc3d0a3586f59a8b6a67610f5b1c824b3d38eaa172fff20e7248478c51b0be5ad3706526533ecc844d355846cd0c50965c52ca5a3dea40cdc076e7ced95d7b301e65f0dc6da509f169ba84cd256f4a5d589258b8a679888a0b8a0957092477e1534debdc4c821b027ae5e9f95e5201f69438b51c262e264a089e933c4b4467a0e34a052e764b1d03959d6f483b98f87f1a8fae2964caca69a82c98f85640821e5fe82435566470d574b8298cfd96e1828fe44b8dc802fc9deebc6870549a7437fa66d09444f7f99c530320743a46bf24bbcf727ea4df9800170299d8016f68d7ff03e9beb033c3b625b2f8df9295b2f29aef43bb45ecd5b99a40d0f4b7c49d8f6064e06c4c20a5ff826eea26dd4eb2d7188b167c52b7aa056c323fade4acd9e4e287bd5edf51adbfdfa1a5841053936e79de0c9617bb8ce1ac1a6f9a1f045a5379f4f8d4b9ff57c94982b696c79530b1411d4f3abea3b27bdce7cd5412867a1f1876624d534fb13b420cd06a52f7b7abc592e9f78c27e63229cbbfe7ca06e09b0ec159129c69e63a215006ae9a05fdab32f4f869ce8cc3ba8f8083b3fa5f9e331ce966f8c235674c36074755a242593c227776e2e786634f989d31870a5d076274d2b673c67aa020fe4781f884ebcfb2fb613cafdb7b4d0006634c3a0ba02d72e187675da4136a24735f47ca2d0ef609dc0de78d12c4a055f62c2d1dab595d1279191ccced95d59f59ebf5974e8963de8339a2746c81b32a9943ece6402d9eb587acd59e58ead6cd080ffa875450232691fc70d52cc7228d0296f2cce71f1c0fc68cabd709119c9087795be5ffb01b78f8fa46f7d642577c49ecc90e2637b6660e022702ee6a5c74eb75e0e777355b164207c98c3ffe990493ffd20286ebb7e23b3a68263c58e54a2d13a8db03f721a9b9d180dfd4a633484b947cd6fecff0c46a4f8db4c960cd04bc9f108fab72c8b9df7c48399e12929d663c45ef7e588bc2641fd0c5cc5480bbdc72918932bf0b2fd3b525df753b3526318e49c4d1169467510514ec4890b0a268847a15575e0faab635663c5d8565ee4c861f29909eec2dc15f2859bbffbf5b205d6b3c03e099fb64d43b4d143fabf109649a069f7466b62710e305d798449e3f63161b08e2bb148084bd08116a4d7c5ae822927a84ed849e26b37c8c7e6f032dd5908e4ed1247c9f0d49165b43019fbf2dbbd8dd3c4bfbae54b3297a29972f6f7c81bade3c572ff4c3929812adfe9f13079cc4844cd823b23d72e05166c240c69b83b995adec4371ea5da7d6c7af4a2614a0b084c01df5d38dfcc98eb15c0274cf715befffe96ee3717efdadec77ba8b13a88b3cc7c6610a5e6cfe1c9c7cb8e7ad8b5706cad5b62cd3a72090816040f8f6a88c641b0c542d45e72cbc03e954754e699c0b1cf6b84da6851b44df1dc14c3102978d63a9f19eea991651cc90f49";
+
+function hexToPixels(hex) {
+  const out = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < out.length; i++) out[i] = parseInt(hex.slice(i*2, i*2+2), 16);
+  return out;
+}
+
+function renderGray(id, pixels) {
+  const c = document.getElementById(id);
+  const ctx = c.getContext('2d');
+  const img = ctx.createImageData(W, H);
+  for (let i = 0; i < pixels.length; i++) {
+    img.data[i*4]   = pixels[i];
+    img.data[i*4+1] = pixels[i];
+    img.data[i*4+2] = pixels[i];
+    img.data[i*4+3] = 255;
+  }
+  ctx.putImageData(img, 0, 0);
+}
+
+renderGray('c-orig', hexToPixels(ORIG_HEX));
+renderGray('c-ecb',  hexToPixels(ECB_HEX));
+renderGray('c-cbc',  hexToPixels(CBC_HEX));
+
+function pick(choice) {
+  document.getElementById('btn-A').classList.remove('selected');
+  document.getElementById('btn-B').classList.remove('selected');
+  document.getElementById('btn-'+choice).classList.add('selected');
+  if (choice === 'A') {
+    showFeedback(true, "<strong>Correct! Image A uses ECB mode.</strong> ECB encrypts every 16-byte block independently. Because the top half of the image is all-white pixels, every block in that region is identical — so they all encrypt to the <em>same</em> ciphertext. The two-tone pattern is still visible. This is the famous <strong>'Penguin Problem'</strong>. CBC chains each block to the previous ciphertext, so even identical blocks produce different output — Image B looks like random noise.");
+  } else {
+    showFeedback(false, "Image B used CBC mode — the chaining randomizes each block, producing uniform noise regardless of the plaintext pattern. Look at Image A: despite being 'encrypted,' you can still see two distinct bands (top/bottom). That pattern leakage is the ECB weakness.");
+  }
+}
+</script>
+</body>
+</html>

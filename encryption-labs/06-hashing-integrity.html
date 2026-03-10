@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lab 6 – Hashing & Data Integrity</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    .field-row{cursor:pointer;transition:background .15s}
+    .field-row:hover td{background:#21262d}
+    .field-row.tampered td{background:#2a1c1c!important;color:#f85149}
+    .hash-panel{background:#21262d;border:1px solid #30363d;border-radius:6px;padding:.9rem;min-height:5rem}
+    .hash-line{font-family:monospace;font-size:.72rem;word-break:break-all;margin:.2rem 0}
+    .match-ok   {color:#3fb950}
+    .match-fail {color:#f85149}
+  </style>
+</head>
+<body>
+<nav class="navbar">
+  <a class="navbar-brand" href="index.html">🔐 Encryption Labs</a>
+  <div class="nav-actions">
+    <span class="nav-pill">Lab 6 / 10</span>
+    <a href="05-iv-nonce-reuse.html" class="btn-nav">← Lab 5</a>
+    <a href="07-password-storage.html" class="btn-nav">Lab 7 →</a>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="lab-header">
+    <div class="lab-badge">Lab 6 · Integrity</div>
+    <h2>Hashing &amp; Data Integrity</h2>
+    <p>SHA-256 · Tamper detection · Digital fingerprints</p>
+  </div>
+
+  <div class="scenario-box">
+    <p><strong>Scenario:</strong> A signed payment contract was emailed to you. The sender also provided the SHA-256 hash of each original field. One field was quietly modified by an attacker in transit. Click each field to verify its hash — find the tampered one.</p>
+  </div>
+
+  <div class="demo-box">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem">
+      <div>
+        <p style="font-size:.85rem;color:#8b949e;margin:0 0 .5rem;font-weight:600">📄 Received Contract — click a row to verify</p>
+        <table>
+          <thead><tr><th>Field</th><th>Value</th><th>Status</th></tr></thead>
+          <tbody id="contract-rows"></tbody>
+        </table>
+        <p style="font-size:.78rem;color:#8b949e;margin:.5rem 0 0">💡 Hashes computed live in your browser using Web Crypto (SHA-256)</p>
+      </div>
+      <div>
+        <p style="font-size:.85rem;color:#8b949e;margin:0 0 .5rem;font-weight:600">🔍 Hash Comparison</p>
+        <div class="hash-panel" id="hash-panel">
+          <span style="color:#8b949e;font-size:.85rem">Click a field row to see its hash</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="question-box">
+    <p class="question-text">❓ Which field was tampered? (Click the row in the table)</p>
+  </div>
+
+  <div id="feedback" class="feedback-box"></div>
+
+  <div id="why-matters" class="why-box">
+    <h6>💡 Why it matters</h6>
+    <p>SHA-256 produces a unique 256-bit "fingerprint" of any data. Even changing a single character produces a completely different hash — this is the <em>avalanche effect</em>. This underpins code signing (software updates), blockchain integrity, TLS certificate verification, and file download verification. Without integrity checks, a man-in-the-middle can silently modify documents or software in transit.</p>
+  </div>
+
+  <div class="lab-footer">
+    <a href="05-iv-nonce-reuse.html" class="btn-nav">← Lab 5</a>
+    <a href="07-password-storage.html" class="btn-nav">Lab 7 →</a>
+  </div>
+</div>
+
+<script src="shared.js"></script>
+<script>
+const ORIGINAL = {
+  name:    'Alice Johnson',
+  date:    '2024-03-15',
+  amount:  '5,000.00',
+  account: 'ACC-7842-9901',
+  memo:    'Consulting Services Q1',
+};
+const TAMPERED = { ...ORIGINAL, amount: '50,000.00' };  // subtle: added a zero
+const LABELS = { name:'Payee Name', date:'Date', amount:'Amount ($)', account:'Account Number', memo:'Memo' };
+
+async function sha256hex(text) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+async function init() {
+  const tbody = document.getElementById('contract-rows');
+  for (const [field, val] of Object.entries(TAMPERED)) {
+    const tr = document.createElement('tr');
+    tr.className = 'field-row';
+    tr.dataset.field = field;
+    tr.innerHTML = `<td>${LABELS[field]}</td><td style="font-family:monospace">${val}</td><td id="st-${field}"><span style="color:#8b949e;font-size:.78rem">click</span></td>`;
+    tr.onclick = () => verifyField(field, val);
+    tbody.appendChild(tr);
+  }
+}
+
+async function verifyField(field, currentVal) {
+  const origVal = ORIGINAL[field];
+  const [hashOrig, hashCurrent] = await Promise.all([sha256hex(origVal), sha256hex(currentVal)]);
+  const match = hashOrig === hashCurrent;
+
+  document.getElementById('st-'+field).innerHTML = match
+    ? '<span class="match-ok" style="font-size:.78rem">✅ Match</span>'
+    : '<span class="match-fail" style="font-size:.78rem">❌ MISMATCH</span>';
+
+  document.getElementById('hash-panel').innerHTML = `
+    <div style="font-size:.82rem;margin-bottom:.5rem"><strong>${LABELS[field]}</strong></div>
+    <div class="hash-line" style="color:#8b949e">Original hash (SHA-256):</div>
+    <div class="hash-line ${match ? 'match-ok' : ''}">${hashOrig}</div>
+    <div class="hash-line" style="color:#8b949e;margin-top:.4rem">Current hash:</div>
+    <div class="hash-line ${match ? 'match-ok' : 'match-fail'}">${hashCurrent}</div>
+    ${!match ? '<div style="background:#2a1c1c;border:1px solid #da3633;border-radius:5px;padding:.5rem .75rem;margin-top:.5rem;font-size:.82rem;color:#f85149">⚠️ Hash mismatch — this field was modified!</div>' : ''}
+  `;
+
+  if (!match) {
+    document.querySelectorAll('.field-row').forEach(r => r.classList.remove('tampered'));
+    document.querySelector(`[data-field="${field}"]`).classList.add('tampered');
+    showFeedback(true, `Correct! The <strong>Amount</strong> field was tampered: "5,000.00" was changed to "50,000.00" (a zero was silently inserted). The SHA-256 hash of the modified value doesn't match the original. This is why digital signatures and HMAC-based integrity checks are critical in financial systems and software distribution.`);
+  }
+}
+
+init();
+</script>
+</body>
+</html>

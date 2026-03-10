@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lab 5 – IV / Nonce Reuse</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    .toggle-row{display:flex;gap:.5rem;margin-bottom:1rem}
+    .toggle-btn{flex:1;padding:.55rem;border-radius:6px;border:1px solid #30363d;background:#21262d;color:#8b949e;cursor:pointer;font-size:.9rem;transition:all .15s}
+    .toggle-btn.active-bad {background:#2a1c1c;border-color:#da3633;color:#f85149}
+    .toggle-btn.active-good{background:#1c2a1c;border-color:#238636;color:#3fb950}
+    .msg-table td:first-child{color:#8b949e;font-size:.8rem;white-space:nowrap}
+    .msg-table td:last-child{font-family:monospace;font-size:.78rem;word-break:break-all}
+    .xor-line{font-family:monospace;font-size:.82rem;margin:.3rem 0;color:#8b949e}
+    .xor-line span{padding:2px 6px;border-radius:4px}
+  </style>
+</head>
+<body>
+<nav class="navbar">
+  <a class="navbar-brand" href="index.html">🔐 Encryption Labs</a>
+  <div class="nav-actions">
+    <span class="nav-pill">Lab 5 / 10</span>
+    <a href="04-block-ciphers-ecb.html" class="btn-nav">← Lab 4</a>
+    <a href="06-hashing-integrity.html" class="btn-nav">Lab 6 →</a>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="lab-header">
+    <div class="lab-badge">Lab 5 · Symmetric</div>
+    <h2>IV / Nonce Reuse</h2>
+    <p>What breaks when the same IV is used twice</p>
+  </div>
+
+  <div class="scenario-box">
+    <p><strong>Scenario:</strong> A bank transmits two wire-transfer orders encrypted with AES-CTR. The developer used the same key — but forgot to generate a fresh nonce for each message. An attacker who intercepts both ciphertexts can recover the secret amounts <em>without knowing the key</em>.</p>
+  </div>
+
+  <div class="demo-box">
+    <div class="toggle-row">
+      <button class="toggle-btn active-bad" id="btn-same" onclick="show('same')">⚠️ Same IV (reused)</button>
+      <button class="toggle-btn" id="btn-diff" onclick="show('diff')">✅ Different IVs (correct)</button>
+    </div>
+
+    <!-- Same IV panel -->
+    <div id="panel-same">
+      <table class="msg-table" style="margin-bottom:.75rem">
+        <thead><tr><th>Message</th><th>Plaintext</th><th>Ciphertext</th></tr></thead>
+        <tbody>
+          <tr><td>Wire 1</td><td style="font-family:monospace">TRANSFER $1000.0</td><td style="font-family:monospace;font-size:.78rem;color:#e3b341;word-break:break-all">819A64EC4C42216963C6EE0248974CC7</td></tr>
+          <tr><td>Wire 2</td><td style="color:#f85149">???</td>                       <td style="font-family:monospace;font-size:.78rem;color:#e3b341;word-break:break-all">819A64EC4C42216963C6E60B419E4CC7</td></tr>
+        </tbody>
+      </table>
+      <div class="attack-box">
+        <p style="margin:0 0 .5rem;font-weight:600;font-size:.9rem">🔍 Attacker's move — XOR the two ciphertexts:</p>
+        <div class="xor-line">C₁ ⊕ C₂ = <span style="background:#2a2000;color:#e3b341">00000000000000000000080909090000</span></div>
+        <div class="xor-line">P₁ ⊕ P₂ = <span style="background:#2a2000;color:#e3b341">00000000000000000000080909090000</span> <span style="color:#8b949e;font-size:.75rem">(identical — key cancels out!)</span></div>
+        <div style="background:#2a1c1c;border:1px solid #da3633;border-radius:6px;padding:.65rem .85rem;margin-top:.6rem;font-size:.88rem;color:#f85149">
+          💥 Attacker knows Wire 1 = "TRANSFER $1000.0" → XOR recovers Wire 2: <strong>"TRANSFER $9999.0"</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- Different IVs panel -->
+    <div id="panel-diff" style="display:none">
+      <table class="msg-table" style="margin-bottom:.75rem">
+        <thead><tr><th>Message</th><th>Plaintext</th><th>Ciphertext</th></tr></thead>
+        <tbody>
+          <tr><td>Wire 1</td><td style="font-family:monospace">TRANSFER $1000.0</td><td style="font-family:monospace;font-size:.78rem;color:#3fb950;word-break:break-all" id="c1-diff">—</td></tr>
+          <tr><td>Wire 2</td><td style="color:#f85149">???</td>                       <td style="font-family:monospace;font-size:.78rem;color:#3fb950;word-break:break-all" id="c2-diff">—</td></tr>
+        </tbody>
+      </table>
+      <div class="attack-box">
+        <p style="margin:0 0 .5rem;font-weight:600;font-size:.9rem">🔍 Attacker's move — XOR the two ciphertexts:</p>
+        <div class="xor-line">C₁ ⊕ C₂ = <span id="xor-diff" style="background:#21262d;color:#8b949e">—</span> <span style="color:#8b949e;font-size:.75rem">(looks random — different keystreams)</span></div>
+        <div style="background:#1c2a1c;border:1px solid #238636;border-radius:6px;padding:.65rem .85rem;margin-top:.6rem;font-size:.88rem;color:#3fb950">
+          ✅ The XOR reveals nothing. Different IVs produce different keystreams — the XOR of ciphertexts is meaningless without knowing at least one plaintext AND the same keystream.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="question-box">
+    <p class="question-text">❓ Which scenario lets an attacker recover the secret plaintext?</p>
+    <div class="options-grid">
+      <button class="opt-btn" onclick="check('same',this)"><span class="opt-id">A</span> Same IV reused for both messages</button>
+      <button class="opt-btn" onclick="check('diff',this)"><span class="opt-id">B</span> Different random IV per message</button>
+    </div>
+  </div>
+
+  <div id="feedback" class="feedback-box"></div>
+
+  <div id="why-matters" class="why-box">
+    <h6>💡 Why it matters</h6>
+    <p>Nonce reuse in CTR/GCM mode is the "two-time pad" attack. In AES-GCM specifically, reusing a nonce <em>also</em> exposes the authentication key — completely breaking both confidentiality and integrity. The fix is simple: always use <code>os.urandom(12)</code> to generate a fresh nonce per encryption. Never hardcode or increment a counter without proper overflow handling.</p>
+  </div>
+
+  <div class="lab-footer">
+    <a href="04-block-ciphers-ecb.html" class="btn-nav">← Lab 4</a>
+    <a href="06-hashing-integrity.html" class="btn-nav">Lab 6 →</a>
+  </div>
+</div>
+
+<script src="shared.js"></script>
+<script>
+// Generate random-looking "different IV" ciphertexts on page load for the contrast panel
+function randHex(n) {
+  return Array.from(crypto.getRandomValues(new Uint8Array(n)), b => b.toString(16).padStart(2,'0').toUpperCase()).join('');
+}
+function xorHex(a, b) {
+  return Array.from({length: a.length/2}, (_,i) =>
+    (parseInt(a.slice(i*2,i*2+2),16) ^ parseInt(b.slice(i*2,i*2+2),16))
+      .toString(16).padStart(2,'0').toUpperCase()
+  ).join('');
+}
+
+const c1d = randHex(16), c2d = randHex(16);
+document.getElementById('c1-diff').textContent = c1d;
+document.getElementById('c2-diff').textContent = c2d;
+document.getElementById('xor-diff').textContent = xorHex(c1d, c2d);
+
+function show(which) {
+  document.getElementById('panel-same').style.display = which==='same' ? '' : 'none';
+  document.getElementById('panel-diff').style.display = which==='diff' ? '' : 'none';
+  document.getElementById('btn-same').className = 'toggle-btn ' + (which==='same' ? 'active-bad'  : '');
+  document.getElementById('btn-diff').className = 'toggle-btn ' + (which==='diff' ? 'active-good' : '');
+}
+
+let answered = false;
+function check(choice, btn) {
+  if (answered) return;
+  const correct = choice === 'same';
+  markBtn(btn, correct);
+  answered = correct;
+  if (correct) {
+    showFeedback(true, "Correct! When two messages share the same key <em>and</em> the same nonce in CTR mode: C₁ = P₁ ⊕ K and C₂ = P₂ ⊕ K. Therefore C₁ ⊕ C₂ = P₁ ⊕ P₂. Knowing either plaintext immediately reveals the other. This is the <strong>'two-time pad'</strong> — the reason one-time pads must never be reused.");
+  } else {
+    showFeedback(false, "Different IVs produce different keystreams, so C₁ ⊕ C₂ is random noise — it doesn't reveal any information about the plaintexts. The attack only works when the <em>same</em> keystream is used twice.");
+  }
+}
+</script>
+</body>
+</html>
