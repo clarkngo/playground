@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Activity 10 – Broken Cryptographic Primitives</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    button.submit-btn{margin-top:.75rem;padding:.5rem 1.25rem;background:#1f6feb;border:none;border-radius:6px;color:#fff;font-size:.92rem;cursor:pointer}
+    button.submit-btn:disabled{opacity:.4;cursor:default}
+    button.submit-btn:hover:not(:disabled){background:#388bfd}
+    .selected-info{font-size:.85rem;color:#8b949e;margin:.5rem 0}
+  </style>
+</head>
+<body>
+<nav class="navbar">
+  <a class="navbar-brand" href="index.html">🐍 Crypto Vuln Labs</a>
+  <div class="nav-actions">
+    <span class="nav-pill">Activity 10 / 10</span>
+    <a href="09-predictable-iv.html" class="btn-nav">← Activity 9</a>
+    <a href="index.html" class="btn-nav">🏠 All Activities</a>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="lab-header">
+    <div class="lab-badge">Activity 10 · Algorithm</div>
+    <h2>Broken Cryptographic Primitives</h2>
+    <p>DES, RC4, and MD4 — algorithms broken by cryptanalysis, not just compute</p>
+  </div>
+
+  <div class="scenario-box">
+    <p><strong>Scenario:</strong> A legacy payments module is being audited before a compliance review. It encrypts PII with DES, encrypts session streams with RC4, and hashes token fingerprints with MD4. All three algorithms have been formally broken. One is <strong>most critical</strong>. Click the line you believe is the single most catastrophic flaw.</p>
+  </div>
+
+  <div class="demo-box">
+    <div class="code-block" id="code-block"></div>
+    <p style="font-size:.78rem;color:#8b949e;margin:.4rem 0 0">
+      <span class="badge badge-yellow" style="font-size:.72rem">⚠</span> = vulnerable line · click to inspect · which is most critical?
+    </p>
+  </div>
+
+  <div class="explain-panel" id="explain-panel"></div>
+
+  <div class="question-box">
+    <p class="question-text">❓ Click the <strong>most critical</strong> vulnerability above, then submit.</p>
+    <div class="selected-info" id="selected-info">No line selected yet.</div>
+    <button class="submit-btn" id="submit-btn" disabled onclick="submitAnswer()">Submit Answer</button>
+  </div>
+
+  <div id="feedback" class="feedback-box"></div>
+
+  <div id="why-matters" class="why-box">
+    <h6>💡 Why it matters</h6>
+    <p>RC4 was used in WEP (Wi-Fi Encryption Protocol) — cracked in under 60 seconds using freely available tools. It was later used in WPA-TKIP (broken in 2009) and in TLS cipher suites (deprecated by RFC 7465 in 2015). RC4's keystream has statistical biases in the first 256 bytes: the second byte of output is twice as likely to be 0 as any other value. These biases enable plaintext recovery without brute-force. DES requires significant hardware to break; RC4 is broken by pure cryptanalysis. <strong>Fix:</strong> replace DES → AES-256-GCM, RC4 → ChaCha20-Poly1305 or AES-256-GCM, MD4 → SHA-256 or BLAKE2b.</p>
+  </div>
+
+  <div class="lab-footer">
+    <a href="09-predictable-iv.html" class="btn-nav">← Activity 9</a>
+    <a href="index.html" class="btn-nav">🏠 All Activities</a>
+  </div>
+</div>
+
+<script src="shared.js"></script>
+<script>
+const CODE = [
+  {n:1,  code:'from Crypto.Cipher import DES, ARC4'},
+  {n:2,  code:'from Crypto.Hash import MD4'},
+  {n:3,  code:'import os'},
+  {n:4,  code:''},
+  {n:5,  code:"DES_KEY = b'Security'                         # 56-bit DES key", bug:'high', title:'Weak 56-bit DES Key'},
+  {n:6,  code:'RC4_KEY = os.urandom(16)                     # RC4 key'},
+  {n:7,  code:''},
+  {n:8,  code:'def protect_pii(data: bytes) -> bytes:'},
+  {n:9,  code:'    cipher = DES.new(DES_KEY, DES.MODE_ECB)  # DES + ECB mode', bug:'high', title:'DES-56 with ECB Mode'},
+  {n:10, code:'    pad = 8 - len(data) % 8'},
+  {n:11, code:'    return cipher.encrypt(data + bytes([pad]*pad))'},
+  {n:12, code:''},
+  {n:13, code:'def encrypt_session_stream(data: bytes) -> bytes:'},
+  {n:14, code:'    return ARC4.new(RC4_KEY).encrypt(data)   # RC4 stream cipher', bug:'critical', title:'RC4 — Cryptographically Broken'},
+  {n:15, code:''},
+  {n:16, code:'def fingerprint_token(data: bytes) -> str:'},
+  {n:17, code:'    return MD4.new(data).hexdigest()          # MD4 — broken hash', bug:'medium', title:'MD4 Broken Hash Function'},
+];
+
+const EXPLANATIONS = {
+  5:  { correct:false, html:'A hardcoded 8-byte DES key is bad — it\'s trivially brute-forceable by anyone with the ciphertext. But line 9 (DES + ECB) is a worse instance of the same algorithm choice, and DES at least requires compute to break. RC4 on line 14 can be broken by pure cryptanalysis without any brute-force.' },
+  9:  { correct:false, html:'DES with a 56-bit key can be brute-forced in under 24 hours with specialised hardware (EFF\'s Deep Crack cracked it in 22 hours in 1998). ECB mode adds pattern leakage on top. This is very serious — but DES still requires significant computation to break. RC4 on line 14 is broken by statistical bias, no brute-force required.' },
+  14: { correct:true,  html:'<strong>Most Critical: RC4 (ARC4) Stream Cipher.</strong> RC4 is not merely weak — it is <em>cryptographically broken</em>. The first bytes of the keystream are statistically biased toward zero and toward key bytes. These biases leak plaintext directly without any brute-force. RC4 was used to crack WEP in under 60 seconds, was exploited in WPA-TKIP (2009), and was banned from TLS by RFC 7465 (2015). DES requires substantial hardware investment to break; RC4 requires only captured ciphertext and free tools.' },
+  17: { correct:false, html:'MD4 has been broken since 1995 and produces collisions trivially — two different inputs with the same hash can be constructed in milliseconds. This is serious for token fingerprinting. However, MD4 is used here for hashing (non-encryption), while RC4 on line 14 is used for actual data confidentiality — a broken encryption primitive is the higher-severity issue.' },
+};
+
+function renderCode() {
+  const block = document.getElementById('code-block');
+  block.innerHTML = CODE.map(line => {
+    const isBug = !!line.bug;
+    return `<div class="code-line ${isBug ? 'code-bug' : line.code==='' ? 'code-blank' : ''}" ${isBug ? `id="cline-${line.n}" onclick="clickLine(${line.n})"` : ''}>
+      <span class="ln">${String(line.n).padStart(2,' ')}</span>
+      <code>${escHtml(line.code)}</code>
+      ${isBug ? `<span class="bug-icon">⚠</span>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+let selectedLine = null;
+
+function clickLine(n) {
+  CODE.filter(l => l.bug).forEach(l => {
+    const el = document.getElementById('cline-'+l.n);
+    if (el) el.classList.remove('selected');
+  });
+  const el = document.getElementById('cline-'+n);
+  if (el) el.classList.add('selected');
+  selectedLine = n;
+  const info = CODE.find(l => l.n === n);
+  const sevColors = {critical:'badge-red', high:'badge-yellow', medium:'badge-gray'};
+  document.getElementById('selected-info').innerHTML =
+    `Selected: <strong>Line ${n}</strong> — <span class="badge ${sevColors[info.bug]}">${info.title} (${info.bug})</span>`;
+  document.getElementById('submit-btn').disabled = false;
+  const exp = EXPLANATIONS[n];
+  const panel = document.getElementById('explain-panel');
+  panel.className = 'explain-panel show ' + (exp.correct ? 'explain-correct' : 'explain-wrong');
+  panel.innerHTML = exp.html;
+  if (exp.correct) showFeedback(true, exp.html);
+}
+
+function submitAnswer() {
+  if (!selectedLine) return;
+  const exp = EXPLANATIONS[selectedLine];
+  if (exp) showFeedback(exp.correct, exp.html);
+}
+
+renderCode();
+</script>
+</body>
+</html>

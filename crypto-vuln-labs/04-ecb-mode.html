@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Activity 4 – ECB Mode Encryption</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    button.submit-btn{margin-top:.75rem;padding:.5rem 1.25rem;background:#1f6feb;border:none;border-radius:6px;color:#fff;font-size:.92rem;cursor:pointer}
+    button.submit-btn:disabled{opacity:.4;cursor:default}
+    button.submit-btn:hover:not(:disabled){background:#388bfd}
+    .selected-info{font-size:.85rem;color:#8b949e;margin:.5rem 0}
+  </style>
+</head>
+<body>
+<nav class="navbar">
+  <a class="navbar-brand" href="index.html">🐍 Crypto Vuln Labs</a>
+  <div class="nav-actions">
+    <span class="nav-pill">Activity 4 / 10</span>
+    <a href="03-broken-password-hashing.html" class="btn-nav">← Activity 3</a>
+    <a href="05-unauthenticated-encryption.html" class="btn-nav">Activity 5 →</a>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="lab-header">
+    <div class="lab-badge">Activity 4 · Encryption</div>
+    <h2>ECB Mode Encryption</h2>
+    <p>Electronic Codebook mode leaks patterns in structured data</p>
+  </div>
+
+  <div class="scenario-box">
+    <p><strong>Scenario:</strong> A healthcare platform encrypts payment records and patient profile images before storing them. Both functions use AES with a securely generated random key — but the mode of operation is wrong in both cases. One issue is <strong>most critical</strong>. Click the line you believe is the single most catastrophic flaw.</p>
+  </div>
+
+  <div class="demo-box">
+    <div class="code-block" id="code-block"></div>
+    <p style="font-size:.78rem;color:#8b949e;margin:.4rem 0 0">
+      <span class="badge badge-yellow" style="font-size:.72rem">⚠</span> = vulnerable line · click to inspect · which is most critical?
+    </p>
+  </div>
+
+  <div class="explain-panel" id="explain-panel"></div>
+
+  <div class="question-box">
+    <p class="question-text">❓ Click the <strong>most critical</strong> vulnerability above, then submit.</p>
+    <div class="selected-info" id="selected-info">No line selected yet.</div>
+    <button class="submit-btn" id="submit-btn" disabled onclick="submitAnswer()">Submit Answer</button>
+  </div>
+
+  <div id="feedback" class="feedback-box"></div>
+
+  <div id="why-matters" class="why-box">
+    <h6>💡 Why it matters</h6>
+    <p>The "Penguin Problem" is the canonical ECB demonstration: encrypt a bitmap image with AES-ECB and the penguin silhouette remains perfectly visible in the ciphertext because identical 16-byte pixel blocks produce identical ciphertext blocks. For medical images, this can reveal anatomical structures directly from encrypted data. <strong>Fix:</strong> always use an authenticated mode — <code>modes.GCM(iv)</code> with a fresh random IV per encryption provides both confidentiality and integrity in one step.</p>
+  </div>
+
+  <div class="lab-footer">
+    <a href="03-broken-password-hashing.html" class="btn-nav">← Activity 3</a>
+    <a href="05-unauthenticated-encryption.html" class="btn-nav">Activity 5 – Unauthenticated Encryption →</a>
+  </div>
+</div>
+
+<script src="shared.js"></script>
+<script>
+const CODE = [
+  {n:1,  code:'from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes'},
+  {n:2,  code:'import os'},
+  {n:3,  code:''},
+  {n:4,  code:'KEY = os.urandom(32)  # AES-256 key — securely generated ✓'},
+  {n:5,  code:''},
+  {n:6,  code:'def encrypt_payment_record(data: str) -> bytes:'},
+  {n:7,  code:'    raw = data.encode().ljust(16)[:16]           # single-block payload'},
+  {n:8,  code:'    cipher = Cipher(algorithms.AES(KEY), modes.ECB())   # ECB mode', bug:'high', title:'ECB Mode — Structured Data'},
+  {n:9,  code:'    return cipher.encryptor().update(raw)'},
+  {n:10, code:''},
+  {n:11, code:'def encrypt_patient_image(image_bytes: bytes) -> bytes:'},
+  {n:12, code:'    pad = 16 - len(image_bytes) % 16'},
+  {n:13, code:'    padded = image_bytes + bytes([pad] * pad)'},
+  {n:14, code:'    cipher = Cipher(algorithms.AES(KEY), modes.ECB())   # ECB mode', bug:'critical', title:'ECB Mode — Image Data'},
+  {n:15, code:'    return cipher.encryptor().update(padded)'},
+];
+
+const EXPLANATIONS = {
+  8:  { correct:false, html:'ECB on a 16-byte payment record is a real vulnerability — identical records produce identical ciphertext, enabling frequency analysis. But the single-block size limits visible pattern leakage. Line 14 (image data) is the more catastrophic instance because images contain vast amounts of repeated pixel data.' },
+  14: { correct:true,  html:'<strong>Most Critical: ECB Mode on Image Data.</strong> In ECB, every 16-byte block is encrypted independently. Images contain large regions of identical or similar pixels — a chest X-ray, facial photo, or financial chart. Identical blocks produce identical ciphertext blocks, preserving the visual structure of the image. An attacker can reconstruct recognisable outlines from the ciphertext alone without ever possessing the key. This is the "Penguin Problem." Switch to <code>modes.GCM(os.urandom(12))</code>.' },
+};
+
+function renderCode() {
+  const block = document.getElementById('code-block');
+  block.innerHTML = CODE.map(line => {
+    const isBug = !!line.bug;
+    return `<div class="code-line ${isBug ? 'code-bug' : line.code==='' ? 'code-blank' : ''}" ${isBug ? `id="cline-${line.n}" onclick="clickLine(${line.n})"` : ''}>
+      <span class="ln">${String(line.n).padStart(2,' ')}</span>
+      <code>${escHtml(line.code)}</code>
+      ${isBug ? `<span class="bug-icon">⚠</span>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+let selectedLine = null;
+
+function clickLine(n) {
+  CODE.filter(l => l.bug).forEach(l => {
+    const el = document.getElementById('cline-'+l.n);
+    if (el) el.classList.remove('selected');
+  });
+  const el = document.getElementById('cline-'+n);
+  if (el) el.classList.add('selected');
+  selectedLine = n;
+  const info = CODE.find(l => l.n === n);
+  const sevColors = {critical:'badge-red', high:'badge-yellow', medium:'badge-gray'};
+  document.getElementById('selected-info').innerHTML =
+    `Selected: <strong>Line ${n}</strong> — <span class="badge ${sevColors[info.bug]}">${info.title} (${info.bug})</span>`;
+  document.getElementById('submit-btn').disabled = false;
+  const exp = EXPLANATIONS[n];
+  const panel = document.getElementById('explain-panel');
+  panel.className = 'explain-panel show ' + (exp.correct ? 'explain-correct' : 'explain-wrong');
+  panel.innerHTML = exp.html;
+  if (exp.correct) showFeedback(true, exp.html);
+}
+
+function submitAnswer() {
+  if (!selectedLine) return;
+  const exp = EXPLANATIONS[selectedLine];
+  if (exp) showFeedback(exp.correct, exp.html);
+}
+
+renderCode();
+</script>
+</body>
+</html>

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Activity 9 – Predictable IV / Nonce</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    button.submit-btn{margin-top:.75rem;padding:.5rem 1.25rem;background:#1f6feb;border:none;border-radius:6px;color:#fff;font-size:.92rem;cursor:pointer}
+    button.submit-btn:disabled{opacity:.4;cursor:default}
+    button.submit-btn:hover:not(:disabled){background:#388bfd}
+    .selected-info{font-size:.85rem;color:#8b949e;margin:.5rem 0}
+  </style>
+</head>
+<body>
+<nav class="navbar">
+  <a class="navbar-brand" href="index.html">🐍 Crypto Vuln Labs</a>
+  <div class="nav-actions">
+    <span class="nav-pill">Activity 9 / 10</span>
+    <a href="08-insecure-tls.html" class="btn-nav">← Activity 8</a>
+    <a href="10-broken-cipher.html" class="btn-nav">Activity 10 →</a>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="lab-header">
+    <div class="lab-badge">Activity 9 · Algorithm</div>
+    <h2>Predictable IV / Nonce</h2>
+    <p>Deterministic initialization vectors expose CBC to chosen-plaintext attacks</p>
+  </div>
+
+  <div class="scenario-box">
+    <p><strong>Scenario:</strong> A logging service encrypts audit entries before writing them to disk. A packet capture service encrypts network packets in-flight. Both use AES-CBC with a correctly sized key — but the IV generation is flawed. One issue is <strong>most critical</strong>. Click the line you believe is the single most catastrophic flaw.</p>
+  </div>
+
+  <div class="demo-box">
+    <div class="code-block" id="code-block"></div>
+    <p style="font-size:.78rem;color:#8b949e;margin:.4rem 0 0">
+      <span class="badge badge-yellow" style="font-size:.72rem">⚠</span> = vulnerable line · click to inspect · which is most critical?
+    </p>
+  </div>
+
+  <div class="explain-panel" id="explain-panel"></div>
+
+  <div class="question-box">
+    <p class="question-text">❓ Click the <strong>most critical</strong> vulnerability above, then submit.</p>
+    <div class="selected-info" id="selected-info">No line selected yet.</div>
+    <button class="submit-btn" id="submit-btn" disabled onclick="submitAnswer()">Submit Answer</button>
+  </div>
+
+  <div id="feedback" class="feedback-box"></div>
+
+  <div id="why-matters" class="why-box">
+    <h6>💡 Why it matters</h6>
+    <p>The BEAST attack (2011) against TLS 1.0 exploited predictable CBC IVs to decrypt HTTPS cookies in under 30 minutes. The attack works because in CBC, the IV is XORed with the plaintext before encryption — a known IV lets an attacker craft a specific plaintext that, when encrypted, reveals information about a target block. Timestamps repeat across server restarts and are observable from log metadata. <strong>Fix:</strong> always generate IVs with <code>os.urandom(16)</code> immediately before each encryption call — never derive them from time, counters, or any deterministic source.</p>
+  </div>
+
+  <div class="lab-footer">
+    <a href="08-insecure-tls.html" class="btn-nav">← Activity 8</a>
+    <a href="10-broken-cipher.html" class="btn-nav">Activity 10 – Broken Cipher →</a>
+  </div>
+</div>
+
+<script src="shared.js"></script>
+<script>
+const CODE = [
+  {n:1,  code:'import time, os'},
+  {n:2,  code:'from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes'},
+  {n:3,  code:''},
+  {n:4,  code:'KEY      = os.urandom(32)  # AES-256 key — securely generated ✓'},
+  {n:5,  code:'_counter = 0'},
+  {n:6,  code:''},
+  {n:7,  code:'def encrypt_audit_log(entry: str) -> bytes:'},
+  {n:8,  code:'    ts = int(time.time())'},
+  {n:9,  code:"    iv = ts.to_bytes(16, 'big')               # timestamp as IV", bug:'critical', title:'Timestamp IV — Predictable & Repeating'},
+  {n:10, code:'    enc = Cipher(algorithms.AES(KEY), modes.CBC(iv)).encryptor()'},
+  {n:11, code:'    data = entry.encode().ljust(48)[:48]       # fixed-length log entry'},
+  {n:12, code:'    return iv + enc.update(data) + enc.finalize()'},
+  {n:13, code:''},
+  {n:14, code:'def encrypt_packet(data: bytes) -> bytes:'},
+  {n:15, code:'    global _counter'},
+  {n:16, code:"    iv = _counter.to_bytes(16, 'big')          # sequential counter IV", bug:'high', title:'Sequential Counter IV — Predictable'},
+  {n:17, code:'    _counter += 1'},
+  {n:18, code:'    enc = Cipher(algorithms.AES(KEY), modes.CBC(iv)).encryptor()'},
+  {n:19, code:'    pad = 16 - len(data) % 16'},
+  {n:20, code:'    return iv + enc.update(data + bytes([pad]*pad)) + enc.finalize()'},
+];
+
+const EXPLANATIONS = {
+  9:  { correct:true,  html:'<strong>Most Critical: Timestamp as IV.</strong> Unix timestamps are 32-bit integers — an attacker who sees the log file\'s creation time knows (or can brute-force in seconds) the IV for every entry. Worse, two entries written within the same second share an identical IV, which in CBC means XORing their ciphertexts reveals the XOR of their plaintexts — directly leaking log content. Timestamps also survive process restarts, unlike the in-memory counter on line 16.' },
+  16: { correct:false, html:'A sequential counter IV (line 16) is also predictable — an observer who sees <em>n</em> packets knows the IV for packet <em>n+1</em>. This enables a chosen-plaintext attack in CBC. However, the counter resets on process restart, limiting the window of predictability. The timestamp IV on line 9 is observable from filesystem metadata and can be narrowed to a 1-second window with no cooperation from the target.' },
+};
+
+function renderCode() {
+  const block = document.getElementById('code-block');
+  block.innerHTML = CODE.map(line => {
+    const isBug = !!line.bug;
+    return `<div class="code-line ${isBug ? 'code-bug' : line.code==='' ? 'code-blank' : ''}" ${isBug ? `id="cline-${line.n}" onclick="clickLine(${line.n})"` : ''}>
+      <span class="ln">${String(line.n).padStart(2,' ')}</span>
+      <code>${escHtml(line.code)}</code>
+      ${isBug ? `<span class="bug-icon">⚠</span>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+let selectedLine = null;
+
+function clickLine(n) {
+  CODE.filter(l => l.bug).forEach(l => {
+    const el = document.getElementById('cline-'+l.n);
+    if (el) el.classList.remove('selected');
+  });
+  const el = document.getElementById('cline-'+n);
+  if (el) el.classList.add('selected');
+  selectedLine = n;
+  const info = CODE.find(l => l.n === n);
+  const sevColors = {critical:'badge-red', high:'badge-yellow', medium:'badge-gray'};
+  document.getElementById('selected-info').innerHTML =
+    `Selected: <strong>Line ${n}</strong> — <span class="badge ${sevColors[info.bug]}">${info.title} (${info.bug})</span>`;
+  document.getElementById('submit-btn').disabled = false;
+  const exp = EXPLANATIONS[n];
+  const panel = document.getElementById('explain-panel');
+  panel.className = 'explain-panel show ' + (exp.correct ? 'explain-correct' : 'explain-wrong');
+  panel.innerHTML = exp.html;
+  if (exp.correct) showFeedback(true, exp.html);
+}
+
+function submitAnswer() {
+  if (!selectedLine) return;
+  const exp = EXPLANATIONS[selectedLine];
+  if (exp) showFeedback(exp.correct, exp.html);
+}
+
+renderCode();
+</script>
+</body>
+</html>

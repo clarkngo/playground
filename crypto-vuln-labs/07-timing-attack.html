@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Activity 7 – Timing Attack</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    button.submit-btn{margin-top:.75rem;padding:.5rem 1.25rem;background:#1f6feb;border:none;border-radius:6px;color:#fff;font-size:.92rem;cursor:pointer}
+    button.submit-btn:disabled{opacity:.4;cursor:default}
+    button.submit-btn:hover:not(:disabled){background:#388bfd}
+    .selected-info{font-size:.85rem;color:#8b949e;margin:.5rem 0}
+  </style>
+</head>
+<body>
+<nav class="navbar">
+  <a class="navbar-brand" href="index.html">🐍 Crypto Vuln Labs</a>
+  <div class="nav-actions">
+    <span class="nav-pill">Activity 7 / 10</span>
+    <a href="06-weak-key-derivation.html" class="btn-nav">← Activity 6</a>
+    <a href="08-insecure-tls.html" class="btn-nav">Activity 8 →</a>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="lab-header">
+    <div class="lab-badge">Activity 7 · Protocol</div>
+    <h2>Timing Attack Vulnerability</h2>
+    <p>Non-constant-time comparison leaks HMAC bytes one at a time</p>
+  </div>
+
+  <div class="scenario-box">
+    <p><strong>Scenario:</strong> A webhook receiver verifies that incoming requests are signed with HMAC-SHA256 using a shared secret. A separate API gateway validates bearer tokens. A security researcher demonstrates that both verification paths are vulnerable to side-channel attacks. One is <strong>most critical</strong>. Click the line you believe is the single most catastrophic flaw.</p>
+  </div>
+
+  <div class="demo-box">
+    <div class="code-block" id="code-block"></div>
+    <p style="font-size:.78rem;color:#8b949e;margin:.4rem 0 0">
+      <span class="badge badge-yellow" style="font-size:.72rem">⚠</span> = vulnerable line · click to inspect · which is most critical?
+    </p>
+  </div>
+
+  <div class="explain-panel" id="explain-panel"></div>
+
+  <div class="question-box">
+    <p class="question-text">❓ Click the <strong>most critical</strong> vulnerability above, then submit.</p>
+    <div class="selected-info" id="selected-info">No line selected yet.</div>
+    <button class="submit-btn" id="submit-btn" disabled onclick="submitAnswer()">Submit Answer</button>
+  </div>
+
+  <div id="feedback" class="feedback-box"></div>
+
+  <div id="why-matters" class="why-box">
+    <h6>💡 Why it matters</h6>
+    <p>In 2009, researchers demonstrated a timing attack against HMAC in Python that recovered keys over a network in ~300 requests per byte. Python's <code>==</code> operator short-circuits on the first differing character — making comparisons faster for "more wrong" guesses and slower for "more correct" ones. By sending thousands of variations and measuring response times in microseconds, an attacker recovers the expected HMAC one byte at a time. <strong>Fix:</strong> replace <code>sig == expected</code> with <code>hmac.compare_digest(sig, expected)</code> — it compares all bytes in constant time regardless of where they differ.</p>
+  </div>
+
+  <div class="lab-footer">
+    <a href="06-weak-key-derivation.html" class="btn-nav">← Activity 6</a>
+    <a href="08-insecure-tls.html" class="btn-nav">Activity 8 – Insecure TLS →</a>
+  </div>
+</div>
+
+<script src="shared.js"></script>
+<script>
+const CODE = [
+  {n:1,  code:'import hmac, hashlib, os'},
+  {n:2,  code:''},
+  {n:3,  code:'SECRET_KEY   = os.urandom(32)   # securely generated ✓'},
+  {n:4,  code:'VALID_TOKENS = set()            # pre-loaded from database'},
+  {n:5,  code:''},
+  {n:6,  code:'def sign(msg: bytes) -> str:'},
+  {n:7,  code:'    return hmac.new(SECRET_KEY, msg, hashlib.sha256).hexdigest()'},
+  {n:8,  code:''},
+  {n:9,  code:'def verify_webhook(msg: bytes, sig: str) -> bool:'},
+  {n:10, code:'    expected = sign(msg)'},
+  {n:11, code:'    return sig == expected                    # string equality comparison', bug:'critical', title:'Timing-Vulnerable HMAC Compare'},
+  {n:12, code:''},
+  {n:13, code:'def validate_token(token: str) -> bool:'},
+  {n:14, code:'    h = hashlib.sha256(token.encode()).hexdigest()'},
+  {n:15, code:'    return h in VALID_TOKENS                  # set membership — variable time', bug:'high', title:'Timing Leak in Set Lookup'},
+];
+
+const EXPLANATIONS = {
+  11: { correct:true,  html:'<strong>Most Critical: Non-Constant-Time HMAC Comparison.</strong> Python\'s <code>==</code> short-circuits: it returns <code>False</code> as soon as the first differing byte is found. This leaks timing information proportional to how many leading bytes are correct. An attacker sends the same payload with systematically varied signatures, measures response time in microseconds, and determines the correct HMAC one byte at a time. HMAC-SHA256 produces 32 bytes — 256 values per byte = ~8,200 requests to forge a valid webhook signature. Use <code>hmac.compare_digest(sig, expected)</code>.' },
+  15: { correct:false, html:'Python set lookup uses hashing, and hash collision probability causes variable-time behaviour — a real but less exploitable timing leak. However, line 11 is a direct HMAC forgery vector: the comparison structure (64-char hex string) has a clear byte-by-byte timing side channel that has been demonstrated in practice. Fix line 11 first.' },
+};
+
+function renderCode() {
+  const block = document.getElementById('code-block');
+  block.innerHTML = CODE.map(line => {
+    const isBug = !!line.bug;
+    return `<div class="code-line ${isBug ? 'code-bug' : line.code==='' ? 'code-blank' : ''}" ${isBug ? `id="cline-${line.n}" onclick="clickLine(${line.n})"` : ''}>
+      <span class="ln">${String(line.n).padStart(2,' ')}</span>
+      <code>${escHtml(line.code)}</code>
+      ${isBug ? `<span class="bug-icon">⚠</span>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+let selectedLine = null;
+
+function clickLine(n) {
+  CODE.filter(l => l.bug).forEach(l => {
+    const el = document.getElementById('cline-'+l.n);
+    if (el) el.classList.remove('selected');
+  });
+  const el = document.getElementById('cline-'+n);
+  if (el) el.classList.add('selected');
+  selectedLine = n;
+  const info = CODE.find(l => l.n === n);
+  const sevColors = {critical:'badge-red', high:'badge-yellow', medium:'badge-gray'};
+  document.getElementById('selected-info').innerHTML =
+    `Selected: <strong>Line ${n}</strong> — <span class="badge ${sevColors[info.bug]}">${info.title} (${info.bug})</span>`;
+  document.getElementById('submit-btn').disabled = false;
+  const exp = EXPLANATIONS[n];
+  const panel = document.getElementById('explain-panel');
+  panel.className = 'explain-panel show ' + (exp.correct ? 'explain-correct' : 'explain-wrong');
+  panel.innerHTML = exp.html;
+  if (exp.correct) showFeedback(true, exp.html);
+}
+
+function submitAnswer() {
+  if (!selectedLine) return;
+  const exp = EXPLANATIONS[selectedLine];
+  if (exp) showFeedback(exp.correct, exp.html);
+}
+
+renderCode();
+</script>
+</body>
+</html>

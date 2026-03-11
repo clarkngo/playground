@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Activity 2 – Weak PRNG</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    button.submit-btn{margin-top:.75rem;padding:.5rem 1.25rem;background:#1f6feb;border:none;border-radius:6px;color:#fff;font-size:.92rem;cursor:pointer}
+    button.submit-btn:disabled{opacity:.4;cursor:default}
+    button.submit-btn:hover:not(:disabled){background:#388bfd}
+    .selected-info{font-size:.85rem;color:#8b949e;margin:.5rem 0}
+  </style>
+</head>
+<body>
+<nav class="navbar">
+  <a class="navbar-brand" href="index.html">🐍 Crypto Vuln Labs</a>
+  <div class="nav-actions">
+    <span class="nav-pill">Activity 2 / 10</span>
+    <a href="01-hardcoded-secrets.html" class="btn-nav">← Activity 1</a>
+    <a href="03-broken-password-hashing.html" class="btn-nav">Activity 3 →</a>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="lab-header">
+    <div class="lab-badge">Activity 2 · Secrets Management</div>
+    <h2>Weak Random Number Generator</h2>
+    <p>Using Python's <code>random</code> module for security-sensitive values</p>
+  </div>
+
+  <div class="scenario-box">
+    <p><strong>Scenario:</strong> An authentication service issues session tokens, one-time passwords, and API keys. A code review flags every call to the <code>random</code> module. All three are vulnerable — but one is <strong>most critical</strong>. Click the line you believe is the single most catastrophic flaw.</p>
+  </div>
+
+  <div class="demo-box">
+    <div class="code-block" id="code-block"></div>
+    <p style="font-size:.78rem;color:#8b949e;margin:.4rem 0 0">
+      <span class="badge badge-yellow" style="font-size:.72rem">⚠</span> = vulnerable line · click to inspect · which is most critical?
+    </p>
+  </div>
+
+  <div class="explain-panel" id="explain-panel"></div>
+
+  <div class="question-box">
+    <p class="question-text">❓ Click the <strong>most critical</strong> vulnerability above, then submit.</p>
+    <div class="selected-info" id="selected-info">No line selected yet.</div>
+    <button class="submit-btn" id="submit-btn" disabled onclick="submitAnswer()">Submit Answer</button>
+  </div>
+
+  <div id="feedback" class="feedback-box"></div>
+
+  <div id="why-matters" class="why-box">
+    <h6>💡 Why it matters</h6>
+    <p>Python's <code>random</code> module uses the Mersenne Twister algorithm, which is designed for statistical simulations — not security. After observing just 624 consecutive outputs, an attacker can reconstruct the entire internal state and predict every future value. For session tokens this means any active session can be forged. <strong>Fix:</strong> always use <code>secrets.token_urlsafe(32)</code> or <code>os.urandom(32)</code> for security-sensitive values. The <code>secrets</code> module was added to Python 3.6 precisely for this purpose.</p>
+  </div>
+
+  <div class="lab-footer">
+    <a href="01-hardcoded-secrets.html" class="btn-nav">← Activity 1</a>
+    <a href="03-broken-password-hashing.html" class="btn-nav">Activity 3 – Password Hashing →</a>
+  </div>
+</div>
+
+<script src="shared.js"></script>
+<script>
+const CODE = [
+  {n:1,  code:'import random'},
+  {n:2,  code:'import string'},
+  {n:3,  code:''},
+  {n:4,  code:'CHARS = string.ascii_letters + string.digits + "!@#$%"'},
+  {n:5,  code:''},
+  {n:6,  code:'def create_session_token(user_id: int) -> str:'},
+  {n:7,  code:"    token = ''.join(random.choices(CHARS, k=32))   # 32-char session token", bug:'critical', title:'Weak PRNG — Session Token'},
+  {n:8,  code:'    return f"sess:{user_id}:{token}"'},
+  {n:9,  code:''},
+  {n:10, code:'def generate_otp() -> str:'},
+  {n:11, code:'    return str(random.randint(100000, 999999))       # 6-digit one-time password', bug:'high', title:'Predictable OTP'},
+  {n:12, code:''},
+  {n:13, code:'def issue_api_key() -> str:'},
+  {n:14, code:"    return ''.join(random.choices(string.hexdigits, k=40))  # API key", bug:'high', title:'Predictable API Key'},
+];
+
+const EXPLANATIONS = {
+  7:  { correct:true,  html:'<strong>Most Critical: Insecure PRNG for Session Tokens.</strong> Session tokens are long-lived (hours to days) and grant full account access. Python\'s Mersenne Twister state can be reconstructed after observing 624 outputs. An attacker who has seen enough server responses can predict valid session tokens for any user — no password needed. Use <code>secrets.token_urlsafe(32)</code> instead.' },
+  11: { correct:false, html:'Predictable OTPs are serious — they enable account takeover by guessing the 6-digit code. But OTPs are short-lived (30–60 seconds) and single-use, limiting the attack window. Session tokens (line 7) are active for hours and grant richer access.' },
+  14: { correct:false, html:'Predictable API keys are dangerous for long-running service integrations. However, API keys often have scoped permissions, while session tokens (line 7) inherit full user privileges and are issued far more frequently — making them the higher-value target for PRNG exploitation.' },
+};
+
+function renderCode() {
+  const block = document.getElementById('code-block');
+  block.innerHTML = CODE.map(line => {
+    const isBug = !!line.bug;
+    return `<div class="code-line ${isBug ? 'code-bug' : line.code==='' ? 'code-blank' : ''}" ${isBug ? `id="cline-${line.n}" onclick="clickLine(${line.n})"` : ''}>
+      <span class="ln">${String(line.n).padStart(2,' ')}</span>
+      <code>${escHtml(line.code)}</code>
+      ${isBug ? `<span class="bug-icon">⚠</span>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+let selectedLine = null;
+
+function clickLine(n) {
+  CODE.filter(l => l.bug).forEach(l => {
+    const el = document.getElementById('cline-'+l.n);
+    if (el) el.classList.remove('selected');
+  });
+  const el = document.getElementById('cline-'+n);
+  if (el) el.classList.add('selected');
+  selectedLine = n;
+  const info = CODE.find(l => l.n === n);
+  const sevColors = {critical:'badge-red', high:'badge-yellow', medium:'badge-gray'};
+  document.getElementById('selected-info').innerHTML =
+    `Selected: <strong>Line ${n}</strong> — <span class="badge ${sevColors[info.bug]}">${info.title} (${info.bug})</span>`;
+  document.getElementById('submit-btn').disabled = false;
+  const exp = EXPLANATIONS[n];
+  const panel = document.getElementById('explain-panel');
+  panel.className = 'explain-panel show ' + (exp.correct ? 'explain-correct' : 'explain-wrong');
+  panel.innerHTML = exp.html;
+  if (exp.correct) showFeedback(true, exp.html);
+}
+
+function submitAnswer() {
+  if (!selectedLine) return;
+  const exp = EXPLANATIONS[selectedLine];
+  if (exp) showFeedback(exp.correct, exp.html);
+}
+
+renderCode();
+</script>
+</body>
+</html>

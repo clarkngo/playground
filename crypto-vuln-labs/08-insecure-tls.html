@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Activity 8 – Insecure TLS Configuration</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    button.submit-btn{margin-top:.75rem;padding:.5rem 1.25rem;background:#1f6feb;border:none;border-radius:6px;color:#fff;font-size:.92rem;cursor:pointer}
+    button.submit-btn:disabled{opacity:.4;cursor:default}
+    button.submit-btn:hover:not(:disabled){background:#388bfd}
+    .selected-info{font-size:.85rem;color:#8b949e;margin:.5rem 0}
+  </style>
+</head>
+<body>
+<nav class="navbar">
+  <a class="navbar-brand" href="index.html">🐍 Crypto Vuln Labs</a>
+  <div class="nav-actions">
+    <span class="nav-pill">Activity 8 / 10</span>
+    <a href="07-timing-attack.html" class="btn-nav">← Activity 7</a>
+    <a href="09-predictable-iv.html" class="btn-nav">Activity 9 →</a>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="lab-header">
+    <div class="lab-badge">Activity 8 · Protocol</div>
+    <h2>Insecure TLS Configuration</h2>
+    <p>Certificate validation disabled — opening the door to man-in-the-middle attacks</p>
+  </div>
+
+  <div class="scenario-box">
+    <p><strong>Scenario:</strong> A fintech application communicates with a payment processor and a legacy internal service. A penetration tester on the same network intercepts traffic and reads card data in plaintext. The code has three TLS issues — one is <strong>most critical</strong>. Click the line you believe is the single most catastrophic flaw.</p>
+  </div>
+
+  <div class="demo-box">
+    <div class="code-block" id="code-block"></div>
+    <p style="font-size:.78rem;color:#8b949e;margin:.4rem 0 0">
+      <span class="badge badge-yellow" style="font-size:.72rem">⚠</span> = vulnerable line · click to inspect · which is most critical?
+    </p>
+  </div>
+
+  <div class="explain-panel" id="explain-panel"></div>
+
+  <div class="question-box">
+    <p class="question-text">❓ Click the <strong>most critical</strong> vulnerability above, then submit.</p>
+    <div class="selected-info" id="selected-info">No line selected yet.</div>
+    <button class="submit-btn" id="submit-btn" disabled onclick="submitAnswer()">Submit Answer</button>
+  </div>
+
+  <div id="feedback" class="feedback-box"></div>
+
+  <div id="why-matters" class="why-box">
+    <h6>💡 Why it matters</h6>
+    <p>PCI DSS (Payment Card Industry Data Security Standard) explicitly prohibits <code>verify=False</code> for any connection handling cardholder data. In 2015 researchers demonstrated a MITM attack against iOS apps that used <code>NSURLSession</code> with validation disabled, intercepting payment data from popular apps within minutes on a coffee shop network. Even in internal Kubernetes/Docker networks, MITM is possible via ARP spoofing or a compromised sidecar container. <strong>Fix:</strong> never disable certificate verification. If using self-signed certs internally, pin the CA certificate: <code>verify='/path/to/internal-ca.pem'</code>.</p>
+  </div>
+
+  <div class="lab-footer">
+    <a href="07-timing-attack.html" class="btn-nav">← Activity 7</a>
+    <a href="09-predictable-iv.html" class="btn-nav">Activity 9 – Predictable IV →</a>
+  </div>
+</div>
+
+<script src="shared.js"></script>
+<script>
+const CODE = [
+  {n:1,  code:'import requests, ssl, urllib.request'},
+  {n:2,  code:''},
+  {n:3,  code:"PAYMENTS_URL = 'https://payments.processor.internal/charge'"},
+  {n:4,  code:"LEGACY_URL   = 'https://legacy.internal/data'"},
+  {n:5,  code:''},
+  {n:6,  code:'def charge_card(card: dict, api_key: str) -> dict:'},
+  {n:7,  code:'    resp = requests.post('},
+  {n:8,  code:'        PAYMENTS_URL,'},
+  {n:9,  code:"        json=card,"},
+  {n:10, code:"        headers={'X-API-Key': api_key},"},
+  {n:11, code:"        verify=False,                        # bypass TLS certificate check", bug:'critical', title:'TLS Certificate Disabled'},
+  {n:12, code:'    )'},
+  {n:13, code:'    return resp.json()'},
+  {n:14, code:''},
+  {n:15, code:'def legacy_fetch(endpoint: str) -> bytes:'},
+  {n:16, code:'    ctx = ssl.SSLContext(ssl.PROTOCOL_TLSv1)  # TLS 1.0 — deprecated 2020', bug:'high', title:'TLS 1.0 Protocol'},
+  {n:17, code:'    ctx.verify_mode = ssl.CERT_NONE            # no certificate validation', bug:'high', title:'Certificate Validation Off'},
+  {n:18, code:'    with urllib.request.urlopen(LEGACY_URL + endpoint, context=ctx) as r:'},
+  {n:19, code:'        return r.read()'},
+];
+
+const EXPLANATIONS = {
+  11: { correct:true,  html:'<strong>Most Critical: <code>verify=False</code> on the Payment Endpoint.</strong> This disables all TLS certificate validation for the card-charging function. Any attacker on the network path can present a self-signed certificate and the <code>requests</code> library will accept it silently. The HTTPS connection now provides zero authentication — all card data, API keys, and responses are readable and modifiable in transit. This violates PCI DSS and is the highest-value target.' },
+  16: { correct:false, html:'TLS 1.0 (line 16) is vulnerable to BEAST and POODLE attacks and has been deprecated by all major browsers since 2020. However, exploiting TLS 1.0 requires active downgrade attacks and specific cipher suites. Line 11\'s <code>verify=False</code> requires zero sophistication — any tool that intercepts traffic can MITM the payment connection immediately.' },
+  17: { correct:false, html:'<code>CERT_NONE</code> on line 17 also disables certificate validation — for the legacy endpoint. This is serious, but the legacy endpoint handles general data. Line 11 is on the payment endpoint handling card numbers and API keys, making it the higher-value MITM target with a larger regulatory and financial impact.' },
+};
+
+function renderCode() {
+  const block = document.getElementById('code-block');
+  block.innerHTML = CODE.map(line => {
+    const isBug = !!line.bug;
+    return `<div class="code-line ${isBug ? 'code-bug' : line.code==='' ? 'code-blank' : ''}" ${isBug ? `id="cline-${line.n}" onclick="clickLine(${line.n})"` : ''}>
+      <span class="ln">${String(line.n).padStart(2,' ')}</span>
+      <code>${escHtml(line.code)}</code>
+      ${isBug ? `<span class="bug-icon">⚠</span>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+let selectedLine = null;
+
+function clickLine(n) {
+  CODE.filter(l => l.bug).forEach(l => {
+    const el = document.getElementById('cline-'+l.n);
+    if (el) el.classList.remove('selected');
+  });
+  const el = document.getElementById('cline-'+n);
+  if (el) el.classList.add('selected');
+  selectedLine = n;
+  const info = CODE.find(l => l.n === n);
+  const sevColors = {critical:'badge-red', high:'badge-yellow', medium:'badge-gray'};
+  document.getElementById('selected-info').innerHTML =
+    `Selected: <strong>Line ${n}</strong> — <span class="badge ${sevColors[info.bug]}">${info.title} (${info.bug})</span>`;
+  document.getElementById('submit-btn').disabled = false;
+  const exp = EXPLANATIONS[n];
+  const panel = document.getElementById('explain-panel');
+  panel.className = 'explain-panel show ' + (exp.correct ? 'explain-correct' : 'explain-wrong');
+  panel.innerHTML = exp.html;
+  if (exp.correct) showFeedback(true, exp.html);
+}
+
+function submitAnswer() {
+  if (!selectedLine) return;
+  const exp = EXPLANATIONS[selectedLine];
+  if (exp) showFeedback(exp.correct, exp.html);
+}
+
+renderCode();
+</script>
+</body>
+</html>
