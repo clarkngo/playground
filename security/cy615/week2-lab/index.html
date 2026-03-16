@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Week 2 Lab – Stream vs Block Ciphers</title>
+  <link rel="stylesheet" href="../shared.css">
+  <style>
+    .cipher-comparison{display:grid;grid-template-columns:1fr auto 1fr;gap:1rem;margin:1.5rem 0}
+    @media(max-width:700px){.cipher-comparison{grid-template-columns:1fr;gap:1rem}}
+    .cipher-type{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:1rem;cursor:pointer;transition:border-color .2s}
+    .cipher-type.selected{border-color:#1f6feb;background:#1c2940}
+    .cipher-stream{border-color:#e3b341}
+    .cipher-block{border-color:#58a6ff}
+    .cipher-title{font-weight:600;color:#e6edf3;margin-bottom:.5rem;display:flex;align-items:center;gap:.5rem}
+    .cipher-desc{color:#8b949e;font-size:.9rem;margin-bottom:.75rem}
+    .cipher-visual{font-family:monospace;font-size:.8rem;background:#0d1117;padding:.75rem;border-radius:4px;margin:.5rem 0}
+
+    .interactive-cipher{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:1.5rem;margin:1rem 0}
+    .cipher-controls{display:grid;grid-template-columns:1fr auto;gap:1rem;align-items:center;margin-bottom:1rem}
+    .cipher-selector{background:#21262d;border:1px solid #30363d;border-radius:6px;padding:.5rem;color:#e6edf3}
+    .encrypt-btn{background:#1f6feb;color:#fff;border:none;border-radius:6px;padding:.5rem 1rem;cursor:pointer;font-size:.9rem}
+    .encrypt-btn:hover{background:#1c64e8}
+
+    .message-input{background:#21262d;border:1px solid #30363d;border-radius:6px;padding:.5rem;color:#e6edf3;width:100%;margin:.5rem 0}
+    .message-input:focus{outline:none;border-color:#58a6ff}
+    .key-input{background:#21262d;border:1px solid #30363d;border-radius:6px;padding:.5rem;color:#e6edf3;width:100%;margin:.5rem 0;font-family:monospace}
+    .key-input:focus{outline:none;border-color:#58a6ff}
+
+    .encryption-output{background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:1rem;margin:.75rem 0;font-family:monospace;font-size:.9rem;min-height:80px;color:#58a6ff}
+    .process-visualization{background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:1rem;margin:.75rem 0}
+
+    .stream-demo{margin:.5rem 0}
+    .stream-chars{display:flex;gap:2px;margin:.5rem 0;font-family:monospace;font-size:.8rem}
+    .char-box{width:30px;height:30px;display:flex;align-items:center;justify-content:center;border:1px solid #30363d;border-radius:3px;background:#21262d}
+    .char-plain{border-color:#e3b341;color:#e3b341}
+    .char-key{border-color:#58a6ff;color:#58a6ff}
+    .char-cipher{border-color:#3fb950;color:#3fb950}
+
+    .block-demo{margin:.5rem 0}
+    .block-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;width:fit-content;margin:.5rem 0}
+    .block-cell{width:25px;height:25px;display:flex;align-items:center;justify-content:center;border:1px solid #30363d;border-radius:3px;font-family:monospace;font-size:.7rem}
+
+    .parameter-controls{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:1rem;margin:1rem 0}
+    .parameter-title{color:#e6edf3;font-weight:600;margin-bottom:.75rem}
+    .parameter-group{margin:.75rem 0}
+    .parameter-label{color:#8b949e;font-size:.9rem;margin-bottom:.25rem}
+    .parameter-slider{width:100%;accent-color:#58a6ff}
+    .parameter-value{color:#1f6feb;font-weight:600}
+
+    .security-analysis{background:#2a1c1c;border:1px solid #f85149;border-radius:8px;padding:1rem;margin:1rem 0}
+    .vulnerability-title{color:#f85149;font-weight:600;margin-bottom:.5rem}
+    .vulnerability-list{color:#8b949e;font-size:.9rem;margin-left:1rem}
+
+    .comparison-table{background:#0d1117;border:1px solid #30363d;border-radius:6px;overflow:hidden;margin:1rem 0}
+    .table-header{background:#21262d;padding:.75rem;font-weight:600;color:#e6edf3;border-bottom:1px solid #30363d}
+    .table-row{display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:1px solid #30363d}
+    .table-cell{padding:.75rem;color:#8b949e;font-size:.9rem}
+    .table-cell.highlight{color:#1f6feb;font-weight:600}
+
+    .reflection-box{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:1.5rem;margin:1.5rem 0}
+    .reflection-title{color:#e6edf3;font-weight:600;margin-bottom:.75rem}
+    .reflection-input{background:#21262d;border:1px solid #30363d;border-radius:6px;padding:.75rem;color:#e6edf3;width:100%;min-height:100px;font-family:inherit;resize:vertical}
+    .reflection-input:focus{outline:none;border-color:#58a6ff}
+    .submit-btn{background:#1f6feb;color:#fff;border:none;border-radius:6px;padding:.5rem 1rem;cursor:pointer;font-size:.9rem;margin-top:.5rem}
+    .submit-btn:hover{background:#1c64e8}
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="navbar-brand" href="../">🔐 Encryption Labs</a>
+  <div class="nav-actions">
+    <span class="nav-pill">Week 2 Lab</span>
+    <a href="../week1-lab/" class="btn-nav">← Week 1</a>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="lab-header">
+    <div class="lab-badge">Week 2 · Cipher Types</div>
+    <h2>Stream vs Block Ciphers</h2>
+    <p>Understanding different cipher architectures — Bit-by-bit vs block-by-block encryption</p>
+  </div>
+
+  <div class="scenario-box">
+    <p><strong>Scenario:</strong> You need to choose the right encryption method for different applications. A streaming video service needs real-time encryption, while a file storage system encrypts documents in batches. Understanding stream vs block ciphers will help you make the right architectural decisions.</p>
+  </div>
+
+  <!-- Cipher Type Comparison -->
+  <div class="demo-box">
+    <h4 style="margin-top:0;color:#e6edf3">🔄 Stream vs Block Cipher Architecture</h4>
+    <p style="margin-bottom:1rem;color:#8b949e">Click on each cipher type to explore how they process data:</p>
+
+    <div class="cipher-comparison">
+      <div class="cipher-type cipher-stream" onclick="selectCipherType('stream', this)">
+        <div class="cipher-title">
+          <span style="font-size:1.5rem">📡</span> Stream Cipher
+        </div>
+        <div class="cipher-desc">Encrypts data bit-by-bit or byte-by-byte in a continuous stream</div>
+        <div class="cipher-visual">
+          Input:  H E L L O<br>
+          Key:    K E Y K E<br>
+          Output: ? ? ? ? ?
+        </div>
+        <div style="color:#e3b341;font-size:.8rem">✓ Fast, low latency</div>
+        <div style="color:#f85149;font-size:.8rem">✗ Key reuse dangerous</div>
+      </div>
+
+      <div style="text-align:center;color:#8b949e;font-size:1.2rem;font-weight:600;align-self:center">VS</div>
+
+      <div class="cipher-type cipher-block" onclick="selectCipherType('block', this)">
+        <div class="cipher-title">
+          <span style="font-size:1.5rem">🧱</span> Block Cipher
+        </div>
+        <div class="cipher-desc">Encrypts data in fixed-size blocks (typically 128 bits)</div>
+        <div class="cipher-visual">
+          Block: [HELL] [O___]<br>
+          Key:   [128-bit key]<br>
+          Output: [####] [####]
+        </div>
+        <div style="color:#3fb950;font-size:.8rem">✓ Well-analyzed, secure modes</div>
+        <div style="color:#f85149;font-size:.8rem">✗ Padding required</div>
+      </div>
+    </div>
+
+    <div id="cipher-details" style="margin-top:1rem;min-height:100px;color:#8b949e">
+      Select a cipher type above to see detailed processing information
+    </div>
+  </div>
+
+  <!-- Interactive Cipher Playground -->
+  <div class="demo-box">
+    <h4 style="margin-top:0;color:#e6edf3">🎮 Interactive Cipher Playground</h4>
+
+    <div class="interactive-cipher">
+      <div class="cipher-controls">
+        <select class="cipher-selector" id="cipher-mode">
+          <option value="stream-rc4">Stream Cipher (RC4-like)</option>
+          <option value="block-aes">Block Cipher (AES-like)</option>
+        </select>
+        <button class="encrypt-btn" onclick="performEncryption()">🔒 Encrypt</button>
+      </div>
+
+      <div style="margin:.75rem 0">
+        <label style="color:#e6edf3;font-size:.9rem;font-weight:600">Message to encrypt:</label>
+        <input type="text" class="message-input" id="plaintext-input" value="Hello World!" maxlength="32" placeholder="Enter message to encrypt...">
+      </div>
+
+      <div style="margin:.75rem 0">
+        <label style="color:#e6edf3;font-size:.9rem;font-weight:600">Encryption key:</label>
+        <input type="text" class="key-input" id="key-input" value="MySecretKey123" maxlength="16" placeholder="Enter encryption key...">
+      </div>
+
+      <div id="process-visualization" class="process-visualization"></div>
+
+      <div class="encryption-output" id="encryption-result">
+        Click "Encrypt" to see the encryption process and result...
+      </div>
+    </div>
+  </div>
+
+  <!-- Parameter Exploration -->
+  <div class="demo-box">
+    <h4 style="margin-top:0;color:#e6edf3">⚙️ Parameter Exploration</h4>
+
+    <div class="parameter-controls">
+      <div class="parameter-title">🔧 Adjust cipher parameters and observe the effects:</div>
+
+      <div class="parameter-group">
+        <div class="parameter-label">Block Size (for block ciphers): <span class="parameter-value" id="block-size-value">128 bits</span></div>
+        <input type="range" class="parameter-slider" id="block-size" min="64" max="256" step="64" value="128" oninput="updateParameter('blockSize')">
+      </div>
+
+      <div class="parameter-group">
+        <div class="parameter-label">Key Length: <span class="parameter-value" id="key-length-value">128 bits</span></div>
+        <input type="range" class="parameter-slider" id="key-length" min="128" max="256" step="64" value="128" oninput="updateParameter('keyLength')">
+      </div>
+
+      <div class="parameter-group">
+        <div class="parameter-label">Message Length: <span class="parameter-value" id="message-length-value">12 characters</span></div>
+        <input type="range" class="parameter-slider" id="message-length" min="1" max="32" value="12" oninput="updateParameter('messageLength')">
+      </div>
+
+      <div id="parameter-effects" style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:1rem;margin-top:1rem;min-height:80px;color:#8b949e">
+        Adjust the parameters above to see how they affect encryption performance and security...
+      </div>
+    </div>
+  </div>
+
+  <!-- Security Analysis -->
+  <div class="demo-box">
+    <h4 style="margin-top:0;color:#e6edf3">🛡️ Security Considerations</h4>
+
+    <div class="comparison-table">
+      <div class="table-header">Stream vs Block Cipher Security Comparison</div>
+      <div class="table-row">
+        <div class="table-cell" style="font-weight:600;color:#e6edf3">Aspect</div>
+        <div class="table-cell" style="font-weight:600;color:#e3b341">Stream Ciphers</div>
+        <div class="table-cell" style="font-weight:600;color:#58a6ff">Block Ciphers</div>
+      </div>
+      <div class="table-row">
+        <div class="table-cell">Key Reuse</div>
+        <div class="table-cell highlight" style="color:#f85149">Critical vulnerability</div>
+        <div class="table-cell">Safe with proper modes</div>
+      </div>
+      <div class="table-row">
+        <div class="table-cell">Padding</div>
+        <div class="table-cell">Not required</div>
+        <div class="table-cell highlight" style="color:#f85149">Padding oracle attacks</div>
+      </div>
+      <div class="table-row">
+        <div class="table-cell">Performance</div>
+        <div class="table-cell highlight" style="color:#3fb950">Excellent for streaming</div>
+        <div class="table-cell">Good for bulk data</div>
+      </div>
+      <div class="table-row">
+        <div class="table-cell">Error Propagation</div>
+        <div class="table-cell highlight" style="color:#3fb950">Minimal</div>
+        <div class="table-cell">Can affect entire block</div>
+      </div>
+    </div>
+
+    <div class="security-analysis">
+      <div class="vulnerability-title">⚠️ Common Vulnerabilities</div>
+      <div class="vulnerability-list">
+        <strong>Stream Ciphers:</strong><br>
+        • Key stream reuse (same key + IV = broken security)<br>
+        • Weak random number generators<br>
+        • Bit-flipping attacks if no authentication<br><br>
+
+        <strong>Block Ciphers:</strong><br>
+        • ECB mode pattern leakage (identical blocks)<br>
+        • Padding oracle attacks (CBC mode)<br>
+        • Key schedule weaknesses
+      </div>
+    </div>
+  </div>
+
+  <!-- Question -->
+  <div class="question-box">
+    <p class="question-text">❓ Which cipher type would be BEST for encrypting a live video stream where low latency is critical?</p>
+    <div class="options-grid">
+      <button class="opt-btn" onclick="check('A',this)"><span class="opt-id">A</span> Stream Cipher</button>
+      <button class="opt-btn" onclick="check('B',this)"><span class="opt-id">B</span> Block Cipher</button>
+      <button class="opt-btn" onclick="check('C',this)"><span class="opt-id">C</span> Both work equally well</button>
+      <button class="opt-btn" onclick="check('D',this)"><span class="opt-id">D</span> Neither is suitable</button>
+    </div>
+  </div>
+
+  <div id="feedback" class="feedback-box"></div>
+
+  <!-- Student Reflection -->
+  <div class="reflection-box">
+    <div class="reflection-title">💭 Learning Reflection Submission</div>
+    <p style="color:#8b949e;margin-bottom:.75rem">After experimenting with different cipher types and parameters, reflect on your discoveries:</p>
+
+    <div style="margin-bottom:1rem">
+      <strong style="color:#e6edf3">Guided Questions:</strong>
+      <ul style="color:#8b949e;font-size:.9rem;margin:.5rem 0 0 1.5rem">
+        <li>How did changing the block size affect encryption behavior?</li>
+        <li>What did you notice about stream vs block cipher performance?</li>
+        <li>When would you choose one cipher type over the other?</li>
+        <li>What security trade-offs did you observe?</li>
+      </ul>
+    </div>
+
+    <textarea class="reflection-input" id="learning-reflection" placeholder="Describe what you learned by changing the parameters and interacting with different cipher types. What surprised you? How do the different architectures suit different use cases?
+
+Please write at least 4-5 sentences about your key insights..."></textarea>
+
+    <button class="submit-btn" onclick="submitReflection()">Submit Learning Reflection</button>
+    <div id="submission-feedback" style="margin-top:.5rem;color:#3fb950;display:none">✅ Reflection submitted successfully!</div>
+  </div>
+
+  <div id="why-matters" class="why-box">
+    <h6>💡 Why it matters</h6>
+    <p>Understanding cipher architectures helps you choose the right tool for each job:</p>
+    <ul>
+      <li><strong>Stream Ciphers</strong> — Perfect for real-time applications like VoIP, video streaming, and satellite communications</li>
+      <li><strong>Block Ciphers</strong> — Ideal for file encryption, disk encryption, and secure storage where data comes in chunks</li>
+      <li><strong>Modern Applications</strong> — Many systems use both (TLS uses stream ciphers for bulk data after block cipher key exchange)</li>
+    </ul>
+    <p>The choice between stream and block ciphers depends on your specific requirements: latency constraints, data patterns, security needs, and implementation complexity.</p>
+  </div>
+
+  <div class="lab-footer">
+    <span class="text-muted">Week 2 Lab - Cipher Architectures</span>
+    <a href="../week1-lab/" class="btn-nav">← Back to Week 1</a>
+  </div>
+</div>
+
+<script src="../shared.js"></script>
+<script>
+let selectedCipherType = null;
+let answered = false;
+
+const cipherDetails = {
+  stream: {
+    title: "📡 Stream Cipher Processing",
+    content: `
+      <div style="background:#2a2000;border:1px solid #e3b341;border-radius:6px;padding:1rem">
+        <strong style="color:#e3b341">How Stream Ciphers Work:</strong><br><br>
+
+        1. <strong>Key Stream Generation:</strong> Pseudo-random generator creates key stream<br>
+        2. <strong>XOR Operation:</strong> Each plaintext bit XORed with key stream bit<br>
+        3. <strong>Continuous Process:</strong> Encryption happens in real-time as data flows<br><br>
+
+        <strong>Examples:</strong> RC4, ChaCha20, Salsa20<br>
+        <strong>Use Cases:</strong> Live streaming, VoIP, satellite communications<br>
+        <strong>Advantage:</strong> No buffering needed, minimal latency<br>
+        <strong>Risk:</strong> Never reuse the same key+IV combination
+      </div>
+    `
+  },
+  block: {
+    title: "🧱 Block Cipher Processing",
+    content: `
+      <div style="background:#1c2940;border:1px solid #58a6ff;border-radius:6px;padding:1rem">
+        <strong style="color:#58a6ff">How Block Ciphers Work:</strong><br><br>
+
+        1. <strong>Block Division:</strong> Data split into fixed-size blocks (128-bit)<br>
+        2. <strong>Padding:</strong> Last block padded if not full<br>
+        3. <strong>Round Processing:</strong> Multiple rounds of substitution and permutation<br>
+        4. <strong>Mode Operation:</strong> Blocks combined using CBC, GCM, etc.<br><br>
+
+        <strong>Examples:</strong> AES, DES, 3DES<br>
+        <strong>Use Cases:</strong> File encryption, disk encryption, secure storage<br>
+        <strong>Advantage:</strong> Well-studied, many secure modes available<br>
+        <strong>Risk:</strong> ECB mode reveals patterns, padding attacks
+      </div>
+    `
+  }
+};
+
+function selectCipherType(type, element) {
+  document.querySelectorAll('.cipher-type').forEach(el => el.classList.remove('selected'));
+  element.classList.add('selected');
+
+  selectedCipherType = type;
+  document.getElementById('cipher-details').innerHTML = cipherDetails[type].content;
+}
+
+function performEncryption() {
+  const mode = document.getElementById('cipher-mode').value;
+  const plaintext = document.getElementById('plaintext-input').value;
+  const key = document.getElementById('key-input').value;
+
+  if (!plaintext || !key) {
+    document.getElementById('encryption-result').innerHTML = '<span style="color:#f85149">Please enter both message and key!</span>';
+    return;
+  }
+
+  const visualization = document.getElementById('process-visualization');
+  const result = document.getElementById('encryption-result');
+
+  if (mode === 'stream-rc4') {
+    // Stream cipher simulation
+    visualization.innerHTML = `
+      <div style="color:#e3b341;font-weight:600;margin-bottom:.5rem">🔄 Stream Cipher Processing:</div>
+      <div class="stream-demo">
+        <div style="font-size:.8rem;color:#8b949e;margin-bottom:.25rem">Plaintext characters:</div>
+        <div class="stream-chars" id="stream-plain"></div>
+        <div style="font-size:.8rem;color:#8b949e;margin:.5rem 0 .25rem">Key stream bytes:</div>
+        <div class="stream-chars" id="stream-key"></div>
+        <div style="font-size:.8rem;color:#8b949e;margin:.5rem 0 .25rem">XOR result:</div>
+        <div class="stream-chars" id="stream-cipher"></div>
+      </div>
+    `;
+
+    // Simulate stream encryption
+    let ciphertext = '';
+    for (let i = 0; i < plaintext.length; i++) {
+      const plainChar = plaintext.charCodeAt(i);
+      const keyByte = key.charCodeAt(i % key.length) ^ (i * 17); // Simple key stream
+      const cipherByte = plainChar ^ keyByte;
+      ciphertext += String.fromCharCode(cipherByte);
+    }
+
+    // Show character-by-character processing
+    setTimeout(() => {
+      const plainDiv = document.getElementById('stream-plain');
+      const keyDiv = document.getElementById('stream-key');
+      const cipherDiv = document.getElementById('stream-cipher');
+
+      for (let i = 0; i < plaintext.length; i++) {
+        plainDiv.innerHTML += `<div class="char-box char-plain">${plaintext[i]}</div>`;
+        keyDiv.innerHTML += `<div class="char-box char-key">${(key.charCodeAt(i % key.length) ^ (i * 17)) % 256}</div>`;
+        cipherDiv.innerHTML += `<div class="char-box char-cipher">?</div>`;
+      }
+    }, 100);
+
+    result.innerHTML = `
+      <strong style="color:#e3b341">Stream Cipher Result:</strong><br>
+      Encrypted: ${btoa(ciphertext)}<br>
+      <span style="color:#8b949e">Processing: ${plaintext.length} bytes processed sequentially</span>
+    `;
+
+  } else {
+    // Block cipher simulation
+    const blockSize = 4; // Simplified 4-character blocks
+    const paddedText = plaintext.padEnd(Math.ceil(plaintext.length / blockSize) * blockSize, '_');
+
+    visualization.innerHTML = `
+      <div style="color:#58a6ff;font-weight:600;margin-bottom:.5rem">🧱 Block Cipher Processing:</div>
+      <div class="block-demo">
+        <div style="font-size:.8rem;color:#8b949e;margin-bottom:.25rem">Data blocks (4-char each):</div>
+        <div id="block-display"></div>
+      </div>
+    `;
+
+    const blockDisplay = document.getElementById('block-display');
+    for (let i = 0; i < paddedText.length; i += blockSize) {
+      const block = paddedText.slice(i, i + blockSize);
+      const blockDiv = document.createElement('div');
+      blockDiv.className = 'block-grid';
+      blockDiv.style.margin = '0.5rem 1rem 0.5rem 0';
+      blockDiv.style.display = 'inline-grid';
+
+      for (let j = 0; j < block.length; j++) {
+        blockDiv.innerHTML += `<div class="block-cell" style="border-color:#58a6ff;color:#58a6ff">${block[j]}</div>`;
+      }
+      blockDisplay.appendChild(blockDiv);
+    }
+
+    // Simple block encryption simulation
+    let encryptedBlocks = [];
+    for (let i = 0; i < paddedText.length; i += blockSize) {
+      const block = paddedText.slice(i, i + blockSize);
+      let encryptedBlock = '';
+      for (let j = 0; j < block.length; j++) {
+        const char = block.charCodeAt(j);
+        const keyChar = key.charCodeAt(j % key.length);
+        encryptedBlock += String.fromCharCode((char + keyChar) % 256);
+      }
+      encryptedBlocks.push(encryptedBlock);
+    }
+
+    result.innerHTML = `
+      <strong style="color:#58a6ff">Block Cipher Result:</strong><br>
+      Encrypted: ${btoa(encryptedBlocks.join(''))}<br>
+      <span style="color:#8b949e">Processing: ${encryptedBlocks.length} blocks of ${blockSize} characters each</span>
+    `;
+  }
+}
+
+function updateParameter(type) {
+  const blockSizeSlider = document.getElementById('block-size');
+  const keyLengthSlider = document.getElementById('key-length');
+  const messageLengthSlider = document.getElementById('message-length');
+
+  const blockSize = blockSizeSlider.value;
+  const keyLength = keyLengthSlider.value;
+  const messageLength = messageLengthSlider.value;
+
+  document.getElementById('block-size-value').textContent = `${blockSize} bits`;
+  document.getElementById('key-length-value').textContent = `${keyLength} bits`;
+  document.getElementById('message-length-value').textContent = `${messageLength} characters`;
+
+  // Show parameter effects
+  let effects = '';
+
+  if (blockSize < 128) {
+    effects += `⚠️ Smaller block size (${blockSize} bits) increases vulnerability to frequency analysis.<br>`;
+  } else if (blockSize > 128) {
+    effects += `🔒 Larger block size (${blockSize} bits) improves security but increases memory usage.<br>`;
+  }
+
+  if (keyLength < 128) {
+    effects += `⚠️ Key length (${keyLength} bits) may be vulnerable to brute force attacks.<br>`;
+  } else if (keyLength >= 256) {
+    effects += `🔒 Strong key length (${keyLength} bits) provides excellent security.<br>`;
+  }
+
+  if (messageLength > 16 && blockSize == 128) {
+    const blocks = Math.ceil(messageLength / (blockSize / 8));
+    effects += `📊 Message requires ${blocks} blocks for encryption.<br>`;
+  }
+
+  const efficiencyScore = Math.min(100, (parseInt(blockSize) + parseInt(keyLength)) / 5);
+  effects += `⚡ Estimated performance score: ${efficiencyScore.toFixed(0)}/100`;
+
+  document.getElementById('parameter-effects').innerHTML = effects || 'Current parameters provide balanced security and performance.';
+}
+
+function submitReflection() {
+  const reflection = document.getElementById('learning-reflection').value;
+
+  if (reflection.trim().length < 100) {
+    alert('Please write a more detailed reflection (at least 100 characters).');
+    return;
+  }
+
+  // Simulate submission
+  const feedback = document.getElementById('submission-feedback');
+  feedback.style.display = 'block';
+
+  // Save submission data
+  const submission = {
+    timestamp: new Date().toISOString(),
+    reflection: reflection,
+    cipherInteractions: selectedCipherType,
+    labCompleted: 'Week 2 Lab'
+  };
+  localStorage.setItem('week2-lab-submission', JSON.stringify(submission));
+}
+
+const HINTS = {
+  B: "Block ciphers require buffering complete blocks before encryption, adding latency.",
+  C: "Stream and block ciphers have different performance characteristics and use cases.",
+  D: "Encryption is definitely needed for video streams - the question is which type."
+};
+
+function check(choice, btn) {
+  if (answered) return;
+  const correct = choice === 'A';
+  markBtn(btn, correct);
+
+  if (correct) {
+    answered = true;
+    showFeedback(true, "Correct! <strong>Stream ciphers</strong> are ideal for live video because they encrypt data bit-by-bit as it flows, without requiring complete blocks. This eliminates buffering delays and provides the low latency critical for real-time streaming applications.");
+  } else {
+    showFeedback(false, HINTS[choice]);
+  }
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+  updateParameter('blockSize');
+});
+</script>
+</body>
+</html>
