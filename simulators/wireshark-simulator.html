@@ -1,0 +1,1750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wireshark Simulator — Network Analysis Lab</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Courier New',Courier,monospace;font-size:12px;background:#e4e4e4;color:#111;display:flex;flex-direction:column}
+
+/* ── Nav bar ── */
+.navbar{background:#161b22;border-bottom:1px solid #30363d;padding:.55rem 1rem;display:flex;align-items:center;gap:.75rem;flex-shrink:0}
+.navbar-brand{font-size:.95rem;font-weight:700;color:#e6edf3;font-family:sans-serif}
+.navbar a{color:#8b949e;font-size:.8rem;margin-left:auto;text-decoration:none;font-family:sans-serif}
+.navbar a:hover{color:#58a6ff}
+
+/* ── Shell ── */
+.ws-shell{flex:1;display:flex;flex-direction:column;overflow:hidden;background:#f0f0f0}
+
+/* ── Toolbar ── */
+.toolbar{background:#e8e8e8;border-bottom:1px solid #b8b8b8;padding:4px 8px;display:flex;align-items:center;gap:6px;flex-shrink:0;flex-wrap:wrap}
+.tb-btn{padding:3px 9px;border:1px solid #a0a0a0;border-radius:3px;background:linear-gradient(to bottom,#f8f8f8,#ddd);cursor:pointer;font-size:11.5px;font-family:sans-serif;display:flex;align-items:center;gap:3px;white-space:nowrap}
+.tb-btn:hover{background:linear-gradient(to bottom,#fff,#e8e8e8)}
+.tb-btn:disabled{opacity:.4;cursor:default;pointer-events:none}
+.tb-sep{width:1px;height:22px;background:#b0b0b0;margin:0 3px}
+.tb-select{padding:2px 5px;border:1px solid #a0a0a0;border-radius:3px;font-size:11.5px;font-family:sans-serif;background:white}
+.tb-label{font-size:11px;font-family:sans-serif;color:#555;white-space:nowrap}
+
+/* ── Step controls bar ── */
+.step-bar{background:linear-gradient(to bottom,#f8f8f8,#eaeaea);border-bottom:2px solid #b0b0b0;padding:6px 10px;display:flex;align-items:center;gap:10px;flex-shrink:0;flex-wrap:wrap}
+.step-counter{font-family:sans-serif;font-size:13px;font-weight:700;color:#333;white-space:nowrap;min-width:110px}
+.step-counter .num{color:#1a73e8}
+.progress-track{flex:1;min-width:100px;height:8px;background:#d0d0d0;border-radius:4px;overflow:hidden;border:1px solid #b8b8b8}
+.progress-fill{height:100%;background:linear-gradient(90deg,#34a853,#1a73e8);border-radius:4px;transition:width .3s ease}
+.step-btns{display:flex;gap:5px;align-items:center}
+.btn-next{padding:5px 16px;border:1px solid #1558b0;border-radius:4px;background:linear-gradient(to bottom,#4a90d9,#2a6ab8);color:white;cursor:pointer;font-size:12px;font-family:sans-serif;font-weight:700;display:flex;align-items:center;gap:5px;white-space:nowrap;transition:all .15s}
+.btn-next:hover{background:linear-gradient(to bottom,#5a9ee8,#3578c8);box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.btn-next:active{background:linear-gradient(to bottom,#3578c8,#4a90d9)}
+.btn-next:disabled{background:linear-gradient(to bottom,#999,#888);border-color:#777;cursor:default;box-shadow:none}
+.btn-next.complete{background:linear-gradient(to bottom,#34a853,#28803e);border-color:#1e6b30}
+.btn-prev{padding:4px 10px;border:1px solid #a0a0a0;border-radius:3px;background:linear-gradient(to bottom,#f8f8f8,#ddd);cursor:pointer;font-size:11.5px;font-family:sans-serif}
+.btn-prev:hover{background:linear-gradient(to bottom,#fff,#e8e8e8)}
+.btn-prev:disabled{opacity:.4;cursor:default;pointer-events:none}
+
+/* ── Step preview ── */
+.step-preview{background:#fffff0;border-bottom:1px solid #e0d890;padding:4px 10px;font-family:sans-serif;font-size:11.5px;color:#555;flex-shrink:0;display:flex;align-items:center;gap:6px;min-height:28px}
+.step-preview .preview-label{font-weight:700;color:#888;font-size:10px;text-transform:uppercase;letter-spacing:.04em;flex-shrink:0}
+.step-preview .preview-text{color:#444}
+.step-preview .preview-proto{font-weight:700;color:#1a73e8}
+.step-preview.done{background:#e8f5e9;border-color:#a5d6a7}
+.step-preview.done .preview-text{color:#2e7d32;font-weight:600}
+
+/* ── Filter bar ── */
+.filter-bar{background:#e0e0e0;border-bottom:1px solid #b0b0b0;padding:3px 6px;display:flex;align-items:center;gap:5px;flex-shrink:0;flex-wrap:wrap}
+.fl-label{font-size:11px;font-weight:700;font-family:sans-serif;color:#444;flex-shrink:0}
+.fl-input{flex:1;min-width:160px;padding:3px 7px;border:2px solid #c0c0c0;border-radius:3px;font-family:'Courier New',monospace;font-size:12px;background:white;outline:none;transition:border-color .15s}
+.fl-input:focus{border-color:#4a90d9}
+.fl-input.valid{border-color:#28a745;background:#f0fff4}
+.fl-input.invalid{border-color:#cc2222;background:#fff5f5}
+.fl-btn{padding:2px 9px;border:1px solid #a0a0a0;border-radius:3px;background:linear-gradient(to bottom,#f8f8f8,#ddd);cursor:pointer;font-size:11px;font-family:sans-serif;white-space:nowrap}
+.fl-btn:hover{background:linear-gradient(to bottom,#fff,#e8e8e8)}
+.qf-btn{padding:2px 8px;border:1px solid #b0b0b0;border-radius:10px;background:white;cursor:pointer;font-size:10.5px;font-family:sans-serif;color:#333;transition:all .15s}
+.qf-btn:hover{background:#ddeeff;border-color:#6699cc}
+.qf-btn.active{background:#cce0ff;border-color:#4a90d9;font-weight:bold}
+
+/* ── 3-pane area ── */
+.pane-area{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0}
+.pane-list{flex:0 0 40%;overflow-y:auto;border-bottom:3px solid #808080;min-height:60px}
+.pane-lower{flex:1;display:flex;overflow:hidden;min-height:0}
+.pane-details{flex:1;overflow-y:auto;border-right:2px solid #909090;background:white;padding:2px}
+.pane-right{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.pane-hex{flex:1;overflow:auto;background:white;padding:4px 6px;font-size:11.5px;min-height:0}
+.pane-insight{flex:0 0 auto;max-height:140px;overflow-y:auto;padding:6px 10px;background:#fffde7;border-top:2px solid #e8c030;font-family:sans-serif;font-size:11px}
+
+/* ── Packet table ── */
+.pkt-table{width:100%;border-collapse:collapse;table-layout:fixed}
+.pkt-table thead{position:sticky;top:0;z-index:5}
+.pkt-table th{background:#d0d0d0;border:1px solid #b8b8b8;padding:3px 5px;text-align:left;font-family:sans-serif;font-size:11px;font-weight:700;user-select:none;white-space:nowrap;overflow:hidden}
+.pkt-table td{padding:1px 5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-bottom:1px solid rgba(0,0,0,.04)}
+.pkt-table tr{cursor:pointer}
+.pkt-table tr:hover td{filter:brightness(.93)}
+.pkt-table tr.selected td{background:#3584e4!important;color:#fff!important}
+
+/* Protocol colors */
+.c-arp  td{background:#FAFAD2}.c-icmp td{background:#c0c0ff}.c-tcp  td{background:#e7e6ff}
+.c-udp  td{background:#daeeff}.c-http td{background:#e4ffc7}.c-dns  td{background:#daeeff}
+.c-tls  td{background:#d5f5e3}.c-dhcp td{background:#fffacd}
+
+.col-no{width:40px}.col-t{width:75px}.col-src{width:145px}.col-dst{width:145px}
+.col-pr{width:65px}.col-len{width:52px}.col-inf{width:auto}
+
+@keyframes slideIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
+.new-row{animation:slideIn .3s ease}
+
+/* ── Protocol tree ── */
+.tree-empty,.hex-empty{padding:20px;text-align:center;color:#999;font-family:sans-serif;font-size:12px;font-style:italic}
+.tree-node{user-select:none}
+.tree-hdr{display:flex;align-items:center;gap:3px;padding:2px 4px;border-radius:2px;cursor:pointer;line-height:1.4}
+.tree-hdr:hover{background:#e8e8ff}
+.tree-toggle{width:12px;font-size:9px;color:#666;flex-shrink:0;text-align:center}
+.tree-icon{font-size:12px;flex-shrink:0}
+.tree-lbl{font-size:11.5px;font-weight:700;color:#1a1a1a}
+.tree-kids{margin-left:18px;border-left:1px solid #ddd;padding-left:5px;display:none}
+.tree-kids.open{display:block}
+.tree-field{padding:1px 4px;font-size:11px;line-height:1.5;cursor:default;border-radius:2px}
+.tree-field:hover{background:#f4f4f4}
+.tf-k{color:#1a1a9a}.tf-v{color:#8a1a1a}.tf-c{color:#777;font-style:italic}
+
+/* ── Hex dump ── */
+.hex-hdr{color:#999;font-size:10px;border-bottom:1px solid #e0e0e0;margin-bottom:2px;padding-bottom:2px;letter-spacing:.04em}
+.hex-row{display:flex;gap:6px;line-height:1.65;padding:0 1px}
+.hex-off{color:#888;width:32px;flex-shrink:0}
+.hex-dat{flex:1;color:#111;letter-spacing:.04em;min-width:0}
+.hex-asc{width:108px;flex-shrink:0;color:#555;border-left:1px solid #e0e0e0;padding-left:5px;letter-spacing:.02em}
+
+/* ── Insight panel ── */
+.ins-empty{color:#aaa;font-style:italic}
+.ins-title{font-size:11.5px;font-weight:700;color:#7b5800;margin-bottom:3px}
+.ins-text{font-size:11px;color:#444;line-height:1.55;margin-bottom:5px}
+.ins-tags{display:flex;gap:4px;flex-wrap:wrap}
+.ins-tag{background:#fff3cd;border:1px solid #e8c030;border-radius:10px;padding:1px 7px;font-size:10px;color:#7b5800}
+
+/* ── Status bar ── */
+.statusbar{background:#d8d8d8;border-top:1px solid #b0b0b0;padding:2px 10px;display:flex;gap:16px;font-family:sans-serif;font-size:10.5px;color:#555;flex-shrink:0;align-items:center}
+
+/* ── Legend ── */
+.legend{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.legend-item{display:flex;align-items:center;gap:3px;font-size:10px;font-family:sans-serif}
+.legend-swatch{width:14px;height:10px;border:1px solid #aaa;flex-shrink:0}
+
+/* ── Pane labels ── */
+.pane-label{font-size:10px;font-family:sans-serif;font-weight:700;color:#555;background:#e8e8e8;border-bottom:1px solid #ccc;padding:2px 6px;flex-shrink:0}
+
+/* ── Scenario info panel ── */
+.scenario-info{background:#f0f4ff;border-bottom:2px solid #a0b8e8;padding:10px 12px;font-family:sans-serif;flex-shrink:0;overflow-y:auto;max-height:220px}
+.si-header{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px}
+.si-icon{font-size:24px;flex-shrink:0;line-height:1}
+.si-title{font-size:13px;font-weight:700;color:#1a3060;line-height:1.3}
+.si-tagline{font-size:11px;color:#5060a0;margin-top:2px}
+.si-close{margin-left:auto;background:none;border:1px solid #a0b8e8;border-radius:3px;cursor:pointer;font-size:12px;color:#5060a0;padding:1px 7px;font-family:sans-serif;flex-shrink:0}
+.si-close:hover{background:#d8e4ff}
+.si-body{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.si-section{background:white;border:1px solid #c8d8f0;border-radius:4px;padding:6px 8px}
+.si-section-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#4060a0;margin-bottom:4px}
+.si-section-content{font-size:11px;color:#333;line-height:1.55}
+.si-concept{display:flex;align-items:flex-start;gap:4px;margin-bottom:2px}
+.si-concept::before{content:'•';color:#4a90d9;flex-shrink:0}
+.si-flow{font-family:'Courier New',monospace;font-size:10.5px;color:#333;line-height:1.7;word-break:break-word}
+.si-flow span{display:inline-block;background:#e7e6ff;border:1px solid #c8c8ff;border-radius:3px;padding:0 4px;margin:1px;white-space:nowrap}
+.si-flow span.proto-http{background:#e4ffc7;border-color:#b8e890}
+.si-flow span.proto-tls{background:#d5f5e3;border-color:#90d8b0}
+.si-flow span.proto-arp{background:#FAFAD2;border-color:#d8d890}
+.si-flow span.proto-icmp{background:#c0c0ff;border-color:#9090e8}
+.si-flow span.proto-dns{background:#daeeff;border-color:#90c8f0}
+@media(max-width:780px){.si-body{grid-template-columns:1fr}}
+
+@media(max-width:780px){
+  .pane-lower{flex-direction:column}
+  .pane-details{border-right:none;border-bottom:2px solid #909090;max-height:200px}
+  .col-src,.col-dst{width:100px}
+}
+
+/* ── Rich tooltip ── */
+#rtip{position:fixed;z-index:9999;pointer-events:none;background:#1c2333;color:#cdd9e5;border:1px solid #444c56;border-radius:6px;padding:8px 11px;font-family:sans-serif;font-size:11.5px;line-height:1.5;max-width:310px;box-shadow:0 4px 18px rgba(0,0,0,.55);display:none}
+.rt-title{font-weight:700;color:#e6edf3;margin-bottom:4px;font-size:12px;border-bottom:1px solid #2d3545;padding-bottom:3px}
+.rt-text{color:#adbac7;font-size:11px;line-height:1.55;margin-top:3px}
+.rt-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
+.rt-tag{background:#2d333b;border:1px solid #444c56;border-radius:8px;padding:1px 6px;font-size:10px;color:#79b8ff}
+.rt-fld .rt-k{color:#9ecbff}.rt-fld .rt-v{color:#f0a450}
+.rt-fld{font-size:11px;color:#adbac7;line-height:1.5;margin-top:3px}
+
+/* ── Guide panel ── */
+.guide-panel{position:fixed;bottom:24px;right:24px;width:288px;background:#fff;border:2px solid #1a73e8;border-radius:8px;box-shadow:0 8px 32px rgba(0,0,0,.28);font-family:sans-serif;z-index:1000;overflow:hidden;display:none}
+.guide-panel.open{display:block}
+.guide-head{background:linear-gradient(135deg,#1558b0,#2a7de8);color:white;padding:7px 12px;display:flex;align-items:center;gap:6px}
+.guide-head-title{font-size:12px;font-weight:700;flex:1}
+.guide-x{background:none;border:none;color:rgba(255,255,255,.75);cursor:pointer;font-size:16px;line-height:1;padding:0}
+.guide-x:hover{color:white}
+.guide-body{padding:10px 12px 12px}
+.guide-prog{display:flex;align-items:center;gap:7px;margin-bottom:9px}
+.guide-prog-track{flex:1;height:5px;background:#e4e4e4;border-radius:3px;overflow:hidden}
+.guide-prog-fill{height:100%;background:linear-gradient(90deg,#34a853,#1a73e8);border-radius:3px;transition:width .35s}
+.guide-prog-txt{font-size:10px;color:#999;white-space:nowrap;flex-shrink:0}
+.guide-snum{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#1a73e8;margin-bottom:2px}
+.guide-stitle{font-size:13px;font-weight:700;color:#1a1a1a;margin-bottom:5px;line-height:1.3}
+.guide-sinst{font-size:11.5px;color:#444;line-height:1.5;margin-bottom:7px}
+.guide-do{background:#eef4ff;border:1px solid #bbd0f8;border-radius:4px;padding:6px 9px;font-size:11.5px;color:#1a2a5a;line-height:1.5;margin-bottom:5px}
+.guide-hint{font-size:10.5px;color:#999;font-style:italic;margin-bottom:5px;padding-left:2px}
+.guide-learn{background:#f0faf2;border:1px solid #aedcbc;border-radius:4px;padding:6px 9px;font-size:11px;color:#1a4a28;line-height:1.5;margin-top:5px}
+.guide-done{text-align:center;padding:14px 10px}
+.guide-done-title{font-size:16px;font-weight:700;color:#34a853;margin-bottom:5px}
+.guide-done-sub{font-size:11px;color:#666;line-height:1.6}
+.guide-restart{margin-top:10px;padding:5px 14px;border:1px solid #1a73e8;border-radius:4px;background:#eef4ff;color:#1a73e8;cursor:pointer;font-size:11px;font-family:sans-serif}
+.guide-restart:hover{background:#ddeaff}
+.tb-btn.guide-active{background:linear-gradient(to bottom,#c8dff8,#a8caf0)!important;border-color:#4a90d9!important}
+
+/* ── Glossary modal ── */
+.gloss-overlay{position:fixed;inset:0;background:rgba(0,0,0,.52);z-index:3000;display:none;align-items:flex-start;justify-content:center;padding:24px 12px;overflow-y:auto}
+.gloss-overlay.open{display:flex}
+.gloss-box{background:#fff;border-radius:8px;box-shadow:0 12px 48px rgba(0,0,0,.38);width:min(780px,100%);max-height:calc(100vh - 48px);display:flex;flex-direction:column;overflow:hidden;margin:auto}
+.gloss-head{background:linear-gradient(135deg,#1558b0,#2a7de8);color:white;padding:10px 16px;display:flex;align-items:center;gap:8px;flex-shrink:0}
+.gloss-head-title{font-family:sans-serif;font-size:14px;font-weight:700;flex:1}
+.gloss-head-count{font-size:11px;opacity:.75;font-family:sans-serif}
+.gloss-x{background:none;border:none;color:rgba(255,255,255,.8);cursor:pointer;font-size:17px;line-height:1;padding:0 2px}
+.gloss-x:hover{color:white}
+.gloss-search-wrap{padding:8px 12px;border-bottom:1px solid #e8e8e8;flex-shrink:0;display:flex;align-items:center;gap:6px}
+.gloss-search{flex:1;padding:5px 10px;border:1px solid #ccc;border-radius:4px;font-size:12.5px;font-family:sans-serif;outline:none}
+.gloss-search:focus{border-color:#4a90d9;box-shadow:0 0 0 2px rgba(74,144,217,.15)}
+.gloss-search-clear{background:none;border:none;color:#999;cursor:pointer;font-size:14px;padding:0 4px;line-height:1}
+.gloss-search-clear:hover{color:#333}
+.gloss-alpha{display:flex;flex-wrap:wrap;gap:2px;padding:5px 12px;border-bottom:1px solid #eee;flex-shrink:0;background:#fafafa}
+.gloss-alpha a{display:inline-block;width:22px;height:22px;line-height:22px;text-align:center;font-size:11px;font-family:sans-serif;font-weight:700;color:#1a73e8;cursor:pointer;border-radius:3px;text-decoration:none}
+.gloss-alpha a:hover{background:#e0eaff}
+.gloss-alpha a.dim{color:#ccc;cursor:default;pointer-events:none}
+.gloss-body{flex:1;overflow-y:auto;padding:4px 16px 20px}
+.gloss-letter-hdr{font-size:17px;font-weight:700;color:#1a73e8;font-family:sans-serif;margin:14px 0 5px;padding-bottom:3px;border-bottom:2px solid #e8f0ff;position:sticky;top:0;background:white;z-index:1}
+.gloss-entry{padding:7px 10px 8px;border-radius:4px;border-left:3px solid transparent;margin-bottom:2px}
+.gloss-entry:hover{background:#f5f7ff;border-left-color:#4a90d9}
+.gloss-term{font-family:sans-serif;font-size:12.5px;font-weight:700;color:#0d1117;display:inline}
+.gloss-abbr{font-family:sans-serif;font-size:11px;color:#6e7781;margin-left:7px;font-style:italic;display:inline}
+.gloss-def{font-family:sans-serif;font-size:11.5px;color:#444;line-height:1.65;margin-top:3px}
+.gloss-tags{margin-top:5px;display:flex;gap:4px;flex-wrap:wrap}
+.gloss-tag{background:#f0f4ff;border:1px solid #c8d8f8;border-radius:8px;padding:1px 7px;font-size:10px;color:#3060a0;font-family:sans-serif;cursor:pointer}
+.gloss-tag:hover{background:#ddeaff}
+.gloss-nomatch{font-family:sans-serif;font-size:12px;color:#999;padding:32px;text-align:center;font-style:italic}
+.gloss-results-label{font-family:sans-serif;font-size:10.5px;color:#888;padding:6px 10px 2px;font-style:italic}
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <span class="navbar-brand">🦈 Wireshark Simulator</span>
+  <a href="../index.html">← Playground</a>
+</nav>
+
+<div class="ws-shell">
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <span class="tb-label">Scenario:</span>
+    <select class="tb-select" id="scenarioSelect" onchange="loadScenario(this.value)" title="Choose a network capture scenario to simulate step-by-step">
+      <option value="mixed">Mixed Traffic (9 packets)</option>
+      <option value="http">HTTP Web Browse (13 packets)</option>
+      <option value="dns">DNS Lookup (4 packets)</option>
+      <option value="icmp">ICMP Ping (8 packets)</option>
+      <option value="handshake">TCP 3-Way Handshake (3 packets)</option>
+      <option value="tls">HTTPS / TLS Handshake (12 packets)</option>
+    </select>
+    <button class="tb-btn" id="btnInfo" onclick="toggleScenarioInfo()" title="View scenario description, learning objectives, and packet flow">ℹ️ About</button>
+    <button class="tb-btn" id="btnGuide" onclick="toggleGuide()" title="Open the interactive step-by-step guide for HTTP Web Browse">🎓 Guide</button>
+    <button class="tb-btn" id="btnGlossary" onclick="toggleGlossary()" title="Open the networking glossary — definitions for all terms and acronyms">📚 Glossary</button>
+    <div class="tb-sep"></div>
+    <div class="legend">
+      <div class="legend-item" title="ARP — Address Resolution Protocol: maps IP addresses to MAC addresses at Layer 2"><div class="legend-swatch" style="background:#FAFAD2"></div>ARP</div>
+      <div class="legend-item" title="ICMP — Internet Control Message Protocol: ping, traceroute, and network diagnostics"><div class="legend-swatch" style="background:#c0c0ff"></div>ICMP</div>
+      <div class="legend-item" title="TCP — Transmission Control Protocol: reliable, ordered, connection-oriented transport"><div class="legend-swatch" style="background:#e7e6ff"></div>TCP</div>
+      <div class="legend-item" title="UDP/DNS — User Datagram Protocol: fast, connectionless; DNS runs on UDP port 53"><div class="legend-swatch" style="background:#daeeff"></div>UDP/DNS</div>
+      <div class="legend-item" title="HTTP — HyperText Transfer Protocol: web requests and responses on port 80 (unencrypted)"><div class="legend-swatch" style="background:#e4ffc7"></div>HTTP</div>
+      <div class="legend-item" title="TLS — Transport Layer Security: encrypted HTTPS communication on port 443"><div class="legend-swatch" style="background:#d5f5e3"></div>TLS</div>
+    </div>
+  </div>
+
+  <!-- Scenario info panel (hidden by default) -->
+  <div class="scenario-info" id="scenarioInfo" style="display:none">
+    <div class="si-header">
+      <span class="si-icon" id="siIcon">🔀</span>
+      <div>
+        <div class="si-title" id="siTitle">Mixed Traffic</div>
+        <div class="si-tagline" id="siTagline"></div>
+      </div>
+      <button class="si-close" onclick="toggleScenarioInfo()" title="Close this panel">✕ Close</button>
+    </div>
+    <div class="si-body">
+      <div class="si-section">
+        <div class="si-section-title">What this simulates</div>
+        <div class="si-section-content" id="siSimulates"></div>
+      </div>
+      <div class="si-section">
+        <div class="si-section-title">Key concepts</div>
+        <div class="si-section-content" id="siConcepts"></div>
+      </div>
+      <div class="si-section">
+        <div class="si-section-title">Packet flow</div>
+        <div class="si-flow" id="siFlow"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step controls -->
+  <div class="step-bar">
+    <div class="step-counter" id="stepCounter" title="Current step / total packets in scenario">Step <span class="num">0</span> of <span id="stepTotal">9</span></div>
+    <div class="progress-track" title="Simulation progress"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+    <div class="step-btns">
+      <button class="btn-prev" id="btnPrev" onclick="prevStep()" disabled title="Step back — removes the last revealed packet and updates progress (← arrow key)">← Back</button>
+      <button class="btn-next" id="btnNext" onclick="nextStep()" title="Reveal the next packet in the simulation (Space, →, or Enter)">Start →</button>
+      <button class="btn-prev" id="btnReset" onclick="resetScenario()" title="Clear all packets and restart this scenario from the beginning (R key)">↺ Reset</button>
+    </div>
+  </div>
+
+  <!-- Step preview -->
+  <div class="step-preview" id="stepPreview">
+    <span class="preview-label">Next:</span>
+    <span class="preview-text" id="previewText">Click <b>Next Step</b> to begin the simulation</span>
+  </div>
+
+  <!-- Filter bar -->
+  <div class="filter-bar">
+    <span class="fl-label" title="Wireshark-style display filter — hides packets that don't match">Filter:</span>
+    <input type="text" id="filterInput" class="fl-input" placeholder='e.g.  tcp   ip.addr == 192.168.1.100   !arp' oninput="onFilterInput()" onkeydown="if(event.key==='Enter')applyFilter()" title="Enter a display filter expression. Syntax: tcp, http, dns, arp, icmp, tls, ip.addr==x.x.x.x, ip.src==x.x.x.x, tcp.flags.syn==1, !arp, tcp&&http">
+    <button class="fl-btn" onclick="applyFilter()" title="Apply the current filter expression to the packet list">Apply</button>
+    <button class="fl-btn" onclick="clearFilter()" title="Clear the filter and show all revealed packets">✕ Clear</button>
+    <div class="tb-sep"></div>
+    <button class="qf-btn" onclick="setFilter('tcp')" title="Show only TCP packets (includes HTTP and TLS which run over TCP)">tcp</button>
+    <button class="qf-btn" onclick="setFilter('udp')" title="Show only UDP packets (includes DNS which uses UDP port 53)">udp</button>
+    <button class="qf-btn" onclick="setFilter('http')" title="Show only HTTP packets (unencrypted web traffic on port 80)">http</button>
+    <button class="qf-btn" onclick="setFilter('dns')" title="Show only DNS packets (name resolution on UDP port 53)">dns</button>
+    <button class="qf-btn" onclick="setFilter('icmp')" title="Show only ICMP packets (ping and network diagnostics)">icmp</button>
+    <button class="qf-btn" onclick="setFilter('arp')" title="Show only ARP packets (Layer 2 MAC address discovery)">arp</button>
+    <button class="qf-btn" onclick="setFilter('tls')" title="Show only TLS packets (encrypted HTTPS traffic on port 443)">tls</button>
+    <button class="qf-btn" onclick="setFilter('tcp.flags.syn==1')" title="Show only TCP packets with the SYN flag set (connection initiation)">SYN</button>
+    <button class="qf-btn" onclick="setFilter('!arp')" title="Exclude ARP packets — show everything except ARP">!arp</button>
+  </div>
+
+  <!-- 3-pane area -->
+  <div class="pane-area">
+    <div class="pane-list" id="paneList">
+      <table class="pkt-table" id="pktTable">
+        <colgroup>
+          <col class="col-no"><col class="col-t"><col class="col-src">
+          <col class="col-dst"><col class="col-pr"><col class="col-len"><col class="col-inf">
+        </colgroup>
+        <thead><tr>
+          <th title="Packet sequence number — order captured">No.</th>
+          <th title="Relative capture time in seconds from the first packet">Time</th>
+          <th title="Source IP address (or MAC for ARP/Ethernet)">Source</th>
+          <th title="Destination IP address (or MAC for ARP/Ethernet)">Destination</th>
+          <th title="Highest-layer protocol identified in this packet">Protocol</th>
+          <th title="Total frame size in bytes (includes all headers and payload)">Length</th>
+          <th title="Protocol-specific summary — flags, ports, URLs, query names, etc.">Info</th>
+        </tr></thead>
+        <tbody id="pktBody"></tbody>
+      </table>
+    </div>
+    <div class="pane-lower">
+      <div class="pane-details">
+        <div class="pane-label" title="Protocol dissection tree — click any layer header to expand or collapse it">Packet Details — click layers to expand ▼</div>
+        <div id="treeRoot"><div class="tree-empty">Click <b>Start →</b> to begin — each packet reveals a new layer of the conversation</div></div>
+      </div>
+      <div class="pane-right">
+        <div class="pane-label" title="Raw packet bytes in hexadecimal — offset | hex bytes | ASCII representation">Packet Bytes (hex dump)</div>
+        <div class="pane-hex" id="hexDump"><div class="hex-empty">Hex dump will appear here</div></div>
+        <div class="pane-insight" id="insightPanel"><span class="ins-empty">💡 Each step includes a plain-English explanation of the packet</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="statusbar">
+    <span id="sbInfo">Select a scenario and click Next Step to begin</span>
+    <span style="margin-left:auto" id="sbSelected">–</span>
+  </div>
+
+</div>
+
+<!-- Glossary modal -->
+<div class="gloss-overlay" id="glossaryOverlay" onclick="if(event.target===this)toggleGlossary()">
+  <div class="gloss-box">
+    <div class="gloss-head">
+      <span class="gloss-head-title">📚 Networking Glossary</span>
+      <span class="gloss-head-count" id="glossCount"></span>
+      <button class="gloss-x" onclick="toggleGlossary()" title="Close glossary">✕</button>
+    </div>
+    <div class="gloss-search-wrap">
+      <input type="text" id="glossSearch" class="gloss-search" placeholder="Search terms, acronyms, definitions…" oninput="renderGlossary()" autocomplete="off">
+      <button class="gloss-search-clear" onclick="document.getElementById('glossSearch').value='';renderGlossary()" title="Clear search">✕</button>
+    </div>
+    <div class="gloss-alpha" id="glossAlpha"></div>
+    <div class="gloss-body" id="glossBody"></div>
+  </div>
+</div>
+
+<!-- Rich tooltip -->
+<div id="rtip"></div>
+
+<!-- DIY Guide panel -->
+<div class="guide-panel open" id="guidePanel">
+  <div class="guide-head">
+    <span class="guide-head-title">🎓 Guided Lab</span>
+    <button class="guide-x" onclick="toggleGuide()" title="Close guide">✕</button>
+  </div>
+  <div class="guide-body" id="guideBody"></div>
+</div>
+
+<script>
+// ───────────────────────────────────────────
+//  PACKET DATA
+// ───────────────────────────────────────────
+
+const CLIENT  = { ip:'192.168.1.100', mac:'c4:47:40:a1:b2:c3' };
+const GATEWAY = { ip:'192.168.1.1',   mac:'aa:bb:cc:11:22:33' };
+const SERVER  = { ip:'93.184.216.34' };
+const DNS_SRV = { ip:'8.8.8.8' };
+
+function frameLayer(n, bytes) {
+  return ['📦', `Frame ${n}: ${bytes} bytes on wire (${bytes*8} bits)`, [
+    `Interface id: 0 (eth0)`, `Frame Length: ${bytes} bytes (${bytes*8} bits)`, `Capture Length: ${bytes} bytes`,
+  ]];
+}
+function ethLayer(src, dst, type='IPv4') {
+  const t = type==='IPv4'?'0x0800':type==='ARP'?'0x0806':'0x86DD';
+  return ['🔌', `Ethernet II, Src: ${src}, Dst: ${dst}`, [
+    `Destination: ${dst}${dst==='ff:ff:ff:ff:ff:ff'?' (Broadcast)':''}`, `Source: ${src}`, `Type: ${type} (${t})`,
+  ]];
+}
+function ipLayer(src, dst, proto, ttl=64, id='0xabcd') {
+  const pmap={TCP:6,UDP:17,ICMP:1};
+  return ['🌐', `Internet Protocol Version 4, Src: ${src}, Dst: ${dst}`, [
+    'Version: 4','Header Length: 20 bytes (5)','Differentiated Services: 0x00',
+    `Identification: ${id}`,'Flags: 0x40 (Don\'t Fragment)',`Time to Live: ${ttl}`,
+    `Protocol: ${proto} (${pmap[proto]||proto})`,'Header Checksum: 0xf23a [validated]',
+    `Source Address: ${src}`,`Destination Address: ${dst}`,
+  ]];
+}
+function tcpLayer(sport, dport, flags, seq, ack, extra=[]) {
+  const fn = [];
+  if(flags&0x02) fn.push('SYN'); if(flags&0x10) fn.push('ACK');
+  if(flags&0x01) fn.push('FIN'); if(flags&0x08) fn.push('PSH');
+  return ['🔀', `Transmission Control Protocol, Src Port: ${sport}, Dst Port: ${dport}`, [
+    `Source Port: ${sport}`,`Destination Port: ${dport}`,`Sequence Number: ${seq}`,
+    ack ? `Acknowledgment Number: ${ack}` : 'Acknowledgment Number: not set',
+    `Flags: 0x${flags.toString(16).padStart(3,'0')} (${fn.join(', ')||'None'})`,
+    flags&0x02 ? '  SYN: Set — connection initiation' : '',
+    flags&0x10 ? '  ACK: Set — acknowledging data' : '',
+    flags&0x01 ? '  FIN: Set — end of stream' : '',
+    flags&0x08 ? '  PSH: Set — push data immediately' : '',
+    'Window: 65535','Checksum: 0xabcd [validated]','Urgent Pointer: 0', ...extra,
+  ].filter(Boolean)];
+}
+function udpLayer(sport, dport, len) {
+  return ['🔀', `User Datagram Protocol, Src Port: ${sport}, Dst Port: ${dport}`, [
+    `Source Port: ${sport}`,`Destination Port: ${dport}`,`Length: ${len}`,'Checksum: 0x1234 [validated]',
+  ]];
+}
+
+// ── Hex data ──
+const HEX = {
+  arp_req:  'ff ff ff ff ff ff c4 47 40 a1 b2 c3 08 06 00 01 08 00 06 04 00 01 c4 47 40 a1 b2 c3 c0 a8 01 64 00 00 00 00 00 00 c0 a8 01 01',
+  arp_rep:  'c4 47 40 a1 b2 c3 aa bb cc 11 22 33 08 06 00 01 08 00 06 04 00 02 aa bb cc 11 22 33 c0 a8 01 01 c4 47 40 a1 b2 c3 c0 a8 01 64',
+  tcp_syn:  'aa bb cc 11 22 33 c4 47 40 a1 b2 c3 08 00 45 00 00 3c ab cd 40 00 40 06 f2 3a c0 a8 01 64 5d b8 d8 22 e2 45 00 50 00 00 00 01 00 00 00 00 a0 02 ff ff ab cd 00 00 02 04 05 b4 04 02 08 0a 12 34 56 78 00 00 00 00 01 03 03 07',
+  tcp_synack:'c4 47 40 a1 b2 c3 aa bb cc 11 22 33 08 00 45 00 00 3c 12 34 40 00 38 06 ef 10 5d b8 d8 22 c0 a8 01 64 00 50 e2 45 34 56 78 90 00 00 00 02 a0 12 ff ff cd ef 00 00 02 04 05 b4 04 02 08 0a ab cd ef 01 12 34 56 78 01 03 03 09',
+  tcp_ack:  'aa bb cc 11 22 33 c4 47 40 a1 b2 c3 08 00 45 00 00 28 ab ce 40 00 40 06 f2 4f c0 a8 01 64 5d b8 d8 22 e2 45 00 50 00 00 00 02 34 56 78 91 50 10 ff ff ef 12 00 00',
+  tcp_ack2: 'c4 47 40 a1 b2 c3 aa bb cc 11 22 33 08 00 45 00 00 28 12 35 40 00 38 06 ef 0e 5d b8 d8 22 c0 a8 01 64 00 50 e2 45 34 56 78 91 00 00 00 03 50 10 ff ff 12 30 00 00',
+  tcp_fin:  'aa bb cc 11 22 33 c4 47 40 a1 b2 c3 08 00 45 00 00 28 ab d0 40 00 40 06 f2 4d c0 a8 01 64 5d b8 d8 22 e2 45 00 50 00 00 00 03 34 56 78 92 50 11 ff ff ef 10 00 00',
+  tcp_finack:'c4 47 40 a1 b2 c3 aa bb cc 11 22 33 08 00 45 00 00 28 12 36 40 00 38 06 ef 0c 5d b8 d8 22 c0 a8 01 64 00 50 e2 45 34 56 78 92 00 00 00 04 50 11 ff ff 12 2e 00 00',
+  http_get: 'aa bb cc 11 22 33 c4 47 40 a1 b2 c3 08 00 45 00 00 a8 ab cf 40 00 40 06 f1 c9 c0 a8 01 64 5d b8 d8 22 e2 45 00 50 00 00 00 02 34 56 78 91 50 18 ff ff 12 34 00 00 47 45 54 20 2f 69 6e 64 65 78 2e 68 74 6d 6c 20 48 54 54 50 2f 31 2e 31 0d 0a 48 6f 73 74 3a 20 77 77 77 2e 65 78 61 6d 70 6c 65 2e 63 6f 6d 0d 0a 55 73 65 72 2d 41 67 65 6e 74 3a 20 4d 6f 7a 69 6c 6c 61 2f 35 2e 30 0d 0a 41 63 63 65 70 74 3a 20 74 65 78 74 2f 68 74 6d 6c 0d 0a 43 6f 6e 6e 65 63 74 69 6f 6e 3a 20 6b 65 65 70 2d 61 6c 69 76 65 0d 0a 0d 0a',
+  http_200: 'c4 47 40 a1 b2 c3 aa bb cc 11 22 33 08 00 45 00 01 a8 12 37 40 00 38 06 ee 0a 5d b8 d8 22 c0 a8 01 64 00 50 e2 45 34 56 78 91 00 00 00 03 50 18 ff ff 12 2c 00 00 48 54 54 50 2f 31 2e 31 20 32 30 30 20 4f 4b 0d 0a 43 6f 6e 74 65 6e 74 2d 54 79 70 65 3a 20 74 65 78 74 2f 68 74 6d 6c 0d 0a 43 6f 6e 74 65 6e 74 2d 4c 65 6e 67 74 68 3a 20 31 37 38 0d 0a 0d 0a 3c 21 44 4f 43 54 59 50 45 20 68 74 6d 6c 3e 0a 3c 68 74 6d 6c 3e 3c 68 65 61 64 3e 3c 74 69 74 6c 65 3e 45 78 61 6d 70 6c 65 20 44 6f 6d 61 69 6e 3c 2f 74 69 74 6c 65 3e 3c 2f 68 65 61 64 3e 0a 3c 62 6f 64 79 3e 3c 68 31 3e 45 78 61 6d 70 6c 65 20 44 6f 6d 61 69 6e 3c 2f 68 31 3e 3c 2f 62 6f 64 79 3e 0a 3c 2f 68 74 6d 6c 3e',
+  dns_qry:  'aa bb cc 11 22 33 c4 47 40 a1 b2 c3 08 00 45 00 00 3d ab d1 40 00 40 11 f1 f4 c0 a8 01 64 08 08 08 08 c0 01 00 35 00 29 12 34 12 34 01 00 00 01 00 00 00 00 00 00 03 77 77 77 07 65 78 61 6d 70 6c 65 03 63 6f 6d 00 00 01 00 01',
+  dns_resp: 'c4 47 40 a1 b2 c3 aa bb cc 11 22 33 08 00 45 00 00 51 12 38 40 00 38 11 ef d8 08 08 08 08 c0 a8 01 64 00 35 c0 01 00 3d 12 34 12 34 81 80 00 01 00 01 00 00 00 00 03 77 77 77 07 65 78 61 6d 70 6c 65 03 63 6f 6d 00 00 01 00 01 c0 0c 00 01 00 01 00 00 05 78 00 04 5d b8 d8 22',
+  icmp_req: 'aa bb cc 11 22 33 c4 47 40 a1 b2 c3 08 00 45 00 00 54 12 39 40 00 40 01 f1 84 c0 a8 01 64 08 08 08 08 08 00 4d 52 00 01 00 01 61 62 63 64 65 66 67 68 69 6a 6b 6c 6d 6e 6f 70 71 72 73 74 75 76 77 61 62 63 64 65 66 67 68 69 6a 6b 6c 6d 6e 6f 70 71 72 73 74 75 76 77 61 62 63 64 65 66 67 68',
+  icmp_rep: 'c4 47 40 a1 b2 c3 aa bb cc 11 22 33 08 00 45 00 00 54 12 3a 00 00 38 01 f9 83 08 08 08 08 c0 a8 01 64 00 00 55 52 00 01 00 01 61 62 63 64 65 66 67 68 69 6a 6b 6c 6d 6e 6f 70 71 72 73 74 75 76 77 61 62 63 64 65 66 67 68 69 6a 6b 6c 6d 6e 6f 70 71 72 73 74 75 76 77 61 62 63 64 65 66 67 68',
+  tls_ch:   'aa bb cc 11 22 33 c4 47 40 a1 b2 c3 08 00 45 00 00 f4 ab d3 40 00 40 06 f1 02 c0 a8 01 64 5d b8 d8 22 e4 ef 01 bb 00 00 00 02 34 56 78 91 50 18 ff ff ab cd 00 00 16 03 01 00 e1 01 00 00 dd 03 03 5f 8c 3a 11 22 33 44 55 66 77 88 99 aa bb cc dd ee ff 00 11 22 33 44 55 66 77 88 99 aa bb cc dd ee ff 00 20 13 01 13 02 13 03 c0 2c c0 30 00 9f cc a9 cc a8 cc aa c0 2b c0 2f 00 9e c0 24 c0 28 00 6b c0 23 c0 27 00 67 00 ff 01 00 00 70 00 00 00 11 00 0f 00 00 0c 77 77 77 2e 65 78 61 6d 70 6c 65 2e 63 6f 6d 00 0a 00 08 00 06 00 1d 00 17 00 18 00 23 00 00 00 10 00 0e 00 0c 02 68 32 08 68 74 74 70 2f 31 2e 31',
+  tls_sh:   'c4 47 40 a1 b2 c3 aa bb cc 11 22 33 08 00 45 00 02 00 12 3b 40 00 38 06 ed f8 5d b8 d8 22 c0 a8 01 64 01 bb e4 ef 34 56 78 91 00 00 00 03 50 18 ff ff 12 2a 00 00 16 03 03 00 7a 02 00 00 76 03 03 5f 8c 3a aa bb cc dd ee ff 00 11 22 33 44 55 66 77 88 99 aa bb cc dd ee ff 00 11 22 33 44 55 66 77 88 99 20 ab cd ef 01 23 45 67 89 ab cd ef 01 23 45 67 89 ab cd ef 01 23 45 67 89 ab cd ef 01 13 01 00 00 2e 00 2b 00 02 03 04 00 33 00 24 00 1d 00 20 78 9a bc de f0 12 34 56 78 9a bc de f0 12 34 56 78 9a bc de f0 12 34 56',
+  tls_app:  'aa bb cc 11 22 33 c4 47 40 a1 b2 c3 08 00 45 00 00 a8 ab d5 40 00 40 06 f0 c7 c0 a8 01 64 5d b8 d8 22 e4 ef 01 bb 00 00 00 06 34 56 78 93 50 18 ff ff ab c1 00 00 17 03 03 00 90 12 34 ab cd ef 56 78 9a bc de f0 12 34 56 78 9a bc de f0 12 34 56 78 9a bc de f0 12 34 56 78 9a bc de f0 12 34 56 78 9a bc de f0 12 34 56 78 9a bc de f0 12 34 56 78 9a bc de f0 12 34 56 78 9a bc de f0 12 34 56 78 9a bc de f0 12 34 56 78 9a bc de f0',
+};
+
+// ───────────────────────────────────────────
+//  SCENARIO PACKET DEFINITIONS
+// ───────────────────────────────────────────
+
+function mkPackets() {
+  let id=0;
+  const p = (t, src, dst, proto, len, info, color, layers, hexKey, insight) =>
+    ({id:++id, t, src, dst, proto, len, info, color, layers, hexKey, insight});
+
+  const SYN_layers = n => [
+    frameLayer(n,74), ethLayer(CLIENT.mac, GATEWAY.mac), ipLayer(CLIENT.ip, SERVER.ip, 'TCP'),
+    tcpLayer(57925, 80, 0x002, 1, null, ['Options: (20 bytes)', '  Maximum segment size: 1460 bytes', '  SACK permitted', '  Window scale: 7']),
+  ];
+  const SYNACK_layers = n => [
+    frameLayer(n,74), ethLayer(GATEWAY.mac, CLIENT.mac), ipLayer(SERVER.ip, CLIENT.ip, 'TCP', 56, '0x1234'),
+    tcpLayer(80, 57925, 0x012, 877606160, 2, ['Options: (20 bytes)', '  Maximum segment size: 1452 bytes', '  SACK permitted', '  Window scale: 9']),
+  ];
+  const ACK_layers = (n, swap=false) => [
+    frameLayer(n,54),
+    swap ? ethLayer(GATEWAY.mac, CLIENT.mac) : ethLayer(CLIENT.mac, GATEWAY.mac),
+    swap ? ipLayer(SERVER.ip, CLIENT.ip, 'TCP', 56, '0x1235') : ipLayer(CLIENT.ip, SERVER.ip, 'TCP'),
+    swap ? tcpLayer(80, 57925, 0x010, 877606161, 2) : tcpLayer(57925, 80, 0x010, 2, 877606161),
+  ];
+
+  const S = {};
+
+  // ── MIXED TRAFFIC ──
+  id=0;
+  S.mixed = [
+    p(0.000, CLIENT.ip,'255.255.255.255','ARP',42,'Who has 192.168.1.1? Tell 192.168.1.100','c-arp',
+      [frameLayer(1,42), ethLayer(CLIENT.mac,'ff:ff:ff:ff:ff:ff','ARP'),
+       ['📡','Address Resolution Protocol (request)',['Hardware type: Ethernet (1)','Protocol type: IPv4 (0x0800)','Hardware size: 6','Protocol size: 4','Opcode: request (1)',`Sender MAC: ${CLIENT.mac}`,`Sender IP: ${CLIENT.ip}`,'Target MAC: 00:00:00:00:00:00 (unknown)',`Target IP: ${GATEWAY.ip}`]]]
+      ,'arp_req',
+      {title:'ARP Request — "Who\'s there?"',text:`Your computer (${CLIENT.ip}) wants to send data to ${GATEWAY.ip} but only knows its IP address. Ethernet requires a MAC address. ARP broadcasts "Who owns this IP?" to every device on the local network.`,tags:['ARP','MAC Address','Broadcast','Layer 2']}),
+
+    p(0.001, GATEWAY.ip, CLIENT.ip,'ARP',42,`${GATEWAY.ip} is at ${GATEWAY.mac}`,'c-arp',
+      [frameLayer(2,42), ethLayer(GATEWAY.mac, CLIENT.mac,'ARP'),
+       ['📡','Address Resolution Protocol (reply)',['Hardware type: Ethernet (1)','Protocol type: IPv4 (0x0800)','Opcode: reply (2)',`Sender MAC: ${GATEWAY.mac}`,`Sender IP: ${GATEWAY.ip}`,`Target MAC: ${CLIENT.mac}`,`Target IP: ${CLIENT.ip}`]]]
+      ,'arp_rep',
+      {title:'ARP Reply — "I\'m here!"',text:`The gateway (${GATEWAY.ip}) replies with its MAC address. Your computer caches this mapping in its ARP table for future packets.`,tags:['ARP','ARP Cache','Unicast','MAC Mapping']}),
+
+    p(0.010, CLIENT.ip, '8.8.8.8','ICMP',98,'Echo (ping) request  id=0x0001, seq=1/256','c-icmp',
+      [frameLayer(3,98), ethLayer(CLIENT.mac, GATEWAY.mac), ipLayer(CLIENT.ip,'8.8.8.8','ICMP'),
+       ['🏓','Internet Control Message Protocol',['Type: 8 (Echo (ping) request)','Code: 0','Checksum: 0x4d52 [correct]','Identifier (BE): 1','Sequence Number (BE): 1','Data (56 bytes): abcdefghijklmnopqrstuvw...']]]
+      ,'icmp_req',
+      {title:'ICMP Echo Request — "ping"',text:'The ping command sends ICMP Echo Requests to test if a host is reachable and measure round-trip time. ICMP operates at Layer 3 — no TCP or UDP ports involved.',tags:['ICMP','Ping','Layer 3','Diagnostics']}),
+
+    p(0.023, '8.8.8.8', CLIENT.ip,'ICMP',98,'Echo (ping) reply  id=0x0001, seq=1/256  ttl=117','c-icmp',
+      [frameLayer(4,98), ethLayer(GATEWAY.mac, CLIENT.mac), ipLayer('8.8.8.8', CLIENT.ip,'ICMP', 117),
+       ['🏓','Internet Control Message Protocol',['Type: 0 (Echo (ping) reply)','Code: 0','Checksum: 0x5552 [correct]','Identifier (BE): 1','Sequence Number (BE): 1','Data (56 bytes): abcdefghijklmnopqrstuvw...']]]
+      ,'icmp_rep',
+      {title:'ICMP Echo Reply — "pong"',text:'Google\'s DNS server responds in 13ms. TTL dropped to 117 — each router decrements it by 1. TTL prevents packets from looping forever on the internet.',tags:['ICMP','TTL','Round-Trip Time','Routing']}),
+
+    p(0.030, CLIENT.ip,'8.8.8.8','DNS',75,'Standard query 0x1234 A www.example.com','c-dns',
+      [frameLayer(5,75), ethLayer(CLIENT.mac, GATEWAY.mac), ipLayer(CLIENT.ip,'8.8.8.8','UDP'),
+       udpLayer(49153,53,41),
+       ['📖','Domain Name System (query)',['Transaction ID: 0x1234','Flags: 0x0100 (Standard query, RD)','Questions: 1','Answer RRs: 0','Queries:','  www.example.com: type A, class IN']]]
+      ,'dns_qry',
+      {title:'DNS Query — "What\'s the IP for www.example.com?"',text:'Your browser must convert the hostname to an IP address. This UDP packet asks Google\'s DNS (8.8.8.8) for the A record. DNS uses UDP port 53 — fast and connectionless.',tags:['DNS','UDP','Port 53','Name Resolution']}),
+
+    p(0.042, '8.8.8.8', CLIENT.ip,'DNS',97,'Standard query response 0x1234 A 93.184.216.34','c-dns',
+      [frameLayer(6,97), ethLayer(GATEWAY.mac, CLIENT.mac), ipLayer('8.8.8.8', CLIENT.ip,'UDP', 128),
+       udpLayer(53,49153,57),
+       ['📖','Domain Name System (response)',['Transaction ID: 0x1234','Flags: 0x8180 (No error)','Questions: 1','Answer RRs: 1','Answers:','  www.example.com: type A, addr 93.184.216.34','  Time to live: 1400 seconds']]]
+      ,'dns_resp',
+      {title:'DNS Response — "The IP is 93.184.216.34"',text:'The DNS server replies with the A record. TTL=1400s means your OS caches this for ~23 minutes. Same Transaction ID (0x1234) matches the query.',tags:['DNS','A Record','DNS Cache','TTL']}),
+
+    p(0.050, CLIENT.ip, SERVER.ip,'TCP',74,'57925 → 80 [SYN] Seq=0 Win=65535 Len=0 MSS=1460','c-tcp',
+      SYN_layers(7),'tcp_syn',
+      {title:'TCP SYN — Starting the 3-Way Handshake',text:'First packet of TCP\'s 3-way handshake. Your computer proposes a connection with the SYN flag and its Initial Sequence Number. MSS=1460 bytes is the max segment size.',tags:['TCP','3-Way Handshake','SYN','ISN','MSS']}),
+
+    p(0.063, SERVER.ip, CLIENT.ip,'TCP',74,'80 → 57925 [SYN, ACK] Seq=0 Ack=1 Win=65535','c-tcp',
+      SYNACK_layers(8),'tcp_synack',
+      {title:'TCP SYN-ACK — Server Accepts',text:'Server acknowledges your SYN and sends its own SYN back. Both sides are synchronizing sequence numbers. This is step 2 of the handshake.',tags:['TCP','SYN-ACK','Sequence Numbers','Acknowledgment']}),
+
+    p(0.063, CLIENT.ip, SERVER.ip,'TCP',54,'57925 → 80 [ACK] Seq=1 Ack=1 Win=65535','c-tcp',
+      ACK_layers(9),'tcp_ack',
+      {title:'TCP ACK — Handshake Complete!',text:'Final handshake packet. The 3-way handshake is complete — a reliable, bidirectional connection is now established. Data can flow.',tags:['TCP','ACK','Connection Established']}),
+  ];
+
+  // ── HTTP WEB BROWSE ──
+  id=0;
+  S.http = [
+    p(0.000,CLIENT.ip,'255.255.255.255','ARP',42,'Who has 192.168.1.1? Tell 192.168.1.100','c-arp',
+      [frameLayer(1,42),ethLayer(CLIENT.mac,'ff:ff:ff:ff:ff:ff','ARP'),['📡','Address Resolution Protocol (request)',['Opcode: request (1)',`Sender MAC: ${CLIENT.mac}`,`Sender IP: ${CLIENT.ip}`,'Target MAC: 00:00:00:00:00:00',`Target IP: ${GATEWAY.ip}`]]],'arp_req',
+      {title:'ARP Request — Discover Gateway MAC',text:'Before any IP traffic, your computer must learn the gateway\'s MAC address via a broadcast ARP request.',tags:['ARP','Broadcast','Layer 2 Discovery']}),
+    p(0.001,GATEWAY.ip,CLIENT.ip,'ARP',42,`${GATEWAY.ip} is at ${GATEWAY.mac}`,'c-arp',
+      [frameLayer(2,42),ethLayer(GATEWAY.mac,CLIENT.mac,'ARP'),['📡','Address Resolution Protocol (reply)',['Opcode: reply (2)',`Sender MAC: ${GATEWAY.mac}`,`Sender IP: ${GATEWAY.ip}`]]],'arp_rep',
+      {title:'ARP Reply — Gateway Found',text:'Gateway responds with its MAC. Your OS caches this mapping. Now Ethernet frames can be addressed correctly.',tags:['ARP','ARP Cache','Layer 2']}),
+    p(0.002,CLIENT.ip,SERVER.ip,'TCP',74,'57925 → 80 [SYN] Seq=0 Win=65535','c-tcp',SYN_layers(3),'tcp_syn',
+      {title:'TCP SYN — Step 1: Client Initiates Connection',text:'Your browser opens a TCP connection to port 80 (HTTP). The SYN flag starts the 3-way handshake. No data yet — just a connection proposal.',tags:['TCP','SYN','Handshake Step 1','Port 80']}),
+    p(0.015,SERVER.ip,CLIENT.ip,'TCP',74,'80 → 57925 [SYN, ACK] Seq=0 Ack=1','c-tcp',SYNACK_layers(4),'tcp_synack',
+      {title:'TCP SYN-ACK — Step 2: Server Accepts',text:'Server accepts with SYN+ACK. The Ack=2 confirms receipt of byte 1. Both sides now know each other\'s sequence numbers.',tags:['TCP','SYN-ACK','Handshake Step 2']}),
+    p(0.016,CLIENT.ip,SERVER.ip,'TCP',54,'57925 → 80 [ACK] Seq=1 Ack=1','c-tcp',ACK_layers(5),'tcp_ack',
+      {title:'TCP ACK — Step 3: Connection Established',text:'Final handshake packet. The TCP connection is now fully established. Total handshake time: ~14ms (the network round-trip time).',tags:['TCP','ACK','Handshake Complete']}),
+    p(0.016,CLIENT.ip,SERVER.ip,'HTTP',200,'GET /index.html HTTP/1.1','c-http',
+      [frameLayer(6,200),ethLayer(CLIENT.mac,GATEWAY.mac),ipLayer(CLIENT.ip,SERVER.ip,'TCP'),
+       tcpLayer(57925,80,0x018,2,877606161),
+       ['🌍','Hypertext Transfer Protocol',['Request Method: GET','Request URI: /index.html','Request Version: HTTP/1.1','Host: www.example.com','User-Agent: Mozilla/5.0','Accept: text/html','Connection: keep-alive','','[Full request URI: http://www.example.com/index.html]']]],'http_get',
+      {title:'HTTP GET — Browser Requests the Page',text:'Your browser requests /index.html. The Host header is required in HTTP/1.1 — one IP can serve many websites (virtual hosting). Connection: keep-alive keeps the TCP connection open for reuse.',tags:['HTTP','GET','Request Headers','Application Layer']}),
+    p(0.029,SERVER.ip,CLIENT.ip,'TCP',54,'80 → 57925 [ACK] Seq=1 Ack=147','c-tcp',ACK_layers(7,true),'tcp_ack2',
+      {title:'TCP ACK — Server Acknowledges Request',text:'Server immediately ACKs the GET request (147 bytes received). This is TCP\'s reliability — every segment is acknowledged. The actual HTTP response comes next.',tags:['TCP','ACK','Reliability']}),
+    p(0.031,SERVER.ip,CLIENT.ip,'HTTP',434,'HTTP/1.1 200 OK  (text/html)','c-http',
+      [frameLayer(8,434),ethLayer(GATEWAY.mac,CLIENT.mac),ipLayer(SERVER.ip,CLIENT.ip,'TCP',56),
+       tcpLayer(80,57925,0x018,877606161,147),
+       ['🌍','Hypertext Transfer Protocol',['Response Version: HTTP/1.1','Status Code: 200','Response Phrase: OK','Content-Type: text/html','Content-Length: 178','','Line-based text data: text/html (3 lines)','  <!DOCTYPE html>','  <html><head><title>Example Domain</title></head>','  <body><h1>Example Domain</h1></body></html>']]],'http_200',
+      {title:'HTTP 200 OK — Page Delivered!',text:'Server responds with status 200 and HTML content. Headers (Content-Type, Content-Length) are followed by a blank line, then the body. Your browser parses this HTML to render the page.',tags:['HTTP','200 OK','Response Headers','HTML']}),
+    p(0.031,CLIENT.ip,SERVER.ip,'TCP',54,'57925 → 80 [ACK] Seq=147 Ack=382','c-tcp',ACK_layers(9),'tcp_ack',
+      {title:'TCP ACK — Client Acknowledges Response',text:'Client confirms receipt of the HTTP response. Ack=382 means "I\'ve received all bytes up to 381." TCP\'s sliding window allows efficient data transfer.',tags:['TCP','ACK','Sliding Window']}),
+    p(0.032,CLIENT.ip,SERVER.ip,'TCP',54,'57925 → 80 [FIN, ACK] Seq=147 Ack=382','c-tcp',
+      [frameLayer(10,54),ethLayer(CLIENT.mac,GATEWAY.mac),ipLayer(CLIENT.ip,SERVER.ip,'TCP'),tcpLayer(57925,80,0x011,147,382)],'tcp_fin',
+      {title:'TCP FIN — Client Initiates Close',text:'Browser is done and sends FIN (finish) to close the connection. TCP\'s graceful close lets each side independently close its half of the connection.',tags:['TCP','FIN','Connection Teardown']}),
+    p(0.045,SERVER.ip,CLIENT.ip,'TCP',54,'80 → 57925 [ACK] Seq=382 Ack=148','c-tcp',ACK_layers(11,true),'tcp_ack2',
+      {title:'TCP ACK — Server Acknowledges FIN',text:'Server acknowledges the client\'s FIN. Client-to-server direction is now closed, but server can still send (half-closed state).',tags:['TCP','Half-Close','Teardown']}),
+    p(0.046,SERVER.ip,CLIENT.ip,'TCP',54,'80 → 57925 [FIN, ACK] Seq=382 Ack=148','c-tcp',
+      [frameLayer(12,54),ethLayer(GATEWAY.mac,CLIENT.mac),ipLayer(SERVER.ip,CLIENT.ip,'TCP',56),tcpLayer(80,57925,0x011,382,148)],'tcp_finack',
+      {title:'TCP FIN — Server Closes Its Side',text:'Server sends its own FIN. Both directions are now closing. The client will enter TIME_WAIT for ~60 seconds before releasing the port.',tags:['TCP','FIN-ACK','TIME_WAIT']}),
+    p(0.046,CLIENT.ip,SERVER.ip,'TCP',54,'57925 → 80 [ACK] Seq=148 Ack=383','c-tcp',ACK_layers(13),'tcp_ack',
+      {title:'TCP ACK — Connection Fully Closed',text:'Final ACK completes the 4-way teardown. Total lifecycle: 3 to open + 1 GET + 1 ACK + 1 response + 1 ACK + 4 to close = 13 packets for one web page!',tags:['TCP','Connection Closed','Full Lifecycle']}),
+  ];
+
+  // ── DNS LOOKUP ──
+  id=0;
+  S.dns = [
+    p(0.000,CLIENT.ip,'8.8.8.8','DNS',75,'Standard query 0x1234 A www.example.com','c-dns',
+      [frameLayer(1,75),ethLayer(CLIENT.mac,GATEWAY.mac),ipLayer(CLIENT.ip,'8.8.8.8','UDP'),udpLayer(49153,53,41),
+       ['📖','Domain Name System (query)',['Transaction ID: 0x1234','Flags: 0x0100 (Standard query, RD)','Questions: 1','Queries:','  Name: www.example.com','  Type: A (Host Address)','  Class: IN (Internet)']]],'dns_qry',
+      {title:'DNS A Query — Resolving a Hostname',text:'Your OS asks for the IPv4 (A) address of www.example.com. The query goes to Google\'s DNS (8.8.8.8) via UDP port 53. "Recursion Desired" tells the server to do all the work.',tags:['DNS','UDP','Port 53','A Record','Recursive']}),
+    p(0.012,'8.8.8.8',CLIENT.ip,'DNS',97,'Standard query response 0x1234 A 93.184.216.34','c-dns',
+      [frameLayer(2,97),ethLayer(GATEWAY.mac,CLIENT.mac),ipLayer('8.8.8.8',CLIENT.ip,'UDP',128),udpLayer(53,49153,57),
+       ['📖','Domain Name System (response)',['Transaction ID: 0x1234','Flags: 0x8180 (No error)','Questions: 1','Answer RRs: 1','Answers:','  www.example.com: type A, addr 93.184.216.34','  Time to live: 1400 (23 min, 20 sec)']]],'dns_resp',
+      {title:'DNS A Response — Answer Received',text:'The resolver replies: www.example.com → 93.184.216.34. TTL=1400s means your OS caches this for ~23 minutes. The Transaction ID matches the query — essential for UDP correlation.',tags:['DNS','A Record','TTL','DNS Cache']}),
+    p(0.013,CLIENT.ip,'8.8.8.8','DNS',75,'Standard query 0x1235 AAAA www.example.com','c-dns',
+      [frameLayer(3,75),ethLayer(CLIENT.mac,GATEWAY.mac),ipLayer(CLIENT.ip,'8.8.8.8','UDP'),udpLayer(49154,53,41),
+       ['📖','Domain Name System (query)',['Transaction ID: 0x1235','Flags: 0x0100','Questions: 1','Queries:','  Name: www.example.com','  Type: AAAA (IPv6 Address)','  Class: IN']]],'dns_qry',
+      {title:'DNS AAAA Query — Asking for IPv6',text:'Modern systems query for both A (IPv4) and AAAA (IPv6) records. "Happy Eyeballs" tries both and uses whichever connects first.',tags:['DNS','AAAA','IPv6','Dual Stack','Happy Eyeballs']}),
+    p(0.014,'8.8.8.8',CLIENT.ip,'DNS',75,'Standard query response 0x1235 AAAA 2606:2800:220:1:248:1893:25c8:1946','c-dns',
+      [frameLayer(4,75),ethLayer(GATEWAY.mac,CLIENT.mac),ipLayer('8.8.8.8',CLIENT.ip,'UDP',128),udpLayer(53,49154,41),
+       ['📖','Domain Name System (response)',['Transaction ID: 0x1235','Flags: 0x8180','Answer RRs: 1','Answers:','  www.example.com: type AAAA','  Address: 2606:2800:220:1:248:1893:25c8:1946','  Time to live: 2400']]],'dns_resp',
+      {title:'DNS AAAA Response — IPv6 Address',text:'example.com also has an IPv6 address. The browser now has both options and will pick whichever responds fastest.',tags:['DNS','AAAA','IPv6 Address','Dual Stack']}),
+  ];
+
+  // ── ICMP PING ──
+  id=0;
+  const mkPing = (seq, tOff, rttMs=13) => [
+    p(tOff,CLIENT.ip,'8.8.8.8','ICMP',98,`Echo (ping) request  id=0x0001, seq=${seq}/256, ttl=64`,'c-icmp',
+      [frameLayer(seq*2-1,98),ethLayer(CLIENT.mac,GATEWAY.mac),ipLayer(CLIENT.ip,'8.8.8.8','ICMP'),
+       ['🏓','Internet Control Message Protocol',['Type: 8 (Echo request)','Code: 0','Identifier (BE): 1',`Sequence Number (BE): ${seq}`,'Data (56 bytes): abcdefghijklmnop...']]],'icmp_req',
+      {title:`ICMP Echo Request — Ping #${seq}`,text:`Sending ping #${seq}. Each request has an incrementing sequence number so responses can be matched. The 56-byte payload brings the total to 98 bytes on wire.`,tags:['ICMP','Echo Request','Type 8','Sequence '+seq]}),
+    p(tOff+rttMs/1000,'8.8.8.8',CLIENT.ip,'ICMP',98,`Echo (ping) reply  id=0x0001, seq=${seq}/256, ttl=117`,'c-icmp',
+      [frameLayer(seq*2,98),ethLayer(GATEWAY.mac,CLIENT.mac),ipLayer('8.8.8.8',CLIENT.ip,'ICMP',117),
+       ['🏓','Internet Control Message Protocol',['Type: 0 (Echo reply)','Code: 0','Identifier (BE): 1',`Sequence Number (BE): ${seq}`,'Data (56 bytes): abcdefghijklmnop...']]],'icmp_rep',
+      {title:`ICMP Echo Reply — ${rttMs}ms from 8.8.8.8`,text:`Reply received in ${rttMs}ms. TTL=117 means Google started at TTL=128 and crossed ${128-117}=11 router hops. traceroute exploits TTL to map the path.`,tags:['ICMP','Echo Reply','TTL','RTT']}),
+  ];
+  S.icmp = [...mkPing(1,0,13),...mkPing(2,1.014,14),...mkPing(3,2.015,12),...mkPing(4,3.016,15)];
+
+  // ── TCP 3-WAY HANDSHAKE ──
+  id=0;
+  S.handshake = [
+    p(0.000,CLIENT.ip,SERVER.ip,'TCP',74,'57925 → 443 [SYN] Seq=0 Win=65535 MSS=1460','c-tcp',
+      [frameLayer(1,74),ethLayer(CLIENT.mac,GATEWAY.mac),ipLayer(CLIENT.ip,SERVER.ip,'TCP'),
+       tcpLayer(57925,443,0x002,1,null,['Options (20 bytes):','  MSS: 1460 bytes','  SACK permitted','  Timestamps: val 0x12345678, ecr 0','  Window scale: 7 → actual window = 8,388,480 bytes'])],'tcp_syn',
+      {title:'Step 1 — SYN: "I want to connect"',text:'Client picks a random Initial Sequence Number (ISN) and sends SYN. The ISN prevents old duplicate packets from being confused with new connections. MSS tells the server the max segment size.',tags:['TCP','SYN','ISN','3-Way Handshake','Port 443']}),
+    p(0.014,SERVER.ip,CLIENT.ip,'TCP',74,'443 → 57925 [SYN, ACK] Seq=0 Ack=2 Win=65535','c-tcp',
+      [frameLayer(2,74),ethLayer(GATEWAY.mac,CLIENT.mac),ipLayer(SERVER.ip,CLIENT.ip,'TCP',56),
+       tcpLayer(443,57925,0x012,877606160,2,['Options (20 bytes):','  MSS: 1452 bytes','  SACK permitted — can acknowledge out-of-order segments','  Window scale: 9 → window = 33,553,920 bytes'])],'tcp_synack',
+      {title:'Step 2 — SYN-ACK: "OK, I\'m ready"',text:'Server\'s ISN (877606160) is different from client\'s — both choose independently. Ack=2 means "received byte 1, send byte 2 next." Both SYN and ACK flags set — unique to the handshake.',tags:['TCP','SYN-ACK','ISN','Both Flags']}),
+    p(0.014,CLIENT.ip,SERVER.ip,'TCP',54,'57925 → 443 [ACK] Seq=2 Ack=877606161 Win=65535','c-tcp',
+      [frameLayer(3,54),ethLayer(CLIENT.mac,GATEWAY.mac),ipLayer(CLIENT.ip,SERVER.ip,'TCP'),
+       tcpLayer(57925,443,0x010,2,877606161)],'tcp_ack',
+      {title:'Step 3 — ACK: "Connection established!"',text:'Client acknowledges the server\'s SYN-ACK. Both sides have confirmed each other\'s ISNs. The connection is ESTABLISHED — data can flow. Total cost: 1 RTT (~14ms here).',tags:['TCP','ACK','ESTABLISHED','1 RTT']}),
+  ];
+
+  // ── HTTPS / TLS ──
+  id=0;
+  S.tls = [
+    p(0.000,CLIENT.ip,SERVER.ip,'TCP',74,'58607 → 443 [SYN] Seq=0','c-tcp',
+      [frameLayer(1,74),ethLayer(CLIENT.mac,GATEWAY.mac),ipLayer(CLIENT.ip,SERVER.ip,'TCP'),tcpLayer(58607,443,0x002,1,null,['Options (20 bytes)','  MSS: 1460, SACK, Window scale: 7'])],'tcp_syn',
+      {title:'TCP SYN — Opening TCP to Port 443',text:'HTTPS runs over TCP port 443. The TCP handshake happens first, before any TLS. Note: the destination IP:port is visible in plaintext.',tags:['TCP','HTTPS','Port 443']}),
+    p(0.013,SERVER.ip,CLIENT.ip,'TCP',74,'443 → 58607 [SYN, ACK]','c-tcp',SYNACK_layers(2),'tcp_synack',
+      {title:'TCP SYN-ACK — TCP Layer Ready',text:'TCP established. There is ZERO encryption at this point. TLS negotiation begins next.',tags:['TCP','SYN-ACK','Before Encryption']}),
+    p(0.013,CLIENT.ip,SERVER.ip,'TCP',54,'58607 → 443 [ACK]','c-tcp',ACK_layers(3),'tcp_ack',
+      {title:'TCP ACK — TCP Complete, TLS Begins',text:'TCP handshake done. HTTPS = HTTP inside TLS inside TCP. The TLS handshake starts in the next packet.',tags:['TCP','ACK','HTTPS Stack']}),
+    p(0.014,CLIENT.ip,SERVER.ip,'TLS',244,'Client Hello (SNI=www.example.com)','c-tls',
+      [frameLayer(4,244),ethLayer(CLIENT.mac,GATEWAY.mac),ipLayer(CLIENT.ip,SERVER.ip,'TCP'),
+       tcpLayer(58607,443,0x018,2,877606161),
+       ['🔒','Transport Layer Security',['Content Type: Handshake (22)','Version: TLS 1.0 (compatibility field)','','Handshake: Client Hello','  Version: TLS 1.2 (0x0303)','  Random: 5f8c3a... (32 bytes — for key derivation)','  Cipher Suites (18):','    TLS_AES_128_GCM_SHA256 (TLS 1.3)','    TLS_AES_256_GCM_SHA384 (TLS 1.3)','    TLS_CHACHA20_POLY1305_SHA256','    ...and 15 more','  Extensions:','    server_name (SNI): www.example.com','    supported_groups: x25519, secp256r1','    application_layer_protocol: h2, http/1.1']]],'tls_ch',
+      {title:'TLS ClientHello — "Here\'s what I support"',text:'Client advertises supported TLS versions and cipher suites. The SNI (Server Name Indication) tells the server which site to serve. CRITICAL: SNI is visible in plaintext — HTTPS doesn\'t hide the hostname!',tags:['TLS','ClientHello','SNI','Cipher Suites','TLS 1.3']}),
+    p(0.027,SERVER.ip,CLIENT.ip,'TCP',54,'443 → 58607 [ACK]','c-tcp',ACK_layers(5,true),'tcp_ack2',
+      {title:'TCP ACK — Server Processing ClientHello',text:'Server acknowledges receipt of ClientHello while choosing the strongest cipher suite both sides support.',tags:['TCP','ACK']}),
+    p(0.028,SERVER.ip,CLIENT.ip,'TLS',512,'Server Hello, Certificate, Finished','c-tls',
+      [frameLayer(6,512),ethLayer(GATEWAY.mac,CLIENT.mac),ipLayer(SERVER.ip,CLIENT.ip,'TCP',56),
+       tcpLayer(443,58607,0x018,877606161,192),
+       ['🔒','Transport Layer Security',['Handshake: Server Hello','  Version: TLS 1.3','  Cipher Suite: TLS_AES_128_GCM_SHA256','  key_share: x25519 public key (32 bytes)','','Handshake: Certificate','  Subject: www.example.com','  Issuer: DigiCert TLS RSA SHA256 2020 CA1','  Valid: 2023-11-15 → 2025-01-15','  Public Key: RSA 2048-bit','  Subject Alt Names: www.example.com, example.com','','Handshake: Certificate Verify','  Signature: rsa_pss_rsae_sha256 (256 bytes)','','Handshake: Finished','  Verify Data: (32 bytes) — HMAC over entire handshake']]],'tls_sh',
+      {title:'TLS ServerHello + Certificate — "Proving my identity"',text:'Server picks TLS 1.3 + AES-128-GCM. The Certificate proves identity — your browser verifies the chain back to a trusted root CA. The key_share enables Perfect Forward Secrecy via ECDHE.',tags:['TLS','ServerHello','X.509 Certificate','CA Chain','PFS','AES-GCM']}),
+    p(0.029,CLIENT.ip,SERVER.ip,'TCP',54,'58607 → 443 [ACK]','c-tcp',ACK_layers(7),'tcp_ack',
+      {title:'TCP ACK — Certificate Received',text:'Client acknowledges the server\'s TLS messages before verifying the certificate chain.',tags:['TCP','ACK']}),
+    p(0.040,CLIENT.ip,SERVER.ip,'TLS',192,'Change Cipher Spec, Finished','c-tls',
+      [frameLayer(8,192),ethLayer(CLIENT.mac,GATEWAY.mac),ipLayer(CLIENT.ip,SERVER.ip,'TCP'),
+       tcpLayer(58607,443,0x018,192,877606673),
+       ['🔒','Transport Layer Security',['Change Cipher Spec: switching to encrypted','','Handshake: Finished','  Verify Data (32 bytes, encrypted)','','  Session key derived from:','    Client Random + Server Random + ECDHE shared secret','    Using HKDF (HMAC-based Key Derivation)','','  4 keys generated:','    Client write key, Server write key','    Client write IV, Server write IV']]],'tls_ch',
+      {title:'TLS Finished — Keys Derived, Encryption Active',text:'Client proves it derived the same session keys. Both sides now have 4 symmetric keys derived from the ECDHE shared secret — the actual key was NEVER transmitted. This is Perfect Forward Secrecy.',tags:['TLS','Finished','Key Derivation','PFS','Session Keys']}),
+    p(0.041,SERVER.ip,CLIENT.ip,'TCP',54,'443 → 58607 [ACK]','c-tcp',ACK_layers(9,true),'tcp_ack2',
+      {title:'TCP ACK',text:'Server acknowledges the client\'s Finished message. The TLS handshake is almost complete.',tags:['TCP','ACK']}),
+    p(0.042,SERVER.ip,CLIENT.ip,'TLS',168,'New Session Ticket, Finished','c-tls',
+      [frameLayer(10,168),ethLayer(GATEWAY.mac,CLIENT.mac),ipLayer(SERVER.ip,CLIENT.ip,'TCP',56),
+       tcpLayer(443,58607,0x018,877606673,192),
+       ['🔒','Transport Layer Security',['Handshake: New Session Ticket','  Lifetime: 7200 sec (2 hours)','  Ticket: (encrypted, 256 bytes)','  Purpose: session resumption — skip full handshake next time','','Handshake: Finished','  Verify Data: (32 bytes, encrypted)','','  TLS HANDSHAKE COMPLETE','  All further data is encrypted with AES-128-GCM']]],'tls_sh',
+      {title:'TLS Session Ticket — Handshake Complete!',text:'Server issues a Session Ticket for resumption — next time, skip the full handshake (0-RTT in TLS 1.3). The TLS handshake is now COMPLETE. All subsequent data is encrypted.',tags:['TLS','Session Resumption','0-RTT','Handshake Complete']}),
+    p(0.043,CLIENT.ip,SERVER.ip,'TLS',168,'Application Data [encrypted]','c-tls',
+      [frameLayer(11,168),ethLayer(CLIENT.mac,GATEWAY.mac),ipLayer(CLIENT.ip,SERVER.ip,'TCP'),
+       tcpLayer(58607,443,0x018,192,877606673),
+       ['🔒','Transport Layer Security',['Content Type: Application Data (23)','Length: 100 (encrypted)','Encrypted: 12 34 ab cd ef 56 78 9a... (opaque)','','[Decrypted with AES-128-GCM session write key]','[Plaintext: HTTP/2 HEADERS frame — GET /index.html]','','No observer can read this without the session keys']]],'tls_app',
+      {title:'Encrypted HTTP Request — Invisible to Observers',text:'The HTTP request is now encrypted and looks like random bytes. Only the packet size and timing are visible. AES-128-GCM (AEAD) also detects any tampering.',tags:['TLS','Encrypted','AES-GCM','AEAD','HTTP/2']}),
+    p(0.055,SERVER.ip,CLIENT.ip,'TLS',434,'Application Data [encrypted]','c-tls',
+      [frameLayer(12,434),ethLayer(GATEWAY.mac,CLIENT.mac),ipLayer(SERVER.ip,CLIENT.ip,'TCP',56),
+       tcpLayer(443,58607,0x018,877606673,292),
+       ['🔒','Transport Layer Security',['Content Type: Application Data (23)','Length: 366 (encrypted)','Encrypted: c4 47 40 a1 b2 c3... (opaque)','','[Contains encrypted HTTP response + HTML page]','[Without the session keys, this is unreadable]']]],'tls_app',
+      {title:'Encrypted HTTP Response — Full HTTPS Protection',text:'The server\'s response is fully encrypted. Even if captured, the content is unreadable without session keys. This is what HTTPS protects: the entire HTTP conversation — headers, cookies, and body.',tags:['TLS','Encrypted Response','Confidentiality','HTTPS']}),
+  ];
+
+  return S;
+}
+
+const SCENARIOS = mkPackets();
+
+// ───────────────────────────────────────────
+//  STATE
+// ───────────────────────────────────────────
+let scenarioKey = 'mixed';
+let scenarioPkts = [];
+let revealedCount = 0;  // how many packets revealed so far
+let selectedId = null;
+let currentFilter = '';
+
+// ───────────────────────────────────────────
+//  STEP-BY-STEP CONTROLS
+// ───────────────────────────────────────────
+function loadScenario(key) {
+  scenarioKey = key;
+  scenarioPkts = SCENARIOS[key];
+  // If info panel is open, refresh it for the new scenario
+  if (scenarioInfoVisible) populateScenarioInfo(key);
+  revealedCount = 0;
+  selectedId = null;
+  currentFilter = '';
+  document.getElementById('filterInput').value = '';
+  document.getElementById('filterInput').className = 'fl-input';
+  document.querySelectorAll('.qf-btn').forEach(b => b.classList.remove('active'));
+
+  document.getElementById('pktBody').innerHTML = '';
+  clearPanes();
+  updateStepUI();
+  // Reset guide for the new scenario
+  guideStep = 0;
+  renderGuide();
+}
+
+function nextStep() {
+  if (revealedCount >= scenarioPkts.length) return;
+  revealedCount++;
+  const pk = scenarioPkts[revealedCount - 1];
+
+  // Add row to table
+  const body = document.getElementById('pktBody');
+  const tr = document.createElement('tr');
+  tr.className = pk.color + ' new-row';
+  tr.id = 'row-' + pk.id;
+  tr.innerHTML = `<td>${pk.id}</td><td>${pk.t.toFixed(6)}</td><td>${pk.src}</td><td>${pk.dst}</td><td><b>${pk.proto}</b></td><td>${pk.len}</td><td>${pk.info}</td>`;
+  tip(tr, `<div class="rt-title">${esc(pk.insight.title)}</div><div class="rt-text">${esc(pk.insight.text)}</div><div class="rt-tags">${pk.insight.tags.map(t=>`<span class="rt-tag">${esc(t)}</span>`).join('')}</div>`);
+  tr.onclick = () => selectPacket(pk.id);
+
+  // Check filter visibility
+  if (currentFilter && !matchFilter(pk, currentFilter)) tr.style.display = 'none';
+
+  body.appendChild(tr);
+
+  // Auto-select the new packet
+  selectPacket(pk.id);
+
+  // Scroll to bottom
+  const listPane = document.getElementById('paneList');
+  listPane.scrollTop = listPane.scrollHeight;
+
+  updateStepUI();
+  checkGuideStep();
+}
+
+function prevStep() {
+  if (revealedCount <= 0) return;
+  // Remove the last revealed packet's row from the DOM
+  const lastPk = scenarioPkts[revealedCount - 1];
+  const lastRow = document.getElementById('row-' + lastPk.id);
+  if (lastRow) lastRow.remove();
+  revealedCount--;
+  selectedId = null;
+  if (revealedCount > 0) {
+    const pk = scenarioPkts[revealedCount - 1];
+    selectPacket(pk.id);
+  } else {
+    clearPanes();
+  }
+  updateStepUI();
+}
+
+function resetScenario() {
+  loadScenario(scenarioKey);
+}
+
+function updateStepUI() {
+  const total = scenarioPkts.length;
+  const step = revealedCount;
+  const done = step >= total;
+
+  // Step counter
+  document.getElementById('stepCounter').innerHTML = done
+    ? 'Complete! <span class="num">✓</span>'
+    : `Step <span class="num">${step}</span> of <span id="stepTotal">${total}</span>`;
+
+  // Progress bar
+  document.getElementById('progressFill').style.width = `${total ? (step/total)*100 : 0}%`;
+
+  // Buttons
+  document.getElementById('btnNext').disabled = done;
+  document.getElementById('btnNext').textContent = step === 0 ? 'Start →' : done ? '✓ Complete' : 'Next Step →';
+  document.getElementById('btnNext').className = done ? 'btn-next complete' : 'btn-next';
+  document.getElementById('btnPrev').disabled = step === 0;
+
+  // Preview
+  const preview = document.getElementById('stepPreview');
+  const previewText = document.getElementById('previewText');
+  if (done) {
+    preview.className = 'step-preview done';
+    previewText.innerHTML = `Scenario complete — all ${total} packets revealed. Use the filter bar to explore, or click any row to review.`;
+  } else if (step === 0) {
+    preview.className = 'step-preview';
+    previewText.innerHTML = `Click <b>Start</b> to begin — ${total} packets in this scenario`;
+  } else {
+    preview.className = 'step-preview';
+    const nextPk = scenarioPkts[step]; // next to reveal
+    if (nextPk) {
+      previewText.innerHTML = `<span class="preview-proto">${nextPk.proto}</span> — ${nextPk.insight.title}`;
+    }
+  }
+
+  // Status bar
+  document.getElementById('sbInfo').textContent = `${step} of ${total} packets revealed | ${scenarioKey}`;
+}
+
+// ───────────────────────────────────────────
+//  PACKET SELECTION & RENDERING
+// ───────────────────────────────────────────
+function selectPacket(id) {
+  selectedId = id;
+  document.querySelectorAll('.pkt-table tbody tr').forEach(r => r.classList.remove('selected'));
+  const row = document.getElementById('row-' + id);
+  if (row) { row.classList.add('selected'); row.scrollIntoView({block:'nearest'}); }
+
+  const pk = scenarioPkts.find(p => p.id === id);
+  if (!pk) return;
+  renderTree(pk);
+  renderHex(pk);
+  renderInsight(pk);
+  document.getElementById('sbSelected').textContent = `#${id} ${pk.proto} ${pk.info.substring(0,60)}`;
+  checkGuideStep();
+}
+
+function clearPanes() {
+  document.getElementById('treeRoot').innerHTML = '<div class="tree-empty">Click <b>Start</b> to begin the step-by-step simulation</div>';
+  document.getElementById('hexDump').innerHTML = '<div class="hex-empty">Hex dump appears here as you step through packets</div>';
+  document.getElementById('insightPanel').innerHTML = '<span class="ins-empty">💡 Each step includes a plain-English explanation</span>';
+  document.getElementById('sbSelected').textContent = '–';
+}
+
+function renderTree(pk) {
+  const root = document.getElementById('treeRoot');
+  root.innerHTML = '';
+  pk.layers.forEach((layer, li) => {
+    const [icon, label, fields] = layer;
+    const node = document.createElement('div');
+    node.className = 'tree-node';
+    const hdr = document.createElement('div');
+    hdr.className = 'tree-hdr';
+    hdr.innerHTML = `<span class="tree-toggle">▶</span><span class="tree-icon">${icon}</span><span class="tree-lbl">${esc(label)}</span>`;
+    const kids = document.createElement('div');
+    kids.className = 'tree-kids';
+    if (li === 0 || li === pk.layers.length - 1) { kids.classList.add('open'); hdr.querySelector('.tree-toggle').textContent = '▼'; }
+    fields.forEach(f => {
+      if (!f) return;
+      const d = document.createElement('div');
+      d.className = 'tree-field';
+      const trimmed = f.trim();
+      const indent = f.length - f.trimStart().length;
+      const pad = indent > 0 ? `style="padding-left:${indent*4+4}px"` : '';
+      const colon = trimmed.indexOf(':');
+      if (colon > 0 && colon < 50) {
+        d.innerHTML = `<span ${pad}><span class="tf-k">${esc(trimmed.slice(0,colon+1))}</span><span class="tf-v">${esc(trimmed.slice(colon+1))}</span></span>`;
+      } else {
+        d.innerHTML = `<span ${pad} class="tf-c">${esc(trimmed)}</span>`;
+      }
+      // Attach field tooltip if available
+      const fieldKey = trimmed.split(':')[0].trim();
+      if (FIELD_TIPS[fieldKey]) {
+        const ft = FIELD_TIPS[fieldKey];
+        tip(d, `<div class="rt-title">${esc(fieldKey)}</div><div class="rt-text">${esc(ft)}</div>`);
+      }
+      kids.appendChild(d);
+    });
+    hdr.onclick = () => {
+      const open = kids.classList.toggle('open');
+      hdr.querySelector('.tree-toggle').textContent = open ? '▼' : '▶';
+    };
+    node.appendChild(hdr);
+    node.appendChild(kids);
+    root.appendChild(node);
+  });
+}
+
+function renderHex(pk) {
+  const el = document.getElementById('hexDump');
+  const hexStr = HEX[pk.hexKey] || '';
+  const bytes = hexStr.split(' ').filter(h => h.length === 2);
+  if (!bytes.length) { el.innerHTML = '<div class="hex-empty">No hex data</div>'; return; }
+  let html = '<div class="hex-hdr">Offset  Hex                                              ASCII</div>';
+  for (let i = 0; i < bytes.length; i += 16) {
+    const chunk = bytes.slice(i, i+16);
+    const hexPart = chunk.join(' ').padEnd(47,' ');
+    const asciiPart = chunk.map(h => { const c=parseInt(h,16); return c>=32&&c<127?String.fromCharCode(c):'.'; }).join('');
+    html += `<div class="hex-row"><span class="hex-off">${i.toString(16).padStart(4,'0')}</span><span class="hex-dat">${hexPart}</span><span class="hex-asc">${asciiPart}</span></div>`;
+  }
+  el.innerHTML = html;
+}
+
+function renderInsight(pk) {
+  const el = document.getElementById('insightPanel');
+  const {title, text, tags} = pk.insight;
+  el.innerHTML = `<div class="ins-title">💡 ${esc(title)}</div><div class="ins-text">${esc(text)}</div><div class="ins-tags">${tags.map(t=>`<span class="ins-tag">${esc(t)}</span>`).join('')}</div>`;
+}
+
+function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ───────────────────────────────────────────
+//  DISPLAY FILTER
+// ───────────────────────────────────────────
+const PROTO_ALIASES = {http:['HTTP'],dns:['DNS'],arp:['ARP'],icmp:['ICMP'],tls:['TLS'],tcp:['TCP','HTTP','TLS'],udp:['UDP','DNS','DHCP']};
+
+function matchFilter(pk, expr) {
+  if (!expr.trim()) return true;
+  try { return evalFilter(pk, expr.trim().toLowerCase()); } catch(e) { return true; }
+}
+function evalFilter(pk, expr) {
+  if (expr.includes('&&')) return expr.split('&&').every(e => evalFilter(pk, e.trim()));
+  if (expr.includes('||')) return expr.split('||').some(e => evalFilter(pk, e.trim()));
+  if (expr.startsWith('!')) return !evalFilter(pk, expr.slice(1).trim());
+  if (PROTO_ALIASES[expr]) return PROTO_ALIASES[expr].some(p => pk.proto.toUpperCase().includes(p));
+  if (expr.match(/^ip\.addr\s*==\s*/)) { const ip=expr.replace(/ip\.addr\s*==\s*/,''); return pk.src.includes(ip)||pk.dst.includes(ip); }
+  if (expr.match(/^ip\.src\s*==\s*/)) { const ip=expr.replace(/ip\.src\s*==\s*/,''); return pk.src.includes(ip); }
+  if (expr.match(/^ip\.dst\s*==\s*/)) { const ip=expr.replace(/ip\.dst\s*==\s*/,''); return pk.dst.includes(ip); }
+  if (/tcp\.port\s*==\s*80/.test(expr)) return pk.info.includes('→ 80')||pk.info.includes('80 →')||pk.proto==='HTTP';
+  if (/tcp\.port\s*==\s*443/.test(expr)) return pk.info.includes('→ 443')||pk.info.includes('443 →')||pk.proto==='TLS';
+  if (/tcp\.flags\.syn\s*==\s*1/.test(expr)) return pk.info.includes('SYN');
+  if (/tcp\.flags\.fin\s*==\s*1/.test(expr)) return pk.info.includes('FIN');
+  return pk.proto.toLowerCase().includes(expr)||pk.src.includes(expr)||pk.dst.includes(expr)||pk.info.toLowerCase().includes(expr);
+}
+function onFilterInput() {
+  const input = document.getElementById('filterInput');
+  const val = input.value.trim();
+  if (!val) { input.className = 'fl-input'; return; }
+  input.className = 'fl-input valid';
+}
+function applyFilter() {
+  currentFilter = document.getElementById('filterInput').value.trim();
+  document.querySelectorAll('.qf-btn').forEach(b => b.classList.remove('active'));
+  // Re-apply visibility to all revealed rows
+  const rows = document.querySelectorAll('#pktBody tr');
+  rows.forEach((tr, i) => {
+    if (i < revealedCount) {
+      const pk = scenarioPkts[i];
+      tr.style.display = (!currentFilter || matchFilter(pk, currentFilter)) ? '' : 'none';
+    }
+  });
+  document.getElementById('sbInfo').textContent = currentFilter
+    ? `Filter: ${currentFilter} | ${revealedCount} of ${scenarioPkts.length} revealed`
+    : `${revealedCount} of ${scenarioPkts.length} packets revealed`;
+  checkGuideStep();
+}
+function clearFilter() {
+  document.getElementById('filterInput').value = '';
+  document.getElementById('filterInput').className = 'fl-input';
+  currentFilter = '';
+  document.querySelectorAll('.qf-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('#pktBody tr').forEach(tr => tr.style.display = '');
+  applyFilter(); // applyFilter already calls checkGuideStep
+}
+function setFilter(f) {
+  document.getElementById('filterInput').value = f;
+  applyFilter();
+}
+
+// ───────────────────────────────────────────
+//  SCENARIO INFO PANEL
+// ───────────────────────────────────────────
+const SCENARIO_INFO = {
+  mixed: {
+    icon:'🔀', title:'Mixed Traffic Overview',
+    tagline:'A sampler of the most common protocol types seen in everyday network captures.',
+    simulates:'A typical LAN session: the computer first discovers the gateway MAC via ARP, then tests connectivity to the internet with ICMP ping, resolves a hostname via DNS, and finally starts a TCP connection to a web server. You\'ll see how each protocol hands off to the next.',
+    concepts:['ARP — maps IP addresses to MAC addresses so Ethernet frames can be addressed','ICMP — tests reachability and measures round-trip time (ping)','DNS — translates hostnames to IP addresses before any connection is made','TCP — establishes a reliable bidirectional connection via 3-way handshake'],
+    flow:[['ARP','arp'],['ARP Reply','arp'],['ICMP Req','icmp'],['ICMP Reply','icmp'],['DNS Query','dns'],['DNS Reply','dns'],['TCP SYN',''],['TCP SYN-ACK',''],['TCP ACK','']],
+  },
+  http: {
+    icon:'🌐', title:'HTTP Web Browse',
+    tagline:'The complete lifecycle of a single web page request over plain HTTP.',
+    simulates:'Your browser opening http://www.example.com. Every packet from ARP gateway discovery through the TCP 3-way handshake, HTTP GET request, 200 OK response with HTML body, and finally the TCP 4-way connection close is captured.',
+    concepts:['ARP — gateway discovery before any IP traffic can flow','TCP 3-way handshake — SYN / SYN-ACK / ACK to establish the connection','HTTP/1.1 — stateless request/response with Host header for virtual hosting','TCP 4-way teardown — graceful FIN / ACK sequence to close the connection'],
+    flow:[['ARP','arp'],['ARP Reply','arp'],['SYN',''],['SYN-ACK',''],['ACK',''],['HTTP GET','http'],['TCP ACK',''],['HTTP 200','http'],['TCP ACK',''],['FIN',''],['ACK',''],['FIN',''],['ACK','']],
+  },
+  dns: {
+    icon:'📖', title:'DNS Lookup',
+    tagline:'How a hostname becomes an IP address — the first step before any web connection.',
+    simulates:'Your OS querying Google\'s DNS resolver (8.8.8.8) for both the IPv4 (A) and IPv6 (AAAA) addresses of www.example.com. Modern systems issue both queries in parallel and prefer IPv6 if both answers arrive.',
+    concepts:['DNS A record — resolves hostname to IPv4 address','DNS AAAA record — resolves hostname to IPv6 address','UDP port 53 — fast, connectionless transport for small DNS messages','Transaction ID — matches each UDP reply to its corresponding query','TTL — how long the OS caches the result before re-querying','Recursion Desired — asks the resolver to do the full lookup on your behalf'],
+    flow:[['DNS A Query','dns'],['DNS A Reply','dns'],['DNS AAAA Query','dns'],['DNS AAAA Reply','dns']],
+  },
+  icmp: {
+    icon:'🏓', title:'ICMP Ping',
+    tagline:'Four round trips to 8.8.8.8 — the simplest network diagnostic tool.',
+    simulates:'Running `ping -c 4 8.8.8.8`. Each second, one ICMP Echo Request is sent and one Echo Reply comes back. The TTL in the reply reveals how many router hops separate you from the destination.',
+    concepts:['ICMP Type 8 — Echo Request (the "ping")','ICMP Type 0 — Echo Reply (the "pong")','TTL — Time to Live: decremented by each router; reveals hop count','Round-trip time — measured from request send to reply receive','Sequence numbers — match each reply to its request even if replies arrive out of order'],
+    flow:[['Req #1','icmp'],['Reply #1','icmp'],['Req #2','icmp'],['Reply #2','icmp'],['Req #3','icmp'],['Reply #3','icmp'],['Req #4','icmp'],['Reply #4','icmp']],
+  },
+  handshake: {
+    icon:'🤝', title:'TCP 3-Way Handshake',
+    tagline:'The three packets that establish every TCP connection — isolated for study.',
+    simulates:'A client connecting to TCP port 443 on a remote server, focusing exclusively on the handshake. No ARP, no data transfer — just SYN, SYN-ACK, ACK. Perfect for studying sequence numbers, TCP options, and the connection state machine.',
+    concepts:['SYN — client proposes connection with a random Initial Sequence Number (ISN)','SYN-ACK — server accepts and sends its own ISN; Ack = client ISN + 1','ACK — client confirms; Ack = server ISN + 1; connection now ESTABLISHED','MSS — Maximum Segment Size negotiated in options (typically 1460 bytes)','Window Scale — multiplies window size for high-bandwidth connections','SACK — Selective Acknowledgment allows out-of-order segment recovery'],
+    flow:[['SYN',''],['SYN-ACK',''],['ACK','']],
+  },
+  tls: {
+    icon:'🔒', title:'HTTPS / TLS 1.3 Handshake',
+    tagline:'From TCP setup to encrypted application data — how HTTPS actually works.',
+    simulates:'Opening https://www.example.com. Starts with a TCP handshake (same as HTTP), then TLS 1.3 negotiation: ClientHello with cipher suite list and SNI, ServerHello with chosen cipher, Certificate for identity verification, key exchange, Finished messages, and finally encrypted HTTP/2 application data.',
+    concepts:['SNI — Server Name Indication is plaintext: the hostname is visible even in HTTPS','X.509 Certificate — proves server identity; browser verifies chain to trusted root CA','ECDHE key exchange — Elliptic Curve Diffie-Hellman; session key never transmitted','Perfect Forward Secrecy — each session uses a unique key; past sessions stay private','AES-128-GCM (AEAD) — authenticated encryption; detects tampering automatically','Session Ticket — enables fast 0-RTT resumption for repeat connections'],
+    flow:[['SYN',''],['SYN-ACK',''],['ACK',''],['ClientHello','tls'],['ACK',''],['ServerHello+Cert','tls'],['ACK',''],['Finished','tls'],['ACK',''],['Ticket+Done','tls'],['App Data →','tls'],['App Data ←','tls']],
+  },
+};
+
+let scenarioInfoVisible = false;
+
+function toggleScenarioInfo() {
+  scenarioInfoVisible = !scenarioInfoVisible;
+  const panel = document.getElementById('scenarioInfo');
+  const btn = document.getElementById('btnInfo');
+  if (scenarioInfoVisible) {
+    populateScenarioInfo(scenarioKey);
+    panel.style.display = '';
+    btn.style.background = 'linear-gradient(to bottom,#c8dff8,#a8caf0)';
+    btn.style.borderColor = '#4a90d9';
+  } else {
+    panel.style.display = 'none';
+    btn.style.background = '';
+    btn.style.borderColor = '';
+  }
+}
+
+function closeScenarioInfo() {
+  scenarioInfoVisible = false;
+  document.getElementById('scenarioInfo').style.display = 'none';
+  const btn = document.getElementById('btnInfo');
+  btn.style.background = '';
+  btn.style.borderColor = '';
+}
+
+function populateScenarioInfo(key) {
+  const info = SCENARIO_INFO[key];
+  if (!info) return;
+  document.getElementById('siIcon').textContent = info.icon;
+  document.getElementById('siTitle').textContent = info.title;
+  document.getElementById('siTagline').textContent = info.tagline;
+  document.getElementById('siSimulates').textContent = info.simulates;
+  document.getElementById('siConcepts').innerHTML = info.concepts.map(c => `<div class="si-concept">${esc(c)}</div>`).join('');
+  document.getElementById('siFlow').innerHTML = info.flow.map(([label, proto]) => {
+    const cls = proto ? ` proto-${proto}` : '';
+    return `<span class="${cls.trim()}">${esc(label)}</span>`;
+  }).join(' → ');
+}
+
+// ───────────────────────────────────────────
+//  RICH TOOLTIP SYSTEM
+// ───────────────────────────────────────────
+const rtip = document.getElementById('rtip');
+let rtipHide;
+
+function tip(el, html) {
+  el.addEventListener('mouseenter', () => {
+    clearTimeout(rtipHide);
+    rtip.innerHTML = html;
+    rtip.style.display = 'block';
+  });
+  el.addEventListener('mouseleave', () => {
+    rtipHide = setTimeout(() => { rtip.style.display = 'none'; }, 80);
+  });
+}
+
+document.addEventListener('mousemove', e => {
+  if (rtip.style.display === 'none') return;
+  const gap = 14, w = 318, h = 180;
+  let x = e.clientX + gap, y = e.clientY + gap;
+  if (x + w > window.innerWidth)  x = e.clientX - w - gap;
+  if (y + h > window.innerHeight) y = e.clientY - h - gap;
+  rtip.style.left = Math.max(4, x) + 'px';
+  rtip.style.top  = Math.max(4, y) + 'px';
+});
+
+// Field tooltip dictionary
+const FIELD_TIPS = {
+  'Time to Live':         'Decremented by 1 at each router hop. If it hits 0, the router drops the packet and sends ICMP "Time Exceeded" back. Prevents packets from looping forever.',
+  'Protocol':             'Identifies the next-layer protocol carried in the IP payload. 6=TCP, 17=UDP, 1=ICMP.',
+  'Source Address':       'The IP address of the sender. Can be spoofed at Layer 3 — use with caution for attribution.',
+  'Destination Address':  'The IP address of the intended recipient. Routers use this to make forwarding decisions.',
+  'Source Port':          'Ephemeral port chosen by the OS (usually 49152–65535) to identify this specific connection on the sender side.',
+  'Destination Port':     'Well-known port identifying the service: 80=HTTP, 443=HTTPS, 53=DNS, 22=SSH.',
+  'Sequence Number':      'Byte offset of the first byte in this segment. Both sides independently pick a random Initial Sequence Number (ISN) at the start of the handshake to prevent collisions.',
+  'Acknowledgment Number':'Next byte the sender expects to receive. If Ack=1001, all bytes up to 1000 have been received successfully.',
+  'Flags':                'TCP control bits: SYN=open, ACK=acknowledge, FIN=close, RST=abort, PSH=push data now, URG=urgent.',
+  'Window':               'How many bytes the receiver can accept before needing an ACK. Large windows allow high throughput on fast links without waiting.',
+  'SYN: Set — connection initiation': 'SYN flag initiates a TCP connection and synchronizes sequence numbers. Appears in the first two handshake packets only.',
+  'ACK: Set — acknowledging data':    'ACK flag is set on almost every packet after the first SYN. Confirms receipt of data up to the Acknowledgment Number.',
+  'FIN: Set — end of stream':         'FIN gracefully closes one direction of the TCP connection. The other side can still send until it also sends FIN (half-close).',
+  'PSH: Set — push data immediately': 'PSH tells the receiver to pass data to the application immediately without buffering.',
+  'Opcode':               'ARP operation: 1=request (who has this IP?), 2=reply (I have this IP, here\'s my MAC).',
+  'Sender MAC':           'Layer 2 hardware address of the ARP sender. 6 bytes, usually written as aa:bb:cc:dd:ee:ff.',
+  'Target MAC':           'In an ARP request this is 00:00:00:00:00:00 (unknown — that\'s what we\'re asking). In a reply it\'s the requester\'s MAC.',
+  'Type: 8 (Echo (ping) request)': 'ICMP Type 8 = Echo Request. The "ping" half. Carries an identifier and sequence number to match replies.',
+  'Type: 0 (Echo (ping) reply)':   'ICMP Type 0 = Echo Reply. The "pong" half. Sequence number matches the request.',
+  'Transaction ID':       'Random 16-bit ID that links each DNS reply to its query. Critical for UDP: without it any server could forge a reply.',
+  'Flags: 0x0100 (Standard query, RD)': '"RD" = Recursion Desired. Asks the resolver to do all the work — query root servers, TLDs, and authoritative servers on your behalf.',
+  'Version: 4':           'IPv4 — the dominant protocol. IPv6 (version 6) is growing but IPv4 still carries most internet traffic.',
+  'Header Length':        'IPv4 header is at minimum 20 bytes. Extra bytes mean IP Options are present (rare in practice).',
+  'Identification':       'Used to reassemble fragmented IP packets. All fragments of the same datagram share the same ID.',
+  'Content Type: Handshake (22)': 'TLS record type 22 = Handshake. Used for ClientHello, ServerHello, Certificate, Finished.',
+  'Content Type: Application Data (23)': 'TLS record type 23 = Application Data. Encrypted payload — HTTP, HTTP/2, or any other protocol riding inside TLS.',
+};
+
+// ───────────────────────────────────────────
+//  DIY GUIDE
+// ───────────────────────────────────────────
+let guideMode = true;  // open by default
+let guideStep = 0;
+
+const GUIDE_TITLES = {
+  mixed:     '🔀 Mixed Traffic — 9 Packets',
+  http:      '🌐 HTTP Web Browse — 13 Packets',
+  dns:       '📖 DNS Lookup — 4 Packets',
+  icmp:      '🏓 ICMP Ping — 8 Packets',
+  handshake: '🤝 TCP 3-Way Handshake — 3 Packets',
+  tls:       '🔒 HTTPS / TLS — 12 Packets',
+};
+
+const ALL_GUIDE_STEPS = {
+
+  // ── MIXED ──────────────────────────────────
+  mixed: [
+    { title: 'Reveal the ARP Request',
+      inst:  'Every session on a local network starts with ARP — discovering the gateway\'s MAC address.',
+      doThis:'Press <b>Space</b> or click <b>Next Step →</b>',
+      hint:  'Keyboard shortcuts: Space, →, or Enter.',
+      check: () => revealedCount >= 1,
+      learn: '' },
+    { title: 'Inspect the ARP Packet',
+      inst:  'Click the yellow ARP row to see the full protocol dissection below.',
+      doThis:'Click the <b>yellow ARP row</b> in the packet list',
+      hint:  'Look at the Opcode field in the ARP layer — 1 = request.',
+      check: () => selectedId === 1,
+      learn: '<b>ARP broadcasts</b> to ff:ff:ff:ff:ff:ff (every device on the LAN). The target MAC is 00:00:00:00:00:00 — that\'s what we\'re asking for.' },
+    { title: 'Step to ICMP Ping',
+      inst:  'After ARP resolves the gateway, ICMP tests connectivity to 8.8.8.8.',
+      doThis:'Click <b>Next Step →</b> <b>twice</b> to reveal the ARP reply and the first ping',
+      hint:  'Watch the protocol color change from yellow (ARP) to blue (ICMP).',
+      check: () => revealedCount >= 3,
+      learn: '<b>ARP reply cached.</b> From now on, packets go directly to the gateway MAC without more ARP broadcasts.' },
+    { title: 'Inspect the Ping',
+      inst:  'ICMP operates at Layer 3 — no TCP/UDP ports involved.',
+      doThis:'Click the <b>blue ICMP row</b> (packet #3)',
+      hint:  'Expand the ICMP layer in the tree to see Type and Sequence Number.',
+      check: () => selectedId === 3,
+      learn: '<b>ICMP Type 8</b> = Echo Request. No source or destination ports — ICMP is not a transport-layer protocol.' },
+    { title: 'Reveal DNS and TCP',
+      inst:  'After ping, watch DNS resolve a hostname, then TCP start a connection.',
+      doThis:'Click <b>Next Step →</b> until all <b>9 packets</b> are revealed',
+      hint:  'Hold Space to step quickly.',
+      check: () => revealedCount >= 9,
+      learn: '<b>Session order:</b> ARP → ICMP (ping) → DNS (resolve name) → TCP (connect). Every protocol hands off to the next.' },
+    { title: 'Filter by Protocol',
+      inst:  'Isolate just the DNS exchange from the mixed capture.',
+      doThis:'Click the <b>dns</b> quick-filter button',
+      hint:  'Pill-shaped quick-filter buttons are in the filter bar.',
+      check: () => currentFilter.toLowerCase() === 'dns',
+      learn: '<b>Only DNS rows show.</b> The filter hides ARP, ICMP, and TCP — they\'re still there, just hidden.' },
+    { title: 'Exclude ARP with Negation',
+      inst:  'Negation filters let you hide noise while keeping everything else.',
+      doThis:'Click the <b>!arp</b> quick-filter button',
+      hint:  '!arp = "not ARP" — show all protocols except ARP.',
+      check: () => currentFilter === '!arp',
+      learn: '<b>Result:</b> ARP rows vanish; ICMP, DNS, and TCP remain. Negation is powerful in large captures full of broadcast chatter.' },
+    { title: '🎉 Mixed Lab Done!',
+      inst:  'You\'ve seen ARP, ICMP, DNS, and TCP working together in one session.',
+      doThis:'', hint:'', check: () => true, learn: '' },
+  ],
+
+  // ── HTTP ───────────────────────────────────
+  http: [
+    { title: 'Reveal the ARP Request',
+      inst:  'Before any web traffic, the browser\'s OS needs the gateway\'s MAC address.',
+      doThis:'Press <b>Space</b> or click <b>Next Step →</b>',
+      hint:  'Keyboard shortcut: Space or → arrow key.',
+      check: () => revealedCount >= 1,
+      learn: '' },
+    { title: 'Inspect the ARP Packet',
+      inst:  'Click the yellow ARP row to see why this broadcast is necessary.',
+      doThis:'Click the <b>yellow ARP row</b>',
+      hint:  'Expand the ARP layer in the tree.',
+      check: () => selectedId === 1,
+      learn: '<b>Destination = ff:ff:ff:ff:ff:ff</b> (broadcast). Target MAC = 00:00 (unknown). Every device on the LAN sees this packet.' },
+    { title: 'Reveal the ARP Reply',
+      inst:  'The gateway responds with its MAC. Now Ethernet frames can be addressed.',
+      doThis:'Click <b>Next Step →</b>',
+      hint:  'Space works too.',
+      check: () => revealedCount >= 2,
+      learn: '<b>ARP cache updated.</b> Your OS stores this MAC→IP mapping. Run "arp -a" in a terminal to see your own cache.' },
+    { title: 'Build the TCP Handshake',
+      inst:  'TCP must establish a reliable connection to port 80 before any HTTP data flows.',
+      doThis:'Click <b>Next Step →</b> <b>3 more times</b> to reveal SYN, SYN-ACK, ACK',
+      hint:  'Hold Space to step quickly. Watch the progress bar.',
+      check: () => revealedCount >= 5,
+      learn: '<b>1 RTT to open.</b> Both sides sync sequence numbers and confirm bidirectional connectivity — that\'s the purpose of all 3 packets.' },
+    { title: 'Examine the SYN',
+      inst:  'The SYN packet starts the handshake with a random Initial Sequence Number.',
+      doThis:'Click <b>packet #3</b> (the "[SYN]" TCP row)',
+      hint:  'TCP rows are light purple. Look for SYN without ACK in the Info column.',
+      check: () => selectedId === 3,
+      learn: '<b>Expand TCP in the tree.</b> Flags: SYN=1, ACK=0. Options include MSS=1460 (max data per segment) and Window Scale.' },
+    { title: 'Reveal the HTTP GET',
+      inst:  'After 5 setup packets, the browser finally asks for the page.',
+      doThis:'Click <b>Next Step →</b> once',
+      hint:  'The HTTP row is bright green.',
+      check: () => revealedCount >= 6,
+      learn: '<b>5 packets before data.</b> That\'s the TCP overhead. HTTP/2 over TLS avoids this per-request cost by reusing connections.' },
+    { title: 'Filter to HTTP Only',
+      inst:  'Display filters let you focus on one protocol in a busy capture.',
+      doThis:'Click the <b>http</b> quick-filter button (or type <b>http</b> + Enter)',
+      hint:  'Quick-filter pills are in the filter bar below the step controls.',
+      check: () => currentFilter.toLowerCase() === 'http',
+      learn: '<b>TCP ACKs hidden.</b> Only the GET and 200 OK show. Filters are non-destructive — packets are hidden, not deleted.' },
+    { title: 'Clear the Filter',
+      inst:  'Bring all packets back.',
+      doThis:'Click <b>✕ Clear</b>',
+      hint:  'Next to the Apply button.',
+      check: () => currentFilter === '' && revealedCount >= 6,
+      learn: '<b>All packets restored.</b> The filter was just a view — no data was lost.' },
+    { title: 'Reveal All 13 Packets',
+      inst:  'Step through the HTTP response and the 4-way TCP connection close.',
+      doThis:'Keep pressing <b>Next Step →</b> until all <b>13 packets</b> appear',
+      hint:  'Hold Space. The progress bar fills completely at 13.',
+      check: () => revealedCount >= 13,
+      learn: '<b>13 packets total:</b> 2 ARP + 3 TCP open + 1 GET + 1 ACK + 1 HTTP 200 + 1 ACK + 4 TCP close. One page request.' },
+    { title: 'Find Connection Opens',
+      inst:  'Use a flags filter to isolate only the connection-initiating packets.',
+      doThis:'Click the <b>SYN</b> quick-filter button',
+      hint:  'SYN pill is in the filter bar.',
+      check: () => currentFilter.toLowerCase().includes('syn'),
+      learn: '<b>SYN and SYN-ACK match.</b> In a large capture this reveals every attempted connection — a key forensics technique.' },
+    { title: '🎉 HTTP Lab Done!',
+      inst:  'You traced the full lifecycle of a web page request — 13 packets, end to end.',
+      doThis:'', hint:'', check: () => true, learn: '' },
+  ],
+
+  // ── DNS ────────────────────────────────────
+  dns: [
+    { title: 'Reveal the DNS A Query',
+      inst:  'Every hostname lookup starts with a UDP packet asking for an IPv4 address.',
+      doThis:'Click <b>Next Step →</b>',
+      hint:  'DNS rows are light blue.',
+      check: () => revealedCount >= 1,
+      learn: '' },
+    { title: 'Inspect the Query',
+      inst:  'See how DNS encodes the question and links reply to request.',
+      doThis:'Click the <b>blue DNS row</b> (packet #1)',
+      hint:  'Expand the DNS layer in the tree below.',
+      check: () => selectedId === 1,
+      learn: '<b>Transaction ID</b> is a random 16-bit number. The reply must echo the same ID — without it, any server could forge a reply (DNS spoofing).' },
+    { title: 'Reveal the A Response',
+      inst:  'The resolver replies with the IPv4 address and a caching TTL.',
+      doThis:'Click <b>Next Step →</b>',
+      hint:  'Watch the Info column — it shows the answer IP.',
+      check: () => revealedCount >= 2,
+      learn: '<b>TTL=1400s (~23 min).</b> Your OS caches this. For 23 minutes, no more DNS queries for www.example.com.' },
+    { title: 'Reveal the AAAA Records',
+      inst:  'Modern stacks also ask for IPv6 — both queries go out in parallel.',
+      doThis:'Click <b>Next Step →</b> <b>twice</b> to see the AAAA query and reply',
+      hint:  'AAAA = quad-A = IPv6 address record.',
+      check: () => revealedCount >= 4,
+      learn: '<b>Dual-stack:</b> Browser gets both IPv4 and IPv6 answers. "Happy Eyeballs" picks whichever connects first — usually IPv6 if available.' },
+    { title: 'Apply the DNS Filter',
+      inst:  'Confirm the filter shows all four DNS packets.',
+      doThis:'Click the <b>dns</b> quick-filter button',
+      hint:  'All rows should remain — this is a DNS-only capture.',
+      check: () => currentFilter.toLowerCase() === 'dns',
+      learn: '<b>DNS always uses UDP port 53</b> for queries under 512 bytes. TCP/53 is used for large responses (DNSSEC) or zone transfers.' },
+    { title: '🎉 DNS Lab Done!',
+      inst:  'You saw A and AAAA records, Transaction IDs, and TTL caching.',
+      doThis:'', hint:'', check: () => true, learn: '' },
+  ],
+
+  // ── ICMP ───────────────────────────────────
+  icmp: [
+    { title: 'Reveal the First Ping',
+      inst:  'The ping command sends ICMP Echo Requests to test reachability.',
+      doThis:'Click <b>Next Step →</b>',
+      hint:  'ICMP rows are light blue-purple.',
+      check: () => revealedCount >= 1,
+      learn: '' },
+    { title: 'Inspect the Echo Request',
+      inst:  'ICMP is a Layer 3 protocol — no ports, no connection setup.',
+      doThis:'Click the first <b>ICMP row</b> (packet #1)',
+      hint:  'Expand the ICMP layer in the tree.',
+      check: () => selectedId === 1,
+      learn: '<b>Type 8 = Echo Request.</b> Carries a Sequence Number to match each reply. No TCP/UDP — ICMP speaks directly to IP.' },
+    { title: 'Reveal the Echo Reply',
+      inst:  'The destination sends back Type 0 (Echo Reply) with the same sequence number.',
+      doThis:'Click <b>Next Step →</b>',
+      hint:  'Check the TTL in the reply — it reveals how many hops away the server is.',
+      check: () => revealedCount >= 2,
+      learn: '<b>TTL=117 in reply.</b> Google started at TTL=128, crossed 11 hops. traceroute exploits TTL to map the entire path.' },
+    { title: 'Complete All 4 Pings',
+      inst:  'Four round trips — watch the sequence numbers increment.',
+      doThis:'Keep pressing <b>Next Step →</b> until all <b>8 packets</b> are revealed',
+      hint:  'Hold Space. You should see 4 requests and 4 replies alternating.',
+      check: () => revealedCount >= 8,
+      learn: '<b>4 requests + 4 replies = 8 packets.</b> RTT is consistent (~13ms), indicating a stable route with no packet loss.' },
+    { title: 'Apply ICMP Filter',
+      inst:  'Confirm the filter isolates all ping packets.',
+      doThis:'Click the <b>icmp</b> quick-filter button',
+      hint:  'All 8 rows should still be visible — this is an ICMP-only capture.',
+      check: () => currentFilter.toLowerCase() === 'icmp',
+      learn: '<b>ICMP has no ports.</b> Firewalls that block ICMP can make ping fail even when the host is up — a common misconception.' },
+    { title: '🎉 ICMP Lab Done!',
+      inst:  'You saw Echo Requests, Echo Replies, sequence numbers, TTL hop counts, and RTT.',
+      doThis:'', hint:'', check: () => true, learn: '' },
+  ],
+
+  // ── HANDSHAKE ──────────────────────────────
+  handshake: [
+    { title: 'Reveal the SYN',
+      inst:  'Step 1 of the 3-way handshake: client proposes a connection with a random ISN.',
+      doThis:'Click <b>Next Step →</b>',
+      hint:  'This is the only packet in the entire internet with only SYN set (no ACK).',
+      check: () => revealedCount >= 1,
+      learn: '' },
+    { title: 'Inspect the SYN',
+      inst:  'Expand the TCP layer to read the flags, sequence number, and options.',
+      doThis:'Click <b>packet #1</b> (the SYN row)',
+      hint:  'TCP rows are light purple.',
+      check: () => selectedId === 1,
+      learn: '<b>ISN is random</b> — not 0. Randomness prevents old duplicate packets from being confused with new connections (TCP sequence-number attack prevention).' },
+    { title: 'Reveal the SYN-ACK',
+      inst:  'Step 2: server accepts and sends its own ISN. Both SYN and ACK flags are set.',
+      doThis:'Click <b>Next Step →</b>',
+      hint:  'The SYN-ACK is the only packet with both SYN=1 and ACK=1.',
+      check: () => revealedCount >= 2,
+      learn: '<b>Ack = client ISN + 1.</b> Server says "I received byte 0, send byte 1 next." Both sides now know each other\'s starting sequence numbers.' },
+    { title: 'Complete the Handshake',
+      inst:  'Step 3: client confirms. The connection is now ESTABLISHED.',
+      doThis:'Click <b>Next Step →</b>',
+      hint:  'After this ACK, application data can flow immediately.',
+      check: () => revealedCount >= 3,
+      learn: '<b>Total cost: 1 RTT.</b> The 3 packets fit in one round trip. This RTT becomes the minimum latency for every new TCP connection.' },
+    { title: 'Filter SYN Packets',
+      inst:  'Use a TCP flags filter to find all connection attempts.',
+      doThis:'Click the <b>SYN</b> quick-filter button',
+      hint:  'In real captures with thousands of packets, this instantly surfaces every connection open.',
+      check: () => currentFilter.toLowerCase().includes('syn'),
+      learn: '<b>tcp.flags.syn==1</b> matches SYN and SYN-ACK. To find only the initial SYN (not ACK), use <code>tcp.flags==0x002</code>.' },
+    { title: '🎉 Handshake Lab Done!',
+      inst:  'Three packets, two ISNs, one reliable connection — the foundation of TCP.',
+      doThis:'', hint:'', check: () => true, learn: '' },
+  ],
+
+  // ── TLS ────────────────────────────────────
+  tls: [
+    { title: 'Complete the TCP Handshake',
+      inst:  'HTTPS = HTTP inside TLS inside TCP. The TCP layer opens first — before any encryption.',
+      doThis:'Press <b>Next Step →</b> <b>3 times</b> to reveal SYN, SYN-ACK, ACK',
+      hint:  'These first 3 packets are identical to plain HTTP — no TLS yet.',
+      check: () => revealedCount >= 3,
+      learn: '<b>Zero encryption so far.</b> The destination IP and port (443) are fully visible. TLS starts in the next packet.' },
+    { title: 'Reveal the ClientHello',
+      inst:  'TLS begins with the client advertising what it supports.',
+      doThis:'Click <b>Next Step →</b> to reveal the ClientHello',
+      hint:  'TLS rows are green.',
+      check: () => revealedCount >= 4,
+      learn: '' },
+    { title: 'Inspect the ClientHello',
+      inst:  'The ClientHello contains critical plaintext data even though HTTPS is in use.',
+      doThis:'Click <b>packet #4</b> (the TLS ClientHello row)',
+      hint:  'Expand the TLS layer in the tree.',
+      check: () => selectedId === 4,
+      learn: '<b>SNI is plaintext!</b> Server Name Indication (www.example.com) is sent unencrypted so routers can forward it. HTTPS hides the URL path, not the hostname.' },
+    { title: 'Reveal ServerHello + Certificate',
+      inst:  'The server picks a cipher suite and proves its identity with an X.509 certificate.',
+      doThis:'Click <b>Next Step →</b> <b>twice</b> (ACK + ServerHello)',
+      hint:  'The ServerHello and Certificate arrive in one record for TLS 1.3.',
+      check: () => revealedCount >= 6,
+      learn: '<b>Certificate chain:</b> Browser checks the cert is signed by a trusted CA. ECDHE key_share enables Perfect Forward Secrecy — the session key is never transmitted.' },
+    { title: 'Complete the TLS Handshake',
+      inst:  'Both sides derive session keys and send Finished messages to confirm.',
+      doThis:'Press <b>Next Step →</b> until <b>10 packets</b> are revealed',
+      hint:  'Steps 7–10: TCP ACK, Client Finished, TCP ACK, Session Ticket + Server Finished.',
+      check: () => revealedCount >= 10,
+      learn: '<b>4 keys derived</b> from the ECDHE shared secret (never transmitted): client write key, server write key, client IV, server IV. AES-128-GCM encrypts everything from here.' },
+    { title: 'Reveal Encrypted Application Data',
+      inst:  'The HTTP request and response are now encrypted and completely opaque.',
+      doThis:'Press <b>Next Step →</b> twice to reveal both Application Data records',
+      hint:  'These are the last 2 packets.',
+      check: () => revealedCount >= 12,
+      learn: '<b>To an observer:</b> only packet size and timing are visible. The URL, cookies, headers, and body are all encrypted. This is what HTTPS protects.' },
+    { title: 'Filter TLS Records',
+      inst:  'Isolate the TLS-specific packets from the full capture.',
+      doThis:'Click the <b>tls</b> quick-filter button',
+      hint:  'TCP handshake and ACK packets will hide; only TLS records remain.',
+      check: () => currentFilter.toLowerCase() === 'tls',
+      learn: '<b>5 TLS records total:</b> ClientHello, ServerHello+Cert, Client Finished, Session Ticket, App Data ×2. The rest are TCP plumbing.' },
+    { title: '🎉 TLS Lab Done!',
+      inst:  'You traced the full HTTPS stack: TCP → TLS → encrypted HTTP. SNI, certificates, ECDHE, AES-GCM.',
+      doThis:'', hint:'', check: () => true, learn: '' },
+  ],
+};
+
+function currentGuideSteps() {
+  return ALL_GUIDE_STEPS[scenarioKey] || ALL_GUIDE_STEPS.mixed;
+}
+
+function toggleGuide() {
+  const panel = document.getElementById('guidePanel');
+  const btn   = document.getElementById('btnGuide');
+  guideMode = !guideMode;
+  if (guideMode) {
+    panel.classList.add('open');
+    btn.classList.add('guide-active');
+    renderGuide();
+  } else {
+    panel.classList.remove('open');
+    btn.classList.remove('guide-active');
+  }
+}
+
+function updateGuideTitle() {
+  document.querySelector('.guide-head-title').textContent =
+    '🎓 ' + (GUIDE_TITLES[scenarioKey] || 'Guided Lab');
+}
+
+function renderGuide() {
+  if (!guideMode) return;
+  updateGuideTitle();
+  const steps  = currentGuideSteps();
+  const body   = document.getElementById('guideBody');
+  const total  = steps.length - 1;
+  const isDone = guideStep >= steps.length - 1;
+  const step   = steps[Math.min(guideStep, steps.length - 1)];
+
+  if (isDone) {
+    body.innerHTML = `
+      <div class="guide-done">
+        <div class="guide-done-title">${step.title}</div>
+        <div class="guide-done-sub">${step.inst || 'Try the other scenarios, experiment with filters, or expand the protocol tree on any packet.'}</div>
+        <button class="guide-restart" onclick="restartGuide()">↺ Restart This Lab</button>
+      </div>`;
+    return;
+  }
+
+  const pct = Math.round((guideStep / total) * 100);
+  const prev = guideStep > 0 ? steps[guideStep - 1] : null;
+  body.innerHTML = `
+    <div class="guide-prog">
+      <div class="guide-prog-track"><div class="guide-prog-fill" style="width:${pct}%"></div></div>
+      <span class="guide-prog-txt">Step ${guideStep + 1} / ${total}</span>
+    </div>
+    <div class="guide-snum">Step ${guideStep + 1}</div>
+    <div class="guide-stitle">${step.title}</div>
+    <div class="guide-sinst">${step.inst}</div>
+    ${step.doThis ? `<div class="guide-do">👉 ${step.doThis}</div>` : ''}
+    ${step.hint   ? `<div class="guide-hint">💡 Hint: ${step.hint}</div>` : ''}
+    ${prev && prev.learn ? `<div class="guide-learn">✅ ${prev.learn}</div>` : ''}`;
+}
+
+function checkGuideStep() {
+  if (!guideMode) return;
+  const steps = currentGuideSteps();
+  if (guideStep >= steps.length - 1) return;
+  if (steps[guideStep].check()) {
+    guideStep++;
+    // Re-render with the learn message from the completed step
+    renderGuide();
+  }
+}
+
+function restartGuide() {
+  guideStep = 0;
+  renderGuide();
+}
+
+// ───────────────────────────────────────────
+//  KEYBOARD SHORTCUT
+// ───────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+  if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') { e.preventDefault(); nextStep(); }
+  if (e.key === 'ArrowLeft') { e.preventDefault(); prevStep(); }
+  if (e.key === 'r' || e.key === 'R') { resetScenario(); }
+});
+
+// ───────────────────────────────────────────
+//  GLOSSARY
+// ───────────────────────────────────────────
+const GLOSSARY = [
+  // A
+  { term:'A Record',         abbr:'DNS resource record',                   def:'Maps a domain name to an IPv4 address (e.g., example.com → 93.184.216.34). The most common DNS record type. Each answer includes a TTL controlling how long the OS caches it.',                                                                                  tags:['DNS','IPv4'] },
+  { term:'AAAA Record',      abbr:'Quad-A DNS resource record',            def:'Maps a domain name to an IPv6 address (128-bit). "Quad-A" because IPv6 is four times the length of IPv4. Modern browsers query A and AAAA in parallel then use whichever connects fastest (Happy Eyeballs).',                                                   tags:['DNS','IPv6'] },
+  { term:'ACK',              abbr:'Acknowledgment (TCP flag)',              def:'TCP control bit indicating the Acknowledgment Number field is valid. Set on nearly every segment after the initial SYN. The Ack Number says "I\'ve received all bytes up to N — send N+1 next."',                                                              tags:['TCP','Flags'] },
+  { term:'AEAD',             abbr:'Authenticated Encryption with Associated Data', def:'Encryption mode that simultaneously encrypts and authenticates data, preventing both eavesdropping and tampering in one operation. AES-128-GCM (used in TLS 1.3) is an AEAD cipher — if any byte is altered in transit, decryption fails.',               tags:['TLS','Cryptography'] },
+  { term:'ARP',              abbr:'Address Resolution Protocol',           def:'Layer 2 protocol that maps IPv4 addresses to MAC addresses within a local network segment. Broadcasts "who has IP X?" to all devices (ff:ff:ff:ff:ff:ff) and receives a unicast reply with the MAC. Results are cached in the OS ARP table. Defined in RFC 826.', tags:['Layer 2','Ethernet'] },
+  { term:'ARP Cache',        abbr:'ARP table',                             def:'OS-maintained table mapping IP addresses to MAC addresses. Entries expire (typically 60–240 seconds) and are refreshed by new ARP traffic. View it with "arp -a" on any OS. Stale entries can cause connectivity issues after network changes.',              tags:['ARP','Layer 2'] },
+  { term:'ARP Spoofing',     abbr:'ARP poisoning',                         def:'Attack where a malicious host sends gratuitous ARP replies, overwriting legitimate entries in victim ARP caches with the attacker\'s MAC. This redirects traffic through the attacker, enabling man-in-the-middle attacks on the local segment.',              tags:['ARP','Security'] },
+  { term:'Authoritative DNS',abbr:'Authoritative nameserver',              def:'The definitive DNS server for a zone — it holds the actual records. When a recursive resolver queries for example.com, it eventually reaches the authoritative server. Authoritative responses have the AA flag set in the DNS header.',                     tags:['DNS'] },
+
+  // B
+  { term:'Broadcast',        abbr:'Ethernet / IP broadcast',               def:'A packet addressed to all devices on a network segment simultaneously. Ethernet broadcast MAC: ff:ff:ff:ff:ff:ff. IPv4 limited broadcast: 255.255.255.255. ARP requests and DHCP discovery are examples. Broadcasts don\'t cross routers (stay within the LAN).',  tags:['Layer 2','ARP'] },
+
+  // C
+  { term:'CA',               abbr:'Certificate Authority',                 def:'Trusted organization that digitally signs X.509 certificates. When your browser verifies an HTTPS site, it checks the cert was signed (directly or via an intermediate CA) by one of ~100 root CAs built into your OS/browser. Examples: DigiCert, Let\'s Encrypt.', tags:['TLS','PKI'] },
+  { term:'Cipher Suite',     abbr:'',                                      def:'Named combination of cryptographic algorithms for a TLS session: key exchange + authentication + bulk encryption + MAC. Example: TLS_AES_128_GCM_SHA256. TLS 1.3 restricts suites to five options, all with Perfect Forward Secrecy and AEAD encryption.',     tags:['TLS','Cryptography'] },
+  { term:'Congestion Control',abbr:'TCP congestion control',               def:'TCP mechanism that reduces the send rate when packet loss is detected (a sign of network congestion). Algorithms include CUBIC, BBR, and RENO. Prevents TCP from overwhelming routers — the internet\'s primary self-regulating mechanism.',                   tags:['TCP','Performance'] },
+
+  // D
+  { term:'DHCP',             abbr:'Dynamic Host Configuration Protocol',   def:'Protocol that automatically assigns IP address, subnet mask, default gateway, and DNS server to new devices on a network. Uses UDP broadcast on port 67 (server) and 68 (client). Without DHCP, every device would need manual IP configuration.',           tags:['UDP','Layer 3'] },
+  { term:'Display Filter',   abbr:'Wireshark display filter',              def:'Expression that hides non-matching packets without deleting them from the capture. Supports: protocol keywords (tcp, http, dns), field comparisons (ip.addr == 192.168.1.1), flags (tcp.flags.syn==1), negation (!arp), and boolean operators (&&, ||).',    tags:['Wireshark','Filtering'] },
+  { term:'DNS',              abbr:'Domain Name System',                    def:'The internet\'s phonebook — a distributed database mapping hostnames to IP addresses. Uses UDP port 53 for queries under ~512 bytes, TCP port 53 for larger responses. Queries are resolved recursively: client → resolver → root → TLD → authoritative. Defined in RFC 1034/1035.', tags:['UDP','Application Layer'] },
+  { term:'DNS Cache',        abbr:'Resolver cache',                        def:'Local copy of DNS answers stored by the OS or resolver, valid until the TTL expires. Reduces latency and network load. DNS cache poisoning attacks inject false entries. Flush with: "ipconfig /flushdns" (Windows), "sudo dscacheutil -flushcache" (macOS), or "systemd-resolve --flush-caches" (Linux).', tags:['DNS'] },
+  { term:'Dual Stack',       abbr:'IPv4 + IPv6 dual stack',                def:'A host or network that supports both IPv4 and IPv6 simultaneously. Modern devices query both A (IPv4) and AAAA (IPv6) DNS records and attempt connections to both, using whichever succeeds first (Happy Eyeballs algorithm, RFC 8305).',                   tags:['IPv4','IPv6','DNS'] },
+
+  // E
+  { term:'ECDHE',            abbr:'Elliptic Curve Diffie-Hellman Ephemeral', def:'Key exchange algorithm mandatory in TLS 1.3. Both sides generate a temporary (ephemeral) key pair, exchange public keys, and each computes the same shared secret without ever transmitting it. "Ephemeral" means keys are discarded after the session, providing Perfect Forward Secrecy.', tags:['TLS','Cryptography'] },
+  { term:'Ephemeral Port',   abbr:'Dynamic / client port',                 def:'Temporary source port (IANA range: 49152–65535) assigned by the OS to identify a specific connection on the client side. Every new TCP or UDP connection gets a fresh ephemeral port. Contrast with well-known ports (0–1023) which identify server services.',  tags:['TCP','UDP','Ports'] },
+  { term:'Ethernet',         abbr:'IEEE 802.3',                            def:'The dominant Layer 2 (Data Link) protocol for wired LANs. Each frame carries source and destination MAC addresses, an EtherType (0x0800=IPv4, 0x0806=ARP, 0x86DD=IPv6), and a payload of up to 1500 bytes (MTU). Switches forward frames based on MAC addresses.', tags:['Layer 2','MAC'] },
+
+  // F
+  { term:'FIN',              abbr:'Finish (TCP flag)',                     def:'TCP flag that gracefully closes one direction of a full-duplex connection. The 4-way teardown uses two FINs: each side independently closes its half. FIN differs from RST — FIN allows pending data to be delivered before closing.',                         tags:['TCP','Flags'] },
+  { term:'Flow Control',     abbr:'TCP flow control',                      def:'TCP mechanism preventing a fast sender from overwhelming a slow receiver. The receiver advertises a window size — the maximum bytes it can buffer. The sender must not exceed this. Window size is updated in every ACK.',                                         tags:['TCP','Performance'] },
+  { term:'Frame',            abbr:'Layer 2 PDU',                           def:'A complete Layer 2 data unit: Ethernet header + IP packet + payload + FCS (frame check sequence). "Frame" is the correct term at Layer 2; "packet" is Layer 3; "segment" is TCP at Layer 4. Wireshark displays full frames including the Ethernet wrapper.',    tags:['Layer 2','Ethernet'] },
+  { term:'Fragmentation',    abbr:'IP fragmentation',                      def:'Process where a router splits an IP packet too large for the next link\'s MTU into smaller fragments, each routed independently and reassembled at the destination. Usually avoided by setting the Don\'t Fragment (DF) bit and using Path MTU Discovery instead.', tags:['IP','MTU'] },
+
+  // G
+  { term:'Gateway',          abbr:'Default gateway',                       def:'The router\'s IP address that traffic is sent to when the destination is outside the local subnet. Your OS discovers the gateway\'s MAC via ARP before sending the first packet to any external host. Configured via DHCP or manually.',                       tags:['IP','Routing','ARP'] },
+
+  // H
+  { term:'Half-Close',       abbr:'TCP half-close state',                  def:'TCP state where one side has sent FIN (signaling it won\'t send more data) but the other direction remains open. The peer can still transmit until it sends its own FIN. Enables protocols like HTTP/1.0 that signal response completion by closing the write side.', tags:['TCP'] },
+  { term:'Happy Eyeballs',   abbr:'RFC 8305',                              def:'Browser algorithm that fires off both IPv4 and IPv6 connection attempts simultaneously (slightly preferring IPv6). Whichever succeeds first wins. Minimizes connection latency on dual-stack networks where one address family may be slower or broken.',         tags:['IPv6','DNS','TCP'] },
+  { term:'Hex Dump',         abbr:'Raw bytes view',                        def:'Raw packet contents displayed as hexadecimal bytes alongside their ASCII representation. Standard format: 4-digit offset | 16 bytes in hex (with spaces) | ASCII printable chars (non-printable shown as "." ). The bottom-right pane in Wireshark.',              tags:['Wireshark'] },
+  { term:'HKDF',             abbr:'HMAC-based Key Derivation Function',    def:'Cryptographic function (RFC 5869) used in TLS 1.3 to derive multiple symmetric keys from the ECDHE shared secret and the handshake transcript hash. Produces: client/server write keys, client/server IVs — all different, all unrelated to the shared secret itself.', tags:['TLS','Cryptography'] },
+  { term:'HTTP',             abbr:'HyperText Transfer Protocol',           def:'Text-based request/response protocol for web content delivery over TCP port 80. All headers and body are plaintext — fully readable in any packet capture. GET requests a resource; POST submits data. HTTP/1.1 requires the Host header for virtual hosting. Defined in RFC 9110.', tags:['TCP','Application Layer','Port 80'] },
+  { term:'HTTPS',            abbr:'HTTP Secure',                           def:'HTTP running inside TLS on TCP port 443. Provides: confidentiality (encrypted body and headers), integrity (AEAD detects any tampering), and authenticity (X.509 certificate proves server identity). Note: HTTPS hides the URL path but NOT the hostname (visible in TLS SNI and DNS).', tags:['TLS','TCP','Port 443'] },
+
+  // I
+  { term:'ICMP',             abbr:'Internet Control Message Protocol',     def:'Layer 3 diagnostic and error-reporting protocol (IP Protocol 1). No ports — operates directly on IP. Key types: 0=Echo Reply (ping response), 8=Echo Request (ping), 3=Destination Unreachable, 11=Time Exceeded (used by traceroute). Defined in RFC 792.',  tags:['Layer 3','Diagnostics'] },
+  { term:'IP',               abbr:'Internet Protocol',                     def:'Layer 3 protocol responsible for addressing and routing packets across networks. Provides best-effort, connectionless delivery — no reliability, ordering, or error correction (those are TCP\'s job). Each packet is routed independently and may arrive out of order.', tags:['Layer 3','Routing'] },
+  { term:'IPv4',             abbr:'Internet Protocol version 4',           def:'32-bit addressing (e.g., 192.168.1.100) supporting ~4.3 billion unique addresses — exhausted by IANA in 2011. Still carries most internet traffic. Header fields include: TTL, Protocol (TCP=6, UDP=17, ICMP=1), Identification (fragmentation), and Flags.', tags:['IP','Layer 3'] },
+  { term:'IPv6',             abbr:'Internet Protocol version 6',           def:'128-bit addressing (e.g., 2001:db8::1) providing ~340 undecillion addresses. Eliminates the need for NAT. Simplified header (no checksum, no fragmentation at routers). Uses AAAA DNS records. Mandatory on modern mobile networks. Defined in RFC 8200.', tags:['IP','Layer 3'] },
+  { term:'ISN',              abbr:'Initial Sequence Number',               def:'Randomly chosen starting value for TCP sequence numbers, selected independently by each side during the SYN/SYN-ACK. Randomness is a security requirement (RFC 6528) — predictable ISNs enabled historical TCP hijacking attacks. Wireshark shows relative sequence numbers (ISN normalized to 0) for readability.', tags:['TCP','Handshake','Security'] },
+
+  // L
+  { term:'Latency',          abbr:'Network delay / RTT',                   def:'Time for a packet to travel from sender to destination. Round-trip latency (RTT) is what ping measures. TCP setup costs 1 RTT; TLS 1.3 handshake costs 1 additional RTT; each HTTP/1.1 request costs at least 1 RTT. High latency (e.g., satellite) dramatically hurts TCP performance.', tags:['Networking','Performance','RTT'] },
+
+  // M
+  { term:'MAC Address',      abbr:'Media Access Control address',          def:'Unique 48-bit hardware identifier assigned to a network interface, written as hex pairs (e.g., c4:47:40:a1:b2:c3). Used for Layer 2 (Ethernet) delivery within a LAN segment. Not routable beyond the local network. Can be spoofed in software ("MAC spoofing").',  tags:['Layer 2','Ethernet','ARP'] },
+  { term:'MSS',              abbr:'Maximum Segment Size',                  def:'TCP option negotiated during the handshake specifying the largest payload a single segment may carry. Typically 1460 bytes = Ethernet MTU (1500) minus IP header (20) minus TCP header (20). Prevents IP fragmentation of TCP segments.',                        tags:['TCP','Performance'] },
+  { term:'MTU',              abbr:'Maximum Transmission Unit',             def:'Largest packet a network link can carry without fragmentation. Standard Ethernet MTU = 1500 bytes. Jumbo frames extend this to 9000 bytes. If a packet exceeds the MTU and the Don\'t Fragment bit is set, the router sends back ICMP "Fragmentation Needed" (used by Path MTU Discovery).', tags:['IP','Ethernet'] },
+
+  // N
+  { term:'NAT',              abbr:'Network Address Translation',           def:'Maps multiple private IP addresses (e.g., 192.168.x.x, 10.x.x.x) to a single public IP at the gateway. Your home router uses NAT. Wireshark on a home machine shows private addresses — external servers only see the router\'s public IP. Complicates peer-to-peer connections.', tags:['IP','Routing'] },
+
+  // O
+  { term:'OSI Model',        abbr:'Open Systems Interconnection model',    def:'Seven-layer reference model for network protocols: L1 Physical, L2 Data Link, L3 Network, L4 Transport, L5 Session, L6 Presentation, L7 Application. Wireshark\'s tree maps directly: Ethernet=L2, IP=L3, TCP/UDP=L4, HTTP/TLS/DNS=L7. Defined by ISO/IEC 7498.',  tags:['Networking','Architecture'] },
+
+  // P
+  { term:'Packet',           abbr:'Layer 3 PDU',                           def:'A Layer 3 (IP) data unit consisting of an IP header and payload. Technically distinct from a "frame" (L2) or "segment" (TCP L4), though colloquially used for any captured unit. Packets are routed independently — different packets in a session may take different paths.', tags:['IP','Layer 3'] },
+  { term:'PDU',              abbr:'Protocol Data Unit',                    def:'Generic term for the data unit at a specific layer: frame (L2), packet (L3), segment (TCP L4), datagram (UDP L4), message (application). Each layer encapsulates the layer above by adding its own header (and sometimes trailer), a process called encapsulation.',    tags:['Networking','OSI'] },
+  { term:'PFS',              abbr:'Perfect Forward Secrecy',               def:'Security property ensuring that compromise of long-term keys (e.g., a server\'s private RSA key) does not expose past session traffic. Achieved by using ephemeral key pairs (ECDHE) that are discarded after each session. Mandatory in TLS 1.3; optional in TLS 1.2.',  tags:['TLS','Security','Cryptography'] },
+  { term:'PKI',              abbr:'Public Key Infrastructure',             def:'System of CAs, certificates, revocation mechanisms, and protocols for establishing trust over the internet. Your browser/OS ships with ~100–150 trusted root CAs. TLS relies on PKI to verify that you\'re talking to the real server, not an impersonator.',          tags:['TLS','Security'] },
+  { term:'Port',             abbr:'TCP/UDP port number',                   def:'16-bit number (0–65535) identifying a specific service or connection endpoint on a host. Well-known ports (0–1023): 22=SSH, 53=DNS, 80=HTTP, 443=HTTPS. Registered ports (1024–49151): 3306=MySQL. Ephemeral/dynamic (49152–65535): used by clients for each new connection.', tags:['TCP','UDP','Transport Layer'] },
+  { term:'PSH',              abbr:'Push (TCP flag)',                       def:'TCP flag requesting that buffered data be delivered to the application immediately rather than waiting for the buffer to fill. Set on the last segment of an application write. Ensures low-latency delivery for interactive protocols like SSH and HTTP.',               tags:['TCP','Flags'] },
+  { term:'Protocol Stack',   abbr:'Network stack',                         def:'The layered set of protocols a packet passes through: Application (HTTP) → Transport (TCP) → Network (IP) → Data Link (Ethernet) → Physical. Each layer adds its header (encapsulation) on the way out and strips it (decapsulation) on the way in. Also called the "TCP/IP stack."', tags:['Networking','OSI'] },
+
+  // R
+  { term:'Recursive Resolver',abbr:'Full-service resolver',               def:'A DNS server (e.g., 8.8.8.8) that does the complete lookup on behalf of a client: queries root servers → TLD servers → authoritative servers → returns the final answer. Indicated by the "Recursion Desired" (RD=1) flag in the DNS query.',                        tags:['DNS'] },
+  { term:'RST',              abbr:'Reset (TCP flag)',                      def:'TCP flag that abruptly terminates a connection without graceful teardown. Sent when a port receives unexpected traffic (e.g., no process is listening), when a firewall kills a session, or after a connection timeout. Unlike FIN, RST is immediate — no ACK needed.',      tags:['TCP','Flags','Security'] },
+  { term:'RTT',              abbr:'Round-Trip Time',                       def:'Time for a packet to travel from sender to receiver and back. Ping measures RTT via ICMP Echo Request/Reply. RTT directly determines: TCP connection setup cost (1 RTT), TLS 1.3 overhead (1 RTT), and HTTP response latency minimum. Typical values: LAN <1ms, city ~20ms, cross-country ~70ms, satellite ~600ms.', tags:['Networking','Performance','ICMP'] },
+
+  // S
+  { term:'SACK',             abbr:'Selective Acknowledgment',              def:'TCP option (RFC 2018) enabling the receiver to acknowledge non-contiguous blocks. Without SACK, a single lost packet forces retransmission of everything after it ("go-back-N"). With SACK, only missing segments are retransmitted. Negotiated as a handshake option.',  tags:['TCP','Performance'] },
+  { term:'Sequence Number',  abbr:'TCP SEQ field',                        def:'TCP field identifying the byte offset of the first byte in this segment relative to the ISN. Enables in-order delivery, detection of duplicates, and retransmission of lost data. Wireshark displays relative sequence numbers (starting from 0) for readability — the wire value is ISN + relative.',    tags:['TCP'] },
+  { term:'Session Key',      abbr:'Symmetric encryption key',             def:'Short-lived key used to encrypt a single TLS session with a symmetric cipher (AES-128-GCM). Derived from the ECDHE shared secret via HKDF. Discarded after the session ends — this disposal is what gives TLS its Perfect Forward Secrecy property.',                 tags:['TLS','Cryptography'] },
+  { term:'Sliding Window',   abbr:'TCP windowing',                        def:'TCP mechanism allowing multiple unacknowledged segments to be in flight simultaneously (bounded by the receiver\'s advertised window). Enables high throughput on high-latency links by keeping the pipe full. Without it, high-RTT connections would be severely limited.', tags:['TCP','Performance'] },
+  { term:'SNI',              abbr:'Server Name Indication',               def:'TLS ClientHello extension that tells the server which hostname the client wants. Sent in plaintext before encryption is established — HTTPS does NOT hide the hostname from network observers. Encrypted SNI (ECH) is a newer solution but not yet universally deployed. Defined in RFC 6066.', tags:['TLS','Privacy','Security'] },
+  { term:'SYN',              abbr:'Synchronize (TCP flag)',               def:'TCP flag that initiates a connection and synchronizes sequence numbers. Set only in the first two packets of the 3-way handshake (SYN alone, then SYN+ACK). SYN flood attacks send thousands of SYNs without completing handshakes, exhausting server connection state (countered by SYN cookies).', tags:['TCP','Flags','Handshake'] },
+
+  // T
+  { term:'TCP',              abbr:'Transmission Control Protocol',        def:'Layer 4 transport protocol providing reliable, ordered, full-duplex byte streams over IP. Key features: 3-way handshake (connection setup), ACKs + retransmission (reliability), sequence numbers (ordering), flow control (windowing), congestion control. Used by HTTP, HTTPS, SSH, SMTP, FTP. Defined in RFC 793.', tags:['Transport Layer','Layer 4'] },
+  { term:'TCP 3-Way Handshake',abbr:'TCP connection setup',              def:'Connection establishment: (1) Client → SYN with random ISN. (2) Server → SYN-ACK with server ISN + Ack=client ISN+1. (3) Client → ACK with Ack=server ISN+1. Total cost: 1 RTT. After step 3 both sides enter ESTABLISHED state and data can flow.',            tags:['TCP','Handshake'] },
+  { term:'TCP 4-Way Teardown',abbr:'TCP connection close',               def:'Graceful connection close sequence: (1) Active closer → FIN. (2) Peer → ACK. (3) Peer → FIN (when done sending). (4) Active closer → ACK. Steps 2 and 3 are often combined into a single FIN-ACK. After step 4, the active closer enters TIME_WAIT for ~60 seconds.', tags:['TCP'] },
+  { term:'TIME_WAIT',        abbr:'TCP TIME_WAIT state',                 def:'TCP state entered by the active closer after sending the final ACK. Duration: 2×MSL (Maximum Segment Lifetime, typically 30s = ~60s total). Purposes: (1) Ensure the final ACK was delivered. (2) Prevent stale packets from a dead connection corrupting a new connection on the same 4-tuple.',  tags:['TCP'] },
+  { term:'TLS',              abbr:'Transport Layer Security',             def:'Cryptographic protocol wrapping TCP to provide authentication, confidentiality, and integrity. TLS 1.3 (RFC 8446, 2018): requires PFS, AEAD-only ciphers, completes in 1 RTT, removes vulnerable features (RSA key exchange, SHA-1, RC4). Supersedes SSL (all versions deprecated by RFC 7568).', tags:['Cryptography','Security','Application Layer'] },
+  { term:'Transaction ID',   abbr:'DNS TXID',                            def:'Random 16-bit number in a DNS query, echoed by the resolver in its reply. Allows the client to match replies to outstanding queries (multiple queries may be in flight over UDP) and detect off-path spoofed responses. A 16-bit ID is now considered too short — DNSSEC provides stronger protection.', tags:['DNS','Security'] },
+  { term:'TTL',              abbr:'Time to Live',                        def:'(1) IP header field (8-bit) decremented by 1 at each router. When TTL reaches 0, the router discards the packet and sends ICMP "Time Exceeded" back — preventing routing loops. Traceroute exploits TTL to map paths. (2) DNS record TTL: seconds a resolver may cache the answer before re-querying.', tags:['IP','ICMP','DNS'] },
+
+  // U
+  { term:'UDP',              abbr:'User Datagram Protocol',              def:'Layer 4 connectionless transport protocol. No handshake, no ACKs, no ordering guarantees — just send. Lower overhead than TCP (8-byte header vs. 20+ bytes). Used by: DNS (speed), DHCP (broadcast), NTP, QUIC, VoIP, video streaming. Application layer must handle reliability if needed. Defined in RFC 768.', tags:['Transport Layer','Layer 4'] },
+  { term:'Unicast',          abbr:'Point-to-point addressing',           def:'A packet addressed to a single specific destination (as opposed to broadcast or multicast). ARP replies are unicast — sent directly to the requesting host\'s MAC. Most normal internet traffic is unicast.',                                                            tags:['Ethernet','Layer 2'] },
+
+  // V
+  { term:'Virtual Hosting',  abbr:'Name-based virtual hosting',          def:'Serving multiple distinct websites from a single IP address. Requires the client to indicate which site it wants: HTTP/1.1 uses the Host header; HTTPS/TLS uses SNI. Without these indicators, a server would not know which certificate to present or which site to serve.', tags:['HTTP','TLS','SNI'] },
+
+  // W
+  { term:'Window Scale',     abbr:'TCP window scale option',             def:'TCP handshake option (RFC 7323) that multiplies the advertised window by a power of 2 (up to 2¹⁴). Without it, the 16-bit window field caps throughput at ~65 KB in flight — far too low for high-bandwidth, high-RTT links. Modern stacks always negotiate window scaling.',  tags:['TCP','Performance'] },
+  { term:'Wireshark',        abbr:'Network protocol analyzer',           def:'The world\'s most popular open-source packet capture and analysis tool. Captures frames at the OS network interface level, dissects hundreds of protocols, and displays them in three panes: packet list, protocol dissection tree, and hex dump. Available free at wireshark.org.',  tags:['Tool'] },
+
+  // X
+  { term:'X.509 Certificate',abbr:'TLS / SSL certificate',              def:'Digital certificate binding a public key to an identity (domain name or organization). Signed by a CA. Contains: subject (who), issuer (CA), validity period, public key, subject alternative names (SANs), and signature. Your browser verifies the chain from server cert → intermediate CA → trusted root CA.',  tags:['TLS','PKI','Security'] },
+
+  // Z
+  { term:'Zone Transfer',    abbr:'DNS AXFR',                            def:'DNS operation (AXFR query) that copies an entire DNS zone from primary to secondary nameserver for redundancy. Uses TCP port 53 (too large for UDP). Misconfigured servers allowing public zone transfers expose every hostname in the zone — a significant reconnaissance risk.',  tags:['DNS','Security'] },
+];
+
+// ── Glossary UI ──
+let glossaryOpen = false;
+
+function toggleGlossary() {
+  const overlay = document.getElementById('glossaryOverlay');
+  const btn = document.getElementById('btnGlossary');
+  glossaryOpen = !glossaryOpen;
+  if (glossaryOpen) {
+    overlay.classList.add('open');
+    btn.style.background = 'linear-gradient(to bottom,#c8dff8,#a8caf0)';
+    btn.style.borderColor = '#4a90d9';
+    document.getElementById('glossSearch').value = '';
+    renderGlossary();
+    setTimeout(() => document.getElementById('glossSearch').focus(), 50);
+  } else {
+    overlay.classList.remove('open');
+    btn.style.background = '';
+    btn.style.borderColor = '';
+  }
+}
+
+function renderGlossary() {
+  const q = (document.getElementById('glossSearch').value || '').toLowerCase().trim();
+  const body = document.getElementById('glossBody');
+  const alphaEl = document.getElementById('glossAlpha');
+
+  // Filter terms
+  const filtered = q
+    ? GLOSSARY.filter(e =>
+        e.term.toLowerCase().includes(q) ||
+        e.abbr.toLowerCase().includes(q) ||
+        e.def.toLowerCase().includes(q) ||
+        e.tags.some(t => t.toLowerCase().includes(q)))
+    : GLOSSARY;
+
+  // Update count
+  document.getElementById('glossCount').textContent = `${filtered.length} of ${GLOSSARY.length} terms`;
+
+  // Build letter index of what's visible
+  const presentLetters = new Set(filtered.map(e => e.term[0].toUpperCase()));
+  const allLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+  alphaEl.innerHTML = allLetters.map(l =>
+    presentLetters.has(l)
+      ? `<a onclick="glossJump('${l}')" title="Jump to ${l}">${l}</a>`
+      : `<a class="dim">${l}</a>`
+  ).join('');
+
+  if (!filtered.length) {
+    body.innerHTML = `<div class="gloss-nomatch">No terms match "<b>${esc(q)}</b>" — try a shorter keyword or acronym.</div>`;
+    return;
+  }
+
+  // Group by first letter
+  const groups = {};
+  filtered.forEach(e => {
+    const letter = e.term[0].toUpperCase();
+    if (!groups[letter]) groups[letter] = [];
+    groups[letter].push(e);
+  });
+
+  let html = q ? `<div class="gloss-results-label">${filtered.length} result${filtered.length !== 1 ? 's' : ''} for "${esc(q)}"</div>` : '';
+
+  Object.keys(groups).sort().forEach(letter => {
+    html += `<div class="gloss-letter-hdr" id="gloss-${letter}">${letter}</div>`;
+    groups[letter].forEach(e => {
+      const tagsHtml = e.tags.map(t =>
+        `<span class="gloss-tag" onclick="glossSearch('${t}')">${esc(t)}</span>`
+      ).join('');
+      const highlight = q
+        ? s => s.replace(new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi'), '<mark>$1</mark>')
+        : s => esc(s);
+      html += `
+        <div class="gloss-entry">
+          <span class="gloss-term">${highlight(esc(e.term))}</span>
+          ${e.abbr ? `<span class="gloss-abbr">${esc(e.abbr)}</span>` : ''}
+          <div class="gloss-def">${highlight(esc(e.def))}</div>
+          <div class="gloss-tags">${tagsHtml}</div>
+        </div>`;
+    });
+  });
+
+  body.innerHTML = html;
+}
+
+function glossJump(letter) {
+  const target = document.getElementById('gloss-' + letter);
+  if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function glossSearch(tag) {
+  document.getElementById('glossSearch').value = tag;
+  renderGlossary();
+}
+
+// Close glossary on Escape key
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && glossaryOpen) toggleGlossary();
+});
+
+// ── Init ──
+loadScenario('mixed');
+document.getElementById('btnGuide').classList.add('guide-active');
+
+// Attach rich tooltips to quick-filter buttons
+const QF_TIPS = {
+  'tcp':  'Show only <b>TCP</b> packets — includes HTTP and TLS which both run over TCP. TCP is connection-oriented, reliable, and ordered.',
+  'udp':  'Show only <b>UDP</b> packets — includes DNS which uses UDP port 53. UDP is connectionless: faster but no delivery guarantees.',
+  'http': 'Show only <b>HTTP</b> packets — unencrypted web traffic on port 80. You can read the full request and response in plaintext.',
+  'dns':  'Show only <b>DNS</b> packets — hostname-to-IP resolution over UDP port 53. Every web connection starts with a DNS lookup.',
+  'icmp': 'Show only <b>ICMP</b> packets — ping, traceroute, and error messages. Operates at Layer 3 with no ports.',
+  'arp':  'Show only <b>ARP</b> packets — Layer 2 MAC address discovery. ARP requests are broadcast; replies are unicast.',
+  'tls':  'Show only <b>TLS</b> packets — encrypted HTTPS traffic on port 443. The content is opaque; only metadata (size, timing) is visible.',
+  'SYN':  'Filter: <b>tcp.flags.syn==1</b> — show TCP packets with the SYN flag set. SYN identifies connection-opening packets (and SYN-ACK pairs).',
+  '!arp': 'Negation filter — show everything <b>except ARP</b>. Useful when ARP chatter is cluttering a capture.',
+};
+document.querySelectorAll('.qf-btn').forEach(btn => {
+  const label = btn.textContent.trim();
+  if (QF_TIPS[label]) {
+    tip(btn, `<div class="rt-text">${QF_TIPS[label]}</div><div class="rt-tags"><span class="rt-tag">Display Filter</span></div>`);
+    btn.removeAttribute('title'); // remove browser tooltip in favor of rich one
+  }
+});
+
+// Attach rich tooltips to column headers
+const TH_TIPS = {
+  'No.':         '<b>Packet number</b> — sequential capture order. Filters may hide some rows but numbers stay stable.',
+  'Time':        '<b>Relative capture time</b> in seconds from the first packet. Useful for measuring delays between events.',
+  'Source':      '<b>Source IP address</b> (or MAC for ARP). The originator of this packet.',
+  'Destination': '<b>Destination IP address</b> (or MAC for ARP). Where the packet is addressed.',
+  'Protocol':    '<b>Highest-layer protocol</b> identified. HTTP overrides TCP; TLS overrides TCP; DNS overrides UDP.',
+  'Length':      '<b>Frame size in bytes</b> including all headers and payload (Ethernet + IP + TCP + application).',
+  'Info':        '<b>Protocol summary</b> — flags, ports, URLs, query names, status codes depending on protocol.',
+};
+document.querySelectorAll('.pkt-table th').forEach(th => {
+  const label = th.textContent.trim();
+  if (TH_TIPS[label]) {
+    tip(th, `<div class="rt-title">${label}</div><div class="rt-text">${TH_TIPS[label]}</div>`);
+    th.removeAttribute('title');
+  }
+});
+</script>
+</body>
+</html>
