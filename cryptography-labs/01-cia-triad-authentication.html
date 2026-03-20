@@ -1,0 +1,1450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Module 1 Lab – CIA Triad & Authentication Fundamentals</title>
+  <style>
+    *,*::before,*::after{box-sizing:border-box}
+    body{background:#0d1117;color:#c9d1d9;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;min-height:100vh;margin:0}
+    a{color:#58a6ff}
+    code{background:#21262d;border-radius:3px;padding:1px 5px;font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;font-size:.875em}
+    .font-mono{font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace}
+    .navbar{background:#161b22;border-bottom:1px solid #30363d;padding:.75rem 1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem}
+    .navbar-brand{font-weight:700;color:#e6edf3;text-decoration:none;font-size:1.1rem}
+    .nav-actions{display:flex;align-items:center;gap:.75rem}
+    .nav-pill{font-size:.8rem;color:#8b949e;white-space:nowrap}
+    .container{max-width:900px;margin:0 auto;padding:1.5rem 1rem}
+    .lab-badge{display:inline-block;background:#1f6feb;color:#fff;font-size:.72rem;font-weight:600;padding:2px 10px;border-radius:12px;margin-bottom:.5rem;text-transform:uppercase;letter-spacing:.06em}
+    .lab-header{margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid #30363d}
+    .lab-header h2{color:#e6edf3;margin:.25rem 0 .1rem;font-size:1.6rem}
+    .lab-header p{color:#8b949e;margin:0;font-size:.95rem}
+    .scenario-box{background:#161b22;border-left:4px solid #1f6feb;border-radius:0 8px 8px 0;padding:1rem 1.25rem;margin-bottom:1.5rem}
+    .scenario-box p{margin:0;line-height:1.65}
+    .demo-box{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:1.5rem;margin-bottom:1.5rem}
+    .question-box{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:1.25rem;margin-bottom:.75rem}
+    .question-text{font-weight:600;color:#e6edf3;font-size:1.05rem;margin:0 0 1rem}
+    .why-box{background:#1c2a1c;border:1px solid #238636;border-radius:8px;padding:1.25rem;margin-top:1rem;display:none}
+    .why-box.show{display:block}
+    .why-box h6{color:#3fb950;font-weight:700;margin:0 0 .5rem}
+    .why-box p{margin:.5rem 0 0;line-height:1.65}
+    .why-box ul{margin:.5rem 0 .5rem 1.25rem;padding:0;line-height:1.8}
+    .options-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+    @media(max-width:600px){.options-grid{grid-template-columns:1fr}}
+    .opt-btn{display:flex;align-items:center;gap:.6rem;text-align:left;background:#161b22;border:1px solid #30363d;border-radius:6px;padding:.65rem .9rem;color:#c9d1d9;cursor:pointer;width:100%;font-size:.95rem;transition:border-color .15s,background .15s}
+    .opt-btn:hover{border-color:#58a6ff;background:#1c2940;color:#e6edf3}
+    .opt-btn.correct{background:#1c2a1c!important;border-color:#238636!important;color:#3fb950!important}
+    .opt-btn.incorrect{background:#2a1c1c!important;border-color:#da3633!important;color:#f85149!important}
+    .opt-id{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;background:#30363d;border-radius:4px;font-size:.78rem;font-weight:700;flex-shrink:0}
+    .feedback-box{border-radius:8px;padding:1rem 1.25rem;margin-top:.75rem;font-size:.95rem;line-height:1.65;display:none}
+    .feedback-box.show{display:block}
+    .feedback-correct{background:#1c2a1c;border:1px solid #238636;color:#3fb950}
+    .feedback-incorrect{background:#2a1c1c;border:1px solid #da3633;color:#f85149}
+    .badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.75rem;font-weight:600}
+    .badge-green{background:#1c2a1c;color:#3fb950;border:1px solid #238636}
+    .badge-red{background:#2a1c1c;color:#f85149;border:1px solid #da3633}
+    .badge-yellow{background:#2a2000;color:#e3b341;border:1px solid #9e6a03}
+    .badge-gray{background:#21262d;color:#8b949e;border:1px solid #30363d}
+    .demo-label{font-size:.78rem;color:#8b949e;font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.4rem}
+    .demo-value{font-family:monospace;font-size:1.7rem;font-weight:700;letter-spacing:.08em}
+    table{width:100%;border-collapse:collapse;font-size:.9rem}
+    th,td{padding:.5rem .75rem;border:1px solid #30363d;text-align:left}
+    th{background:#21262d;color:#8b949e;font-weight:600;font-size:.8rem;text-transform:uppercase;letter-spacing:.05em}
+    tr:hover td{background:#1c2128}
+    .lab-footer{display:flex;justify-content:space-between;align-items:center;margin-top:2rem;padding-top:1rem;border-top:1px solid #30363d}
+    .lab-footer .text-muted{color:#8b949e;font-size:.85rem}
+    .btn-nav{display:inline-flex;align-items:center;gap:.4rem;padding:.4rem .9rem;border:1px solid #30363d;border-radius:6px;color:#c9d1d9;text-decoration:none;font-size:.85rem;background:#161b22;transition:border-color .15s}
+    .btn-nav:hover{border-color:#58a6ff;color:#58a6ff}
+    .btn-nav.disabled{opacity:.4;pointer-events:none}
+
+    .cia-demo{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin:1.5rem 0}
+    @media(max-width:600px){.cia-demo{grid-template-columns:1fr}}
+    .cia-pillar{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:1rem;text-align:center;cursor:pointer;transition:border-color .2s}
+    .cia-pillar:hover{border-color:#58a6ff}
+    .cia-pillar.selected{border-color:#3fb950;background:#1c2a1c}
+    .cia-icon{font-size:2.5rem;margin-bottom:.5rem}
+    .cia-title{font-weight:600;color:#e6edf3;margin-bottom:.25rem}
+    .cia-desc{font-size:.85rem;color:#8b949e}
+    .cia-details{background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:1rem;margin:.75rem 0;display:none}
+    .cia-details.show{display:block}
+
+    .key-demo{margin:1.5rem 0}
+    .key-comparison{display:grid;grid-template-columns:1fr auto 1fr;gap:1rem;align-items:center;margin:1rem 0}
+    .key-box{background:#161b22;border:1px solid #30363d;border-radius:6px;padding:1rem;text-align:center}
+    .key-symmetric{border-color:#e3b341}
+    .key-asymmetric{border-color:#58a6ff}
+    .key-title{font-weight:600;color:#e6edf3;margin-bottom:.5rem}
+    .key-visual{font-family:monospace;font-size:.8rem;margin:.5rem 0}
+    .key-pros{color:#3fb950;font-size:.75rem;margin-top:.5rem}
+    .key-cons{color:#f85149;font-size:.75rem;margin-top:.25rem}
+
+    .password-strength{margin:1.5rem 0}
+    .password-input{background:#21262d;border:1px solid #30363d;border-radius:6px;padding:.5rem;color:#e6edf3;width:100%;margin:.5rem 0}
+    .password-input:focus{outline:none;border-color:#58a6ff}
+    .strength-meter{height:8px;background:#30363d;border-radius:4px;overflow:hidden;margin:.5rem 0}
+    .strength-fill{height:100%;transition:width .3s ease}
+    .strength-weak{background:#f85149;width:25%}
+    .strength-medium{background:#e3b341;width:60%}
+    .strength-strong{background:#3fb950;width:100%}
+    .password-feedback{font-size:.85rem;margin:.5rem 0}
+
+    .reflection-box{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:1.5rem;margin:1.5rem 0}
+    .reflection-title{color:#e6edf3;font-weight:600;margin-bottom:.75rem}
+    .reflection-input{background:#21262d;border:1px solid #30363d;border-radius:6px;padding:.75rem;color:#e6edf3;width:100%;min-height:120px;font-family:inherit;resize:vertical}
+    .reflection-input:focus{outline:none;border-color:#58a6ff}
+    .submit-btn{background:#1f6feb;color:#fff;border:none;border-radius:6px;padding:.5rem 1rem;cursor:pointer;font-size:.9rem;margin-top:.5rem}
+    .submit-btn:hover{background:#1c64e8}
+    .export-pdf-btn{background:#3fb950;color:#fff;border:none;border-radius:6px;padding:.5rem 1rem;cursor:pointer;font-size:.9rem;margin-top:.5rem;margin-left:.5rem}
+    .export-pdf-btn:hover{background:#3aad49}
+    .sub-area-locked{opacity:.4;pointer-events:none;user-select:none}
+    #print-summary{display:none;font-family:Arial,sans-serif;color:#000;padding:2rem;line-height:1.6}
+    #print-summary h1{font-size:1.4rem;margin-bottom:.25rem}
+    #print-summary h2{font-size:1.1rem;margin:1rem 0 .25rem;border-bottom:1px solid #ccc;padding-bottom:.2rem}
+    #print-summary table{border-collapse:collapse;width:100%;margin-bottom:.5rem}
+    #print-summary td{padding:.2rem .5rem;vertical-align:top}
+    #print-summary td:first-child{font-weight:bold;white-space:nowrap;width:160px}
+    @media print{
+      body>*:not(#print-summary){display:none!important}
+      #print-summary{display:block!important}
+    }
+
+    .interactive-demo{background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:1rem;margin:1rem 0}
+    .demo-controls{display:grid;grid-template-columns:1fr auto;gap:.5rem;align-items:center;margin-bottom:1rem}
+    .scenario-selector{background:#21262d;border:1px solid #30363d;border-radius:6px;padding:.5rem;color:#e6edf3}
+    .attack-btn{background:#f85149;color:#fff;border:none;border-radius:6px;padding:.5rem 1rem;cursor:pointer;font-size:.85rem}
+    .attack-btn:hover{background:#e5484d}
+    .scenario-result{font-family:monospace;font-size:.9rem;padding:.75rem;background:#21262d;border-radius:6px;margin-top:.5rem;min-height:60px}
+
+    /* CIA Threat Simulator – animated */
+    .attack-phases{display:flex;margin:.6rem 0;border-radius:6px;overflow:hidden;border:1px solid #30363d}
+    .attack-phase{flex:1;padding:.32rem .4rem;text-align:center;font-size:.69rem;background:#161b22;color:#8b949e;border-right:1px solid #30363d;transition:background .35s,color .35s}
+    .attack-phase:last-child{border-right:none}
+    .attack-phase.active{background:#2a1200;color:#f85149;font-weight:600}
+    .attack-phase.done{background:#162016;color:#3fb950}
+
+    .system-flow{display:flex;align-items:center;justify-content:center;padding:.7rem .5rem;background:#0d1117;border:1px solid #30363d;border-radius:6px;margin:.45rem 0;gap:0}
+    .sys-node{text-align:center;padding:.35rem .5rem;border-radius:6px;background:#161b22;border:2px solid #30363d;min-width:60px;transition:border-color .4s,background .4s;flex-shrink:0}
+    .sys-node .nd-icon{font-size:1.3rem;line-height:1.2}
+    .sys-node .nd-label{font-size:.62rem;color:#8b949e;margin-top:.15rem;white-space:nowrap}
+    .sys-node.sn-hit{border-color:#f85149!important;background:#2a1c1c!important;animation:sn-pulse 1.2s ease-in-out infinite}
+    @keyframes sn-pulse{0%,100%{box-shadow:0 0 0 0 rgba(248,81,73,.45)}55%{box-shadow:0 0 0 7px rgba(248,81,73,0)}}
+
+    .flow-conn{flex:1;height:2px;background:#30363d;position:relative;align-self:center;margin:0 3px;overflow:visible;transition:background .3s}
+    .flow-conn.fc-lit{background:#f85149}
+    .flow-conn::after{content:'›';position:absolute;right:-6px;top:-9px;color:#30363d;font-size:1rem;transition:color .3s;pointer-events:none}
+    .flow-conn.fc-lit::after{color:#f85149}
+    .pkt-dot{position:absolute;width:9px;height:9px;border-radius:50%;background:#f85149;top:-3.5px;left:0;pointer-events:none;box-shadow:0 0 5px #f85149}
+
+    .threat-log{background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:.5rem .75rem;font-family:monospace;font-size:.74rem;height:108px;overflow-y:auto;margin:.45rem 0;scroll-behavior:smooth}
+    .threat-log .tl{line-height:1.75;animation:tl-in .2s ease both}
+    .threat-log .tl-err{color:#f85149}.threat-log .tl-warn{color:#e3b341}
+    .threat-log .tl-ok{color:#3fb950}.threat-log .tl-info{color:#8b949e;opacity:.85}
+    @keyframes tl-in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+    .cia-impact-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.4rem;margin-top:.5rem}
+    .cia-impact-cell{text-align:center;padding:.4rem .3rem;border-radius:6px;background:#161b22;border:2px solid #30363d;font-size:.76rem;font-weight:600;color:#8b949e;transition:all .5s}
+    .cia-impact-cell .cic-icon{font-size:1rem;display:block;margin-bottom:.12rem}
+    .cia-impact-cell .cic-st{font-size:.62rem;font-weight:400;margin-top:.1rem;color:#555;transition:color .5s}
+    .cia-impact-cell.cic-violated{border-color:#f85149;background:#2a1c1c;color:#f85149;animation:cic-flash .5s}
+    .cia-impact-cell.cic-violated .cic-st{color:#f85149}
+    .cia-impact-cell.cic-safe{border-color:#3fb950;background:#1c2a1c;color:#3fb950}
+    .cia-impact-cell.cic-safe .cic-st{color:#3fb950}
+    @keyframes cic-flash{0%,100%{opacity:1}40%{opacity:.4}}
+
+    /* ── Secure Key Exchange Animation ── */
+    .kx-wrap{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:.85rem;margin-top:.75rem}
+    .kx-progress{display:flex;gap:3px;margin-bottom:.4rem}
+    .kx-prog-step{flex:1;height:3px;background:#30363d;border-radius:2px;transition:background .4s}
+    .kx-prog-step.kxp-active{background:#e3b341}
+    .kx-prog-step.kxp-done{background:#3fb950}
+    .kx-step-lbl{font-size:.7rem;color:#8b949e;text-align:center;min-height:1.4em;margin:.25rem 0 .5rem;transition:color .3s}
+    .kx-stage{display:flex;align-items:stretch;gap:0;margin:.4rem 0}
+    .kx-actor{flex:0 0 118px;background:#161b22;border:2px solid #30363d;border-radius:8px;padding:.6rem .45rem;text-align:center;transition:border-color .4s,background .4s}
+    .kx-actor.kxa-active{border-color:#58a6ff;background:#0d1a2e}
+    .kx-actor.kxa-done{border-color:#238636}
+    .kx-av{font-size:1.5rem;line-height:1.2}
+    .kx-nm{font-size:.75rem;font-weight:700;color:#e6edf3;margin:.12rem 0}
+    .kx-st{font-size:.66rem;color:#8b949e;min-height:2.6em;margin:.2rem 0;line-height:1.4;transition:color .3s}
+    .kx-dat{min-height:1.8rem;margin-top:.3rem;display:flex;flex-wrap:wrap;gap:2px;justify-content:center}
+    .kx-chip{font-size:.63rem;padding:.12rem .35rem;border-radius:3px;font-family:monospace;animation:kx-pop .22s ease both;white-space:nowrap}
+    .kx-pub{background:#1c2940;border:1px solid #58a6ff;color:#58a6ff}
+    .kx-prv{background:#2a1c1c;border:1px solid #f85149;color:#f85149}
+    .kx-msg{background:#2a2000;border:1px solid #e3b341;color:#e3b341}
+    .kx-enc{background:#1a0d2e;border:1px solid #9068d6;color:#c0a0f8}
+    .kx-ok{background:#1c2a1c;border:1px solid #3fb950;color:#3fb950}
+    @keyframes kx-pop{from{opacity:0;transform:scale(.65)}to{opacity:1;transform:scale(1)}}
+    .kx-mid{flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 .4rem}
+    .kx-conn{height:2px;background:#30363d;position:relative;margin:.25rem 0;border-radius:1px;transition:background .3s;overflow:visible}
+    .kx-conn.kxc-lit{background:#58a6ff}
+    .kx-pkt{position:absolute;top:-10px;width:22px;height:22px;border-radius:50%;background:#58a6ff;display:flex;align-items:center;justify-content:center;font-size:.75rem;box-shadow:0 0 7px #58a6ff;pointer-events:none;z-index:2}
+    .kx-ch-lbl{font-size:.6rem;color:#555;text-align:center;margin-top:.15rem}
+    .kx-result{margin-top:.65rem;background:#1c2a1c;border:1px solid #238636;border-radius:6px;padding:.6rem .85rem;font-size:.84rem;color:#3fb950;display:none;animation:kx-pop .3s ease both}
+    .kx-result.show{display:block}
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="navbar-brand" href="../">🔐 Cryptography Labs</a>
+  <div class="nav-actions">
+    <span class="nav-pill">Module 1 Lab</span>
+    <button onclick="resetLab()" style="background:none;border:1px solid #30363d;border-radius:6px;padding:.25rem .6rem;color:#8b949e;cursor:pointer;font-size:.75rem" title="Reset lab progress">↺ Reset</button>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="lab-header">
+    <div class="lab-badge">Module 1 · Fundamentals</div>
+    <h2>CIA Triad & Authentication Fundamentals</h2>
+    <p>Confidentiality, Integrity, Availability — Understanding public key cryptography and password security</p>
+  </div>
+
+  <div class="scenario-box">
+    <p><strong>Scenario:</strong> You're a cybersecurity analyst for a financial institution. Your job is to protect customer data using the three pillars of information security. Understanding these fundamentals will help you implement proper authentication and encryption systems.</p>
+  </div>
+
+  <!-- CIA Triad Interactive Demo -->
+  <div class="demo-box">
+    <h4 style="margin-top:0;color:#e6edf3">🛡️ The CIA Triad</h4>
+    <p style="margin-bottom:1rem;color:#8b949e">Click on each pillar to explore how it protects information:</p>
+
+    <div class="cia-demo">
+      <div class="cia-pillar" onclick="selectCIA('confidentiality', this)">
+        <div class="cia-icon">🔒</div>
+        <div class="cia-title">Confidentiality</div>
+        <div class="cia-desc">Data privacy & secrecy</div>
+      </div>
+      <div class="cia-pillar" onclick="selectCIA('integrity', this)">
+        <div class="cia-icon">✅</div>
+        <div class="cia-title">Integrity</div>
+        <div class="cia-desc">Data accuracy & trustworthiness</div>
+      </div>
+      <div class="cia-pillar" onclick="selectCIA('availability', this)">
+        <div class="cia-icon">⚡</div>
+        <div class="cia-title">Availability</div>
+        <div class="cia-desc">System accessibility & uptime</div>
+      </div>
+    </div>
+
+    <div id="cia-details" class="cia-details">
+      <p style="color:#8b949e;text-align:center">Select a CIA pillar above to see detailed examples and threats</p>
+    </div>
+
+    <!-- Interactive Scenario Tester — animated process flow -->
+    <div class="interactive-demo">
+      <p style="margin-bottom:.65rem;font-weight:600;color:#e6edf3">🎯 CIA Threat Simulator</p>
+      <div class="demo-controls">
+        <select class="scenario-selector" id="threat-scenario">
+          <option value="">Select a security scenario...</option>
+          <option value="breach">🔓 Data Breach — Confidentiality</option>
+          <option value="tampering">✏️ Data Tampering — Integrity</option>
+          <option value="ddos">💥 DDoS Attack — Availability</option>
+        </select>
+        <button class="attack-btn" id="attack-sim-btn" onclick="simulateThreat()">▶ Simulate</button>
+      </div>
+
+      <!-- Attack phase progress strip -->
+      <div id="sim-phases" class="attack-phases" style="display:none">
+        <div class="attack-phase" id="sim-phase-0"></div>
+        <div class="attack-phase" id="sim-phase-1"></div>
+        <div class="attack-phase" id="sim-phase-2"></div>
+        <div class="attack-phase" id="sim-phase-3"></div>
+      </div>
+
+      <!-- Animated system flow diagram -->
+      <div id="sim-flow" class="system-flow" style="display:none">
+        <div class="sys-node" id="sn-attacker">
+          <div class="nd-icon">🕵️</div>
+          <div class="nd-label">Attacker</div>
+        </div>
+        <div class="flow-conn" id="fc-0"></div>
+        <div class="sys-node" id="sn-mid">
+          <div class="nd-icon" id="sn-mid-i">🛡️</div>
+          <div class="nd-label" id="sn-mid-l">Firewall</div>
+        </div>
+        <div class="flow-conn" id="fc-1"></div>
+        <div class="sys-node" id="sn-server">
+          <div class="nd-icon" id="sn-srv-i">💻</div>
+          <div class="nd-label" id="sn-srv-l">App Server</div>
+        </div>
+        <div class="flow-conn" id="fc-2"></div>
+        <div class="sys-node" id="sn-target">
+          <div class="nd-icon" id="sn-tgt-i">🗄️</div>
+          <div class="nd-label" id="sn-tgt-l">Database</div>
+        </div>
+      </div>
+
+      <!-- Live attack log (terminal-style) -->
+      <div id="sim-log" class="threat-log" style="display:none;color:#8b949e">Select a scenario and click ▶ Simulate to run the attack...</div>
+
+      <!-- CIA impact indicators -->
+      <div id="sim-cia" class="cia-impact-row" style="display:none">
+        <div class="cia-impact-cell" id="cic-c">
+          <span class="cic-icon">🔒</span>
+          <div>Confidentiality</div>
+          <div class="cic-st" id="cic-c-s">—</div>
+        </div>
+        <div class="cia-impact-cell" id="cic-i">
+          <span class="cic-icon">✅</span>
+          <div>Integrity</div>
+          <div class="cic-st" id="cic-i-s">—</div>
+        </div>
+        <div class="cia-impact-cell" id="cic-a">
+          <span class="cic-icon">⚡</span>
+          <div>Availability</div>
+          <div class="cic-st" id="cic-a-s">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Public Key vs Symmetric Key -->
+  <div class="demo-box">
+    <h4 style="margin-top:0;color:#e6edf3">🔑 Symmetric vs Asymmetric (Public Key) Cryptography</h4>
+
+    <div style="background:#1c2940;border:1px solid #58a6ff;border-radius:6px;padding:1rem;margin-bottom:1.25rem">
+      <p style="margin:0 0 .4rem;color:#58a6ff;font-weight:600">📌 Scenario</p>
+      <p style="margin:0;color:#8b949e;font-size:.9rem;line-height:1.6">You're a developer who needs to give a teammate remote access to a production server — without ever emailing them a password. You also need to encrypt customer records at rest as fast as possible. These two problems require <em>different</em> types of cryptography. Understanding when to use symmetric vs asymmetric encryption is one of the most practical skills in cybersecurity.</p>
+    </div>
+
+    <div class="key-comparison">
+      <div class="key-box key-symmetric">
+        <div class="key-title">🔑 Symmetric Key</div>
+        <div class="key-visual">
+          Alice ←→ [Same Key] ←→ Bob<br>
+          🔒 Encrypt with Key A<br>
+          🔓 Decrypt with Key A
+        </div>
+        <div class="key-pros">✓ Fast & efficient</div>
+        <div class="key-cons">✗ Key distribution problem</div>
+      </div>
+
+      <div style="text-align:center;color:#e3b341;font-size:1.2rem;font-weight:600">VS</div>
+
+      <div class="key-box key-asymmetric">
+        <div class="key-title">🔐 Public Key (Asymmetric)</div>
+        <div class="key-visual">
+          Alice ←→ [Public/Private Keys] ←→ Bob<br>
+          🔒 Encrypt with Bob's Public Key<br>
+          🔓 Decrypt with Bob's Private Key
+        </div>
+        <div class="key-pros">✓ Secure key exchange</div>
+        <div class="key-cons">✗ Slower computation</div>
+      </div>
+    </div>
+
+    <button onclick="demonstrateKeyExchange()" style="background:#1f6feb;color:#fff;border:none;border-radius:6px;padding:.5rem 1rem;cursor:pointer;margin-top:1rem">
+      🔄 Demonstrate Key Exchange
+    </button>
+    <div id="key-exchange-demo" style="margin-top:1rem;min-height:60px"></div>
+
+    <!-- Why it matters in practice -->
+    <div style="background:#161b22;border:1px solid #30363d;border-radius:6px;padding:1rem;margin-top:1.25rem">
+      <p style="margin:0 0 .5rem;color:#e6edf3;font-weight:600">💡 Why this matters in practice</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;font-size:.85rem;color:#8b949e">
+        <div>
+          <p style="margin:0 0 .25rem;color:#e3b341;font-weight:600">Use Symmetric when:</p>
+          <ul style="margin:.25rem 0;padding-left:1rem;line-height:1.7">
+            <li>Encrypting large files or databases</li>
+            <li>Both parties already share a key securely</li>
+            <li>Speed is critical (AES is ~1000× faster than RSA)</li>
+          </ul>
+        </div>
+        <div>
+          <p style="margin:0 0 .25rem;color:#58a6ff;font-weight:600">Use Asymmetric when:</p>
+          <ul style="margin:.25rem 0;padding-left:1rem;line-height:1.7">
+            <li>Establishing a secure connection for the first time</li>
+            <li>Authenticating identity (digital signatures)</li>
+            <li>Sharing a symmetric key safely over the internet</li>
+          </ul>
+        </div>
+      </div>
+      <p style="margin:.75rem 0 0;color:#8b949e;font-size:.83rem">🔐 Real-world example: HTTPS uses asymmetric encryption (RSA/ECDH) only to exchange a temporary symmetric key, then switches to AES for the rest of the session — getting the best of both worlds.</p>
+    </div>
+
+    <!-- OS-specific key generation commands -->
+    <div style="margin-top:1.5rem">
+      <p style="font-weight:600;color:#e6edf3;margin-bottom:.25rem">🖥️ Try it yourself — Generate Your Own Key Pair</p>
+      <p style="color:#8b949e;font-size:.85rem;margin-bottom:.75rem">Your browser detected you're on <strong id="detected-os-label" style="color:#e6edf3"></strong>. The correct commands are pre-selected below. Open your terminal and run them to create a real RSA key pair.</p>
+
+      <div style="display:flex;gap:.5rem;margin-bottom:.5rem;align-items:flex-end">
+        <button onclick="showOSCommands('mac')" id="os-tab-mac" style="background:#21262d;color:#8b949e;border:none;border-radius:6px 6px 0 0;padding:.4rem .9rem;cursor:pointer;font-size:.85rem">macOS</button>
+        <button onclick="showOSCommands('win')" id="os-tab-win" style="background:#21262d;color:#8b949e;border:none;border-radius:6px 6px 0 0;padding:.4rem .9rem;cursor:pointer;font-size:.85rem">Windows</button>
+        <button onclick="showOSCommands('linux')" id="os-tab-linux" style="background:#21262d;color:#8b949e;border:none;border-radius:6px 6px 0 0;padding:.4rem .9rem;cursor:pointer;font-size:.85rem">Linux</button>
+        <span style="color:#8b949e;font-size:.78rem;margin-bottom:.35rem;margin-left:.25rem">← not right? switch here</span>
+      </div>
+
+      <div id="os-commands" style="background:#0d1117;border:1px solid #30363d;border-radius:0 6px 6px 6px;padding:1rem;font-family:monospace;font-size:.82rem;color:#e6edf3">
+        <div id="os-mac">
+          <span style="color:#8b949e"># 1. Generate a 4096-bit RSA key pair (press Enter to accept defaults)</span><br>
+          <span style="color:#3fb950">ssh-keygen</span> -t rsa -b 4096 -C <span style="color:#e3b341">"your.email@example.com"</span><br><br>
+          <span style="color:#8b949e"># 2. View your PUBLIC key — safe to share with anyone</span><br>
+          <span style="color:#3fb950">cat</span> ~/.ssh/id_rsa.pub<br><br>
+          <span style="color:#8b949e"># 3. View your PRIVATE key — never share this!</span><br>
+          <span style="color:#3fb950">cat</span> ~/.ssh/id_rsa
+        </div>
+        <div id="os-win" style="display:none">
+          <span style="color:#8b949e"># Open PowerShell as Administrator, then run:</span><br><br>
+          <span style="color:#8b949e"># 1. Enable OpenSSH (if not already installed)</span><br>
+          <span style="color:#3fb950">Add-WindowsCapability</span> -Online -Name OpenSSH.Client~~~~0.0.1.0<br><br>
+          <span style="color:#8b949e"># 2. Generate a 4096-bit RSA key pair</span><br>
+          <span style="color:#3fb950">ssh-keygen</span> -t rsa -b 4096 -C <span style="color:#e3b341">"your.email@example.com"</span><br><br>
+          <span style="color:#8b949e"># 3. View your PUBLIC key — safe to share</span><br>
+          <span style="color:#3fb950">Get-Content</span> $env:USERPROFILE\.ssh\id_rsa.pub<br><br>
+          <span style="color:#8b949e"># Alternatively: use Git Bash if Git for Windows is installed</span>
+        </div>
+        <div id="os-linux" style="display:none">
+          <span style="color:#8b949e"># 1. Generate a 4096-bit RSA key pair</span><br>
+          <span style="color:#3fb950">ssh-keygen</span> -t rsa -b 4096 -C <span style="color:#e3b341">"your.email@example.com"</span><br><br>
+          <span style="color:#8b949e"># 2. View your PUBLIC key — safe to share with anyone</span><br>
+          <span style="color:#3fb950">cat</span> ~/.ssh/id_rsa.pub<br><br>
+          <span style="color:#8b949e"># 3. Set correct permissions (required on Linux)</span><br>
+          <span style="color:#3fb950">chmod</span> 600 ~/.ssh/id_rsa &amp;&amp; chmod 644 ~/.ssh/id_rsa.pub<br><br>
+          <span style="color:#8b949e"># 4. Verify your private key is protected</span><br>
+          <span style="color:#3fb950">ls</span> -la ~/.ssh/
+        </div>
+      </div>
+
+      <div style="background:#2a2000;border:1px solid #e3b341;border-radius:6px;padding:.6rem .9rem;margin-top:.75rem;font-size:.83rem;color:#8b949e">
+        <strong style="color:#e3b341">🔑 Key rule:</strong> Your <span style="color:#3fb950">public key</span> (.pub) can be freely shared — it's how others encrypt messages for you or verify your identity. Your <span style="color:#f85149">private key</span> (no extension) must never leave your machine.
+      </div>
+
+      <!-- Screenshot upload -->
+      <div style="margin-top:1.25rem">
+        <p style="font-weight:600;color:#e6edf3;margin-bottom:.25rem;font-size:.9rem">📸 Upload Your Terminal Screenshot</p>
+        <p style="color:#8b949e;font-size:.83rem;margin-bottom:.5rem">After running the commands above, take a screenshot of your terminal showing <strong style="color:#e6edf3">both the public and private key output</strong>. Upload it here as proof of completion.</p>
+
+        <label for="screenshot-upload" id="screenshot-upload-label"
+          style="display:flex;align-items:center;gap:.75rem;background:#21262d;border:2px dashed #30363d;border-radius:6px;padding:.75rem 1rem;cursor:pointer;transition:border-color .2s">
+          <span style="font-size:1.4rem">📁</span>
+          <span id="screenshot-upload-text" style="color:#8b949e;font-size:.85rem">Click to upload screenshot (PNG, JPG, or GIF)</span>
+        </label>
+        <input type="file" id="screenshot-upload" accept="image/*" style="display:none" onchange="handleScreenshotUpload(this)">
+
+        <div id="screenshot-preview" style="display:none;margin-top:.75rem">
+          <img id="screenshot-img" style="max-width:100%;border-radius:6px;border:1px solid #30363d;display:block" alt="Terminal screenshot">
+          <p style="color:#3fb950;font-size:.82rem;margin:.35rem 0 0">✅ Screenshot uploaded — will be included in your PDF submission.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Why Passwords? -->
+  <div class="demo-box">
+    <h4 style="margin-top:0;color:#e6edf3">🔐 Why Do We Have Passwords?</h4>
+
+    <div style="background:#1c2940;border:1px solid #58a6ff;border-radius:6px;padding:1rem;margin:1rem 0">
+      <p style="margin:0;color:#e6edf3"><strong>Authentication:</strong> Passwords verify "you are who you say you are"</p>
+      <p style="margin:.5rem 0 0;color:#8b949e">Without authentication, anyone could access your accounts, files, and sensitive information.</p>
+    </div>
+
+    <div class="password-strength">
+      <p style="font-weight:600;color:#e6edf3;margin-bottom:.25rem">🧪 Password Generator Task</p>
+      <p style="color:#8b949e;font-size:.85rem;margin-bottom:.9rem">Use a <a href="https://bitwarden.com/password-generator/" target="_blank" rel="noopener" style="color:#58a6ff">password generator</a> to create three passwords — one for each strength level — then paste them in the fields below. Each field will validate your entry and show you the estimated crack time.</p>
+
+      <!-- Weak password input -->
+      <div style="margin-bottom:1.1rem">
+        <label style="color:#f85149;font-weight:600;font-size:.9rem">🔴 Weak Password</label>
+        <p style="color:#8b949e;font-size:.8rem;margin:.2rem 0 .35rem">Short password — under 8 characters (e.g. <code style="color:#e6edf3;background:#21262d;padding:.1rem .3rem;border-radius:3px">hello123</code>)</p>
+        <input type="text" class="password-input" id="pw-weak" placeholder="Paste a weak password here..." oninput="checkPasswordLevel('weak',this.value)">
+        <div class="strength-meter"><div class="strength-fill" id="pw-weak-bar"></div></div>
+        <div id="pw-weak-feedback" class="password-feedback"></div>
+      </div>
+
+      <!-- Medium password input -->
+      <div style="margin-bottom:1.1rem">
+        <label style="color:#e3b341;font-weight:600;font-size:.9rem">🟡 Medium Password</label>
+        <p style="color:#8b949e;font-size:.8rem;margin:.2rem 0 .35rem">Mix of letters &amp; numbers, 8–11 characters (e.g. <code style="color:#e6edf3;background:#21262d;padding:.1rem .3rem;border-radius:3px">Coffee2024</code>)</p>
+        <input type="text" class="password-input" id="pw-medium" placeholder="Paste a medium-strength password here..." oninput="checkPasswordLevel('medium',this.value)">
+        <div class="strength-meter"><div class="strength-fill" id="pw-medium-bar"></div></div>
+        <div id="pw-medium-feedback" class="password-feedback"></div>
+      </div>
+
+      <!-- Strong password input -->
+      <div style="margin-bottom:.5rem">
+        <label style="color:#3fb950;font-weight:600;font-size:.9rem">🟢 Strong Password</label>
+        <p style="color:#8b949e;font-size:.8rem;margin:.2rem 0 .35rem">12+ characters with uppercase, lowercase, numbers &amp; symbols (e.g. <code style="color:#e6edf3;background:#21262d;padding:.1rem .3rem;border-radius:3px">T!ger$8x#Mango</code>)</p>
+        <input type="text" class="password-input" id="pw-strong" placeholder="Paste a strong password here..." oninput="checkPasswordLevel('strong',this.value)">
+        <div class="strength-meter"><div class="strength-fill" id="pw-strong-bar"></div></div>
+        <div id="pw-strong-feedback" class="password-feedback"></div>
+      </div>
+
+      <!-- All-done badge -->
+      <div id="pw-all-done" style="display:none;background:#1c2a1c;border:1px solid #3fb950;border-radius:6px;padding:.6rem 1rem;margin:.75rem 0">
+        <strong style="color:#3fb950">✅ All three password levels validated!</strong>
+        <span style="color:#8b949e;font-size:.85rem"> Your passwords will be included in your submission.</span>
+      </div>
+
+      <div style="background:#2a1c1c;border:1px solid #f85149;border-radius:6px;padding:1rem;margin-top:1rem">
+        <p style="margin:0;color:#f85149;font-weight:600">⚠️ Password Vulnerabilities</p>
+        <ul style="margin:.5rem 0 0 1rem;color:#8b949e;font-size:.85rem">
+          <li>Dictionary attacks (using common words)</li>
+          <li>Brute force attacks (trying all combinations)</li>
+          <li>Social engineering (guessing personal info)</li>
+          <li>Data breaches (passwords stolen from other sites)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Question -->
+  <div class="question-box">
+    <p class="question-text">❓ Which CIA principle is MOST violated when an attacker intercepts and reads your encrypted email without authorization?</p>
+    <div class="options-grid">
+      <button class="opt-btn" onclick="check('A',this)"><span class="opt-id">A</span> Confidentiality</button>
+      <button class="opt-btn" onclick="check('B',this)"><span class="opt-id">B</span> Integrity</button>
+      <button class="opt-btn" onclick="check('C',this)"><span class="opt-id">C</span> Availability</button>
+      <button class="opt-btn" onclick="check('D',this)"><span class="opt-id">D</span> All three equally</button>
+    </div>
+  </div>
+
+  <div id="feedback" class="feedback-box"></div>
+
+  <!-- Student Reflection -->
+  <div class="reflection-box">
+    <div class="reflection-title">💭 Reflection & Learning Submission</div>
+    <p style="color:#8b949e;margin-bottom:.75rem">After interacting with the CIA triad, public key concepts, and password strength tools, reflect on your learning:</p>
+
+    <!-- Lock indicator -->
+    <div id="reflection-lock" style="background:#2a1c1c;border:1px solid #f85149;border-radius:6px;padding:.5rem .85rem;margin-bottom:1rem;font-size:.83rem;color:#f85149">
+      🔒 Complete all objectives (see tracker bottom-right ↘) to unlock submission
+    </div>
+
+    <!-- Submission area — greyed out until unlocked -->
+    <div id="submission-area" class="sub-area-locked">
+      <textarea class="reflection-input" id="learning-reflection" placeholder="What did you learn when you interacted with the different components? How do the CIA triad principles apply to real-world scenarios you've experienced? What surprised you about password security?
+
+Please write at least 3-4 sentences describing your key insights..."></textarea>
+
+      <div style="margin-top:.75rem">
+        <label style="color:#e6edf3;font-size:.9rem;font-weight:600">🔍 Lab Observations</label>
+        <p style="color:#8b949e;font-size:.82rem;margin:.2rem 0 .3rem">Was there anything within the lab you expected to change, but didn't?</p>
+        <textarea class="reflection-input" id="lab-feedback" placeholder="Share any observations, surprises, or things that felt missing..." style="min-height:80px"></textarea>
+      </div>
+
+      <div style="margin-top:.75rem">
+        <label style="color:#e6edf3;font-size:.9rem;font-weight:600">Your name:</label>
+        <input type="text" id="student-name" placeholder="Enter your full name..."
+          style="background:#21262d;border:1px solid #30363d;border-radius:6px;padding:.5rem;color:#e6edf3;width:100%;max-width:320px;display:block;margin:.3rem 0">
+      </div>
+
+      <div style="margin-top:.75rem">
+        <button class="submit-btn" onclick="submitReflection()" id="submit-reflection">💾 Save Reflection</button>
+        <button id="export-pdf-btn" class="export-pdf-btn" onclick="exportPDF()" style="display:none">📄 Export PDF</button>
+      </div>
+      <div id="submission-feedback" style="margin-top:.5rem;color:#3fb950;display:none">✅ Saved! Edit and re-save anytime — Export PDF always uses your latest version.</div>
+    </div>
+  </div>
+
+  <div id="why-matters" class="why-box">
+    <h6>💡 Why it matters</h6>
+    <p>The CIA Triad forms the foundation of all cybersecurity practices:</p>
+    <ul>
+      <li><strong>Confidentiality</strong> — Encryption protects sensitive data from unauthorized access</li>
+      <li><strong>Integrity</strong> — Hash functions and digital signatures ensure data hasn't been tampered with</li>
+      <li><strong>Availability</strong> — Redundancy and security measures keep systems accessible to authorized users</li>
+    </ul>
+    <p>Public key cryptography solves the key distribution problem, enabling secure communication over insecure channels. Strong authentication (passwords, multi-factor auth) ensures only authorized users access protected systems.</p>
+  </div>
+
+  <div class="lab-footer">
+    <span class="text-muted">Module 1 Lab - Security Fundamentals</span>
+  </div>
+</div>
+
+<!-- PDF Print Summary (hidden until Export PDF is clicked) -->
+<div id="print-summary">
+  <h1>Module 1 Lab – CIA Triad &amp; Authentication Fundamentals</h1>
+  <p style="color:#555;font-size:.9rem;margin-top:0">Cybersecurity Lab Submission</p>
+  <hr>
+  <h2>Student Info</h2>
+  <table>
+    <tr><td>Student:</td><td id="ps-name"></td></tr>
+    <tr><td>Opened:</td><td id="ps-opened"></td></tr>
+    <tr><td>Submitted:</td><td id="ps-submitted"></td></tr>
+    <tr><td>Time on page:</td><td id="ps-duration"></td></tr>
+  </table>
+  <h2>Interactions</h2>
+  <div id="ps-interactions"></div>
+  <h2>Key Pair Screenshot</h2>
+  <div id="ps-screenshot"></div>
+  <h2>Reflection</h2>
+  <div id="ps-reflection" style="white-space:pre-wrap"></div>
+  <h2>Lab Observations</h2>
+  <div id="ps-feedback" style="white-space:pre-wrap"></div>
+</div>
+
+<!-- Floating objective overlay -->
+<div id="obj-overlay" style="position:fixed;bottom:1.25rem;right:1.25rem;z-index:999;font-size:.8rem;user-select:none">
+  <div id="obj-badge" onclick="toggleObj()" style="background:rgba(22,27,34,.95);border:1px solid #30363d;border-radius:20px;padding:.35rem .8rem;cursor:pointer;display:flex;align-items:center;gap:.5rem;color:#8b949e;backdrop-filter:blur(4px);transition:border-color .2s;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.4)">
+    <span id="obj-count">📋 0/4 objectives</span><span id="obj-chev" style="font-size:.65rem">▼</span>
+  </div>
+  <div id="obj-panel" style="display:block;position:absolute;bottom:calc(100% + .4rem);right:0;background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.65rem .9rem;min-width:210px;line-height:2.2;box-shadow:0 4px 12px rgba(0,0,0,.5)">
+    <div style="font-size:.72rem;color:#58a6ff;font-weight:600;margin-bottom:.25rem;border-bottom:1px solid #30363d;padding-bottom:.2rem">Lab Objectives</div>
+    <div id="obj-list"></div>
+  </div>
+</div>
+
+<script>
+// ── Shared JS (inlined from shared.js) ──
+function showFeedback(correct, html) {
+  const fb = document.getElementById('feedback');
+  if (!fb) return;
+  fb.className = 'feedback-box show ' + (correct ? 'feedback-correct' : 'feedback-incorrect');
+  fb.innerHTML = (correct ? '✅ ' : '❌ ') + html;
+  if (correct) {
+    const why = document.getElementById('why-matters');
+    if (why) setTimeout(() => { why.classList.add('show'); }, 350);
+  }
+}
+function markBtn(btn, correct) {
+  const parent = btn.closest('.options-grid, .question-box');
+  if (parent) parent.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('correct','incorrect'));
+  btn.classList.add(correct ? 'correct' : 'incorrect');
+}
+
+// ── Lab state ──
+const ciaData = {
+  confidentiality: {
+    title: "🔒 Confidentiality",
+    content: `
+      <div style="background:#1c2940;border:1px solid #58a6ff;border-radius:6px;padding:1rem">
+        <strong style="color:#58a6ff">Definition:</strong> Ensuring information is accessible only to authorized individuals<br><br>
+
+        <strong>Examples:</strong><br>
+        • Medical records protected by HIPAA<br>
+        • Banking information encrypted during transmission<br>
+        • Government classified documents<br><br>
+
+        <strong>Threats:</strong><br>
+        • Data breaches and unauthorized access<br>
+        • Eavesdropping on communications<br>
+        • Social engineering attacks<br><br>
+
+        <strong>Protection Methods:</strong><br>
+        • Encryption (AES, RSA)<br>
+        • Access controls and permissions<br>
+        • Strong authentication systems
+      </div>
+    `
+  },
+  integrity: {
+    title: "✅ Integrity",
+    content: `
+      <div style="background:#1c2a1c;border:1px solid #3fb950;border-radius:6px;padding:1rem">
+        <strong style="color:#3fb950">Definition:</strong> Ensuring information accuracy and preventing unauthorized modification<br><br>
+
+        <strong>Examples:</strong><br>
+        • Financial transaction records<br>
+        • Software code and updates<br>
+        • Legal documents and contracts<br><br>
+
+        <strong>Threats:</strong><br>
+        • Data tampering and manipulation<br>
+        • Man-in-the-middle attacks<br>
+        • Malware that corrupts files<br><br>
+
+        <strong>Protection Methods:</strong><br>
+        • Digital signatures<br>
+        • Hash functions (SHA-256)<br>
+        • Version control and backups
+      </div>
+    `
+  },
+  availability: {
+    title: "⚡ Availability",
+    content: `
+      <div style="background:#2a2000;border:1px solid #e3b341;border-radius:6px;padding:1rem">
+        <strong style="color:#e3b341">Definition:</strong> Ensuring systems and data are accessible when needed by authorized users<br><br>
+
+        <strong>Examples:</strong><br>
+        • 24/7 online banking services<br>
+        • Emergency communication systems<br>
+        • E-commerce websites during sales<br><br>
+
+        <strong>Threats:</strong><br>
+        • Denial of Service (DoS) attacks<br>
+        • Hardware failures<br>
+        • Natural disasters<br><br>
+
+        <strong>Protection Methods:</strong><br>
+        • Redundant systems and backups<br>
+        • Load balancing<br>
+        • Incident response planning
+      </div>
+    `
+  }
+};
+
+let selectedCIAPillar = null;
+let answered = false;
+let quizPassed = false;
+let quizAttempts = 0;
+let ciaInteracted = false;
+let keyDemoViewed = false;
+let passwordLevelsAchieved = {weak: false, medium: false, strong: false};
+let passwordEntries = {weak: '', medium: '', strong: ''};
+let screenshotUploaded = false;
+let screenshotDataUrl = '';
+const openedAt = new Date().toISOString();
+
+// ── localStorage persistence ──
+function saveState() {
+  const state = {
+    quizPassed,
+    quizAttempts,
+    ciaInteracted,
+    selectedCIAPillar,
+    keyDemoViewed,
+    passwordLevelsAchieved,
+    passwordEntries,
+    screenshotUploaded,
+    screenshotDataUrl,
+    studentName: (document.getElementById('student-name') || {}).value || '',
+    reflection: (document.getElementById('learning-reflection') || {}).value || '',
+    labFeedback: (document.getElementById('lab-feedback') || {}).value || ''
+  };
+  localStorage.setItem('lab01-state', JSON.stringify(state));
+}
+
+function loadState() {
+  const raw = localStorage.getItem('lab01-state');
+  if (!raw) return;
+  let state;
+  try { state = JSON.parse(raw); } catch(e) { return; }
+
+  quizPassed = state.quizPassed || false;
+  quizAttempts = state.quizAttempts || 0;
+  ciaInteracted = state.ciaInteracted || false;
+  selectedCIAPillar = state.selectedCIAPillar || null;
+  keyDemoViewed = state.keyDemoViewed || false;
+  passwordLevelsAchieved = state.passwordLevelsAchieved || {weak: false, medium: false, strong: false};
+  passwordEntries = state.passwordEntries || {weak: '', medium: '', strong: ''};
+  screenshotUploaded = state.screenshotUploaded || false;
+  screenshotDataUrl = state.screenshotDataUrl || '';
+
+  // Restore text inputs
+  if (state.studentName) {
+    const el = document.getElementById('student-name');
+    if (el) el.value = state.studentName;
+  }
+  if (state.reflection) {
+    const el = document.getElementById('learning-reflection');
+    if (el) el.value = state.reflection;
+  }
+  if (state.labFeedback) {
+    const el = document.getElementById('lab-feedback');
+    if (el) el.value = state.labFeedback;
+  }
+
+  // Restore password inputs
+  ['weak', 'medium', 'strong'].forEach(level => {
+    if (passwordEntries[level]) {
+      const el = document.getElementById(`pw-${level}`);
+      if (el) {
+        el.value = passwordEntries[level];
+        checkPasswordLevel(level, passwordEntries[level]);
+      }
+    }
+  });
+
+  // Restore screenshot preview
+  if (screenshotUploaded && screenshotDataUrl) {
+    document.getElementById('screenshot-img').src = screenshotDataUrl;
+    document.getElementById('screenshot-preview').style.display = 'block';
+    document.getElementById('screenshot-upload-text').textContent = '✓ Screenshot restored';
+    document.getElementById('screenshot-upload-label').style.borderColor = '#3fb950';
+    document.getElementById('screenshot-upload-label').style.borderStyle = 'solid';
+  }
+
+  // Restore quiz visual state
+  if (quizPassed) {
+    answered = true;
+    const btns = document.querySelectorAll('.opt-btn');
+    if (btns.length > 0) btns[0].classList.add('correct');
+    showFeedback(true, "Correct! <strong>Confidentiality</strong> is violated when unauthorized parties gain access to private information. Even if the email is encrypted, reading it without permission breaks confidentiality. The data itself wasn't changed (integrity) and the system remained accessible (availability).");
+  }
+
+  // Restore key exchange demo
+  if (keyDemoViewed) {
+    demonstrateKeyExchange();
+  }
+}
+
+function resetLab() {
+  if (!confirm('Reset all progress for this lab?')) return;
+  localStorage.removeItem('lab01-state');
+  location.reload();
+}
+
+// ── Floating objective overlay ──
+let _objOpen = true;
+function toggleObj() {
+  _objOpen = !_objOpen;
+  document.getElementById('obj-panel').style.display = _objOpen ? 'block' : 'none';
+  document.getElementById('obj-chev').textContent = _objOpen ? '▼' : '▲';
+}
+function updateObjOverlay(checks) {
+  const done = checks.filter(c => c.done).length;
+  const total = checks.length;
+  const allDone = done === total;
+  const badge = document.getElementById('obj-badge');
+  badge.style.borderColor = allDone ? '#238636' : '#30363d';
+  badge.style.color = allDone ? '#3fb950' : '#8b949e';
+  document.getElementById('obj-count').textContent = allDone ? '✅ All objectives done!' : `📋 ${done}/${total} objectives`;
+  document.getElementById('obj-list').innerHTML = checks.map(c =>
+    `<div style="color:${c.done?'#3fb950':'#8b949e'};font-size:.79rem">${c.done?'✅':'⬜'} ${c.label}</div>`
+  ).join('');
+}
+
+function handleScreenshotUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    screenshotDataUrl = e.target.result;
+    screenshotUploaded = true;
+    document.getElementById('screenshot-img').src = screenshotDataUrl;
+    document.getElementById('screenshot-preview').style.display = 'block';
+    document.getElementById('screenshot-upload-text').textContent = `✓ ${file.name}`;
+    document.getElementById('screenshot-upload-label').style.borderColor = '#3fb950';
+    document.getElementById('screenshot-upload-label').style.borderStyle = 'solid';
+    saveState();
+    checkReflectionLock();
+  };
+  reader.readAsDataURL(file);
+}
+
+function selectCIA(pillar, element) {
+  document.querySelectorAll('.cia-pillar').forEach(el => el.classList.remove('selected'));
+  element.classList.add('selected');
+
+  selectedCIAPillar = pillar;
+  ciaInteracted = true;
+
+  const detailsDiv = document.getElementById('cia-details');
+  detailsDiv.innerHTML = ciaData[pillar].content;
+  detailsDiv.classList.add('show');
+
+  saveState();
+  checkReflectionLock();
+}
+
+// ── CIA Threat Simulator — animated process flow ──
+const THREAT_SCENARIOS = {
+  breach: {
+    phases: ['Reconnaissance', 'Vuln. Scanning', 'Auth Bypass', 'Data Exfiltration'],
+    mid:{i:'🛡️',l:'Firewall'}, srv:{i:'💻',l:'App Server'}, tgt:{i:'🗄️',l:'Database'},
+    steps: [
+      {d:0,    ph:0, log:['info', '> Initiating target reconnaissance...']},
+      {d:700,  ph:0, log:['warn', '> Open ports: 80, 443, 3306  ·  SSH banner: OpenSSH 7.9']},
+      {d:1400, ph:1, log:['info', '> Testing /login endpoint for injection vectors...'], fc:0},
+      {d:2100, ph:1, log:['warn', "⚠ SQLi vector found: ' OR 1=1-- bypasses authentication"]},
+      {d:2800, ph:2, log:['err',  '> Exploiting auth bypass → dumping admin session token...'], fc:1, sn:'sn-server'},
+      {d:3500, ph:2, log:['err',  '✗ Admin credentials captured — session hijacked']},
+      {d:4200, ph:3, log:['err',  '> Connecting to database server on port 3306...'], fc:2, sn:'sn-target'},
+      {d:4900, ph:3, log:['err',  '✗ 50,000 customer records (PII + CC numbers) exfiltrated!']},
+      {d:5600, ph:3, log:['err',  '▓▓▓  BREACH COMPLETE  ·  CONFIDENTIALITY VIOLATED  ▓▓▓'], final:true},
+    ],
+    cia:{C:'violated',I:'safe',A:'safe'}, ciaD:5900,
+  },
+  tampering: {
+    phases: ['ARP Poisoning', 'MITM Position', 'Data Modification', 'Payload Inject'],
+    mid:{i:'📡',l:'Network'}, srv:{i:'💻',l:'Web Server'}, tgt:{i:'📊',l:'Data Store'},
+    steps: [
+      {d:0,    ph:0, log:['info', '> Sending crafted ARP replies to gateway and target host...']},
+      {d:700,  ph:0, log:['warn', '> ARP tables poisoned — all traffic rerouted through attacker'], sn:'sn-mid'},
+      {d:1400, ph:1, log:['info', '> MITM established · intercepting unencrypted HTTP traffic...'], fc:0},
+      {d:2100, ph:1, log:['warn', '⚠ Plaintext HTTP detected — request body readable & writable']},
+      {d:2800, ph:2, log:['err',  '> Modifying bank transfer amount in-flight...'], fc:1, sn:'sn-server'},
+      {d:3500, ph:2, log:['err',  '✗ Transfer rewritten: $500  →  $50,000 before reaching server']},
+      {d:4200, ph:3, log:['err',  '> Injecting persistent XSS payload into HTTP response...'], fc:2, sn:'sn-target'},
+      {d:4900, ph:3, log:['err',  '✗ Database records silently altered · audit logs forged']},
+      {d:5600, ph:3, log:['err',  '▓▓▓  TAMPER COMPLETE  ·  INTEGRITY VIOLATED  ▓▓▓'], final:true},
+    ],
+    cia:{C:'safe',I:'violated',A:'safe'}, ciaD:5900,
+  },
+  ddos: {
+    phases: ['Botnet Ready', 'Flood Launch', 'Overload', 'Service Down'],
+    mid:{i:'🤖',l:'Botnet (10K)'}, srv:{i:'⚖️',l:'Load Balancer'}, tgt:{i:'💻',l:'Web Server'},
+    steps: [
+      {d:0,    ph:0, log:['info', '> Activating C2 server and marshalling botnet nodes...']},
+      {d:500,  ph:0, log:['warn', '> 10,247 bots online — awaiting fire command'], sn:'sn-mid'},
+      {d:1000, ph:1, log:['err',  '> SYN flood: 2.4 Gbps · UDP flood: 890 Mbps — launched'], fc:0, multi:true},
+      {d:1600, ph:1, log:['err',  '> HTTP flood: 180,000 req/sec targeting /api/account...'], fc:0, multi:true},
+      {d:2300, ph:2, log:['warn', '> Load balancer CPU at 98% · connection queue filling up...'], fc:1, sn:'sn-server'},
+      {d:3000, ph:2, log:['err',  '> Packets dropped · legitimate users timing out (SYN backlog full)']},
+      {d:3700, ph:3, log:['err',  '> Web server OOM — kernel killing worker processes...'], fc:2, sn:'sn-target', multi:true},
+      {d:4400, ph:3, log:['err',  '✗ HTTP 503 Service Unavailable — all users locked out']},
+      {d:5000, ph:3, log:['err',  '▓▓▓  DOWNTIME: 4h 23m  ·  AVAILABILITY VIOLATED  ▓▓▓'], final:true},
+    ],
+    cia:{C:'safe',I:'safe',A:'violated'}, ciaD:5200,
+  },
+};
+
+let _simTimers = [];
+
+function _firePacket(connId, multi) {
+  const fc = document.getElementById(connId);
+  if (!fc) return;
+  fc.classList.add('fc-lit');
+  const count = multi ? 4 : 1;
+  const spd   = multi ? 380 : 540;
+  for (let j = 0; j < count; j++) {
+    setTimeout(() => {
+      const dot = document.createElement('div');
+      dot.className = 'pkt-dot';
+      dot.style.left = '0px';
+      dot.style.opacity = '1';
+      if (multi) dot.style.background = '#f85149';
+      fc.appendChild(dot);
+      // Double rAF to ensure the initial position paints before the transition starts
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        dot.style.transition = `left ${spd}ms linear`;
+        dot.style.left = 'calc(100% - 9px)';
+        setTimeout(() => { if (dot.parentNode) dot.remove(); }, spd + 80);
+      }));
+    }, j * 140);
+  }
+  setTimeout(() => fc.classList.remove('fc-lit'), spd + count * 140 + 100);
+}
+
+function simulateThreat() {
+  const key = document.getElementById('threat-scenario').value;
+  if (!key) {
+    const sel = document.getElementById('threat-scenario');
+    sel.style.borderColor = '#f85149';
+    setTimeout(() => sel.style.borderColor = '', 1200);
+    return;
+  }
+
+  // Cancel any in-progress simulation
+  _simTimers.forEach(t => clearTimeout(t));
+  _simTimers = [];
+
+  const s = THREAT_SCENARIOS[key];
+
+  // ── Phase strip ──
+  const phaseEl = document.getElementById('sim-phases');
+  phaseEl.style.display = 'flex';
+  for (let i = 0; i < 4; i++) {
+    const el = document.getElementById(`sim-phase-${i}`);
+    el.textContent = s.phases[i];
+    el.className = 'attack-phase';
+  }
+
+  // ── System flow ──
+  const flowEl = document.getElementById('sim-flow');
+  flowEl.style.display = 'flex';
+  ['sn-attacker','sn-mid','sn-server','sn-target'].forEach(id => {
+    document.getElementById(id).className = 'sys-node';
+  });
+  ['fc-0','fc-1','fc-2'].forEach(id => {
+    const fc = document.getElementById(id);
+    fc.className = 'flow-conn';
+    fc.querySelectorAll('.pkt-dot').forEach(d => d.remove());
+  });
+  document.getElementById('sn-mid-i').textContent = s.mid.i;
+  document.getElementById('sn-mid-l').textContent = s.mid.l;
+  document.getElementById('sn-srv-i').textContent = s.srv.i;
+  document.getElementById('sn-srv-l').textContent = s.srv.l;
+  document.getElementById('sn-tgt-i').textContent = s.tgt.i;
+  document.getElementById('sn-tgt-l').textContent = s.tgt.l;
+
+  // ── Log ──
+  const logEl = document.getElementById('sim-log');
+  logEl.style.display = 'block';
+  logEl.innerHTML = '';
+
+  // ── CIA strip ──
+  const ciaEl = document.getElementById('sim-cia');
+  ciaEl.style.display = 'grid';
+  ['c','i','a'].forEach(k => {
+    document.getElementById(`cic-${k}`).className = 'cia-impact-cell';
+    document.getElementById(`cic-${k}-s`).textContent = '—';
+  });
+
+  // ── Disable button ──
+  const btn = document.getElementById('attack-sim-btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Running...';
+
+  // ── Execute steps ──
+  let lastPh = -1;
+  s.steps.forEach(step => {
+    const t = setTimeout(() => {
+      // Phase progress
+      if (step.ph !== lastPh) {
+        if (lastPh >= 0) {
+          const prev = document.getElementById(`sim-phase-${lastPh}`);
+          if (prev) prev.classList.replace('active', 'done');
+        }
+        const cur = document.getElementById(`sim-phase-${step.ph}`);
+        if (cur) cur.classList.add('active');
+        lastPh = step.ph;
+      }
+      // Animate packet(s)
+      if (step.fc !== undefined) _firePacket(`fc-${step.fc}`, step.multi);
+      // Highlight compromised node
+      if (step.sn) document.getElementById(step.sn).classList.add('sn-hit');
+      // Append log line
+      const cls = step.log[0] === 'err' ? 'tl-err' : step.log[0] === 'warn' ? 'tl-warn' : step.log[0] === 'ok' ? 'tl-ok' : 'tl-info';
+      const line = document.createElement('div');
+      line.className = `tl ${cls}`;
+      line.textContent = step.log[1];
+      logEl.appendChild(line);
+      logEl.scrollTop = logEl.scrollHeight;
+      // Final phase → mark done
+      if (step.final) {
+        const cur = document.getElementById(`sim-phase-${step.ph}`);
+        if (cur) { cur.classList.remove('active'); cur.classList.add('done'); }
+      }
+    }, step.d);
+    _simTimers.push(t);
+  });
+
+  // ── Update CIA indicators + re-enable button ──
+  const ciaT = setTimeout(() => {
+    const map = {C:'c', I:'i', A:'a'};
+    Object.entries(s.cia).forEach(([k, status]) => {
+      const id = map[k];
+      document.getElementById(`cic-${id}`).className = `cia-impact-cell cic-${status}`;
+      document.getElementById(`cic-${id}-s`).textContent = status === 'violated' ? 'VIOLATED ✗' : 'Intact ✓';
+    });
+    btn.disabled = false;
+    btn.textContent = '▶ Simulate';
+  }, s.ciaD);
+  _simTimers.push(ciaT);
+}
+
+function demonstrateKeyExchange() {
+  keyDemoViewed = true;
+  saveState();
+  checkReflectionLock();
+
+  const demoDiv = document.getElementById('key-exchange-demo');
+
+  // Build the animated stage
+  demoDiv.innerHTML = `
+    <div class="kx-wrap">
+      <div class="kx-progress">
+        <div class="kx-prog-step" id="kxp-0"></div>
+        <div class="kx-prog-step" id="kxp-1"></div>
+        <div class="kx-prog-step" id="kxp-2"></div>
+        <div class="kx-prog-step" id="kxp-3"></div>
+        <div class="kx-prog-step" id="kxp-4"></div>
+      </div>
+      <div class="kx-step-lbl" id="kx-lbl">Initializing…</div>
+      <div class="kx-stage">
+        <div class="kx-actor" id="kx-alice">
+          <div class="kx-av">🙍‍♀️</div>
+          <div class="kx-nm">Alice</div>
+          <div class="kx-st" id="kx-ast">Waiting for Bob's key…</div>
+          <div class="kx-dat" id="kx-adat"></div>
+        </div>
+        <div class="kx-mid">
+          <div class="kx-conn" id="kx-conn"></div>
+          <div class="kx-ch-lbl">📡 Public Channel</div>
+        </div>
+        <div class="kx-actor" id="kx-bob">
+          <div class="kx-av">🧑‍💻</div>
+          <div class="kx-nm">Bob</div>
+          <div class="kx-st" id="kx-bst">Starting…</div>
+          <div class="kx-dat" id="kx-bdat"></div>
+        </div>
+      </div>
+      <div class="kx-result" id="kx-result">
+        ✅ Secure channel established — the private key <strong>never left Bob's machine</strong>. Only Bob can read Alice's message.
+      </div>
+    </div>
+  `;
+
+  // ── helpers ──────────────────────────────────────────
+  function firePacket(dir, emoji) {
+    const conn = document.getElementById('kx-conn');
+    if (!conn) return;
+    conn.classList.add('kxc-lit');
+    const dot = document.createElement('div');
+    dot.className = 'kx-pkt';
+    dot.textContent = emoji;
+    const w = conn.offsetWidth || 120;
+    const startX = dir === 'ltr' ? 0 : w - 22;
+    const endX   = dir === 'ltr' ? w - 22 : 0;
+    dot.style.left = startX + 'px';
+    conn.appendChild(dot);
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      dot.style.transition = 'left 680ms ease-in-out';
+      dot.style.left = endX + 'px';
+      setTimeout(() => { if (dot.parentNode) dot.remove(); conn.classList.remove('kxc-lit'); }, 760);
+    }));
+  }
+
+  function chip(parentId, cls, text) {
+    const d = document.getElementById(parentId);
+    if (!d) return;
+    const c = document.createElement('span');
+    c.className = 'kx-chip ' + cls;
+    c.textContent = text;
+    d.appendChild(c);
+  }
+
+  function removeChip(parentId, cls) {
+    const d = document.getElementById(parentId);
+    if (!d) return;
+    const el = d.querySelector('.' + cls);
+    if (el) el.remove();
+  }
+
+  function setStep(n, lbl) {
+    for (let i = 0; i < 5; i++) {
+      const el = document.getElementById('kxp-' + i);
+      if (el) el.className = 'kx-prog-step' + (i < n ? ' kxp-done' : i === n ? ' kxp-active' : '');
+    }
+    const l = document.getElementById('kx-lbl');
+    if (l) l.textContent = lbl;
+  }
+
+  function active(id) { const el = document.getElementById(id); if (el) { el.classList.add('kxa-active'); el.classList.remove('kxa-done'); } }
+  function done(id)   { const el = document.getElementById(id); if (el) { el.classList.remove('kxa-active'); el.classList.add('kxa-done'); } }
+  function idle(id)   { const el = document.getElementById(id); if (el) { el.classList.remove('kxa-active','kxa-done'); } }
+
+  const T = (fn, d) => setTimeout(fn, d);
+
+  // ── Step 1 — Bob generates key pair ──────────────────
+  setStep(0, 'Step 1 of 5 — Bob generates an RSA key pair');
+  active('kx-bob');
+  document.getElementById('kx-bst').textContent = '⚙️ Generating RSA-2048 key pair…';
+
+  T(() => {
+    chip('kx-bdat', 'kx-pub', '🔓 Public Key');
+    chip('kx-bdat', 'kx-prv', '🔒 Private Key');
+    document.getElementById('kx-bst').textContent = '✓ Keys ready. Sharing public key…';
+  }, 850);
+
+  // ── Step 2 — Bob sends Public Key → Alice ────────────
+  T(() => {
+    setStep(1, 'Step 2 of 5 — Bob sends his Public Key over the public channel');
+    firePacket('rtl', '🔓');
+  }, 1700);
+
+  T(() => {
+    chip('kx-adat', 'kx-pub', '🔓 Bob\'s Public Key');
+    document.getElementById('kx-ast').textContent = '✓ Got Bob\'s public key';
+    active('kx-alice');
+    done('kx-bob');
+  }, 2550);
+
+  // ── Step 3 — Alice encrypts her message ──────────────
+  T(() => {
+    setStep(2, 'Step 3 of 5 — Alice encrypts her message with Bob\'s Public Key');
+    document.getElementById('kx-ast').textContent = '✍️ Writing plaintext message…';
+    chip('kx-adat', 'kx-msg', '📩 "Meet at noon"');
+  }, 3350);
+
+  T(() => {
+    document.getElementById('kx-ast').textContent = '🔐 Encrypting with Bob\'s public key…';
+  }, 4100);
+
+  T(() => {
+    removeChip('kx-adat', 'kx-msg');
+    chip('kx-adat', 'kx-enc', '🔐 4a7f…c2b9');
+    document.getElementById('kx-ast').textContent = '✓ Ciphertext ready — only Bob can open this';
+  }, 4700);
+
+  // ── Step 4 — Alice sends ciphertext → Bob ────────────
+  T(() => {
+    setStep(3, 'Step 4 of 5 — Alice sends the ciphertext over the public channel');
+    document.getElementById('kx-ast').textContent = '📤 Sending ciphertext to Bob…';
+    firePacket('ltr', '🔐');
+  }, 5500);
+
+  T(() => {
+    chip('kx-bdat', 'kx-enc', '🔐 4a7f…c2b9');
+    document.getElementById('kx-bst').textContent = '📥 Received ciphertext';
+    active('kx-bob');
+    done('kx-alice');
+  }, 6350);
+
+  // ── Step 5 — Bob decrypts with Private Key ───────────
+  T(() => {
+    setStep(4, 'Step 5 of 5 — Bob decrypts using his Private Key');
+    document.getElementById('kx-bst').textContent = '🔓 Decrypting with private key…';
+  }, 7100);
+
+  T(() => {
+    removeChip('kx-bdat', 'kx-enc');
+    chip('kx-bdat', 'kx-ok', '📩 "Meet at noon"');
+    document.getElementById('kx-bst').textContent = '✅ Message decrypted!';
+    done('kx-bob');
+
+    // All steps green
+    for (let i = 0; i < 5; i++) {
+      const el = document.getElementById('kxp-' + i);
+      if (el) el.className = 'kx-prog-step kxp-done';
+    }
+    const lbl = document.getElementById('kx-lbl');
+    if (lbl) { lbl.textContent = '✅ Secure exchange complete!'; lbl.style.color = '#3fb950'; }
+
+    document.getElementById('kx-result').classList.add('show');
+  }, 7900);
+}
+
+// Returns 'weak', 'medium', 'strong', or null (too short to classify)
+function getPasswordStrength(password) {
+  if (!password || password.length < 4) return null;
+  let score = 0;
+  if (password.length >= 16) score += 3;
+  else if (password.length >= 12) score += 2;
+  else if (password.length >= 8) score += 1;
+  if (/[a-z]/.test(password)) score += 1;
+  if (/[A-Z]/.test(password)) score += 1;
+  if (/[0-9]/.test(password)) score += 1;
+  if (/[^A-Za-z0-9]/.test(password)) score += 1;
+  if (/(.)\1{2,}/.test(password)) score -= 1;
+  if (/123|abc|qwe/i.test(password)) score -= 1;
+  if (/password|admin|welcome/i.test(password)) score -= 2;
+  // Categorize: Strong requires 12+ chars AND score >= 5
+  if (password.length >= 12 && score >= 5) return 'strong';
+  if (password.length < 8 || score <= 2) return 'weak';
+  return 'medium';
+}
+
+function crackTimeStr(val) {
+  let cs = 0;
+  if (/[a-z]/.test(val)) cs += 26;
+  if (/[A-Z]/.test(val)) cs += 26;
+  if (/[0-9]/.test(val)) cs += 10;
+  if (/[^A-Za-z0-9]/.test(val)) cs += 32;
+  if (cs === 0) cs = 26;
+  const secs = Math.pow(cs, val.length) / 2 / 1e10;
+  if (secs < 0.001) return 'instantly';
+  if (secs < 1) return '<1 second';
+  if (secs < 60) return `${secs.toFixed(1)}s`;
+  if (secs < 3600) return `${(secs/60).toFixed(1)} min`;
+  if (secs < 86400) return `${(secs/3600).toFixed(1)} hrs`;
+  if (secs < 31536000) return `${(secs/86400).toFixed(1)} days`;
+  if (secs < 3.154e10) return `${(secs/31536000).toFixed(1)} yrs`;
+  return 'millions of yrs';
+}
+
+function checkPasswordLevel(level, val) {
+  const strength = getPasswordStrength(val);
+  const barEl = document.getElementById(`pw-${level}-bar`);
+  const feedback = document.getElementById(`pw-${level}-feedback`);
+
+  const strengthColors = {weak:'#f85149', medium:'#e3b341', strong:'#3fb950'};
+  const barClasses = {weak:'strength-fill strength-weak', medium:'strength-fill strength-medium', strong:'strength-fill strength-strong'};
+
+  if (!val) {
+    barEl.className = 'strength-fill';
+    barEl.style.width = '0%';
+    feedback.innerHTML = '';
+    passwordLevelsAchieved[level] = false;
+  } else if (strength === level) {
+    barEl.className = barClasses[level];
+    barEl.style.width = '';
+    const t = crackTimeStr(val);
+    feedback.innerHTML = `<span style="color:${strengthColors[level]};font-weight:600">${level.charAt(0).toUpperCase()+level.slice(1)} ✓</span> <span style="color:#8b949e;font-size:.8rem">⏱ Cracks in: <strong>${t}</strong></span>`;
+    passwordLevelsAchieved[level] = true;
+    passwordEntries[level] = val;
+  } else {
+    const detected = strength || 'too short';
+    const detectedColor = strength ? strengthColors[strength] : '#8b949e';
+    barEl.className = strength ? barClasses[strength] : 'strength-fill strength-weak';
+    barEl.style.width = '';
+    const t = val.length >= 4 ? crackTimeStr(val) : '';
+    feedback.innerHTML = `<span style="color:#8b949e;font-size:.85rem">Detected: <strong style="color:${detectedColor}">${detected.charAt(0).toUpperCase()+detected.slice(1)}</strong> — this field needs a <strong style="color:${strengthColors[level]}">${level}</strong> password${t ? ` ⏱ <strong>${t}</strong>` : ''}</span>`;
+    passwordLevelsAchieved[level] = false;
+  }
+
+  const allDone = passwordLevelsAchieved.weak && passwordLevelsAchieved.medium && passwordLevelsAchieved.strong;
+  document.getElementById('pw-all-done').style.display = allDone ? 'block' : 'none';
+  saveState();
+  checkReflectionLock();
+}
+
+function checkReflectionLock() {
+  const allPwLevels = passwordLevelsAchieved.weak && passwordLevelsAchieved.medium && passwordLevelsAchieved.strong;
+  const checks = [
+    { label: 'Answer the mini quiz correctly',                          done: quizPassed },
+    { label: 'Click "Demonstrate Key Exchange"',                        done: keyDemoViewed },
+    { label: 'Complete the Password Task (Weak, Medium &amp; Strong)',  done: allPwLevels },
+    { label: 'Upload your key pair terminal screenshot',                done: screenshotUploaded },
+  ];
+  const allDone = checks.every(c => c.done);
+  const lockDiv = document.getElementById('reflection-lock');
+  const subArea = document.getElementById('submission-area');
+
+  if (allDone) {
+    lockDiv.style.display = 'none';
+    subArea.classList.remove('sub-area-locked');
+  } else {
+    lockDiv.style.display = 'block';
+    subArea.classList.add('sub-area-locked');
+  }
+
+  updateObjOverlay(checks);
+}
+
+function submitReflection() {
+  const reflection  = document.getElementById('learning-reflection').value;
+  const studentName = (document.getElementById('student-name').value || '').trim();
+
+  if (!studentName) {
+    alert('Please enter your full name before submitting.');
+    document.getElementById('student-name').focus();
+    return;
+  }
+  if (reflection.trim().length < 50) {
+    alert('Please write a more detailed reflection (at least 50 characters).');
+    return;
+  }
+
+  const labFeedback = (document.getElementById('lab-feedback').value || '').trim();
+  const submittedAt = new Date().toISOString();
+  const allPwLevels = passwordLevelsAchieved.weak && passwordLevelsAchieved.medium && passwordLevelsAchieved.strong;
+  const submission = {
+    studentName,
+    openedAt,
+    submittedAt,
+    timeOnPageMs: new Date(submittedAt) - new Date(openedAt),
+    quizPassed,
+    quizAttempts,
+    ciaInteracted,
+    ciaPillarSelected: selectedCIAPillar,
+    keyDemoViewed,
+    allPwLevels,
+    passwordEntries,
+    screenshotUploaded,
+    screenshotDataUrl,
+    reflection,
+    labFeedback,
+    labCompleted: 'Module 1 Lab'
+  };
+  localStorage.setItem('week1-lab-submission', JSON.stringify(submission));
+  saveState();
+
+  const _fb = document.getElementById('submission-feedback');
+  const _alreadySaved = document.getElementById('export-pdf-btn').style.display !== 'none';
+  _fb.innerHTML = _alreadySaved
+    ? '✅ Updated! Export PDF will reflect your latest changes.'
+    : '✅ Saved! Edit and re-save anytime — Export PDF always uses your latest version.';
+  _fb.style.display = 'block';
+  document.getElementById('export-pdf-btn').style.display = 'inline-block';
+  const submitBtn = document.getElementById('submit-reflection');
+  submitBtn.textContent = '✓ Saved!';
+  submitBtn.style.background = '#3fb950';
+  setTimeout(() => {
+    submitBtn.textContent = '💾 Save Reflection';
+    submitBtn.style.background = '';
+  }, 2000);
+}
+
+function exportPDF() {
+  const data = JSON.parse(localStorage.getItem('week1-lab-submission') || '{}');
+
+  document.getElementById('ps-name').textContent      = data.studentName || '—';
+  document.getElementById('ps-opened').textContent    = data.openedAt    ? fmtTs(data.openedAt)    : '—';
+  document.getElementById('ps-submitted').textContent = data.submittedAt ? fmtTs(data.submittedAt) : '—';
+  document.getElementById('ps-duration').textContent  = data.timeOnPageMs != null ? fmtDur(data.timeOnPageMs) : '—';
+
+  document.getElementById('ps-interactions').innerHTML = `
+    <table>
+      <tr><td>Quiz:</td><td>${data.quizPassed ? '✅ Passed' : '❌ Not passed'} (${data.quizAttempts || 0} attempt${data.quizAttempts !== 1 ? 's' : ''})</td></tr>
+      <tr><td>Key Exchange Demo:</td><td>${data.keyDemoViewed ? '✅ Viewed' : '❌ Not viewed'}</td></tr>
+      <tr><td>CIA Pillars:</td><td>${data.ciaInteracted ? `✅ Explored (last: ${data.ciaPillarSelected || '—'})` : '❌ Not explored'}</td></tr>
+      <tr><td>Password Task:</td><td>${data.allPwLevels ? '✅ All 3 levels completed' : '❌ Incomplete'}</td></tr>
+      <tr><td>Weak password:</td><td>${(data.passwordEntries && data.passwordEntries.weak) || '—'}</td></tr>
+      <tr><td>Medium password:</td><td>${(data.passwordEntries && data.passwordEntries.medium) || '—'}</td></tr>
+      <tr><td>Strong password:</td><td>${(data.passwordEntries && data.passwordEntries.strong) || '—'}</td></tr>
+      <tr><td>Key Screenshot:</td><td>${data.screenshotUploaded ? '✅ Uploaded' : '❌ Not uploaded'}</td></tr>
+    </table>`;
+
+  // Screenshot
+  const psScreenshot = document.getElementById('ps-screenshot');
+  if (data.screenshotDataUrl) {
+    psScreenshot.innerHTML = `<img src="${data.screenshotDataUrl}" style="max-width:100%;border:1px solid #ccc;border-radius:4px;margin-top:.25rem" alt="Key pair terminal screenshot">`;
+  } else {
+    psScreenshot.textContent = 'No screenshot uploaded.';
+  }
+
+  document.getElementById('ps-reflection').textContent = data.reflection || '—';
+  document.getElementById('ps-feedback').textContent = data.labFeedback || '—';
+
+  document.getElementById('print-summary').style.display = 'block';
+  // Set document.title → used by browser as the suggested PDF filename
+  const _origTitle = document.title;
+  const _pdfState  = JSON.parse(localStorage.getItem('lab01-state') || '{}');
+  const _pdfName   = (_pdfState.studentName || '').trim()
+                     || (document.getElementById('student-name') ? document.getElementById('student-name').value.trim() : '');
+  if (_pdfName) {
+    const _slug = _pdfName.replace(/[^\w\s\-]/g, '').trim();
+    document.title = _slug + ' — ' + _origTitle;
+  }
+  window.print();
+  setTimeout(() => {
+    document.title = _origTitle;
+    document.getElementById('print-summary').style.display = 'none';
+  }, 500);
+}
+
+function fmtTs(iso) { return new Date(iso).toLocaleString(); }
+function fmtDur(ms) {
+  const s = Math.floor(ms / 1000), m = Math.floor(s / 60), h = Math.floor(m / 60);
+  if (h > 0) return `${h}h ${m % 60}m ${s % 60}s`;
+  if (m > 0) return `${m}m ${s % 60}s`;
+  return `${s}s`;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  loadState();
+  checkReflectionLock();
+  const os = detectOS();
+  showOSCommands(os);
+  const label = document.getElementById('detected-os-label');
+  if (label) label.textContent = OS_LABELS[os] || 'your OS';
+});
+
+function showOSCommands(os) {
+  ['mac', 'win', 'linux'].forEach(o => {
+    document.getElementById(`os-${o}`).style.display = o === os ? 'block' : 'none';
+    const tab = document.getElementById(`os-tab-${o}`);
+    tab.style.background = o === os ? '#1f6feb' : '#21262d';
+    tab.style.color = o === os ? '#fff' : '#8b949e';
+  });
+}
+
+function detectOS() {
+  const ua = (navigator.userAgent || '').toLowerCase();
+  const platform = (navigator.platform || '').toLowerCase();
+  if (platform.includes('win') || ua.includes('windows')) return 'win';
+  if (platform.includes('linux') || ua.includes('linux')) return 'linux';
+  return 'mac'; // default: macOS / any other Unix
+}
+
+const OS_LABELS = { mac: 'macOS', win: 'Windows', linux: 'Linux' };
+
+const HINTS = {
+  B: "Integrity focuses on data accuracy and tampering prevention, not unauthorized reading.",
+  C: "Availability is about system uptime and access, not data privacy breaches.",
+  D: "While related, the primary violation here is unauthorized access to private information."
+};
+
+function check(choice, btn) {
+  quizAttempts++;
+  const correct = choice === 'A';
+  markBtn(btn, correct);
+
+  if (correct) {
+    answered = true;
+    quizPassed = true;
+    showFeedback(true, "Correct! <strong>Confidentiality</strong> is violated when unauthorized parties gain access to private information. Even if the email is encrypted, reading it without permission breaks confidentiality. The data itself wasn't changed (integrity) and the system remained accessible (availability).");
+  } else {
+    showFeedback(false, HINTS[choice]);
+  }
+  saveState();
+  checkReflectionLock();
+}
+</script>
+</body>
+</html>

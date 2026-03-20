@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Module 8 Lab – IPsec, TLS 1.3 & Perfect Forward Secrecy</title>
+  <style>
+    *,*::before,*::after{box-sizing:border-box}
+    body{background:#0d1117;color:#c9d1d9;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;min-height:100vh;margin:0}
+    a{color:#58a6ff}
+    code{background:#21262d;border-radius:3px;padding:1px 5px;font-family:"SFMono-Regular",Consolas,monospace;font-size:.875em}
+    .navbar{background:#161b22;border-bottom:1px solid #30363d;padding:.75rem 1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem}
+    .navbar-brand{font-weight:700;color:#e6edf3;text-decoration:none;font-size:1.1rem}
+    .nav-actions{display:flex;align-items:center;gap:.75rem}
+    .container{max-width:900px;margin:0 auto;padding:1.5rem 1rem}
+    .lab-badge{display:inline-block;background:#0d4d8c;color:#fff;font-size:.72rem;font-weight:600;padding:2px 10px;border-radius:12px;margin-bottom:.5rem;text-transform:uppercase;letter-spacing:.06em}
+    .lab-header{margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid #30363d}
+    .lab-header h2{color:#e6edf3;margin:.25rem 0 .1rem;font-size:1.6rem}
+    .lab-header p{color:#8b949e;margin:0;font-size:.95rem}
+    .scenario-box{background:#161b22;border-left:4px solid #0d4d8c;border-radius:0 8px 8px 0;padding:1rem 1.25rem;margin-bottom:1.5rem}
+    .scenario-box p{margin:0;line-height:1.65}
+    .demo-box{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:1.5rem;margin-bottom:1.5rem}
+    .demo-box h4{margin-top:0;color:#e6edf3}
+    .options-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+    @media(max-width:600px){.options-grid{grid-template-columns:1fr}}
+    .opt-btn{display:flex;align-items:center;gap:.6rem;text-align:left;background:#161b22;border:1px solid #30363d;border-radius:6px;padding:.65rem .9rem;color:#c9d1d9;cursor:pointer;width:100%;font-size:.95rem;transition:border-color .15s}
+    .opt-btn:hover{border-color:#58a6ff;background:#1c2940;color:#e6edf3}
+    .opt-btn.correct{background:#1c2a1c!important;border-color:#238636!important;color:#3fb950!important}
+    .opt-btn.incorrect{background:#2a1c1c!important;border-color:#da3633!important;color:#f85149!important}
+    .opt-id{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;background:#30363d;border-radius:4px;font-size:.78rem;font-weight:700;flex-shrink:0}
+    .feedback-box{border-radius:8px;padding:1rem 1.25rem;margin-top:.75rem;font-size:.95rem;line-height:1.65;display:none}
+    .feedback-box.show{display:block}
+    .feedback-correct{background:#1c2a1c;border:1px solid #238636;color:#3fb950}
+    .feedback-incorrect{background:#2a1c1c;border:1px solid #da3633;color:#f85149}
+    .why-box{background:#1c2a1c;border:1px solid #238636;border-radius:8px;padding:1.25rem;margin-top:1rem;display:none}
+    .why-box.show{display:block}
+    .why-box h6{color:#3fb950;font-weight:700;margin:0 0 .5rem}
+    .why-box ul{margin:.5rem 0 .5rem 1.25rem;padding:0;line-height:1.8}
+    .badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.75rem;font-weight:600}
+    .badge-green{background:#1c2a1c;color:#3fb950;border:1px solid #238636}
+    .badge-red{background:#2a1c1c;color:#f85149;border:1px solid #da3633}
+    .badge-yellow{background:#2a2000;color:#e3b341;border:1px solid #9e6a03}
+    .badge-blue{background:#1c2940;color:#58a6ff;border:1px solid #1f6feb}
+    .reflection-box{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:1.5rem;margin:1.5rem 0}
+    .reflection-input{background:#21262d;border:1px solid #30363d;border-radius:6px;padding:.75rem;color:#e6edf3;width:100%;min-height:120px;font-family:inherit;resize:vertical}
+    .reflection-input:focus{outline:none;border-color:#58a6ff}
+    .text-input{background:#21262d;border:1px solid #30363d;border-radius:6px;padding:.5rem .75rem;color:#e6edf3;font-family:inherit;font-size:.9rem}
+    .text-input:focus{outline:none;border-color:#58a6ff}
+    .submit-btn{background:#1f6feb;color:#fff;border:none;border-radius:6px;padding:.5rem 1rem;cursor:pointer;font-size:.9rem;margin-top:.5rem}
+    .export-pdf-btn{background:#3fb950;color:#fff;border:none;border-radius:6px;padding:.5rem 1rem;cursor:pointer;font-size:.9rem;margin-top:.5rem;margin-left:.5rem;display:none}
+    .action-btn{background:#21262d;color:#c9d1d9;border:1px solid #30363d;border-radius:6px;padding:.45rem .9rem;cursor:pointer;font-size:.85rem;transition:border-color .15s}
+    .action-btn:hover{border-color:#58a6ff;color:#58a6ff}
+    .action-btn-blue{background:#1f6feb;color:#fff;border:none;border-radius:6px;padding:.45rem .9rem;cursor:pointer;font-size:.85rem}
+    .action-btn-blue:hover{background:#1c64e8}
+    #print-summary{display:none;font-family:Arial,sans-serif;color:#000;padding:2rem;line-height:1.6}
+    #print-summary h1{font-size:1.4rem}#print-summary h2{font-size:1.1rem;border-bottom:1px solid #ccc;padding-bottom:.2rem}
+    #print-summary table{border-collapse:collapse;width:100%}#print-summary td{padding:.2rem .5rem;vertical-align:top}#print-summary td:first-child{font-weight:bold;width:160px}
+    .reflection-title{font-weight:600;color:#e6edf3;margin-bottom:.75rem;font-size:1rem}
+    .sub-area-locked{opacity:.45;pointer-events:none;user-select:none}
+    .sub-area-unlocked{opacity:1;pointer-events:auto}
+    @media print{body>*:not(#print-summary){display:none!important}#print-summary{display:block!important}}
+    .lab-footer{display:flex;justify-content:space-between;align-items:center;margin-top:2rem;padding-top:1rem;border-top:1px solid #30363d}
+    .btn-nav{display:inline-flex;align-items:center;gap:.4rem;padding:.4rem .9rem;border:1px solid #30363d;border-radius:6px;color:#c9d1d9;text-decoration:none;font-size:.85rem;background:#161b22;transition:border-color .15s}
+    .btn-nav:hover{border-color:#58a6ff;color:#58a6ff}
+
+    /* Packet diagrams */
+    .pkt-wrap{display:flex;flex-direction:column;gap:.3rem;margin:.75rem 0}
+    .pkt-row{display:flex;gap:2px;align-items:stretch;font-size:.72rem;font-family:monospace}
+    .pkt-field{padding:.4rem .3rem;text-align:center;border-radius:3px;flex:1;min-width:0;font-weight:600;word-break:break-word;line-height:1.3}
+    .pkt-encrypted{background:#1a0d2e;border:1px dashed #6e40c9;color:#c084fc}
+    .pkt-clear{background:#1c2a1c;border:1px solid #238636;color:#3fb950}
+    .pkt-new{background:#1c2940;border:1px solid #1f6feb;color:#58a6ff}
+    .pkt-meta{background:#21262d;border:1px solid #30363d;color:#8b949e}
+
+    /* IKEv2 */
+    .ike-actors{display:grid;grid-template-columns:1fr 160px 1fr;gap:.5rem;align-items:stretch}
+    .ike-actor{background:#21262d;border:2px solid #30363d;border-radius:8px;padding:.65rem .5rem;text-align:center;transition:border-color .4s,background .4s}
+    .ike-actor.active{border-color:#58a6ff;background:#0d1a2e}
+    .ike-actor.done{border-color:#238636}
+    .ike-actor .ia-name{font-weight:700;color:#e6edf3;font-size:.85rem}
+    .ike-actor .ia-icon{font-size:1.5rem;margin-bottom:.25rem}
+    .ike-actor .ia-state{font-size:.72rem;color:#8b949e;min-height:2em;margin-top:.25rem;line-height:1.4;transition:color .3s}
+    .ike-mid{display:flex;flex-direction:column;justify-content:center;gap:.3rem;padding:0 .25rem}
+    .ike-msg{text-align:center;font-size:.72rem;font-family:monospace;padding:.3rem .2rem;border-radius:4px;opacity:0;transition:opacity .4s;line-height:1.4}
+    .ike-msg.show{opacity:1}
+
+    /* TLS comparison */
+    .tls-compare{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+    @media(max-width:580px){.tls-compare{grid-template-columns:1fr}}
+    .tls-lane{background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:.75rem}
+    .tls-lane h5{margin:0 0 .5rem;color:#e6edf3;font-size:.85rem;font-weight:600}
+    .tls-step{font-size:.78rem;font-family:monospace;padding:.25rem .4rem;border-radius:4px;margin:.2rem 0;opacity:0;transition:opacity .4s,transform .4s;transform:translateY(4px)}
+    .tls-step.show{opacity:1;transform:none}
+    .tls-step.s2c{color:#58a6ff}
+    .tls-step.c2s{color:#3fb950}
+    .tls-step.enc{color:#c084fc}
+    .tls-step.app{color:#e3b341}
+    .tls-rtt{font-size:.72rem;color:#e3b341;font-weight:600;margin:.4rem 0 .2rem;font-family:monospace}
+
+    /* PFS scenario */
+    .pfs-scenario{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:.75rem}
+    @media(max-width:580px){.pfs-scenario{grid-template-columns:1fr}}
+    .pfs-box{border:1px solid #30363d;border-radius:6px;padding:.85rem;font-size:.82rem}
+
+    /* VPN table */
+    .vpn-table{font-size:.8rem}
+    .vpn-table th{font-size:.72rem}
+    .vpn-row-sel{background:#1c2940!important}
+
+    #obj-overlay{position:fixed;bottom:1rem;right:1rem;z-index:1000;font-size:.8rem}
+    #obj-badge{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.4rem .7rem;cursor:pointer;color:#8b949e;user-select:none;display:flex;align-items:center;gap:.4rem}
+    #obj-panel{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.6rem .8rem;margin-top:.3rem;min-width:220px;display:block}
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="navbar-brand" href="../">🔐 Cryptography Labs</a>
+  <div class="nav-actions">
+    <span class="nav-pill" style="font-size:.8rem;color:#8b949e">Module 8 Lab</span>
+    <button onclick="resetLab()" style="background:none;border:1px solid #30363d;border-radius:6px;padding:.25rem .6rem;color:#8b949e;cursor:pointer;font-size:.75rem">↺ Reset</button>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="lab-header">
+    <div class="lab-badge">Module 8 · Protocols</div>
+    <h2>IPsec, TLS 1.3 &amp; Perfect Forward Secrecy</h2>
+    <p>Tunnel vs Transport mode, IKEv2 key exchange, TLS 1.2 vs 1.3 differences, and VPN protocol comparison</p>
+  </div>
+
+  <div class="scenario-box">
+    <p><strong>Scenario:</strong> Your organization's VPN was found to be using TLS 1.2 with static RSA key exchange. An incident report suggests an adversary has been recording encrypted traffic for years. Now you need to understand what data is at risk (hint: Perfect Forward Secrecy), compare IPsec and TLS architectures, and recommend a modern protocol stack.</p>
+  </div>
+
+  <!-- Demo 1: IPsec Tunnel vs Transport -->
+  <div class="demo-box">
+    <h4>🌐 Demo 1 — IPsec: Tunnel vs Transport Mode</h4>
+    <p style="color:#8b949e;margin-bottom:.75rem">Compare how each mode structures the packet and what gets encrypted.</p>
+    <div style="display:flex;gap:.5rem;margin-bottom:.75rem;flex-wrap:wrap">
+      <button class="action-btn" id="mode-transport" onclick="showMode('transport')">Transport Mode</button>
+      <button class="action-btn-blue" id="mode-tunnel" onclick="showMode('tunnel')">Tunnel Mode</button>
+      <button class="action-btn" id="proto-esp" onclick="showProto('esp')" style="margin-left:.5rem">ESP</button>
+      <button class="action-btn" id="proto-ah" onclick="showProto('ah')">AH</button>
+    </div>
+    <div id="pkt-diagram"></div>
+    <div id="mode-explain" style="font-size:.82rem;color:#8b949e;margin-top:.5rem;line-height:1.7"></div>
+    <div style="background:#1c2940;border:1px solid #1f6feb;border-radius:6px;padding:.65rem .85rem;margin-top:.75rem;font-size:.82rem;color:#58a6ff">
+      💡 <strong>ESP vs AH:</strong> ESP (Encapsulating Security Payload) provides encryption + optional authentication. AH (Authentication Header) provides authentication only — no encryption. In practice, ESP with authentication is almost always used. AH cannot traverse NAT (it authenticates the IP header, which NAT changes).
+    </div>
+  </div>
+
+  <!-- Demo 2: IKEv2 -->
+  <div class="demo-box">
+    <h4>🤝 Demo 2 — IKEv2 Key Exchange Phases</h4>
+    <p style="color:#8b949e;margin-bottom:.75rem">IKEv2 establishes the IPsec Security Association in two phases. Step through the exchange.</p>
+    <div class="ike-actors">
+      <div class="ike-actor" id="ike-init">
+        <div class="ia-icon">💻</div>
+        <div class="ia-name">Initiator</div>
+        <div class="ia-state" id="ike-init-state">Waiting to start…</div>
+      </div>
+      <div class="ike-mid">
+        <div class="ike-msg" id="ike-m1" style="background:#1c2940;border:1px solid #1f6feb;color:#58a6ff"></div>
+        <div class="ike-msg" id="ike-m2" style="background:#1c2a1c;border:1px solid #238636;color:#3fb950"></div>
+        <div class="ike-msg" id="ike-m3" style="background:#2a2000;border:1px solid #9e6a03;color:#e3b341"></div>
+        <div class="ike-msg" id="ike-m4" style="background:#1a0d2e;border:1px solid #6e40c9;color:#c084fc"></div>
+      </div>
+      <div class="ike-actor" id="ike-resp">
+        <div class="ia-icon">🖥️</div>
+        <div class="ia-name">Responder</div>
+        <div class="ia-state" id="ike-resp-state">Waiting…</div>
+      </div>
+    </div>
+    <div id="ike-shared" style="display:none;margin-top:.5rem;background:#1c2a1c;border:1px solid #238636;border-radius:6px;padding:.6rem .85rem;font-size:.82rem;color:#3fb950;font-family:monospace"></div>
+    <div style="display:flex;gap:.5rem;margin-top:.75rem;flex-wrap:wrap">
+      <button class="action-btn-blue" id="ike-btn" onclick="ikeStep()">▶ IKE_SA_INIT Request</button>
+      <button class="action-btn" onclick="ikeReset()">↺ Reset</button>
+    </div>
+  </div>
+
+  <!-- Demo 3: TLS 1.2 vs 1.3 + PFS -->
+  <div class="demo-box">
+    <h4>🔒 Demo 3 — TLS 1.2 vs 1.3 &amp; Perfect Forward Secrecy</h4>
+    <p style="color:#8b949e;margin-bottom:.75rem">Focus on the key differences — not the basic handshake, but WHY 1.3 is better.</p>
+    <div style="display:flex;gap:.5rem;margin-bottom:.75rem">
+      <button class="action-btn" id="tls-btn" onclick="runTLSCompare()">▶ Run Both Handshakes</button>
+      <button class="action-btn" onclick="resetTLS()">↺ Reset</button>
+    </div>
+    <div class="tls-compare">
+      <div class="tls-lane">
+        <h5 style="color:#f85149">TLS 1.2 (static RSA)</h5>
+        <div id="tls12-steps"></div>
+      </div>
+      <div class="tls-lane">
+        <h5 style="color:#3fb950">TLS 1.3 (ECDHE)</h5>
+        <div id="tls13-steps"></div>
+      </div>
+    </div>
+    <div style="margin-top:1rem">
+      <div style="font-size:.85rem;font-weight:600;color:#e6edf3;margin-bottom:.5rem">⚠️ Perfect Forward Secrecy — Eavesdropper Scenario</div>
+      <div class="pfs-scenario">
+        <div class="pfs-box" style="border-color:#da3633">
+          <div style="color:#f85149;font-weight:600;margin-bottom:.4rem">TLS 1.2 + Static RSA</div>
+          <label style="font-size:.78rem;color:#8b949e"><input type="checkbox" id="rsa-stolen" onchange="checkPFS()"> Attacker steals server private key in 2027</label>
+          <div id="rsa-outcome" style="margin-top:.5rem;font-size:.8rem"></div>
+        </div>
+        <div class="pfs-box" style="border-color:#238636">
+          <div style="color:#3fb950;font-weight:600;margin-bottom:.4rem">TLS 1.3 + ECDHE</div>
+          <label style="font-size:.78rem;color:#8b949e"><input type="checkbox" id="ecdhe-stolen" onchange="checkPFS()"> Attacker steals server private key in 2027</label>
+          <div id="ecdhe-outcome" style="margin-top:.5rem;font-size:.8rem"></div>
+        </div>
+      </div>
+    </div>
+
+    <table style="margin-top:1rem;font-size:.8rem">
+      <thead><tr><th>Feature</th><th>TLS 1.2</th><th>TLS 1.3</th></tr></thead>
+      <tbody>
+        <tr><td>Round-trips before app data</td><td><span class="badge badge-red">2-RTT</span></td><td><span class="badge badge-green">1-RTT (0-RTT possible)</span></td></tr>
+        <tr><td>Cipher suite options</td><td><span class="badge badge-red">37 (incl. weak)</span></td><td><span class="badge badge-green">5 (all strong)</span></td></tr>
+        <tr><td>Key exchange</td><td><span class="badge badge-red">RSA or ECDHE</span></td><td><span class="badge badge-green">ECDHE only (PFS mandatory)</span></td></tr>
+        <tr><td>Certificate in handshake</td><td><span class="badge badge-red">Plaintext</span></td><td><span class="badge badge-green">Encrypted</span></td></tr>
+        <tr><td>Perfect Forward Secrecy</td><td><span class="badge badge-yellow">Optional (ECDHE cipher)</span></td><td><span class="badge badge-green">Always (mandatory)</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Demo 4: VPN Comparison -->
+  <div class="demo-box">
+    <h4>🛡️ Demo 4 — VPN Protocol Comparison</h4>
+    <p style="color:#8b949e;margin-bottom:.75rem">Click a row to highlight it, then use the scenario selector to see which protocol wins.</p>
+    <table class="vpn-table">
+      <thead>
+        <tr><th>Protocol</th><th>Transport</th><th>Performance</th><th>PFS</th><th>NAT Traversal</th><th>Crypto Agility</th></tr>
+      </thead>
+      <tbody>
+        <tr onclick="selectVPN(this,'ipsec')" style="cursor:pointer"><td><strong>IPsec/IKEv2</strong></td><td>UDP 500/4500</td><td>🟢 High</td><td>✅ Yes</td><td>✅ Yes</td><td>🟢 High</td></tr>
+        <tr onclick="selectVPN(this,'openvpn')" style="cursor:pointer"><td><strong>OpenVPN</strong></td><td>UDP 1194 / TCP 443</td><td>🟡 Medium</td><td>✅ Yes</td><td>✅ Yes</td><td>🟢 High</td></tr>
+        <tr onclick="selectVPN(this,'wireguard')" style="cursor:pointer"><td><strong>WireGuard</strong></td><td>UDP 51820</td><td>🟢 Fastest</td><td>✅ Yes</td><td>⚠️ Limited</td><td>🔴 Low (opinionated)</td></tr>
+        <tr onclick="selectVPN(this,'ssl')" style="cursor:pointer"><td><strong>SSL/TLS VPN</strong></td><td>TCP 443</td><td>🔴 Lower</td><td>✅ Yes</td><td>✅ Excellent</td><td>🟡 Medium</td></tr>
+      </tbody>
+    </table>
+    <div style="margin-top:.75rem">
+      <label style="font-size:.83rem;color:#8b949e">Scenario: </label>
+      <select id="vpn-scenario" onchange="showVPNScenario()" style="background:#21262d;border:1px solid #30363d;border-radius:6px;padding:.35rem .6rem;color:#e6edf3;font-size:.83rem">
+        <option value="">Select a scenario…</option>
+        <option value="dpi">DPI blocks UDP 1194 (restrictive firewall)</option>
+        <option value="quantum">Quantum adversary in 2030</option>
+        <option value="iot">Battery-constrained IoT device</option>
+        <option value="federal">Federal agency — FIPS compliance required</option>
+      </select>
+    </div>
+    <div id="vpn-scenario-result" style="display:none;margin-top:.5rem;padding:.75rem;background:#0d1117;border:1px solid #30363d;border-radius:6px;font-size:.83rem;line-height:1.7"></div>
+  </div>
+
+  <!-- Quiz -->
+  <div class="demo-box">
+    <div class="question-box">
+      <p style="font-weight:600;color:#e6edf3;font-size:1.05rem;margin:0 0 1rem">A company uses TLS 1.2 with RSA key exchange (no ECDHE). An attacker records encrypted traffic. Three years later the server's private key is compromised. What is the outcome?</p>
+      <div class="options-grid">
+        <button class="opt-btn" onclick="checkQ(this,'A')"><span class="opt-id">A</span>Past traffic remains secure due to session key rotation</button>
+        <button class="opt-btn" onclick="checkQ(this,'B')"><span class="opt-id">B</span>Only traffic from the past 24 hours can be decrypted</button>
+        <button class="opt-btn" onclick="checkQ(this,'C')"><span class="opt-id">C</span>All recorded past traffic can be decrypted</button>
+        <button class="opt-btn" onclick="checkQ(this,'D')"><span class="opt-id">D</span>Past traffic is safe because TLS uses symmetric encryption for data</button>
+      </div>
+      <div id="q-feedback" class="feedback-box"></div>
+      <div class="why-box" id="why-box">
+        <h6>📚 Why Static RSA Breaks Perfect Forward Secrecy</h6>
+        <ul>
+          <li><strong>TLS 1.2 RSA key exchange:</strong> Client generates a pre-master secret, encrypts it with the server's RSA public key, sends it. The server decrypts with its private key. Session keys are derived from this pre-master secret.</li>
+          <li><strong>The threat:</strong> An attacker recording this traffic has the RSA-encrypted pre-master secret. Once they steal the private key, they decrypt it → derive all session keys → decrypt all past traffic.</li>
+          <li><strong>ECDHE (PFS):</strong> Each session generates a fresh ephemeral key pair. The private key is discarded after the session. Even with the server's long-term private key, the attacker cannot reconstruct the ephemeral session key.</li>
+          <li><strong>TLS 1.3 mandates ECDHE</strong> for exactly this reason — PFS is not optional.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reflection -->
+  <div class="reflection-box">
+    <div class="reflection-title">💭 Learning Reflection Submission</div>
+    <p style="color:#8b949e;margin-bottom:.75rem">After exploring IPsec, TLS 1.3, and Perfect Forward Secrecy, reflect on what you discovered:</p>
+    <div style="margin-bottom:1rem">
+      <strong style="color:#e6edf3">Guided Questions:</strong>
+      <ul style="color:#8b949e;font-size:.9rem;margin:.5rem 0 0 1.5rem;line-height:1.9">
+        <li>Explain Perfect Forward Secrecy in your own words. Why can't a recorded TLS 1.2 (static RSA) session be decrypted even if only the symmetric session key is discarded?</li>
+        <li>What is the main architectural difference between IPsec Tunnel mode and Transport mode? When would you use each?</li>
+        <li>What two improvements in TLS 1.3 reduce the handshake from 2-RTT to 1-RTT compared to TLS 1.2?</li>
+        <li>Why does IKEv2 replace IKEv1, and what does the AUTH phase in IKEv2 accomplish?</li>
+        <li><strong style="color:#e6edf3">Key question:</strong> A colleague says "TLS 1.2 is fine since it still uses AES-256." How would you respond using what you learned about key exchange?</li>
+      </ul>
+    </div>
+    <div id="reflection-lock" style="background:#2a1c1c;border:1px solid #f85149;border-radius:6px;padding:.75rem 1rem;margin-bottom:1rem">
+      <p style="color:#f85149;font-weight:600;margin:0;font-size:.9rem">🔒 Complete all objectives (tracker bottom-right ↘) to unlock submission</p>
+    </div>
+    <div id="submission-area" class="sub-area-locked">
+      <textarea class="reflection-input" id="learning-reflection" placeholder="Describe what you learned about IPsec modes, IKEv2, TLS 1.3 improvements, and Perfect Forward Secrecy. Why does the key exchange method matter as much as the encryption algorithm?&#10;&#10;Please write at least 4–5 sentences about your key insights..." oninput="saveState()"></textarea>
+      <div style="margin-top:.75rem">
+        <label style="color:#e6edf3;font-size:.9rem;font-weight:600">🔍 Lab Observations</label>
+        <p style="color:#8b949e;font-size:.82rem;margin:.2rem 0 .3rem">Was there anything within the lab you expected to change, but didn't?</p>
+        <textarea class="reflection-input" id="lab-feedback" placeholder="Share any observations, surprises, or things that felt missing..." style="min-height:80px" oninput="saveState()"></textarea>
+      </div>
+      <div style="margin-top:.75rem">
+        <label style="color:#e6edf3;font-size:.9rem;font-weight:600">Your name:</label>
+        <input type="text" id="student-name" class="text-input" placeholder="Enter your full name..." style="max-width:320px;margin:.3rem 0 0" oninput="saveState()">
+      </div>
+      <div style="margin-top:.75rem">
+        <button class="submit-btn" onclick="saveReflection()">💾 Save Reflection</button>
+        <button id="export-pdf-btn" class="export-pdf-btn" onclick="exportPDF()" style="display:none">📄 Export PDF</button>
+      </div>
+      <div id="submission-feedback" style="margin-top:.5rem;color:#3fb950;display:none">✅ Saved! Edit and re-save anytime — Export PDF always uses your latest version.</div>
+    </div>
+  </div>
+
+  <div class="lab-footer">
+    <a class="btn-nav" href="../week7-lab/07-public-key-infrastructure.html">← Week 7</a>
+    <span class="text-muted">Module 8 · Protocols</span>
+    <a class="btn-nav" href="../week9-lab/09-secure-implementation.html">Week 9 →</a>
+  </div>
+</div>
+
+<div id="obj-overlay">
+  <div id="obj-badge" onclick="toggleObj()"><span id="obj-count">📋 0/5 objectives</span><span id="obj-chev">▲</span></div>
+  <div id="obj-panel"><div id="obj-list"></div></div>
+</div>
+
+<div id="print-summary">
+  <h1>Module 8 Lab — IPsec &amp; TLS</h1>
+  <p style="color:#555;font-size:.85rem">CS 615 · Cryptography for Cyber Professionals</p>
+  <h2>Student Info</h2>
+  <table><tr><td>Name:</td><td id="ps-name"></td></tr><tr><td>Submitted:</td><td id="ps-submitted"></td></tr><tr><td>Time:</td><td id="ps-duration"></td></tr></table>
+  <h2>Lab Interactions</h2><div id="ps-interactions"></div>
+  <h2>Reflection</h2><div id="ps-reflection" style="white-space:pre-wrap"></div>
+</div>
+
+<script>
+let ipsecDone=false, ikeDone=false, tlsDone=false, pfsDone=false, vpnDone=false, quizPassed=false, quizAttempts=0;
+let _currentMode='tunnel', _currentProto='esp', _ikePhase=0, _ikeRunning=false;
+let _tlsRan=false;
+const openedAt=new Date().toISOString();
+
+// ── IPsec packet diagram ──
+function buildPacket(mode, proto){
+  const wrap=document.getElementById('pkt-diagram');
+  const explain=document.getElementById('mode-explain');
+  if(mode==='transport'){
+    if(proto==='esp'){
+      wrap.innerHTML=`
+        <div style="font-size:.75rem;color:#8b949e;margin-bottom:.3rem">Transport Mode + ESP:</div>
+        <div class="pkt-wrap">
+          <div class="pkt-row">
+            <div class="pkt-field pkt-clear" style="flex:2">Original IP Header</div>
+            <div class="pkt-field pkt-meta">ESP Hdr</div>
+            <div class="pkt-field pkt-encrypted" style="flex:3">[ TCP/UDP Header + Payload ] Encrypted</div>
+            <div class="pkt-field pkt-meta">ESP Trl</div>
+            <div class="pkt-field pkt-meta">ESP Auth</div>
+          </div>
+        </div>`;
+      explain.innerHTML='<strong style="color:#3fb950">Transport mode + ESP:</strong> Original IP header is preserved (not encrypted). The payload (TCP/UDP + data) is encrypted. Use case: <em>host-to-host VPN within the same organization</em> — e.g., secure communication between two servers. Simpler but exposes IP addresses.';
+    }else{
+      wrap.innerHTML=`
+        <div style="font-size:.75rem;color:#8b949e;margin-bottom:.3rem">Transport Mode + AH:</div>
+        <div class="pkt-wrap">
+          <div class="pkt-row">
+            <div class="pkt-field pkt-clear" style="flex:2">Original IP Header</div>
+            <div class="pkt-field pkt-meta">AH Header</div>
+            <div class="pkt-field pkt-clear" style="flex:3">[ TCP/UDP Header + Payload ] CLEAR (auth only)</div>
+          </div>
+        </div>`;
+      explain.innerHTML='<strong style="color:#e3b341">Transport mode + AH:</strong> AH provides <em>integrity and authentication</em> but NO encryption. The payload is sent in cleartext. AH cannot traverse NAT (it authenticates the IP header which NAT modifies). Rarely used in practice — ESP with authentication is preferred.';
+    }
+  }else{
+    if(proto==='esp'){
+      wrap.innerHTML=`
+        <div style="font-size:.75rem;color:#8b949e;margin-bottom:.3rem">Tunnel Mode + ESP (standard site-to-site VPN):</div>
+        <div class="pkt-wrap">
+          <div class="pkt-row">
+            <div class="pkt-field pkt-new" style="flex:2">New IP Header (gateway)</div>
+            <div class="pkt-field pkt-meta">ESP Hdr</div>
+            <div class="pkt-field pkt-encrypted" style="flex:5">[ Original IP Header + TCP/UDP + Payload ] Fully Encrypted</div>
+            <div class="pkt-field pkt-meta">ESP Trl</div>
+            <div class="pkt-field pkt-meta">Auth</div>
+          </div>
+        </div>`;
+      explain.innerHTML='<strong style="color:#58a6ff">Tunnel mode + ESP:</strong> The entire original packet (IP header + payload) is encrypted and wrapped in a new IP header addressed to the far-end VPN gateway. <em>Use case: site-to-site VPN, cloud VPN gateway</em>. The original source/destination IPs are hidden inside the encrypted tunnel.';
+    }else{
+      wrap.innerHTML=`
+        <div style="font-size:.75rem;color:#8b949e;margin-bottom:.3rem">Tunnel Mode + AH:</div>
+        <div class="pkt-wrap">
+          <div class="pkt-row">
+            <div class="pkt-field pkt-new" style="flex:2">New IP Header</div>
+            <div class="pkt-field pkt-meta">AH Header</div>
+            <div class="pkt-field pkt-clear" style="flex:5">[ Original IP Header + TCP/UDP + Payload ] CLEAR</div>
+          </div>
+        </div>`;
+      explain.innerHTML='<strong style="color:#e3b341">Tunnel mode + AH:</strong> New IP header added for routing, but original packet is unencrypted. Only authentication/integrity is provided. This configuration is almost never used in practice.';
+    }
+  }
+  ipsecDone=true;saveState();updateObj();
+}
+
+function showMode(m){
+  _currentMode=m;
+  document.getElementById('mode-transport').className=m==='transport'?'action-btn-blue':'action-btn';
+  document.getElementById('mode-tunnel').className=m==='tunnel'?'action-btn-blue':'action-btn';
+  buildPacket(m,_currentProto);
+}
+function showProto(p){
+  _currentProto=p;
+  document.getElementById('proto-esp').className=p==='esp'?'action-btn-blue':'action-btn';
+  document.getElementById('proto-ah').className=p==='ah'?'action-btn-blue':'action-btn';
+  buildPacket(_currentMode,p);
+}
+
+// ── IKEv2 ──
+const IKE_STEPS=[
+  {label:'▶ IKE_SA_INIT Request',
+    m1:'→ SAi1 (proposed algorithms)\n→ KEi (DH public value gˢ)\n→ Ni (initiator nonce)',
+    initState:'Proposing algorithms + sending DH public value…',
+    respState:'Receiving INIT request…'},
+  {label:'▶ IKE_SA_INIT Response',
+    m2:'← SAr1 (selected algorithm: AES-256-GCM)\n← KEr (DH public value gʳ)\n← Nr (responder nonce)',
+    initState:'Receiving algorithm selection + DH response…',
+    respState:'Sending selected algorithm + DH public value…',
+    shared:'🔑 Both sides now compute: DH shared secret = (gˢ)ʳ = (gʳ)ˢ\nSKEYSEED = prf(Ni | Nr, g^ir)\nAll SA keys derived from SKEYSEED'},
+  {label:'▶ IKE_AUTH Request (encrypted)',
+    m3:'SK{ IDi, AUTH, SAi2, TSi, TSr }',
+    initState:'Authenticating identity (encrypted with derived key)…',
+    respState:'Verifying initiator identity…'},
+  {label:'▶ IKE_AUTH Response (encrypted)',
+    m4:'SK{ IDr, AUTH, SAr2, TSi, TSr }',
+    initState:'✅ IPsec SA established!',
+    respState:'✅ IPsec SA established!',
+    done:true},
+];
+
+function ikeStep(){
+  if(_ikePhase>=IKE_STEPS.length)return;
+  const step=IKE_STEPS[_ikePhase];
+  document.getElementById('ike-init').classList.add('active');
+  document.getElementById('ike-resp').classList.add('active');
+  document.getElementById('ike-init-state').textContent=step.initState;
+  document.getElementById('ike-resp-state').textContent=step.respState;
+  if(step.m1){const el=document.getElementById('ike-m1');el.textContent=step.m1;el.classList.add('show');}
+  if(step.m2){const el=document.getElementById('ike-m2');el.textContent=step.m2;el.classList.add('show');}
+  if(step.m3){const el=document.getElementById('ike-m3');el.textContent=step.m3;el.classList.add('show');}
+  if(step.m4){const el=document.getElementById('ike-m4');el.textContent=step.m4;el.classList.add('show');}
+  if(step.shared){
+    const s=document.getElementById('ike-shared');s.textContent=step.shared;s.style.display='block';
+  }
+  if(step.done){
+    document.getElementById('ike-init').classList.add('done');
+    document.getElementById('ike-resp').classList.add('done');
+    document.getElementById('ike-btn').textContent='✅ SA Established';
+    document.getElementById('ike-btn').disabled=true;
+    ikeDone=true;saveState();updateObj();
+  }else{
+    _ikePhase++;
+    if(_ikePhase<IKE_STEPS.length)document.getElementById('ike-btn').textContent=IKE_STEPS[_ikePhase].label;
+  }
+}
+function ikeReset(){
+  _ikePhase=0;
+  ['ike-m1','ike-m2','ike-m3','ike-m4'].forEach(id=>{const el=document.getElementById(id);el.textContent='';el.classList.remove('show');});
+  ['ike-init','ike-resp'].forEach(id=>document.getElementById(id).className='ike-actor');
+  document.getElementById('ike-init-state').textContent='Waiting to start…';
+  document.getElementById('ike-resp-state').textContent='Waiting…';
+  document.getElementById('ike-shared').style.display='none';
+  document.getElementById('ike-btn').textContent='▶ IKE_SA_INIT Request';
+  document.getElementById('ike-btn').disabled=false;
+}
+
+// ── TLS Compare ──
+const TLS12=[
+  {cls:'c2s rtt',txt:'——— RTT 1 ———'},
+  {cls:'c2s',txt:'→ ClientHello (TLS 1.2, cipher suites)'},
+  {cls:'s2c',txt:'← ServerHello (selected cipher)'},
+  {cls:'s2c',txt:'← Certificate [PLAINTEXT]'},
+  {cls:'s2c',txt:'← ServerKeyExchange (optional)'},
+  {cls:'s2c',txt:'← ServerHelloDone'},
+  {cls:'c2s rtt',txt:'——— RTT 2 ———'},
+  {cls:'c2s',txt:'→ ClientKeyExchange (RSA-encrypt PreMasterSecret)'},
+  {cls:'c2s',txt:'→ ChangeCipherSpec'},
+  {cls:'c2s',txt:'→ Finished (encrypted)'},
+  {cls:'s2c',txt:'← ChangeCipherSpec'},
+  {cls:'s2c',txt:'← Finished (encrypted)'},
+  {cls:'app',txt:'——— Application Data ———'},
+];
+const TLS13=[
+  {cls:'c2s rtt',txt:'——— RTT 1 ———'},
+  {cls:'c2s',txt:'→ ClientHello + KeyShare (ECDHE public key)'},
+  {cls:'s2c',txt:'← ServerHello + KeyShare'},
+  {cls:'enc',txt:'  [Session keys derived here — both sides]'},
+  {cls:'s2c enc',txt:'← {Certificate} [ENCRYPTED ✅]'},
+  {cls:'s2c enc',txt:'← {CertificateVerify}'},
+  {cls:'s2c enc',txt:'← {Finished}'},
+  {cls:'c2s enc',txt:'→ {Finished}'},
+  {cls:'app',txt:'——— Application Data (1-RTT) ———'},
+];
+
+function runTLSCompare(){
+  const c12=document.getElementById('tls12-steps');
+  const c13=document.getElementById('tls13-steps');
+  c12.innerHTML='';c13.innerHTML='';
+  TLS12.forEach((s,i)=>{
+    setTimeout(()=>{
+      const d=document.createElement('div');
+      d.className='tls-step '+s.cls;
+      if(s.cls.includes('rtt'))d.style.cssText='color:#e3b341;font-weight:700';
+      d.textContent=s.txt;c12.appendChild(d);
+      requestAnimationFrame(()=>requestAnimationFrame(()=>d.classList.add('show')));
+    },i*250);
+  });
+  TLS13.forEach((s,i)=>{
+    setTimeout(()=>{
+      const d=document.createElement('div');
+      d.className='tls-step '+s.cls;
+      if(s.cls.includes('rtt'))d.style.cssText='color:#e3b341;font-weight:700';
+      d.textContent=s.txt;c13.appendChild(d);
+      requestAnimationFrame(()=>requestAnimationFrame(()=>d.classList.add('show')));
+    },i*250);
+  });
+  _tlsRan=true;tlsDone=true;saveState();updateObj();
+}
+function resetTLS(){document.getElementById('tls12-steps').innerHTML='';document.getElementById('tls13-steps').innerHTML='';_tlsRan=false;}
+
+function checkPFS(){
+  const rsaStolen=document.getElementById('rsa-stolen').checked;
+  const ecdheStolen=document.getElementById('ecdhe-stolen').checked;
+  const r=document.getElementById('rsa-outcome');
+  const e=document.getElementById('ecdhe-outcome');
+  if(rsaStolen){
+    r.innerHTML='<span style="color:#f85149">❌ <strong>CATASTROPHIC:</strong> Attacker decrypts RSA-wrapped PreMasterSecret from recordings → derives all session keys → reads ALL past traffic going back years.</span>';
+  }else{r.innerHTML='';}
+  if(ecdheStolen){
+    e.innerHTML='<span style="color:#3fb950">✅ <strong>SAFE:</strong> Ephemeral ECDHE keys were discarded after each session. Server private key only used for certificate authentication — cannot recover session keys. Past sessions remain secure.</span>';
+  }else{e.innerHTML='';}
+  if(rsaStolen||ecdheStolen){pfsDone=true;saveState();updateObj();}
+}
+
+// ── VPN comparison ──
+const VPN_SCENARIOS={
+  dpi:'<strong style="color:#3fb950">Winner: SSL/TLS VPN (TCP 443)</strong><br>Deep Packet Inspection filtering UDP 1194 blocks OpenVPN in default mode. IPsec UDP 500/4500 may also be blocked. SSL VPN on TCP 443 blends with HTTPS traffic — hardest to block without breaking the entire web. OpenVPN on TCP 443 also works.',
+  quantum:'<strong style="color:#e3b341">All need upgrade</strong><br>All current VPN protocols use ECDHE (quantum-vulnerable) for key exchange. Migration path: IPsec IKEv2 supports PQC algorithms via IKEv2 extensions. WireGuard is exploring post-quantum updates. Recommend hybrid classical+ML-KEM in IKEv2 for near-term quantum readiness.',
+  iot:'<strong style="color:#3fb950">Winner: WireGuard</strong><br>WireGuard has the smallest codebase (≈4,000 lines vs 100,000+ for OpenVPN/IPsec), lowest CPU overhead (ChaCha20 is ARM-optimized with no hardware AES required), and minimal handshake traffic. Ideal for constrained IoT devices on battery power.',
+  federal:'<strong style="color:#58a6ff">Winner: IPsec/IKEv2</strong><br>FIPS 140-3 requires NIST-approved algorithms (AES, SHA-2). IPsec IKEv2 fully supports AES-256-GCM + SHA-384 (FIPS-approved). WireGuard uses ChaCha20 which is NOT FIPS-approved — disqualified for US federal use. OpenVPN/IPsec with FIPS-validated libraries are acceptable.',
+};
+let _vpnSel=false;
+function selectVPN(row,id){document.querySelectorAll('.vpn-table tbody tr').forEach(r=>r.className='');row.className='vpn-row-sel';_vpnSel=true;vpnDone=true;saveState();updateObj();}
+function showVPNScenario(){
+  const v=document.getElementById('vpn-scenario').value;
+  const r=document.getElementById('vpn-scenario-result');
+  if(!v){r.style.display='none';return;}
+  r.style.display='block';r.innerHTML=VPN_SCENARIOS[v]||'';
+  vpnDone=true;saveState();updateObj();
+}
+
+// ── Quiz ──
+let _qAnswered=false;
+function checkQ(btn,choice){
+  quizAttempts++;
+  document.querySelectorAll('.opt-btn').forEach(b=>b.classList.remove('incorrect','correct'));
+  const correct=choice==='C';
+  btn.classList.add(correct?'correct':'incorrect');
+  const fb=document.getElementById('q-feedback');
+  fb.className='feedback-box show '+(correct?'feedback-correct':'feedback-incorrect');
+  if(correct){
+    fb.innerHTML='✅ <strong>Correct!</strong> Without PFS (ECDHE), the session key was derived from a secret encrypted with the server\'s static RSA key. Once that key is compromised, ALL past sessions that were recorded can be decrypted.';
+    quizPassed=true;document.getElementById('why-box').classList.add('show');
+  }else{
+    fb.innerHTML='❌ Not quite. TLS does use symmetric encryption for the actual data, but the key exchange is the vulnerability. If the attacker can recover the session key from the key exchange, they can decrypt the data.';
+  }
+  checkReflectionLock();saveState();updateObj();
+}
+
+function checkReflectionLock(){
+  const lock=document.getElementById('reflection-lock');
+  const area=document.getElementById('submission-area');
+  const cnt=document.getElementById('obj-count');
+  const allDone=cnt&&cnt.textContent.startsWith('✅');
+  if(allDone){
+    if(lock)lock.style.display='none';
+    if(area)area.className='sub-area-unlocked';
+  }else{
+    if(lock)lock.style.display='block';
+    if(area)area.className='sub-area-locked';
+  }
+}
+
+function updateObj(){
+  const checks=[
+    {done:ipsecDone,label:'Compared IPsec Tunnel vs Transport mode'},
+    {done:ikeDone,label:'Walked through IKEv2 key exchange phases'},
+    {done:tlsDone,label:'Ran TLS 1.2 vs 1.3 comparison'},
+    {done:pfsDone,label:'Triggered Perfect Forward Secrecy scenario'},
+    {done:quizPassed,label:'Passed the IPsec/TLS quiz'},
+  ];
+  const done=checks.filter(c=>c.done).length,allDone=done===checks.length;
+  const badge=document.getElementById('obj-badge');
+  badge.style.borderColor=allDone?'#238636':'#30363d';badge.style.color=allDone?'#3fb950':'#8b949e';
+  document.getElementById('obj-count').textContent=allDone?'✅ All objectives done!':`📋 ${done}/${checks.length} objectives`;
+  document.getElementById('obj-list').innerHTML=checks.map(c=>`<div style="color:${c.done?'#3fb950':'#8b949e'};font-size:.79rem">${c.done?'✅':'⬜'} ${c.label}</div>`).join('');
+  checkReflectionLock();
+}
+let _objOpen=true;
+function toggleObj(){_objOpen=!_objOpen;document.getElementById('obj-panel').style.display=_objOpen?'block':'none';document.getElementById('obj-chev').textContent=_objOpen?'▲':'▼';}
+
+function saveState(){
+  const s={quizPassed,quizAttempts,ipsecDone,ikeDone,tlsDone,pfsDone,vpnDone,
+    studentName:(document.getElementById('student-name')||{}).value||'',
+    reflection:(document.getElementById('learning-reflection')||{}).value||'',
+    labFeedback: (document.getElementById('lab-feedback')?.value||''),};
+  localStorage.setItem('lab08-state',JSON.stringify(s));
+}
+function loadState(){
+  const raw=localStorage.getItem('lab08-state');if(!raw)return;
+  let s;try{s=JSON.parse(raw);}catch(e){return;}
+  quizPassed=s.quizPassed||false;quizAttempts=s.quizAttempts||0;
+  ipsecDone=s.ipsecDone||false;ikeDone=s.ikeDone||false;
+  tlsDone=s.tlsDone||false;pfsDone=s.pfsDone||false;vpnDone=s.vpnDone||false;
+  if(s.studentName){const el=document.getElementById('student-name');if(el)el.value=s.studentName;}
+  if(s.reflection){const el=document.getElementById('learning-reflection');if(el)el.value=s.reflection;}
+  if(s.labFeedback&&document.getElementById('lab-feedback')){document.getElementById('lab-feedback').value=s.labFeedback;}
+  if(quizPassed){_qAnswered=true;const btns=document.querySelectorAll('.opt-btn');if(btns.length>2)btns[2].classList.add('correct');const fb=document.getElementById('q-feedback');fb.className='feedback-box show feedback-correct';fb.innerHTML='✅ <strong>Correct!</strong> Without PFS, all past recorded traffic can be decrypted once the private key is compromised.';document.getElementById('why-box').classList.add('show');}
+  updateObj();
+}
+function resetLab(){if(!confirm('Reset all progress?'))return;localStorage.removeItem('lab08-state');location.reload();}
+function saveReflection(){
+  const reflection=(document.getElementById('learning-reflection').value||'').trim();
+  if(!reflection){alert('Please write a reflection before saving.');return;}
+  const data={studentName:(document.getElementById('student-name').value||'').trim(),openedAt,
+    submittedAt:new Date().toISOString(),timeOnPageMs:Date.now()-new Date(openedAt).getTime(),
+    quizPassed,quizAttempts,ipsecDone,ikeDone,tlsDone,pfsDone,vpnDone,reflection,labCompleted:'Module 8 Lab'};
+  localStorage.setItem('week8-lab-submission',JSON.stringify(data));saveState();
+  document.getElementById('submission-feedback').style.display='inline';
+  document.getElementById('submission-feedback').textContent='✅ Saved!';
+  document.getElementById('export-pdf-btn').style.display='inline-block';
+  const btn=document.getElementById('submit-reflection');btn.textContent='✓ Saved!';btn.style.background='#3fb950';
+  setTimeout(()=>{btn.textContent='💾 Save Reflection';btn.style.background='';},2000);
+}
+function exportPDF(){
+  const data=JSON.parse(localStorage.getItem('week8-lab-submission')||'{}');
+  document.getElementById('ps-name').textContent=data.studentName||'—';
+  document.getElementById('ps-submitted').textContent=data.submittedAt?new Date(data.submittedAt).toLocaleString():'—';
+  const ms=data.timeOnPageMs;const m=Math.floor(ms/60000),sc=Math.floor((ms%60000)/1000);
+  document.getElementById('ps-duration').textContent=ms?`${m}m ${sc}s`:'—';
+  document.getElementById('ps-interactions').innerHTML=`<table>
+    <tr><td>Quiz:</td><td>${data.quizPassed?'✅ Passed':'❌ Not passed'} (${data.quizAttempts||0} attempts)</td></tr>
+    <tr><td>IPsec Modes:</td><td>${data.ipsecDone?'✅ Explored':'❌ Not done'}</td></tr>
+    <tr><td>IKEv2 Phases:</td><td>${data.ikeDone?'✅ Completed':'❌ Not done'}</td></tr>
+    <tr><td>TLS Compare:</td><td>${data.tlsDone?'✅ Ran comparison':'❌ Not done'}</td></tr>
+    <tr><td>PFS Scenario:</td><td>${data.pfsDone?'✅ Triggered':'❌ Not done'}</td></tr>
+  </table>`;
+  document.getElementById('ps-reflection').textContent=data.reflection||'—';
+  document.getElementById('print-summary').style.display='block';
+  const orig=document.title;const slug=(data.studentName||'').replace(/[^\w\s-]/g,'').trim();
+  if(slug)document.title=slug+' — '+orig;
+  window.print();setTimeout(()=>{document.title=orig;document.getElementById('print-summary').style.display='none';},500);
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  buildPacket('tunnel','esp');
+  loadState();updateObj();
+});
+</script>
+</body>
+</html>

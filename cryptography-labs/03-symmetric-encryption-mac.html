@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Module 3 Lab – Symmetric Encryption & Message Authentication</title>
+  <style>
+    /* ── Shared CSS (inlined) ── */
+    *,*::before,*::after{box-sizing:border-box}
+    body{background:#0d1117;color:#c9d1d9;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;min-height:100vh;margin:0}
+    a{color:#58a6ff}
+    code{background:#21262d;border-radius:3px;padding:1px 5px;font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;font-size:.875em}
+    .font-mono{font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace}
+    .navbar{background:#161b22;border-bottom:1px solid #30363d;padding:.75rem 1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem}
+    .navbar-brand{font-weight:700;color:#e6edf3;text-decoration:none;font-size:1.1rem}
+    .nav-actions{display:flex;align-items:center;gap:.75rem}
+    .nav-pill{font-size:.8rem;color:#8b949e;white-space:nowrap}
+    .container{max-width:900px;margin:0 auto;padding:1.5rem 1rem}
+    .lab-badge{display:inline-block;background:#1f6feb;color:#fff;font-size:.72rem;font-weight:600;padding:2px 10px;border-radius:12px;margin-bottom:.5rem;text-transform:uppercase;letter-spacing:.06em}
+    .lab-header{margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid #30363d}
+    .lab-header h2{color:#e6edf3;margin:.25rem 0 .1rem;font-size:1.6rem}
+    .lab-header p{color:#8b949e;margin:0;font-size:.95rem}
+    .scenario-box{background:#161b22;border-left:4px solid #1f6feb;border-radius:0 8px 8px 0;padding:1rem 1.25rem;margin-bottom:1.5rem}
+    .scenario-box p{margin:0;line-height:1.65}
+    .demo-box{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:1.5rem;margin-bottom:1.5rem}
+    .question-box{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:1.25rem;margin-bottom:.75rem}
+    .question-text{font-weight:600;color:#e6edf3;font-size:1.05rem;margin:0 0 1rem}
+    .why-box{background:#1c2a1c;border:1px solid #238636;border-radius:8px;padding:1.25rem;margin-top:1rem;display:none}
+    .why-box.show{display:block}
+    .why-box h6{color:#3fb950;font-weight:700;margin:0 0 .5rem}
+    .why-box p{margin:.5rem 0 0;line-height:1.65}
+    .why-box ul{margin:.5rem 0 .5rem 1.25rem;padding:0;line-height:1.8}
+    .options-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+    @media(max-width:600px){.options-grid{grid-template-columns:1fr}}
+    .opt-btn{display:flex;align-items:center;gap:.6rem;text-align:left;background:#161b22;border:1px solid #30363d;border-radius:6px;padding:.65rem .9rem;color:#c9d1d9;cursor:pointer;width:100%;font-size:.95rem;transition:border-color .15s,background .15s}
+    .opt-btn:hover{border-color:#58a6ff;background:#1c2940;color:#e6edf3}
+    .opt-btn.correct{background:#1c2a1c!important;border-color:#238636!important;color:#3fb950!important}
+    .opt-btn.incorrect{background:#2a1c1c!important;border-color:#da3633!important;color:#f85149!important}
+    .opt-id{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;background:#30363d;border-radius:4px;font-size:.78rem;font-weight:700;flex-shrink:0}
+    .feedback-box{border-radius:8px;padding:1rem 1.25rem;margin-top:.75rem;font-size:.95rem;line-height:1.65;display:none}
+    .feedback-box.show{display:block}
+    .feedback-correct{background:#1c2a1c;border:1px solid #238636;color:#3fb950}
+    .feedback-incorrect{background:#2a1c1c;border:1px solid #da3633;color:#f85149}
+    .badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.75rem;font-weight:600}
+    .badge-green{background:#1c2a1c;color:#3fb950;border:1px solid #238636}
+    .badge-red{background:#2a1c1c;color:#f85149;border:1px solid #da3633}
+    .badge-yellow{background:#2a2000;color:#e3b341;border:1px solid #9e6a03}
+    .badge-gray{background:#21262d;color:#8b949e;border:1px solid #30363d}
+    table{width:100%;border-collapse:collapse;font-size:.9rem}
+    th,td{padding:.5rem .75rem;border:1px solid #30363d;text-align:left}
+    th{background:#21262d;color:#8b949e;font-weight:600;font-size:.8rem;text-transform:uppercase;letter-spacing:.05em}
+    tr:hover td{background:#1c2128}
+    .lab-footer{display:flex;justify-content:space-between;align-items:center;margin-top:2rem;padding-top:1rem;border-top:1px solid #30363d}
+    .lab-footer .text-muted{color:#8b949e;font-size:.85rem}
+    .btn-nav{display:inline-flex;align-items:center;gap:.4rem;padding:.4rem .9rem;border:1px solid #30363d;border-radius:6px;color:#c9d1d9;text-decoration:none;font-size:.85rem;background:#161b22;transition:border-color .15s}
+    .btn-nav:hover{border-color:#58a6ff;color:#58a6ff}
+    .btn-nav.disabled{opacity:.4;pointer-events:none}
+
+    /* ── Mode Explorer ── */
+    .mode-tabs{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem}
+    .mode-tab{padding:.4rem .9rem;border-radius:6px;border:1px solid #30363d;background:#21262d;color:#8b949e;cursor:pointer;font-size:.85rem;transition:all .2s}
+    .mode-tab.active{border-color:#58a6ff;background:#1c2940;color:#58a6ff;font-weight:600}
+    .cipher-vis{display:flex;gap:1.5rem;align-items:flex-start;flex-wrap:wrap;margin:1rem 0}
+    .cipher-panel{flex:1;min-width:160px}
+    .cipher-panel-title{font-size:.82rem;font-weight:600;margin-bottom:.4rem}
+    .block-grid{display:grid;grid-template-columns:repeat(16,1fr);gap:1px;border:1px solid #30363d;border-radius:4px;overflow:hidden;width:100%;max-width:280px}
+    .block-cell{width:100%;aspect-ratio:1}
+    .mode-info{background:#161b22;border:1px solid #30363d;border-radius:6px;padding:.75rem 1rem;margin-top:.75rem;font-size:.85rem;color:#8b949e;line-height:1.7}
+    .mode-info code{background:#21262d;padding:.1rem .3rem;border-radius:3px;color:#e3b341;font-size:.8rem}
+
+    /* ── HMAC ── */
+    .hmac-box{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:1rem;margin:1rem 0}
+    .hmac-output{background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:.65rem .75rem;margin:.4rem 0;font-family:monospace;font-size:.78rem;word-break:break-all;min-height:44px;color:#3fb950}
+
+    /* ── GCM ── */
+    .gcm-box{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:1rem;margin:1rem 0}
+    .tag-disp{font-family:monospace;font-size:.76rem;padding:.45rem .65rem;background:#0d1117;border:1px solid #30363d;border-radius:4px;word-break:break-all;margin:.3rem 0}
+
+    /* ── Inline input ── */
+    .lab-input{background:#21262d;border:1px solid #30363d;border-radius:6px;padding:.45rem .6rem;color:#e6edf3;width:100%;font-size:.88rem}
+    .lab-input:focus{outline:none;border-color:#58a6ff}
+    .run-btn{background:#1f6feb;color:#fff;border:none;border-radius:6px;padding:.4rem .85rem;cursor:pointer;font-size:.83rem;transition:background .2s}
+    .run-btn:hover{background:#1c64e8}
+    .danger-btn{background:#f85149}
+    .danger-btn:hover{background:#e5484d}
+    .warn-btn{background:#e3b341;color:#0d1117}
+    .warn-btn:hover{background:#d9a82b}
+
+    /* ── Reflection / Submission ── */
+    .reflection-box{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:1.5rem;margin:1.5rem 0}
+    .reflection-title{color:#e6edf3;font-weight:600;margin-bottom:.75rem}
+    .reflection-input{background:#21262d;border:1px solid #30363d;border-radius:6px;padding:.75rem;color:#e6edf3;width:100%;min-height:100px;font-family:inherit;resize:vertical}
+    .reflection-input:focus{outline:none;border-color:#58a6ff}
+    .submit-btn{background:#1f6feb;color:#fff;border:none;border-radius:6px;padding:.5rem 1rem;cursor:pointer;font-size:.9rem;margin-top:.5rem}
+    .submit-btn:hover{background:#1c64e8}
+    .export-pdf-btn{background:#3fb950;color:#fff;border:none;border-radius:6px;padding:.5rem 1rem;cursor:pointer;font-size:.9rem;margin-top:.5rem;margin-left:.5rem}
+    .export-pdf-btn:hover{background:#3aad49}
+    .sub-area-locked{opacity:.4;pointer-events:none;user-select:none}
+
+    /* ── Print ── */
+    #print-summary{display:none;font-family:Arial,sans-serif;color:#000;padding:2rem;line-height:1.6}
+    #print-summary h1{font-size:1.4rem;margin-bottom:.25rem}
+    #print-summary h2{font-size:1.1rem;margin:1rem 0 .25rem;border-bottom:1px solid #ccc;padding-bottom:.2rem}
+    #print-summary table{border-collapse:collapse;width:100%;margin-bottom:.5rem}
+    #print-summary td{padding:.2rem .5rem;vertical-align:top}
+    #print-summary td:first-child{font-weight:bold;white-space:nowrap;width:180px}
+    @media print{body>*:not(#print-summary){display:none!important}#print-summary{display:block!important}}
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="navbar-brand" href="../">🔐 Cryptography Labs</a>
+  <div class="nav-actions">
+    <span class="nav-pill">Module 3 Lab</span>
+    <button onclick="resetLab()" style="background:none;border:1px solid #30363d;border-radius:6px;padding:.25rem .6rem;color:#8b949e;cursor:pointer;font-size:.75rem" title="Reset lab progress">↺ Reset</button>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="lab-header">
+    <div class="lab-badge">Module 3 · Symmetric Crypto</div>
+    <h2>Symmetric Encryption &amp; Message Authentication</h2>
+    <p>AES cipher modes, HMAC authentication, and why authenticated encryption matters</p>
+  </div>
+
+  <div class="scenario-box">
+    <p><strong>Scenario:</strong> You're a security engineer at a fintech startup processing thousands of transactions per second. You need to choose the right AES mode for encrypting transaction data <em>and</em> ensure messages haven't been tampered with in transit. The wrong choice could expose customer data — or let an attacker silently modify transaction amounts.</p>
+  </div>
+
+  <!-- Section 1: AES Cipher Mode Explorer -->
+  <div class="demo-box">
+    <h4 style="margin-top:0;color:#e6edf3">🧱 AES Cipher Mode Explorer</h4>
+    <p style="color:#8b949e;margin-bottom:1rem">Each mode handles block independence differently. This 16×16 grid represents a patterned plaintext (a padlock shape — 3 distinct block values). Watch what happens to the pattern as you switch encryption modes:</p>
+
+    <div class="mode-tabs">
+      <button class="mode-tab" onclick="selectMode('ecb',this)">ECB Mode</button>
+      <button class="mode-tab" onclick="selectMode('cbc',this)">CBC Mode</button>
+      <button class="mode-tab" onclick="selectMode('ctr',this)">CTR Mode</button>
+      <button class="mode-tab" onclick="selectMode('gcm',this)">GCM Mode</button>
+    </div>
+
+    <div class="cipher-vis">
+      <div class="cipher-panel">
+        <div class="cipher-panel-title" style="color:#58a6ff">📄 Plaintext (patterned)</div>
+        <div class="block-grid" id="plain-grid"></div>
+        <div style="font-size:.71rem;color:#8b949e;margin-top:.3rem">16×16 blocks · 3 repeating values</div>
+      </div>
+      <div class="cipher-panel">
+        <div class="cipher-panel-title" id="mode-panel-label" style="color:#8b949e">🔒 Ciphertext</div>
+        <div class="block-grid" id="cipher-grid"></div>
+        <div style="font-size:.71rem;color:#8b949e;margin-top:.3rem" id="mode-panel-note">Select a mode above to encrypt</div>
+      </div>
+    </div>
+
+    <div class="mode-info" id="mode-info">
+      <p style="margin:0">Select an AES mode above to see how it encrypts patterned input and learn about its security properties.</p>
+    </div>
+  </div>
+
+  <!-- Section 2: HMAC Message Authentication -->
+  <div class="demo-box">
+    <h4 style="margin-top:0;color:#e6edf3">🔏 HMAC Message Authentication</h4>
+    <p style="color:#8b949e;margin-bottom:.75rem">Encryption hides data — but it doesn't prove the data hasn't been <strong style="color:#e6edf3">altered</strong>. A Hash-based Message Authentication Code (HMAC) binds message + secret key into a tag. Any change to the message produces a completely different tag.</p>
+
+    <div class="hmac-box">
+      <div style="margin-bottom:.65rem">
+        <label style="color:#e6edf3;font-size:.87rem;font-weight:600">Message to authenticate:</label>
+        <p style="color:#58a6ff;font-size:.82rem;margin:.1rem 0 .3rem">💡 Try changing the dollar amount (e.g. $500 → $200, $1000) and watch how the HMAC tag changes completely. Then run the Tamper Attack to see detection in action.</p>
+        <input type="text" class="lab-input" id="hmac-msg" value="Transfer $500 to Account #8821" style="margin:.3rem 0" oninput="computeHMAC()">
+      </div>
+      <div style="margin-bottom:.65rem">
+        <label style="color:#e6edf3;font-size:.87rem;font-weight:600">Secret HMAC Key:</label>
+        <input type="text" class="lab-input" id="hmac-key" value="BankSecretKey$42" style="margin:.3rem 0;font-family:monospace" oninput="computeHMAC()">
+      </div>
+      <div>
+        <label style="color:#e6edf3;font-size:.87rem;font-weight:600">HMAC-SHA256 Tag:</label>
+        <div class="hmac-output"><span id="hmac-result">—</span></div>
+      </div>
+
+      <div style="border-top:1px solid #30363d;padding-top:.85rem;margin-top:.85rem">
+        <p style="color:#e6edf3;font-size:.87rem;font-weight:600;margin-bottom:.35rem">🎯 Tamper Attack Simulation</p>
+        <p style="color:#8b949e;font-size:.82rem;margin-bottom:.65rem">An attacker intercepts the message and modifies the dollar amount while reusing the original HMAC tag. Does the receiver catch it?</p>
+        <button class="run-btn danger-btn" onclick="runTamperTest()">⚔️ Simulate Tamper Attack</button>
+        <div id="tamper-result" style="margin-top:.75rem;display:none"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 3: AES-GCM Authenticated Encryption -->
+  <div class="demo-box">
+    <h4 style="margin-top:0;color:#e6edf3">🛡️ AES-GCM: Authenticated Encryption</h4>
+    <p style="color:#8b949e;margin-bottom:.75rem">GCM mode combines encryption + authentication into one pass, producing a ciphertext <em>and</em> a 128-bit authentication tag. Any modification to the ciphertext immediately invalidates the tag.</p>
+
+    <div class="gcm-box">
+      <div style="margin-bottom:.65rem">
+        <label style="color:#e6edf3;font-size:.87rem;font-weight:600">Plaintext to encrypt:</label>
+        <input type="text" class="lab-input" id="gcm-plain" value="Authorize payment: $1,250.00" style="margin:.3rem 0" oninput="runGCM()">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.65rem">
+        <div>
+          <label style="color:#8b949e;font-size:.81rem">Ciphertext (base64):</label>
+          <div class="tag-disp" id="gcm-ct" style="color:#58a6ff">—</div>
+        </div>
+        <div>
+          <label style="color:#8b949e;font-size:.81rem">Auth Tag (16 bytes):</label>
+          <div class="tag-disp" id="gcm-tag" style="color:#3fb950">—</div>
+        </div>
+      </div>
+
+      <div id="gcm-breakdown-wrap" style="margin-bottom:.75rem;display:none">
+        <p style="color:#e6edf3;font-size:.85rem;font-weight:600;margin:0 0 .4rem">📐 Calculation Breakdown</p>
+        <div id="gcm-breakdown" style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:.7rem .85rem;font-family:monospace;font-size:.75rem;line-height:2"></div>
+      </div>
+
+      <div style="border-top:1px solid #30363d;padding-top:.85rem">
+        <p style="color:#e6edf3;font-size:.87rem;font-weight:600;margin-bottom:.35rem">⚡ Bit-Flip Attack on GCM Ciphertext</p>
+        <p style="color:#8b949e;font-size:.82rem;margin-bottom:.65rem">An attacker flips a single bit in the ciphertext (byte index 3, mask 0xFF). Unlike CBC, GCM catches this <em>immediately</em> — decryption is rejected entirely.</p>
+        <button class="run-btn warn-btn" onclick="runBitFlip()">⚡ Flip a Ciphertext Bit</button>
+        <div id="bitflip-result" style="margin-top:.65rem;display:none"></div>
+      </div>
+    </div>
+
+    <div style="background:#162016;border:1px solid #3fb950;border-radius:6px;padding:.85rem;margin-top:.75rem">
+      <p style="margin:0 0 .4rem;color:#3fb950;font-weight:600;font-size:.87rem">💡 GCM vs CBC comparison</p>
+      <ul style="margin:0;padding-left:1.25rem;color:#8b949e;font-size:.82rem;line-height:1.9">
+        <li><strong style="color:#e6edf3">CBC alone</strong> — encrypts but doesn't authenticate. Bit flips corrupt plaintext silently.</li>
+        <li><strong style="color:#e6edf3">CBC + HMAC</strong> — secure but requires two separate operations (encrypt-then-MAC order matters!).</li>
+        <li><strong style="color:#e6edf3">AES-GCM</strong> — single-pass AEAD. Any modification invalidates the tag. Used in TLS 1.3, Signal, SSH.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Section 4: Padding Oracle -->
+  <div class="demo-box">
+    <h4 style="margin-top:0;color:#e6edf3">⚠️ Padding Oracle Attacks on CBC</h4>
+    <p style="color:#8b949e;margin-bottom:.75rem">When a server reveals whether CBC padding is <em>valid</em> separately from whether decryption succeeded, an attacker can decrypt <em>any ciphertext</em> — one byte at a time — without knowing the key.</p>
+
+    <div style="display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:.5rem;align-items:center;margin:1rem 0">
+      <div style="background:#161b22;border:1px solid #30363d;border-radius:6px;padding:.6rem;text-align:center">
+        <div style="font-size:1.3rem">🕵️</div>
+        <div style="font-size:.72rem;color:#8b949e;margin-top:.2rem">Attacker modifies<br>C_{i-1} byte</div>
+      </div>
+      <div style="color:#f85149;font-size:1.2rem;text-align:center">→</div>
+      <div style="background:#2a1c1c;border:1px solid #f85149;border-radius:6px;padding:.6rem;text-align:center">
+        <div style="font-size:1.3rem">💻</div>
+        <div style="font-size:.72rem;color:#f85149;margin-top:.2rem">Server decrypts &amp;<br>checks padding</div>
+      </div>
+      <div style="color:#f85149;font-size:1.2rem;text-align:center">→</div>
+      <div style="background:#2a2000;border:1px solid #e3b341;border-radius:6px;padding:.6rem;text-align:center">
+        <div style="font-size:1.3rem">📡</div>
+        <div style="font-size:.72rem;color:#e3b341;margin-top:.2rem">Server leaks:<br>"valid" or "invalid"</div>
+      </div>
+    </div>
+
+    <p style="color:#8b949e;font-size:.84rem;line-height:1.7;margin:.75rem 0">By sending modified ciphertexts and observing "padding valid / invalid" responses, the attacker learns one plaintext byte per ~128 requests. For a 16-byte block, that's ~2048 requests — easily automated. Real attacks: <strong style="color:#f85149">POODLE</strong> (SSLv3), <strong style="color:#f85149">BEAST</strong> (TLS 1.0), <strong style="color:#f85149">Lucky13</strong> (TLS CBC timing).</p>
+
+    <div style="background:#2a1c00;border:1px solid #e3b341;border-radius:6px;padding:.75rem">
+      <p style="margin:0;color:#e3b341;font-size:.84rem"><strong>Defense:</strong> Use AES-GCM (no padding needed). If you must use CBC, apply <em>encrypt-then-MAC</em> and return identical errors for padding failures and MAC failures — never distinguish between them.</p>
+    </div>
+  </div>
+
+  <!-- Quiz -->
+  <div class="question-box">
+    <p class="question-text">❓ You're storing encrypted medical records. An attacker — without knowing the key — manages to corrupt specific fields in the database without detection. Which AES mode was most likely being used?</p>
+    <div class="options-grid">
+      <button class="opt-btn" onclick="check('A',this)"><span class="opt-id">A</span> AES-GCM</button>
+      <button class="opt-btn" onclick="check('B',this)"><span class="opt-id">B</span> AES-CBC without a MAC</button>
+      <button class="opt-btn" onclick="check('C',this)"><span class="opt-id">C</span> AES-CTR with HMAC-SHA256</button>
+      <button class="opt-btn" onclick="check('D',this)"><span class="opt-id">D</span> AES-GCM with AAD</button>
+    </div>
+  </div>
+  <div id="feedback" class="feedback-box"></div>
+
+  <!-- Student Reflection -->
+  <div class="reflection-box">
+    <div class="reflection-title">💭 Learning Reflection Submission</div>
+    <p style="color:#8b949e;margin-bottom:.75rem">After exploring cipher modes and message authentication, reflect on what you discovered:</p>
+
+    <div style="margin-bottom:1rem">
+      <strong style="color:#e6edf3">Guided Questions:</strong>
+      <ul style="color:#8b949e;font-size:.9rem;margin:.5rem 0 0 1.5rem;line-height:1.9">
+        <li>Why does ECB mode reveal the structure of plaintext even after encryption?</li>
+        <li>How does an Initialization Vector (IV) in CBC prevent pattern leakage?</li>
+        <li>What is the difference between <em>encryption</em> and <em>authentication</em>? Can you have encryption without authentication?</li>
+        <li>Why should new systems prefer AES-GCM over AES-CBC + HMAC?</li>
+        <li><strong style="color:#e6edf3">Key question:</strong> Padding Oracle Attacks exploit the server's <em>error response</em>, not the ciphertext itself. Why does using <em>encrypt-then-MAC</em> (and returning identical errors for padding vs. MAC failures) close this vulnerability?</li>
+      </ul>
+    </div>
+
+    <div id="reflection-lock" style="background:#2a1c1c;border:1px solid #f85149;border-radius:6px;padding:.75rem 1rem;margin-bottom:1rem">
+      <p style="color:#f85149;font-weight:600;margin:0;font-size:.9rem">🔒 Complete all objectives (tracker bottom-right ↘) to unlock submission</p>
+    </div>
+
+    <div id="submission-area" class="sub-area-locked">
+      <textarea class="reflection-input" id="learning-reflection" placeholder="Describe what you learned about AES cipher modes and message authentication. Why does the mode choice matter? What surprised you about ECB pattern leakage or the bit-flip attack?
+
+Please write at least 4-5 sentences about your key insights..."></textarea>
+
+      <div style="margin-top:.75rem">
+        <label style="color:#e6edf3;font-size:.9rem;font-weight:600">🔍 Lab Observations</label>
+        <p style="color:#8b949e;font-size:.82rem;margin:.2rem 0 .3rem">Was there anything within the lab you expected to change, but didn't?</p>
+        <textarea class="reflection-input" id="lab-feedback" placeholder="Share any observations, surprises, or things that felt missing..." style="min-height:80px"></textarea>
+      </div>
+
+      <div style="margin-top:.75rem">
+        <label style="color:#e6edf3;font-size:.9rem;font-weight:600">Your name:</label>
+        <input type="text" id="student-name" class="lab-input" placeholder="Enter your full name..." style="max-width:320px;margin:.3rem 0 0">
+      </div>
+
+      <div style="margin-top:.75rem">
+        <button class="submit-btn" onclick="submitReflection()">💾 Save Reflection</button>
+        <button id="export-pdf-btn" class="export-pdf-btn" onclick="exportPDF()" style="display:none">📄 Export PDF</button>
+      </div>
+      <div id="submission-feedback" style="margin-top:.5rem;color:#3fb950;display:none">✅ Saved! Edit and re-save anytime — Export PDF always uses your latest version.</div>
+    </div>
+  </div>
+
+  <div class="why-box" id="why-matters">
+    <h6>💡 Why it matters — real-world incidents</h6>
+    <ul>
+      <li><strong>Adobe (2013)</strong> — Used AES-ECB for password storage. 153M encrypted passwords leaked; identical passwords were visible as identical ciphertexts.</li>
+      <li><strong>POODLE (2014)</strong> — Forced SSLv3 downgrade exploited CBC padding oracle to decrypt HTTPS session cookies.</li>
+      <li><strong>Lucky13 (2013)</strong> — Timing side-channel in TLS CBC padding check allowed plaintext recovery. Fixed by migrating to GCM.</li>
+    </ul>
+    <p>Modern guidance: use <strong>AES-256-GCM</strong> for new systems. Always authenticate your ciphertext.</p>
+  </div>
+
+  <div class="lab-footer">
+    <span class="text-muted">Module 3 Lab – Symmetric Encryption &amp; MACs</span>
+    <div>
+    </div>
+  </div>
+</div>
+
+<!-- PDF Print Summary -->
+<div id="print-summary">
+  <h1>Module 3 Lab – Symmetric Encryption &amp; Message Authentication</h1>
+  <p style="color:#555;font-size:.9rem;margin-top:0">Cybersecurity Lab Submission</p>
+  <hr>
+  <h2>Student Info</h2>
+  <table>
+    <tr><td>Student:</td><td id="ps-name"></td></tr>
+    <tr><td>Opened:</td><td id="ps-opened"></td></tr>
+    <tr><td>Submitted:</td><td id="ps-submitted"></td></tr>
+    <tr><td>Time on page:</td><td id="ps-duration"></td></tr>
+  </table>
+  <h2>Interactions</h2>
+  <div id="ps-interactions"></div>
+  <h2>AES-GCM Authenticated Encryption</h2>
+  <div id="ps-gcm"></div>
+  <h2>Reflection</h2>
+  <div id="ps-reflection" style="white-space:pre-wrap"></div>
+  <h2>Lab Observations</h2>
+  <div id="ps-feedback" style="white-space:pre-wrap"></div>
+</div>
+
+<!-- Floating Objective Overlay -->
+<div id="obj-overlay" style="position:fixed;bottom:1.25rem;right:1.25rem;z-index:999;font-size:.8rem;user-select:none">
+  <div id="obj-badge" onclick="toggleObj()" style="background:rgba(22,27,34,.95);border:1px solid #30363d;border-radius:20px;padding:.35rem .8rem;cursor:pointer;display:flex;align-items:center;gap:.5rem;color:#8b949e;backdrop-filter:blur(4px);transition:border-color .2s;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.4)">
+    <span id="obj-count">📋 0/4 objectives</span><span id="obj-chev" style="font-size:.65rem">▼</span>
+  </div>
+  <div id="obj-panel" style="display:block;position:absolute;bottom:calc(100% + .4rem);right:0;background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.65rem .9rem;min-width:210px;line-height:2.2;box-shadow:0 4px 12px rgba(0,0,0,.5)">
+    <div style="font-size:.72rem;color:#58a6ff;font-weight:600;margin-bottom:.25rem;border-bottom:1px solid #30363d;padding-bottom:.2rem">Lab Objectives</div>
+    <div id="obj-list"></div>
+  </div>
+</div>
+
+<script>
+// ── Shared JS (inlined) ──
+function showFeedback(correct, html) {
+  const fb = document.getElementById('feedback');
+  if (!fb) return;
+  fb.className = 'feedback-box show ' + (correct ? 'feedback-correct' : 'feedback-incorrect');
+  fb.innerHTML = (correct ? '✅ ' : '❌ ') + html;
+  if (correct) {
+    const why = document.getElementById('why-matters');
+    if (why) setTimeout(() => { why.classList.add('show'); }, 350);
+  }
+}
+function markBtn(btn, correct) {
+  const parent = btn.closest('.options-grid, .question-box');
+  if (parent) parent.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('correct','incorrect'));
+  btn.classList.add(correct ? 'correct' : 'incorrect');
+}
+
+// ── State ──
+let quizPassed = false, quizAttempts = 0;
+let modesExplored = new Set();
+let tamperTested = false;
+let bitFlipTested = false;
+const openedAt = new Date().toISOString();
+
+// ── Objective Overlay ──
+let _objOpen = true;
+function toggleObj() {
+  _objOpen = !_objOpen;
+  document.getElementById('obj-panel').style.display = _objOpen ? 'block' : 'none';
+  document.getElementById('obj-chev').textContent = _objOpen ? '▼' : '▲';
+}
+function updateObjOverlay(checks) {
+  const done = checks.filter(c => c.done).length;
+  const total = checks.length;
+  const allDone = done === total;
+  const badge = document.getElementById('obj-badge');
+  badge.style.borderColor = allDone ? '#238636' : '#30363d';
+  badge.style.color = allDone ? '#3fb950' : '#8b949e';
+  document.getElementById('obj-count').textContent = allDone ? '✅ All objectives done!' : `📋 ${done}/${total} objectives`;
+  document.getElementById('obj-list').innerHTML = checks.map(c =>
+    `<div style="color:${c.done?'#3fb950':'#8b949e'};font-size:.79rem">${c.done?'✅':'⬜'} ${c.label}</div>`
+  ).join('');
+}
+
+// ── localStorage persistence ──
+function saveState() {
+  const state = {
+    quizPassed,
+    quizAttempts,
+    modesExplored: [...modesExplored],
+    tamperTested,
+    bitFlipTested,
+    studentName: (document.getElementById('student-name') ? document.getElementById('student-name').value : ''),
+    reflection: (document.getElementById('learning-reflection') ? document.getElementById('learning-reflection').value : ''),
+    labFeedback: (document.getElementById('lab-feedback') ? document.getElementById('lab-feedback').value : ''),
+  };
+  localStorage.setItem('lab03-state', JSON.stringify(state));
+}
+
+function loadState() {
+  const raw = localStorage.getItem('lab03-state');
+  if (!raw) return;
+  try {
+    const state = JSON.parse(raw);
+    quizPassed    = !!state.quizPassed;
+    quizAttempts  = state.quizAttempts || 0;
+    modesExplored = new Set(Array.isArray(state.modesExplored) ? state.modesExplored : []);
+    tamperTested  = !!state.tamperTested;
+    bitFlipTested = !!state.bitFlipTested;
+    if (state.studentName && document.getElementById('student-name')) {
+      document.getElementById('student-name').value = state.studentName;
+    }
+    if (state.reflection && document.getElementById('learning-reflection')) {
+      document.getElementById('learning-reflection').value = state.reflection;
+    }
+    if (state.labFeedback && document.getElementById('lab-feedback')) {
+      document.getElementById('lab-feedback').value = state.labFeedback;
+    }
+  } catch(e) {}
+}
+
+function resetLab() {
+  if (!confirm('Reset all lab progress? This cannot be undone.')) return;
+  localStorage.removeItem('lab03-state');
+  location.reload();
+}
+
+// ── Block Grid ──
+// Padlock-shaped pattern: 0=background, 1=body, 2=shackle
+const PLAIN_PAT = (() => {
+  const g = [];
+  for (let r = 0; r < 16; r++) {
+    for (let c = 0; c < 16; c++) {
+      const body    = r >= 7  && r <= 14 && c >= 3 && c <= 12;
+      const shackle = r >= 2  && r <= 7  && c >= 5 && c <= 10
+                   && !(r >= 4 && r <= 6  && c >= 6 && c <= 9);
+      g.push(body ? 1 : shackle ? 2 : 0);
+    }
+  }
+  return g;
+})();
+
+const PLAIN_COLORS  = ['#21262d', '#1f6feb', '#e3b341'];
+const ECB_COLORS    = ['#2a1c2a', '#0d4a3a', '#4a1a0d'];  // same value → same cipher color (pattern still visible)
+
+function cellHash(r, c, salt) {
+  let h = (r * 31 + c * 17 + salt) >>> 0;
+  h = Math.imul(h ^ (h >>> 16), 0x45d9f3b) >>> 0;
+  h = Math.imul(h ^ (h >>> 15), 0xd97b1b2d) >>> 0;
+  h ^= h >>> 16;
+  return '#' + (h & 0xFFFFFF).toString(16).padStart(6, '0');
+}
+
+function renderGrid(id, colorFn) {
+  const el = document.getElementById(id);
+  el.innerHTML = '';
+  for (let r = 0; r < 16; r++) {
+    for (let c = 0; c < 16; c++) {
+      const d = document.createElement('div');
+      d.className = 'block-cell';
+      d.style.background = colorFn(r, c, PLAIN_PAT[r * 16 + c]);
+      el.appendChild(d);
+    }
+  }
+}
+
+function renderPlain() {
+  renderGrid('plain-grid', (r, c, v) => PLAIN_COLORS[v]);
+}
+
+const MODE_DATA = {
+  ecb: {
+    label: '🔴 ECB — Pattern Still Visible!', labelColor: '#f85149',
+    note: 'Identical plaintext blocks → identical ciphertext blocks',
+    info: `<strong>Electronic Codebook (ECB)</strong> encrypts each 16-byte block independently with the same key — no chaining, no randomness.<br><br>
+<strong style="color:#f85149">Fatal flaw:</strong> Identical plaintext blocks always produce identical ciphertext blocks. Even without decrypting, an attacker can see the <em>structure</em> of your data (notice the padlock shape is still visible in the ciphertext!).<br><br>
+✗ No IV — deterministic and pattern-leaking<br>✗ Never use for anything beyond a single isolated block<br>✗ <strong>Real consequence:</strong> Adobe (2013) used ECB for passwords — 153M accounts exposed<br>
+<br><strong style="color:#58a6ff">Formula:</strong> <code>C_i = E_K(P_i)</code><br>
+<strong style="color:#e3b341">Why it exists:</strong> Simplest block cipher mode — each block encrypted independently. Used in AES key wrapping (RFC 3394) where blocks are already random, making ECB safe. <strong>Never use for structured data.</strong>`,
+    colorFn: (r, c, v) => ECB_COLORS[v],
+  },
+  cbc: {
+    label: '🟡 CBC — Pattern Hidden (but no auth)', labelColor: '#e3b341',
+    note: 'IV + block chaining hides patterns; no built-in authentication',
+    info: `<strong>Cipher Block Chaining (CBC)</strong> XORs each plaintext block with the previous ciphertext block before encrypting.<br><br>
+<strong>Formula:</strong> <code>C_i = E_K(P_i XOR C_{i-1})</code> &nbsp; where <code>C_0</code> = IV<br><br>
+✓ Patterns hidden — identical plaintext produces different ciphertext each run (thanks to unique IV)<br>
+✓ Widely deployed (TLS 1.2, older SSH)<br>
+✗ <strong>No authentication</strong> — an attacker can flip bits in C_{i-1} to predictably corrupt P_i<br>
+✗ Vulnerable to Padding Oracle Attacks if errors are revealed<br>
+✗ Sequential decryption only (can't parallelize)<br>
+<br><strong style="color:#e3b341">Why it exists:</strong> Fixes ECB's pattern leakage by chaining each block to the previous ciphertext. IV ensures even identical messages produce different ciphertexts. Used in TLS 1.2, older file encryption. Requires sequential processing.`,
+    colorFn: (r, c) => cellHash(r, c, 3),
+  },
+  ctr: {
+    label: '🟡 CTR — Parallelizable Stream', labelColor: '#e3b341',
+    note: 'Counter mode — parallelizable, no padding, still no auth alone',
+    info: `<strong>Counter (CTR)</strong> mode turns a block cipher into a stream cipher by encrypting a nonce+counter and XORing with plaintext.<br><br>
+<strong>Formula:</strong> <code>C_i = P_i XOR E_K(Nonce || Counter_i)</code><br><br>
+✓ Fully parallelizable — encrypt or decrypt any block independently<br>
+✓ No padding required — works for any message length<br>
+✓ Random access — jump to block 500 without processing 1–499<br>
+✗ Still <strong>no authentication</strong> — combine with HMAC for integrity or use GCM instead<br>
+<br><strong style="color:#e3b341">Why it exists:</strong> Enables parallel encryption — critical for multi-core processors and random-access storage. Since each block is independent, you can encrypt block 500 without processing 1–499. Used in disk encryption, database field encryption.`,
+    colorFn: (r, c) => cellHash(r, c, 7),
+  },
+  gcm: {
+    label: '🟢 GCM — Authenticated Encryption', labelColor: '#3fb950',
+    note: 'CTR + GHASH = encryption AND 128-bit authentication tag',
+    info: `<strong>Galois/Counter Mode (GCM)</strong> = CTR encryption + GHASH polynomial authentication in a single pass.<br><br>
+Produces ciphertext <em>and</em> a 128-bit auth tag. Any modification to the ciphertext, IV, or Additional Authenticated Data (AAD) invalidates the tag — decryption is rejected entirely.<br><br>
+✓ <strong>AEAD</strong> — Authenticated Encryption with Associated Data<br>
+✓ Parallelizable, no padding, supports AAD (encrypt headers separately)<br>
+✓ Standard for TLS 1.3, QUIC, Signal, Age<br>
+✓ <strong>The recommended AES mode for new systems</strong><br>
+⚠️ Critical: never reuse a (key, IV) pair — catastrophic security failure<br>
+<br><strong style="color:#58a6ff">Formulas:</strong><br><code style="display:block;margin:.2rem 0 .1rem;white-space:normal">Cᵢ = Pᵢ ⊕ E_K(J₀ + i)</code><code style="display:block;margin:.1rem 0;white-space:normal">Tag = GHASH(H, A, C) ⊕ E_K(J₀)</code><br>
+<strong style="color:#e3b341">Why it exists:</strong> Combines CTR encryption with polynomial MAC (GHASH) in a single pass. No separate HMAC needed. Hardware-accelerated on modern CPUs (CLMUL instruction). The modern standard for authenticated encryption.`,
+    colorFn: (r, c) => cellHash(r, c, 13),
+  },
+};
+
+function selectMode(mode, btn) {
+  document.querySelectorAll('.mode-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  modesExplored.add(mode);
+  const d = MODE_DATA[mode];
+  document.getElementById('mode-panel-label').textContent = d.label;
+  document.getElementById('mode-panel-label').style.color  = d.labelColor;
+  document.getElementById('mode-panel-note').textContent   = d.note;
+  document.getElementById('mode-info').innerHTML = `<p style="margin:0">${d.info}</p>`;
+  renderGrid('cipher-grid', d.colorFn);
+  checkReflectionLock();
+  saveState();
+}
+
+// ── HMAC Simulation ──
+function hashMix(h, x) {
+  h = Math.imul(h ^ x, 0x9e3779b9) >>> 0;
+  h ^= h >>> 16;
+  h = Math.imul(h, 0x85ebca6b) >>> 0;
+  h ^= h >>> 13;
+  h = Math.imul(h, 0xc2b2ae35) >>> 0;
+  h ^= h >>> 16;
+  return h >>> 0;
+}
+
+function simHMAC(key, msg) {
+  let h = 0x6b43c8fa;
+  for (let i = 0; i < key.length; i++)  h = hashMix(h, key.charCodeAt(i));
+  h = hashMix(h, 0x5c5c5c5c);  // ipad/opad simulation
+  for (let i = 0; i < msg.length; i++)  h = hashMix(h, msg.charCodeAt(i));
+  let out = '';
+  for (let i = 0; i < 4; i++) { h = hashMix(h, i * 0xdeadbeef); out += h.toString(16).padStart(8, '0'); }
+  return out;
+}
+
+function computeHMAC() {
+  const msg = document.getElementById('hmac-msg').value;
+  const key = document.getElementById('hmac-key').value;
+  const tag = (msg && key) ? simHMAC(key, msg) : '—';
+  document.getElementById('hmac-result').textContent = tag;
+  document.getElementById('tamper-result').style.display = 'none';
+}
+
+function runTamperTest() {
+  const key  = document.getElementById('hmac-key').value  || 'BankSecretKey$42';
+  const orig = document.getElementById('hmac-msg').value  || 'Transfer $500 to Account #8821';
+  // Find dollar amount and add 2 zeros
+  let tampered;
+  if (/\$\d+/.test(orig)) {
+    tampered = orig.replace(/\$(\d+)/, (m, n) => '$' + n + '00');
+  } else {
+    tampered = orig + '00';
+  }
+  const tagOrig = simHMAC(key, orig);
+  const tagTamp = simHMAC(key, tampered);
+  const div = document.getElementById('tamper-result');
+  div.style.display = 'block';
+  div.innerHTML = `
+    <div style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:.7rem .85rem;font-family:monospace;font-size:.77rem;line-height:1.9">
+      <div style="color:#8b949e">📨 Original:  <span style="color:#e6edf3">"${orig}"</span></div>
+      <div style="color:#8b949e">🏷 HMAC tag: <span style="color:#3fb950">${tagOrig}</span></div>
+      <div style="color:#8b949e;margin-top:.35rem">✏️ Tampered: <span style="color:#f85149">"${tampered}"</span></div>
+      <div style="color:#8b949e">🏷 New tag:  <span style="color:#f85149">${tagTamp}</span></div>
+      <div style="background:#162016;border:1px solid #3fb950;border-radius:4px;padding:.45rem .6rem;margin-top:.5rem">
+        <strong style="color:#3fb950">✅ TAMPERING DETECTED</strong>
+        <span style="color:#8b949e"> — Tags differ completely. Receiver rejects the modified message.</span>
+      </div>
+    </div>`;
+  tamperTested = true;
+  checkReflectionLock();
+  saveState();
+}
+
+// ── GCM Simulation ──
+const GCM_KEY = 'AES256GCMDemoKey!';
+let _gcmCt = '';
+
+function streamEncrypt(plain, key) {
+  let ct = '';
+  for (let i = 0; i < plain.length; i++) {
+    const kb = hashMix(key.charCodeAt(i % key.length), i * 0x6364136) & 0xFF;
+    ct += String.fromCharCode((plain.charCodeAt(i) ^ kb) & 0xFF);
+  }
+  return ct;
+}
+
+function runGCM() {
+  const plain = document.getElementById('gcm-plain').value;
+  if (!plain) return;
+  _gcmCt = streamEncrypt(plain, GCM_KEY);
+  const tag = simHMAC(GCM_KEY, _gcmCt);
+  document.getElementById('gcm-ct').textContent  = btoa(_gcmCt).slice(0, 36) + '…';
+  document.getElementById('gcm-tag').textContent = tag;
+  document.getElementById('bitflip-result').style.display = 'none';
+  // ── Calculation breakdown ──
+  const H        = simHMAC(GCM_KEY, '\x00'.repeat(16)).slice(0, 16);
+  const nonceHex = simHMAC(GCM_KEY, 'iv:' + plain).slice(0, 24);
+  const p1 = plain.slice(0, 4).padEnd(4, ' ');
+  const p1Hex  = p1.split('').map(c => c.charCodeAt(0).toString(16).padStart(2, '0')).join(' ');
+  const c1Hex  = _gcmCt.slice(0, 4).split('').map(c => c.charCodeAt(0).toString(16).padStart(2, '0')).join(' ');
+  const fullB64 = btoa(_gcmCt);
+  document.getElementById('gcm-breakdown-wrap').style.display = 'block';
+  document.getElementById('gcm-breakdown').innerHTML =
+    `<div style="color:#8b949e;margin:.15rem 0"><span style="color:#a371f7">① Key Setup:  </span>H = E_K(0¹²⁸) = <span style="color:#a371f7">${H}…</span> <span style="color:#555">(GHASH subkey)</span></div>` +
+    `<div style="color:#8b949e;margin:.15rem 0"><span style="color:#e3b341">② Nonce/IV:   </span>96-bit IV = <span style="color:#e3b341">${nonceHex}</span>  →  J₀ = IV ‖ 0x00000001</div>` +
+    `<div style="color:#8b949e;margin:.15rem 0"><span style="color:#58a6ff">③ Encrypt:    </span>P₁ hex: <span style="color:#58a6ff">${p1Hex}</span>  ⊕  E_K(J₀+1)  →  C₁: <span style="color:#58a6ff">${c1Hex}</span></div>` +
+    `<div style="color:#8b949e;margin:.15rem 0"><span style="color:#58a6ff">④ Full C:     </span><span style="color:#58a6ff">${fullB64.slice(0,44)}${fullB64.length>44?'…':''}</span> <span style="color:#555">(base64)</span></div>` +
+    `<div style="color:#8b949e;margin:.15rem 0"><span style="color:#3fb950">⑤ Auth Tag:   </span>T = GHASH(H, AAD="", C) ⊕ E_K(J₀) = <span style="color:#3fb950">${tag}</span></div>` +
+    `<div style="color:#8b949e;margin:.15rem 0"><span style="color:#e3b341">⑥ Output:     </span><span style="color:#e3b341">[ IV (12B) | Ciphertext | Tag (16B) ]</span> — all three fields required for decryption</div>`;
+}
+
+function runBitFlip() {
+  if (!_gcmCt) runGCM();
+  const origTag = simHMAC(GCM_KEY, _gcmCt);
+  const arr = _gcmCt.split('').map(c => c.charCodeAt(0));
+  arr[3] ^= 0xFF;
+  const tampered = arr.map(c => String.fromCharCode(c)).join('');
+  const tampTag  = simHMAC(GCM_KEY, tampered);
+  const div = document.getElementById('bitflip-result');
+  div.style.display = 'block';
+  div.innerHTML = `
+    <div style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:.7rem .85rem;font-family:monospace;font-size:.77rem;line-height:1.9">
+      <div style="color:#8b949e">Original tag:  <span style="color:#3fb950">${origTag}</span></div>
+      <div style="color:#8b949e">Tag after flip: <span style="color:#f85149">${tampTag}</span></div>
+      <div style="background:#2a1c1c;border:1px solid #f85149;border-radius:4px;padding:.45rem .6rem;margin-top:.5rem">
+        <strong style="color:#f85149">❌ InvalidTag — Decryption REJECTED</strong>
+        <span style="color:#8b949e"> — One bit flip changed every tag byte. GCM is tamper-evident by design.</span>
+      </div>
+    </div>`;
+  bitFlipTested = true;
+  checkReflectionLock();
+  saveState();
+}
+
+// ── Lock ──
+function checkReflectionLock() {
+  const checks = [
+    { label: 'Answer the mini quiz correctly',           done: quizPassed },
+    { label: 'Explore at least 2 AES cipher modes',     done: modesExplored.size >= 2 },
+    { label: 'Run the HMAC tamper attack',               done: tamperTested },
+    { label: 'Run the AES-GCM bit-flip test',           done: bitFlipTested },
+  ];
+  const allDone = checks.every(c => c.done);
+  document.getElementById('reflection-lock').style.display = allDone ? 'none' : 'block';
+  document.getElementById('submission-area').classList.toggle('sub-area-locked', !allDone);
+  updateObjOverlay(checks);
+}
+
+// ── Quiz ──
+const HINTS3 = {
+  A: 'AES-GCM includes a cryptographic auth tag — any modification is immediately detected.',
+  C: 'CTR mode with HMAC-SHA256 properly authenticates ciphertext; tampering would be caught.',
+  D: 'GCM with AAD (Additional Authenticated Data) provides even stronger protection.',
+};
+function check(choice, btn) {
+  quizAttempts++;
+  const correct = choice === 'B';
+  markBtn(btn, correct);
+  if (correct) {
+    quizPassed = true;
+    showFeedback(true, '<strong>AES-CBC without a MAC</strong> is vulnerable to bit-flip attacks. Flipping bits in ciphertext block C<sub>i-1</sub> causes predictable XOR corruption of plaintext block P<sub>i</sub> — without touching the key. Always pair CBC with HMAC, or switch to AES-GCM which includes authentication natively.');
+    checkReflectionLock();
+    saveState();
+  } else {
+    showFeedback(false, HINTS3[choice]);
+    checkReflectionLock();
+  }
+}
+
+// ── Submission ──
+function submitReflection() {
+  const reflection = document.getElementById('learning-reflection').value;
+  const studentName = (document.getElementById('student-name').value || '').trim();
+  if (!studentName) { alert('Please enter your full name.'); document.getElementById('student-name').focus(); return; }
+  if (reflection.trim().length < 100) { alert('Please write at least 100 characters.'); return; }
+  const labFeedback = (document.getElementById('lab-feedback').value || '').trim();
+  const submittedAt = new Date().toISOString();
+  const gcmPlain = document.getElementById('gcm-plain') ? document.getElementById('gcm-plain').value : '—';
+  const gcmCt    = document.getElementById('gcm-ct')    ? document.getElementById('gcm-ct').textContent : '—';
+  const gcmTag   = document.getElementById('gcm-tag')   ? document.getElementById('gcm-tag').textContent : '—';
+  const submission = {
+    studentName, openedAt, submittedAt,
+    timeOnPageMs: new Date(submittedAt) - new Date(openedAt),
+    quizPassed, quizAttempts,
+    modesExplored: [...modesExplored], tamperTested, bitFlipTested,
+    reflection, labFeedback, labCompleted: 'Module 3 Lab',
+    gcmOutput: { plain: gcmPlain, ct: gcmCt, tag: gcmTag },
+  };
+  localStorage.setItem('week3-lab-submission', JSON.stringify(submission));
+  const _fb = document.getElementById('submission-feedback');
+  const _alreadySaved = document.getElementById('export-pdf-btn').style.display !== 'none';
+  _fb.innerHTML = _alreadySaved
+    ? '✅ Updated! Export PDF will reflect your latest changes.'
+    : '✅ Saved! Edit and re-save anytime — Export PDF always uses your latest version.';
+  _fb.style.display = 'block';
+  document.getElementById('export-pdf-btn').style.display = 'inline-block';
+  saveState();
+}
+
+function exportPDF() {
+  const data = JSON.parse(localStorage.getItem('week3-lab-submission') || '{}');
+  document.getElementById('ps-name').textContent      = data.studentName || '—';
+  document.getElementById('ps-opened').textContent    = data.openedAt    ? fmtTs(data.openedAt)    : '—';
+  document.getElementById('ps-submitted').textContent = data.submittedAt ? fmtTs(data.submittedAt) : '—';
+  document.getElementById('ps-duration').textContent  = data.timeOnPageMs != null ? fmtDur(data.timeOnPageMs) : '—';
+  document.getElementById('ps-interactions').innerHTML = `
+    <table>
+      <tr><td>Quiz:</td><td>${data.quizPassed ? '✅ Passed' : '❌ Not passed'} (${data.quizAttempts || 0} attempt${data.quizAttempts !== 1 ? 's' : ''})</td></tr>
+      <tr><td>AES Modes Explored:</td><td>${(data.modesExplored || []).join(', ') || '—'}</td></tr>
+      <tr><td>HMAC Tamper Test:</td><td>${data.tamperTested   ? '✅ Completed' : '❌ Not run'}</td></tr>
+      <tr><td>GCM Bit-Flip Test:</td><td>${data.bitFlipTested ? '✅ Completed' : '❌ Not run'}</td></tr>
+    </table>`;
+  const gcmPlain = document.getElementById('gcm-plain') ? document.getElementById('gcm-plain').value : '—';
+  const gcmCt    = document.getElementById('gcm-ct')    ? document.getElementById('gcm-ct').textContent : '—';
+  const gcmTag   = document.getElementById('gcm-tag')   ? document.getElementById('gcm-tag').textContent : '—';
+  document.getElementById('ps-gcm').innerHTML = `
+    <table>
+      <tr><td>Plaintext:</td><td>${gcmPlain}</td></tr>
+      <tr><td>Ciphertext (base64):</td><td style="font-family:monospace;font-size:.85rem">${gcmCt}</td></tr>
+      <tr><td>Auth Tag:</td><td style="font-family:monospace;font-size:.85rem;color:#238636">${gcmTag}</td></tr>
+      <tr><td>Bit-flip Tested:</td><td>${data.bitFlipTested ? '✅ Yes — InvalidTag raised' : '❌ Not tested'}</td></tr>
+    </table>`;
+  document.getElementById('ps-reflection').textContent = data.reflection  || '—';
+  document.getElementById('ps-feedback').textContent   = data.labFeedback || '—';
+  document.getElementById('print-summary').style.display = 'block';
+  // Set document.title → used by browser as the suggested PDF filename
+  const _origTitle = document.title;
+  const _pdfState  = JSON.parse(localStorage.getItem('lab03-state') || '{}');
+  const _pdfName   = (_pdfState.studentName || '').trim()
+                     || (document.getElementById('student-name') ? document.getElementById('student-name').value.trim() : '');
+  if (_pdfName) {
+    const _slug = _pdfName.replace(/[^\w\s\-]/g, '').trim();
+    document.title = _slug + ' — ' + _origTitle;
+  }
+  window.print();
+  setTimeout(() => {
+    document.title = _origTitle;
+    document.getElementById('print-summary').style.display = 'none';
+  }, 500);
+}
+
+function fmtTs(iso) { return new Date(iso).toLocaleString(); }
+function fmtDur(ms) {
+  const s = Math.floor(ms/1000), m = Math.floor(s/60), h = Math.floor(m/60);
+  if (h > 0) return `${h}h ${m%60}m ${s%60}s`;
+  if (m > 0) return `${m}m ${s%60}s`;
+  return `${s}s`;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadState();
+  renderPlain();
+  computeHMAC();
+  runGCM();
+  checkReflectionLock();
+});
+</script>
+</body>
+</html>

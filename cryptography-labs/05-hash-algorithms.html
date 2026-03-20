@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Module 5 Lab – Hash Algorithms & Password Security</title>
+  <style>
+    *,*::before,*::after{box-sizing:border-box}
+    body{background:#0d1117;color:#c9d1d9;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;min-height:100vh;margin:0}
+    a{color:#58a6ff}
+    code{background:#21262d;border-radius:3px;padding:1px 5px;font-family:"SFMono-Regular",Consolas,monospace;font-size:.875em}
+    .navbar{background:#161b22;border-bottom:1px solid #30363d;padding:.75rem 1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem}
+    .navbar-brand{font-weight:700;color:#e6edf3;text-decoration:none;font-size:1.1rem}
+    .nav-actions{display:flex;align-items:center;gap:.75rem}
+    .nav-pill{font-size:.8rem;color:#8b949e;white-space:nowrap}
+    .container{max-width:900px;margin:0 auto;padding:1.5rem 1rem}
+    .lab-badge{display:inline-block;background:#1f6feb;color:#fff;font-size:.72rem;font-weight:600;padding:2px 10px;border-radius:12px;margin-bottom:.5rem;text-transform:uppercase;letter-spacing:.06em}
+    .lab-header{margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid #30363d}
+    .lab-header h2{color:#e6edf3;margin:.25rem 0 .1rem;font-size:1.6rem}
+    .lab-header p{color:#8b949e;margin:0;font-size:.95rem}
+    .scenario-box{background:#161b22;border-left:4px solid #1f6feb;border-radius:0 8px 8px 0;padding:1rem 1.25rem;margin-bottom:1.5rem}
+    .scenario-box p{margin:0;line-height:1.65}
+    .demo-box{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:1.5rem;margin-bottom:1.5rem}
+    .demo-box h4{margin-top:0;color:#e6edf3}
+    .question-box{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:1.25rem;margin-bottom:.75rem}
+    .question-text{font-weight:600;color:#e6edf3;font-size:1.05rem;margin:0 0 1rem}
+    .why-box{background:#1c2a1c;border:1px solid #238636;border-radius:8px;padding:1.25rem;margin-top:1rem;display:none}
+    .why-box.show{display:block}
+    .why-box h6{color:#3fb950;font-weight:700;margin:0 0 .5rem}
+    .why-box p{margin:.5rem 0 0;line-height:1.65}
+    .why-box ul{margin:.5rem 0 .5rem 1.25rem;padding:0;line-height:1.8}
+    .options-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+    @media(max-width:600px){.options-grid{grid-template-columns:1fr}}
+    .opt-btn{display:flex;align-items:center;gap:.6rem;text-align:left;background:#161b22;border:1px solid #30363d;border-radius:6px;padding:.65rem .9rem;color:#c9d1d9;cursor:pointer;width:100%;font-size:.95rem;transition:border-color .15s,background .15s}
+    .opt-btn:hover{border-color:#58a6ff;background:#1c2940;color:#e6edf3}
+    .opt-btn.correct{background:#1c2a1c!important;border-color:#238636!important;color:#3fb950!important}
+    .opt-btn.incorrect{background:#2a1c1c!important;border-color:#da3633!important;color:#f85149!important}
+    .opt-id{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;background:#30363d;border-radius:4px;font-size:.78rem;font-weight:700;flex-shrink:0}
+    .feedback-box{border-radius:8px;padding:1rem 1.25rem;margin-top:.75rem;font-size:.95rem;line-height:1.65;display:none}
+    .feedback-box.show{display:block}
+    .feedback-correct{background:#1c2a1c;border:1px solid #238636;color:#3fb950}
+    .feedback-incorrect{background:#2a1c1c;border:1px solid #da3633;color:#f85149}
+    .badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.75rem;font-weight:600}
+    .badge-green{background:#1c2a1c;color:#3fb950;border:1px solid #238636}
+    .badge-red{background:#2a1c1c;color:#f85149;border:1px solid #da3633}
+    .badge-yellow{background:#2a2000;color:#e3b341;border:1px solid #9e6a03}
+    .badge-blue{background:#1c2940;color:#58a6ff;border:1px solid #1f6feb}
+    .badge-gray{background:#21262d;color:#8b949e;border:1px solid #30363d}
+    table{width:100%;border-collapse:collapse;font-size:.9rem}
+    th,td{padding:.5rem .75rem;border:1px solid #30363d;text-align:left}
+    th{background:#21262d;color:#8b949e;font-weight:600;font-size:.8rem;text-transform:uppercase;letter-spacing:.05em}
+    tr:hover td{background:#1c2128}
+    .reflection-box{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:1.5rem;margin:1.5rem 0}
+    .reflection-title{color:#e6edf3;font-weight:600;margin-bottom:.75rem}
+    .reflection-input{background:#21262d;border:1px solid #30363d;border-radius:6px;padding:.75rem;color:#e6edf3;width:100%;min-height:120px;font-family:inherit;resize:vertical}
+    .reflection-input:focus{outline:none;border-color:#58a6ff}
+    .text-input{background:#21262d;border:1px solid #30363d;border-radius:6px;padding:.5rem .75rem;color:#e6edf3;font-family:inherit;font-size:.9rem}
+    .text-input:focus{outline:none;border-color:#58a6ff}
+    .submit-btn{background:#1f6feb;color:#fff;border:none;border-radius:6px;padding:.5rem 1rem;cursor:pointer;font-size:.9rem;margin-top:.5rem}
+    .submit-btn:hover{background:#1c64e8}
+    .export-pdf-btn{background:#3fb950;color:#fff;border:none;border-radius:6px;padding:.5rem 1rem;cursor:pointer;font-size:.9rem;margin-top:.5rem;margin-left:.5rem;display:none}
+    .export-pdf-btn:hover{background:#3aad49}
+    .action-btn{background:#21262d;color:#c9d1d9;border:1px solid #30363d;border-radius:6px;padding:.45rem .9rem;cursor:pointer;font-size:.85rem;transition:border-color .15s}
+    .action-btn:hover{border-color:#58a6ff;color:#58a6ff}
+    .action-btn-blue{background:#1f6feb;color:#fff;border:none;border-radius:6px;padding:.45rem .9rem;cursor:pointer;font-size:.85rem}
+    .action-btn-blue:hover{background:#1c64e8}
+    #print-summary{display:none;font-family:Arial,sans-serif;color:#000;padding:2rem;line-height:1.6}
+    #print-summary h1{font-size:1.4rem;margin-bottom:.25rem}
+    #print-summary h2{font-size:1.1rem;margin:1rem 0 .25rem;border-bottom:1px solid #ccc;padding-bottom:.2rem}
+    #print-summary table{border-collapse:collapse;width:100%;margin-bottom:.5rem}
+    #print-summary td{padding:.2rem .5rem;vertical-align:top}
+    #print-summary td:first-child{font-weight:bold;white-space:nowrap;width:160px}
+    .reflection-title{font-weight:600;color:#e6edf3;margin-bottom:.75rem;font-size:1rem}
+    .sub-area-locked{opacity:.45;pointer-events:none;user-select:none}
+    .sub-area-unlocked{opacity:1;pointer-events:auto}
+    @media print{body>*:not(#print-summary){display:none!important}#print-summary{display:block!important}}
+    .lab-footer{display:flex;justify-content:space-between;align-items:center;margin-top:2rem;padding-top:1rem;border-top:1px solid #30363d}
+    .lab-footer .text-muted{color:#8b949e;font-size:.85rem}
+    .btn-nav{display:inline-flex;align-items:center;gap:.4rem;padding:.4rem .9rem;border:1px solid #30363d;border-radius:6px;color:#c9d1d9;text-decoration:none;font-size:.85rem;background:#161b22;transition:border-color .15s}
+    .btn-nav:hover{border-color:#58a6ff;color:#58a6ff}
+    .btn-nav.disabled{opacity:.4;pointer-events:none}
+
+    /* Avalanche */
+    .hash-display{font-family:monospace;font-size:.78rem;word-break:break-all;padding:.65rem;background:#0d1117;border:1px solid #30363d;border-radius:6px;line-height:1.8;min-height:2.4rem}
+    .bit-diff-bar{display:flex;gap:1px;flex-wrap:wrap;margin:.5rem 0}
+    .bit-chip{width:10px;height:10px;border-radius:2px;display:inline-block}
+    .bit-match{background:#3fb950}
+    .bit-diff{background:#f85149}
+
+    /* Algorithm comparison */
+    .algo-row{border:1px solid #30363d;border-radius:6px;margin:.4rem 0;overflow:hidden;cursor:pointer;transition:border-color .2s}
+    .algo-row:hover{border-color:#58a6ff}
+    .algo-row.open{border-color:#58a6ff}
+    .algo-header{display:grid;grid-template-columns:1fr 80px 120px 110px;gap:.5rem;padding:.65rem .85rem;align-items:center}
+    @media(max-width:580px){.algo-header{grid-template-columns:1fr 80px;gap:.3rem}}
+    .algo-name{font-weight:600;color:#e6edf3;font-size:.9rem}
+    .algo-details-panel{display:none;padding:.65rem .85rem;background:#0d1117;border-top:1px solid #30363d;font-size:.82rem;color:#8b949e;line-height:1.7}
+    .algo-row.open .algo-details-panel{display:block}
+
+    /* Birthday attack */
+    .bd-grid{display:flex;flex-wrap:wrap;gap:3px;padding:.5rem;background:#0d1117;border:1px solid #30363d;border-radius:6px;min-height:80px;max-height:200px;overflow-y:auto}
+    .bd-cell{width:12px;height:12px;border-radius:2px;background:#30363d;transition:background .2s}
+
+    /* Floating objectives */
+    #obj-overlay{position:fixed;bottom:1rem;right:1rem;z-index:1000;font-size:.8rem}
+    #obj-badge{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.4rem .7rem;cursor:pointer;color:#8b949e;user-select:none;display:flex;align-items:center;gap:.4rem}
+    #obj-panel{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.6rem .8rem;margin-top:.3rem;min-width:220px;display:block}
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="navbar-brand" href="../">🔐 Cryptography Labs</a>
+  <div class="nav-actions">
+    <span class="nav-pill">Module 5 Lab</span>
+    <button onclick="resetLab()" style="background:none;border:1px solid #30363d;border-radius:6px;padding:.25rem .6rem;color:#8b949e;cursor:pointer;font-size:.75rem">↺ Reset</button>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="lab-header">
+    <div class="lab-badge">Module 5 · Integrity</div>
+    <h2>Hash Algorithms &amp; Password Security</h2>
+    <p>SHA-256 avalanche effect, algorithm lifecycle, bcrypt vs raw hashing, and the birthday attack</p>
+  </div>
+
+  <div class="scenario-box">
+    <p><strong>Scenario:</strong> You're auditing a web application that stores user passwords as unsalted MD5 hashes. Your task is to understand why this is catastrophic, demonstrate the cryptographic properties that make good hash functions essential, and propose a secure alternative. Along the way you'll see how even a single bit change cascades through SHA-256.</p>
+  </div>
+
+  <!-- Demo 1: Avalanche Effect -->
+  <div class="demo-box">
+    <h4>🌊 Demo 1 — SHA-256 Avalanche Effect</h4>
+    <p style="color:#8b949e;margin-bottom:1rem">Enter two similar messages and observe how a tiny change flips ~50% of output bits.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.75rem">
+      <div>
+        <label style="font-size:.8rem;color:#8b949e;display:block;margin-bottom:.3rem">Message A</label>
+        <input id="msg-a" class="text-input" style="width:100%" value="hello" oninput="avalancheUpdate()">
+      </div>
+      <div>
+        <label style="font-size:.8rem;color:#8b949e;display:block;margin-bottom:.3rem">Message B</label>
+        <input id="msg-b" class="text-input" style="width:100%" value="hellO" oninput="avalancheUpdate()">
+      </div>
+    </div>
+    <button class="action-btn-blue" onclick="runAvalanche()">🔨 Hash Both Messages</button>
+    <div id="avalanche-result" style="display:none;margin-top:1rem">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.75rem">
+        <div>
+          <div style="font-size:.75rem;color:#8b949e;margin-bottom:.3rem">SHA-256(A)</div>
+          <div id="hash-a" class="hash-display"></div>
+        </div>
+        <div>
+          <div style="font-size:.75rem;color:#8b949e;margin-bottom:.3rem">SHA-256(B)</div>
+          <div id="hash-b" class="hash-display"></div>
+        </div>
+      </div>
+      <div style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:.75rem">
+        <div style="font-size:.78rem;color:#8b949e;margin-bottom:.4rem">Bit-level difference (green = match, red = differs):</div>
+        <div id="bit-diff" class="bit-diff-bar"></div>
+        <div id="diff-stats" style="font-size:.82rem;margin-top:.5rem;color:#e6edf3"></div>
+      </div>
+      <div style="background:#1c2940;border:1px solid #1f6feb;border-radius:6px;padding:.65rem .85rem;margin-top:.75rem;font-size:.83rem;color:#58a6ff">
+        💡 <strong>Avalanche Effect:</strong> Even a 1-character change (lowercase 'o' → uppercase 'O') causes roughly half of all 256 output bits to flip. This property is essential — it prevents attackers from learning anything about similar plaintexts by comparing their hashes.
+      </div>
+    </div>
+  </div>
+
+  <!-- Demo 2: Algorithm Comparison -->
+  <div class="demo-box">
+    <h4>📊 Demo 2 — Hash Algorithm Comparison</h4>
+    <p style="color:#8b949e;margin-bottom:1rem">Click any algorithm row to see why it was deprecated or is recommended.</p>
+
+    <div id="algo-table">
+      <div class="algo-row" onclick="toggleAlgo(this,'md5')">
+        <div class="algo-header">
+          <div><div class="algo-name">MD5</div><div style="font-size:.75rem;color:#8b949e">128-bit digest</div></div>
+          <span class="badge badge-gray">Very Fast</span>
+          <span class="badge badge-red">BROKEN</span>
+          <span style="font-size:.75rem;color:#8b949e">&#9660; details</span>
+        </div>
+        <div class="algo-details-panel" id="d-md5">
+          <strong style="color:#f85149">Status: Broken — Do not use for any security purpose</strong><br>
+          First collision attack demonstrated 1996 (Dobbertin). Practical chosen-prefix collisions demonstrated 2004 (Wang et al). Used in the Flame malware (2012) to forge Windows Update signatures. A modern GPU can compute <strong>~10 billion MD5 hashes/second</strong>. All stored MD5 password hashes are trivially crackable via rainbow tables or brute force.<br><br>
+          <strong>Still used for:</strong> Non-security checksums (file integrity verification where collision resistance isn't needed), legacy systems that can't be updated.
+        </div>
+      </div>
+
+      <div class="algo-row" onclick="toggleAlgo(this,'sha1')">
+        <div class="algo-header">
+          <div><div class="algo-name">SHA-1</div><div style="font-size:.75rem;color:#8b949e">160-bit digest</div></div>
+          <span class="badge badge-gray">Fast</span>
+          <span class="badge badge-yellow">DEPRECATED</span>
+          <span style="font-size:.75rem;color:#8b949e">&#9660; details</span>
+        </div>
+        <div class="algo-details-panel" id="d-sha1">
+          <strong style="color:#e3b341">Status: Deprecated — Phase out immediately</strong><br>
+          Theoretical weaknesses known since 2005. The <strong>SHAttered attack (2017)</strong> by Google and CWI Amsterdam produced the first practical SHA-1 collision — two different PDF files with identical SHA-1 hashes. Cost was ~$100K in cloud compute. NIST deprecated SHA-1 for digital signatures in 2011; browsers dropped it for TLS certificates by 2017.<br><br>
+          <strong>Migration path:</strong> SHA-1 → SHA-256 (drop-in for most uses), SHA-1 HMAC → HMAC-SHA-256.
+        </div>
+      </div>
+
+      <div class="algo-row" onclick="toggleAlgo(this,'sha256')">
+        <div class="algo-header">
+          <div><div class="algo-name">SHA-256</div><div style="font-size:.75rem;color:#8b949e">256-bit digest</div></div>
+          <span class="badge badge-yellow">Moderate</span>
+          <span class="badge badge-blue">CURRENT</span>
+          <span style="font-size:.75rem;color:#8b949e">&#9660; details</span>
+        </div>
+        <div class="algo-details-panel" id="d-sha256">
+          <strong style="color:#58a6ff">Status: Current NIST standard — safe to use</strong><br>
+          Part of the SHA-2 family (FIPS 180-4). No known weaknesses. Collision resistance: 2<sup>128</sup> operations. Used everywhere: TLS certificates, Bitcoin proof-of-work, code signing, HMAC-SHA-256, PBKDF2-SHA-256.<br><br>
+          <strong>Quantum note:</strong> Grover's algorithm reduces effective security to 2<sup>128</sup> — still infeasible. SHA-256 is considered quantum-safe for hash functions.<br>
+          <strong>Use for:</strong> Digital signatures, MACs, key derivation (with PBKDF2/HKDF), integrity checks.
+        </div>
+      </div>
+
+      <div class="algo-row" onclick="toggleAlgo(this,'sha3')">
+        <div class="algo-header">
+          <div><div class="algo-name">SHA-3 / Keccak</div><div style="font-size:.75rem;color:#8b949e">256-bit digest</div></div>
+          <span class="badge badge-yellow">Slower</span>
+          <span class="badge badge-green">RECOMMENDED</span>
+          <span style="font-size:.75rem;color:#8b949e">&#9660; details</span>
+        </div>
+        <div class="algo-details-panel" id="d-sha3">
+          <strong style="color:#3fb950">Status: Recommended — different design from SHA-2</strong><br>
+          Won NIST hash competition (2012). Based on the <strong>sponge construction</strong> (Keccak), fundamentally different from SHA-2's Merkle–Damgård construction. This diversity matters: if a weakness is found in SHA-2's design, SHA-3 provides a fallback.<br><br>
+          <strong>Variants:</strong> SHA3-256 (drop-in for SHA-256), SHA3-512, SHAKE128/256 (variable-length XOF).<br>
+          <strong>Best for:</strong> New protocol designs, post-quantum hybrid schemes, when algorithm diversity is required.
+        </div>
+      </div>
+    </div>
+
+    <div id="algo-obj-done" style="display:none;margin-top:.5rem">
+      <span class="badge badge-green">✅ All algorithms reviewed</span>
+    </div>
+  </div>
+
+  <!-- Demo 3: Password Hashing -->
+  <div class="demo-box">
+    <h4>🔑 Demo 3 — Raw Hash vs bcrypt Password Storage</h4>
+    <p style="color:#8b949e;margin-bottom:1rem">Enter a password to compare how MD5 and bcrypt handle storage differently.</p>
+    <div style="display:flex;gap:.5rem;margin-bottom:.75rem;flex-wrap:wrap">
+      <input id="pw-input" class="text-input" style="flex:1;min-width:180px" placeholder="Enter a password..." value="hunter2">
+      <button class="action-btn" onclick="hashMD5sim()">Hash with MD5 (unsafe)</button>
+      <button class="action-btn-blue" onclick="hashBcryptSim()">Hash with bcrypt (safe)</button>
+    </div>
+
+    <div id="pw-md5-result" style="display:none;margin-bottom:.75rem">
+      <div style="font-size:.78rem;color:#f85149;font-weight:600;margin-bottom:.3rem">⚠️ MD5 (instant — dangerous)</div>
+      <div id="pw-md5-hash" class="hash-display" style="border-color:#da3633"></div>
+      <div style="background:#2a1c1c;border:1px solid #da3633;border-radius:6px;padding:.6rem .85rem;margin-top:.5rem;font-size:.81rem;color:#f85149">
+        No salt. Deterministic. Any two users with "hunter2" get <em>identical</em> hashes → rainbow table attack. A modern GPU cracks ~10 billion MD5/sec. A 6-character password falls in milliseconds.
+      </div>
+    </div>
+
+    <div id="pw-bcrypt-working" style="display:none;margin-bottom:.75rem">
+      <div style="font-size:.78rem;color:#e3b341;font-weight:600;margin-bottom:.3rem">⏳ bcrypt computing… (cost factor 12)</div>
+      <div style="background:#21262d;border-radius:6px;height:8px;overflow:hidden"><div id="bcrypt-progress" style="height:100%;background:#e3b341;width:0%;transition:width .1s linear"></div></div>
+    </div>
+
+    <div id="pw-bcrypt-result" style="display:none;margin-bottom:.75rem">
+      <div style="font-size:.78rem;color:#3fb950;font-weight:600;margin-bottom:.3rem">✅ bcrypt (after ~800ms deliberate delay)</div>
+      <div id="pw-bcrypt-hash" class="hash-display" style="border-color:#238636;font-size:.7rem"></div>
+      <div style="background:#1c2a1c;border:1px solid #238636;border-radius:6px;padding:.6rem .85rem;margin-top:.5rem;font-size:.81rem;color:#3fb950">
+        Includes <strong>random salt</strong> (first 22 chars). Same password hashed twice → different outputs. Cost factor 12 = 4,096 rounds. GPU speed: ~1,000 bcrypt/sec. Cracking one password at this rate would take <strong id="bcrypt-crack-time">years</strong>.
+      </div>
+    </div>
+
+    <div style="background:#161b22;border:1px solid #30363d;border-radius:6px;padding:.75rem;margin-top:.5rem">
+      <div style="font-size:.8rem;color:#8b949e;font-weight:600;margin-bottom:.5rem">Attacker cracking speed comparison</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;font-size:.8rem">
+        <div style="text-align:center;padding:.5rem;background:#2a1c1c;border-radius:6px">
+          <div style="color:#f85149;font-weight:700;font-size:1.1rem">10,000,000,000</div>
+          <div style="color:#8b949e">MD5 hashes/sec (GPU)</div>
+        </div>
+        <div style="text-align:center;padding:.5rem;background:#1c2a1c;border-radius:6px">
+          <div style="color:#3fb950;font-weight:700;font-size:1.1rem">1,000</div>
+          <div style="color:#8b949e">bcrypt/sec (cost=12)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Demo 4: Birthday Attack -->
+  <div class="demo-box">
+    <h4>🎂 Demo 4 — Birthday Attack Simulator</h4>
+    <p style="color:#8b949e;margin-bottom:.75rem">We simulate a collision in a <strong>16-bit hash space</strong> (65,536 possible values). The birthday paradox predicts a collision after ~√65536 = <strong>256 attempts</strong> on average.</p>
+    <div style="background:#1c2940;border:1px solid #1f6feb;border-radius:6px;padding:.65rem .85rem;margin-bottom:.75rem;font-size:.82rem;color:#58a6ff">
+      📐 <strong>Formula:</strong> For an n-bit hash, collision resistance = 2<sup>n/2</sup> operations (not 2<sup>n</sup>). SHA-256 needs 2<sup>128</sup> operations to find a collision — infeasible with classical computers.
+    </div>
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.75rem">
+      <button class="action-btn-blue" id="bd-btn" onclick="startBirthday()">▶ Start Simulation</button>
+      <button class="action-btn" onclick="resetBirthday()">↺ Reset</button>
+      <span id="bd-stats" style="font-size:.82rem;color:#8b949e;align-self:center;margin-left:.25rem"></span>
+    </div>
+    <div id="bd-grid" class="bd-grid"></div>
+    <div id="bd-collision" style="display:none;margin-top:.75rem;background:#1c2a1c;border:1px solid #238636;border-radius:6px;padding:.75rem;font-size:.85rem;color:#3fb950"></div>
+    <div style="margin-top:.75rem;font-size:.82rem;color:#8b949e">
+      <strong style="color:#e6edf3">Why this matters for SHA-256:</strong> With a 256-bit output, an attacker needs 2<sup>128</sup> ≈ 3.4×10<sup>38</sup> hash computations to find a collision. Even at 10<sup>18</sup> hashes/second, that would take 10<sup>13</sup> years — longer than the age of the universe.
+    </div>
+  </div>
+
+  <!-- Quiz -->
+  <div class="demo-box">
+    <div class="question-box">
+      <p class="question-text">Which hash property guarantees that given a hash output, you cannot efficiently find the original input?</p>
+      <div class="options-grid">
+        <button class="opt-btn" onclick="checkQ(this,'A')"><span class="opt-id">A</span>Collision resistance</button>
+        <button class="opt-btn" onclick="checkQ(this,'B')"><span class="opt-id">B</span>Preimage resistance</button>
+        <button class="opt-btn" onclick="checkQ(this,'C')"><span class="opt-id">C</span>Avalanche effect</button>
+        <button class="opt-btn" onclick="checkQ(this,'D')"><span class="opt-id">D</span>Key stretching</button>
+      </div>
+      <div id="q-feedback" class="feedback-box"></div>
+      <div class="why-box" id="why-box">
+        <h6>📚 The Three Hash Security Properties</h6>
+        <ul>
+          <li><strong>Preimage resistance (one-way):</strong> Given H(x), cannot find x. This is what protects passwords.</li>
+          <li><strong>Second-preimage resistance:</strong> Given x, cannot find x′ ≠ x such that H(x) = H(x′).</li>
+          <li><strong>Collision resistance:</strong> Cannot find any two inputs x ≠ x′ where H(x) = H(x′). Required for digital signatures — attacker can't substitute a different document with the same hash.</li>
+          <li><strong>Avalanche effect:</strong> A property of the function design (small input change → ~50% bit flip), not a formal security property.</li>
+          <li><strong>Key stretching</strong> (bcrypt, PBKDF2): a technique to make hash computation slow, not a hash property itself.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reflection -->
+  <div class="reflection-box">
+    <div class="reflection-title">💭 Learning Reflection Submission</div>
+    <p style="color:#8b949e;margin-bottom:.75rem">After exploring hash algorithms and password security, reflect on what you discovered:</p>
+    <div style="margin-bottom:1rem">
+      <strong style="color:#e6edf3">Guided Questions:</strong>
+      <ul style="color:#8b949e;font-size:.9rem;margin:.5rem 0 0 1.5rem;line-height:1.9">
+        <li>Why do we use SHA-256 instead of MD5 for integrity-critical applications today?</li>
+        <li>What is the avalanche effect and why is it a desirable property of cryptographic hash functions?</li>
+        <li>Explain in your own words why a hash function is "one-way" — what prevents reversing it?</li>
+        <li>Why does bcrypt take longer to compute than MD5, and why is that beneficial for password storage?</li>
+        <li><strong style="color:#e6edf3">Key question:</strong> Describe the birthday attack you simulated. What does it reveal about the relationship between hash output size and collision probability?</li>
+      </ul>
+    </div>
+    <div id="reflection-lock" style="background:#2a1c1c;border:1px solid #f85149;border-radius:6px;padding:.75rem 1rem;margin-bottom:1rem">
+      <p style="color:#f85149;font-weight:600;margin:0;font-size:.9rem">🔒 Complete all objectives (tracker bottom-right ↘) to unlock submission</p>
+    </div>
+    <div id="submission-area" class="sub-area-locked">
+      <textarea class="reflection-input" id="learning-reflection" placeholder="Describe what you learned about hash properties, password storage, and birthday attacks. Why does the choice of hash algorithm matter so much for security?&#10;&#10;Please write at least 4–5 sentences about your key insights..." oninput="saveState()"></textarea>
+      <div style="margin-top:.75rem">
+        <label style="color:#e6edf3;font-size:.9rem;font-weight:600">🔍 Lab Observations</label>
+        <p style="color:#8b949e;font-size:.82rem;margin:.2rem 0 .3rem">Was there anything within the lab you expected to change, but didn't?</p>
+        <textarea class="reflection-input" id="lab-feedback" placeholder="Share any observations, surprises, or things that felt missing..." style="min-height:80px" oninput="saveState()"></textarea>
+      </div>
+      <div style="margin-top:.75rem">
+        <label style="color:#e6edf3;font-size:.9rem;font-weight:600">Your name:</label>
+        <input type="text" id="student-name" class="text-input" placeholder="Enter your full name..." style="max-width:320px;margin:.3rem 0 0" oninput="saveState()">
+      </div>
+      <div style="margin-top:.75rem">
+        <button class="submit-btn" onclick="saveReflection()">💾 Save Reflection</button>
+        <button id="export-pdf-btn" class="export-pdf-btn" onclick="exportPDF()" style="display:none">📄 Export PDF</button>
+      </div>
+      <div id="submission-feedback" style="margin-top:.5rem;color:#3fb950;display:none">✅ Saved! Edit and re-save anytime — Export PDF always uses your latest version.</div>
+    </div>
+  </div>
+
+  <div class="lab-footer">
+    <a class="btn-nav" href="../week4-lab/04-asymmetric-encryption.html">← Week 4</a>
+    <span class="text-muted">Module 5 · Hash Algorithms</span>
+    <a class="btn-nav" href="../week6-lab/06-cryptography-standards.html">Week 6 →</a>
+  </div>
+</div>
+
+<!-- Floating Objectives -->
+<div id="obj-overlay">
+  <div id="obj-badge" onclick="toggleObj()">
+    <span id="obj-count">📋 0/5 objectives</span>
+    <span id="obj-chev">▲</span>
+  </div>
+  <div id="obj-panel">
+    <div id="obj-list"></div>
+  </div>
+</div>
+
+<!-- Print Summary -->
+<div id="print-summary">
+  <h1>Module 5 Lab — Hash Algorithms &amp; Password Security</h1>
+  <p style="color:#555;font-size:.85rem">CS 615 · Cryptography for Cyber Professionals</p>
+  <h2>Student Info</h2>
+  <table><tr><td>Name:</td><td id="ps-name"></td></tr><tr><td>Submitted:</td><td id="ps-submitted"></td></tr><tr><td>Time on page:</td><td id="ps-duration"></td></tr></table>
+  <h2>Lab Interactions</h2>
+  <div id="ps-interactions"></div>
+  <h2>Reflection</h2>
+  <div id="ps-reflection" style="white-space:pre-wrap"></div>
+</div>
+
+<script>
+// ── State ──
+let quizPassed=false, quizAttempts=0;
+let avalancheDone=false, algosDone=false, pwHashDone=false, birthdayDone=false;
+let algosSeen=new Set();
+const openedAt=new Date().toISOString();
+let _bdTimer=null, _bdRunning=false;
+let _bdSeen={};
+let _bcryptTimer=null;
+
+// ── Simulated SHA-256 (deterministic pseudo-hash) ──
+function simSHA256(str){
+  let h=[0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
+  for(let i=0;i<str.length;i++){
+    const c=str.charCodeAt(i);
+    h[i%8]=((h[i%8]^(c*2654435761))>>>0);
+    h[(i+1)%8]=((h[(i+1)%8]+(h[i%8]^(c*0x9e3779b9)))>>>0);
+    h[(i+3)%8]=((h[(i+3)%8]^(h[(i+2)%8]*0x517cc1b7|0))>>>0);
+    for(let j=0;j<8;j++)h[j]=((h[j]*0x45d9f3b)^(h[j]>>>16))>>>0;
+  }
+  // extra mixing passes
+  for(let p=0;p<4;p++){
+    for(let j=0;j<8;j++){
+      h[j]=((h[j]^(h[(j+1)%8]>>>3))>>>0);
+      h[(j+3)%8]=((h[(j+3)%8]+h[j]*0xd2a98b26)>>>0);
+    }
+  }
+  return h.map(x=>x.toString(16).padStart(8,'0')).join('');
+}
+
+function simMD5(str){
+  let h=0x12345678;
+  for(let i=0;i<str.length;i++){h=((h*31+str.charCodeAt(i))^(h>>>5))>>>0;}
+  h=h^0xaabbccdd;
+  return h.toString(16).padStart(8,'0').repeat(4);
+}
+
+// ── Avalanche ──
+function avalancheUpdate(){
+  const a=document.getElementById('msg-a').value;
+  const b=document.getElementById('msg-b').value;
+  if(a&&b)document.getElementById('avalanche-result').style.display='none';
+}
+function runAvalanche(){
+  const a=document.getElementById('msg-a').value||'hello';
+  const b=document.getElementById('msg-b').value||'hellO';
+  const ha=simSHA256(a), hb=simSHA256(b);
+  // Color the hex chars
+  let htmlA='',htmlB='';
+  let diffNibbles=0;
+  for(let i=0;i<ha.length;i++){
+    const match=ha[i]===hb[i];
+    if(!match)diffNibbles++;
+    htmlA+=`<span style="color:${match?'#3fb950':'#f85149'}">${ha[i]}</span>`;
+    htmlB+=`<span style="color:${match?'#3fb950':'#f85149'}">${hb[i]}</span>`;
+  }
+  document.getElementById('hash-a').innerHTML=htmlA;
+  document.getElementById('hash-b').innerHTML=htmlB;
+  // Bit diff bar (nibble-level)
+  let bar='';
+  for(let i=0;i<ha.length;i++){
+    bar+=`<span class="bit-chip ${ha[i]===hb[i]?'bit-match':'bit-diff'}"></span>`;
+  }
+  document.getElementById('bit-diff').innerHTML=bar;
+  const pct=Math.round(diffNibbles/ha.length*100);
+  document.getElementById('diff-stats').innerHTML=`<strong>${diffNibbles}</strong> of ${ha.length} nibbles differ &nbsp;·&nbsp; <strong style="color:#e3b341">${pct}%</strong> of output bits changed`;
+  document.getElementById('avalanche-result').style.display='block';
+  avalancheDone=true;
+  saveState();updateObj();
+}
+
+// ── Algorithm comparison ──
+function toggleAlgo(row,id){
+  row.classList.toggle('open');
+  algosSeen.add(id);
+  if(algosSeen.size>=4){
+    algosDone=true;
+    document.getElementById('algo-obj-done').style.display='block';
+  }
+  saveState();updateObj();
+}
+
+// ── Password hashing ──
+function hashMD5sim(){
+  const pw=document.getElementById('pw-input').value||'hunter2';
+  const hash=simMD5(pw);
+  document.getElementById('pw-md5-hash').textContent=hash;
+  document.getElementById('pw-md5-result').style.display='block';
+  pwHashDone=true;
+  saveState();updateObj();
+}
+
+function hashBcryptSim(){
+  const pw=document.getElementById('pw-input').value||'hunter2';
+  document.getElementById('pw-bcrypt-result').style.display='none';
+  document.getElementById('pw-bcrypt-working').style.display='block';
+  const bar=document.getElementById('bcrypt-progress');
+  bar.style.width='0%';
+  const start=Date.now();
+  const dur=900;
+  if(_bcryptTimer)clearInterval(_bcryptTimer);
+  _bcryptTimer=setInterval(()=>{
+    const pct=Math.min(100,(Date.now()-start)/dur*100);
+    bar.style.width=pct+'%';
+    if(pct>=100){
+      clearInterval(_bcryptTimer);
+      document.getElementById('pw-bcrypt-working').style.display='none';
+      // generate bcrypt-like output
+      const salt='$2b$12$'+simSHA256(pw+Date.now()).slice(0,22);
+      const hash=salt+simSHA256(pw+salt).slice(0,31);
+      document.getElementById('pw-bcrypt-hash').textContent=hash;
+      // crack time estimate
+      const entropy=Math.pow(2,pw.length*6); // rough
+      const bcryptPerSec=1000;
+      const secs=entropy/bcryptPerSec/2;
+      const yrs=secs/3.15e7;
+      document.getElementById('bcrypt-crack-time').textContent=
+        yrs>1e6?'millions of years':yrs>1?Math.round(yrs)+' years':secs>3600?Math.round(secs/3600)+' hours':'minutes';
+      document.getElementById('pw-bcrypt-result').style.display='block';
+      pwHashDone=true;
+      saveState();updateObj();
+    }
+  },40);
+}
+
+// ── Birthday Attack ──
+function simHash16(input){
+  let h=0xabcd;
+  for(let i=0;i<input.length;i++)h=((h*31+input.charCodeAt(i))^(h>>>3))&0xffff;
+  h=h^(h>>>5);h=(h*0x4c1d)&0xffff;
+  return h;
+}
+function hue(v){return Math.floor(v/65536*360)}
+
+function initBdGrid(){
+  const g=document.getElementById('bd-grid');
+  g.innerHTML='';
+  for(let i=0;i<256;i++){
+    const c=document.createElement('span');
+    c.className='bd-cell';
+    c.id='bd-'+i;
+    g.appendChild(c);
+  }
+}
+
+function startBirthday(){
+  if(_bdRunning)return;
+  resetBirthday();
+  _bdRunning=true;
+  _bdSeen={};
+  let attempt=0;
+  document.getElementById('bd-btn').disabled=true;
+  const run=()=>{
+    if(!_bdRunning)return;
+    const msg='msg'+attempt;
+    const h=simHash16(msg);
+    const bucket=Math.floor(h/256); // 0-255 bucket for display
+    const el=document.getElementById('bd-'+bucket);
+    if(el){
+      const hue=Math.floor(h/65536*360);
+      el.style.background=`hsl(${hue},70%,50%)`;
+    }
+    if(_bdSeen[h]!==undefined){
+      _bdRunning=false;
+      document.getElementById('bd-btn').disabled=false;
+      document.getElementById('bd-stats').textContent=`Collision found after ${attempt+1} attempts!`;
+      document.getElementById('bd-collision').style.display='block';
+      document.getElementById('bd-collision').innerHTML=
+        `🎯 <strong>Collision found!</strong> &nbsp;Attempt #${attempt+1}<br>`+
+        `<code style="font-size:.78rem">"${_bdSeen[h]}"</code> and <code style="font-size:.78rem">"${msg}"</code> both hash to <code style="font-size:.78rem">0x${h.toString(16).padStart(4,'0')}</code><br>`+
+        `<span style="color:#8b949e;font-size:.8rem">Expected: ~√65536 = 256 attempts &nbsp;·&nbsp; Got: ${attempt+1} (${attempt+1<256?'below':'above'} average)</span>`;
+      birthdayDone=true;
+      saveState();updateObj();
+      return;
+    }
+    _bdSeen[h]=msg;
+    attempt++;
+    document.getElementById('bd-stats').textContent=`Attempt ${attempt}…`;
+    _bdTimer=setTimeout(run,8);
+  };
+  run();
+}
+
+function resetBirthday(){
+  _bdRunning=false;
+  if(_bdTimer)clearTimeout(_bdTimer);
+  _bdSeen={};
+  initBdGrid();
+  document.getElementById('bd-stats').textContent='';
+  document.getElementById('bd-collision').style.display='none';
+  document.getElementById('bd-btn').disabled=false;
+}
+
+// ── Quiz ──
+let _qAnswered=false;
+function checkQ(btn,choice){
+  quizAttempts++;
+  document.querySelectorAll('.opt-btn').forEach(b=>b.classList.remove('incorrect','correct'));
+  const correct=choice==='B';
+  btn.classList.add(correct?'correct':'incorrect');
+  const fb=document.getElementById('q-feedback');
+  fb.className='feedback-box show '+(correct?'feedback-correct':'feedback-incorrect');
+  if(correct){
+    fb.innerHTML='✅ <strong>Correct!</strong> <strong>Preimage resistance</strong> (one-way property) means: given H(x), you cannot find x. This is what makes password hashing secure — even if the hash database is stolen, the attacker cannot reverse the hashes to get the original passwords.';
+    quizPassed=true;
+    document.getElementById('why-box').classList.add('show');
+  } else {
+    fb.innerHTML='❌ Not quite. Think about which property specifically deals with reversing a hash — going <em>backwards</em> from the hash output to the input.';
+  }
+  checkReflectionLock();saveState();updateObj();
+}
+
+function checkReflectionLock(){
+  const lock=document.getElementById('reflection-lock');
+  const area=document.getElementById('submission-area');
+  const cnt=document.getElementById('obj-count');
+  const allDone=cnt&&cnt.textContent.startsWith('✅');
+  if(allDone){
+    if(lock)lock.style.display='none';
+    if(area)area.className='sub-area-unlocked';
+  }else{
+    if(lock)lock.style.display='block';
+    if(area)area.className='sub-area-locked';
+  }
+}
+
+// ── Objectives ──
+function updateObj(){
+  const checks=[
+    {done:avalancheDone, label:'Observed SHA-256 avalanche effect'},
+    {done:algosDone, label:'Compared all 4 algorithm security statuses'},
+    {done:pwHashDone, label:'Compared raw hash vs bcrypt storage'},
+    {done:birthdayDone, label:'Simulated birthday attack collision'},
+    {done:quizPassed, label:'Passed the hash properties quiz'},
+  ];
+  const done=checks.filter(c=>c.done).length;
+  const allDone=done===checks.length;
+  const badge=document.getElementById('obj-badge');
+  badge.style.borderColor=allDone?'#238636':'#30363d';
+  badge.style.color=allDone?'#3fb950':'#8b949e';
+  document.getElementById('obj-count').textContent=allDone?'✅ All objectives done!':`📋 ${done}/${checks.length} objectives`;
+  document.getElementById('obj-list').innerHTML=checks.map(c=>
+    `<div style="color:${c.done?'#3fb950':'#8b949e'};font-size:.79rem">${c.done?'✅':'⬜'} ${c.label}</div>`
+  ).join('');
+  checkReflectionLock();
+}
+let _objOpen=true;
+function toggleObj(){
+  _objOpen=!_objOpen;
+  document.getElementById('obj-panel').style.display=_objOpen?'block':'none';
+  document.getElementById('obj-chev').textContent=_objOpen?'▲':'▼';
+}
+
+// ── Persistence ──
+function saveState(){
+  const state={quizPassed,quizAttempts,avalancheDone,algosDone,pwHashDone,birthdayDone,
+    algosSeen:Array.from(algosSeen),
+    studentName: (document.getElementById('student-name')?.value||''),
+    reflection: (document.getElementById('learning-reflection')?.value||''),
+    labFeedback: (document.getElementById('lab-feedback')?.value||'')};
+  localStorage.setItem('lab05-state',JSON.stringify(state));
+}
+function loadState(){
+  const raw=localStorage.getItem('lab05-state');
+  if(!raw)return;
+  let s;try{s=JSON.parse(raw);}catch(e){return;}
+  quizPassed=s.quizPassed||false;quizAttempts=s.quizAttempts||0;
+  avalancheDone=s.avalancheDone||false;algosDone=s.algosDone||false;
+  pwHashDone=s.pwHashDone||false;birthdayDone=s.birthdayDone||false;
+  algosSeen=new Set(s.algosSeen||[]);
+  if(s.studentName){const el=document.getElementById('student-name');if(el)el.value=s.studentName;}
+  if(s.reflection){const el=document.getElementById('learning-reflection');if(el)el.value=s.reflection;}
+    if(s.labFeedback&&document.getElementById('lab-feedback')){
+      document.getElementById('lab-feedback').value=s.labFeedback;
+    }
+  if(quizPassed){
+    _qAnswered=true;
+    const btns=document.querySelectorAll('.opt-btn');
+    if(btns.length>1)btns[1].classList.add('correct');
+    const fb=document.getElementById('q-feedback');
+    fb.className='feedback-box show feedback-correct';
+    fb.innerHTML='✅ <strong>Correct!</strong> Preimage resistance (one-way property) means: given H(x), you cannot find x.';
+    document.getElementById('why-box').classList.add('show');
+  }
+  if(algosDone)document.getElementById('algo-obj-done').style.display='block';
+  updateObj();
+}
+function resetLab(){
+  if(!confirm('Reset all progress for this lab?'))return;
+  localStorage.removeItem('lab05-state');
+  location.reload();
+}
+
+// ── Reflection save ──
+function saveReflection(){
+  const name=(document.getElementById('student-name').value||'').trim();
+  const reflection=(document.getElementById('learning-reflection').value||'').trim();
+  if(!reflection){alert('Please write a reflection before saving.');return;}
+  const data={studentName:name,openedAt,submittedAt:new Date().toISOString(),
+    timeOnPageMs:Date.now()-new Date(openedAt).getTime(),
+    quizPassed,quizAttempts,avalancheDone,algosDone,pwHashDone,birthdayDone,reflection,
+    labCompleted:'Module 5 Lab'};
+  localStorage.setItem('week5-lab-submission',JSON.stringify(data));
+  saveState();
+  document.getElementById('submission-feedback').style.display='inline';
+  document.getElementById('submission-feedback').textContent='✅ Saved!';
+  document.getElementById('export-pdf-btn').style.display='inline-block';
+  const btn=document.getElementById('submit-reflection');
+  btn.textContent='✓ Saved!';btn.style.background='#3fb950';
+  setTimeout(()=>{btn.textContent='💾 Save Reflection';btn.style.background='';},2000);
+}
+
+function exportPDF(){
+  const data=JSON.parse(localStorage.getItem('week5-lab-submission')||'{}');
+  document.getElementById('ps-name').textContent=data.studentName||'—';
+  document.getElementById('ps-submitted').textContent=data.submittedAt?new Date(data.submittedAt).toLocaleString():'—';
+  const ms=data.timeOnPageMs;
+  const m=Math.floor(ms/60000),sc=Math.floor((ms%60000)/1000);
+  document.getElementById('ps-duration').textContent=ms?`${m}m ${sc}s`:'—';
+  document.getElementById('ps-interactions').innerHTML=`<table>
+    <tr><td>Quiz:</td><td>${data.quizPassed?'✅ Passed':'❌ Not passed'} (${data.quizAttempts||0} attempts)</td></tr>
+    <tr><td>Avalanche Demo:</td><td>${data.avalancheDone?'✅ Completed':'❌ Not done'}</td></tr>
+    <tr><td>Algo Comparison:</td><td>${data.algosDone?'✅ All 4 reviewed':'❌ Incomplete'}</td></tr>
+    <tr><td>Password Hashing:</td><td>${data.pwHashDone?'✅ Compared':'❌ Not done'}</td></tr>
+    <tr><td>Birthday Attack:</td><td>${data.birthdayDone?'✅ Found collision':'❌ Not run'}</td></tr>
+  </table>`;
+  document.getElementById('ps-reflection').textContent=data.reflection||'—';
+  document.getElementById('print-summary').style.display='block';
+  const orig=document.title;
+  const slug=(data.studentName||'').replace(/[^\w\s-]/g,'').trim();
+  if(slug)document.title=slug+' — '+orig;
+  window.print();
+  setTimeout(()=>{document.title=orig;document.getElementById('print-summary').style.display='none';},500);
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  loadState();
+  initBdGrid();
+  updateObj();
+});
+</script>
+</body>
+</html>

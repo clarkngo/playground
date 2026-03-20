@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Module 9 Lab – Secure Cryptographic Implementation</title>
+  <style>
+    *,*::before,*::after{box-sizing:border-box}
+    body{background:#0d1117;color:#c9d1d9;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;min-height:100vh;margin:0}
+    a{color:#58a6ff}
+    code{background:#21262d;border-radius:3px;padding:1px 5px;font-family:"SFMono-Regular",Consolas,monospace;font-size:.875em}
+    .navbar{background:#161b22;border-bottom:1px solid #30363d;padding:.75rem 1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem}
+    .navbar-brand{font-weight:700;color:#e6edf3;text-decoration:none;font-size:1.1rem}
+    .nav-actions{display:flex;align-items:center;gap:.75rem}
+    .container{max-width:900px;margin:0 auto;padding:1.5rem 1rem}
+    .lab-badge{display:inline-block;background:#065f46;color:#6ee7b7;font-size:.72rem;font-weight:600;padding:2px 10px;border-radius:12px;margin-bottom:.5rem;text-transform:uppercase;letter-spacing:.06em}
+    .lab-header{margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid #30363d}
+    .lab-header h2{color:#e6edf3;margin:.25rem 0 .1rem;font-size:1.6rem}
+    .lab-header p{color:#8b949e;margin:0;font-size:.95rem}
+    .scenario-box{background:#161b22;border-left:4px solid #34d399;border-radius:0 8px 8px 0;padding:1rem 1.25rem;margin-bottom:1.5rem}
+    .scenario-box p{margin:0;line-height:1.65}
+    .demo-box{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:1.5rem;margin-bottom:1.5rem}
+    .demo-box h4{margin-top:0;color:#e6edf3}
+    .options-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+    @media(max-width:600px){.options-grid{grid-template-columns:1fr}}
+    .opt-btn{display:flex;align-items:center;gap:.6rem;text-align:left;background:#161b22;border:1px solid #30363d;border-radius:6px;padding:.65rem .9rem;color:#c9d1d9;cursor:pointer;width:100%;font-size:.95rem;transition:border-color .15s}
+    .opt-btn:hover{border-color:#58a6ff;background:#1c2940;color:#e6edf3}
+    .opt-btn.correct{background:#1c2a1c!important;border-color:#238636!important;color:#3fb950!important}
+    .opt-btn.incorrect{background:#2a1c1c!important;border-color:#da3633!important;color:#f85149!important}
+    .opt-id{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;background:#30363d;border-radius:4px;font-size:.78rem;font-weight:700;flex-shrink:0}
+    .feedback-box{border-radius:8px;padding:1rem 1.25rem;margin-top:.75rem;font-size:.95rem;line-height:1.65;display:none}
+    .feedback-box.show{display:block}
+    .feedback-correct{background:#1c2a1c;border:1px solid #238636;color:#3fb950}
+    .feedback-incorrect{background:#2a1c1c;border:1px solid #da3633;color:#f85149}
+    .why-box{background:#1c2a1c;border:1px solid #238636;border-radius:8px;padding:1.25rem;margin-top:1rem;display:none}
+    .why-box.show{display:block}
+    .why-box h6{color:#3fb950;font-weight:700;margin:0 0 .5rem}
+    .why-box ul{margin:.5rem 0 .5rem 1.25rem;padding:0;line-height:1.8}
+    .badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.75rem;font-weight:600}
+    .badge-green{background:#1c2a1c;color:#3fb950;border:1px solid #238636}
+    .badge-red{background:#2a1c1c;color:#f85149;border:1px solid #da3633}
+    .badge-yellow{background:#2a2000;color:#e3b341;border:1px solid #9e6a03}
+    .badge-blue{background:#1c2940;color:#58a6ff;border:1px solid #1f6feb}
+    .reflection-box{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:1.5rem;margin:1.5rem 0}
+    .reflection-input{background:#21262d;border:1px solid #30363d;border-radius:6px;padding:.75rem;color:#e6edf3;width:100%;min-height:120px;font-family:inherit;resize:vertical}
+    .reflection-input:focus{outline:none;border-color:#58a6ff}
+    .text-input{background:#21262d;border:1px solid #30363d;border-radius:6px;padding:.5rem .75rem;color:#e6edf3;font-family:inherit;font-size:.9rem}
+    .submit-btn{background:#1f6feb;color:#fff;border:none;border-radius:6px;padding:.5rem 1rem;cursor:pointer;font-size:.9rem;margin-top:.5rem}
+    .export-pdf-btn{background:#3fb950;color:#fff;border:none;border-radius:6px;padding:.5rem 1rem;cursor:pointer;font-size:.9rem;margin-top:.5rem;margin-left:.5rem;display:none}
+    .action-btn{background:#21262d;color:#c9d1d9;border:1px solid #30363d;border-radius:6px;padding:.45rem .9rem;cursor:pointer;font-size:.85rem;transition:border-color .15s}
+    .action-btn:hover{border-color:#58a6ff;color:#58a6ff}
+    .action-btn-blue{background:#1f6feb;color:#fff;border:none;border-radius:6px;padding:.45rem .9rem;cursor:pointer;font-size:.85rem}
+    .action-btn-blue:hover{background:#1c64e8}
+    #print-summary{display:none;font-family:Arial,sans-serif;color:#000;padding:2rem;line-height:1.6}
+    #print-summary h1{font-size:1.4rem}#print-summary h2{font-size:1.1rem;border-bottom:1px solid #ccc;padding-bottom:.2rem}
+    #print-summary table{border-collapse:collapse;width:100%}#print-summary td{padding:.2rem .5rem;vertical-align:top}#print-summary td:first-child{font-weight:bold;width:160px}
+    .reflection-title{font-weight:600;color:#e6edf3;margin-bottom:.75rem;font-size:1rem}
+    .sub-area-locked{opacity:.45;pointer-events:none;user-select:none}
+    .sub-area-unlocked{opacity:1;pointer-events:auto}
+    @media print{body>*:not(#print-summary){display:none!important}#print-summary{display:block!important}}
+    .lab-footer{display:flex;justify-content:space-between;align-items:center;margin-top:2rem;padding-top:1rem;border-top:1px solid #30363d}
+    .btn-nav{display:inline-flex;align-items:center;gap:.4rem;padding:.4rem .9rem;border:1px solid #30363d;border-radius:6px;color:#c9d1d9;text-decoration:none;font-size:.85rem;background:#161b22;transition:border-color .15s}
+    .btn-nav:hover{border-color:#58a6ff;color:#58a6ff}
+
+    /* Timing attack */
+    .code-compare{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin:.75rem 0}
+    @media(max-width:580px){.code-compare{grid-template-columns:1fr}}
+    .code-block{background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:.75rem;font-family:monospace;font-size:.74rem;line-height:1.7;overflow-x:auto}
+    .code-block.bad{border-color:#da3633}
+    .code-block.good{border-color:#238636}
+    .timing-bar-wrap{display:flex;gap:.4rem;align-items:center;margin:.2rem 0;font-size:.78rem;font-family:monospace}
+    .timing-bar{height:14px;border-radius:3px;transition:width .4s ease;min-width:3px}
+    .timing-label{flex:0 0 100px;color:#8b949e;font-size:.74rem}
+    .timing-time{flex:0 0 60px;color:#e3b341;font-size:.74rem;text-align:right}
+
+    /* KDF tabs */
+    .kdf-tabs{display:flex;gap:0;border-bottom:1px solid #30363d;margin-bottom:.75rem}
+    .kdf-tab{padding:.4rem .85rem;cursor:pointer;font-size:.83rem;color:#8b949e;border-bottom:2px solid transparent;transition:color .2s,border-color .2s}
+    .kdf-tab.active{color:#58a6ff;border-bottom-color:#58a6ff}
+    .kdf-panel{display:none}
+    .kdf-panel.active{display:block}
+
+    /* Mistakes gallery */
+    .mistakes-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+    @media(max-width:580px){.mistakes-grid{grid-template-columns:1fr}}
+    .mistake-card{border:1px solid #da3633;border-radius:6px;background:#0d1117;overflow:hidden;transition:border-color .2s}
+    .mistake-card.fixed{border-color:#238636}
+    .mistake-header{padding:.5rem .7rem;background:#2a1c1c;font-size:.8rem;font-weight:600;color:#f85149;cursor:pointer}
+    .mistake-card.fixed .mistake-header{background:#1c2a1c;color:#3fb950}
+    .mistake-body{padding:.6rem .7rem;font-family:monospace;font-size:.72rem;line-height:1.6;color:#8b949e}
+    .mistake-toggle{display:flex;gap:.4rem;padding:.4rem .7rem;border-top:1px solid #30363d}
+
+    /* Lifecycle */
+    .lifecycle-stages{display:flex;gap:0;overflow-x:auto;padding-bottom:.25rem}
+    .lc-stage{flex:0 0 auto;text-align:center;padding:.5rem .75rem;border:1px solid #30363d;cursor:pointer;font-size:.8rem;font-weight:600;color:#8b949e;background:#0d1117;transition:all .2s;white-space:nowrap}
+    .lc-stage:first-child{border-radius:6px 0 0 6px}
+    .lc-stage:last-child{border-radius:0 6px 6px 0}
+    .lc-stage.active{background:#1c2940;border-color:#58a6ff;color:#58a6ff}
+    .lc-detail{background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:.85rem;margin-top:.5rem;font-size:.82rem;color:#8b949e;line-height:1.7;display:none}
+    .lc-detail.show{display:block}
+
+    #obj-overlay{position:fixed;bottom:1rem;right:1rem;z-index:1000;font-size:.8rem}
+    #obj-badge{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.4rem .7rem;cursor:pointer;color:#8b949e;user-select:none;display:flex;align-items:center;gap:.4rem}
+    #obj-panel{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.6rem .8rem;margin-top:.3rem;min-width:220px;display:block}
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="navbar-brand" href="../">🔐 Cryptography Labs</a>
+  <div class="nav-actions">
+    <span style="font-size:.8rem;color:#8b949e">Module 9 Lab</span>
+    <button onclick="resetLab()" style="background:none;border:1px solid #30363d;border-radius:6px;padding:.25rem .6rem;color:#8b949e;cursor:pointer;font-size:.75rem">↺ Reset</button>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="lab-header">
+    <div class="lab-badge">Module 9 · Implementation</div>
+    <h2>Secure Cryptographic Implementation</h2>
+    <p>Timing attacks, key derivation functions, implementation mistakes gallery, and key lifecycle</p>
+  </div>
+
+  <div class="scenario-box">
+    <p><strong>Scenario:</strong> A code review reveals your application uses <code>==</code> to compare HMAC tokens, MD5 for password hashing, and a hardcoded encryption key in source code. This lab walks through each of these classes of implementation error — and the fixes — that separate "uses cryptography" from "uses cryptography securely."</p>
+  </div>
+
+  <!-- Demo 1: Timing Attack -->
+  <div class="demo-box">
+    <h4>⏱️ Demo 1 — Timing Side-Channel Attack</h4>
+    <p style="color:#8b949e;margin-bottom:.75rem">An early-exit comparison leaks information about how many characters match. See the timing difference.</p>
+    <div class="code-compare">
+      <div>
+        <div style="font-size:.75rem;color:#f85149;font-weight:600;margin-bottom:.3rem">❌ VULNERABLE: Early-exit comparison</div>
+        <div class="code-block bad">function insecureCompare(a, b) {
+  if (a.length !== b.length)
+    return false;
+  for (let i = 0; i &lt; a.length; i++) {
+    // Returns IMMEDIATELY on first mismatch
+    // → leaks how many chars match!
+    if (a[i] !== b[i]) return false;
+  }
+  return true;
+}</div>
+      </div>
+      <div>
+        <div style="font-size:.75rem;color:#3fb950;font-weight:600;margin-bottom:.3rem">✅ SECURE: Constant-time comparison</div>
+        <div class="code-block good">function secureCompare(a, b) {
+  if (a.length !== b.length)
+    return false;
+  let diff = 0;
+  for (let i = 0; i &lt; a.length; i++) {
+    // XOR accumulates — always runs all chars
+    // → same time regardless of match position
+    diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return diff === 0;
+}</div>
+      </div>
+    </div>
+    <div style="margin:.75rem 0">
+      <label style="font-size:.82rem;color:#8b949e">Secret value (simulated): <code>secret123</code></label><br>
+      <label style="font-size:.82rem;color:#8b949e">Attacker tries guesses — watch timing bars:</label>
+    </div>
+    <button class="action-btn-blue" onclick="runTimingAttack()">▶ Simulate Timing Attack</button>
+    <div id="timing-bars" style="margin-top:.75rem"></div>
+    <div id="timing-insight" style="display:none;margin-top:.5rem;background:#2a1c1c;border:1px solid #da3633;border-radius:6px;padding:.65rem .85rem;font-size:.82rem;color:#f85149">
+      ⚠️ The insecure version takes measurably longer for guesses sharing more prefix characters with the secret. After thousands of requests, attackers can statistically recover the secret character by character. <strong>Real-world example:</strong> Lucky 13 (2013) — timing attack on TLS CBC padding oracle.
+    </div>
+  </div>
+
+  <!-- Demo 2: KDF Comparison -->
+  <div class="demo-box">
+    <h4>🔑 Demo 2 — Key Derivation Functions Comparison</h4>
+    <div class="kdf-tabs">
+      <div class="kdf-tab active" onclick="showKDFTab('pbkdf2',this)">PBKDF2</div>
+      <div class="kdf-tab" onclick="showKDFTab('bcrypt',this)">bcrypt</div>
+      <div class="kdf-tab" onclick="showKDFTab('argon2',this)">Argon2id</div>
+      <div class="kdf-tab" onclick="showKDFTab('hkdf',this)">HKDF</div>
+    </div>
+
+    <div id="kdf-pbkdf2" class="kdf-panel active">
+      <p style="font-size:.85rem;color:#8b949e;margin-bottom:.75rem">PBKDF2 applies a pseudorandom function (HMAC-SHA-256) repeatedly, making brute-force expensive. NIST SP 800-132 now recommends ≥600,000 iterations.</p>
+      <label style="font-size:.8rem;color:#8b949e">Iterations: <span id="pbkdf2-iter-label">100,000</span></label>
+      <input type="range" id="pbkdf2-iter" min="1000" max="600000" value="100000" step="10000" oninput="updatePBKDF2()" style="width:100%;margin:.4rem 0">
+      <div id="pbkdf2-stats" style="font-size:.82rem;line-height:1.9;background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:.65rem .85rem;font-family:monospace"></div>
+      <div style="margin-top:.5rem;font-size:.78rem;color:#8b949e"><strong style="color:#3fb950">FIPS 140-3 Approved ✅</strong> · Use PBKDF2-SHA-256 with ≥600,000 iterations and 16+ byte salt for federal systems.</div>
+    </div>
+
+    <div id="kdf-bcrypt" class="kdf-panel">
+      <p style="font-size:.85rem;color:#8b949e;margin-bottom:.75rem">bcrypt uses Blowfish cipher with a cost factor that doubles work per increment. Includes automatic salting. Widely used but NOT FIPS-approved.</p>
+      <label style="font-size:.8rem;color:#8b949e">Cost factor: <span id="bcrypt-cost-label">12</span> (2¹² = 4,096 rounds)</label>
+      <input type="range" id="bcrypt-cost" min="10" max="16" value="12" step="1" oninput="updateBcrypt()" style="width:100%;margin:.4rem 0">
+      <div id="bcrypt-stats" style="font-size:.82rem;line-height:1.9;background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:.65rem .85rem;font-family:monospace"></div>
+      <div style="margin-top:.5rem;font-size:.78rem;color:#8b949e"><strong style="color:#e3b341">NOT FIPS-approved ⚠️</strong> · Blowfish is not a NIST-approved algorithm. Cannot be used in FIPS 140-3 validated modules. Use PBKDF2 or Argon2 for federal compliance.</div>
+    </div>
+
+    <div id="kdf-argon2" class="kdf-panel">
+      <p style="font-size:.85rem;color:#8b949e;margin-bottom:.75rem">Argon2id won the Password Hashing Competition (2015). Memory-hard design defeats GPU/ASIC attacks. Recommended for new applications.</p>
+      <div style="font-size:.82rem;line-height:1.9;background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:.65rem .85rem;font-family:monospace">
+        Argon2id(password, salt, time=3, memory=64MB, parallel=4)<br>
+        <span style="color:#3fb950">→ Memory required: 64 MB per hash attempt</span><br>
+        <span style="color:#3fb950">→ GPU efficiency: severely reduced (can't parallelize memory)</span><br>
+        <span style="color:#3fb950">→ ASIC resistance: high (memory bandwidth limited)</span><br>
+        <span style="color:#3fb950">→ Attacker GPU speed: ~100–1,000 Argon2/sec (vs 10B MD5/sec)</span><br>
+        <span style="color:#e3b341">→ FIPS status: not yet standardized (OWASP recommends it)</span>
+      </div>
+      <div style="margin-top:.5rem;font-size:.78rem;color:#8b949e">Argon2id is the <strong>OWASP #1 recommendation</strong> for password hashing. Combines Argon2i (side-channel resistant) and Argon2d (GPU resistant).</div>
+    </div>
+
+    <div id="kdf-hkdf" class="kdf-panel">
+      <p style="font-size:.85rem;color:#8b949e;margin-bottom:.75rem">HKDF (HMAC-based Extract-and-Expand KDF) is for <em>key material</em>, NOT passwords. No work factor — fast by design. Used in TLS 1.3 key schedule.</p>
+      <div style="font-size:.82rem;line-height:1.9;background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:.65rem .85rem;font-family:monospace">
+        <span style="color:#a371f7">Step 1 — Extract:</span><br>
+        &nbsp;&nbsp;PRK = HMAC-SHA256(salt, IKM)<br>
+        &nbsp;&nbsp;<span style="color:#8b949e">→ PRK is a pseudorandom key of fixed length</span><br><br>
+        <span style="color:#58a6ff">Step 2 — Expand:</span><br>
+        &nbsp;&nbsp;OKM = T(1) ‖ T(2) ‖ … where T(i) = HMAC-SHA256(PRK, T(i-1) ‖ info ‖ i)<br>
+        &nbsp;&nbsp;<span style="color:#8b949e">→ Derive multiple keys from one master secret</span><br><br>
+        <span style="color:#3fb950">Use cases: TLS 1.3 session keys, signal protocol ratchet, ECDH → AES key</span><br>
+        <span style="color:#f85149">⚠️ Do NOT use HKDF for passwords — it's too fast, no work factor</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Demo 3: Mistakes Gallery -->
+  <div class="demo-box">
+    <h4>🚨 Demo 3 — Crypto Implementation Mistakes Gallery</h4>
+    <p style="color:#8b949e;margin-bottom:.75rem">Click "Show Fix" on each card to see the corrected code. <span id="mistakes-progress" style="color:#e3b341">0/8 fixed</span></p>
+    <div class="mistakes-grid" id="mistakes-grid"></div>
+  </div>
+
+  <!-- Demo 4: Key Lifecycle -->
+  <div class="demo-box">
+    <h4>🔄 Demo 4 — Key Management Lifecycle</h4>
+    <p style="color:#8b949e;margin-bottom:.75rem">Click each stage to see NIST SP 800-57 requirements and compromise scenarios.</p>
+    <div class="lifecycle-stages">
+      <div class="lc-stage" onclick="showLifecycle('gen',this)">① Generation</div>
+      <div class="lc-stage" onclick="showLifecycle('dist',this)">② Distribution</div>
+      <div class="lc-stage" onclick="showLifecycle('store',this)">③ Storage</div>
+      <div class="lc-stage" onclick="showLifecycle('rotate',this)">④ Rotation</div>
+      <div class="lc-stage" onclick="showLifecycle('destroy',this)">⑤ Destruction</div>
+    </div>
+    <div id="lc-detail" class="lc-detail"></div>
+  </div>
+
+  <!-- Quiz -->
+  <div class="demo-box">
+    <div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:1.25rem">
+      <p style="font-weight:600;color:#e6edf3;font-size:1.05rem;margin:0 0 1rem">A developer uses PBKDF2 with 1,000 iterations and SHA-1 to hash passwords for a federal system. What are the TWO main problems?</p>
+      <div class="options-grid">
+        <button class="opt-btn" onclick="checkQ(this,'A')"><span class="opt-id">A</span>SHA-1 is deprecated and 1,000 iterations is insufficient</button>
+        <button class="opt-btn" onclick="checkQ(this,'B')"><span class="opt-id">B</span>PBKDF2 is not FIPS-approved and needs 10,000 iterations</button>
+        <button class="opt-btn" onclick="checkQ(this,'C')"><span class="opt-id">C</span>PBKDF2 requires bcrypt and SHA-1 has no collision resistance</button>
+        <button class="opt-btn" onclick="checkQ(this,'D')"><span class="opt-id">D</span>Salt length is unspecified and PBKDF2 cannot use SHA-1</button>
+      </div>
+      <div id="q-feedback" class="feedback-box"></div>
+      <div class="why-box" id="why-box">
+        <h6>📚 PBKDF2 Requirements (NIST SP 800-132)</h6>
+        <ul>
+          <li><strong>SHA-1 is deprecated:</strong> Not approved for new cryptographic uses under FIPS 140-3. SHA-256 or SHA-512 must be used for PBKDF2-HMAC in federal systems.</li>
+          <li><strong>1,000 iterations is far too low:</strong> NIST SP 800-132 (2023 update) now recommends ≥600,000 iterations for PBKDF2-SHA256. At 1,000, a modern GPU can test millions of password guesses per second.</li>
+          <li><strong>PBKDF2 itself IS FIPS-approved</strong> when using SHA-2 — option B is wrong about PBKDF2 not being FIPS-approved.</li>
+          <li><strong>PBKDF2 CAN use SHA-1</strong> technically — the problem is that SHA-1 is deprecated, not that it's incompatible.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reflection -->
+  <div class="reflection-box">
+    <div class="reflection-title">💭 Learning Reflection Submission</div>
+    <p style="color:#8b949e;margin-bottom:.75rem">After exploring secure cryptographic implementation patterns, reflect on what you discovered:</p>
+    <div style="margin-bottom:1rem">
+      <strong style="color:#e6edf3">Guided Questions:</strong>
+      <ul style="color:#8b949e;font-size:.9rem;margin:.5rem 0 0 1.5rem;line-height:1.9">
+        <li>Explain how a timing side-channel leaks information about secret data. Give one real-world example of this class of attack.</li>
+        <li>What is the difference between PBKDF2, bcrypt, and Argon2id? Which does OWASP recommend first, and why?</li>
+        <li>Pick one mistake from the gallery (e.g., ECB mode, IV reuse, hardcoded key) and describe the real-world damage it could cause.</li>
+        <li>Why is the distinction between "encrypt-then-MAC" and "MAC-then-encrypt" security-critical?</li>
+        <li><strong style="color:#e6edf3">Key question:</strong> At what stage of the key lifecycle is key destruction critical, and what are the consequences of neglecting it?</li>
+      </ul>
+    </div>
+    <div id="reflection-lock" style="background:#2a1c1c;border:1px solid #f85149;border-radius:6px;padding:.75rem 1rem;margin-bottom:1rem">
+      <p style="color:#f85149;font-weight:600;margin:0;font-size:.9rem">🔒 Complete all objectives (tracker bottom-right ↘) to unlock submission</p>
+    </div>
+    <div id="submission-area" class="sub-area-locked">
+      <textarea class="reflection-input" id="learning-reflection" placeholder="Describe what you learned about timing attacks, KDF selection, common crypto mistakes, and key lifecycle management. Why do implementation details matter as much as algorithm choice?&#10;&#10;Please write at least 4–5 sentences about your key insights..." oninput="saveState()"></textarea>
+      <div style="margin-top:.75rem">
+        <label style="color:#e6edf3;font-size:.9rem;font-weight:600">🔍 Lab Observations</label>
+        <p style="color:#8b949e;font-size:.82rem;margin:.2rem 0 .3rem">Was there anything within the lab you expected to change, but didn't?</p>
+        <textarea class="reflection-input" id="lab-feedback" placeholder="Share any observations, surprises, or things that felt missing..." style="min-height:80px" oninput="saveState()"></textarea>
+      </div>
+      <div style="margin-top:.75rem">
+        <label style="color:#e6edf3;font-size:.9rem;font-weight:600">Your name:</label>
+        <input type="text" id="student-name" class="text-input" placeholder="Enter your full name..." style="max-width:320px;margin:.3rem 0 0" oninput="saveState()">
+      </div>
+      <div style="margin-top:.75rem">
+        <button class="submit-btn" onclick="saveReflection()">💾 Save Reflection</button>
+        <button id="export-pdf-btn" class="export-pdf-btn" onclick="exportPDF()" style="display:none">📄 Export PDF</button>
+      </div>
+      <div id="submission-feedback" style="margin-top:.5rem;color:#3fb950;display:none">✅ Saved! Edit and re-save anytime — Export PDF always uses your latest version.</div>
+    </div>
+  </div>
+
+  <div class="lab-footer">
+    <a class="btn-nav" href="../week8-lab/08-ipsec-tls.html">← Week 8</a>
+    <span class="text-muted">Module 9 · Implementation</span>
+    <a class="btn-nav" href="../week10-lab/10-emerging-crypto.html">Week 10 →</a>
+  </div>
+</div>
+
+<div id="obj-overlay">
+  <div id="obj-badge" onclick="toggleObj()"><span id="obj-count">📋 0/5 objectives</span><span id="obj-chev">▲</span></div>
+  <div id="obj-panel"><div id="obj-list"></div></div>
+</div>
+
+<div id="print-summary">
+  <h1>Module 9 Lab — Secure Cryptographic Implementation</h1>
+  <p style="color:#555;font-size:.85rem">CS 615 · Cryptography for Cyber Professionals</p>
+  <h2>Student Info</h2>
+  <table><tr><td>Name:</td><td id="ps-name"></td></tr><tr><td>Submitted:</td><td id="ps-submitted"></td></tr><tr><td>Time:</td><td id="ps-duration"></td></tr></table>
+  <h2>Lab Interactions</h2><div id="ps-interactions"></div>
+  <h2>Reflection</h2><div id="ps-reflection" style="white-space:pre-wrap"></div>
+</div>
+
+<script>
+let timingDone=false, kdfDone=false, mistakesDone=false, lifecycleDone=false, quizPassed=false, quizAttempts=0;
+let mistakesFixed=0, lifecyclesSeen=new Set(), kdfTabsSeen=new Set();
+const openedAt=new Date().toISOString();
+
+// ── Timing Attack ──
+const SECRET='secret123';
+const GUESSES=['abc','sec','secr','secre','secret','secret1','secret12','secret123'];
+
+function runTimingAttack(){
+  const container=document.getElementById('timing-bars');
+  container.innerHTML='<div style="font-size:.75rem;color:#8b949e;margin-bottom:.4rem">Insecure (early-exit) vs Secure (constant-time) timing measurements:</div>';
+  GUESSES.forEach((guess,i)=>{
+    setTimeout(()=>{
+      // Simulated timing: insecure leaks how many chars match
+      const matches=commonPrefixLen(guess,SECRET);
+      const insecureNs=5+(matches*8)+Math.random()*3;
+      const secureNs=12+Math.random()*3; // always same
+      const maxNs=5+SECRET.length*8+3;
+
+      const row=document.createElement('div');
+      row.innerHTML=`
+        <div style="font-size:.72rem;color:#8b949e;margin:.5rem 0 .2rem">Guess: <code>${guess}</code> (matches ${matches} char${matches===1?'':'s'})</div>
+        <div class="timing-bar-wrap"><div class="timing-label">Insecure:</div>
+          <div class="timing-bar" style="background:#f85149;width:${Math.round(insecureNs/maxNs*200)}px"></div>
+          <div class="timing-time">${insecureNs.toFixed(1)}ns</div></div>
+        <div class="timing-bar-wrap"><div class="timing-label">Secure:</div>
+          <div class="timing-bar" style="background:#3fb950;width:${Math.round(secureNs/maxNs*200)}px"></div>
+          <div class="timing-time">${secureNs.toFixed(1)}ns</div></div>`;
+      container.appendChild(row);
+      if(i===GUESSES.length-1){
+        document.getElementById('timing-insight').style.display='block';
+        timingDone=true;saveState();updateObj();
+      }
+    },i*400);
+  });
+}
+function commonPrefixLen(a,b){let n=0;while(n<a.length&&n<b.length&&a[n]===b[n])n++;return n;}
+
+// ── KDF Tabs ──
+function showKDFTab(id,tab){
+  document.querySelectorAll('.kdf-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.kdf-panel').forEach(p=>p.classList.remove('active'));
+  tab.classList.add('active');
+  document.getElementById('kdf-'+id).classList.add('active');
+  kdfTabsSeen.add(id);
+  if(kdfTabsSeen.size>=3)kdfDone=true;
+  updatePBKDF2();updateBcrypt();
+  saveState();updateObj();
+}
+function updatePBKDF2(){
+  const iter=parseInt(document.getElementById('pbkdf2-iter').value);
+  document.getElementById('pbkdf2-iter-label').textContent=iter.toLocaleString();
+  const gpuPerSec=1e9/iter; // 1B SHA256/sec GPU
+  const el=document.getElementById('pbkdf2-stats');
+  const fips=iter>=600000?'<span style="color:#3fb950">✅ FIPS SP 800-132 compliant (≥600,000)</span>':'<span style="color:#f85149">❌ Below FIPS recommendation (need ≥600,000)</span>';
+  el.innerHTML=`Iterations: ${iter.toLocaleString()}   Salt: 16 bytes (random)   Hash: HMAC-SHA-256\n`+
+    `Attacker GPU speed: ~${Math.round(gpuPerSec).toLocaleString()} password attempts/sec\n`+
+    `Time to crack 8-char password: ~${(Math.pow(62,8)/gpuPerSec/3.15e7).toFixed(0)} years at full entropy\n${fips}`;
+}
+function updateBcrypt(){
+  const cost=parseInt(document.getElementById('bcrypt-cost').value);
+  document.getElementById('bcrypt-cost-label').textContent=cost+` (2^${cost} = ${Math.pow(2,cost).toLocaleString()} rounds)`;
+  const perSec=Math.round(1e6/Math.pow(2,cost));
+  const el=document.getElementById('bcrypt-stats');
+  el.innerHTML=`Cost factor: ${cost}   Rounds: ${Math.pow(2,cost).toLocaleString()}   Auto-salted: yes\n`+
+    `GPU speed: ~${perSec.toLocaleString()} bcrypt/sec\n`+
+    `Time to crack 8-char password: ~${(Math.pow(62,8)/perSec/3.15e7).toFixed(0)} years at full entropy\n`+
+    `<span style="color:#e3b341">⚠️ NOT FIPS 140-3 approved (Blowfish not NIST-approved)</span>`;
+}
+
+// ── Mistakes Gallery ──
+const MISTAKES=[
+  {title:'Hardcoded Encryption Key',
+   bad:'// ❌ Key in source code\nconst KEY = "mysecretkey12345";\nconst cipher = encrypt(KEY, data);',
+   fix:'// ✅ Key from environment / KMS\nconst KEY = process.env.ENCRYPTION_KEY\n         || await kms.getKey(keyId);\nconst cipher = encrypt(KEY, data);',
+   why:'Keys in source code end up in version control, logs, and error messages. Use environment variables, AWS KMS, HashiCorp Vault, or Azure Key Vault.'},
+  {title:'ECB Mode Selected',
+   bad:'// ❌ ECB reveals patterns\nfrom Crypto.Cipher import AES\ncipher = AES.new(key, AES.MODE_ECB)\nct = cipher.encrypt(padded_data)',
+   fix:'// ✅ GCM: authenticated encryption\nfrom Crypto.Cipher import AES\ncipher = AES.new(key, AES.MODE_GCM,\n         nonce=os.urandom(12))\nct, tag = cipher.encrypt_and_digest(data)',
+   why:'ECB encrypts identical 16-byte blocks identically — produces patterns in structured data. The "Tux Problem" (ECB-encrypted image retains visual structure) demonstrates this.'},
+  {title:'IV Reused Across Messages',
+   bad:'// ❌ Same IV every time\nconst FIXED_IV = Buffer.from("000000000000","hex");\nencrypt(key, FIXED_IV, plaintext1);\nencrypt(key, FIXED_IV, plaintext2);',
+   fix:'// ✅ Random IV per message\nconst iv = crypto.randomBytes(12); // GCM\nconst {ct, tag} = encrypt(key, iv, pt);\nstore(iv + ct + tag); // IV is not secret',
+   why:'IV reuse in CTR/GCM mode allows XOR of ciphertexts to recover XOR of plaintexts. In GCM, nonce reuse fully breaks authentication — attacker can forge valid ciphertexts.'},
+  {title:'Auth Tag Not Verified',
+   bad:'// ❌ Decrypt without checking tag\nfunction decrypt(key, iv, ct) {\n  const pt = aes_gcm_decrypt(key, iv, ct);\n  return pt; // using unverified plaintext!\n}',
+   fix:'// ✅ Verify before using plaintext\nfunction decrypt(key, iv, ct, tag) {\n  const {pt, valid} = aes_gcm_decrypt(\n    key, iv, ct, tag);\n  if (!valid) throw new Error("InvalidTag");\n  return pt; // verified safe\n}',
+   why:'Decrypting without verifying the GCM authentication tag allows padding oracle attacks and message forgery. Always verify BEFORE using the plaintext. "Authenticate-then-decrypt."'},
+  {title:'RSA-512 Key Too Short',
+   bad:'// ❌ 512-bit RSA factored in 2 hours\nKeyPairGenerator kpg = \n  KeyPairGenerator.getInstance("RSA");\nkpg.initialize(512);\nKeyPair kp = kpg.generateKeyPair();',
+   fix:'// ✅ RSA-3072 or ECDSA P-256 (stronger+faster)\nKeyPairGenerator kpg = \n  KeyPairGenerator.getInstance("EC");\nkpg.initialize(new ECGenParameterSpec(\n  "secp256r1")); // P-256\nKeyPair kp = kpg.generateKeyPair();',
+   why:'RSA-512 was factored in 1999. RSA-1024 in 2010. RSA-2048 is the current minimum. ECDSA P-256 provides equivalent security with much smaller keys and faster operations.'},
+  {title:'MD5 Used for HMAC',
+   bad:'# ❌ HMAC-MD5 — broken\nimport hmac, hashlib\nmac = hmac.new(\n  key,\n  message,\n  hashlib.md5  # MD5 is broken!\n)',
+   fix:'# ✅ HMAC-SHA-256 — FIPS approved\nimport hmac, hashlib\nmac = hmac.new(\n  key,\n  message,\n  hashlib.sha256  # SHA-256 required\n)',
+   why:'While HMAC-MD5 is not immediately broken in the way raw MD5 is, FIPS 140-3 prohibits MD5 for any security function. SHA-256 is the minimum approved hash for HMAC in federal systems.'},
+  {title:'Non-Constant-Time Comparison',
+   bad:'// ❌ Timing leak\nif (computed_hmac === received_hmac) {\n  // Vulnerable! String equality\n  // short-circuits on first mismatch\n  return true;\n}',
+   fix:'// ✅ Constant-time comparison\nconst safe = crypto.timingSafeEqual(\n  Buffer.from(computed_hmac, "hex"),\n  Buffer.from(received_hmac, "hex")\n);\nif (safe) return true;',
+   why:'Non-constant-time comparison of MACs or tokens enables timing attacks. An attacker can determine how many bytes match by measuring response time, eventually recovering the valid MAC.'},
+  {title:'Seeding RNG with Time',
+   bad:'# ❌ Predictable seed\nimport random, time\nrandom.seed(int(time.time()))\nkey = bytes([random.randint(0,255)\n  for _ in range(32)])\n# An attacker who knows approximate time\n# can reproduce this key!',
+   fix:'# ✅ OS entropy source\nimport os, secrets\nkey = os.urandom(32)   # cryptographic RNG\n# or equivalently:\nkey = secrets.token_bytes(32)',
+   why:'Seeding with system time provides only ~32 bits of entropy (timestamp in seconds). Debian\'s OpenSSL bug (2008) had a similar issue — only 32,767 possible keys. Always use os.urandom() or secrets.'},
+];
+
+let _mistakesFixed=new Set();
+
+function buildMistakesGrid(){
+  const grid=document.getElementById('mistakes-grid');
+  grid.innerHTML='';
+  MISTAKES.forEach((m,i)=>{
+    const card=document.createElement('div');
+    card.className='mistake-card';
+    card.id='mc-'+i;
+    const showing=_mistakesFixed.has(i);
+    card.innerHTML=`
+      <div class="mistake-header">❌ ${m.title}</div>
+      <div class="mistake-body" id="mb-${i}"><pre style="margin:0;white-space:pre-wrap">${showing?m.fix:m.bad}</pre></div>
+      <div class="mistake-toggle">
+        <button onclick="toggleMistake(${i})" style="background:${showing?'#1c2a1c':'#2a1c1c'};border:1px solid ${showing?'#238636':'#da3633'};border-radius:4px;padding:.25rem .6rem;color:${showing?'#3fb950':'#f85149'};cursor:pointer;font-size:.75rem">${showing?'Show Bug':'Show Fix'}</button>
+        <span style="font-size:.72rem;color:#8b949e;align-self:center;margin-left:.4rem;flex:1">${m.why.slice(0,60)}…</span>
+      </div>`;
+    grid.appendChild(card);
+    if(showing)card.classList.add('fixed');
+  });
+  document.getElementById('mistakes-progress').textContent=`${_mistakesFixed.size}/8 fixed`;
+  if(_mistakesFixed.size>=5)mistakesDone=true;
+}
+function toggleMistake(i){
+  const showing=_mistakesFixed.has(i);
+  if(showing)_mistakesFixed.delete(i);else _mistakesFixed.add(i);
+  buildMistakesGrid();
+  saveState();updateObj();
+}
+
+// ── Lifecycle ──
+const LC_DATA={
+  gen:{title:'① Key Generation',
+    body:`<strong style="color:#58a6ff">Requirements:</strong><br>
+    • Use hardware RNG (HSM) or OS CSPRNG (os.urandom, /dev/urandom)<br>
+    • Never use user-space PRNG, time-seeded, or derived from passwords without KDF<br>
+    • Document: who generated, when, purpose, rotation date<br>
+    • Generate on the device that will use it (minimize key transfer)<br><br>
+    <strong style="color:#f85149">⚡ Compromise here:</strong> Attacker has all current AND future encrypted data. Highest severity.`},
+  dist:{title:'② Key Distribution',
+    body:`<strong style="color:#58a6ff">Requirements:</strong><br>
+    • Encrypt with a Key-Encryption-Key (KEK) before transmission<br>
+    • Use secure channels (TLS 1.3, encrypted key exchange)<br>
+    • Never email, Slack, or embed in configuration files<br>
+    • Use key management systems: AWS KMS, HashiCorp Vault, PKCS#11<br>
+    • Verify key fingerprint out-of-band after distribution<br><br>
+    <strong style="color:#f85149">⚡ Compromise here:</strong> Attacker can decrypt future data encrypted with this key.`},
+  store:{title:'③ Key Storage',
+    body:`<strong style="color:#58a6ff">Requirements:</strong><br>
+    • Encrypt at rest: use a separate KEK to protect data encryption keys<br>
+    • HSM or TPM for highest-value keys (signing keys, root keys)<br>
+    • Never store key adjacent to the data it protects<br>
+    • Access logging: every key access should be audited<br>
+    • Separation of duties: no single person should have full access<br><br>
+    <strong style="color:#f85149">⚡ Compromise here:</strong> Attacker can decrypt data encrypted with this key.`},
+  rotate:{title:'④ Key Rotation',
+    body:`<strong style="color:#58a6ff">Requirements (NIST SP 800-57):</strong><br>
+    • AES encryption keys: rotate annually or after large data volume<br>
+    • Signing keys: rotate every 1–2 years<br>
+    • Session keys: per-session (ephemeral) — TLS 1.3 does this automatically<br>
+    • <strong>Archive</strong> old keys (don't delete) — needed to decrypt old data<br>
+    • Automate rotation: manual rotation is forgotten and inconsistently applied<br><br>
+    <strong style="color:#e3b341">⚡ Compromise here:</strong> Only data from this key's active period is at risk (not past rotations).`},
+  destroy:{title:'⑤ Key Destruction',
+    body:`<strong style="color:#58a6ff">Requirements:</strong><br>
+    • Cryptographic erasure: overwrite key material with zeros (multiple passes)<br>
+    • HSM zeroization: hardware-enforced destruction<br>
+    • Certificate revocation: if key is in a certificate, revoke via OCSP/CRL<br>
+    • Remove from all backups and key management systems<br>
+    • Document destruction with timestamp and witness<br><br>
+    <strong style="color:#3fb950">After proper destruction:</strong> Even if storage media is recovered, key material is unrecoverable.`},
+};
+
+function showLifecycle(id,el){
+  document.querySelectorAll('.lc-stage').forEach(s=>s.classList.remove('active'));
+  el.classList.add('active');
+  const d=LC_DATA[id];
+  const det=document.getElementById('lc-detail');
+  det.innerHTML=`<strong style="color:#58a6ff">${d.title}</strong><br><br>${d.body}`;
+  det.className='lc-detail show';
+  lifecyclesSeen.add(id);
+  if(lifecyclesSeen.size>=3)lifecycleDone=true;
+  saveState();updateObj();
+}
+
+// ── Quiz ──
+let _qAnswered=false;
+function checkQ(btn,choice){
+  quizAttempts++;
+  document.querySelectorAll('.opt-btn').forEach(b=>b.classList.remove('incorrect','correct'));
+  const correct=choice==='A';
+  btn.classList.add(correct?'correct':'incorrect');
+  const fb=document.getElementById('q-feedback');
+  fb.className='feedback-box show '+(correct?'feedback-correct':'feedback-incorrect');
+  if(correct){
+    fb.innerHTML='✅ <strong>Correct!</strong> Two problems: SHA-1 is deprecated (FIPS requires SHA-2 minimum), and 1,000 iterations is far below the NIST SP 800-132 recommendation of ≥600,000 for PBKDF2-SHA256.';
+    quizPassed=true;document.getElementById('why-box').classList.add('show');
+  }else{
+    fb.innerHTML='❌ Not quite. Focus on: (1) which hash algorithm is deprecated under FIPS, and (2) what NIST says about minimum iteration counts for PBKDF2.';
+  }
+  checkReflectionLock();saveState();updateObj();
+}
+
+function checkReflectionLock(){
+  const lock=document.getElementById('reflection-lock');
+  const area=document.getElementById('submission-area');
+  const cnt=document.getElementById('obj-count');
+  const allDone=cnt&&cnt.textContent.startsWith('✅');
+  if(allDone){
+    if(lock)lock.style.display='none';
+    if(area)area.className='sub-area-unlocked';
+  }else{
+    if(lock)lock.style.display='block';
+    if(area)area.className='sub-area-locked';
+  }
+}
+
+function updateObj(){
+  const checks=[
+    {done:timingDone,label:'Identified timing side-channel vulnerability'},
+    {done:kdfDone,label:'Compared ≥3 KDFs (PBKDF2/bcrypt/Argon2/HKDF)'},
+    {done:mistakesDone,label:'Fixed ≥5 crypto implementation mistakes'},
+    {done:lifecycleDone,label:'Explored ≥3 key lifecycle stages'},
+    {done:quizPassed,label:'Passed the implementation security quiz'},
+  ];
+  const done=checks.filter(c=>c.done).length,allDone=done===checks.length;
+  const badge=document.getElementById('obj-badge');
+  badge.style.borderColor=allDone?'#238636':'#30363d';badge.style.color=allDone?'#3fb950':'#8b949e';
+  document.getElementById('obj-count').textContent=allDone?'✅ All objectives done!':`📋 ${done}/${checks.length} objectives`;
+  document.getElementById('obj-list').innerHTML=checks.map(c=>`<div style="color:${c.done?'#3fb950':'#8b949e'};font-size:.79rem">${c.done?'✅':'⬜'} ${c.label}</div>`).join('');
+}
+let _objOpen=true;
+function toggleObj(){_objOpen=!_objOpen;document.getElementById('obj-panel').style.display=_objOpen?'block':'none';document.getElementById('obj-chev').textContent=_objOpen?'▲':'▼';}
+
+function saveState(){
+  const s={quizPassed,quizAttempts,timingDone,kdfDone,mistakesDone,lifecycleDone,
+    mistakesFixed:Array.from(_mistakesFixed),
+    kdfTabsSeen:Array.from(kdfTabsSeen),
+    lifecyclesSeen:Array.from(lifecyclesSeen),
+    studentName:(document.getElementById('student-name')||{}).value||'',
+    reflection:(document.getElementById('learning-reflection')||{}).value||'',
+    labFeedback: (document.getElementById('lab-feedback')?.value||''),};
+  localStorage.setItem('lab09-state',JSON.stringify(s));
+}
+function loadState(){
+  const raw=localStorage.getItem('lab09-state');if(!raw)return;
+  let s;try{s=JSON.parse(raw);}catch(e){return;}
+  quizPassed=s.quizPassed||false;quizAttempts=s.quizAttempts||0;
+  timingDone=s.timingDone||false;kdfDone=s.kdfDone||false;
+  mistakesDone=s.mistakesDone||false;lifecycleDone=s.lifecycleDone||false;
+  _mistakesFixed=new Set(s.mistakesFixed||[]);
+  kdfTabsSeen=new Set(s.kdfTabsSeen||[]);
+  lifecyclesSeen=new Set(s.lifecyclesSeen||[]);
+  if(s.studentName){const el=document.getElementById('student-name');if(el)el.value=s.studentName;}
+  if(s.reflection){const el=document.getElementById('learning-reflection');if(el)el.value=s.reflection;}
+  if(s.labFeedback&&document.getElementById('lab-feedback')){document.getElementById('lab-feedback').value=s.labFeedback;}
+  if(quizPassed){_qAnswered=true;const btns=document.querySelectorAll('.opt-btn');if(btns.length>0)btns[0].classList.add('correct');const fb=document.getElementById('q-feedback');fb.className='feedback-box show feedback-correct';fb.innerHTML='✅ <strong>Correct!</strong> SHA-1 deprecated and 1,000 iterations insufficient.';document.getElementById('why-box').classList.add('show');}
+  buildMistakesGrid();updateObj();
+}
+function resetLab(){if(!confirm('Reset all progress?'))return;localStorage.removeItem('lab09-state');location.reload();}
+function saveReflection(){
+  const reflection=(document.getElementById('learning-reflection').value||'').trim();
+  if(!reflection){alert('Please write a reflection before saving.');return;}
+  const data={studentName:(document.getElementById('student-name').value||'').trim(),openedAt,
+    submittedAt:new Date().toISOString(),timeOnPageMs:Date.now()-new Date(openedAt).getTime(),
+    quizPassed,quizAttempts,timingDone,kdfDone,mistakesDone,lifecycleDone,
+    mistakesFixed:_mistakesFixed.size,reflection,labCompleted:'Module 9 Lab'};
+  localStorage.setItem('week9-lab-submission',JSON.stringify(data));saveState();
+  document.getElementById('submission-feedback').style.display='inline';
+  document.getElementById('submission-feedback').textContent='✅ Saved!';
+  document.getElementById('export-pdf-btn').style.display='inline-block';
+  const btn=document.getElementById('submit-reflection');btn.textContent='✓ Saved!';btn.style.background='#3fb950';
+  setTimeout(()=>{btn.textContent='💾 Save Reflection';btn.style.background='';},2000);
+}
+function exportPDF(){
+  const data=JSON.parse(localStorage.getItem('week9-lab-submission')||'{}');
+  document.getElementById('ps-name').textContent=data.studentName||'—';
+  document.getElementById('ps-submitted').textContent=data.submittedAt?new Date(data.submittedAt).toLocaleString():'—';
+  const ms=data.timeOnPageMs;const m=Math.floor(ms/60000),sc=Math.floor((ms%60000)/1000);
+  document.getElementById('ps-duration').textContent=ms?`${m}m ${sc}s`:'—';
+  document.getElementById('ps-interactions').innerHTML=`<table>
+    <tr><td>Quiz:</td><td>${data.quizPassed?'✅ Passed':'❌ Not passed'} (${data.quizAttempts||0} attempts)</td></tr>
+    <tr><td>Timing Attack:</td><td>${data.timingDone?'✅ Simulated':'❌ Not done'}</td></tr>
+    <tr><td>KDF Comparison:</td><td>${data.kdfDone?'✅ ≥3 explored':'❌ Incomplete'}</td></tr>
+    <tr><td>Mistakes Gallery:</td><td>${data.mistakesDone?`✅ ${data.mistakesFixed}/8 fixed`:'❌ Incomplete'}</td></tr>
+    <tr><td>Key Lifecycle:</td><td>${data.lifecycleDone?'✅ ≥3 stages explored':'❌ Incomplete'}</td></tr>
+  </table>`;
+  document.getElementById('ps-reflection').textContent=data.reflection||'—';
+  document.getElementById('print-summary').style.display='block';
+  const orig=document.title;const slug=(data.studentName||'').replace(/[^\w\s-]/g,'').trim();
+  if(slug)document.title=slug+' — '+orig;
+  window.print();setTimeout(()=>{document.title=orig;document.getElementById('print-summary').style.display='none';},500);
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  buildMistakesGrid();
+  updatePBKDF2();updateBcrypt();
+  loadState();updateObj();
+});
+</script>
+</body>
+</html>

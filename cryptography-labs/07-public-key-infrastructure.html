@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Module 7 Lab – Public Key Infrastructure & Certificate Validation</title>
+  <style>
+    *,*::before,*::after{box-sizing:border-box}
+    body{background:#0d1117;color:#c9d1d9;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;min-height:100vh;margin:0}
+    a{color:#58a6ff}
+    code{background:#21262d;border-radius:3px;padding:1px 5px;font-family:"SFMono-Regular",Consolas,monospace;font-size:.875em}
+    .navbar{background:#161b22;border-bottom:1px solid #30363d;padding:.75rem 1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem}
+    .navbar-brand{font-weight:700;color:#e6edf3;text-decoration:none;font-size:1.1rem}
+    .nav-actions{display:flex;align-items:center;gap:.75rem}
+    .nav-pill{font-size:.8rem;color:#8b949e;white-space:nowrap}
+    .container{max-width:900px;margin:0 auto;padding:1.5rem 1rem}
+    .lab-badge{display:inline-block;background:#6e40c9;color:#fff;font-size:.72rem;font-weight:600;padding:2px 10px;border-radius:12px;margin-bottom:.5rem;text-transform:uppercase;letter-spacing:.06em}
+    .lab-header{margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid #30363d}
+    .lab-header h2{color:#e6edf3;margin:.25rem 0 .1rem;font-size:1.6rem}
+    .lab-header p{color:#8b949e;margin:0;font-size:.95rem}
+    .scenario-box{background:#161b22;border-left:4px solid #6e40c9;border-radius:0 8px 8px 0;padding:1rem 1.25rem;margin-bottom:1.5rem}
+    .scenario-box p{margin:0;line-height:1.65}
+    .demo-box{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:1.5rem;margin-bottom:1.5rem}
+    .demo-box h4{margin-top:0;color:#e6edf3}
+    .options-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+    @media(max-width:600px){.options-grid{grid-template-columns:1fr}}
+    .opt-btn{display:flex;align-items:center;gap:.6rem;text-align:left;background:#161b22;border:1px solid #30363d;border-radius:6px;padding:.65rem .9rem;color:#c9d1d9;cursor:pointer;width:100%;font-size:.95rem;transition:border-color .15s,background .15s}
+    .opt-btn:hover{border-color:#58a6ff;background:#1c2940;color:#e6edf3}
+    .opt-btn.correct{background:#1c2a1c!important;border-color:#238636!important;color:#3fb950!important}
+    .opt-btn.incorrect{background:#2a1c1c!important;border-color:#da3633!important;color:#f85149!important}
+    .opt-id{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;background:#30363d;border-radius:4px;font-size:.78rem;font-weight:700;flex-shrink:0}
+    .feedback-box{border-radius:8px;padding:1rem 1.25rem;margin-top:.75rem;font-size:.95rem;line-height:1.65;display:none}
+    .feedback-box.show{display:block}
+    .feedback-correct{background:#1c2a1c;border:1px solid #238636;color:#3fb950}
+    .feedback-incorrect{background:#2a1c1c;border:1px solid #da3633;color:#f85149}
+    .why-box{background:#1c2a1c;border:1px solid #238636;border-radius:8px;padding:1.25rem;margin-top:1rem;display:none}
+    .why-box.show{display:block}
+    .why-box h6{color:#3fb950;font-weight:700;margin:0 0 .5rem}
+    .why-box ul{margin:.5rem 0 .5rem 1.25rem;padding:0;line-height:1.8}
+    .badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.75rem;font-weight:600}
+    .badge-green{background:#1c2a1c;color:#3fb950;border:1px solid #238636}
+    .badge-red{background:#2a1c1c;color:#f85149;border:1px solid #da3633}
+    .badge-yellow{background:#2a2000;color:#e3b341;border:1px solid #9e6a03}
+    .badge-blue{background:#1c2940;color:#58a6ff;border:1px solid #1f6feb}
+    .reflection-box{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:1.5rem;margin:1.5rem 0}
+    .reflection-input{background:#21262d;border:1px solid #30363d;border-radius:6px;padding:.75rem;color:#e6edf3;width:100%;min-height:120px;font-family:inherit;resize:vertical}
+    .reflection-input:focus{outline:none;border-color:#58a6ff}
+    .text-input{background:#21262d;border:1px solid #30363d;border-radius:6px;padding:.5rem .75rem;color:#e6edf3;font-family:inherit;font-size:.9rem}
+    .text-input:focus{outline:none;border-color:#58a6ff}
+    .submit-btn{background:#1f6feb;color:#fff;border:none;border-radius:6px;padding:.5rem 1rem;cursor:pointer;font-size:.9rem;margin-top:.5rem}
+    .export-pdf-btn{background:#3fb950;color:#fff;border:none;border-radius:6px;padding:.5rem 1rem;cursor:pointer;font-size:.9rem;margin-top:.5rem;margin-left:.5rem;display:none}
+    .action-btn{background:#21262d;color:#c9d1d9;border:1px solid #30363d;border-radius:6px;padding:.45rem .9rem;cursor:pointer;font-size:.85rem;transition:border-color .15s}
+    .action-btn:hover{border-color:#58a6ff;color:#58a6ff}
+    .action-btn-blue{background:#1f6feb;color:#fff;border:none;border-radius:6px;padding:.45rem .9rem;cursor:pointer;font-size:.85rem}
+    .action-btn-blue:hover{background:#1c64e8}
+    .action-btn-red{background:#b91c1c;color:#fff;border:none;border-radius:6px;padding:.45rem .9rem;cursor:pointer;font-size:.85rem}
+    #print-summary{display:none;font-family:Arial,sans-serif;color:#000;padding:2rem;line-height:1.6}
+    #print-summary h1{font-size:1.4rem}#print-summary h2{font-size:1.1rem;border-bottom:1px solid #ccc;padding-bottom:.2rem}
+    #print-summary table{border-collapse:collapse;width:100%}#print-summary td{padding:.2rem .5rem;vertical-align:top}#print-summary td:first-child{font-weight:bold;width:150px}
+    .reflection-title{font-weight:600;color:#e6edf3;margin-bottom:.75rem;font-size:1rem}
+    .sub-area-locked{opacity:.45;pointer-events:none;user-select:none}
+    .sub-area-unlocked{opacity:1;pointer-events:auto}
+    @media print{body>*:not(#print-summary){display:none!important}#print-summary{display:block!important}}
+    .lab-footer{display:flex;justify-content:space-between;align-items:center;margin-top:2rem;padding-top:1rem;border-top:1px solid #30363d}
+    .btn-nav{display:inline-flex;align-items:center;gap:.4rem;padding:.4rem .9rem;border:1px solid #30363d;border-radius:6px;color:#c9d1d9;text-decoration:none;font-size:.85rem;background:#161b22;transition:border-color .15s}
+    .btn-nav:hover{border-color:#58a6ff;color:#58a6ff}
+
+    /* Certificate anatomy */
+    .cert-box{background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:.75rem;font-family:monospace;font-size:.78rem}
+    .cert-field{display:flex;gap:.5rem;padding:.25rem .4rem;border-radius:4px;cursor:pointer;transition:background .15s;align-items:flex-start}
+    .cert-field:hover{background:#21262d}
+    .cert-field.active{background:#1c2940;border-left:3px solid #58a6ff}
+    .cert-field-key{color:#8b949e;flex:0 0 160px;white-space:nowrap}
+    .cert-field-val{color:#e3b341;flex:1}
+    .cert-explain{background:#0d1117;border:1px solid #1f6feb;border-radius:6px;padding:.75rem .9rem;margin-top:.5rem;font-size:.82rem;color:#c9d1d9;line-height:1.7;display:none}
+    .cert-explain.show{display:block}
+
+    /* Chain visualizer */
+    .chain-wrap{display:flex;flex-direction:column;gap:0;align-items:center;margin:1rem 0}
+    .chain-node{border:2px solid #30363d;border-radius:8px;padding:.75rem 1.25rem;text-align:center;width:260px;transition:border-color .4s,background .4s}
+    .chain-arrow{font-size:1.2rem;color:#30363d;transition:color .4s;line-height:1.4}
+    .chain-node.verified{border-color:#238636!important;background:#1c2a1c!important}
+    .chain-node.failed{border-color:#da3633!important;background:#2a1c1c!important;animation:shake .3s}
+    @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+    .chain-arrow.lit{color:#3fb950}
+    .chain-arrow.broken{color:#f85149}
+
+    /* OCSP/CRL */
+    .rev-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+    @media(max-width:580px){.rev-grid{grid-template-columns:1fr}}
+    .rev-panel{background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:.85rem}
+    .rev-panel h5{color:#e6edf3;font-size:.85rem;font-weight:600;margin:0 0 .6rem}
+    .progress-bar{height:8px;background:#30363d;border-radius:4px;overflow:hidden;margin:.4rem 0}
+    .progress-fill{height:100%;background:#58a6ff;border-radius:4px;transition:width .3s}
+
+    /* CT Log */
+    .ct-entry{display:flex;align-items:center;gap:.6rem;padding:.45rem .7rem;border-radius:6px;margin:.3rem 0;font-size:.82rem;transition:background .2s}
+    .ct-entry:hover{background:#21262d}
+    .ct-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+
+    /* Attack cards */
+    .attack-card{background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:.75rem;margin:.4rem 0;cursor:pointer;transition:border-color .2s}
+    .attack-card:hover{border-color:#f85149}
+    .attack-card.open{border-color:#f85149;background:#1a0808}
+    .attack-detail{display:none;margin-top:.5rem;font-size:.82rem;color:#8b949e;line-height:1.7}
+    .attack-card.open .attack-detail{display:block}
+
+    /* Objectives */
+    #obj-overlay{position:fixed;bottom:1rem;right:1rem;z-index:1000;font-size:.8rem}
+    #obj-badge{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.4rem .7rem;cursor:pointer;color:#8b949e;user-select:none;display:flex;align-items:center;gap:.4rem}
+    #obj-panel{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.6rem .8rem;margin-top:.3rem;min-width:220px;display:block}
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="navbar-brand" href="../">🔐 Cryptography Labs</a>
+  <div class="nav-actions">
+    <span class="nav-pill">Module 7 Lab</span>
+    <button onclick="resetLab()" style="background:none;border:1px solid #30363d;border-radius:6px;padding:.25rem .6rem;color:#8b949e;cursor:pointer;font-size:.75rem">↺ Reset</button>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="lab-header">
+    <div class="lab-badge">Module 7 · PKI</div>
+    <h2>Public Key Infrastructure &amp; Certificate Validation</h2>
+    <p>X.509 anatomy, certificate chains, OCSP vs CRL revocation, and CT logs</p>
+  </div>
+
+  <div class="scenario-box">
+    <p><strong>Scenario:</strong> A security incident report claims that a rogue certificate was issued for your organization's domain. You need to investigate: what fields prove a certificate is legitimate, how the chain of trust works, how to check revocation status, and what certificate transparency logs reveal about unauthorized issuances.</p>
+  </div>
+
+  <!-- Demo 1: X.509 Certificate Anatomy -->
+  <div class="demo-box">
+    <h4>📜 Demo 1 — X.509 Certificate Anatomy Explorer</h4>
+    <p style="color:#8b949e;margin-bottom:.75rem">Click any field to learn what it means and why it matters for trust validation.</p>
+    <div style="display:flex;gap:.75rem;align-items:center;margin-bottom:.75rem;flex-wrap:wrap">
+      <span id="cert-status-badge" class="badge badge-green">✅ Certificate VALID</span>
+      <span style="font-size:.78rem;color:#8b949e">Valid To: 2025-01-15 · Expires in <span id="days-left">—</span> days</span>
+    </div>
+    <div class="cert-box">
+      <div class="cert-field" onclick="showCertField('version')"><span class="cert-field-key">Version:</span><span class="cert-field-val">X.509 v3</span></div>
+      <div class="cert-field" onclick="showCertField('serial')"><span class="cert-field-key">Serial Number:</span><span class="cert-field-val">0A:1B:2C:3D:4E:5F:6A:7B</span></div>
+      <div class="cert-field" onclick="showCertField('subject')"><span class="cert-field-key">Subject:</span><span class="cert-field-val">CN=www.example.com, O=Example Corp, C=US</span></div>
+      <div class="cert-field" onclick="showCertField('issuer')"><span class="cert-field-key">Issuer:</span><span class="cert-field-val">CN=DigiCert TLS RSA SHA256 2020 CA1, O=DigiCert Inc, C=US</span></div>
+      <div class="cert-field" onclick="showCertField('validity')"><span class="cert-field-key">Not Before:</span><span class="cert-field-val">2024-01-15 00:00:00 UTC</span></div>
+      <div class="cert-field" onclick="showCertField('validto')"><span class="cert-field-key">Not After:</span><span class="cert-field-val">2025-01-15 23:59:59 UTC</span></div>
+      <div class="cert-field" onclick="showCertField('pubkey')"><span class="cert-field-key">Public Key:</span><span class="cert-field-val">RSA 2048-bit (30 82 01 0a 02 82 01 01 00 b3 4a 8f…)</span></div>
+      <div class="cert-field" onclick="showCertField('keyuse')"><span class="cert-field-key">Key Usage:</span><span class="cert-field-val">Digital Signature, Key Encipherment</span></div>
+      <div class="cert-field" onclick="showCertField('san')"><span class="cert-field-key">SAN:</span><span class="cert-field-val">www.example.com, example.com</span></div>
+      <div class="cert-field" onclick="showCertField('sigalg')"><span class="cert-field-key">Signature Alg:</span><span class="cert-field-val">sha256WithRSAEncryption</span></div>
+      <div class="cert-field" onclick="showCertField('sig')"><span class="cert-field-key">Signature:</span><span class="cert-field-val">4a 7c 2f 90 e1 b3 8d 44 c2 1a … (256 bytes)</span></div>
+    </div>
+    <div id="cert-explain" class="cert-explain"></div>
+  </div>
+
+  <!-- Demo 2: Certificate Chain -->
+  <div class="demo-box">
+    <h4>🔗 Demo 2 — Certificate Chain Verifier</h4>
+    <p style="color:#8b949e;margin-bottom:.75rem">Verify the chain of trust from the leaf certificate up to the root CA.</p>
+    <div class="chain-wrap">
+      <div class="chain-node" id="cn-root" style="background:#21262d">
+        <div style="font-size:.75rem;color:#8b949e;text-transform:uppercase;letter-spacing:.05em">Root CA</div>
+        <div style="font-weight:600;color:#e6edf3;margin:.2rem 0">DigiCert Global Root G2</div>
+        <div style="font-size:.75rem;color:#8b949e">Self-signed · In browser trust store</div>
+      </div>
+      <div class="chain-arrow" id="ca-arrow-2">↑ signed by</div>
+      <div class="chain-node" id="cn-inter" style="background:#21262d">
+        <div style="font-size:.75rem;color:#8b949e;text-transform:uppercase;letter-spacing:.05em">Intermediate CA</div>
+        <div style="font-weight:600;color:#e6edf3;margin:.2rem 0">DigiCert TLS RSA SHA256 2020 CA1</div>
+        <div style="font-size:.75rem;color:#8b949e">Issued by Root · Valid 2020–2030</div>
+      </div>
+      <div class="chain-arrow" id="ca-arrow-1">↑ signed by</div>
+      <div class="chain-node" id="cn-leaf">
+        <div style="font-size:.75rem;color:#8b949e;text-transform:uppercase;letter-spacing:.05em">Leaf Certificate</div>
+        <div style="font-weight:600;color:#e6edf3;margin:.2rem 0">www.example.com</div>
+        <div style="font-size:.75rem;color:#8b949e">Issued by Intermediate · Valid 2024–2025</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.5rem">
+      <button class="action-btn-blue" onclick="verifyChain()">✅ Verify Chain</button>
+      <button class="action-btn-red" onclick="breakChain()">💥 Break Chain</button>
+      <button class="action-btn" onclick="resetChain()">↺ Reset</button>
+    </div>
+    <div id="chain-result" style="display:none;padding:.75rem;border-radius:6px;font-size:.85rem;margin-top:.5rem"></div>
+    <div style="background:#1c2940;border:1px solid #1f6feb;border-radius:6px;padding:.65rem .85rem;margin-top:.75rem;font-size:.82rem;color:#58a6ff">
+      💡 <strong>Why 3 tiers?</strong> Root CAs are kept offline (air-gapped) in HSMs for maximum security. Intermediate CAs do the day-to-day signing. If an intermediate is compromised, it's revoked — the root CA stays safe and issues a new intermediate.
+    </div>
+  </div>
+
+  <!-- Demo 3: OCSP vs CRL -->
+  <div class="demo-box">
+    <h4>🔍 Demo 3 — Certificate Revocation: OCSP vs CRL</h4>
+    <p style="color:#8b949e;margin-bottom:.75rem">See how CRL and OCSP differ for checking if a certificate has been revoked.</p>
+    <div style="margin-bottom:.75rem">
+      <label style="font-size:.83rem;color:#8b949e">Certificate status: &nbsp;</label>
+      <button class="action-btn" id="revoke-btn" onclick="toggleRevocation()">🔴 Revoke Certificate</button>
+    </div>
+    <div class="rev-grid">
+      <div class="rev-panel">
+        <h5>📋 CRL (Certificate Revocation List)</h5>
+        <button class="action-btn-blue" style="width:100%;margin-bottom:.5rem" onclick="checkCRL()">Download &amp; Check CRL</button>
+        <div id="crl-status" style="font-size:.82rem;color:#8b949e"></div>
+        <div style="margin-top:.5rem;font-size:.78rem;color:#8b949e;line-height:1.6">
+          <strong style="color:#e6edf3">Downsides:</strong> Large file (MBs), cached up to 24h, bandwidth overhead
+        </div>
+      </div>
+      <div class="rev-panel">
+        <h5>⚡ OCSP (Online Cert Status Protocol)</h5>
+        <button class="action-btn-blue" style="width:100%;margin-bottom:.5rem" onclick="checkOCSP()">Query OCSP Responder</button>
+        <div id="ocsp-status" style="font-size:.82rem;color:#8b949e"></div>
+        <div style="margin-top:.5rem;font-size:.78rem;color:#8b949e;line-height:1.6">
+          <strong style="color:#e6edf3">OCSP Stapling:</strong> Server pre-fetches &amp; caches OCSP response — eliminates privacy leak, reduces latency
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Demo 4: Certificate Transparency -->
+  <div class="demo-box">
+    <h4>🌐 Demo 4 — Certificate Transparency &amp; Attack Scenarios</h4>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+      <div>
+        <div style="font-size:.85rem;font-weight:600;color:#e6edf3;margin-bottom:.5rem">📋 CT Log for example.com</div>
+        <div class="ct-entry"><div class="ct-dot" style="background:#3fb950"></div><div><div style="color:#3fb950;font-size:.8rem">2024-01-15 — DigiCert</div><div style="color:#8b949e;font-size:.75rem">www.example.com · Valid ✅</div></div></div>
+        <div class="ct-entry"><div class="ct-dot" style="background:#3fb950"></div><div><div style="color:#3fb950;font-size:.8rem">2024-06-20 — Let's Encrypt</div><div style="color:#8b949e;font-size:.75rem">example.com · Valid ✅</div></div></div>
+        <div class="ct-entry" style="background:#2a1c1c;border-radius:6px"><div class="ct-dot" style="background:#f85149"></div><div><div style="color:#f85149;font-size:.8rem">2024-08-01 — Unknown CA ⚠️</div><div style="color:#8b949e;font-size:.75rem">www.example.com · SUSPICIOUS</div></div></div>
+        <button class="action-btn" style="margin-top:.5rem;width:100%;font-size:.78rem" onclick="reportCT()">🚨 Report to CT Monitor</button>
+        <div id="ct-report" style="display:none;margin-top:.4rem;font-size:.79rem;color:#3fb950;padding:.4rem;background:#1c2a1c;border-radius:4px">✅ Reported! CA investigation triggered. Certificate will be revoked within 24h.</div>
+      </div>
+      <div>
+        <div style="font-size:.85rem;font-weight:600;color:#e6edf3;margin-bottom:.5rem">⚠️ Certificate Attack Scenarios</div>
+        <div class="attack-card" onclick="toggleAttack(this)">
+          <div style="font-size:.83rem;font-weight:600;color:#f85149">Rogue CA Attack</div>
+          <div class="attack-detail">Attacker compromises a CA and issues a fraudulent certificate for google.com. CT logs make this detectable — Google's Chrome enforcement of CT means uncertified certificates fail immediately. DigiCert/Symantec distrust (2017–2018) was discovered via CT.</div>
+        </div>
+        <div class="attack-card" onclick="toggleAttack(this)">
+          <div style="font-size:.83rem;font-weight:600;color:#f85149">MITM with Valid Cert</div>
+          <div class="attack-detail">Attacker obtains a valid certificate (via social engineering the CA, or domain validation bypass). Defense: HPKP (deprecated), CAA DNS records restricting which CAs can issue for your domain, CT monitoring with immediate revocation.</div>
+        </div>
+        <div class="attack-card" onclick="toggleAttack(this)">
+          <div style="font-size:.83rem;font-weight:600;color:#e3b341">Wildcard Cert Abuse</div>
+          <div class="attack-detail">A *.example.com certificate covers ALL subdomains including internal ones (admin.example.com, vpn.example.com). If the wildcard cert private key is stolen, all subdomains are compromised. Mitigation: use individual SAN certs for sensitive subdomains, not wildcards.</div>
+        </div>
+        <div class="attack-card" onclick="toggleAttack(this)">
+          <div style="font-size:.83rem;font-weight:600;color:#e3b341">Certificate Pinning Bypass</div>
+          <div class="attack-detail">Mobile apps pin a specific certificate or public key. Attackers use tools like Frida or Objection to hook the TLS verification function at runtime and bypass pinning. Defense: multi-layered pinning, integrity attestation, jailbreak/root detection.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quiz -->
+  <div class="demo-box">
+    <div class="question-box">
+      <p style="font-weight:600;color:#e6edf3;font-size:1.05rem;margin:0 0 1rem">During TLS, a client receives a certificate for 'bank.com'. The intermediate CA was recently compromised. Which mechanism MOST effectively prevents trust in this certificate?</p>
+      <div class="options-grid">
+        <button class="opt-btn" onclick="checkQ(this,'A')"><span class="opt-id">A</span>Certificate pinning to original intermediate</button>
+        <button class="opt-btn" onclick="checkQ(this,'B')"><span class="opt-id">B</span>Certificate Transparency + revocation</button>
+        <button class="opt-btn" onclick="checkQ(this,'C')"><span class="opt-id">C</span>Checking only the root CA signature</button>
+        <button class="opt-btn" onclick="checkQ(this,'D')"><span class="opt-id">D</span>Verifying the certificate's Not Before date</button>
+      </div>
+      <div id="q-feedback" class="feedback-box"></div>
+      <div class="why-box" id="why-box">
+        <h6>📚 Certificate Revocation &amp; Trust</h6>
+        <ul>
+          <li><strong>CT + Revocation (B):</strong> When a CA is compromised, all certificates it issued must be revoked. CT logs make the mis-issuance visible, and OCSP/CRL revocation removes trust. This is the correct defense-in-depth answer.</li>
+          <li><strong>Pinning alone (A):</strong> Would not help — if the attacker has the compromised intermediate, they could issue a new certificate that satisfies the pin if it was pinned to the intermediate rather than a specific key.</li>
+          <li><strong>Checking root (C):</strong> Incorrect — the root signature on the intermediate may still be valid. The intermediate itself is what's compromised.</li>
+          <li><strong>Not Before date (D):</strong> Irrelevant to compromise — a cert issued before the compromise date appears fully valid.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reflection -->
+  <div class="reflection-box">
+    <div style="color:#e6edf3;font-weight:600;margin-bottom:.75rem">📝 Learning Reflection</div>
+    <label style="font-size:.85rem;color:#8b949e;display:block;margin-bottom:.3rem">Student Name</label>
+    <input id="student-name" class="text-input" style="width:100%;margin-bottom:.75rem" placeholder="Your full name" oninput="saveState()">
+    <label style="font-size:.85rem;color:#8b949e;display:block;margin-bottom:.3rem">Reflection <span style="font-weight:400">(explain how the certificate chain of trust works and what Certificate Transparency adds to PKI security)</span></label>
+    <textarea id="learning-reflection" class="reflection-input" placeholder="Write your reflection here..." oninput="saveState()"></textarea>
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.5rem;align-items:center">
+      <button class="submit-btn" id="submit-reflection" onclick="saveReflection()">💾 Save Reflection</button>
+      <button class="export-pdf-btn" id="export-pdf-btn" onclick="exportPDF()">📄 Export PDF</button>
+      <span id="submission-feedback" style="font-size:.82rem;color:#3fb950;display:none"></span>
+    </div>
+  </div>
+
+  <div class="lab-footer">
+    <a class="btn-nav" href="../week6-lab/06-cryptography-standards.html">← Week 6</a>
+    <span style="color:#8b949e;font-size:.85rem">Module 7 · PKI</span>
+    <a class="btn-nav" href="../week8-lab/08-ipsec-tls.html">Week 8 →</a>
+  </div>
+</div>
+
+<div id="obj-overlay">
+  <div id="obj-badge" onclick="toggleObj()">
+    <span id="obj-count">📋 0/5 objectives</span>
+    <span id="obj-chev">▲</span>
+  </div>
+  <div id="obj-panel"><div id="obj-list"></div></div>
+</div>
+
+<div id="print-summary">
+  <h1>Module 7 Lab — Public Key Infrastructure</h1>
+  <p style="color:#555;font-size:.85rem">CS 615 · Cryptography for Cyber Professionals</p>
+  <h2>Student Info</h2>
+  <table><tr><td>Name:</td><td id="ps-name"></td></tr><tr><td>Submitted:</td><td id="ps-submitted"></td></tr><tr><td>Time:</td><td id="ps-duration"></td></tr></table>
+  <h2>Lab Interactions</h2><div id="ps-interactions"></div>
+  <h2>Reflection</h2><div id="ps-reflection" style="white-space:pre-wrap"></div>
+</div>
+
+<script>
+const CERT_FIELDS={
+  version:{title:'Version: X.509 v3',body:'X.509 version 3 (the current standard) adds critical extensions like Subject Alternative Names (SANs), Key Usage, and Certificate Policies. Version 1 had no extensions. Always verify you\'re looking at a v3 certificate for modern TLS.'},
+  serial:{title:'Serial Number',body:'Unique identifier assigned by the issuing CA. Used to reference specific certificates in CRL (Certificate Revocation Lists). If you need to report a certificate for revocation, the serial number is the key identifier.'},
+  subject:{title:'Subject Distinguished Name (DN)',body:'Identifies who the certificate belongs to. CN (Common Name) was the original hostname field but is now largely replaced by SAN. O=Organization, C=Country. For EV (Extended Validation) certificates, the organization is independently verified by the CA.'},
+  issuer:{title:'Issuer Distinguished Name',body:'Identifies which Certificate Authority signed and issued this certificate. The issuer\'s certificate must be found in the chain and trusted. If you don\'t recognize the issuer, verify it against the root CA trust store before trusting the certificate.'},
+  validity:{title:'Not Before (Valid From)',body:'Certificate is invalid before this timestamp. Ensures certificates can\'t be used before their intended activation. Clocks on both client and server must be synchronized (NTP) to validate this correctly.'},
+  validto:{title:'Not After (Expiry)',body:'Certificate expires at this time — the browser will show a warning and refuse connection. Modern certificates are capped at 398 days by browser policies (Apple introduced this in 2020). Short lifetimes limit exposure if a key is compromised.'},
+  pubkey:{title:'Subject Public Key',body:'The RSA/EC public key that the certificate holder controls. When you connect to the server, it proves possession of the corresponding private key (via TLS handshake signature). Only the legitimate server has the private key — an impostor has the wrong private key.'},
+  keyuse:{title:'Key Usage Extension',body:'"Digital Signature" allows signing (required for TLS). "Key Encipherment" allows RSA key transport (TLS 1.2 only). "Certificate Sign" would mean it\'s a CA certificate. Key Usage restricts what the key can be used for — prevents misuse if the key is stolen.'},
+  san:{title:'Subject Alternative Names (SAN)',body:'The authoritative list of hostnames this certificate is valid for. Chrome removed support for CN-only validation in 2017 — all valid TLS certs MUST have SANs. Multiple SANs allow one cert to cover www.example.com AND example.com. Wildcard SANs (*.example.com) cover all immediate subdomains.'},
+  sigalg:{title:'Signature Algorithm',body:'sha256WithRSAEncryption means the CA signed this certificate using RSA with SHA-256 as the hash. MD5 and SHA-1 signature algorithms are rejected by modern browsers. The signature algorithm must match what the CA\'s certificate claims to support.'},
+  sig:{title:'Certificate Signature',body:'The CA\'s digital signature over all other certificate fields. This is what you verify using the CA\'s public key from the next certificate up the chain. If even one bit of the certificate is modified, this signature verification fails — providing integrity protection.'},
+};
+
+let certFieldDone=false, chainDone=false, revDone=false, ctDone=false, quizPassed=false, quizAttempts=0;
+let certFieldsSeen=new Set(), attacksSeen=0;
+let _certRevoked=false, _chainBroken=false;
+const openedAt=new Date().toISOString();
+
+// Compute days until 2025-01-15
+const daysLeft=Math.round((new Date('2025-01-15')-new Date())/(1000*60*60*24));
+document.addEventListener('DOMContentLoaded',()=>{
+  const dl=document.getElementById('days-left');
+  if(dl)dl.textContent=daysLeft>0?daysLeft:'EXPIRED';
+  const badge=document.getElementById('cert-status-badge');
+  if(daysLeft<=0&&badge){badge.className='badge badge-red';badge.textContent='❌ Certificate EXPIRED';}
+  loadState();updateObj();
+});
+
+function showCertField(id){
+  document.querySelectorAll('.cert-field').forEach(f=>f.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  const d=CERT_FIELDS[id];
+  const ex=document.getElementById('cert-explain');
+  ex.innerHTML=`<strong style="color:#58a6ff">${d.title}</strong><br><br>${d.body}`;
+  ex.className='cert-explain show';
+  certFieldsSeen.add(id);
+  if(certFieldsSeen.size>=5)certFieldDone=true;
+  saveState();updateObj();
+}
+
+function verifyChain(){
+  _chainBroken=false;
+  const steps=[
+    ()=>{document.getElementById('cn-leaf').classList.add('verified');document.getElementById('ca-arrow-1').classList.add('lit');},
+    ()=>{document.getElementById('cn-inter').classList.add('verified');document.getElementById('ca-arrow-2').classList.add('lit');},
+    ()=>{document.getElementById('cn-root').classList.add('verified');
+      const r=document.getElementById('chain-result');r.style.display='block';
+      r.style.background='#1c2a1c';r.style.border='1px solid #238636';r.style.color='#3fb950';
+      r.innerHTML='✅ <strong>Chain Valid!</strong> Leaf ← Intermediate ← Root (in trust store). All signatures verified.';
+      chainDone=true;saveState();updateObj();}
+  ];
+  let i=0;const run=()=>{if(i<steps.length){steps[i]();i++;setTimeout(run,500);}};
+  resetChainVisual();setTimeout(run,200);
+}
+
+function breakChain(){
+  resetChainVisual();
+  setTimeout(()=>{
+    document.getElementById('cn-leaf').classList.add('verified');
+    document.getElementById('ca-arrow-1').classList.add('broken');
+    setTimeout(()=>{
+      document.getElementById('cn-inter').classList.add('failed');
+      const r=document.getElementById('chain-result');r.style.display='block';
+      r.style.background='#2a1c1c';r.style.border='1px solid #da3633';r.style.color='#f85149';
+      r.innerHTML='❌ <strong>Chain Broken!</strong> Intermediate CA replaced with untrusted "Evil CA Inc." — browser rejects with NET::ERR_CERT_AUTHORITY_INVALID';
+      _chainBroken=true;chainDone=true;saveState();updateObj();
+    },500);
+  },200);
+}
+
+function resetChain(){resetChainVisual();document.getElementById('chain-result').style.display='none';}
+function resetChainVisual(){
+  ['cn-root','cn-inter','cn-leaf'].forEach(id=>document.getElementById(id).className='chain-node'+(id==='cn-leaf'?'':''));
+  ['ca-arrow-1','ca-arrow-2'].forEach(id=>document.getElementById(id).className='chain-arrow');
+  document.getElementById('cn-leaf').style.cssText='';
+}
+
+function toggleRevocation(){
+  _certRevoked=!_certRevoked;
+  document.getElementById('revoke-btn').textContent=_certRevoked?'🟢 Restore Certificate':'🔴 Revoke Certificate';
+  document.getElementById('crl-status').innerHTML='';
+  document.getElementById('ocsp-status').innerHTML='';
+}
+
+function checkCRL(){
+  const el=document.getElementById('crl-status');
+  el.innerHTML='<div style="color:#58a6ff">📥 Downloading CRL from crl.digicert.com… (8.2 MB)</div>';
+  const bar=document.createElement('div');bar.className='progress-bar';
+  const fill=document.createElement('div');fill.className='progress-fill';fill.style.width='0%';
+  bar.appendChild(fill);el.appendChild(bar);
+  let pct=0;const t=setInterval(()=>{
+    pct=Math.min(100,pct+8);fill.style.width=pct+'%';
+    if(pct>=100){
+      clearInterval(t);
+      setTimeout(()=>{
+        if(_certRevoked)el.innerHTML='<div style="color:#f85149">❌ Serial 0A:1B:2C:3D:4E:5F:6A:7B found in CRL — <strong>REVOKED</strong> (revoked 2024-07-01)</div>';
+        else el.innerHTML='<div style="color:#3fb950">✅ Serial not found in CRL — certificate is <strong>not revoked</strong></div>';
+        revDone=true;saveState();updateObj();
+      },200);
+    }
+  },60);
+}
+
+function checkOCSP(){
+  const el=document.getElementById('ocsp-status');
+  el.innerHTML='<div style="color:#58a6ff">⚡ Querying OCSP responder at ocsp.digicert.com…</div>';
+  setTimeout(()=>{
+    if(_certRevoked)el.innerHTML='<div style="color:#f85149">❌ OCSP Response: <strong>REVOKED</strong> — revoked at 2024-07-01T14:23:00Z, reason: keyCompromise</div>';
+    else el.innerHTML='<div style="color:#3fb950">✅ OCSP Response: <strong>Good</strong> — nextUpdate: '+new Date(Date.now()+86400000).toUTCString()+'</div>';
+    revDone=true;saveState();updateObj();
+  },220);
+}
+
+function reportCT(){
+  document.getElementById('ct-report').style.display='block';
+  ctDone=true;saveState();updateObj();
+}
+
+function toggleAttack(card){
+  const wasOpen=card.classList.contains('open');
+  document.querySelectorAll('.attack-card').forEach(c=>c.classList.remove('open'));
+  if(!wasOpen)card.classList.add('open');
+  attacksSeen=document.querySelectorAll('.attack-card.open').length+(wasOpen?0:1);
+  if(attacksSeen>=1)ctDone=true;
+  saveState();updateObj();
+}
+
+let _qAnswered=false;
+function checkQ(btn,choice){
+  quizAttempts++;
+  document.querySelectorAll('\.opt-btn').forEach(b=>b.classList.remove('incorrect','correct'));
+  const correct=choice==='B';
+  btn.classList.add(correct?'correct':'incorrect');
+  const fb=document.getElementById('q-feedback');
+  fb.className='feedback-box show '+(correct?'feedback-correct':'feedback-incorrect');
+  if(correct){
+    fb.innerHTML='✅ <strong>Correct!</strong> CT logs make the mis-issuance visible to everyone, and OCSP/CRL revocation immediately removes trust. This combination is the most effective defense when a CA is compromised.';
+    quizPassed=true;document.getElementById('why-box').classList.add('show');
+  }else{
+    fb.innerHTML='❌ Not quite. Consider: the intermediate CA has been compromised — which mechanism actively revokes its certificates AND makes the compromise publicly visible?';
+  }
+  saveState();updateObj();
+}
+
+function updateObj(){
+  const checks=[
+    {done:certFieldDone,label:'Explored ≥5 certificate fields'},
+    {done:chainDone,label:'Verified (and broke) certificate chain'},
+    {done:revDone,label:'Compared CRL vs OCSP revocation'},
+    {done:ctDone,label:'Investigated CT log & attack scenarios'},
+    {done:quizPassed,label:'Passed the PKI quiz'},
+  ];
+  const done=checks.filter(c=>c.done).length,allDone=done===checks.length;
+  const badge=document.getElementById('obj-badge');
+  badge.style.borderColor=allDone?'#238636':'#30363d';badge.style.color=allDone?'#3fb950':'#8b949e';
+  document.getElementById('obj-count').textContent=allDone?'✅ All objectives done!':`📋 ${done}/${checks.length} objectives`;
+  document.getElementById('obj-list').innerHTML=checks.map(c=>
+    `<div style="color:${c.done?'#3fb950':'#8b949e'};font-size:.79rem">${c.done?'✅':'⬜'} ${c.label}</div>`).join('');
+}
+let _objOpen=true;
+function toggleObj(){_objOpen=!_objOpen;document.getElementById('obj-panel').style.display=_objOpen?'block':'none';document.getElementById('obj-chev').textContent=_objOpen?'▲':'▼';}
+
+function saveState(){
+  const s={quizPassed,quizAttempts,certFieldDone,chainDone,revDone,ctDone,
+    certFieldsSeen:Array.from(certFieldsSeen),attacksSeen,
+    studentName:(document.getElementById('student-name')||{}).value||'',
+    reflection:(document.getElementById('learning-reflection')||{}).value||''};
+  localStorage.setItem('lab07-state',JSON.stringify(s));
+}
+function loadState(){
+  const raw=localStorage.getItem('lab07-state');if(!raw)return;
+  let s;try{s=JSON.parse(raw);}catch(e){return;}
+  quizPassed=s.quizPassed||false;quizAttempts=s.quizAttempts||0;
+  certFieldDone=s.certFieldDone||false;chainDone=s.chainDone||false;
+  revDone=s.revDone||false;ctDone=s.ctDone||false;
+  certFieldsSeen=new Set(s.certFieldsSeen||[]);attacksSeen=s.attacksSeen||0;
+  if(s.studentName){const el=document.getElementById('student-name');if(el)el.value=s.studentName;}
+  if(s.reflection){const el=document.getElementById('learning-reflection');if(el)el.value=s.reflection;}
+  if(quizPassed){_qAnswered=true;const btns=document.querySelectorAll('.opt-btn');if(btns.length>1)btns[1].classList.add('correct');const fb=document.getElementById('q-feedback');fb.className='feedback-box show feedback-correct';fb.innerHTML='✅ <strong>Correct!</strong> CT + revocation is the most effective defense.';document.getElementById('why-box').classList.add('show');}
+  updateObj();
+}
+function resetLab(){if(!confirm('Reset all progress?'))return;localStorage.removeItem('lab07-state');location.reload();}
+function saveReflection(){
+  const reflection=(document.getElementById('learning-reflection').value||'').trim();
+  if(!reflection){alert('Please write a reflection before saving.');return;}
+  const data={studentName:(document.getElementById('student-name').value||'').trim(),openedAt,
+    submittedAt:new Date().toISOString(),timeOnPageMs:Date.now()-new Date(openedAt).getTime(),
+    quizPassed,quizAttempts,certFieldDone,chainDone,revDone,ctDone,reflection,labCompleted:'Module 7 Lab'};
+  localStorage.setItem('week7-lab-submission',JSON.stringify(data));saveState();
+  document.getElementById('submission-feedback').style.display='inline';
+  document.getElementById('submission-feedback').textContent='✅ Saved!';
+  document.getElementById('export-pdf-btn').style.display='inline-block';
+  const btn=document.getElementById('submit-reflection');btn.textContent='✓ Saved!';btn.style.background='#3fb950';
+  setTimeout(()=>{btn.textContent='💾 Save Reflection';btn.style.background='';},2000);
+}
+function exportPDF(){
+  const data=JSON.parse(localStorage.getItem('week7-lab-submission')||'{}');
+  document.getElementById('ps-name').textContent=data.studentName||'—';
+  document.getElementById('ps-submitted').textContent=data.submittedAt?new Date(data.submittedAt).toLocaleString():'—';
+  const ms=data.timeOnPageMs;const m=Math.floor(ms/60000),sc=Math.floor((ms%60000)/1000);
+  document.getElementById('ps-duration').textContent=ms?`${m}m ${sc}s`:'—';
+  document.getElementById('ps-interactions').innerHTML=`<table>
+    <tr><td>Quiz:</td><td>${data.quizPassed?'✅ Passed':'❌ Not passed'} (${data.quizAttempts||0} attempts)</td></tr>
+    <tr><td>Cert Anatomy:</td><td>${data.certFieldDone?'✅ ≥5 fields explored':'❌ Incomplete'}</td></tr>
+    <tr><td>Chain Verify:</td><td>${data.chainDone?'✅ Completed':'❌ Not done'}</td></tr>
+    <tr><td>Revocation:</td><td>${data.revDone?'✅ OCSP/CRL tested':'❌ Not done'}</td></tr>
+    <tr><td>CT &amp; Attacks:</td><td>${data.ctDone?'✅ Explored':'❌ Not done'}</td></tr>
+  </table>`;
+  document.getElementById('ps-reflection').textContent=data.reflection||'—';
+  document.getElementById('print-summary').style.display='block';
+  const orig=document.title;const slug=(data.studentName||'').replace(/[^\w\s-]/g,'').trim();
+  if(slug)document.title=slug+' — '+orig;
+  window.print();setTimeout(()=>{document.title=orig;document.getElementById('print-summary').style.display='none';},500);
+}
+</script>
+</body>
+</html>

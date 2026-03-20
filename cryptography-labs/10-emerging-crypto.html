@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Module 10 Lab – Emerging Cryptography & Quantum Readiness</title>
+  <style>
+    *,*::before,*::after{box-sizing:border-box}
+    body{background:#0d1117;color:#c9d1d9;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;min-height:100vh;margin:0}
+    a{color:#58a6ff}
+    code{background:#21262d;border-radius:3px;padding:1px 5px;font-family:"SFMono-Regular",Consolas,monospace;font-size:.875em}
+    .navbar{background:#161b22;border-bottom:1px solid #30363d;padding:.75rem 1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem}
+    .navbar-brand{font-weight:700;color:#e6edf3;text-decoration:none;font-size:1.1rem}
+    .nav-actions{display:flex;align-items:center;gap:.75rem}
+    .container{max-width:900px;margin:0 auto;padding:1.5rem 1rem}
+    .lab-badge{display:inline-block;background:#312e81;color:#a5b4fc;font-size:.72rem;font-weight:600;padding:2px 10px;border-radius:12px;margin-bottom:.5rem;text-transform:uppercase;letter-spacing:.06em}
+    .lab-header{margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid #30363d}
+    .lab-header h2{color:#e6edf3;margin:.25rem 0 .1rem;font-size:1.6rem}
+    .lab-header p{color:#8b949e;margin:0;font-size:.95rem}
+    .scenario-box{background:#161b22;border-left:4px solid #6366f1;border-radius:0 8px 8px 0;padding:1rem 1.25rem;margin-bottom:1.5rem}
+    .scenario-box p{margin:0;line-height:1.65}
+    .demo-box{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:1.5rem;margin-bottom:1.5rem}
+    .demo-box h4{margin-top:0;color:#e6edf3}
+    .options-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+    @media(max-width:600px){.options-grid{grid-template-columns:1fr}}
+    .opt-btn{display:flex;align-items:center;gap:.6rem;text-align:left;background:#161b22;border:1px solid #30363d;border-radius:6px;padding:.65rem .9rem;color:#c9d1d9;cursor:pointer;width:100%;font-size:.95rem;transition:border-color .15s}
+    .opt-btn:hover{border-color:#58a6ff;background:#1c2940;color:#e6edf3}
+    .opt-btn.correct{background:#1c2a1c!important;border-color:#238636!important;color:#3fb950!important}
+    .opt-btn.incorrect{background:#2a1c1c!important;border-color:#da3633!important;color:#f85149!important}
+    .opt-id{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;background:#30363d;border-radius:4px;font-size:.78rem;font-weight:700;flex-shrink:0}
+    .feedback-box{border-radius:8px;padding:1rem 1.25rem;margin-top:.75rem;font-size:.95rem;line-height:1.65;display:none}
+    .feedback-box.show{display:block}
+    .feedback-correct{background:#1c2a1c;border:1px solid #238636;color:#3fb950}
+    .feedback-incorrect{background:#2a1c1c;border:1px solid #da3633;color:#f85149}
+    .why-box{background:#1c2a1c;border:1px solid #238636;border-radius:8px;padding:1.25rem;margin-top:1rem;display:none}
+    .why-box.show{display:block}
+    .why-box h6{color:#3fb950;font-weight:700;margin:0 0 .5rem}
+    .why-box ul{margin:.5rem 0 .5rem 1.25rem;padding:0;line-height:1.8}
+    .badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.75rem;font-weight:600}
+    .badge-green{background:#1c2a1c;color:#3fb950;border:1px solid #238636}
+    .badge-red{background:#2a1c1c;color:#f85149;border:1px solid #da3633}
+    .badge-yellow{background:#2a2000;color:#e3b341;border:1px solid #9e6a03}
+    .badge-blue{background:#1c2940;color:#58a6ff;border:1px solid #1f6feb}
+    .badge-purple{background:#1a0d2e;color:#c084fc;border:1px solid #6e40c9}
+    .reflection-box{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:1.5rem;margin:1.5rem 0}
+    .reflection-input{background:#21262d;border:1px solid #30363d;border-radius:6px;padding:.75rem;color:#e6edf3;width:100%;min-height:120px;font-family:inherit;resize:vertical}
+    .reflection-input:focus{outline:none;border-color:#58a6ff}
+    .text-input{background:#21262d;border:1px solid #30363d;border-radius:6px;padding:.5rem .75rem;color:#e6edf3;font-family:inherit;font-size:.9rem}
+    .submit-btn{background:#1f6feb;color:#fff;border:none;border-radius:6px;padding:.5rem 1rem;cursor:pointer;font-size:.9rem;margin-top:.5rem}
+    .export-pdf-btn{background:#3fb950;color:#fff;border:none;border-radius:6px;padding:.5rem 1rem;cursor:pointer;font-size:.9rem;margin-top:.5rem;margin-left:.5rem;display:none}
+    .action-btn{background:#21262d;color:#c9d1d9;border:1px solid #30363d;border-radius:6px;padding:.45rem .9rem;cursor:pointer;font-size:.85rem;transition:border-color .15s}
+    .action-btn:hover{border-color:#58a6ff;color:#58a6ff}
+    .action-btn-blue{background:#1f6feb;color:#fff;border:none;border-radius:6px;padding:.45rem .9rem;cursor:pointer;font-size:.85rem}
+    .action-btn-blue:hover{background:#1c64e8}
+    #print-summary{display:none;font-family:Arial,sans-serif;color:#000;padding:2rem;line-height:1.6}
+    #print-summary h1{font-size:1.4rem}#print-summary h2{font-size:1.1rem;border-bottom:1px solid #ccc;padding-bottom:.2rem}
+    #print-summary table{border-collapse:collapse;width:100%}#print-summary td{padding:.2rem .5rem;vertical-align:top}#print-summary td:first-child{font-weight:bold;width:160px}
+    @media print{body>*:not(#print-summary){display:none!important}#print-summary{display:block!important}}
+    .lab-footer{display:flex;justify-content:space-between;align-items:center;margin-top:2rem;padding-top:1rem;border-top:1px solid #30363d}
+    .btn-nav{display:inline-flex;align-items:center;gap:.4rem;padding:.4rem .9rem;border:1px solid #30363d;border-radius:6px;color:#c9d1d9;text-decoration:none;font-size:.85rem;background:#161b22;transition:border-color .15s}
+    .btn-nav:hover{border-color:#58a6ff;color:#58a6ff}
+
+    /* Quantum threat */
+    .threat-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:.75rem 0}
+    @media(max-width:580px){.threat-grid{grid-template-columns:1fr}}
+    .threat-panel{background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:.85rem}
+    .threat-panel h5{color:#e6edf3;font-size:.85rem;font-weight:600;margin:0 0 .6rem}
+    .security-indicator{text-align:center;padding:.5rem;border-radius:6px;margin-top:.5rem;font-weight:600;font-size:.82rem}
+    .si-safe{background:#1c2a1c;border:1px solid #238636;color:#3fb950}
+    .si-warn{background:#2a2000;border:1px solid #9e6a03;color:#e3b341}
+    .si-danger{background:#2a1c1c;border:1px solid #da3633;color:#f85149}
+
+    /* PQC cards */
+    .pqc-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin:.75rem 0}
+    @media(max-width:580px){.pqc-grid{grid-template-columns:1fr}}
+    .pqc-card{border:1px solid #6e40c9;border-radius:8px;background:#0d1117;overflow:hidden;cursor:pointer;transition:border-color .2s}
+    .pqc-card:hover{border-color:#a78bfa}
+    .pqc-card.open{border-color:#a78bfa;background:#0d0a1e}
+    .pqc-card-header{padding:.75rem;background:#1a0d2e}
+    .pqc-card-name{font-weight:700;color:#c084fc;font-size:.9rem}
+    .pqc-card-sub{font-size:.72rem;color:#8b949e;margin-top:.2rem}
+    .pqc-card-body{padding:.75rem;font-size:.8rem;color:#8b949e;line-height:1.7;display:none}
+    .pqc-card.open .pqc-card-body{display:block}
+
+    /* ZK Proof */
+    .zk-board{display:flex;gap:1.5rem;justify-content:center;align-items:flex-start;flex-wrap:wrap;margin:.75rem 0}
+    .zk-actor{text-align:center;min-width:120px}
+    .zk-icon{font-size:2.5rem;margin-bottom:.3rem}
+    .zk-name{font-weight:600;font-size:.85rem;color:#e6edf3}
+    .zk-state{font-size:.75rem;color:#8b949e;min-height:2.5em;margin-top:.25rem;line-height:1.4}
+    .zk-cards{display:flex;gap:.4rem;justify-content:center;margin:.5rem 0}
+    .zk-card{width:36px;height:52px;border-radius:5px;border:2px solid #30363d;display:flex;align-items:center;justify-content:center;font-size:1.3rem;transition:all .4s;background:#21262d}
+    .zk-card.revealed{border-color:#58a6ff}
+    .zk-result-log{background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:.5rem .75rem;font-family:monospace;font-size:.75rem;max-height:140px;overflow-y:auto;margin:.5rem 0}
+    .zk-log-entry{line-height:1.8;animation:zk-in .2s ease both}
+    @keyframes zk-in{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+
+    /* Security Checklist */
+    .checklist-section{margin-bottom:1rem}
+    .checklist-section-title{font-size:.82rem;font-weight:600;color:#e3b341;margin-bottom:.4rem;padding:.3rem .5rem;background:#2a2000;border-radius:4px}
+    .checklist-item{display:flex;align-items:flex-start;gap:.5rem;padding:.3rem .1rem;font-size:.82rem;cursor:pointer;border-radius:4px;transition:background .15s}
+    .checklist-item:hover{background:#21262d}
+    .checklist-item input[type=checkbox]{margin-top:2px;flex-shrink:0;cursor:pointer}
+    .checklist-item label{cursor:pointer;line-height:1.5}
+    .checklist-score{text-align:center;padding:.75rem;border-radius:8px;margin-top:.75rem;font-weight:600}
+
+    /* Capstone banner */
+    #capstone-banner{display:none;background:linear-gradient(135deg,#1a0d2e 0%,#0d1a2e 100%);border:2px solid #6366f1;border-radius:12px;padding:1.5rem;text-align:center;margin-top:1.5rem;animation:cap-in .6s ease both}
+    @keyframes cap-in{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+
+    #obj-overlay{position:fixed;bottom:1rem;right:1rem;z-index:1000;font-size:.8rem}
+    #obj-badge{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.4rem .7rem;cursor:pointer;color:#8b949e;user-select:none;display:flex;align-items:center;gap:.4rem}
+    #obj-panel{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.6rem .8rem;margin-top:.3rem;min-width:220px;display:block}
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="navbar-brand" href="../">🔐 Cryptography Labs</a>
+  <div class="nav-actions">
+    <span style="font-size:.8rem;color:#8b949e">Module 10 Lab · Capstone</span>
+    <button onclick="resetLab()" style="background:none;border:1px solid #30363d;border-radius:6px;padding:.25rem .6rem;color:#8b949e;cursor:pointer;font-size:.75rem">↺ Reset</button>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="lab-header">
+    <div class="lab-badge">Module 10 · Emerging</div>
+    <h2>Emerging Cryptography &amp; Quantum Readiness</h2>
+    <p>Quantum threats, NIST post-quantum standards, zero-knowledge proofs, and a security design checklist</p>
+  </div>
+
+  <div class="scenario-box">
+    <p><strong>Scenario:</strong> It's 2026. Intelligence agencies estimate cryptographically-relevant quantum computers are 5–10 years away. Your organization's CISO has asked you to assess quantum risk and produce a migration roadmap. This capstone lab synthesizes everything from the course into a post-quantum readiness plan.</p>
+  </div>
+
+  <!-- Demo 1: Quantum Threat Calculator -->
+  <div class="demo-box">
+    <h4>⚛️ Demo 1 — Quantum Threat Calculator</h4>
+    <p style="color:#8b949e;margin-bottom:.75rem">Estimate how Shor's and Grover's algorithms affect your current cryptography.</p>
+    <div class="threat-grid">
+      <div class="threat-panel">
+        <h5>🔓 Asymmetric / Public-Key (Shor's Algorithm)</h5>
+        <label style="font-size:.8rem;color:#8b949e">RSA key size: <span id="rsa-size-label">2048</span> bits</label>
+        <input type="range" id="rsa-slider" min="1024" max="4096" step="512" value="2048" oninput="updateRSA()" style="width:100%;margin:.4rem 0">
+        <div id="rsa-result" style="font-size:.8rem;line-height:1.8;background:#0d1117;border:1px solid #30363d;border-radius:4px;padding:.5rem .65rem;font-family:monospace"></div>
+        <div id="rsa-indicator" class="security-indicator"></div>
+      </div>
+      <div class="threat-panel">
+        <h5>🔐 Symmetric / Hash (Grover's Algorithm)</h5>
+        <label style="font-size:.8rem;color:#8b949e">AES key size: <span id="aes-size-label">256</span> bits</label>
+        <input type="range" id="aes-slider" min="128" max="256" step="64" value="256" oninput="updateAES()" style="width:100%;margin:.4rem 0">
+        <div id="aes-result" style="font-size:.8rem;line-height:1.8;background:#0d1117;border:1px solid #30363d;border-radius:4px;padding:.5rem .65rem;font-family:monospace"></div>
+        <div id="aes-indicator" class="security-indicator"></div>
+      </div>
+    </div>
+    <div style="background:#2a2000;border:1px solid #9e6a03;border-radius:6px;padding:.65rem .85rem;font-size:.82rem;color:#e3b341;margin-top:.5rem">
+      ⏰ <strong>Y2Q Timeline:</strong> NSA estimates cryptographically-relevant quantum computers by 2030–2035. "Harvest now, decrypt later" attacks are already happening — adversaries record encrypted traffic today to decrypt when quantum computers arrive. <strong>Migrate NOW for data with 10+ year sensitivity requirements.</strong>
+    </div>
+  </div>
+
+  <!-- Demo 2: NIST PQC Algorithms -->
+  <div class="demo-box">
+    <h4>🔬 Demo 2 — NIST Post-Quantum Standards (2024)</h4>
+    <p style="color:#8b949e;margin-bottom:.75rem">Click each algorithm card to explore NIST's 4 selected post-quantum standards.</p>
+    <div class="pqc-grid">
+      <div class="pqc-card" onclick="togglePQC(this,'mlkem')">
+        <div class="pqc-card-header">
+          <div class="pqc-card-name">ML-KEM (CRYSTALS-Kyber)</div>
+          <div class="pqc-card-sub">FIPS 203 · Key Encapsulation Mechanism</div>
+        </div>
+        <div class="pqc-card-body">
+          <strong style="color:#c084fc">Replaces:</strong> RSA/ECDH for key exchange<br>
+          <strong style="color:#c084fc">Math basis:</strong> Module Learning With Errors (MLWE) — lattice problem<br>
+          <strong style="color:#c084fc">Security levels:</strong> ML-KEM-512 (L1), ML-KEM-768 (L3), ML-KEM-1024 (L5)<br>
+          <strong style="color:#c084fc">Key sizes:</strong> 800B (L1) → 1568B (L5) public key<br>
+          <strong style="color:#c084fc">Performance:</strong> Faster than RSA-2048 for key generation and encapsulation<br>
+          <strong style="color:#c084fc">Deployment:</strong> Use ML-KEM-768 + X25519 hybrid for TLS 1.3 (IETF draft)<br>
+          <span class="badge badge-purple">Only KEM in NIST PQC</span>
+        </div>
+      </div>
+      <div class="pqc-card" onclick="togglePQC(this,'mldsa')">
+        <div class="pqc-card-header">
+          <div class="pqc-card-name">ML-DSA (CRYSTALS-Dilithium)</div>
+          <div class="pqc-card-sub">FIPS 204 · Digital Signature Algorithm</div>
+        </div>
+        <div class="pqc-card-body">
+          <strong style="color:#c084fc">Replaces:</strong> ECDSA/RSA-PSS for digital signatures<br>
+          <strong style="color:#c084fc">Math basis:</strong> Module Learning With Errors — lattice problem<br>
+          <strong style="color:#c084fc">Security levels:</strong> ML-DSA-44 (L2), ML-DSA-65 (L3), ML-DSA-87 (L5)<br>
+          <strong style="color:#c084fc">Signature sizes:</strong> 2420B (L2) → 4595B (L5)<br>
+          <strong style="color:#c084fc">Performance:</strong> Fast signing and verification, deterministic<br>
+          <strong style="color:#c084fc">Deployment:</strong> Primary recommendation for code signing, TLS certificates<br>
+          <span class="badge badge-purple">Primary PQC signature standard</span>
+        </div>
+      </div>
+      <div class="pqc-card" onclick="togglePQC(this,'slhdsa')">
+        <div class="pqc-card-header">
+          <div class="pqc-card-name">SLH-DSA (SPHINCS+)</div>
+          <div class="pqc-card-sub">FIPS 205 · Hash-based Signature</div>
+        </div>
+        <div class="pqc-card-body">
+          <strong style="color:#c084fc">Replaces:</strong> ECDSA/RSA for signatures (hash-based alternative)<br>
+          <strong style="color:#c084fc">Math basis:</strong> Hash functions only — no lattice or number theory assumptions<br>
+          <strong style="color:#c084fc">Security levels:</strong> Multiple parameter sets (128s, 128f, 192s, 256f, etc.)<br>
+          <strong style="color:#c084fc">Signature sizes:</strong> 8KB (small) → 50KB (fast variant)<br>
+          <strong style="color:#c084fc">Performance:</strong> Slower than ML-DSA but based only on hash security<br>
+          <strong style="color:#c084fc">Why use it:</strong> Most conservative — security relies only on SHA-2/SHA-3 hardness<br>
+          <span class="badge badge-green">Most conservative security assumptions</span>
+        </div>
+      </div>
+      <div class="pqc-card" onclick="togglePQC(this,'fndsa')">
+        <div class="pqc-card-header">
+          <div class="pqc-card-name">FN-DSA (FALCON)</div>
+          <div class="pqc-card-sub">FIPS 206 · NTRU Lattice Signature</div>
+        </div>
+        <div class="pqc-card-body">
+          <strong style="color:#c084fc">Replaces:</strong> ECDSA for constrained environments<br>
+          <strong style="color:#c084fc">Math basis:</strong> NTRU lattices (different from Module-LWE)<br>
+          <strong style="color:#c084fc">Security levels:</strong> FALCON-512 (L1), FALCON-1024 (L5)<br>
+          <strong style="color:#c084fc">Signature sizes:</strong> 666B (L1), 1280B (L5) — compact!</br>
+          <strong style="color:#c084fc">Performance:</strong> Very fast verification; complex signing (requires Gaussian sampler)<br>
+          <strong style="color:#c084fc">Caution:</strong> Implementation is tricky — requires careful floating-point handling<br>
+          <span class="badge badge-yellow">Compact signatures, complex impl.</span>
+        </div>
+      </div>
+    </div>
+    <div style="background:#1a0d2e;border:1px solid #6e40c9;border-radius:6px;padding:.65rem .85rem;font-size:.82rem;color:#c084fc;margin-top:.5rem">
+      🔀 <strong>Hybrid Mode:</strong> During transition, use classical + PQC simultaneously. Example: X25519 + ML-KEM-768 for key exchange. This provides security against both classical and quantum adversaries — even if ML-KEM is broken classically (unlikely), X25519 still protects you.
+    </div>
+  </div>
+
+  <!-- Demo 3: ZK Proof -->
+  <div class="demo-box">
+    <h4>🔮 Demo 3 — Zero-Knowledge Proof Simulation</h4>
+    <p style="color:#8b949e;margin-bottom:.5rem">The "color-blind verifier" protocol: Prover claims to see two different colors. Can they prove it without revealing which color is which?</p>
+    <div class="zk-board">
+      <div class="zk-actor">
+        <div class="zk-icon">🧑‍💻</div>
+        <div class="zk-name">Prover</div>
+        <div class="zk-state" id="zk-prover-state">Knows which card is red and which is blue</div>
+        <div class="zk-cards">
+          <div class="zk-card" id="zk-card-l">🟥</div>
+          <div class="zk-card" id="zk-card-r">🟦</div>
+        </div>
+      </div>
+      <div style="align-self:center;text-align:center">
+        <div style="font-size:1.5rem;margin:.5rem 0">⟷</div>
+        <div id="zk-round-display" style="font-size:.78rem;color:#8b949e">Round 0 · Confidence: 0%</div>
+      </div>
+      <div class="zk-actor">
+        <div class="zk-icon">🕵️</div>
+        <div class="zk-name">Verifier</div>
+        <div class="zk-state" id="zk-verifier-state">Colorblind — cannot distinguish cards</div>
+        <div style="margin-top:.5rem;font-size:.75rem;color:#8b949e">Secretly shuffles or not, then asks prover: "Did I swap?"</div>
+      </div>
+    </div>
+    <div class="zk-result-log" id="zk-log"><div class="zk-log-entry" style="color:#8b949e">Click "Run Round" to begin the interactive proof…</div></div>
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.5rem;align-items:center">
+      <button class="action-btn-blue" id="zk-btn" onclick="zkRound()">▶ Run Round</button>
+      <button class="action-btn" onclick="zkReset()">↺ Reset</button>
+      <span id="zk-confidence" style="font-size:.82rem;color:#8b949e;margin-left:.25rem"></span>
+    </div>
+    <div style="margin-top:.75rem;font-size:.82rem;color:#8b949e;line-height:1.7">
+      <strong style="color:#e6edf3">Real-world ZK applications:</strong> zk-SNARKs (Zcash blockchain privacy) · Prove age &gt;18 without revealing birthdate · Anonymous credential systems · Verifiable computation (cloud proves it ran your program correctly)
+    </div>
+  </div>
+
+  <!-- Demo 4: Security Checklist -->
+  <div class="demo-box">
+    <h4>✅ Demo 4 — Protocol Design Security Checklist</h4>
+    <p style="color:#8b949e;margin-bottom:.75rem">Check off controls as you've learned them throughout the course. This is your capstone security framework.</p>
+    <div id="checklist-container"></div>
+    <div id="checklist-score-wrap"></div>
+  </div>
+
+  <!-- Quiz -->
+  <div class="demo-box">
+    <div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:1.25rem">
+      <p style="font-weight:600;color:#e6edf3;font-size:1.05rem;margin:0 0 1rem">Which NIST-standardized post-quantum algorithm is specifically a Key Encapsulation Mechanism (KEM) — replacing RSA/ECDH for key exchange?</p>
+      <div class="options-grid">
+        <button class="opt-btn" onclick="checkQ(this,'A')"><span class="opt-id">A</span>SLH-DSA (SPHINCS+)</button>
+        <button class="opt-btn" onclick="checkQ(this,'B')"><span class="opt-id">B</span>ML-DSA (CRYSTALS-Dilithium)</button>
+        <button class="opt-btn" onclick="checkQ(this,'C')"><span class="opt-id">C</span>FN-DSA (FALCON)</button>
+        <button class="opt-btn" onclick="checkQ(this,'D')"><span class="opt-id">D</span>ML-KEM (CRYSTALS-Kyber)</button>
+      </div>
+      <div id="q-feedback" class="feedback-box"></div>
+      <div class="why-box" id="why-box">
+        <h6>📚 NIST PQC Algorithm Roles</h6>
+        <ul>
+          <li><strong>ML-KEM (FIPS 203):</strong> The ONLY KEM — replaces RSA/ECDH. Used to establish shared secrets for symmetric encryption. Not for signatures.</li>
+          <li><strong>ML-DSA (FIPS 204):</strong> Digital Signature — replaces ECDSA. Used for code signing, TLS certificates, authentication.</li>
+          <li><strong>SLH-DSA (FIPS 205):</strong> Hash-based Digital Signature — most conservative, based only on hash security.</li>
+          <li><strong>FN-DSA (FIPS 206):</strong> NTRU lattice Digital Signature — compact signatures, complex implementation.</li>
+        </ul>
+        <p>In hybrid TLS 1.3: ML-KEM-768 handles key exchange, ML-DSA-65 (or classical ECDSA) handles certificate authentication.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reflection -->
+  <div class="reflection-box">
+    <div style="color:#e6edf3;font-weight:600;margin-bottom:.75rem">📝 Final Reflection — Course Capstone</div>
+    <label style="font-size:.85rem;color:#8b949e;display:block;margin-bottom:.3rem">Student Name</label>
+    <input id="student-name" class="text-input" style="width:100%;margin-bottom:.75rem" placeholder="Your full name" oninput="saveState()">
+    <label style="font-size:.85rem;color:#8b949e;display:block;margin-bottom:.3rem">Capstone Reflection <span style="font-weight:400">(describe your organization's post-quantum migration strategy: what to change first, what can wait, and why)</span></label>
+    <textarea id="learning-reflection" class="reflection-input" placeholder="Write your capstone reflection here..." oninput="saveState()"></textarea>
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.5rem;align-items:center">
+      <button class="submit-btn" id="submit-reflection" onclick="saveReflection()">💾 Save Reflection</button>
+      <button class="export-pdf-btn" id="export-pdf-btn" onclick="exportPDF()">📄 Export PDF</button>
+      <span id="submission-feedback" style="font-size:.82rem;color:#3fb950;display:none"></span>
+    </div>
+  </div>
+
+  <div class="lab-footer">
+    <a class="btn-nav" href="../week9-lab/09-secure-implementation.html">← Week 9</a>
+    <span style="color:#8b949e;font-size:.85rem">Module 10 · Capstone</span>
+    <span style="color:#8b949e;font-size:.85rem">Final Lab</span>
+  </div>
+
+  <!-- Capstone banner -->
+  <div id="capstone-banner">
+    <div style="font-size:2.5rem;margin-bottom:.5rem">🎓</div>
+    <div style="font-size:1.25rem;font-weight:700;color:#a5b4fc;margin-bottom:.5rem">Course Complete!</div>
+    <div style="color:#c9d1d9;line-height:1.7;max-width:550px;margin:0 auto">
+      Congratulations! You've completed all 10 modules of <strong>CS 615 — Cryptography for Cyber Professionals</strong>.
+      You now have a comprehensive understanding of modern cryptography from CIA foundations to quantum-resistant systems.
+    </div>
+    <div style="margin-top:.75rem;display:flex;justify-content:center;gap:.5rem;flex-wrap:wrap">
+      <span class="badge badge-blue">CIA Triad</span>
+      <span class="badge badge-blue">AES/GCM</span>
+      <span class="badge badge-blue">SHA-256</span>
+      <span class="badge badge-blue">PKI/X.509</span>
+      <span class="badge badge-blue">TLS 1.3</span>
+      <span class="badge badge-blue">IPsec/IKEv2</span>
+      <span class="badge badge-blue">Timing Attacks</span>
+      <span class="badge badge-purple">Post-Quantum</span>
+    </div>
+  </div>
+</div>
+
+<div id="obj-overlay">
+  <div id="obj-badge" onclick="toggleObj()"><span id="obj-count">📋 0/5 objectives</span><span id="obj-chev">▲</span></div>
+  <div id="obj-panel"><div id="obj-list"></div></div>
+</div>
+
+<div id="print-summary">
+  <h1>Module 10 Lab — Emerging Cryptography (Capstone)</h1>
+  <p style="color:#555;font-size:.85rem">CS 615 · Cryptography for Cyber Professionals</p>
+  <h2>Student Info</h2>
+  <table><tr><td>Name:</td><td id="ps-name"></td></tr><tr><td>Submitted:</td><td id="ps-submitted"></td></tr><tr><td>Time:</td><td id="ps-duration"></td></tr></table>
+  <h2>Lab Interactions</h2><div id="ps-interactions"></div>
+  <h2>Capstone Reflection</h2><div id="ps-reflection" style="white-space:pre-wrap"></div>
+</div>
+
+<script>
+let quantumDone=false, pqcDone=false, zkDone=false, checklistDone=false, quizPassed=false, quizAttempts=0;
+let pqcSeen=new Set(), zkRounds=0;
+let _checkedItems=new Set();
+const openedAt=new Date().toISOString();
+
+// ── Quantum Threat ──
+function updateRSA(){
+  const bits=parseInt(document.getElementById('rsa-slider').value);
+  document.getElementById('rsa-size-label').textContent=bits;
+  const classical=bits<2048?'Broken (factored)':`~${Math.round(bits/18)}-bit classical`;
+  const quantum='~2–24 hours (Shor\'s algorithm)';
+  const safe=bits>=8192;
+  const warn=bits>=4096;
+  const el=document.getElementById('rsa-result');
+  el.innerHTML=`Key size: ${bits} bits\nClassical security: ${classical}\nQuantum (Shor's): ${quantum}\nFuture status: ${safe?'Requires impractical qubit count':warn?'Vulnerable ~2033+':'Vulnerable ~2030+'}`;
+  const ind=document.getElementById('rsa-indicator');
+  ind.className='security-indicator '+(safe?'si-warn':warn?'si-warn':'si-danger');
+  ind.textContent=safe?'⚠️ Large key — still quantum-vulnerable':warn?'⚠️ Quantum-Vulnerable — begin migrating':'❌ Quantum-Vulnerable — migrate immediately';
+  quantumDone=true;saveState();updateObj();
+}
+function updateAES(){
+  const bits=parseInt(document.getElementById('aes-slider').value);
+  document.getElementById('aes-size-label').textContent=bits;
+  const quantum=bits/2;
+  const el=document.getElementById('aes-result');
+  el.innerHTML=`Key size: ${bits} bits\nClassical security: ${bits}-bit (brute force 2^${bits})\nQuantum (Grover's): ${quantum}-bit (2^${quantum} — halved)\nStatus: ${quantum>=128?'✅ Still infeasible even with quantum computer':'⚠️ Weakened — consider upgrading'}`;
+  const ind=document.getElementById('aes-indicator');
+  ind.className='security-indicator '+(quantum>=128?'si-safe':'si-warn');
+  ind.textContent=quantum>=128?'✅ Quantum-Safe (2^128 operations needed)':'⚠️ Weakened by quantum — upgrade to AES-256';
+  quantumDone=true;saveState();updateObj();
+}
+
+// ── PQC Cards ──
+function togglePQC(card,id){
+  const wasOpen=card.classList.contains('open');
+  document.querySelectorAll('.pqc-card').forEach(c=>c.classList.remove('open'));
+  if(!wasOpen){card.classList.add('open');pqcSeen.add(id);}
+  if(pqcSeen.size>=3)pqcDone=true;
+  saveState();updateObj();
+}
+
+// ── ZK Proof ──
+let _zkSwapped=false, _zkConfidence=0;
+function zkRound(){
+  zkRounds++;
+  _zkSwapped=Math.random()<0.5;
+  const proverCorrect=true; // honest prover always correct
+  const log=document.getElementById('zk-log');
+  // Update cards
+  if(_zkSwapped){
+    document.getElementById('zk-card-l').textContent='🟦';
+    document.getElementById('zk-card-r').textContent='🟥';
+  }else{
+    document.getElementById('zk-card-l').textContent='🟥';
+    document.getElementById('zk-card-r').textContent='🟦';
+  }
+  const answer=_zkSwapped?'Yes, swapped':'No, same';
+  const correct=proverCorrect;
+  _zkConfidence=Math.round((1-(1/Math.pow(2,zkRounds)))*100);
+  document.getElementById('zk-round-display').textContent=`Round ${zkRounds} · Confidence: ${_zkConfidence}%`;
+  const entry=document.createElement('div');
+  entry.className='zk-log-entry';
+  entry.innerHTML=`<span style="color:#8b949e">Round ${zkRounds}:</span> Verifier ${_zkSwapped?'<span style="color:#e3b341">SWAPPED</span>':'<span style="color:#8b949e">kept same</span>'} → Prover says "<span style="color:#58a6ff">${answer}</span>" → <span style="color:#3fb950">✅ Correct</span>`;
+  log.appendChild(entry);
+  log.scrollTop=log.scrollHeight;
+  document.getElementById('zk-confidence').textContent=`${_zkConfidence}% confident prover knows colors`;
+  if(zkRounds>=5){
+    document.getElementById('zk-prover-state').textContent='Proven knowledge of colors ('+_zkConfidence+'% confidence)';
+    document.getElementById('zk-verifier-state').textContent='Convinced! Zero information about which card is which color.';
+    zkDone=true;saveState();updateObj();
+    if(zkRounds>=8){document.getElementById('zk-btn').textContent='✅ Proof Complete ('+_zkConfidence+'%)';document.getElementById('zk-btn').disabled=true;}
+  }
+}
+function zkReset(){
+  zkRounds=0;_zkSwapped=false;_zkConfidence=0;
+  document.getElementById('zk-log').innerHTML='<div class="zk-log-entry" style="color:#8b949e">Click "Run Round" to begin the interactive proof…</div>';
+  document.getElementById('zk-card-l').textContent='🟥';
+  document.getElementById('zk-card-r').textContent='🟦';
+  document.getElementById('zk-round-display').textContent='Round 0 · Confidence: 0%';
+  document.getElementById('zk-prover-state').textContent='Knows which card is red and which is blue';
+  document.getElementById('zk-verifier-state').textContent='Colorblind — cannot distinguish cards';
+  document.getElementById('zk-confidence').textContent='';
+  document.getElementById('zk-btn').textContent='▶ Run Round';
+  document.getElementById('zk-btn').disabled=false;
+}
+
+// ── Checklist ──
+const CHECKLIST_SECTIONS=[
+  {title:'🔑 Key Management',items:['Use 256-bit keys for symmetric encryption','Use ECDHE or ML-KEM for key exchange (forward secrecy)','Never hardcode keys — use KMS or environment variables','Rotate keys on a defined schedule (NIST SP 800-57)']},
+  {title:'🛡️ Algorithm Selection',items:['AES-256-GCM for authenticated encryption','SHA-256 or SHA-3 for hashing (not MD5/SHA-1)','PBKDF2-SHA256 (≥600k iterations) or Argon2id for passwords','Plan post-quantum migration path (ML-KEM + ML-DSA)']},
+  {title:'🔒 Implementation',items:['Use constant-time comparison for secrets (HMAC, tokens)','Generate random IV/nonce per encryption operation','Authenticate then decrypt (verify tag before using plaintext)','Use well-audited libraries (BoringSSL, libsodium, OpenSSL 3.x)']},
+  {title:'📜 PKI & Certificates',items:['Enable Certificate Transparency monitoring for your domains','Implement OCSP stapling on all web servers','Set certificate validity ≤398 days (browser policy)','Use TLS 1.3 minimum; disable TLS 1.0/1.1 on all endpoints']},
+  {title:'🌐 Protocol Design',items:['TLS 1.3 for all web/API/microservice communications','IPsec IKEv2 for network-layer VPN (FIPS-compliant)','Avoid custom cryptography — use standard protocols','Document and review your threat model annually']},
+];
+
+function buildChecklist(){
+  const container=document.getElementById('checklist-container');
+  container.innerHTML='';
+  CHECKLIST_SECTIONS.forEach((section,si)=>{
+    const wrap=document.createElement('div');
+    wrap.className='checklist-section';
+    const title=document.createElement('div');
+    title.className='checklist-section-title';
+    title.textContent=section.title;
+    wrap.appendChild(title);
+    section.items.forEach((item,ii)=>{
+      const id=`cl-${si}-${ii}`;
+      const row=document.createElement('div');
+      row.className='checklist-item';
+      const cb=document.createElement('input');
+      cb.type='checkbox';cb.id=id;
+      cb.checked=_checkedItems.has(id);
+      cb.onchange=()=>{if(cb.checked)_checkedItems.add(id);else _checkedItems.delete(id);updateChecklistScore();saveState();updateObj();};
+      const lbl=document.createElement('label');lbl.htmlFor=id;lbl.textContent=item;
+      row.appendChild(cb);row.appendChild(lbl);wrap.appendChild(row);
+    });
+    container.appendChild(wrap);
+  });
+  updateChecklistScore();
+}
+function updateChecklistScore(){
+  const total=20,done=_checkedItems.size;
+  let scoreClass='si-danger',msg='Needs Improvement';
+  if(done>=16){scoreClass='si-safe';msg='Security-Conscious';}
+  else if(done>=10){scoreClass='si-warn';msg='Developing';}
+  const wrap=document.getElementById('checklist-score-wrap');
+  wrap.innerHTML=`<div class="security-indicator ${scoreClass}" style="margin-top:.75rem">${done}/${total} controls · ${msg}</div>`;
+  if(done>=15)checklistDone=true;
+}
+
+// ── Quiz ──
+let _qAnswered=false;
+function checkQ(btn,choice){
+  quizAttempts++;
+  document.querySelectorAll('.opt-btn').forEach(b=>b.classList.remove('incorrect','correct'));
+  const correct=choice==='D';
+  btn.classList.add(correct?'correct':'incorrect');
+  const fb=document.getElementById('q-feedback');
+  fb.className='feedback-box show '+(correct?'feedback-correct':'feedback-incorrect');
+  if(correct){
+    fb.innerHTML='✅ <strong>Correct!</strong> ML-KEM (FIPS 203) is the only Key Encapsulation Mechanism in NIST\'s PQC standards. ML-DSA, SLH-DSA, and FN-DSA are all digital signature algorithms.';
+    quizPassed=true;document.getElementById('why-box').classList.add('show');
+  }else{
+    fb.innerHTML='❌ Not quite. Look at the algorithm type: KEM vs Signature. Only one of these four algorithms is a Key Encapsulation Mechanism.';
+  }
+  saveState();updateObj();
+}
+
+function updateObj(){
+  const checks=[
+    {done:quantumDone,label:'Assessed quantum threat to RSA and AES'},
+    {done:pqcDone,label:'Explored ≥3 NIST PQC algorithms'},
+    {done:zkDone,label:'Completed ≥5 ZK proof rounds'},
+    {done:checklistDone,label:'Checked ≥15/20 security controls'},
+    {done:quizPassed,label:'Passed the emerging crypto quiz'},
+  ];
+  const done=checks.filter(c=>c.done).length,allDone=done===checks.length;
+  const badge=document.getElementById('obj-badge');
+  badge.style.borderColor=allDone?'#238636':'#30363d';badge.style.color=allDone?'#3fb950':'#8b949e';
+  document.getElementById('obj-count').textContent=allDone?'✅ All objectives done!':`📋 ${done}/${checks.length} objectives`;
+  document.getElementById('obj-list').innerHTML=checks.map(c=>`<div style="color:${c.done?'#3fb950':'#8b949e'};font-size:.79rem">${c.done?'✅':'⬜'} ${c.label}</div>`).join('');
+  if(allDone)document.getElementById('capstone-banner').style.display='block';
+}
+let _objOpen=true;
+function toggleObj(){_objOpen=!_objOpen;document.getElementById('obj-panel').style.display=_objOpen?'block':'none';document.getElementById('obj-chev').textContent=_objOpen?'▲':'▼';}
+
+function saveState(){
+  const s={quizPassed,quizAttempts,quantumDone,pqcDone,zkDone,checklistDone,zkRounds,
+    pqcSeen:Array.from(pqcSeen),checkedItems:Array.from(_checkedItems),
+    studentName:(document.getElementById('student-name')||{}).value||'',
+    reflection:(document.getElementById('learning-reflection')||{}).value||''};
+  localStorage.setItem('lab10-state',JSON.stringify(s));
+}
+function loadState(){
+  const raw=localStorage.getItem('lab10-state');if(!raw)return;
+  let s;try{s=JSON.parse(raw);}catch(e){return;}
+  quizPassed=s.quizPassed||false;quizAttempts=s.quizAttempts||0;
+  quantumDone=s.quantumDone||false;pqcDone=s.pqcDone||false;
+  zkDone=s.zkDone||false;checklistDone=s.checklistDone||false;
+  zkRounds=s.zkRounds||0;pqcSeen=new Set(s.pqcSeen||[]);
+  _checkedItems=new Set(s.checkedItems||[]);
+  if(s.studentName){const el=document.getElementById('student-name');if(el)el.value=s.studentName;}
+  if(s.reflection){const el=document.getElementById('learning-reflection');if(el)el.value=s.reflection;}
+  if(quizPassed){_qAnswered=true;const btns=document.querySelectorAll('.opt-btn');if(btns.length>3)btns[3].classList.add('correct');const fb=document.getElementById('q-feedback');fb.className='feedback-box show feedback-correct';fb.innerHTML='✅ <strong>Correct!</strong> ML-KEM is the only KEM in NIST PQC.';document.getElementById('why-box').classList.add('show');}
+  buildChecklist();updateObj();
+}
+function resetLab(){if(!confirm('Reset all progress?'))return;localStorage.removeItem('lab10-state');location.reload();}
+function saveReflection(){
+  const reflection=(document.getElementById('learning-reflection').value||'').trim();
+  if(!reflection){alert('Please write a reflection before saving.');return;}
+  const data={studentName:(document.getElementById('student-name').value||'').trim(),openedAt,
+    submittedAt:new Date().toISOString(),timeOnPageMs:Date.now()-new Date(openedAt).getTime(),
+    quizPassed,quizAttempts,quantumDone,pqcDone,zkDone,checklistDone,
+    checklistScore:_checkedItems.size,reflection,labCompleted:'Module 10 Lab (Capstone)'};
+  localStorage.setItem('week10-lab-submission',JSON.stringify(data));saveState();
+  document.getElementById('submission-feedback').style.display='inline';
+  document.getElementById('submission-feedback').textContent='✅ Saved!';
+  document.getElementById('export-pdf-btn').style.display='inline-block';
+  const btn=document.getElementById('submit-reflection');btn.textContent='✓ Saved!';btn.style.background='#3fb950';
+  setTimeout(()=>{btn.textContent='💾 Save Reflection';btn.style.background='';},2000);
+}
+function exportPDF(){
+  const data=JSON.parse(localStorage.getItem('week10-lab-submission')||'{}');
+  document.getElementById('ps-name').textContent=data.studentName||'—';
+  document.getElementById('ps-submitted').textContent=data.submittedAt?new Date(data.submittedAt).toLocaleString():'—';
+  const ms=data.timeOnPageMs;const m=Math.floor(ms/60000),sc=Math.floor((ms%60000)/1000);
+  document.getElementById('ps-duration').textContent=ms?`${m}m ${sc}s`:'—';
+  document.getElementById('ps-interactions').innerHTML=`<table>
+    <tr><td>Quiz:</td><td>${data.quizPassed?'✅ Passed':'❌ Not passed'} (${data.quizAttempts||0} attempts)</td></tr>
+    <tr><td>Quantum Calculator:</td><td>${data.quantumDone?'✅ Used':'❌ Not done'}</td></tr>
+    <tr><td>PQC Explorer:</td><td>${data.pqcDone?'✅ ≥3 algorithms':'❌ Incomplete'}</td></tr>
+    <tr><td>ZK Proof Simulation:</td><td>${data.zkDone?'✅ ≥5 rounds':'❌ Incomplete'}</td></tr>
+    <tr><td>Security Checklist:</td><td>${data.checklistDone?`✅ ${data.checklistScore}/20 checked`:'❌ Incomplete'}</td></tr>
+  </table>`;
+  document.getElementById('ps-reflection').textContent=data.reflection||'—';
+  document.getElementById('print-summary').style.display='block';
+  const orig=document.title;const slug=(data.studentName||'').replace(/[^\w\s-]/g,'').trim();
+  if(slug)document.title=slug+' — '+orig;
+  window.print();setTimeout(()=>{document.title=orig;document.getElementById('print-summary').style.display='none';},500);
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  updateRSA();updateAES();
+  buildChecklist();loadState();updateObj();
+});
+</script>
+</body>
+</html>

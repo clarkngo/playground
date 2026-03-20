@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Module 6 Lab – Cryptography Standards & Post-Quantum Readiness</title>
+  <style>
+    *,*::before,*::after{box-sizing:border-box}
+    body{background:#0d1117;color:#c9d1d9;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;min-height:100vh;margin:0}
+    a{color:#58a6ff}
+    code{background:#21262d;border-radius:3px;padding:1px 5px;font-family:"SFMono-Regular",Consolas,monospace;font-size:.875em}
+    .navbar{background:#161b22;border-bottom:1px solid #30363d;padding:.75rem 1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem}
+    .navbar-brand{font-weight:700;color:#e6edf3;text-decoration:none;font-size:1.1rem}
+    .nav-actions{display:flex;align-items:center;gap:.75rem}
+    .nav-pill{font-size:.8rem;color:#8b949e;white-space:nowrap}
+    .container{max-width:900px;margin:0 auto;padding:1.5rem 1rem}
+    .lab-badge{display:inline-block;background:#6e40c9;color:#fff;font-size:.72rem;font-weight:600;padding:2px 10px;border-radius:12px;margin-bottom:.5rem;text-transform:uppercase;letter-spacing:.06em}
+    .lab-header{margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid #30363d}
+    .lab-header h2{color:#e6edf3;margin:.25rem 0 .1rem;font-size:1.6rem}
+    .lab-header p{color:#8b949e;margin:0;font-size:.95rem}
+    .scenario-box{background:#161b22;border-left:4px solid #6e40c9;border-radius:0 8px 8px 0;padding:1rem 1.25rem;margin-bottom:1.5rem}
+    .scenario-box p{margin:0;line-height:1.65}
+    .demo-box{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:1.5rem;margin-bottom:1.5rem}
+    .demo-box h4{margin-top:0;color:#e6edf3}
+    .question-box{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:1.25rem;margin-bottom:.75rem}
+    .question-text{font-weight:600;color:#e6edf3;font-size:1.05rem;margin:0 0 1rem}
+    .why-box{background:#1c2a1c;border:1px solid #238636;border-radius:8px;padding:1.25rem;margin-top:1rem;display:none}
+    .why-box.show{display:block}
+    .why-box h6{color:#3fb950;font-weight:700;margin:0 0 .5rem}
+    .why-box p{margin:.5rem 0 0;line-height:1.65}
+    .why-box ul{margin:.5rem 0 .5rem 1.25rem;padding:0;line-height:1.8}
+    .options-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+    @media(max-width:600px){.options-grid{grid-template-columns:1fr}}
+    .opt-btn{display:flex;align-items:center;gap:.6rem;text-align:left;background:#161b22;border:1px solid #30363d;border-radius:6px;padding:.65rem .9rem;color:#c9d1d9;cursor:pointer;width:100%;font-size:.95rem;transition:border-color .15s,background .15s}
+    .opt-btn:hover{border-color:#58a6ff;background:#1c2940;color:#e6edf3}
+    .opt-btn.correct{background:#1c2a1c!important;border-color:#238636!important;color:#3fb950!important}
+    .opt-btn.incorrect{background:#2a1c1c!important;border-color:#da3633!important;color:#f85149!important}
+    .opt-id{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;background:#30363d;border-radius:4px;font-size:.78rem;font-weight:700;flex-shrink:0}
+    .feedback-box{border-radius:8px;padding:1rem 1.25rem;margin-top:.75rem;font-size:.95rem;line-height:1.65;display:none}
+    .feedback-box.show{display:block}
+    .feedback-correct{background:#1c2a1c;border:1px solid #238636;color:#3fb950}
+    .feedback-incorrect{background:#2a1c1c;border:1px solid #da3633;color:#f85149}
+    .badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.75rem;font-weight:600}
+    .badge-green{background:#1c2a1c;color:#3fb950;border:1px solid #238636}
+    .badge-red{background:#2a1c1c;color:#f85149;border:1px solid #da3633}
+    .badge-yellow{background:#2a2000;color:#e3b341;border:1px solid #9e6a03}
+    .badge-blue{background:#1c2940;color:#58a6ff;border:1px solid #1f6feb}
+    .badge-purple{background:#1a0d2e;color:#c084fc;border:1px solid #6e40c9}
+    .badge-gray{background:#21262d;color:#8b949e;border:1px solid #30363d}
+    table{width:100%;border-collapse:collapse;font-size:.9rem}
+    th,td{padding:.5rem .75rem;border:1px solid #30363d;text-align:left}
+    th{background:#21262d;color:#8b949e;font-weight:600;font-size:.8rem;text-transform:uppercase;letter-spacing:.05em}
+    tr:hover td{background:#1c2128}
+    .reflection-box{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:1.5rem;margin:1.5rem 0}
+    .reflection-input{background:#21262d;border:1px solid #30363d;border-radius:6px;padding:.75rem;color:#e6edf3;width:100%;min-height:120px;font-family:inherit;resize:vertical}
+    .reflection-input:focus{outline:none;border-color:#58a6ff}
+    .text-input{background:#21262d;border:1px solid #30363d;border-radius:6px;padding:.5rem .75rem;color:#e6edf3;font-family:inherit;font-size:.9rem}
+    .text-input:focus{outline:none;border-color:#58a6ff}
+    .submit-btn{background:#1f6feb;color:#fff;border:none;border-radius:6px;padding:.5rem 1rem;cursor:pointer;font-size:.9rem;margin-top:.5rem}
+    .submit-btn:hover{background:#1c64e8}
+    .export-pdf-btn{background:#3fb950;color:#fff;border:none;border-radius:6px;padding:.5rem 1rem;cursor:pointer;font-size:.9rem;margin-top:.5rem;margin-left:.5rem;display:none}
+    .action-btn{background:#21262d;color:#c9d1d9;border:1px solid #30363d;border-radius:6px;padding:.45rem .9rem;cursor:pointer;font-size:.85rem;transition:border-color .15s}
+    .action-btn:hover{border-color:#58a6ff;color:#58a6ff}
+    .action-btn-blue{background:#1f6feb;color:#fff;border:none;border-radius:6px;padding:.45rem .9rem;cursor:pointer;font-size:.85rem}
+    .action-btn-blue:hover{background:#1c64e8}
+    select.sel{background:#21262d;border:1px solid #30363d;border-radius:6px;padding:.45rem .7rem;color:#e6edf3;font-size:.88rem}
+    #print-summary{display:none;font-family:Arial,sans-serif;color:#000;padding:2rem;line-height:1.6}
+    #print-summary h1{font-size:1.4rem;margin-bottom:.25rem}
+    #print-summary h2{font-size:1.1rem;margin:1rem 0 .25rem;border-bottom:1px solid #ccc;padding-bottom:.2rem}
+    #print-summary table{border-collapse:collapse;width:100%}
+    #print-summary td{padding:.2rem .5rem;vertical-align:top}
+    #print-summary td:first-child{font-weight:bold;width:160px}
+    .reflection-title{font-weight:600;color:#e6edf3;margin-bottom:.75rem;font-size:1rem}
+    .sub-area-locked{opacity:.45;pointer-events:none;user-select:none}
+    .sub-area-unlocked{opacity:1;pointer-events:auto}
+    @media print{body>*:not(#print-summary){display:none!important}#print-summary{display:block!important}}
+    .lab-footer{display:flex;justify-content:space-between;align-items:center;margin-top:2rem;padding-top:1rem;border-top:1px solid #30363d}
+    .lab-footer .text-muted{color:#8b949e;font-size:.85rem}
+    .btn-nav{display:inline-flex;align-items:center;gap:.4rem;padding:.4rem .9rem;border:1px solid #30363d;border-radius:6px;color:#c9d1d9;text-decoration:none;font-size:.85rem;background:#161b22;transition:border-color .15s}
+    .btn-nav:hover{border-color:#58a6ff;color:#58a6ff}
+
+    /* NIST level cards */
+    .level-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:.5rem}
+    @media(max-width:580px){.level-grid{grid-template-columns:1fr 1fr}}
+    .level-card{border:1px solid #30363d;border-radius:8px;padding:.75rem .5rem;text-align:center;cursor:pointer;transition:all .2s}
+    .level-card:hover{border-color:#58a6ff}
+    .level-card.open{border-color:#58a6ff;background:#0d1a2e}
+    .level-num{font-size:1.6rem;font-weight:700}
+    .level-detail{display:none;grid-column:1/-1;background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:.85rem;margin-top:.3rem;font-size:.82rem;color:#8b949e;line-height:1.7}
+
+    /* Algorithm dashboard */
+    .algo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:.5rem}
+    .algo-card{background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:.6rem .5rem;text-align:center;cursor:pointer;transition:border-color .2s}
+    .algo-card:hover{border-color:#58a6ff}
+    .algo-card.sel{border-color:#58a6ff;background:#0d1a2e}
+    .algo-card .ac-name{font-weight:600;font-size:.82rem;color:#e6edf3}
+    .algo-card .ac-badge{margin-top:.3rem}
+    .algo-detail{display:none;margin-top:.75rem;background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:.85rem;font-size:.82rem;color:#8b949e;line-height:1.7}
+    .algo-detail.show{display:block}
+
+    /* FIPS checker */
+    .fips-check-row{display:flex;align-items:center;gap:.6rem;padding:.4rem 0;border-bottom:1px solid #30363d;font-size:.85rem}
+    .fips-check-row:last-child{border-bottom:none}
+    .fips-icon{font-size:1rem;flex-shrink:0;width:20px}
+
+    /* Agility timeline */
+    .era-timeline{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.75rem;margin:.75rem 0}
+    @media(max-width:580px){.era-timeline{grid-template-columns:1fr}}
+    .era-card{border:1px solid #30363d;border-radius:8px;padding:1rem;text-align:center;opacity:.4;transition:all .4s}
+    .era-card.active{opacity:1}
+    .era-year{font-size:1.1rem;font-weight:700;margin-bottom:.4rem}
+    .era-algos{font-size:.78rem;font-family:monospace;line-height:1.8}
+    .era-bits{font-size:.75rem;color:#8b949e;margin-top:.4rem}
+
+    /* Objectives */
+    #obj-overlay{position:fixed;bottom:1rem;right:1rem;z-index:1000;font-size:.8rem}
+    #obj-badge{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.4rem .7rem;cursor:pointer;color:#8b949e;user-select:none;display:flex;align-items:center;gap:.4rem}
+    #obj-panel{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.6rem .8rem;margin-top:.3rem;min-width:220px;display:block}
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="navbar-brand" href="../">🔐 Cryptography Labs</a>
+  <div class="nav-actions">
+    <span class="nav-pill">Module 6 Lab</span>
+    <button onclick="resetLab()" style="background:none;border:1px solid #30363d;border-radius:6px;padding:.25rem .6rem;color:#8b949e;cursor:pointer;font-size:.75rem">↺ Reset</button>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="lab-header">
+    <div class="lab-badge">Module 6 · Standards</div>
+    <h2>Cryptography Standards &amp; Post-Quantum Readiness</h2>
+    <p>NIST security levels, algorithm lifecycle, FIPS 140-3 compliance, and cryptographic agility</p>
+  </div>
+
+  <div class="scenario-box">
+    <p><strong>Scenario:</strong> You're a security architect at a US federal contractor. A new system must handle classified data and comply with FIPS 140-3. You need to assess which algorithms are approved, plan for post-quantum migration, and ensure the design supports cryptographic agility — the ability to swap algorithms without a full system rewrite.</p>
+  </div>
+
+  <!-- Demo 1: NIST Security Levels -->
+  <div class="demo-box">
+    <h4>🏛️ Demo 1 — NIST Security Level Explorer</h4>
+    <p style="color:#8b949e;margin-bottom:.75rem">Click any security level to see which algorithms qualify and what threats they resist.</p>
+    <div class="level-grid" id="level-grid">
+      <div class="level-card" onclick="showLevel(1,this)" style="border-color:#f85149">
+        <div class="level-num" style="color:#f85149">L1</div>
+        <div style="font-size:.72rem;color:#8b949e">AES-128<br>SHA-256</div>
+      </div>
+      <div class="level-card" onclick="showLevel(2,this)" style="border-color:#e3b341">
+        <div class="level-num" style="color:#e3b341">L2</div>
+        <div style="font-size:.72rem;color:#8b949e">AES-128<br>SHA-256</div>
+      </div>
+      <div class="level-card" onclick="showLevel(3,this)" style="border-color:#e3b341">
+        <div class="level-num" style="color:#e3b341">L3</div>
+        <div style="font-size:.72rem;color:#8b949e">AES-192<br>SHA-384</div>
+      </div>
+      <div class="level-card" onclick="showLevel(4,this)" style="border-color:#3fb950">
+        <div class="level-num" style="color:#3fb950">L4</div>
+        <div style="font-size:.72rem;color:#8b949e">AES-192<br>SHA-384</div>
+      </div>
+      <div class="level-card" onclick="showLevel(5,this)" style="border-color:#3fb950">
+        <div class="level-num" style="color:#3fb950">L5</div>
+        <div style="font-size:.72rem;color:#8b949e">AES-256<br>SHA-512</div>
+      </div>
+    </div>
+    <div id="level-detail" class="level-detail" style="display:none"></div>
+    <div style="background:#1c2940;border:1px solid #1f6feb;border-radius:6px;padding:.65rem .85rem;margin-top:.75rem;font-size:.82rem;color:#58a6ff">
+      💡 <strong>Grover's Algorithm:</strong> Halves the effective key length for symmetric ciphers. AES-128 drops to 64-bit quantum security (Level 1). AES-256 stays at 128-bit quantum security (Level 5) — still infeasible. This is why AES-256 is recommended for long-term data protection.
+    </div>
+  </div>
+
+  <!-- Demo 2: Algorithm Dashboard -->
+  <div class="demo-box">
+    <h4>🗺️ Demo 2 — Algorithm Status Dashboard</h4>
+    <p style="color:#8b949e;margin-bottom:.75rem">Click any algorithm card to see its status, vulnerabilities, and migration path.</p>
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.75rem">
+      <span class="badge badge-red">Deprecated</span> <span style="font-size:.78rem;color:#8b949e">·</span>
+      <span class="badge badge-blue">Current</span> <span style="font-size:.78rem;color:#8b949e">·</span>
+      <span class="badge badge-green">Recommended</span> <span style="font-size:.78rem;color:#8b949e">·</span>
+      <span class="badge badge-purple">Post-Quantum</span>
+    </div>
+    <div class="algo-grid" id="algo-grid">
+      <div class="algo-card" onclick="showAlgo('des',this)"><div class="ac-name">DES</div><div class="ac-badge"><span class="badge badge-red">Deprecated</span></div></div>
+      <div class="algo-card" onclick="showAlgo('3des',this)"><div class="ac-name">3DES</div><div class="ac-badge"><span class="badge badge-red">Deprecated</span></div></div>
+      <div class="algo-card" onclick="showAlgo('md5',this)"><div class="ac-name">MD5</div><div class="ac-badge"><span class="badge badge-red">Broken</span></div></div>
+      <div class="algo-card" onclick="showAlgo('sha1',this)"><div class="ac-name">SHA-1</div><div class="ac-badge"><span class="badge badge-red">Deprecated</span></div></div>
+      <div class="algo-card" onclick="showAlgo('rc4',this)"><div class="ac-name">RC4</div><div class="ac-badge"><span class="badge badge-red">Broken</span></div></div>
+      <div class="algo-card" onclick="showAlgo('aes128',this)"><div class="ac-name">AES-128</div><div class="ac-badge"><span class="badge badge-blue">Current</span></div></div>
+      <div class="algo-card" onclick="showAlgo('sha256',this)"><div class="ac-name">SHA-256</div><div class="ac-badge"><span class="badge badge-blue">Current</span></div></div>
+      <div class="algo-card" onclick="showAlgo('rsa2048',this)"><div class="ac-name">RSA-2048</div><div class="ac-badge"><span class="badge badge-blue">Current</span></div></div>
+      <div class="algo-card" onclick="showAlgo('ecdsa',this)"><div class="ac-name">ECDSA-P256</div><div class="ac-badge"><span class="badge badge-blue">Current</span></div></div>
+      <div class="algo-card" onclick="showAlgo('aes256',this)"><div class="ac-name">AES-256</div><div class="ac-badge"><span class="badge badge-green">Recommended</span></div></div>
+      <div class="algo-card" onclick="showAlgo('sha3',this)"><div class="ac-name">SHA-3</div><div class="ac-badge"><span class="badge badge-green">Recommended</span></div></div>
+      <div class="algo-card" onclick="showAlgo('mlkem',this)"><div class="ac-name">ML-KEM</div><div class="ac-badge"><span class="badge badge-purple">Post-Quantum</span></div></div>
+    </div>
+    <div id="algo-detail" class="algo-detail"></div>
+    <div id="algo-progress" style="font-size:.8rem;color:#8b949e;margin-top:.5rem"></div>
+  </div>
+
+  <!-- Demo 3: FIPS 140-3 Checker -->
+  <div class="demo-box">
+    <h4>🏛️ Demo 3 — FIPS 140-3 Compliance Checker</h4>
+    <p style="color:#8b949e;margin-bottom:.75rem">Select a cryptographic configuration and check whether it meets FIPS 140-3 requirements for federal systems.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.75rem">
+      <div>
+        <label style="font-size:.8rem;color:#8b949e;display:block;margin-bottom:.3rem">Key Size</label>
+        <select class="sel" id="fips-key" style="width:100%">
+          <option value="64">64-bit (DES)</option>
+          <option value="128" selected>128-bit (AES-128)</option>
+          <option value="192">192-bit (AES-192)</option>
+          <option value="256">256-bit (AES-256)</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:.8rem;color:#8b949e;display:block;margin-bottom:.3rem">Cipher Mode</label>
+        <select class="sel" id="fips-mode" style="width:100%">
+          <option value="ECB">ECB</option>
+          <option value="CBC" selected>CBC</option>
+          <option value="CTR">CTR</option>
+          <option value="GCM">GCM</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:.8rem;color:#8b949e;display:block;margin-bottom:.3rem">Hash Function</label>
+        <select class="sel" id="fips-hash" style="width:100%">
+          <option value="MD5">MD5</option>
+          <option value="SHA1">SHA-1</option>
+          <option value="SHA256" selected>SHA-256</option>
+          <option value="SHA512">SHA-512</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:.8rem;color:#8b949e;display:block;margin-bottom:.3rem">Authentication</label>
+        <select class="sel" id="fips-auth" style="width:100%">
+          <option value="none">None</option>
+          <option value="hmac" selected>HMAC</option>
+          <option value="gcm">AES-GCM (built-in)</option>
+        </select>
+      </div>
+    </div>
+    <button class="action-btn-blue" onclick="checkFIPS()">🔍 Check FIPS 140-3 Compliance</button>
+    <div id="fips-result" style="display:none;margin-top:.75rem">
+      <div id="fips-checks"></div>
+      <div id="fips-verdict" style="margin-top:.75rem;padding:.75rem;border-radius:6px;font-weight:600;text-align:center;font-size:1rem"></div>
+    </div>
+  </div>
+
+  <!-- Demo 4: Cryptographic Agility -->
+  <div class="demo-box">
+    <h4>🔄 Demo 4 — Cryptographic Agility Upgrade Path</h4>
+    <p style="color:#8b949e;margin-bottom:.75rem">Walk through a system's cryptographic evolution over three eras. Click "Upgrade →" to advance.</p>
+    <div class="era-timeline">
+      <div class="era-card active" id="era-2005" style="border-color:#f85149">
+        <div class="era-year" style="color:#f85149">2005</div>
+        <div class="era-algos">DES-CBC<br>MD5<br>RSA-1024</div>
+        <div class="era-bits">~56-bit security</div>
+        <span class="badge badge-red">BROKEN</span>
+      </div>
+      <div class="era-card" id="era-2015" style="border-color:#30363d">
+        <div class="era-year" style="color:#e3b341">2015</div>
+        <div class="era-algos">AES-128-CBC<br>SHA-256<br>RSA-2048</div>
+        <div class="era-bits">~112-bit security</div>
+        <span class="badge badge-yellow">AGING</span>
+      </div>
+      <div class="era-card" id="era-2025" style="border-color:#30363d">
+        <div class="era-year" style="color:#3fb950">2025</div>
+        <div class="era-algos">AES-256-GCM<br>SHA-3<br>ML-KEM-768</div>
+        <div class="era-bits">≥128-bit quantum-safe</div>
+        <span class="badge badge-green">RECOMMENDED</span>
+      </div>
+    </div>
+    <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
+      <button class="action-btn-blue" id="era-btn" onclick="upgradeEra()">Upgrade to 2015 →</button>
+      <div id="era-insight" style="font-size:.82rem;color:#8b949e;flex:1"></div>
+    </div>
+    <div style="background:#1c2940;border:1px solid #1f6feb;border-radius:6px;padding:.65rem .85rem;margin-top:.75rem;font-size:.82rem;color:#58a6ff">
+      💡 <strong>Cryptographic Agility:</strong> Design systems so algorithms are configurable, not hardcoded. Abstract your crypto into a provider layer — when SHA-256 eventually weakens, you swap the provider, not your entire codebase. PKCS#11, JCA/JCE, and OpenSSL EVP all support this pattern.
+    </div>
+  </div>
+
+  <!-- Quiz -->
+  <div class="demo-box">
+    <div class="question-box">
+      <p class="question-text">A US federal agency must choose symmetric encryption for classified data. Which combination meets FIPS 140-3 requirements?</p>
+      <div class="options-grid">
+        <button class="opt-btn" onclick="checkQ(this,'A')"><span class="opt-id">A</span>DES-56 with MD5 authentication</button>
+        <button class="opt-btn" onclick="checkQ(this,'B')"><span class="opt-id">B</span>AES-128-GCM with SHA-256</button>
+        <button class="opt-btn" onclick="checkQ(this,'C')"><span class="opt-id">C</span>RC4 stream cipher with SHA-1</button>
+        <button class="opt-btn" onclick="checkQ(this,'D')"><span class="opt-id">D</span>3DES-CBC without authentication</button>
+      </div>
+      <div id="q-feedback" class="feedback-box"></div>
+      <div class="why-box" id="why-box">
+        <h6>📚 FIPS 140-3 Algorithm Requirements</h6>
+        <ul>
+          <li><strong>Symmetric encryption:</strong> AES (128, 192, or 256-bit) required. DES, 3DES, and RC4 are not approved for new systems.</li>
+          <li><strong>Approved modes:</strong> CBC, CTR, GCM (ECB is approved but forbidden for most uses). GCM provides built-in authentication.</li>
+          <li><strong>Hash functions:</strong> SHA-2 (SHA-256, SHA-384, SHA-512) or SHA-3. MD5 and SHA-1 are not approved for any security use.</li>
+          <li><strong>Authentication:</strong> HMAC-SHA-256 or AES-GCM authenticated encryption. Unauthenticated encryption is prohibited for classified data.</li>
+        </ul>
+        <p>Option B (AES-128-GCM + SHA-256) is the only option that uses an approved algorithm, an approved authenticated mode, and an approved hash function.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reflection -->
+  <div class="reflection-box">
+    <div class="reflection-title">💭 Learning Reflection Submission</div>
+    <p style="color:#8b949e;margin-bottom:.75rem">After exploring cryptography standards and post-quantum readiness, reflect on what you discovered:</p>
+    <div style="margin-bottom:1rem">
+      <strong style="color:#e6edf3">Guided Questions:</strong>
+      <ul style="color:#8b949e;font-size:.9rem;margin:.5rem 0 0 1.5rem;line-height:1.9">
+        <li>What does "FIPS 140-3 validated" mean and why does it matter for federal procurement?</li>
+        <li>Explain cryptographic agility. Why is it more critical now than it was in 2005?</li>
+        <li>What is the difference between an algorithm being "deprecated" and it being "broken"?</li>
+        <li>Why does NIST maintain five distinct security levels rather than one universal standard?</li>
+        <li><strong style="color:#e6edf3">Key question:</strong> If a system uses AES-128 today, what threat does a large-scale quantum computer pose, and which NIST PQC standard should it migrate toward?</li>
+      </ul>
+    </div>
+    <div id="reflection-lock" style="background:#2a1c1c;border:1px solid #f85149;border-radius:6px;padding:.75rem 1rem;margin-bottom:1rem">
+      <p style="color:#f85149;font-weight:600;margin:0;font-size:.9rem">🔒 Complete all objectives (tracker bottom-right ↘) to unlock submission</p>
+    </div>
+    <div id="submission-area" class="sub-area-locked">
+      <textarea class="reflection-input" id="learning-reflection" placeholder="Describe what you learned about cryptographic standards, FIPS 140-3, and the post-quantum transition. Why does algorithm choice matter at the federal level?&#10;&#10;Please write at least 4–5 sentences about your key insights..." oninput="saveState()"></textarea>
+      <div style="margin-top:.75rem">
+        <label style="color:#e6edf3;font-size:.9rem;font-weight:600">🔍 Lab Observations</label>
+        <p style="color:#8b949e;font-size:.82rem;margin:.2rem 0 .3rem">Was there anything within the lab you expected to change, but didn't?</p>
+        <textarea class="reflection-input" id="lab-feedback" placeholder="Share any observations, surprises, or things that felt missing..." style="min-height:80px" oninput="saveState()"></textarea>
+      </div>
+      <div style="margin-top:.75rem">
+        <label style="color:#e6edf3;font-size:.9rem;font-weight:600">Your name:</label>
+        <input type="text" id="student-name" class="text-input" placeholder="Enter your full name..." style="max-width:320px;margin:.3rem 0 0" oninput="saveState()">
+      </div>
+      <div style="margin-top:.75rem">
+        <button class="submit-btn" onclick="saveReflection()">💾 Save Reflection</button>
+        <button id="export-pdf-btn" class="export-pdf-btn" onclick="exportPDF()" style="display:none">📄 Export PDF</button>
+      </div>
+      <div id="submission-feedback" style="margin-top:.5rem;color:#3fb950;display:none">✅ Saved! Edit and re-save anytime — Export PDF always uses your latest version.</div>
+    </div>
+  </div>
+
+  <div class="lab-footer">
+    <a class="btn-nav" href="../week5-lab/05-hash-algorithms.html">← Week 5</a>
+    <span class="text-muted">Module 6 · Standards</span>
+    <a class="btn-nav" href="../week7-lab/07-public-key-infrastructure.html">Week 7 →</a>
+  </div>
+</div>
+
+<!-- Objectives -->
+<div id="obj-overlay">
+  <div id="obj-badge" onclick="toggleObj()">
+    <span id="obj-count">📋 0/5 objectives</span>
+    <span id="obj-chev">▲</span>
+  </div>
+  <div id="obj-panel">
+    <div id="obj-list"></div>
+  </div>
+</div>
+
+<div id="print-summary">
+  <h1>Module 6 Lab — Cryptography Standards</h1>
+  <p style="color:#555;font-size:.85rem">CS 615 · Cryptography for Cyber Professionals</p>
+  <h2>Student Info</h2>
+  <table><tr><td>Name:</td><td id="ps-name"></td></tr><tr><td>Submitted:</td><td id="ps-submitted"></td></tr><tr><td>Time:</td><td id="ps-duration"></td></tr></table>
+  <h2>Lab Interactions</h2><div id="ps-interactions"></div>
+  <h2>Reflection</h2><div id="ps-reflection" style="white-space:pre-wrap"></div>
+</div>
+
+<script>
+const LEVEL_DATA={
+  1:{color:'#f85149',label:'Equivalent to AES-128 symmetric security',classical:'128-bit',quantum:'64-bit (Grover)',algos:'AES-128, SHA-256, RSA-3072, ECDH P-256',pqc:'ML-KEM-512, ML-DSA-44',note:'Minimum level for any new federal system. Quantum-vulnerable for long-term data.'},
+  2:{color:'#e3b341',label:'Equivalent to SHA-256 collision resistance',classical:'128-bit (with collision resistance)',quantum:'64-bit symmetric / 106-bit collision',algos:'AES-128 + SHA-256, RSA-3072',pqc:'ML-KEM-512, SLH-DSA-SHA2-128s',note:'Adds collision resistance requirement. Suitable for 5–10 year data protection.'},
+  3:{color:'#e3b341',label:'Equivalent to AES-192 symmetric security',classical:'192-bit',quantum:'96-bit (Grover)',algos:'AES-192, SHA-384, RSA-7680, ECDH P-384',pqc:'ML-KEM-768, ML-DSA-65',note:'Recommended for SECRET-level classified information. Good balance of security and performance.'},
+  4:{color:'#3fb950',label:'Equivalent to SHA-384 collision resistance',classical:'192-bit (with collision resistance)',quantum:'96-bit symmetric / 192-bit collision',algos:'AES-192 + SHA-384',pqc:'ML-KEM-768, SLH-DSA-SHA2-192s',note:'HIGH security tier. Appropriate for 20+ year data protection windows.'},
+  5:{color:'#3fb950',label:'Equivalent to AES-256 symmetric security',classical:'256-bit',quantum:'128-bit (Grover — still infeasible)',algos:'AES-256, SHA-512, RSA-15360, ECDH P-521',pqc:'ML-KEM-1024, ML-DSA-87, SLH-DSA-256',note:'Maximum NIST level. Required for TOP SECRET and quantum-resistant long-term storage. AES-256 survives Grover\'s algorithm.'},
+};
+
+const ALGO_DATA={
+  des:{status:'Deprecated',color:'#f85149',desc:'56-bit key — brute-forced in 22 hours in 1999 (EFF Deep Crack). Officially disallowed by NIST since 2005. Still found in legacy ATM systems and industrial control systems.', migrate:'DES → AES-128 (drop-in for block cipher) or AES-256-GCM for authenticated encryption.'},
+  '3des':{status:'Deprecated',color:'#f85149',desc:'Triple-DES (112-bit effective security due to meet-in-the-middle). NIST deprecated 2023. Sweet32 attack (2016) enables birthday attacks on 64-bit blocks in ~785GB of traffic. Speed is 3× slower than DES.', migrate:'3DES → AES-128-GCM. FIPS compliance: remove 3DES from all new implementations immediately.'},
+  md5:{status:'Broken',color:'#f85149',desc:'128-bit digest. Practical collisions demonstrated 2004. Used in Flame malware (2012) to forge Windows Update certificates. GPU can compute 10B MD5/sec — no longer usable for any security purpose.', migrate:'MD5 → SHA-256 for integrity. MD5 password hashes → bcrypt or Argon2id.'},
+  sha1:{status:'Deprecated',color:'#f85149',desc:'160-bit digest. SHAttered (2017): first practical collision ($100K cloud compute). All browsers dropped SHA-1 TLS certificates by 2017. NIST deprecated for digital signatures 2011, all uses 2022.', migrate:'SHA-1 → SHA-256 (HMAC, code signing, certificates). Certificates: reissue with SHA-256 signature.'},
+  rc4:{status:'Broken',color:'#f85149',desc:'Stream cipher. Biases in keystream exploitable after ~2GB data. BEAST, RC4 NOMORE, and numerous attacks make it completely insecure. Banned in TLS by RFC 7465 (2015). Never use.', migrate:'RC4 → ChaCha20-Poly1305 (IETF standard, RFC 8439) or AES-256-GCM.'},
+  aes128:{status:'Current',color:'#58a6ff',desc:'NIST FIPS 197 standard. 128-bit classical security, 64-bit quantum security (Grover). No known attacks faster than brute force. Used in TLS, disk encryption, VPNs. FIPS 140-3 approved.', migrate:'Acceptable for most uses. Upgrade to AES-256 for data requiring 20+ year protection against quantum threats.'},
+  sha256:{status:'Current',color:'#58a6ff',desc:'SHA-2 family (FIPS 180-4). 128-bit collision resistance. No known weaknesses. Used in Bitcoin, TLS certificates, code signing, HMAC-SHA-256. Quantum-safe for hash function uses (Grover only affects preimage, not collision resistance proportionally).', migrate:'No immediate migration needed. SHA-3 is the recommended alternative for new protocols.'},
+  rsa2048:{status:'Current',color:'#58a6ff',desc:'2048-bit RSA provides ~112-bit classical security. Quantum-vulnerable: Shor\'s algorithm breaks RSA in polynomial time on a large quantum computer. Acceptable for data up to 2030 (estimated quantum threat horizon).', migrate:'RSA-2048 → ML-KEM (key exchange) + ML-DSA (signatures) for post-quantum readiness. Hybrid mode: use both simultaneously.'},
+  ecdsa:{status:'Current',color:'#58a6ff',desc:'ECDSA P-256: 128-bit classical security. Quantum-vulnerable (Shor\'s algorithm applies to discrete log on elliptic curves). More efficient than RSA for same security level. Widely used in TLS 1.3, code signing, SSH.', migrate:'ECDSA → ML-DSA-65 or FN-DSA for post-quantum signatures. Hybrid: ECDSA + ML-DSA for transition period.'},
+  aes256:{status:'Recommended',color:'#3fb950',desc:'256-bit key. 256-bit classical security, 128-bit quantum security after Grover — still infeasible. FIPS 197. Recommended for all new systems and long-term data protection. Only minor performance overhead vs AES-128 on modern hardware with AES-NI.', migrate:'Already the recommended standard. Use GCM mode for authenticated encryption. Pair with PBKDF2-SHA256 (600k+ iterations) for key derivation.'},
+  sha3:{status:'Recommended',color:'#3fb950',desc:'Keccak sponge construction (fundamentally different from SHA-2 Merkle-Damgård). FIPS 202. Algorithm diversity: if SHA-2 weakens, SHA-3 is the backup. SHA3-256 is a drop-in for SHA-256. SHAKE128/256 are extendable output functions (XOF) for variable-length output.', migrate:'No migration needed — SHA-3 is the recommended new standard. Use SHA3-256 or SHAKE256 in new protocol designs.'},
+  mlkem:{status:'Post-Quantum (FIPS 203)',color:'#c084fc',desc:'ML-KEM (CRYSTALS-Kyber): Lattice-based Key Encapsulation Mechanism. Standardized 2024. Replaces RSA/ECDH for key exchange. Security levels: ML-KEM-512 (L1), ML-KEM-768 (L3), ML-KEM-1024 (L5). Public key: 800B–1568B. Resistant to both classical and quantum attacks.', migrate:'Use ML-KEM alongside ECDH X25519 in hybrid mode during transition. ML-KEM-768 + X25519 is the IETF-recommended hybrid for TLS 1.3 post-quantum.'},
+};
+
+let levelDone=false, algoDone=false, fipsDone=false, eraStep=0, eraDone=false, quizPassed=false, quizAttempts=0;
+let algosSeen=new Set();
+const openedAt=new Date().toISOString();
+
+function showLevel(n,card){
+  document.querySelectorAll('.level-card').forEach(c=>c.classList.remove('open'));
+  card.classList.add('open');
+  const d=LEVEL_DATA[n];
+  const det=document.getElementById('level-detail');
+  det.style.display='block';
+  det.innerHTML=`<strong style="color:${d.color}">Security Level ${n}: ${d.label}</strong><br>
+    Classical security: <strong>${d.classical}</strong> &nbsp;·&nbsp; Quantum security: <strong>${d.quantum}</strong><br><br>
+    <strong>Qualifying algorithms:</strong> ${d.algos}<br>
+    <strong>NIST PQC algorithms at this level:</strong> <span style="color:#c084fc">${d.pqc}</span><br><br>
+    <em style="color:#8b949e">${d.note}</em>`;
+  levelDone=true;
+  saveState();updateObj();
+}
+
+function showAlgo(id,card){
+  document.querySelectorAll('.algo-card').forEach(c=>c.classList.remove('sel'));
+  card.classList.add('sel');
+  algosSeen.add(id);
+  const d=ALGO_DATA[id];
+  const det=document.getElementById('algo-detail');
+  det.className='algo-detail show';
+  det.innerHTML=`<strong style="color:${d.color}">${id.toUpperCase()} — ${d.status}</strong><br><br>
+    ${d.desc}<br><br>
+    <strong style="color:#58a6ff">Migration path:</strong> ${d.migrate}`;
+  document.getElementById('algo-progress').textContent=`${algosSeen.size}/12 algorithms explored`;
+  if(algosSeen.size>=6)algoDone=true;
+  saveState();updateObj();
+}
+
+function checkFIPS(){
+  const key=parseInt(document.getElementById('fips-key').value);
+  const mode=document.getElementById('fips-mode').value;
+  const hash=document.getElementById('fips-hash').value;
+  const auth=document.getElementById('fips-auth').value;
+  const checks=[
+    {label:'Key length ≥ 128 bits',pass:key>=128,why:key<128?'DES (56-bit) and similar short keys are not FIPS-approved. Minimum is AES-128.':'AES with key ≥ 128 bits is FIPS 197 approved.'},
+    {label:'Mode is not ECB',pass:mode!=='ECB',why:mode==='ECB'?'ECB mode is technically FIPS-approved but prohibited by policy — it leaks plaintext patterns.':'Non-ECB modes (CBC, CTR, GCM) are FIPS-approved for general use.'},
+    {label:'Hash is SHA-2 or SHA-3 (not MD5/SHA-1)',pass:hash==='SHA256'||hash==='SHA512',why:(hash==='MD5'||hash==='SHA1')?'MD5 and SHA-1 are not approved for any cryptographic use under FIPS 140-3.':'SHA-256 and SHA-512 are FIPS 180-4 approved.'},
+    {label:'Authentication provided',pass:auth!=='none'||(mode==='GCM'),why:auth==='none'&&mode!=='GCM'?'Unauthenticated encryption is not compliant — integrity protection is required for classified data.':'HMAC or GCM authenticated encryption satisfies the integrity requirement.'},
+  ];
+  document.getElementById('fips-result').style.display='block';
+  document.getElementById('fips-checks').innerHTML=checks.map(c=>`
+    <div class="fips-check-row">
+      <span class="fips-icon">${c.pass?'✅':'❌'}</span>
+      <span style="color:${c.pass?'#3fb950':'#f85149'};flex:1">${c.label}</span>
+      <span style="color:#8b949e;font-size:.78rem">${c.why}</span>
+    </div>`).join('');
+  const allPass=checks.every(c=>c.pass);
+  const verdict=document.getElementById('fips-verdict');
+  verdict.style.background=allPass?'#1c2a1c':'#2a1c1c';
+  verdict.style.border=`1px solid ${allPass?'#238636':'#da3633'}`;
+  verdict.style.color=allPass?'#3fb950':'#f85149';
+  verdict.textContent=allPass?'✅ FIPS 140-3 COMPLIANT — Approved for federal use':'❌ NOT FIPS 140-3 COMPLIANT — Review failed checks above';
+  fipsDone=true;
+  saveState();updateObj();
+}
+
+const ERA_INSIGHTS=['This configuration was standard in 2005 but is now fully broken. DES is trivially cracked, MD5 collisions are practical, and RSA-1024 is factored by nation-states.',
+  'The 2015 configuration meets current minimums but is aging. AES-128 loses 50% of its strength against quantum computers, and RSA-2048 is quantum-vulnerable.',
+  '🎯 Modern configuration complete! AES-256-GCM provides authenticated quantum-resistant encryption. SHA-3 offers algorithm diversity. ML-KEM-768 is post-quantum safe (FIPS 203).'];
+
+function upgradeEra(){
+  eraStep++;
+  if(eraStep===1){
+    document.getElementById('era-2015').classList.add('active');
+    document.getElementById('era-btn').textContent='Upgrade to 2025 →';
+  }else if(eraStep===2){
+    document.getElementById('era-2025').classList.add('active');
+    document.getElementById('era-btn').textContent='✅ Fully Upgraded';
+    document.getElementById('era-btn').disabled=true;
+    eraDone=true;
+    saveState();updateObj();
+  }
+  document.getElementById('era-insight').textContent=ERA_INSIGHTS[eraStep-1]||'';
+}
+
+let _qAnswered=false;
+function checkQ(btn,choice){
+  quizAttempts++;
+  document.querySelectorAll('.opt-btn').forEach(b=>b.classList.remove('incorrect','correct'));
+  const correct=choice==='B';
+  btn.classList.add(correct?'correct':'incorrect');
+  const fb=document.getElementById('q-feedback');
+  fb.className='feedback-box show '+(correct?'feedback-correct':'feedback-incorrect');
+  if(correct){
+    fb.innerHTML='✅ <strong>Correct!</strong> AES-128-GCM with SHA-256 satisfies all FIPS 140-3 requirements: approved algorithm (AES), approved mode (GCM with built-in authentication), and approved hash (SHA-256).';
+    quizPassed=true;
+    document.getElementById('why-box').classList.add('show');
+  }else{
+    fb.innerHTML='❌ Not quite. Consider which option uses a current NIST-approved symmetric algorithm, an authenticated mode, and an approved hash function.';
+  }
+  checkReflectionLock();saveState();updateObj();
+}
+
+function checkReflectionLock(){
+  const lock=document.getElementById('reflection-lock');
+  const area=document.getElementById('submission-area');
+  const cnt=document.getElementById('obj-count');
+  const allDone=cnt&&cnt.textContent.startsWith('✅');
+  if(allDone){
+    if(lock)lock.style.display='none';
+    if(area)area.className='sub-area-unlocked';
+  }else{
+    if(lock)lock.style.display='block';
+    if(area)area.className='sub-area-locked';
+  }
+}
+
+function updateObj(){
+  const checks=[
+    {done:levelDone,label:'Explored NIST security levels 1–5'},
+    {done:algoDone,label:'Identified ≥6 deprecated/current/PQC algorithms'},
+    {done:fipsDone,label:'Ran FIPS 140-3 compliance check'},
+    {done:eraDone,label:'Completed cryptographic agility upgrade path'},
+    {done:quizPassed,label:'Passed the standards quiz'},
+  ];
+  const done=checks.filter(c=>c.done).length;
+  const allDone=done===checks.length;
+  const badge=document.getElementById('obj-badge');
+  badge.style.borderColor=allDone?'#238636':'#30363d';
+  badge.style.color=allDone?'#3fb950':'#8b949e';
+  document.getElementById('obj-count').textContent=allDone?'✅ All objectives done!':`📋 ${done}/${checks.length} objectives`;
+  document.getElementById('obj-list').innerHTML=checks.map(c=>
+    `<div style="color:${c.done?'#3fb950':'#8b949e'};font-size:.79rem">${c.done?'✅':'⬜'} ${c.label}</div>`).join('');
+  checkReflectionLock();
+}
+let _objOpen=true;
+function toggleObj(){
+  _objOpen=!_objOpen;
+  document.getElementById('obj-panel').style.display=_objOpen?'block':'none';
+  document.getElementById('obj-chev').textContent=_objOpen?'▲':'▼';
+}
+
+function saveState(){
+  const s={quizPassed,quizAttempts,levelDone,algoDone,fipsDone,eraDone,eraStep,
+    algosSeen:Array.from(algosSeen),
+    studentName:(document.getElementById('student-name')||{}).value||'',
+    reflection:(document.getElementById('learning-reflection')||{}).value||'',
+    labFeedback: (document.getElementById('lab-feedback')?.value||'')};
+  localStorage.setItem('lab06-state',JSON.stringify(s));
+}
+function loadState(){
+  const raw=localStorage.getItem('lab06-state');
+  if(!raw)return;
+  let s;try{s=JSON.parse(raw);}catch(e){return;}
+  quizPassed=s.quizPassed||false;quizAttempts=s.quizAttempts||0;
+  levelDone=s.levelDone||false;algoDone=s.algoDone||false;
+  fipsDone=s.fipsDone||false;eraDone=s.eraDone||false;
+  eraStep=s.eraStep||0;algosSeen=new Set(s.algosSeen||[]);
+  if(s.studentName){const el=document.getElementById('student-name');if(el)el.value=s.studentName;}
+  if(s.reflection){const el=document.getElementById('learning-reflection');if(el)el.value=s.reflection;}
+  if(s.labFeedback&&document.getElementById('lab-feedback')){document.getElementById('lab-feedback').value=s.labFeedback;}
+  if(eraStep>=1)document.getElementById('era-2015').classList.add('active');
+  if(eraStep>=2){document.getElementById('era-2025').classList.add('active');document.getElementById('era-btn').textContent='✅ Fully Upgraded';document.getElementById('era-btn').disabled=true;}
+  if(eraStep>0&&eraStep<=3)document.getElementById('era-insight').textContent=ERA_INSIGHTS[eraStep-1]||'';
+  if(quizPassed){
+    _qAnswered=true;
+    const btns=document.querySelectorAll('.opt-btn');
+    if(btns.length>1)btns[1].classList.add('correct');
+    const fb=document.getElementById('q-feedback');
+    fb.className='feedback-box show feedback-correct';
+    fb.innerHTML='✅ <strong>Correct!</strong> AES-128-GCM with SHA-256 satisfies FIPS 140-3 requirements.';
+    document.getElementById('why-box').classList.add('show');
+  }
+  if(algosSeen.size>0)document.getElementById('algo-progress').textContent=`${algosSeen.size}/12 algorithms explored`;
+  updateObj();
+}
+function resetLab(){
+  if(!confirm('Reset all progress for this lab?'))return;
+  localStorage.removeItem('lab06-state');location.reload();
+}
+function saveReflection(){
+  const reflection=(document.getElementById('learning-reflection').value||'').trim();
+  if(!reflection){alert('Please write a reflection before saving.');return;}
+  const data={studentName:(document.getElementById('student-name').value||'').trim(),openedAt,
+    submittedAt:new Date().toISOString(),timeOnPageMs:Date.now()-new Date(openedAt).getTime(),
+    quizPassed,quizAttempts,levelDone,algoDone,fipsDone,eraDone,reflection,labCompleted:'Module 6 Lab'};
+  localStorage.setItem('week6-lab-submission',JSON.stringify(data));
+  saveState();
+  document.getElementById('submission-feedback').style.display='inline';
+  document.getElementById('submission-feedback').textContent='✅ Saved!';
+  document.getElementById('export-pdf-btn').style.display='inline-block';
+  const btn=document.getElementById('submit-reflection');
+  btn.textContent='✓ Saved!';btn.style.background='#3fb950';
+  setTimeout(()=>{btn.textContent='💾 Save Reflection';btn.style.background='';},2000);
+}
+function exportPDF(){
+  const data=JSON.parse(localStorage.getItem('week6-lab-submission')||'{}');
+  document.getElementById('ps-name').textContent=data.studentName||'—';
+  document.getElementById('ps-submitted').textContent=data.submittedAt?new Date(data.submittedAt).toLocaleString():'—';
+  const ms=data.timeOnPageMs;const m=Math.floor(ms/60000),sc=Math.floor((ms%60000)/1000);
+  document.getElementById('ps-duration').textContent=ms?`${m}m ${sc}s`:'—';
+  document.getElementById('ps-interactions').innerHTML=`<table>
+    <tr><td>Quiz:</td><td>${data.quizPassed?'✅ Passed':'❌ Not passed'} (${data.quizAttempts||0} attempts)</td></tr>
+    <tr><td>NIST Levels:</td><td>${data.levelDone?'✅ Explored':'❌ Not done'}</td></tr>
+    <tr><td>Algorithm Dashboard:</td><td>${data.algoDone?'✅ ≥6 reviewed':'❌ Incomplete'}</td></tr>
+    <tr><td>FIPS Checker:</td><td>${data.fipsDone?'✅ Completed':'❌ Not done'}</td></tr>
+    <tr><td>Agility Timeline:</td><td>${data.eraDone?'✅ Fully upgraded':'❌ Incomplete'}</td></tr>
+  </table>`;
+  document.getElementById('ps-reflection').textContent=data.reflection||'—';
+  document.getElementById('print-summary').style.display='block';
+  const orig=document.title;
+  const slug=(data.studentName||'').replace(/[^\w\s-]/g,'').trim();
+  if(slug)document.title=slug+' — '+orig;
+  window.print();
+  setTimeout(()=>{document.title=orig;document.getElementById('print-summary').style.display='none';},500);
+}
+document.addEventListener('DOMContentLoaded',()=>{loadState();updateObj();});
+</script>
+</body>
+</html>

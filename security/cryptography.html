@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cryptography Exercise</title>
-    
+
     <link rel="stylesheet" href="https://pyscript.net/releases/2023.05.1/pyscript.css" />
     <script defer src="https://pyscript.net/releases/2023.05.1/pyscript.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -21,11 +21,11 @@
         .scenario-box { background: #e8f6f3; border-left: 5px solid #1abc9c; padding: 15px; margin: 15px 0; }
         .learning-obj { font-style: italic; color: #555; font-size: 0.9em; margin-bottom: 20px; }
         .panel-right { width: 60%; display: flex; flex-direction: column; padding: 20px; box-sizing: border-box; }
-        
+
         .editor-container { display: flex; height: 50%; border: 1px solid #3c3c3c; background-color: #252526; position: relative; }
         .line-numbers { width: 40px; background-color: #1e1e1e; color: #858585; text-align: right; padding: 10px 5px; font-family: 'Consolas', monospace; font-size: 14px; line-height: 21px; border-right: 1px solid #3c3c3c; box-sizing: border-box; user-select: none; }
         .code-editor-wrapper { position: relative; flex-grow: 1; overflow: hidden; }
-        
+
         textarea#code-editor, pre[class*="language-"] { font-family: 'Consolas', monospace !important; font-size: 14px !important; line-height: 21px !important; padding: 10px !important; margin: 0 !important; box-sizing: border-box !important; border: none !important; white-space: pre !important; }
         pre[class*="language-"] { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; color: transparent; }
         textarea#code-editor { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; background: transparent; color: transparent; caret-color: #fff; resize: none; outline: none; }
@@ -36,12 +36,11 @@
         .btn-reset { background-color: #7f8c8d; color: white; }
         .btn-export { background-color: #8e44ad; color: white; }
         .save-status { color: #888; font-style: italic; font-size: 0.9em; margin-left: auto; }
-        .editor-label { color: #aaa; font-size: 0.9em; margin-bottom: 5px; margin-top: 10px; display: flex; justify-content: space-between;}
-        
+        .editor-label { color: #aaa; font-size: 0.9em; margin-bottom: 5px; margin-top: 10px; }
+
         #console-output { flex-grow: 1; background-color: #000; color: #0f0; font-family: 'Consolas', monospace; padding: 15px; border: 1px solid #333; overflow-y: auto; white-space: pre-wrap; }
-        
+
         #loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0d0d0d; z-index: 999; display: flex; flex-direction: column; padding: 40px; box-sizing: border-box; font-family: 'Courier New', monospace; color: #00ff00; font-size: 16px; }
-        .engine-status { font-size: 0.8em; color: #666; }
     </style>
 </head>
 <body>
@@ -66,7 +65,7 @@
                 div.textContent = `[SYSTEM] ${bootMessages[msgIndex]}`;
                 logContainer.appendChild(div);
                 msgIndex++;
-                setTimeout(typeWriter, 150); 
+                setTimeout(typeWriter, 150);
             } else { setTimeout(() => { document.getElementById("loading").style.display = "none"; }, 1000); }
         }
         typeWriter();
@@ -76,9 +75,9 @@
         <div class="learning-obj">Cryptography Training</div>
         <h1>Exercise: Secure User Registration</h1>
         <p>In this activity, you will implement a <strong>Salted Hash</strong> function to store user credentials securely.</p>
-        
+
         <div class="scenario-box">
-            <strong>Scenario:</strong> 
+            <strong>Scenario:</strong>
             You are building the registration system for a new app. You must ensure that every user has a unique <code>salt</code> generated for them, so that identical passwords result in different hashes.
         </div>
 
@@ -95,11 +94,8 @@
     </div>
 
     <div class="panel-right">
-        <div class="editor-label">
-            <span>PYTHON EDITOR (auth_manager.py)</span>
-            <span class="engine-status" id="engine-status">Engine: Initializing...</span>
-        </div>
-        
+        <div class="editor-label">PYTHON EDITOR (auth_manager.py)</div>
+
         <div class="editor-container">
             <div class="line-numbers" id="line-numbers">1</div>
             <div class="code-editor-wrapper">
@@ -111,17 +107,17 @@ def save_user(username, password):
     Saves a user with a SALTED hash.
     Returns: A dictionary {'salt': ..., 'hash': ...}
     """
-    
+
     # 1. Generate a random salt (16 hex chars)
     # Hint: use secrets.token_hex(16)
-    
-    
+
+
     # 2. Combine Salt + Password and Hash it
     # Hint: (salt + password).encode()
     # Don't forget to use hashlib.sha256(...).hexdigest()
-    
-    
-    
+
+
+
     # 3. Return the storage dictionary
     # return {'salt': my_salt, 'hash': my_hash}
     return {}
@@ -131,184 +127,254 @@ def save_user(username, password):
         </div>
 
         <div class="toolbar">
-            <button class="btn-run" onclick="runHybridTests()">Run Security Test</button>
-            <button class="btn-reset" onclick="resetCode()">Reset</button>
+            <button class="btn-run" id="run-btn" py-click="run_tests()">Run Security Test</button>
+            <button class="btn-reset" onclick="resetCode()">Reset Code</button>
             <button class="btn-export" onclick="exportPDF()">Export PDF</button>
             <span class="save-status" id="save-status"></span>
         </div>
         <div class="editor-label">SECURITY CONSOLE</div>
-        <div id="console-output">Ready...</div>
+        <div id="console-output">Ready... Waiting for registration simulation.</div>
     </div>
 
     <py-script>
-        from js import window, document
+        from js import document, window
+        import sys
         import hashlib
         import secrets
-        
-        window.python_is_ready = True
-        try: document.getElementById("engine-status").innerHTML = "Engine: <span style='color:#2ecc71'>Python Active</span>"
-        except: pass
 
-        def python_test_logic(user_code):
-            results = []
-            def add_log(msg, type="normal"): results.append({"msg": msg, "type": type})
+        def setup():
+            loading = document.getElementById("loading")
+            if loading:
+                loading.style.display = "none"
 
-            add_log("[SYSTEM] Running Registration Tests...", "system")
+        setup()
+
+        class ConsoleOutput:
+            def write(self, text):
+                if text.strip():
+                    log(text.strip(), "normal")
+            def flush(self):
+                pass
+
+        sys.stdout = ConsoleOutput()
+        sys.stderr = ConsoleOutput()
+
+        def log(message, type="normal"):
+            console = document.getElementById("console-output")
+            if type == "clear":
+                console.innerHTML = ""
+                return
+            color = "#ffffff"
+            if type == "pass": color = "#2ecc71"
+            if type == "fail": color = "#e74c3c"
+            if type == "info": color = "#3498db"
+            if type == "system": color = "#d4d4d4"
+            safe_message = message.replace("<", "&lt;").replace(">", "&gt;")
+            console.innerHTML += f'<div style="color:{color}; margin-bottom: 5px;">{safe_message}</div>'
+            console.scrollTop = console.scrollHeight
+
+        def run_tests(*args):
+            log("", "clear")
+            log("[SYSTEM] Running Registration Tests...", "system")
+
+            user_code = document.getElementById("code-editor").value
             test_env = {'hashlib': hashlib, 'secrets': secrets}
-            
+            window.submissionStatus = "INCOMPLETE / FAILED"
+
             try:
                 exec(user_code, test_env)
+
                 if "save_user" not in test_env:
-                    add_log("[!] Error: Function 'save_user' not found.", "fail")
-                    return results, "FAILED"
-                
+                    log("[!] Error: Function 'save_user' not found.", "fail")
+                    return
+
                 func = test_env["save_user"]
-                
+
                 # TEST 1: Return Type & Structure
-                add_log("--- TEST 1: Output Structure ---", "system")
+                log("--- TEST 1: Output Structure ---", "system")
                 user1 = func("alice", "password123")
-                
+
                 if not isinstance(user1, dict):
-                    add_log(f"   -> FAIL: Function must return a dictionary. Got: {type(user1)}", "fail")
-                    return results, "FAILED"
-                
+                    log(f"   -> FAIL: Function must return a dictionary. Got: {type(user1)}", "fail")
+                    return
+
                 if 'salt' not in user1 or 'hash' not in user1:
-                    add_log("   -> FAIL: Dictionary missing 'salt' or 'hash' keys.", "fail")
-                    return results, "FAILED"
-                
-                add_log("   -> PASS: Dictionary structure is correct.", "pass")
+                    log("   -> FAIL: Dictionary missing 'salt' or 'hash' keys.", "fail")
+                    return
+
+                log("   -> PASS: Dictionary structure is correct.", "pass")
 
                 # TEST 2: Salt Randomness
-                add_log("--- TEST 2: Salt Randomness (secrets) ---", "system")
-                user2 = func("alice", "password123") # Same inputs
-                
+                log("--- TEST 2: Salt Randomness (secrets) ---", "system")
+                user2 = func("alice", "password123")
+
                 if user1['salt'] == user2['salt']:
-                    add_log("   -> FAIL: Salt did not change! (Did you use secrets.token_hex?)", "fail")
-                    return results, "FAILED"
-                
+                    log("   -> FAIL: Salt did not change! (Did you use secrets.token_hex?)", "fail")
+                    window.submissionStatus = "FAILED - Static Salt"
+                    return
+
                 if len(user1['salt']) < 16:
-                     add_log("   -> FAIL: Salt is too short.", "fail")
-                     return results, "FAILED"
-                     
-                add_log("   -> PASS: Unique salt generated for each call.", "pass")
+                    log("   -> FAIL: Salt is too short.", "fail")
+                    window.submissionStatus = "FAILED - Salt Too Short"
+                    return
+
+                log("   -> PASS: Unique salt generated for each call.", "pass")
 
                 # TEST 3: Cryptographic Integrity
-                add_log("--- TEST 3: Hash Verification ---", "system")
-                
+                log("--- TEST 3: Hash Verification ---", "system")
+
                 salt_used = user1['salt']
                 expected_hash = hashlib.sha256((salt_used + "password123").encode()).hexdigest()
-                
+
                 if user1['hash'] == expected_hash:
-                    add_log("   -> PASS: Hash matches SHA256(salt + password).", "pass")
-                    add_log("   SUCCESS: User stored securely.", "pass")
-                    return results, "PASSED - Secure"
+                    log("   -> PASS: Hash matches SHA256(salt + password).", "pass")
+                    log("   SUCCESS: User stored securely.", "pass")
+                    window.submissionStatus = "PASSED - Secure"
                 else:
-                    add_log("   -> FAIL: Hash calculation is incorrect.", "fail")
-                    add_log(f"      Expect: {expected_hash}", "fail")
-                    add_log(f"      Got:    {user1['hash']}", "fail")
-                    return results, "FAILED"
+                    log("   -> FAIL: Hash calculation is incorrect.", "fail")
+                    log(f"      Expected: {expected_hash}", "fail")
+                    log(f"      Got:      {user1['hash']}", "fail")
+                    window.submissionStatus = "FAILED - Bad Hash"
 
             except Exception as e:
-                add_log(f"[!] Runtime Error: {e}", "fail")
-                return results, "ERROR"
-            
-            return results, "UNKNOWN"
-        window.python_test_runner = python_test_logic
+                log(f"[!] Runtime Error: {e}", "fail")
+                window.submissionStatus = "ERROR - Syntax/Runtime"
     </py-script>
 
     <script>
         const editor = document.getElementById("code-editor");
         const lineNumbers = document.getElementById("line-numbers");
-        const consoleOut = document.getElementById("console-output");
         const saveStatus = document.getElementById("save-status");
-        window.submissionStatus = "Not Started";
-        window.python_is_ready = false;
 
-        function runHybridTests() {
-            consoleOut.innerHTML = "";
-            const userCode = editor.value;
-            
-            // Check if Python loaded successfully
-            if (window.python_is_ready && window.python_test_runner) {
-                try {
-                    const [logs, status] = window.python_test_runner(userCode);
-                    logs.forEach(l => log(l.msg, l.type));
-                    window.submissionStatus = status;
-                } catch(e) { runJSFallback(userCode); }
-            } else { 
-                runJSFallback(userCode); 
-            }
-        }
-
-        function runJSFallback(code) {
-            log("[SYSTEM] JS Fallback Mode (Python Engine Offline)...", "system");
-            
-            // STRICT REGEX CHECKS
-            const hasSecrets = /secrets\.token_hex\(\s*16\s*\)/.test(code);
-            const hasHash = /hashlib\.sha256\(.*\.encode\(\)\)\.hexdigest\(\)/.test(code);
-            const hasReturn = /return\s*\{\s*['"]salt['"]\s*:.*['"]hash['"]\s*:/.test(code);
-            
-            if (hasSecrets && hasHash && hasReturn) {
-                log("   -> PASS: Secrets module used.", "pass");
-                log("   -> PASS: SHA-256 Hashing detected.", "pass");
-                log("   -> PASS: Dictionary return format detected.", "pass");
-                window.submissionStatus = "PASSED - Secure";
-            } else {
-                log("   -> FAIL: Validation checks failed.", "fail");
-                if(!hasSecrets) log("      Missing: secrets.token_hex(16)", "fail");
-                if(!hasHash) log("      Missing: hashlib.sha256(...).hexdigest()", "fail");
-                if(!hasReturn) log("      Missing: return {'salt': ..., 'hash': ...}", "fail");
-                window.submissionStatus = "FAILED";
-            }
-        }
-
-        function log(message, type="normal") {
-            let color = "#fff";
-            if (type == "pass") color = "#2ecc71";
-            if (type == "fail") color = "#e74c3c";
-            if (type == "system") color = "#888";
-            // Sanitize
-            const safeMsg = message.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-            consoleOut.innerHTML += `<div style="color:${color}; margin-bottom: 5px;">${safeMsg}</div>`;
-        }
-
-        /* --- Editor Utils --- */
         const STORAGE_KEY = 'week9_crypto_v3';
-        const originalCode = editor.value; 
+        const AUTOSAVE_DELAY_MS = 3000;
+
+        window.submissionStatus = "Not Started";
+
+        const originalCode = editor.value;
         let saveTimer;
 
         function updateSyntaxHighlighting() {
-            document.getElementById("code-highlight").textContent = editor.value;
-            Prism.highlightElement(document.getElementById("code-highlight"));
-            lineNumbers.innerHTML = Array(editor.value.split('\n').length).fill(0).map((_, i) => i + 1).join('\n');
+            const codeHighlight = document.getElementById("code-highlight");
+            codeHighlight.textContent = editor.value;
+            Prism.highlightElement(codeHighlight);
+            updateLineNumbers();
         }
-        function handleInput() { updateSyntaxHighlighting(); clearTimeout(saveTimer); saveTimer = setTimeout(() => { localStorage.setItem(STORAGE_KEY, editor.value); saveStatus.innerText = "Autosaved"; }, 3000); }
-        function handleTab(e) { if(e.key == 'Tab') { e.preventDefault(); editor.setRangeText("    ", editor.selectionStart, editor.selectionEnd, "end"); handleInput(); }}
-        function syncScroll() { lineNumbers.scrollTop = editor.scrollTop; document.getElementById("code-display").scrollTop = editor.scrollTop; }
-        
-        window.onload = function() {
-            const saved = localStorage.getItem(STORAGE_KEY);
-            if(saved) editor.value = saved;
-            updateSyntaxHighlighting();
-            
-            // Wait 3 seconds to see if Python loads
-            setTimeout(() => { 
-                if(!window.python_is_ready) {
-                    document.getElementById("engine-status").innerHTML = "Engine: <span style='color:#f39c12'>JS Fallback</span>";
-                }
-            }, 3000);
-        }
-        
+
         async function exportPDF() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
-            doc.text("Cryptography Report", 20, 20);
-            doc.text(`Status: ${window.submissionStatus}`, 20, 30);
-            const splitCode = doc.splitTextToSize(editor.value, 170);
-            doc.text(splitCode, 20, 40);
-            doc.save("Crypto_Report.pdf");
+
+            let studentName = prompt("Please enter your name for the report:", "Student");
+            if (studentName === null) return;
+
+            const timestamp = new Date().toLocaleString();
+            const codeContent = editor.value;
+            const status = window.submissionStatus;
+
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(18);
+            doc.text("Secure Coding Report", 20, 20);
+
+            doc.setFontSize(12);
+            doc.setFont("helvetica", "normal");
+            doc.text("Exercise: Secure User Registration", 20, 30);
+
+            doc.setDrawColor(0);
+            doc.setFillColor(240, 240, 240);
+            doc.rect(20, 35, 170, 25, 'F');
+
+            doc.text(`Student Name: ${studentName}`, 25, 42);
+            doc.text(`Date: ${timestamp}`, 25, 49);
+
+            doc.text("Status: ", 25, 56);
+            if (status.includes("PASSED")) {
+                doc.setTextColor(0, 150, 0);
+            } else {
+                doc.setTextColor(200, 0, 0);
+            }
+            doc.text(status, 45, 56);
+
+            doc.setTextColor(0, 0, 0);
+            doc.text("Submitted Code:", 20, 70);
+
+            doc.setFont("courier", "normal");
+            doc.setFontSize(10);
+
+            const splitCode = doc.splitTextToSize(codeContent, 170);
+            doc.text(splitCode, 20, 77);
+
+            doc.save(`${studentName.replace(/\s/g, '_')}_Secure_User_Registration.pdf`);
         }
-        function resetCode() { editor.value = originalCode; updateSyntaxHighlighting(); }
+
+        window.onload = function() {
+            const savedCode = localStorage.getItem(STORAGE_KEY);
+            if (savedCode) {
+                editor.value = savedCode;
+                saveStatus.innerText = "Restored from autosave";
+            }
+            updateSyntaxHighlighting();
+        };
+
+        function handleInput() {
+            updateSyntaxHighlighting();
+            saveStatus.innerText = "Typing...";
+            clearTimeout(saveTimer);
+            saveTimer = setTimeout(() => {
+                saveToLocal();
+            }, AUTOSAVE_DELAY_MS);
+        }
+
+        function saveToLocal() {
+            localStorage.setItem(STORAGE_KEY, editor.value);
+            const now = new Date();
+            saveStatus.innerText = `Autosaved at ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+        }
+
+        function syncScroll() {
+            lineNumbers.scrollTop = editor.scrollTop;
+            document.getElementById("code-display").scrollTop = editor.scrollTop;
+            document.getElementById("code-display").scrollLeft = editor.scrollLeft;
+        }
+
+        function handleTab(e) {
+            if (e.key == 'Tab') {
+                e.preventDefault();
+                const start = editor.selectionStart;
+                const end = editor.selectionEnd;
+                const value = editor.value;
+                const scrollTop = editor.scrollTop;
+
+                if (e.shiftKey) {
+                    let lineStart = value.lastIndexOf('\n', start - 1) + 1;
+                    if (value.substring(lineStart, lineStart + 4) === "    ") {
+                        editor.value = value.substring(0, lineStart) + value.substring(lineStart + 4);
+                        editor.selectionStart = Math.max(lineStart, start - 4);
+                        editor.selectionEnd = Math.max(lineStart, end - 4);
+                    }
+                } else {
+                    editor.value = value.substring(0, start) + "    " + value.substring(end);
+                    editor.selectionStart = editor.selectionEnd = start + 4;
+                }
+                editor.scrollTop = scrollTop;
+                handleInput();
+            }
+        }
+
+        function updateLineNumbers() {
+            const lines = editor.value.split('\n').length;
+            lineNumbers.innerHTML = Array(lines).fill(0).map((_, i) => i + 1).join('\n');
+        }
+
+        function resetCode() {
+            if (confirm("Are you sure? This will delete your current code.")) {
+                editor.value = originalCode;
+                updateSyntaxHighlighting();
+                saveToLocal();
+                document.getElementById("console-output").innerHTML = "Code reset.";
+                window.submissionStatus = "Not Started";
+            }
+        }
     </script>
 </body>
 </html>

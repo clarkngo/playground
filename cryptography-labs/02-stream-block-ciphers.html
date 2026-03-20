@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Module 2 Lab – Stream vs Block Ciphers</title>
+  <style>
+    /* === SHARED CSS === */
+    *,*::before,*::after{box-sizing:border-box}
+    body{background:#0d1117;color:#c9d1d9;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;min-height:100vh;margin:0}
+    a{color:#58a6ff}
+    code{background:#21262d;border-radius:3px;padding:1px 5px;font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;font-size:.875em}
+    .font-mono{font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace}
+    .navbar{background:#161b22;border-bottom:1px solid #30363d;padding:.75rem 1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem}
+    .navbar-brand{font-weight:700;color:#e6edf3;text-decoration:none;font-size:1.1rem}
+    .nav-actions{display:flex;align-items:center;gap:.75rem}
+    .nav-pill{font-size:.8rem;color:#8b949e;white-space:nowrap}
+    .container{max-width:900px;margin:0 auto;padding:1.5rem 1rem}
+    .lab-badge{display:inline-block;background:#1f6feb;color:#fff;font-size:.72rem;font-weight:600;padding:2px 10px;border-radius:12px;margin-bottom:.5rem;text-transform:uppercase;letter-spacing:.06em}
+    .lab-header{margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid #30363d}
+    .lab-header h2{color:#e6edf3;margin:.25rem 0 .1rem;font-size:1.6rem}
+    .lab-header p{color:#8b949e;margin:0;font-size:.95rem}
+    .scenario-box{background:#161b22;border-left:4px solid #1f6feb;border-radius:0 8px 8px 0;padding:1rem 1.25rem;margin-bottom:1.5rem}
+    .scenario-box p{margin:0;line-height:1.65}
+    .demo-box{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:1.5rem;margin-bottom:1.5rem}
+    .question-box{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:1.25rem;margin-bottom:.75rem}
+    .question-text{font-weight:600;color:#e6edf3;font-size:1.05rem;margin:0 0 1rem}
+    .why-box{background:#1c2a1c;border:1px solid #238636;border-radius:8px;padding:1.25rem;margin-top:1rem;display:none}
+    .why-box.show{display:block}
+    .why-box h6{color:#3fb950;font-weight:700;margin:0 0 .5rem}
+    .why-box p{margin:.5rem 0 0;line-height:1.65}
+    .why-box ul{margin:.5rem 0 .5rem 1.25rem;padding:0;line-height:1.8}
+    .options-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+    @media(max-width:600px){.options-grid{grid-template-columns:1fr}}
+    .opt-btn{display:flex;align-items:center;gap:.6rem;text-align:left;background:#161b22;border:1px solid #30363d;border-radius:6px;padding:.65rem .9rem;color:#c9d1d9;cursor:pointer;width:100%;font-size:.95rem;transition:border-color .15s,background .15s}
+    .opt-btn:hover{border-color:#58a6ff;background:#1c2940;color:#e6edf3}
+    .opt-btn.correct{background:#1c2a1c!important;border-color:#238636!important;color:#3fb950!important}
+    .opt-btn.incorrect{background:#2a1c1c!important;border-color:#da3633!important;color:#f85149!important}
+    .opt-id{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;background:#30363d;border-radius:4px;font-size:.78rem;font-weight:700;flex-shrink:0}
+    .feedback-box{border-radius:8px;padding:1rem 1.25rem;margin-top:.75rem;font-size:.95rem;line-height:1.65;display:none}
+    .feedback-box.show{display:block}
+    .feedback-correct{background:#1c2a1c;border:1px solid #238636;color:#3fb950}
+    .feedback-incorrect{background:#2a1c1c;border:1px solid #da3633;color:#f85149}
+    .badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.75rem;font-weight:600}
+    .badge-green{background:#1c2a1c;color:#3fb950;border:1px solid #238636}
+    .badge-red{background:#2a1c1c;color:#f85149;border:1px solid #da3633}
+    .badge-yellow{background:#2a2000;color:#e3b341;border:1px solid #9e6a03}
+    .badge-gray{background:#21262d;color:#8b949e;border:1px solid #30363d}
+    .demo-label{font-size:.78rem;color:#8b949e;font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.4rem}
+    .demo-value{font-family:monospace;font-size:1.7rem;font-weight:700;letter-spacing:.08em}
+    table{width:100%;border-collapse:collapse;font-size:.9rem}
+    th,td{padding:.5rem .75rem;border:1px solid #30363d;text-align:left}
+    th{background:#21262d;color:#8b949e;font-weight:600;font-size:.8rem;text-transform:uppercase;letter-spacing:.05em}
+    tr:hover td{background:#1c2128}
+    .lab-footer{display:flex;justify-content:space-between;align-items:center;margin-top:2rem;padding-top:1rem;border-top:1px solid #30363d}
+    .lab-footer .text-muted{color:#8b949e;font-size:.85rem}
+    .btn-nav{display:inline-flex;align-items:center;gap:.4rem;padding:.4rem .9rem;border:1px solid #30363d;border-radius:6px;color:#c9d1d9;text-decoration:none;font-size:.85rem;background:#161b22;transition:border-color .15s}
+    .btn-nav:hover{border-color:#58a6ff;color:#58a6ff}
+    .btn-nav.disabled{opacity:.4;pointer-events:none}
+
+    /* === PAGE-SPECIFIC CSS === */
+    .cipher-comparison{display:grid;grid-template-columns:1fr auto 1fr;gap:1rem;margin:1.5rem 0}
+    @media(max-width:700px){.cipher-comparison{grid-template-columns:1fr;gap:1rem}}
+    .cipher-type{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:1rem;cursor:pointer;transition:border-color .2s}
+    .cipher-type.selected{border-color:#1f6feb;background:#1c2940}
+    .cipher-stream{border-color:#e3b341}
+    .cipher-block{border-color:#58a6ff}
+    .cipher-title{font-weight:600;color:#e6edf3;margin-bottom:.5rem;display:flex;align-items:center;gap:.5rem}
+    .cipher-desc{color:#8b949e;font-size:.9rem;margin-bottom:.75rem}
+    .cipher-visual{font-family:monospace;font-size:.8rem;background:#0d1117;padding:.75rem;border-radius:4px;margin:.5rem 0}
+
+    .interactive-cipher{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:1.5rem;margin:1rem 0}
+    .cipher-controls{display:grid;grid-template-columns:1fr auto;gap:1rem;align-items:center;margin-bottom:1rem}
+    .cipher-selector{background:#21262d;border:1px solid #30363d;border-radius:6px;padding:.5rem;color:#e6edf3}
+    .encrypt-btn{background:#1f6feb;color:#fff;border:none;border-radius:6px;padding:.5rem 1rem;cursor:pointer;font-size:.9rem}
+    .encrypt-btn:hover{background:#1c64e8}
+
+    .message-input{background:#21262d;border:1px solid #30363d;border-radius:6px;padding:.5rem;color:#e6edf3;width:100%;margin:.5rem 0}
+    .message-input:focus{outline:none;border-color:#58a6ff}
+    .key-input{background:#21262d;border:1px solid #30363d;border-radius:6px;padding:.5rem;color:#e6edf3;width:100%;margin:.5rem 0;font-family:monospace}
+    .key-input:focus{outline:none;border-color:#58a6ff}
+
+    .encryption-output{background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:1rem;margin:.75rem 0;font-family:monospace;font-size:.9rem;min-height:80px;color:#58a6ff;word-break:break-all;overflow-wrap:break-word}
+    .process-visualization{background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:1rem;margin:.75rem 0}
+
+    .stream-demo{margin:.5rem 0}
+    .stream-chars{display:flex;flex-wrap:wrap;gap:2px;margin:.5rem 0;font-family:monospace;font-size:.75rem}
+    .char-box{width:28px;height:24px;display:flex;align-items:center;justify-content:center;border:1px solid #30363d;border-radius:3px;background:#21262d;overflow:hidden;font-size:.7rem}
+    .char-plain{border-color:#e3b341;color:#e3b341}
+    .char-key{border-color:#58a6ff;color:#58a6ff}
+    .char-cipher{border-color:#3fb950;color:#3fb950}
+
+    .block-demo{margin:.5rem 0}
+    .block-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;width:fit-content;margin:.5rem 0}
+    .block-cell{width:25px;height:25px;display:flex;align-items:center;justify-content:center;border:1px solid #30363d;border-radius:3px;font-family:monospace;font-size:.7rem}
+
+    .parameter-controls{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:1rem;margin:1rem 0}
+    .parameter-title{color:#e6edf3;font-weight:600;margin-bottom:.75rem}
+    .parameter-group{margin:.75rem 0}
+    .parameter-label{color:#8b949e;font-size:.9rem;margin-bottom:.25rem}
+    .parameter-value{color:#1f6feb;font-weight:600}
+
+    /* Slider styling — change 5 */
+    .parameter-slider{width:100%;height:6px;border-radius:3px;outline:none;border:none;cursor:pointer;-webkit-appearance:none;appearance:none;transition:background .2s}
+    .parameter-slider::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:#58a6ff;cursor:pointer;border:2px solid #161b22}
+    .parameter-slider::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:#58a6ff;cursor:pointer;border:2px solid #161b22}
+
+    .security-analysis{background:#2a1c1c;border:1px solid #f85149;border-radius:8px;padding:1rem;margin:1rem 0}
+    .vulnerability-title{color:#f85149;font-weight:600;margin-bottom:.5rem}
+    .vulnerability-list{color:#8b949e;font-size:.9rem;margin-left:1rem}
+
+    .comparison-table{background:#0d1117;border:1px solid #30363d;border-radius:6px;overflow:hidden;margin:1rem 0}
+    .table-header{background:#21262d;padding:.75rem;font-weight:600;color:#e6edf3;border-bottom:1px solid #30363d}
+    .table-row{display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:1px solid #30363d}
+    .table-cell{padding:.75rem;color:#8b949e;font-size:.9rem}
+    .table-cell.highlight{color:#1f6feb;font-weight:600}
+
+    .reflection-box{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:1.5rem;margin:1.5rem 0}
+    .reflection-title{color:#e6edf3;font-weight:600;margin-bottom:.75rem}
+    .reflection-input{background:#21262d;border:1px solid #30363d;border-radius:6px;padding:.75rem;color:#e6edf3;width:100%;min-height:100px;font-family:inherit;resize:vertical}
+    .reflection-input:focus{outline:none;border-color:#58a6ff}
+    .submit-btn{background:#1f6feb;color:#fff;border:none;border-radius:6px;padding:.5rem 1rem;cursor:pointer;font-size:.9rem;margin-top:.5rem}
+    .submit-btn:hover{background:#1c64e8}
+    .export-pdf-btn{background:#3fb950;color:#fff;border:none;border-radius:6px;padding:.5rem 1rem;cursor:pointer;font-size:.9rem;margin-top:.5rem;margin-left:.5rem}
+    .export-pdf-btn:hover{background:#3aad49}
+    .sub-area-locked{opacity:.4;pointer-events:none;user-select:none}
+    #print-summary{display:none;font-family:Arial,sans-serif;color:#000;padding:2rem;line-height:1.6}
+    #print-summary h1{font-size:1.4rem;margin-bottom:.25rem}
+    #print-summary h2{font-size:1.1rem;margin:1rem 0 .25rem;border-bottom:1px solid #ccc;padding-bottom:.2rem}
+    #print-summary table{border-collapse:collapse;width:100%;margin-bottom:.5rem}
+    #print-summary td{padding:.2rem .5rem;vertical-align:top}
+    #print-summary td:first-child{font-weight:bold;white-space:nowrap;width:160px}
+    #print-summary .cipher-data{font-family:monospace;font-size:.8rem;word-break:break-all;background:#f5f5f5;padding:.5rem;border-radius:4px;margin:.25rem 0}
+    @media print{
+      body>*:not(#print-summary){display:none!important}
+      #print-summary{display:block!important}
+    }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="navbar-brand" href="../">🔐 Cryptography Labs</a>
+  <div class="nav-actions">
+    <span class="nav-pill">Module 2 Lab</span>
+    <!-- Change 10: Reset button -->
+    <button onclick="resetLab()" style="background:none;border:1px solid #30363d;border-radius:6px;padding:.25rem .6rem;color:#8b949e;cursor:pointer;font-size:.75rem" title="Reset lab progress">↺ Reset</button>
+    <!-- Change 2: Updated nav link -->
+  </div>
+</nav>
+
+<div class="container">
+  <div class="lab-header">
+    <div class="lab-badge">Module 2 · Cipher Types</div>
+    <h2>Stream vs Block Ciphers</h2>
+    <p>Understanding different cipher architectures — Bit-by-bit vs block-by-block encryption</p>
+  </div>
+
+  <div class="scenario-box">
+    <p><strong>Scenario:</strong> You need to choose the right encryption method for different applications. A streaming video service needs real-time encryption, while a file storage system encrypts documents in batches. Understanding stream vs block ciphers will help you make the right architectural decisions.</p>
+  </div>
+
+  <!-- Cipher Type Comparison -->
+  <div class="demo-box">
+    <h4 style="margin-top:0;color:#e6edf3">🔄 Stream vs Block Cipher Architecture</h4>
+    <p style="margin-bottom:1rem;color:#8b949e">Click on each cipher type to explore how they process data:</p>
+
+    <div class="cipher-comparison">
+      <div class="cipher-type cipher-stream" onclick="selectCipherType('stream', this)">
+        <div class="cipher-title">
+          <span style="font-size:1.5rem">📡</span> Stream Cipher
+        </div>
+        <div class="cipher-desc">Encrypts data bit-by-bit or byte-by-byte in a continuous stream</div>
+        <div class="cipher-visual">
+          Input:  H E L L O<br>
+          Key:    K E Y K E<br>
+          Output: ? ? ? ? ?
+        </div>
+        <div style="color:#e3b341;font-size:.8rem">✓ Fast, low latency</div>
+        <div style="color:#f85149;font-size:.8rem">✗ Key reuse dangerous</div>
+      </div>
+
+      <div style="text-align:center;color:#8b949e;font-size:1.2rem;font-weight:600;align-self:center">VS</div>
+
+      <div class="cipher-type cipher-block" onclick="selectCipherType('block', this)">
+        <div class="cipher-title">
+          <span style="font-size:1.5rem">🧱</span> Block Cipher
+        </div>
+        <div class="cipher-desc">Encrypts data in fixed-size blocks (typically 128 bits)</div>
+        <div class="cipher-visual">
+          Block: [HELL] [O___]<br>
+          Key:   [128-bit key]<br>
+          Output: [####] [####]
+        </div>
+        <div style="color:#3fb950;font-size:.8rem">✓ Well-analyzed, secure modes</div>
+        <div style="color:#f85149;font-size:.8rem">✗ Padding required</div>
+      </div>
+    </div>
+
+    <div id="cipher-details" style="margin-top:1rem;min-height:100px;color:#8b949e">
+      Select a cipher type above to see detailed processing information
+    </div>
+  </div>
+
+  <!-- Interactive Cipher Playground -->
+  <div class="demo-box">
+    <h4 style="margin-top:0;color:#e6edf3">🎮 Interactive Cipher Playground</h4>
+
+    <div style="background:#1c2940;border:1px solid #58a6ff;border-radius:6px;padding:1rem;margin-bottom:1rem">
+      <p style="margin:0 0 .5rem;color:#58a6ff;font-weight:600">📋 Instructions</p>
+      <ol style="margin:0;padding-left:1.25rem;color:#8b949e;font-size:.9rem;line-height:1.7">
+        <li>Enter your message below. Use the prompt: <em style="color:#e6edf3">"What is your favorite dish and restaurant?"</em></li>
+        <li>Your message must be between <strong style="color:#e6edf3">32 and 75 characters</strong>.</li>
+        <li>Select <strong style="color:#e3b341">Stream Cipher</strong>, enter a key, and click Encrypt — observe how it processes character by character.</li>
+        <li>Switch to <strong style="color:#58a6ff">Block Cipher</strong> and encrypt the same message — observe how data is split into blocks.</li>
+        <li>You must try <strong style="color:#e6edf3">both cipher types</strong> before your data is captured for submission.</li>
+      </ol>
+    </div>
+
+    <!-- Progress tracker -->
+    <div style="display:flex;gap:.75rem;margin-bottom:1rem">
+      <div id="track-stream" style="background:#21262d;border:1px solid #30363d;border-radius:6px;padding:.5rem .9rem;font-size:.85rem;color:#8b949e">
+        📡 Stream Cipher: <span id="track-stream-label">not tried</span>
+      </div>
+      <div id="track-block" style="background:#21262d;border:1px solid #30363d;border-radius:6px;padding:.5rem .9rem;font-size:.85rem;color:#8b949e">
+        🧱 Block Cipher: <span id="track-block-label">not tried</span>
+      </div>
+    </div>
+
+    <div class="interactive-cipher">
+      <div class="cipher-controls">
+        <select class="cipher-selector" id="cipher-mode">
+          <option value="stream-rc4">Stream Cipher (RC4-like)</option>
+          <option value="block-aes">Block Cipher (AES-like)</option>
+        </select>
+        <button class="encrypt-btn" id="encrypt-btn" onclick="performEncryption()" disabled>🔒 Encrypt</button>
+      </div>
+
+      <div style="margin:.75rem 0">
+        <label style="color:#e6edf3;font-size:.9rem;font-weight:600">Message to encrypt:</label>
+        <p style="color:#8b949e;font-size:.82rem;margin:.25rem 0 .25rem">Prompt: <em>What is your favorite dish and restaurant?</em></p>
+        <input type="text" class="message-input" id="plaintext-input" maxlength="75" placeholder="e.g. My favorite dish is sushi at Nobu — the omakase is incredible!" oninput="onMessageInput()">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:.25rem">
+          <span id="char-hint" style="font-size:.8rem;color:#8b949e">32–75 characters required</span>
+          <span id="char-counter" style="font-size:.8rem;font-weight:600;color:#8b949e">0 / 75</span>
+        </div>
+        <div style="height:4px;background:#30363d;border-radius:2px;margin-top:.35rem;overflow:hidden">
+          <div id="char-progress" style="height:100%;background:#30363d;width:0%;transition:width .2s,background .2s"></div>
+        </div>
+      </div>
+
+      <div style="margin:.75rem 0">
+        <label style="color:#e6edf3;font-size:.9rem;font-weight:600">Encryption key:</label>
+        <input type="text" class="key-input" id="key-input" value="MySecretKey123" maxlength="16" placeholder="Enter encryption key...">
+      </div>
+
+      <div id="process-visualization" class="process-visualization"></div>
+
+      <div class="encryption-output" id="encryption-result">
+        Enter a message (32–75 characters) and click "Encrypt" to see the encryption process...
+      </div>
+    </div>
+  </div>
+
+  <!-- Parameter Exploration -->
+  <div class="demo-box">
+    <h4 style="margin-top:0;color:#e6edf3">⚙️ Parameter Exploration</h4>
+
+    <div class="parameter-controls">
+      <div class="parameter-title">🔧 Adjust cipher parameters and observe the effects:</div>
+
+      <div class="parameter-group">
+        <div class="parameter-label">Block Size (for block ciphers): <span class="parameter-value" id="block-size-value">128 bits</span></div>
+        <input type="range" class="parameter-slider" id="block-size" min="64" max="256" step="64" value="128" oninput="updateParameter('blockSize')">
+      </div>
+
+      <div class="parameter-group">
+        <div class="parameter-label">Key Length: <span class="parameter-value" id="key-length-value">128 bits</span></div>
+        <input type="range" class="parameter-slider" id="key-length" min="128" max="256" step="64" value="128" oninput="updateParameter('keyLength')">
+      </div>
+
+      <div class="parameter-group">
+        <div class="parameter-label">Password Length: <span class="parameter-value" id="message-length-value">0 characters</span></div>
+        <input type="text" class="message-input" id="password-param-input" maxlength="15" placeholder="Enter a password (8–15 characters)..." oninput="updateParameter('passwordLength')" style="margin-top:.35rem">
+        <div id="password-vulnerability" style="margin-top:.5rem;min-height:1.5rem"></div>
+      </div>
+
+      <div id="parameter-effects" style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:1rem;margin-top:1rem;min-height:80px;color:#8b949e">
+        Adjust the parameters above to see how they affect encryption performance and security...
+      </div>
+    </div>
+  </div>
+
+  <!-- Security Analysis -->
+  <div class="demo-box">
+    <h4 style="margin-top:0;color:#e6edf3">🛡️ Security Considerations</h4>
+
+    <div class="comparison-table">
+      <div class="table-header">Stream vs Block Cipher Security Comparison</div>
+      <div class="table-row">
+        <div class="table-cell" style="font-weight:600;color:#e6edf3">Aspect</div>
+        <div class="table-cell" style="font-weight:600;color:#e3b341">Stream Ciphers</div>
+        <div class="table-cell" style="font-weight:600;color:#58a6ff">Block Ciphers</div>
+      </div>
+      <div class="table-row">
+        <div class="table-cell">Key Reuse</div>
+        <div class="table-cell highlight" style="color:#f85149">Critical vulnerability</div>
+        <div class="table-cell">Safe with proper modes</div>
+      </div>
+      <div class="table-row">
+        <div class="table-cell">Padding</div>
+        <div class="table-cell">Not required</div>
+        <div class="table-cell highlight" style="color:#f85149">Padding oracle attacks</div>
+      </div>
+      <div class="table-row">
+        <div class="table-cell">Performance</div>
+        <div class="table-cell highlight" style="color:#3fb950">Excellent for streaming</div>
+        <div class="table-cell">Good for bulk data</div>
+      </div>
+      <div class="table-row">
+        <div class="table-cell">Error Propagation</div>
+        <div class="table-cell highlight" style="color:#3fb950">Minimal</div>
+        <div class="table-cell">Can affect entire block</div>
+      </div>
+    </div>
+
+    <div class="security-analysis">
+      <div class="vulnerability-title">⚠️ Common Vulnerabilities</div>
+      <div class="vulnerability-list">
+        <strong>Stream Ciphers:</strong><br>
+        • Key stream reuse (same key + IV = broken security)<br>
+        • Weak random number generators<br>
+        • Bit-flipping attacks if no authentication<br><br>
+
+        <strong>Block Ciphers:</strong><br>
+        • ECB mode pattern leakage (identical blocks)<br>
+        • Padding oracle attacks (CBC mode)<br>
+        • Key schedule weaknesses
+      </div>
+    </div>
+  </div>
+
+  <!-- Question -->
+  <div class="question-box">
+    <p class="question-text">❓ Which cipher type would be BEST for encrypting a live video stream where low latency is critical?</p>
+    <div class="options-grid">
+      <button class="opt-btn" onclick="check('A',this)"><span class="opt-id">A</span> Stream Cipher</button>
+      <button class="opt-btn" onclick="check('B',this)"><span class="opt-id">B</span> Block Cipher</button>
+      <button class="opt-btn" onclick="check('C',this)"><span class="opt-id">C</span> Both work equally well</button>
+      <button class="opt-btn" onclick="check('D',this)"><span class="opt-id">D</span> Neither is suitable</button>
+    </div>
+  </div>
+
+  <div id="feedback" class="feedback-box"></div>
+
+  <!-- Student Reflection -->
+  <div class="reflection-box">
+    <div class="reflection-title">💭 Learning Reflection Submission</div>
+    <p style="color:#8b949e;margin-bottom:.75rem">After experimenting with different cipher types and parameters, reflect on your discoveries:</p>
+
+    <div style="margin-bottom:1rem">
+      <strong style="color:#e6edf3">Guided Questions:</strong>
+      <ul style="color:#8b949e;font-size:.9rem;margin:.5rem 0 0 1.5rem">
+        <li>How did changing the block size affect encryption behavior?</li>
+        <li>What did you notice about stream vs block cipher performance?</li>
+        <li>When would you choose one cipher type over the other?</li>
+        <li>What security trade-offs did you observe?</li>
+        <li><strong style="color:#e6edf3">Key question:</strong> Block sizes are restricted to specific values — 64, 128, 192, or 256 bits — and key lengths are restricted to 128, 192, or 256 bits. Why are these constrained to powers of two, and how does increasing or decreasing these values affect both security and performance?</li>
+      </ul>
+    </div>
+
+    <!-- Change 8: Simplified lock indicator -->
+    <div id="reflection-lock" style="background:#2a1c1c;border:1px solid #f85149;border-radius:6px;padding:.75rem 1rem;margin-bottom:1rem">
+      <p style="color:#f85149;font-weight:600;margin:0;font-size:.9rem">🔒 Complete all objectives (tracker bottom-right ↘) to unlock submission</p>
+    </div>
+
+    <!-- Submission area — greyed out until unlocked -->
+    <div id="submission-area" class="sub-area-locked">
+      <textarea class="reflection-input" id="learning-reflection" placeholder="Describe what you learned by changing the parameters and interacting with different cipher types. What surprised you? How do the different architectures suit different use cases?
+
+Please write at least 4-5 sentences about your key insights..."></textarea>
+
+      <div style="margin-top:.75rem">
+        <label style="color:#e6edf3;font-size:.9rem;font-weight:600">🔍 Lab Observations</label>
+        <p style="color:#8b949e;font-size:.82rem;margin:.2rem 0 .3rem">Was there anything within the lab you expected to change, but didn't?</p>
+        <textarea class="reflection-input" id="lab-feedback" placeholder="Share any observations, surprises, or things that felt missing..." style="min-height:80px"></textarea>
+      </div>
+
+      <div style="margin-top:.75rem">
+        <label style="color:#e6edf3;font-size:.9rem;font-weight:600">Your name:</label>
+        <input type="text" id="student-name" class="message-input" placeholder="Enter your full name..." style="margin:.3rem 0 0;max-width:320px">
+      </div>
+
+      <div style="margin-top:.75rem">
+        <button class="submit-btn" onclick="submitReflection()">💾 Save Reflection</button>
+        <button id="export-pdf-btn" class="export-pdf-btn" onclick="exportPDF()" style="display:none">📄 Export PDF</button>
+      </div>
+      <div id="submission-feedback" style="margin-top:.5rem;color:#3fb950;display:none">✅ Saved! Edit and re-save anytime — Export PDF always uses your latest version.</div>
+    </div>
+  </div>
+
+  <div id="why-matters" class="why-box">
+    <h6>💡 Why it matters</h6>
+    <p>Understanding cipher architectures helps you choose the right tool for each job:</p>
+    <ul>
+      <li><strong>Stream Ciphers</strong> — Perfect for real-time applications like VoIP, video streaming, and satellite communications</li>
+      <li><strong>Block Ciphers</strong> — Ideal for file encryption, disk encryption, and secure storage where data comes in chunks</li>
+      <li><strong>Modern Applications</strong> — Many systems use both (TLS uses stream ciphers for bulk data after block cipher key exchange)</li>
+    </ul>
+    <p>The choice between stream and block ciphers depends on your specific requirements: latency constraints, data patterns, security needs, and implementation complexity.</p>
+  </div>
+
+  <div class="lab-footer">
+    <span class="text-muted">Module 2 Lab - Cipher Architectures</span>
+  </div>
+</div>
+
+<!-- PDF Print Summary (hidden until Export PDF is clicked) -->
+<div id="print-summary">
+  <h1>Module 2 Lab – Stream vs Block Ciphers</h1>
+  <p style="color:#555;font-size:.9rem;margin-top:0">Cybersecurity Lab Submission</p>
+  <hr>
+  <h2>Student Info</h2>
+  <table>
+    <tr><td>Student:</td><td id="ps-name"></td></tr>
+    <tr><td>Opened:</td><td id="ps-opened"></td></tr>
+    <tr><td>Submitted:</td><td id="ps-submitted"></td></tr>
+    <tr><td>Time on page:</td><td id="ps-duration"></td></tr>
+  </table>
+  <h2>Interactions</h2>
+  <div id="ps-interactions"></div>
+  <h2>Parameter Exploration</h2>
+  <div id="ps-params"></div>
+  <h2>Stream Cipher Encryption</h2>
+  <div id="ps-stream"></div>
+  <h2>Block Cipher Encryption</h2>
+  <div id="ps-block"></div>
+  <h2>Reflection</h2>
+  <div id="ps-reflection" style="white-space:pre-wrap"></div>
+  <h2>Lab Observations</h2>
+  <div id="ps-feedback" style="white-space:pre-wrap"></div>
+</div>
+
+<!-- Change 7: Floating objective overlay -->
+<div id="obj-overlay" style="position:fixed;bottom:1.25rem;right:1.25rem;z-index:999;font-size:.8rem;user-select:none">
+  <div id="obj-badge" onclick="toggleObj()" style="background:rgba(22,27,34,.95);border:1px solid #30363d;border-radius:20px;padding:.35rem .8rem;cursor:pointer;display:flex;align-items:center;gap:.5rem;color:#8b949e;backdrop-filter:blur(4px);transition:border-color .2s;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.4)">
+    <span id="obj-count">📋 0/4 objectives</span><span id="obj-chev" style="font-size:.65rem">▼</span>
+  </div>
+  <div id="obj-panel" style="display:block;position:absolute;bottom:calc(100% + .4rem);right:0;background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.65rem .9rem;min-width:210px;line-height:2.2;box-shadow:0 4px 12px rgba(0,0,0,.5)">
+    <div style="font-size:.72rem;color:#58a6ff;font-weight:600;margin-bottom:.25rem;border-bottom:1px solid #30363d;padding-bottom:.2rem">Lab Objectives</div>
+    <div id="obj-list"></div>
+  </div>
+</div>
+
+<script>
+/* === SHARED JS === */
+function showFeedback(correct, html) {
+  const fb = document.getElementById('feedback');
+  if (!fb) return;
+  fb.className = 'feedback-box show ' + (correct ? 'feedback-correct' : 'feedback-incorrect');
+  fb.innerHTML = (correct ? '✅ ' : '❌ ') + html;
+  if (correct) {
+    const why = document.getElementById('why-matters');
+    if (why) setTimeout(() => { why.classList.add('show'); }, 350);
+  }
+}
+function markBtn(btn, correct) {
+  const parent = btn.closest('.options-grid, .question-box');
+  if (parent) parent.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('correct','incorrect'));
+  btn.classList.add(correct ? 'correct' : 'incorrect');
+}
+
+/* === PAGE JS === */
+let selectedCipherType = null;
+let answered = false;
+let quizPassed = false;
+let quizAttempts = 0;
+let paramExplored = false;
+let _pageReady = false;
+const openedAt = new Date().toISOString();
+const cipherCaptures = { stream: null, block: null };
+
+/* Change 7: Objective overlay functions */
+let _objOpen = true;
+function toggleObj() {
+  _objOpen = !_objOpen;
+  document.getElementById('obj-panel').style.display = _objOpen ? 'block' : 'none';
+  document.getElementById('obj-chev').textContent = _objOpen ? '▼' : '▲';
+}
+function updateObjOverlay(checks) {
+  const done = checks.filter(c => c.done).length;
+  const total = checks.length;
+  const allDone = done === total;
+  const badge = document.getElementById('obj-badge');
+  badge.style.borderColor = allDone ? '#238636' : '#30363d';
+  badge.style.color = allDone ? '#3fb950' : '#8b949e';
+  document.getElementById('obj-count').textContent = allDone ? '✅ All objectives done!' : `📋 ${done}/${total} objectives`;
+  document.getElementById('obj-list').innerHTML = checks.map(c =>
+    `<div style="color:${c.done?'#3fb950':'#8b949e'};font-size:.79rem">${c.done?'✅':'⬜'} ${c.label}</div>`
+  ).join('');
+}
+
+/* Change 9: localStorage persistence */
+function saveState() {
+  const state = {
+    quizPassed,
+    quizAttempts,
+    streamCapture: cipherCaptures.stream,
+    blockCapture: cipherCaptures.block,
+    studentName: (document.getElementById('student-name') || {}).value || '',
+    reflection: (document.getElementById('learning-reflection') || {}).value || '',
+    labFeedback: (document.getElementById('lab-feedback') || {}).value || '',
+    paramExplored,
+    paramSnapshot: {
+      blockSize: (document.getElementById('block-size') || {}).value || '128',
+      keyLength: (document.getElementById('key-length') || {}).value || '128',
+      password: (document.getElementById('password-param-input') || {}).value || ''
+    }
+  };
+  localStorage.setItem('lab02-state', JSON.stringify(state));
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem('lab02-state');
+    if (!raw) return;
+    const state = JSON.parse(raw);
+    if (state.quizPassed) quizPassed = true;
+    if (state.quizAttempts) quizAttempts = state.quizAttempts;
+    if (state.streamCapture) {
+      cipherCaptures.stream = state.streamCapture;
+      const trackEl = document.getElementById('track-stream');
+      const label = document.getElementById('track-stream-label');
+      if (trackEl) { trackEl.style.border = '1px solid #3fb950'; trackEl.style.background = '#1c2a1c'; }
+      if (label) { label.textContent = 'done ✓'; label.style.color = '#3fb950'; }
+    }
+    if (state.blockCapture) {
+      cipherCaptures.block = state.blockCapture;
+      const trackEl = document.getElementById('track-block');
+      const label = document.getElementById('track-block-label');
+      if (trackEl) { trackEl.style.border = '1px solid #3fb950'; trackEl.style.background = '#1c2a1c'; }
+      if (label) { label.textContent = 'done ✓'; label.style.color = '#3fb950'; }
+    }
+    if (state.studentName) {
+      const el = document.getElementById('student-name');
+      if (el) el.value = state.studentName;
+    }
+    if (state.reflection) {
+      const el = document.getElementById('learning-reflection');
+      if (el) el.value = state.reflection;
+    }
+    if (state.labFeedback) {
+      const el = document.getElementById('lab-feedback');
+      if (el) el.value = state.labFeedback;
+    }
+    if (state.paramExplored) paramExplored = true;
+    if (state.paramSnapshot) {
+      const bs = document.getElementById('block-size');
+      const kl = document.getElementById('key-length');
+      const pp = document.getElementById('password-param-input');
+      if (bs && state.paramSnapshot.blockSize) bs.value = state.paramSnapshot.blockSize;
+      if (kl && state.paramSnapshot.keyLength) kl.value = state.paramSnapshot.keyLength;
+      if (pp && state.paramSnapshot.password) pp.value = state.paramSnapshot.password;
+    }
+    if (quizPassed) {
+      answered = true;
+      showFeedback(true, "Correct! <strong>Stream ciphers</strong> are ideal for live video because they encrypt data bit-by-bit as it flows, without requiring complete blocks. This eliminates buffering delays and provides the low latency critical for real-time streaming applications.");
+    }
+    checkReflectionLock();
+  } catch(e) { /* ignore corrupt state */ }
+}
+
+/* Change 10: Reset button function */
+function resetLab() {
+  if (!confirm('Reset all lab progress? This cannot be undone.')) return;
+  localStorage.removeItem('lab02-state');
+  location.reload();
+}
+
+const cipherDetails = {
+  stream: {
+    title: "📡 Stream Cipher Processing",
+    content: `
+      <div style="background:#2a2000;border:1px solid #e3b341;border-radius:6px;padding:1rem">
+        <strong style="color:#e3b341">How Stream Ciphers Work:</strong><br><br>
+
+        1. <strong>Key Stream Generation:</strong> Pseudo-random generator creates key stream<br>
+        2. <strong>XOR Operation:</strong> Each plaintext bit XORed with key stream bit<br>
+        3. <strong>Continuous Process:</strong> Encryption happens in real-time as data flows<br><br>
+
+        <strong>Examples:</strong> RC4, ChaCha20, Salsa20<br>
+        <strong>Use Cases:</strong> Live streaming, VoIP, satellite communications<br>
+        <strong>Advantage:</strong> No buffering needed, minimal latency<br>
+        <strong>Risk:</strong> Never reuse the same key+IV combination
+      </div>
+    `
+  },
+  block: {
+    title: "🧱 Block Cipher Processing",
+    content: `
+      <div style="background:#1c2940;border:1px solid #58a6ff;border-radius:6px;padding:1rem">
+        <strong style="color:#58a6ff">How Block Ciphers Work:</strong><br><br>
+
+        1. <strong>Block Division:</strong> Data split into fixed-size blocks (128-bit)<br>
+        2. <strong>Padding:</strong> Last block padded if not full<br>
+        3. <strong>Round Processing:</strong> Multiple rounds of substitution and permutation<br>
+        4. <strong>Mode Operation:</strong> Blocks combined using CBC, GCM, etc.<br><br>
+
+        <strong>Examples:</strong> AES, DES, 3DES<br>
+        <strong>Use Cases:</strong> File encryption, disk encryption, secure storage<br>
+        <strong>Advantage:</strong> Well-studied, many secure modes available<br>
+        <strong>Risk:</strong> ECB mode reveals patterns, padding attacks
+      </div>
+    `
+  }
+};
+
+function selectCipherType(type, element) {
+  document.querySelectorAll('.cipher-type').forEach(el => el.classList.remove('selected'));
+  element.classList.add('selected');
+
+  selectedCipherType = type;
+  document.getElementById('cipher-details').innerHTML = cipherDetails[type].content;
+}
+
+function onMessageInput() {
+  const val = document.getElementById('plaintext-input').value;
+  const len = val.length;
+  const counter = document.getElementById('char-counter');
+  const hint = document.getElementById('char-hint');
+  const bar = document.getElementById('char-progress');
+  const btn = document.getElementById('encrypt-btn');
+
+  counter.textContent = `${len} / 75`;
+
+  const pct = Math.min(100, (len / 75) * 100);
+  bar.style.width = pct + '%';
+
+  if (len < 32) {
+    bar.style.background = '#f85149';
+    counter.style.color = '#f85149';
+    hint.textContent = `${32 - len} more characters needed`;
+    btn.disabled = true;
+  } else if (len <= 75) {
+    bar.style.background = '#3fb950';
+    counter.style.color = '#3fb950';
+    hint.textContent = 'Good length!';
+    btn.disabled = false;
+  } else {
+    bar.style.background = '#f85149';
+    counter.style.color = '#f85149';
+    hint.textContent = 'Too long — max 75 characters';
+    btn.disabled = true;
+  }
+}
+
+function updateCipherTracker(mode, plaintext, key, resultB64) {
+  const isStream = mode === 'stream-rc4';
+  const key_ = isStream ? 'stream' : 'block';
+  cipherCaptures[key_] = { mode, plaintext, key, ciphertext: resultB64, timestamp: new Date().toISOString() };
+
+  const trackEl = document.getElementById(`track-${key_}`);
+  const label = document.getElementById(`track-${key_}-label`);
+  trackEl.style.border = '1px solid #3fb950';
+  trackEl.style.background = '#1c2a1c';
+  label.textContent = 'done ✓';
+  label.style.color = '#3fb950';
+
+  saveState(); /* Change 9 */
+  checkReflectionLock();
+}
+
+function performEncryption() {
+  const mode = document.getElementById('cipher-mode').value;
+  const plaintext = document.getElementById('plaintext-input').value;
+  const key = document.getElementById('key-input').value;
+
+  if (!plaintext || !key) {
+    document.getElementById('encryption-result').innerHTML = '<span style="color:#f85149">Please enter both message and key!</span>';
+    return;
+  }
+
+  const visualization = document.getElementById('process-visualization');
+  const result = document.getElementById('encryption-result');
+
+  if (mode === 'stream-rc4') {
+    // Stream cipher simulation
+    visualization.innerHTML = `
+      <div style="color:#e3b341;font-weight:600;margin-bottom:.5rem">🔄 Stream Cipher Processing:</div>
+      <div class="stream-demo">
+        <div style="font-size:.8rem;color:#8b949e;margin-bottom:.25rem">Plaintext characters:</div>
+        <div class="stream-chars" id="stream-plain"></div>
+        <div style="font-size:.8rem;color:#8b949e;margin:.5rem 0 .25rem">Key stream bytes:</div>
+        <div class="stream-chars" id="stream-key"></div>
+        <div style="font-size:.8rem;color:#8b949e;margin:.5rem 0 .25rem">XOR result:</div>
+        <div class="stream-chars" id="stream-cipher"></div>
+      </div>
+    `;
+
+    // Simulate stream encryption — mask all values to 8-bit so btoa never throws
+    let ciphertext = '';
+    for (let i = 0; i < plaintext.length; i++) {
+      const plainChar = plaintext.charCodeAt(i) & 0xFF;
+      const keyByte  = (key.charCodeAt(i % key.length) ^ (i * 17)) & 0xFF;
+      const cipherByte = (plainChar ^ keyByte) & 0xFF;
+      ciphertext += String.fromCharCode(cipherByte);
+    }
+
+    // Show character-by-character processing
+    setTimeout(() => {
+      const plainDiv = document.getElementById('stream-plain');
+      const keyDiv = document.getElementById('stream-key');
+      const cipherDiv = document.getElementById('stream-cipher');
+
+      for (let i = 0; i < plaintext.length; i++) {
+        plainDiv.innerHTML += `<div class="char-box char-plain">${plaintext[i]}</div>`;
+        keyDiv.innerHTML += `<div class="char-box char-key">${(key.charCodeAt(i % key.length) ^ (i * 17)) % 256}</div>`;
+        cipherDiv.innerHTML += `<div class="char-box char-cipher">?</div>`;
+      }
+    }, 100);
+
+    const streamB64 = btoa(ciphertext);
+    updateCipherTracker(mode, plaintext, key, streamB64);
+    result.innerHTML = `
+      <strong style="color:#e3b341">Stream Cipher Result:</strong><br>
+      Encrypted: ${streamB64}<br>
+      <span style="color:#8b949e">Processing: ${plaintext.length} bytes processed sequentially</span>
+    `;
+
+  } else {
+    // Block cipher simulation
+    const blockSize = 4; // Simplified 4-character blocks
+    const paddedText = plaintext.padEnd(Math.ceil(plaintext.length / blockSize) * blockSize, '_');
+
+    visualization.innerHTML = `
+      <div style="color:#58a6ff;font-weight:600;margin-bottom:.5rem">🧱 Block Cipher Processing:</div>
+      <div class="block-demo">
+        <div style="font-size:.8rem;color:#8b949e;margin-bottom:.25rem">Data blocks (4-char each):</div>
+        <div id="block-display"></div>
+      </div>
+    `;
+
+    const blockDisplay = document.getElementById('block-display');
+    for (let i = 0; i < paddedText.length; i += blockSize) {
+      const block = paddedText.slice(i, i + blockSize);
+      const blockDiv = document.createElement('div');
+      blockDiv.className = 'block-grid';
+      blockDiv.style.margin = '0.5rem 1rem 0.5rem 0';
+      blockDiv.style.display = 'inline-grid';
+
+      for (let j = 0; j < block.length; j++) {
+        blockDiv.innerHTML += `<div class="block-cell" style="border-color:#58a6ff;color:#58a6ff">${block[j]}</div>`;
+      }
+      blockDisplay.appendChild(blockDiv);
+    }
+
+    // Simple block encryption simulation
+    let encryptedBlocks = [];
+    for (let i = 0; i < paddedText.length; i += blockSize) {
+      const block = paddedText.slice(i, i + blockSize);
+      let encryptedBlock = '';
+      for (let j = 0; j < block.length; j++) {
+        const char = block.charCodeAt(j);
+        const keyChar = key.charCodeAt(j % key.length);
+        encryptedBlock += String.fromCharCode((char + keyChar) % 256);
+      }
+      encryptedBlocks.push(encryptedBlock);
+    }
+
+    const blockB64 = btoa(encryptedBlocks.join(''));
+    updateCipherTracker(mode, plaintext, key, blockB64);
+    result.innerHTML = `
+      <strong style="color:#58a6ff">Block Cipher Result:</strong><br>
+      Encrypted: ${blockB64}<br>
+      <span style="color:#8b949e">Processing: ${encryptedBlocks.length} blocks of ${blockSize} characters each</span>
+    `;
+  }
+}
+
+/* Change 5: Slider color update function */
+function updateSliderStyle() {
+  const bs = document.getElementById('block-size');
+  const kl = document.getElementById('key-length');
+  // block-size: 64=red, 128=yellow, 256=green
+  const bsPct = ((parseInt(bs.value) - 64) / (256 - 64)) * 100;
+  const bsHue = bsPct * 1.2; // 0=red(0), 100=green(120)
+  bs.style.background = `linear-gradient(to right, hsl(${bsHue},80%,45%) ${bsPct}%, #30363d ${bsPct}%)`;
+  // key-length: 128=yellow/orange, 256=green
+  const klPct = ((parseInt(kl.value) - 128) / (256 - 128)) * 100;
+  const klHue = 30 + klPct * 0.9; // 30=orange, 120=green
+  kl.style.background = `linear-gradient(to right, hsl(${klHue},80%,45%) ${klPct}%, #30363d ${klPct}%)`;
+}
+
+function updateParameter(type) {
+  updateSliderStyle(); /* Change 5 */
+
+  if (_pageReady && !paramExplored) {
+    paramExplored = true;
+    saveState();
+    checkReflectionLock();
+  }
+
+  const blockSizeSlider = document.getElementById('block-size');
+  const keyLengthSlider = document.getElementById('key-length');
+  const passwordInput = document.getElementById('password-param-input');
+
+  const blockSize = blockSizeSlider.value;
+  const keyLength = keyLengthSlider.value;
+  const password = passwordInput ? passwordInput.value : '';
+  const passwordLength = password.length;
+
+  document.getElementById('block-size-value').textContent = `${blockSize} bits`;
+  document.getElementById('key-length-value').textContent = `${keyLength} bits`;
+  document.getElementById('message-length-value').textContent = `${passwordLength} character${passwordLength !== 1 ? 's' : ''}`;
+
+  // Password vulnerability analysis — always recalculate when any parameter changes
+  const vulnDiv = document.getElementById('password-vulnerability');
+  if (passwordLength === 0) {
+    vulnDiv.innerHTML = '';
+  } else if (passwordLength < 8 || passwordLength > 15) {
+    vulnDiv.innerHTML = `<span style="color:#f85149;font-size:.82rem">⚠️ Enter a password between 8 and 15 characters</span>`;
+  } else {
+    let charsetSize = 0;
+    if (/[a-z]/.test(password)) charsetSize += 26;
+    if (/[A-Z]/.test(password)) charsetSize += 26;
+    if (/[0-9]/.test(password)) charsetSize += 10;
+    if (/[^A-Za-z0-9]/.test(password)) charsetSize += 32;
+    if (charsetSize === 0) charsetSize = 26;
+
+    // Factor 1: Base from password length
+    const lengthReduction = (passwordLength - 8) * 8;
+    let vulnPct = Math.max(5, 100 - lengthReduction);
+
+    // Factor 2: Block size (smaller = easier pattern analysis)
+    const blockSizeInt = parseInt(blockSize);
+    const blockFactor = blockSizeInt <= 64 ? 12 : blockSizeInt >= 256 ? -6 : 0;
+    vulnPct += blockFactor;
+
+    // Factor 3: Key length (longer = harder to brute-force)
+    const keyLengthInt = parseInt(keyLength);
+    const keyFactor = keyLengthInt >= 256 ? 15 : keyLengthInt >= 192 ? 8 : 0;
+    vulnPct -= keyFactor;
+
+    // Factor 4: Character variety
+    const charsetBonus = charsetSize >= 94 ? 25 : charsetSize >= 62 ? 15 : charsetSize >= 36 ? 5 : 0;
+    vulnPct -= charsetBonus;
+
+    // Factor 5: Common patterns
+    let patternPenalty = 0;
+    if (/(.)\1{2,}/.test(password)) patternPenalty += 15;
+    if (/123|abc|qwe/i.test(password)) patternPenalty += 20;
+    if (/password|admin|welcome/i.test(password)) patternPenalty += 30;
+    vulnPct += patternPenalty;
+
+    vulnPct = Math.min(99, Math.max(1, vulnPct));
+    const vulnColor = vulnPct >= 70 ? '#f85149' : vulnPct >= 40 ? '#e3b341' : '#3fb950';
+
+    // Build formula breakdown
+    const baseVal = Math.max(5, 100 - lengthReduction);
+    const blockNote = blockFactor > 0 ? `small blocks = easier pattern analysis` : blockFactor < 0 ? `large blocks = harder analysis` : `no effect at 128 bits`;
+    const keyNote = keyFactor > 0 ? `longer key = harder to brute-force` : `standard 128-bit protection`;
+
+    /* Change 4: Formula breakdown always visible (no <details>/<summary>) */
+    vulnDiv.innerHTML = `
+      <span style="font-size:.85rem;color:#8b949e">Estimated vulnerability: <strong style="color:${vulnColor}">${vulnPct}% chance of being cracked</strong></span>
+      <div style="margin-top:.4rem">
+        <div style="color:#58a6ff;font-size:.8rem;font-weight:600;margin-bottom:.3rem">📐 How is this calculated?</div>
+        <div style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:.65rem .9rem;font-size:.79rem;color:#8b949e;line-height:2">
+          <div>📏 Password length (${passwordLength} chars): base = <strong style="color:#e6edf3">${baseVal}%</strong></div>
+          <div>🧱 Block size (${blockSizeInt} bits): <strong style="color:${blockFactor > 0 ? '#f85149' : blockFactor < 0 ? '#3fb950' : '#8b949e'}">${blockFactor > 0 ? '+' : ''}${blockFactor}%</strong> <span style="color:#555">(${blockNote})</span></div>
+          <div>🔑 Key length (${keyLengthInt} bits): <strong style="color:${keyFactor > 0 ? '#3fb950' : '#8b949e'}">${keyFactor > 0 ? '-' : '+0'}${keyFactor > 0 ? keyFactor : ''}%</strong> <span style="color:#555">(${keyNote})</span></div>
+          <div>🔤 Charset variety (${charsetSize} chars): <strong style="color:${charsetBonus > 0 ? '#3fb950' : '#8b949e'}">${charsetBonus > 0 ? '-' : '+0'}${charsetBonus > 0 ? charsetBonus : ''}%</strong></div>
+          ${patternPenalty > 0 ? `<div>⚠️ Common pattern detected: <strong style="color:#f85149">+${patternPenalty}%</strong></div>` : ''}
+          <div style="border-top:1px solid #30363d;margin-top:.3rem;padding-top:.3rem;color:#e6edf3"><strong>Final: ${vulnPct}%</strong> estimated vulnerability</div>
+        </div>
+      </div>`;
+  }
+
+  // Show parameter effects
+  let effects = '';
+
+  if (blockSize < 128) {
+    effects += `⚠️ Smaller block size (${blockSize} bits) increases vulnerability to frequency analysis.<br>`;
+  } else if (blockSize > 128) {
+    effects += `🔒 Larger block size (${blockSize} bits) improves security but increases memory usage.<br>`;
+  }
+
+  if (keyLength < 128) {
+    effects += `⚠️ Key length (${keyLength} bits) may be vulnerable to brute force attacks.<br>`;
+  } else if (keyLength >= 256) {
+    effects += `🔒 Strong key length (${keyLength} bits) provides excellent security.<br>`;
+  }
+
+  if (passwordLength >= 8 && passwordLength <= 15 && blockSize == 128) {
+    const blocks = Math.ceil((passwordLength * 8) / parseInt(blockSize));
+    effects += `📊 Password (${passwordLength} chars = ${passwordLength * 8} bits) fits within ${blocks} ${blockSize}-bit block${blocks !== 1 ? 's' : ''}.<br>`;
+  }
+
+  const efficiencyScore = Math.min(100, (parseInt(blockSize) + parseInt(keyLength)) / 5);
+  effects += `⚡ Estimated performance score: ${efficiencyScore.toFixed(0)}/100`;
+
+  document.getElementById('parameter-effects').innerHTML = effects || 'Current parameters provide balanced security and performance.';
+}
+
+/* Change 8: checkReflectionLock calls updateObjOverlay */
+function checkReflectionLock() {
+  const checks = [
+    { label: 'Answer the mini quiz correctly',  done: quizPassed },
+    { label: 'Encrypt with the Stream Cipher',  done: !!cipherCaptures.stream },
+    { label: 'Encrypt with the Block Cipher',   done: !!cipherCaptures.block },
+    { label: 'Explore cipher parameters',        done: paramExplored },
+  ];
+  const allDone = checks.every(c => c.done);
+  const lockDiv = document.getElementById('reflection-lock');
+  const subArea = document.getElementById('submission-area');
+
+  updateObjOverlay(checks); /* Change 7/8 */
+
+  if (allDone) {
+    lockDiv.style.display = 'none';
+    subArea.classList.remove('sub-area-locked');
+  } else {
+    lockDiv.style.display = 'block';
+    subArea.classList.add('sub-area-locked');
+  }
+}
+
+function submitReflection() {
+  const reflection = document.getElementById('learning-reflection').value;
+  const studentName = (document.getElementById('student-name').value || '').trim();
+
+  if (!studentName) {
+    alert('Please enter your full name before submitting.');
+    document.getElementById('student-name').focus();
+    return;
+  }
+  if (reflection.trim().length < 100) {
+    alert('Please write a more detailed reflection (at least 100 characters).');
+    return;
+  }
+
+  const labFeedback = (document.getElementById('lab-feedback').value || '').trim();
+  const submittedAt = new Date().toISOString();
+  const submission = {
+    studentName,
+    openedAt,
+    submittedAt,
+    timeOnPageMs: new Date(submittedAt) - new Date(openedAt),
+    quizPassed,
+    quizAttempts,
+    streamCapture: cipherCaptures.stream,
+    blockCapture: cipherCaptures.block,
+    paramExplored,
+    paramSnapshot: {
+      blockSize: (document.getElementById('block-size') || {}).value || '128',
+      keyLength: (document.getElementById('key-length') || {}).value || '128',
+      password: (document.getElementById('password-param-input') || {}).value || ''
+    },
+    reflection,
+    labFeedback,
+    labCompleted: 'Module 2 Lab'
+  };
+  localStorage.setItem('week2-lab-submission', JSON.stringify(submission));
+
+  const _fb = document.getElementById('submission-feedback');
+  const _alreadySaved = document.getElementById('export-pdf-btn').style.display !== 'none';
+  _fb.innerHTML = _alreadySaved
+    ? '✅ Updated! Export PDF will reflect your latest changes.'
+    : '✅ Saved! Edit and re-save anytime — Export PDF always uses your latest version.';
+  _fb.style.display = 'block';
+  document.getElementById('export-pdf-btn').style.display = 'inline-block';
+
+  saveState(); /* Change 9 */
+}
+
+function fmtTs(iso) { return new Date(iso).toLocaleString(); }
+function fmtDur(ms) {
+  const s = Math.floor(ms / 1000), m = Math.floor(s / 60), h = Math.floor(m / 60);
+  if (h > 0) return `${h}h ${m % 60}m ${s % 60}s`;
+  if (m > 0) return `${m}m ${s % 60}s`;
+  return `${s}s`;
+}
+
+/* Change 6: Richer exportPDF with processing description */
+function exportPDF() {
+  const data = JSON.parse(localStorage.getItem('week2-lab-submission') || '{}');
+
+  document.getElementById('ps-name').textContent      = data.studentName || '—';
+  document.getElementById('ps-opened').textContent    = data.openedAt    ? fmtTs(data.openedAt)   : '—';
+  document.getElementById('ps-submitted').textContent = data.submittedAt ? fmtTs(data.submittedAt): '—';
+  document.getElementById('ps-duration').textContent  = data.timeOnPageMs != null ? fmtDur(data.timeOnPageMs) : '—';
+
+  document.getElementById('ps-interactions').innerHTML = `
+    <table>
+      <tr><td>Quiz:</td><td>${data.quizPassed ? '✅ Passed' : '❌ Not passed'} (${data.quizAttempts || 0} attempt${data.quizAttempts !== 1 ? 's' : ''})</td></tr>
+      <tr><td>Stream Cipher:</td><td>${data.streamCapture ? '✅ Used' : '❌ Not used'}</td></tr>
+      <tr><td>Block Cipher:</td><td>${data.blockCapture  ? '✅ Used' : '❌ Not used'}</td></tr>
+      <tr><td>Parameter Exploration:</td><td>${data.paramExplored ? '✅ Explored' : '❌ Not explored'}</td></tr>
+    </table>`;
+
+  const params = data.paramSnapshot;
+  document.getElementById('ps-params').innerHTML = data.paramExplored && params ? `
+    <table>
+      <tr><td>Block Size:</td><td>${params.blockSize} bits</td></tr>
+      <tr><td>Key Length:</td><td>${params.keyLength} bits</td></tr>
+      <tr><td>Password Tested:</td><td>${params.password ? params.password.length + ' characters' : 'None'}</td></tr>
+    </table>` : '<p>Not explored.</p>';
+
+  const renderCipher = (cap) => cap ? `
+    <table>
+      <tr><td>Message:</td><td>${cap.plaintext}</td></tr>
+      <tr><td>Key:</td><td>${cap.key}</td></tr>
+      <tr><td>Processing:</td><td>${cap.mode === 'stream-rc4' ? 'Each byte XORed with key stream byte sequentially' : `Data split into ${Math.ceil(cap.plaintext.length/4)} blocks of 4 characters each`}</td></tr>
+      <tr><td>Ciphertext (base64):</td><td class="cipher-data">${cap.ciphertext}</td></tr>
+      <tr><td>Encrypted at:</td><td>${fmtTs(cap.timestamp)}</td></tr>
+    </table>` : '<p>Not completed.</p>';
+
+  document.getElementById('ps-stream').innerHTML = renderCipher(data.streamCapture);
+  document.getElementById('ps-block').innerHTML  = renderCipher(data.blockCapture);
+  document.getElementById('ps-reflection').textContent = data.reflection || '—';
+  document.getElementById('ps-feedback').textContent = data.labFeedback || '—';
+
+  document.getElementById('print-summary').style.display = 'block';
+  // Set document.title → used by browser as the suggested PDF filename
+  const _origTitle = document.title;
+  const _pdfState  = JSON.parse(localStorage.getItem('lab02-state') || '{}');
+  const _pdfName   = (_pdfState.studentName || '').trim()
+                     || (document.getElementById('student-name') ? document.getElementById('student-name').value.trim() : '');
+  if (_pdfName) {
+    const _slug = _pdfName.replace(/[^\w\s\-]/g, '').trim();
+    document.title = _slug + ' — ' + _origTitle;
+  }
+  window.print();
+  setTimeout(() => {
+    document.title = _origTitle;
+    document.getElementById('print-summary').style.display = 'none';
+  }, 500);
+}
+
+const HINTS = {
+  B: "Block ciphers require buffering complete blocks before encryption, adding latency.",
+  C: "Stream and block ciphers have different performance characteristics and use cases.",
+  D: "Encryption is definitely needed for video streams - the question is which type."
+};
+
+/* Change 3: Removed if (answered) return; guard — students can always click */
+function check(choice, btn) {
+  quizAttempts++;
+  const correct = choice === 'A';
+  markBtn(btn, correct);
+
+  if (correct) {
+    answered = true;
+    quizPassed = true;
+    showFeedback(true, "Correct! <strong>Stream ciphers</strong> are ideal for live video because they encrypt data bit-by-bit as it flows, without requiring complete blocks. This eliminates buffering delays and provides the low latency critical for real-time streaming applications.");
+    saveState(); /* Change 9 */
+    checkReflectionLock();
+  } else {
+    showFeedback(false, HINTS[choice]);
+    checkReflectionLock();
+  }
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+  updateParameter('blockSize'); /* also calls updateSliderStyle */
+  onMessageInput();
+  loadState(); /* Change 9: restore persisted state */
+  _pageReady = true; /* must be after loadState so init calls don't mark paramExplored */
+});
+</script>
+</body>
+</html>

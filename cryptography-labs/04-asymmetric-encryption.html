@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Module 4 Lab – Asymmetric Encryption &amp; Secure Protocols</title>
+  <style>
+    *,*::before,*::after{box-sizing:border-box}
+    body{background:#0d1117;color:#c9d1d9;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;min-height:100vh;margin:0}
+    a{color:#58a6ff}
+    code{background:#21262d;border-radius:3px;padding:1px 5px;font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;font-size:.875em}
+    .font-mono{font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace}
+    .navbar{background:#161b22;border-bottom:1px solid #30363d;padding:.75rem 1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem}
+    .navbar-brand{font-weight:700;color:#e6edf3;text-decoration:none;font-size:1.1rem}
+    .nav-actions{display:flex;align-items:center;gap:.75rem}
+    .nav-pill{font-size:.8rem;color:#8b949e;white-space:nowrap}
+    .container{max-width:900px;margin:0 auto;padding:1.5rem 1rem}
+    .lab-badge{display:inline-block;background:#1f6feb;color:#fff;font-size:.72rem;font-weight:600;padding:2px 10px;border-radius:12px;margin-bottom:.5rem;text-transform:uppercase;letter-spacing:.06em}
+    .lab-header{margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid #30363d}
+    .lab-header h2{color:#e6edf3;margin:.25rem 0 .1rem;font-size:1.6rem}
+    .lab-header p{color:#8b949e;margin:0;font-size:.95rem}
+    .scenario-box{background:#161b22;border-left:4px solid #1f6feb;border-radius:0 8px 8px 0;padding:1rem 1.25rem;margin-bottom:1.5rem}
+    .scenario-box p{margin:0;line-height:1.65}
+    .demo-box{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:1.5rem;margin-bottom:1.5rem}
+    .question-box{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:1.25rem;margin-bottom:.75rem}
+    .question-text{font-weight:600;color:#e6edf3;font-size:1.05rem;margin:0 0 1rem}
+    .why-box{background:#1c2a1c;border:1px solid #238636;border-radius:8px;padding:1.25rem;margin-top:1rem;display:none}
+    .why-box.show{display:block}
+    .why-box h6{color:#3fb950;font-weight:700;margin:0 0 .5rem}
+    .why-box p{margin:.5rem 0 0;line-height:1.65}
+    .why-box ul{margin:.5rem 0 .5rem 1.25rem;padding:0;line-height:1.8}
+    .options-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+    @media(max-width:600px){.options-grid{grid-template-columns:1fr}}
+    .opt-btn{display:flex;align-items:center;gap:.6rem;text-align:left;background:#161b22;border:1px solid #30363d;border-radius:6px;padding:.65rem .9rem;color:#c9d1d9;cursor:pointer;width:100%;font-size:.95rem;transition:border-color .15s,background .15s}
+    .opt-btn:hover{border-color:#58a6ff;background:#1c2940;color:#e6edf3}
+    .opt-btn.correct{background:#1c2a1c!important;border-color:#238636!important;color:#3fb950!important}
+    .opt-btn.incorrect{background:#2a1c1c!important;border-color:#da3633!important;color:#f85149!important}
+    .opt-id{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;background:#30363d;border-radius:4px;font-size:.78rem;font-weight:700;flex-shrink:0}
+    .feedback-box{border-radius:8px;padding:1rem 1.25rem;margin-top:.75rem;font-size:.95rem;line-height:1.65;display:none}
+    .feedback-box.show{display:block}
+    .feedback-correct{background:#1c2a1c;border:1px solid #238636;color:#3fb950}
+    .feedback-incorrect{background:#2a1c1c;border:1px solid #da3633;color:#f85149}
+    .badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.75rem;font-weight:600}
+    .badge-green{background:#1c2a1c;color:#3fb950;border:1px solid #238636}
+    .badge-red{background:#2a1c1c;color:#f85149;border:1px solid #da3633}
+    .badge-yellow{background:#2a2000;color:#e3b341;border:1px solid #9e6a03}
+    .badge-gray{background:#21262d;color:#8b949e;border:1px solid #30363d}
+    .demo-label{font-size:.78rem;color:#8b949e;font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.4rem}
+    .demo-value{font-family:monospace;font-size:1.7rem;font-weight:700;letter-spacing:.08em}
+    table{width:100%;border-collapse:collapse;font-size:.9rem}
+    th,td{padding:.5rem .75rem;border:1px solid #30363d;text-align:left}
+    th{background:#21262d;color:#8b949e;font-weight:600;font-size:.8rem;text-transform:uppercase;letter-spacing:.05em}
+    tr:hover td{background:#1c2128}
+    .lab-footer{display:flex;justify-content:space-between;align-items:center;margin-top:2rem;padding-top:1rem;border-top:1px solid #30363d}
+    .lab-footer .text-muted{color:#8b949e;font-size:.85rem}
+    .btn-nav{display:inline-flex;align-items:center;gap:.4rem;padding:.4rem .9rem;border:1px solid #30363d;border-radius:6px;color:#c9d1d9;text-decoration:none;font-size:.85rem;background:#161b22;transition:border-color .15s}
+    .btn-nav:hover{border-color:#58a6ff;color:#58a6ff}
+    .btn-nav.disabled{opacity:.4;pointer-events:none}
+
+    /* ── DH Color Mixer ── */
+    .dh-stage{display:flex;align-items:flex-start;gap:0;margin:.5rem 0;flex-wrap:wrap}
+    .dh-party{flex:1;min-width:140px;text-align:center;padding:.6rem .4rem;background:#161b22;border:1px solid #30363d;border-radius:8px}
+    .dh-party-label{font-weight:600;font-size:.82rem;margin-bottom:.5rem;color:#e6edf3}
+    .color-swatch{width:52px;height:52px;border-radius:50%;margin:.4rem auto;border:2px solid #30363d;transition:background .5s}
+    .dh-arrow{display:flex;align-items:center;justify-content:center;font-size:1.2rem;color:#8b949e;padding:0 .25rem;align-self:center;min-width:28px}
+    .dh-public-row{display:flex;align-items:center;justify-content:center;gap:.75rem;margin:.75rem 0;flex-wrap:wrap}
+    .dh-public-box{background:#2a2000;border:1px solid #e3b341;border-radius:6px;padding:.45rem .8rem;font-size:.8rem;color:#e3b341;font-family:monospace}
+    .dh-step-btn{background:#1f6feb;color:#fff;border:none;border-radius:6px;padding:.4rem .85rem;cursor:pointer;font-size:.83rem;margin:.4rem auto;display:block}
+    .dh-step-btn:disabled{background:#30363d;cursor:not-allowed}
+    .dh-log{background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:.5rem .75rem;font-family:monospace;font-size:.75rem;height:90px;overflow-y:auto;margin:.5rem 0}
+    .dh-log .dl{line-height:1.8;animation:dl-in .2s ease both}
+    .dh-log .dl-y{color:#e3b341}.dh-log .dl-b{color:#58a6ff}.dh-log .dl-g{color:#3fb950}.dh-log .dl-r{color:#f85149}
+    @keyframes dl-in{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+    @keyframes dh-arrow-right{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
+    @keyframes dh-arrow-left{from{opacity:0;transform:translateX(8px)}to{opacity:1;transform:none}}
+    .dh-arrow-anim{display:block;line-height:1.4;text-align:center}
+
+    /* ── RSA Demo ── */
+    .rsa-box{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:1rem;margin:1rem 0}
+    .rsa-math{background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:.65rem .85rem;font-family:monospace;font-size:.78rem;line-height:1.9;margin:.5rem 0}
+    .rsa-math .rm-label{color:#8b949e}.rsa-math .rm-val{color:#e3b341}.rsa-math .rm-op{color:#58a6ff}
+    .rsa-result{background:#162016;border:1px solid #3fb950;border-radius:6px;padding:.5rem .85rem;font-family:monospace;font-size:.78rem;margin:.4rem 0;color:#3fb950}
+
+    /* ── Signature Demo ── */
+    .sig-box{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:1rem;margin:1rem 0}
+    .sig-flow{display:grid;grid-template-columns:1fr auto 1fr;gap:.75rem;align-items:center;margin:.75rem 0}
+    .sig-step{background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:.6rem .75rem;text-align:center;font-size:.78rem}
+    .sig-arrow{color:#58a6ff;font-size:1.3rem;text-align:center}
+    .sig-output{font-family:monospace;font-size:.76rem;background:#0d1117;border:1px solid #30363d;border-radius:4px;padding:.4rem .6rem;word-break:break-all;margin:.3rem 0}
+
+    /* ── TLS Handshake ── */
+    .tls-scene{display:grid;grid-template-columns:1fr 160px 1fr;gap:0;margin:.75rem 0;min-height:300px}
+    .tls-party{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.75rem .6rem;font-size:.76rem}
+    .tls-party-label{font-weight:600;font-size:.84rem;text-align:center;margin-bottom:.6rem;padding-bottom:.4rem;border-bottom:1px solid #30363d}
+    .tls-lane{display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;padding-top:2.2rem;gap:.1rem}
+    .tls-msg{background:#21262d;border:1px solid #30363d;border-radius:4px;padding:.2rem .45rem;font-size:.65rem;font-family:monospace;white-space:normal;word-break:break-word;opacity:0;transition:opacity .35s,transform .35s;width:100%;text-align:center;margin:.15rem 0}
+    .tls-msg.show{opacity:1;transform:none!important}
+    .tls-msg.c2s{color:#58a6ff;border-color:#58a6ff;transform:translateX(-8px)}
+    .tls-msg.s2c{color:#e3b341;border-color:#e3b341;transform:translateX(8px)}
+    .tls-msg.both{color:#3fb950;border-color:#3fb950}
+    .tls-event{font-size:.72rem;padding:.15rem .3rem;margin:.1rem 0;border-radius:3px;opacity:0;transition:opacity .3s;line-height:1.5}
+    .tls-event.show{opacity:1}
+    .tls-log{background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:.5rem .75rem;font-family:monospace;font-size:.73rem;height:80px;overflow-y:auto;margin:.5rem 0}
+    .tls-log .tl{line-height:1.75;animation:dl-in .2s ease both}
+    .tls-log .tl-b{color:#58a6ff}.tls-log .tl-y{color:#e3b341}.tls-log .tl-g{color:#3fb950}.tls-log .tl-p{color:#a371f7}
+
+    /* ── Hybrid Encryption ── */
+    .hybrid-box{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:1rem;margin:1rem 0}
+    .hybrid-flow{display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;margin:.65rem 0}
+    .hybrid-node{flex:1;min-width:80px;text-align:center;padding:.4rem .3rem;background:#0d1117;border:1px solid #30363d;border-radius:6px;font-size:.72rem;color:#8b949e}
+    .hybrid-arrow{color:#58a6ff;font-size:1rem}
+
+    /* ── Shared ── */
+    .lab-input{background:#21262d;border:1px solid #30363d;border-radius:6px;padding:.45rem .6rem;color:#e6edf3;width:100%;font-size:.87rem}
+    .lab-input:focus{outline:none;border-color:#58a6ff}
+    .run-btn{background:#1f6feb;color:#fff;border:none;border-radius:6px;padding:.4rem .85rem;cursor:pointer;font-size:.83rem;transition:background .2s}
+    .run-btn:hover{background:#1c64e8}
+    .danger-btn{background:#f85149}.danger-btn:hover{background:#e5484d}
+
+    /* ── Reflection ── */
+    .reflection-box{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:1.5rem;margin:1.5rem 0}
+    .reflection-title{color:#e6edf3;font-weight:600;margin-bottom:.75rem}
+    .reflection-input{background:#21262d;border:1px solid #30363d;border-radius:6px;padding:.75rem;color:#e6edf3;width:100%;min-height:100px;font-family:inherit;resize:vertical}
+    .reflection-input:focus{outline:none;border-color:#58a6ff}
+    .submit-btn{background:#1f6feb;color:#fff;border:none;border-radius:6px;padding:.5rem 1rem;cursor:pointer;font-size:.9rem;margin-top:.5rem}
+    .submit-btn:hover{background:#1c64e8}
+    .export-pdf-btn{background:#3fb950;color:#fff;border:none;border-radius:6px;padding:.5rem 1rem;cursor:pointer;font-size:.9rem;margin-top:.5rem;margin-left:.5rem}
+    .export-pdf-btn:hover{background:#3aad49}
+    .sub-area-locked{opacity:.4;pointer-events:none;user-select:none}
+
+    /* ── Print ── */
+    #print-summary{display:none;font-family:Arial,sans-serif;color:#000;padding:2rem;line-height:1.6}
+    #print-summary h1{font-size:1.4rem;margin-bottom:.25rem}
+    #print-summary h2{font-size:1.1rem;margin:1rem 0 .25rem;border-bottom:1px solid #ccc;padding-bottom:.2rem}
+    #print-summary table{border-collapse:collapse;width:100%;margin-bottom:.5rem}
+    #print-summary td{padding:.2rem .5rem;vertical-align:top}
+    #print-summary td:first-child{font-weight:bold;white-space:nowrap;width:180px}
+    @media print{body>*:not(#print-summary){display:none!important}#print-summary{display:block!important}}
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="navbar-brand" href="../">🔐 Cryptography Labs</a>
+  <div class="nav-actions">
+    <span class="nav-pill">Module 4 Lab</span>
+    <button onclick="resetLab()" style="background:none;border:1px solid #30363d;border-radius:6px;padding:.25rem .6rem;color:#8b949e;cursor:pointer;font-size:.75rem" title="Reset lab progress">↺ Reset</button>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="lab-header">
+    <div class="lab-badge">Module 4 · Asymmetric Crypto</div>
+    <h2>Asymmetric Encryption &amp; Secure Protocols</h2>
+    <p>Key exchange, RSA, digital signatures, hybrid encryption, and TLS — how the internet stays secure</p>
+  </div>
+
+  <div class="scenario-box">
+    <p><strong>Scenario:</strong> You're building a secure messaging platform. Your users need to communicate privately — but they've never met and can't share a secret key in advance. You need key exchange without a pre-shared secret, message encryption, tamper-proof signatures, and a secure transport channel. This lab walks through every piece of that puzzle.</p>
+  </div>
+
+  <!-- Section 1: Diffie-Hellman Key Exchange -->
+  <div class="demo-box">
+    <h4 style="margin-top:0;color:#e6edf3">🎨 Diffie-Hellman Key Exchange</h4>
+    <p style="color:#8b949e;margin-bottom:.75rem">DH allows two parties to establish a <em>shared secret over a public channel</em> — without ever sending that secret. The classic analogy uses paint mixing: mixing colors is easy, but separating them is nearly impossible.</p>
+
+    <div class="dh-public-row">
+      <div class="dh-public-box">p = 23 (prime modulus)</div>
+      <div class="dh-public-box">g = 5 (generator)</div>
+      <div style="color:#8b949e;font-size:.8rem">← Public parameters, known to everyone</div>
+    </div>
+
+    <div class="dh-stage" id="dh-stage">
+      <div class="dh-party" id="dh-alice">
+        <div class="dh-party-label" style="color:#58a6ff">Alice</div>
+        <div class="color-swatch" id="sw-alice" style="background:#21262d"></div>
+        <div style="font-size:.72rem;color:#8b949e;margin-top:.3rem" id="sw-alice-label">—</div>
+      </div>
+      <div class="dh-arrow" id="dh-arrow" style="flex-direction:column;font-size:1.2rem;line-height:1.4">⟷</div>
+      <div class="dh-party" id="dh-bob">
+        <div class="dh-party-label" style="color:#e3b341">Bob</div>
+        <div class="color-swatch" id="sw-bob" style="background:#21262d"></div>
+        <div style="font-size:.72rem;color:#8b949e;margin-top:.3rem" id="sw-bob-label">—</div>
+      </div>
+    </div>
+
+    <div class="dh-log" id="dh-log"></div>
+    <div style="display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap;margin:.35rem 0">
+      <button class="dh-step-btn" id="dh-btn" onclick="dhStep()" style="margin:0">▶ Start Key Exchange</button>
+      <button class="dh-step-btn" onclick="dhRedo()" style="margin:0;background:#30363d">↺ Redo</button>
+    </div>
+    <div id="dh-shared" style="display:none;background:#162016;border:1px solid #3fb950;border-radius:6px;padding:.7rem 1rem;margin:.5rem 0;font-size:.84rem">
+      <strong style="color:#3fb950">🔐 Shared Secret Established!</strong>
+      <span style="color:#8b949e" id="dh-shared-val"></span>
+    </div>
+    <div id="dh-disconnect-wrap" style="display:none;margin-top:.65rem">
+      <button class="dh-step-btn" onclick="dhDisconnect()" style="margin:0;background:#b91c1c;display:inline-block;width:auto">⚡ Simulate Bob Disconnects</button>
+      <div id="dh-disconnect-result" style="display:none;margin-top:.5rem;background:#2a1c1c;border:1px solid #f85149;border-radius:6px;padding:.75rem .9rem;font-size:.82rem;line-height:1.85"></div>
+    </div>
+  </div>
+
+  <!-- Section 2: RSA Toy Example -->
+  <div class="demo-box">
+    <h4 style="margin-top:0;color:#e6edf3">🔑 RSA Fundamentals</h4>
+    <p style="color:#8b949e;margin-bottom:.75rem">RSA relies on the difficulty of factoring large numbers. This demo uses small primes so you can follow the math — real RSA uses primes with 1024+ digits.</p>
+
+    <div class="rsa-box">
+      <p style="margin:0 0 .5rem;color:#e6edf3;font-size:.87rem;font-weight:600">Key Generation (p=17, q=11):</p>
+      <div class="rsa-math" id="rsa-keygen">
+        <div><span class="rm-label">n  = p × q   = </span><span class="rm-val">17 × 11 = 187</span><span style="color:#555"> (public modulus)</span></div>
+        <div><span class="rm-label">φ(n) = (p-1)(q-1) = </span><span class="rm-val">16 × 10 = 160</span><span style="color:#555"> (Euler's totient)</span></div>
+        <div><span class="rm-label">e  = </span><span class="rm-val">7</span><span style="color:#555"> (public exponent, gcd(7,160)=1)</span></div>
+        <div><span class="rm-label">d  = </span><span class="rm-val">23</span><span style="color:#555"> (private exponent, 7×23=161≡1 mod 160)</span></div>
+        <div style="margin-top:.3rem"><span style="color:#3fb950">Public key: (e=7, n=187)</span> · <span style="color:#f85149">Private key: (d=23, n=187)</span></div>
+      </div>
+
+      <div style="background:#1c2940;border-left:3px solid #58a6ff;border-radius:0 6px 6px 0;padding:.65rem .85rem;margin:.5rem 0 .75rem;font-size:.82rem;color:#8b949e;line-height:1.85">
+        <strong style="color:#58a6ff">📋 What to do &amp; observe:</strong>
+        <ol style="margin:.3rem 0 0 1.2rem;padding:0">
+          <li>Type a single letter below — try <code style="color:#e6edf3">A</code>, <code style="color:#e6edf3">M</code>, or <code style="color:#e6edf3">Z</code></li>
+          <li>Watch <span style="color:#58a6ff">c = m<sup>e</sup> mod n</span> — encrypting with the <em>public</em> exponent (e=7)</li>
+          <li>Watch <span style="color:#3fb950">m = c<sup>d</sup> mod n</span> — decrypting with the <em>private</em> exponent (d=23)</li>
+          <li>Confirm decryption recovers your original character</li>
+          <li>Characters with ASCII ≥ 187 won't work — because <span style="color:#e3b341">m must be &lt; n = 187</span></li>
+        </ol>
+      </div>
+      <p style="margin:.75rem 0 .4rem;color:#e6edf3;font-size:.87rem;font-weight:600">Try encrypting a character:</p>
+      <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
+        <input type="text" class="lab-input" id="rsa-char" maxlength="1" placeholder="Enter a character (A–Z)" style="max-width:200px" oninput="runRSA()">
+        <span style="color:#8b949e;font-size:.82rem">e.g. type <strong>A</strong></span>
+      </div>
+      <div id="rsa-output" style="margin-top:.6rem;display:none">
+        <div class="rsa-math">
+          <div id="rsa-enc-line"></div>
+          <div id="rsa-dec-line"></div>
+        </div>
+        <div class="rsa-result" id="rsa-result-line"></div>
+      </div>
+    </div>
+
+    <div style="background:#1c2940;border:1px solid #58a6ff;border-radius:6px;padding:.8rem;margin-top:.5rem;font-size:.83rem;color:#8b949e;line-height:1.8">
+      <strong style="color:#58a6ff">Why RSA works:</strong> Anyone with the public key (e, n) can encrypt. Only the holder of the private key (d, n) can decrypt — because computing d from (e, n) requires factoring n, which is computationally infeasible for large primes.<br>
+      <strong style="color:#e3b341">⚠️ RSA in practice:</strong> Never encrypt data directly with RSA. Use RSA to encrypt a random symmetric key (AES), then encrypt data with that AES key (hybrid encryption).
+    </div>
+  </div>
+
+  <!-- Section 3: Digital Signatures -->
+  <div class="demo-box">
+    <h4 style="margin-top:0;color:#e6edf3">✍️ Digital Signatures</h4>
+    <p style="color:#8b949e;margin-bottom:.75rem">A digital signature proves <strong style="color:#e6edf3">authenticity</strong> (who sent it) and <strong style="color:#e6edf3">integrity</strong> (it hasn't changed). Using the same RSA keys: Alice signs with her <em>private</em> key; anyone with her <em>public</em> key can verify.</p>
+
+    <div class="sig-box">
+      <div style="margin-bottom:.65rem">
+        <label style="color:#e6edf3;font-size:.87rem;font-weight:600">Message to sign:</label>
+        <input type="text" class="lab-input" id="sig-msg" value="Transfer 100 tokens to Bob" style="margin:.3rem 0" oninput="runSignature()">
+      </div>
+
+      <div class="sig-flow">
+        <div class="sig-step">
+          <div style="color:#58a6ff;font-weight:600;margin-bottom:.3rem">📨 Sign (Alice's private key)</div>
+          <div style="color:#8b949e;font-size:.7rem">Hash message → encrypt hash with d=23</div>
+          <div class="sig-output" id="sig-hash" style="color:#a371f7">—</div>
+          <div style="color:#8b949e;font-size:.7rem;margin-top:.2rem">Signature:</div>
+          <div class="sig-output" id="sig-sig" style="color:#3fb950">—</div>
+        </div>
+        <div class="sig-arrow">→</div>
+        <div class="sig-step">
+          <div style="color:#e3b341;font-weight:600;margin-bottom:.3rem">🔍 Verify (Alice's public key)</div>
+          <div style="color:#8b949e;font-size:.7rem">Decrypt signature with e=7 → compare hash</div>
+          <div class="sig-output" id="ver-hash" style="color:#a371f7">—</div>
+          <div id="ver-result" style="margin-top:.35rem;font-size:.76rem;font-weight:600">—</div>
+        </div>
+      </div>
+
+      <div style="border-top:1px solid #30363d;padding-top:.75rem;margin-top:.4rem">
+        <p style="color:#e6edf3;font-size:.87rem;font-weight:600;margin-bottom:.35rem">🎯 Tamper the Message After Signing</p>
+        <p style="color:#8b949e;font-size:.82rem;margin-bottom:.55rem">The signature was created for the original message. Change the message — does the signature still verify?</p>
+        <button class="run-btn danger-btn" onclick="runTamperSig()">✏️ Tamper Message &amp; Re-verify</button>
+        <div id="tamper-sig-result" style="margin-top:.6rem;display:none"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 4: Hybrid Encryption -->
+  <div class="demo-box">
+    <h4 style="margin-top:0;color:#e6edf3">🔀 Hybrid Encryption</h4>
+    <p style="color:#8b949e;margin-bottom:.75rem">RSA is too slow to encrypt large data directly. Real systems use <strong style="color:#e6edf3">hybrid encryption</strong>: RSA to securely exchange a random AES session key, then AES to encrypt the actual data.</p>
+
+    <div class="hybrid-box">
+      <div class="hybrid-flow">
+        <div class="hybrid-node" style="border-color:#a371f7;color:#a371f7">🎲 Random<br>AES-256 Key</div>
+        <div class="hybrid-arrow">→</div>
+        <div class="hybrid-node" style="border-color:#58a6ff;color:#58a6ff">🔑 Encrypt key<br>w/ RSA pubkey</div>
+        <div class="hybrid-arrow">→</div>
+        <div class="hybrid-node" style="border-color:#e3b341;color:#e3b341">📡 Send:<br>RSA(key) + AES(data)</div>
+        <div class="hybrid-arrow">→</div>
+        <div class="hybrid-node" style="border-color:#f85149;color:#f85149">🔓 Decrypt key<br>w/ RSA privkey</div>
+        <div class="hybrid-arrow">→</div>
+        <div class="hybrid-node" style="border-color:#3fb950;color:#3fb950">✅ Decrypt data<br>w/ AES key</div>
+      </div>
+
+      <div style="margin:.65rem 0">
+        <label style="color:#e6edf3;font-size:.87rem;font-weight:600">Message to hybrid-encrypt:</label>
+        <input type="text" class="lab-input" id="hybrid-msg" value="Secret: my private key is safe!" style="margin:.3rem 0">
+        <button class="run-btn" onclick="runHybrid()" style="margin-top:.4rem">🔀 Hybrid Encrypt &amp; Decrypt</button>
+      </div>
+      <div id="hybrid-output" style="display:none;font-family:monospace;font-size:.76rem;background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:.65rem .85rem;margin-top:.5rem;line-height:1.9"></div>
+    </div>
+
+    <div style="background:#1c2940;border:1px solid #58a6ff;border-radius:6px;padding:.8rem;margin-top:.5rem;font-size:.83rem;color:#8b949e;line-height:1.8">
+      <strong style="color:#58a6ff">TLS uses this exact pattern:</strong> The TLS handshake uses RSA or ECDH to establish a shared session key, then all subsequent traffic is encrypted with AES-GCM using that session key. This gives you RSA's security properties at AES's speed.
+    </div>
+  </div>
+
+  <!-- Section 5: TLS Handshake Animation -->
+  <div class="demo-box">
+    <h4 style="margin-top:0;color:#e6edf3">🤝 TLS 1.3 Handshake</h4>
+    <p style="color:#8b949e;margin-bottom:.75rem">TLS 1.3 reduces the handshake to <strong style="color:#e6edf3">1 round-trip</strong> (down from 2 in TLS 1.2). Watch the messages flow between client and server — and see which cryptographic primitive is used at each step.</p>
+
+    <div class="tls-scene">
+      <div class="tls-party">
+        <div class="tls-party-label" style="color:#58a6ff">🖥 Client</div>
+        <div id="tls-client-events"></div>
+      </div>
+      <div class="tls-lane" id="tls-lane"></div>
+      <div class="tls-party">
+        <div class="tls-party-label" style="color:#e3b341">🌐 Server</div>
+        <div id="tls-server-events"></div>
+      </div>
+    </div>
+    <div class="tls-log" id="tls-log"></div>
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.4rem">
+      <button class="run-btn" id="tls-btn" onclick="startTLS()">▶ Animate TLS Handshake</button>
+      <button class="run-btn" onclick="resetTLS()" style="background:#30363d">↺ Reset</button>
+    </div>
+  </div>
+
+  <!-- Section 6: Randomness -->
+  <div class="demo-box">
+    <h4 style="margin-top:0;color:#e6edf3">🎲 Randomness &amp; Entropy</h4>
+    <p style="color:#8b949e;margin-bottom:.75rem">Every cryptographic operation depends on <strong style="color:#e6edf3">unpredictable randomness</strong>. Weak random number generation has broken real-world systems — including RSA key generation on embedded devices.</p>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin:1rem 0">
+      <div style="background:#2a1c1c;border:1px solid #f85149;border-radius:6px;padding:.75rem">
+        <div style="color:#f85149;font-weight:600;font-size:.85rem;margin-bottom:.4rem">❌ Weak Entropy (PRNG)</div>
+        <div style="color:#8b949e;font-size:.8rem;line-height:1.7">Seeded from system time → predictable<br>DUAL_EC_DRBG (NSA backdoor, 2007)<br>Debian OpenSSL bug (2008) — only 32,767 possible keys generated<br>Android Bitcoin wallets (2013) — k reuse in ECDSA</div>
+      </div>
+      <div style="background:#162016;border:1px solid #3fb950;border-radius:6px;padding:.75rem">
+        <div style="color:#3fb950;font-weight:600;font-size:.85rem;margin-bottom:.4rem">✅ Strong Entropy (CSPRNG)</div>
+        <div style="color:#8b949e;font-size:.8rem;line-height:1.7">OS-level: <code style="color:#e6edf3">/dev/urandom</code>, <code style="color:#e6edf3">CryptGenRandom</code><br>Hardware: Intel RDRAND, TPM chips<br>Python: <code style="color:#e6edf3">secrets.token_bytes(32)</code><br>Never use <code style="color:#f85149">Math.random()</code> for crypto!</div>
+      </div>
+    </div>
+
+    <div style="margin-top:.5rem">
+      <button class="run-btn" onclick="showEntropyDemo()">🎲 Generate Cryptographic Nonce</button>
+      <div id="entropy-output" style="margin-top:.5rem;display:none;font-family:monospace;font-size:.77rem;background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:.55rem .75rem"></div>
+    </div>
+
+    <div style="background:#2a1c1c;border:1px solid #f85149;border-radius:6px;padding:.75rem;margin-top:.75rem">
+      <p style="color:#f85149;font-weight:600;font-size:.85rem;margin:0 0 .45rem">⚠️ Why <code style="color:#f85149;background:transparent">Math.random()</code> is unsafe for cryptography</p>
+      <ul style="color:#8b949e;font-size:.81rem;margin:0;padding-left:1.25rem;line-height:2">
+        <li><strong style="color:#e6edf3">It's a PRNG, not a CSPRNG</strong> — output is fully deterministic once the internal seed is known; there's no unpredictability guarantee</li>
+        <li><strong style="color:#e6edf3">Predictable future outputs</strong> — observing a dozen values lets an attacker reverse-engineer the seed and predict every future "random" number</li>
+        <li><strong style="color:#e6edf3">No hardware entropy</strong> — <code style="color:#3fb950">crypto.getRandomValues()</code> harvests OS/hardware noise (CPU timing jitter, interrupt events, hardware RNG); <code style="color:#f85149">Math.random()</code> does not</li>
+        <li><strong style="color:#e6edf3">Real-world failures:</strong>
+          <ul style="margin:.25rem 0 0 1rem;line-height:1.9">
+            <li><span style="color:#e3b341">Debian OpenSSL 2008</span> — a single-line patch accidentally reduced entropy to just the process ID, leaving at most 32,767 distinct RSA keys</li>
+            <li><span style="color:#e3b341">Android Bitcoin wallets 2013</span> — weak PRNG reused the ECDSA nonce <em>k</em>, which directly exposes the private key via a simple equation</li>
+          </ul>
+        </li>
+        <li><strong style="color:#3fb950">Safe alternatives:</strong> <code style="color:#3fb950">crypto.getRandomValues()</code> (JS/browser) · <code style="color:#3fb950">secrets</code> module (Python) · <code style="color:#3fb950">SecureRandom</code> (Java) · <code style="color:#3fb950">/dev/urandom</code> (Linux)</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Quiz -->
+  <div class="question-box">
+    <p class="question-text">❓ A developer needs to securely send a 100 MB encrypted file to a server they've never contacted before. Which approach correctly applies hybrid encryption?</p>
+    <div class="options-grid">
+      <button class="opt-btn" onclick="check('A',this)"><span class="opt-id">A</span> Encrypt the 100 MB file directly with the server's RSA public key</button>
+      <button class="opt-btn" onclick="check('B',this)"><span class="opt-id">B</span> Generate a random AES-256 key, encrypt the file with AES-GCM, then encrypt the AES key with the server's RSA public key — send both</button>
+      <button class="opt-btn" onclick="check('C',this)"><span class="opt-id">C</span> Use Diffie-Hellman to encrypt the file bytes directly</button>
+      <button class="opt-btn" onclick="check('D',this)"><span class="opt-id">D</span> Hash the file with SHA-256 and encrypt the hash with RSA</button>
+    </div>
+  </div>
+  <div id="feedback" class="feedback-box"></div>
+
+  <!-- Student Reflection -->
+  <div class="reflection-box">
+    <div class="reflection-title">💭 Learning Reflection Submission</div>
+    <p style="color:#8b949e;margin-bottom:.75rem">After exploring key exchange, RSA, digital signatures, and the TLS handshake, reflect on how these pieces fit together:</p>
+
+    <div style="margin-bottom:1rem">
+      <strong style="color:#e6edf3">Guided Questions:</strong>
+      <ul style="color:#8b949e;font-size:.9rem;margin:.5rem 0 0 1.5rem;line-height:1.9">
+        <li>How does Diffie-Hellman allow two parties to establish a shared secret without ever transmitting that secret?</li>
+        <li>Why can't RSA alone efficiently encrypt large amounts of data? How does hybrid encryption solve this?</li>
+        <li>What is the difference between <em>encryption</em> (confidentiality) and a <em>digital signature</em> (authenticity + integrity)?</li>
+        <li>In the TLS handshake, why is the server's certificate necessary? What attack does it prevent?</li>
+        <li><strong style="color:#e6edf3">Key question:</strong> A zero-knowledge proof lets Alice prove she knows a secret without revealing the secret itself. How might this concept apply to passwordless authentication — and why would this be more secure than sending a hashed password?</li>
+      </ul>
+    </div>
+
+    <div id="reflection-lock" style="background:#2a1c1c;border:1px solid #f85149;border-radius:6px;padding:.75rem 1rem;margin-bottom:1rem">
+      <p style="color:#f85149;font-weight:600;margin:0;font-size:.9rem">🔒 Complete all objectives (tracker bottom-right ↘) to unlock submission</p>
+    </div>
+
+    <div id="submission-area" class="sub-area-locked">
+      <textarea class="reflection-input" id="learning-reflection" placeholder="Describe what you learned about asymmetric cryptography and secure protocols. How do RSA, DH, digital signatures, and TLS work together to secure the internet?
+
+Please write at least 4-5 sentences about your key insights..."></textarea>
+
+      <div style="margin-top:.75rem">
+        <label style="color:#e6edf3;font-size:.9rem;font-weight:600">🔍 Lab Observations</label>
+        <p style="color:#8b949e;font-size:.82rem;margin:.2rem 0 .3rem">Was there anything within the lab you expected to change, but didn't?</p>
+        <textarea class="reflection-input" id="lab-feedback" placeholder="Share any observations, surprises, or things that felt missing..." style="min-height:80px"></textarea>
+      </div>
+
+      <div style="margin-top:.75rem">
+        <label style="color:#e6edf3;font-size:.9rem;font-weight:600">Your name:</label>
+        <input type="text" id="student-name" class="lab-input" placeholder="Enter your full name..." style="max-width:320px;margin:.3rem 0 0">
+      </div>
+
+      <div style="margin-top:.75rem">
+        <button class="submit-btn" onclick="submitReflection()">💾 Save Reflection</button>
+        <button id="export-pdf-btn" class="export-pdf-btn" onclick="exportPDF()" style="display:none">📄 Export PDF</button>
+      </div>
+      <div id="submission-feedback" style="margin-top:.5rem;color:#3fb950;display:none">✅ Saved! Edit and re-save anytime — Export PDF always uses your latest version.</div>
+    </div>
+  </div>
+
+  <div class="why-box" id="why-matters">
+    <h6>💡 Why it matters — asymmetric crypto in the wild</h6>
+    <ul>
+      <li><strong>HTTPS everywhere</strong> — TLS uses ECDH key exchange + AES-GCM encryption + RSA/ECDSA certificates for every secure website.</li>
+      <li><strong>Signal Protocol</strong> — Uses a "Double Ratchet" combining DH key exchange + AES + HMAC for forward secrecy in every message.</li>
+      <li><strong>Code signing</strong> — Software updates are digitally signed; your OS verifies the signature before installing — preventing supply-chain attacks.</li>
+      <li><strong>SSH</strong> — Uses RSA/ED25519 public key authentication; your private key never leaves your machine.</li>
+    </ul>
+  </div>
+
+  <div class="lab-footer">
+    <span class="text-muted">Module 4 Lab – Asymmetric Encryption &amp; Secure Protocols</span>
+  </div>
+</div>
+
+<!-- PDF Print Summary -->
+<div id="print-summary">
+  <h1>Module 4 Lab – Asymmetric Encryption &amp; Secure Protocols</h1>
+  <p style="color:#555;font-size:.9rem;margin-top:0">Cybersecurity Lab Submission</p>
+  <hr>
+  <h2>Student Info</h2>
+  <table>
+    <tr><td>Student:</td><td id="ps-name"></td></tr>
+    <tr><td>Opened:</td><td id="ps-opened"></td></tr>
+    <tr><td>Submitted:</td><td id="ps-submitted"></td></tr>
+    <tr><td>Time on page:</td><td id="ps-duration"></td></tr>
+  </table>
+  <h2>Interactions</h2>
+  <div id="ps-interactions"></div>
+  <h2>Reflection</h2>
+  <div id="ps-reflection" style="white-space:pre-wrap"></div>
+  <h2>Lab Observations</h2>
+  <div id="ps-feedback" style="white-space:pre-wrap"></div>
+</div>
+
+<!-- Floating Objective Overlay -->
+<div id="obj-overlay" style="position:fixed;bottom:1.25rem;right:1.25rem;z-index:999;font-size:.8rem;user-select:none">
+  <div id="obj-badge" onclick="toggleObj()" style="background:rgba(22,27,34,.95);border:1px solid #30363d;border-radius:20px;padding:.35rem .8rem;cursor:pointer;display:flex;align-items:center;gap:.5rem;color:#8b949e;backdrop-filter:blur(4px);transition:border-color .2s;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.4)">
+    <span id="obj-count">📋 0/4 objectives</span><span id="obj-chev" style="font-size:.65rem">▼</span>
+  </div>
+  <div id="obj-panel" style="display:block;position:absolute;bottom:calc(100% + .4rem);right:0;background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.65rem .9rem;min-width:210px;line-height:2.2;box-shadow:0 4px 12px rgba(0,0,0,.5)">
+    <div style="font-size:.72rem;color:#58a6ff;font-weight:600;margin-bottom:.25rem;border-bottom:1px solid #30363d;padding-bottom:.2rem">Lab Objectives</div>
+    <div id="obj-list"></div>
+  </div>
+</div>
+
+<script>
+// ── Shared JS (inlined from shared.js) ──
+function showFeedback(correct, html) {
+  const fb = document.getElementById('feedback');
+  if (!fb) return;
+  fb.className = 'feedback-box show ' + (correct ? 'feedback-correct' : 'feedback-incorrect');
+  fb.innerHTML = (correct ? '✅ ' : '❌ ') + html;
+  if (correct) {
+    const why = document.getElementById('why-matters');
+    if (why) setTimeout(() => { why.classList.add('show'); }, 350);
+  }
+}
+function markBtn(btn, correct) {
+  const parent = btn.closest('.options-grid, .question-box');
+  if (parent) parent.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('correct','incorrect'));
+  btn.classList.add(correct ? 'correct' : 'incorrect');
+}
+
+// ── State ──
+let quizPassed = false, quizAttempts = 0;
+let dhCompleted = false;
+let sigTamperTested = false;
+let tlsViewed = false;
+const openedAt = new Date().toISOString();
+
+// ── localStorage persistence ──
+function saveState() {
+  const studentName = (document.getElementById('student-name') || {}).value || '';
+  const reflection  = (document.getElementById('learning-reflection') || {}).value || '';
+  const labFeedback = (document.getElementById('lab-feedback') || {}).value || '';
+  localStorage.setItem('lab04-state', JSON.stringify({
+    quizPassed, quizAttempts, dhCompleted, sigTamperTested, tlsWatched: tlsViewed,
+    studentName, reflection, labFeedback
+  }));
+}
+
+function loadState() {
+  const raw = localStorage.getItem('lab04-state');
+  if (!raw) return;
+  try {
+    const s = JSON.parse(raw);
+    if (s.quizPassed)       quizPassed       = true;
+    if (s.quizAttempts)     quizAttempts     = s.quizAttempts;
+    if (s.dhCompleted)      dhCompleted      = true;
+    if (s.sigTamperTested)  sigTamperTested  = true;
+    if (s.tlsWatched)       tlsViewed        = true;
+    if (s.studentName) {
+      const el = document.getElementById('student-name');
+      if (el) el.value = s.studentName;
+    }
+    if (s.reflection) {
+      const el = document.getElementById('learning-reflection');
+      if (el) el.value = s.reflection;
+    }
+    if (s.labFeedback) {
+      const el = document.getElementById('lab-feedback');
+      if (el) el.value = s.labFeedback;
+    }
+    // Restore quiz visual state
+    if (quizPassed) {
+      const fb = document.getElementById('feedback');
+      if (fb) {
+        fb.className = 'feedback-box show feedback-correct';
+        fb.innerHTML = '✅ <strong>Correct!</strong> This is hybrid encryption — the standard approach used by TLS, PGP, and SSH. RSA encrypts only the small AES key (fast), while AES-GCM encrypts the large file (very fast). The receiver uses their RSA private key to decrypt the AES key, then AES to decrypt the file. Best of both worlds: RSA\'s security model + AES\'s performance.';
+        const why = document.getElementById('why-matters');
+        if (why) why.classList.add('show');
+      }
+    }
+    // Restore DH visual state
+    if (dhCompleted) {
+      const btn = document.getElementById('dh-btn');
+      if (btn) btn.disabled = true;
+      const shared = document.getElementById('dh-shared');
+      if (shared) shared.style.display = 'block';
+      setSwatch('sw-alice', '#4ade80', 'Completed');
+      setSwatch('sw-bob',   '#4ade80', 'Completed');
+    }
+  } catch(e) {}
+  checkReflectionLock();
+}
+
+function resetLab() {
+  if (!confirm('Reset all lab progress? This cannot be undone.')) return;
+  localStorage.removeItem('lab04-state');
+  location.reload();
+}
+
+// ── Floating Objective Overlay ──
+let _objOpen = true;
+function toggleObj() {
+  _objOpen = !_objOpen;
+  document.getElementById('obj-panel').style.display = _objOpen ? 'block' : 'none';
+  document.getElementById('obj-chev').textContent = _objOpen ? '▼' : '▲';
+}
+function updateObjOverlay(checks) {
+  const done  = checks.filter(c => c.done).length;
+  const total = checks.length;
+  const allDone = done === total;
+  const badge = document.getElementById('obj-badge');
+  badge.style.borderColor = allDone ? '#238636' : '#30363d';
+  badge.style.color       = allDone ? '#3fb950' : '#8b949e';
+  document.getElementById('obj-count').textContent = allDone ? '✅ All objectives done!' : `📋 ${done}/${total} objectives`;
+  document.getElementById('obj-list').innerHTML = checks.map(c =>
+    `<div style="color:${c.done?'#3fb950':'#8b949e'};font-size:.79rem">${c.done?'✅':'⬜'} ${c.label}</div>`
+  ).join('');
+}
+
+// ── Hash helper ──
+function hashMix(h, x) {
+  h = Math.imul(h ^ (x | 0), 0x9e3779b9) >>> 0;
+  h ^= h >>> 16; h = Math.imul(h, 0x85ebca6b) >>> 0;
+  h ^= h >>> 13; h = Math.imul(h, 0xc2b2ae35) >>> 0;
+  return (h ^ (h >>> 16)) >>> 0;
+}
+function simHash(str) {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < str.length; i++) h = hashMix(h, str.charCodeAt(i));
+  return h >>> 0;
+}
+
+// ── ModPow (BigInt) ──
+function modpow(base, exp, mod) {
+  return Number(BigInt(base) ** BigInt(exp) % BigInt(mod));
+}
+
+// ── DH Key Exchange ──
+// p=23, g=5, Alice a=6, Bob b=15
+const DH = { p:23, g:5, a:6, b:15 };
+let dhPhase = 0;
+const DH_STEPS = [
+  () => {
+    dhLog('y', `Public parameters: p=${DH.p}, g=${DH.g} (shared with everyone)`);
+    dhLog('b', `Alice picks private key a=${DH.a}  (secret, never shared)`);
+    dhLog('y', `Bob   picks private key b=${DH.b}  (secret, never shared)`);
+    setSwatch('sw-alice', '#1f6feb', `Private a=${DH.a}`);
+    setSwatch('sw-bob',   '#e3b341', `Private b=${DH.b}`);
+    // Reveal disconnect scenario button — Bob could drop before exchanging public values
+    document.getElementById('dh-disconnect-wrap').style.display = 'block';
+  },
+  () => {
+    const A = modpow(DH.g, DH.a, DH.p); // 5^6 mod 23 = 8
+    const B = modpow(DH.g, DH.b, DH.p); // 5^15 mod 23 = 19
+    dhLog('b', `Alice computes A = g^a mod p = ${DH.g}^${DH.a} mod ${DH.p} = ${A}`);
+    dhLog('y', `Bob   computes B = g^b mod p = ${DH.g}^${DH.b} mod ${DH.p} = ${B}`);
+    dhLog('r', `Alice → A=${A} → Bob  (public)    Bob → B=${B} → Alice  (public)`);
+    setSwatch('sw-alice', '#38bdf8', `Sends A=${A}`);
+    setSwatch('sw-bob',   '#fb923c', `Sends B=${B}`);
+    // Animate directional arrows in center
+    const arrowEl = document.getElementById('dh-arrow');
+    if (arrowEl) {
+      arrowEl.style.color = '';
+      arrowEl.innerHTML =
+        '<span class="dh-arrow-anim" style="animation:dh-arrow-right .4s ease both;color:#58a6ff">→</span>' +
+        '<span class="dh-arrow-anim" style="animation:dh-arrow-left .4s ease .5s both;color:#e3b341">←</span>';
+    }
+  },
+  () => {
+    const A = modpow(DH.g, DH.a, DH.p);
+    const B = modpow(DH.g, DH.b, DH.p);
+    const Ka = modpow(B, DH.a, DH.p); // B^a mod p
+    const Kb = modpow(A, DH.b, DH.p); // A^b mod p
+    dhLog('b', `Alice computes K = B^a mod p = ${B}^${DH.a} mod ${DH.p} = ${Ka}`);
+    dhLog('y', `Bob   computes K = A^b mod p = ${A}^${DH.b} mod ${DH.p} = ${Kb}`);
+    dhLog('g', `Both arrive at K = ${Ka} — without ever transmitting it!`);
+    setSwatch('sw-alice', '#4ade80', `Shared K=${Ka}`);
+    setSwatch('sw-bob',   '#4ade80', `Shared K=${Kb}`);
+    // Fully-connected indicator in center
+    const arrowEl = document.getElementById('dh-arrow');
+    if (arrowEl) {
+      arrowEl.innerHTML =
+        '<span style="color:#3fb950;font-size:1.4rem;display:block;text-align:center;animation:dl-in .3s ease both">🔐</span>' +
+        '<span style="color:#3fb950;font-size:.65rem;display:block;text-align:center;animation:dl-in .3s .2s ease both">Connected</span>';
+    }
+    // Hide disconnect scenario (exchange succeeded)
+    document.getElementById('dh-disconnect-wrap').style.display = 'none';
+    document.getElementById('dh-shared').style.display = 'block';
+    document.getElementById('dh-shared-val').textContent = ` Both computed K = ${Ka}. An eavesdropper sees p=${DH.p}, g=${DH.g}, A=${A}, B=${B} — but computing a or b requires solving the discrete logarithm problem.`;
+    document.getElementById('dh-btn').disabled = true;
+    dhCompleted = true;
+    saveState();
+    checkReflectionLock();
+  },
+];
+
+function dhStep() {
+  if (dhPhase >= DH_STEPS.length) return;
+  DH_STEPS[dhPhase]();
+  dhPhase++;
+  if (dhPhase >= DH_STEPS.length) document.getElementById('dh-btn').disabled = true;
+  else document.getElementById('dh-btn').textContent = `▶ Step ${dhPhase + 1} of ${DH_STEPS.length}`;
+}
+
+function dhRedo() {
+  dhPhase = 0;
+  dhCompleted = false;
+  document.getElementById('dh-log').innerHTML = '';
+  document.getElementById('dh-shared').style.display = 'none';
+  document.getElementById('dh-disconnect-wrap').style.display = 'none';
+  document.getElementById('dh-disconnect-result').style.display = 'none';
+  const arrowEl = document.getElementById('dh-arrow');
+  if (arrowEl) { arrowEl.innerHTML = '⟷'; arrowEl.style.color = '#8b949e'; }
+  setSwatch('sw-alice', '#21262d', '—');
+  setSwatch('sw-bob',   '#21262d', '—');
+  document.getElementById('dh-btn').disabled = false;
+  document.getElementById('dh-btn').textContent = '▶ Start Key Exchange';
+  saveState();
+  checkReflectionLock();
+}
+
+function dhDisconnect() {
+  const A = modpow(DH.g, DH.a, DH.p);
+  const div = document.getElementById('dh-disconnect-result');
+  div.style.display = 'block';
+  div.innerHTML =
+    '<div style="color:#f85149;font-weight:600;margin-bottom:.4rem">⚡ Bob dropped the connection!</div>' +
+    '<div style="color:#8b949e;font-size:.81rem;line-height:1.9">' +
+    `Alice has computed her public value <span style="color:#58a6ff">A = g<sup>a</sup> mod p = ${A}</span> and is ready to exchange — ` +
+    `but <span style="color:#e3b341">Bob goes offline</span> before sending back his public value B.<br>` +
+    'Without B, Alice cannot compute the shared secret K = B<sup>a</sup> mod p.<br>' +
+    '<div style="background:#161b22;border:1px solid #30363d;border-radius:4px;padding:.4rem .65rem;margin:.4rem 0;font-family:monospace;font-size:.78rem">' +
+    `<span style="color:#3fb950">Alice has:  </span> p=${DH.p}, g=${DH.g}, a=${DH.a} (secret), A=${A} (computed)<br>` +
+    '<span style="color:#f85149">Alice needs:</span> B from Bob  →  cannot derive K = B<sup>a</sup> mod p<br>' +
+    '<span style="color:#e3b341">Result:     </span> No shared secret — handshake aborted, must restart' +
+    '</div>' +
+    '<span style="color:#e3b341">💡 In real protocols: a handshake timeout fires, the connection is aborted, and a fresh key exchange is initiated.</span>' +
+    '</div>';
+}
+
+function dhLog(cls, text) {
+  const log = document.getElementById('dh-log');
+  const d = document.createElement('div');
+  d.className = `dl dl-${cls}`;
+  d.textContent = text;
+  log.appendChild(d);
+  log.scrollTop = log.scrollHeight;
+}
+
+function setSwatch(swId, color, label) {
+  const sw = document.getElementById(swId);
+  if (sw) sw.style.background = color;
+  const lEl = document.getElementById(swId + '-label');
+  if (lEl) lEl.textContent = label;
+}
+
+// ── RSA Demo ──
+function runRSA() {
+  const ch = document.getElementById('rsa-char').value;
+  if (!ch) { document.getElementById('rsa-output').style.display = 'none'; return; }
+  const m = ch.charCodeAt(0);
+  if (m >= 187) {
+    document.getElementById('rsa-output').style.display = 'none';
+    return;
+  }
+  const c  = modpow(m, 7,  187); // encrypt with e=7
+  const m2 = modpow(c, 23, 187); // decrypt with d=23
+  document.getElementById('rsa-enc-line').innerHTML =
+    `<span class="rm-label">Encrypt: </span><span class="rm-val">m=${m} ('${ch}')</span> → <span class="rm-op">c = m^e mod n</span> = ${m}^7 mod 187 = <span class="rm-val">${c}</span>`;
+  document.getElementById('rsa-dec-line').innerHTML =
+    `<span class="rm-label">Decrypt: </span><span class="rm-val">c=${c}</span> → <span class="rm-op">m = c^d mod n</span> = ${c}^23 mod 187 = <span class="rm-val">${m2}</span> ('${String.fromCharCode(m2)}')`;
+  document.getElementById('rsa-result-line').textContent =
+    `✓ Original: '${ch}' (${m})  →  Ciphertext: ${c}  →  Decrypted: '${String.fromCharCode(m2)}' (${m2})`;
+  document.getElementById('rsa-output').style.display = 'block';
+}
+
+// ── Digital Signatures ──
+// Uses toy RSA: n=187, e=7, d=23
+function toySigHash(msg) {
+  // Map message to a value < 187 for toy RSA
+  let h = simHash(msg);
+  return (h % 180) + 1; // 1..180, safely < n=187
+}
+
+function rsaSign(hashVal)   { return modpow(hashVal, 23, 187); } // sign with d
+function rsaVerify(sigVal)  { return modpow(sigVal,  7,  187); } // verify with e
+
+function runSignature() {
+  const msg = document.getElementById('sig-msg').value;
+  if (!msg) return;
+  const h   = toySigHash(msg);
+  const sig = rsaSign(h);
+  const ver = rsaVerify(sig);
+  const ok  = ver === h;
+  document.getElementById('sig-hash').textContent = `hash(msg) = ${h}`;
+  document.getElementById('sig-sig').textContent  = `sig = hash^d mod n = ${h}^23 mod 187 = ${sig}`;
+  document.getElementById('ver-hash').textContent = `sig^e mod n = ${sig}^7 mod 187 = ${ver}`;
+  document.getElementById('ver-result').innerHTML = ok
+    ? `<span style="color:#3fb950">✅ VALID — ${ver} === ${h} (hash matches)</span>`
+    : `<span style="color:#f85149">❌ INVALID — ${ver} ≠ ${h}</span>`;
+  document.getElementById('tamper-sig-result').style.display = 'none';
+}
+
+function runTamperSig() {
+  const orig     = document.getElementById('sig-msg').value || 'Transfer 100 tokens to Bob';
+  const tampered = orig + ' [MODIFIED]';
+  const origHash = toySigHash(orig);
+  const sig      = rsaSign(origHash);
+  const tampHash = toySigHash(tampered);
+  const ver      = rsaVerify(sig);
+  const div = document.getElementById('tamper-sig-result');
+  div.style.display = 'block';
+  div.innerHTML = `
+    <div style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:.65rem .85rem;font-family:monospace;font-size:.76rem;line-height:1.9">
+      <div style="color:#8b949e">Original msg hash:  <span style="color:#a371f7">${origHash}</span>  →  Signature: <span style="color:#3fb950">${sig}</span></div>
+      <div style="color:#8b949e">Tampered msg hash:  <span style="color:#f85149">${tampHash}</span>  (changed by tampering)</div>
+      <div style="color:#8b949e">sig^e mod n:        <span style="color:#3fb950">${ver}</span>  (signature still decrypts to original hash)</div>
+      <div style="background:#2a1c1c;border:1px solid #f85149;border-radius:4px;padding:.4rem .6rem;margin-top:.4rem">
+        <strong style="color:#f85149">❌ VERIFICATION FAILED</strong>
+        <span style="color:#8b949e"> — Decrypted signature (${ver}) ≠ tampered hash (${tampHash}). The message was altered after signing.</span>
+      </div>
+    </div>`;
+  sigTamperTested = true;
+  saveState();
+  checkReflectionLock();
+}
+
+// ── Hybrid Encryption ──
+function streamXOR(data, key) {
+  let out = '';
+  for (let i = 0; i < data.length; i++) {
+    const kb = (hashMix(key.charCodeAt(i % key.length), i * 0x6364136) & 0xFF);
+    out += String.fromCharCode((data.charCodeAt(i) ^ kb) & 0xFF);
+  }
+  return out;
+}
+
+function runHybrid() {
+  const msg = document.getElementById('hybrid-msg').value;
+  if (!msg) return;
+  // 1. Generate random AES session key (simulate with random hex)
+  const sessionKey = Array.from({length:16}, () => Math.floor(Math.random()*256).toString(16).padStart(2,'0')).join('');
+  // 2. RSA encrypt a simplified representation of the key (first char's ASCII)
+  const keyCode = sessionKey.charCodeAt(0) % 180 + 1; // toy
+  const encKey  = modpow(keyCode, 7, 187); // RSA encrypt with public key
+  // 3. AES encrypt the message
+  const ct = streamXOR(msg, sessionKey);
+  const ctB64 = btoa(ct);
+  // 4. RSA decrypt the key
+  const decKeyCode = modpow(encKey, 23, 187);
+  // 5. AES decrypt
+  const pt = streamXOR(ct, sessionKey);
+
+  const div = document.getElementById('hybrid-output');
+  div.style.display = 'block';
+  div.innerHTML = '';
+  const _hybridLines = [
+    `<span style="color:#a371f7">① AES session key (random):    ${sessionKey}</span>`,
+    `<span style="color:#58a6ff">② RSA-encrypt key byte ${keyCode} → ${encKey}   (sent alongside ciphertext)</span>`,
+    `<span style="color:#e3b341">③ AES-encrypt message:         "${msg}"</span>`,
+    `<span style="color:#e3b341">   → Ciphertext (b64):         ${ctB64.slice(0,40)}${ctB64.length>40?'…':''}</span>`,
+    `<span style="color:#8b949e">── Receiver uses their RSA private key ──</span>`,
+    `<span style="color:#f85149">④ RSA-decrypt AES key:         ${encKey}^23 mod 187 = ${decKeyCode}</span>`,
+    `<span style="color:#3fb950">⑤ AES-decrypt ciphertext →    "${pt}"   ✅</span>`,
+  ];
+  _hybridLines.forEach((line, i) => {
+    setTimeout(() => {
+      const row = document.createElement('div');
+      row.style.cssText = 'opacity:0;transition:opacity .35s,transform .35s;transform:translateY(5px)';
+      row.innerHTML = line;
+      div.appendChild(row);
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        row.style.opacity = '1';
+        row.style.transform = 'none';
+      }));
+    }, i * 380);
+  });
+}
+
+// ── TLS Handshake Animation ──
+const TLS_STEPS = [
+  { delay:0,    side:'c2s', msg:'ClientHello',         client:'Sending supported cipher suites, TLS version, random nonce', log:['b','> Client → Server: ClientHello (TLS 1.3, supported ciphers, nonce_C)'] },
+  { delay:800,  side:'s2c', msg:'ServerHello',          server:'Selecting cipher suite, sending random nonce',              log:['y','> Server → Client: ServerHello (AES-256-GCM, nonce_S)'] },
+  { delay:1600, side:'s2c', msg:'Certificate',          server:'Sending X.509 certificate (RSA/ECDSA public key)',         log:['y','> Server → Client: Certificate (signed by trusted CA)'] },
+  { delay:2400, side:'s2c', msg:'ServerKeyExchange',    server:'Sending ephemeral DH public key',                         log:['y','> Server → Client: ECDHE public key for key exchange'] },
+  { delay:3200, side:'c2s', msg:'ClientKeyExchange',    client:'Generating ephemeral DH key, computing shared secret',    log:['b','> Client computes shared secret via ECDHE'] },
+  { delay:4000, side:'both',msg:'[Key Derivation]',     client:'Deriving session keys from shared secret + nonces',        log:['p','> Both derive symmetric keys: AES-256-GCM session key + HMAC key'] },
+  { delay:4800, side:'c2s', msg:'Finished (encrypted)', client:'Sending MAC of handshake transcript — handshake complete', log:['b','> Client → Server: Finished (encrypted, authenticates handshake)'] },
+  { delay:5600, side:'s2c', msg:'Finished (encrypted)', server:'Verifying client MAC — connection established!',           log:['g','> Server → Client: Finished ✓  —  Secure channel established!'] },
+  { delay:6400, side:'both',msg:'Application Data',     client:'All data encrypted with AES-256-GCM session key',          log:['g','> 🔐 Secure tunnel active — all traffic now AES-256-GCM encrypted'] },
+];
+
+let _tlsTimers = [];
+
+function addTLSMsg(text, cls) {
+  const lane = document.getElementById('tls-lane');
+  const d = document.createElement('div');
+  d.className = `tls-msg ${cls}`;
+  const arrow = cls === 'c2s' ? '→ ' : cls === 's2c' ? '← ' : '↔ ';
+  d.textContent = arrow + text;
+  lane.appendChild(d);
+  requestAnimationFrame(() => requestAnimationFrame(() => d.classList.add('show')));
+}
+
+function addTLSEvent(side, text) {
+  const el = document.getElementById(`tls-${side}-events`);
+  const d = document.createElement('div');
+  d.className = 'tls-event';
+  d.style.color = side === 'client' ? '#58a6ff88' : '#e3b34188';
+  d.textContent = text;
+  el.appendChild(d);
+  requestAnimationFrame(() => requestAnimationFrame(() => d.classList.add('show')));
+}
+
+function tlsLog(cls, text) {
+  const log = document.getElementById('tls-log');
+  const d = document.createElement('div');
+  d.className = `tl tl-${cls}`;
+  d.textContent = text;
+  log.appendChild(d);
+  log.scrollTop = log.scrollHeight;
+}
+
+function startTLS() {
+  _tlsTimers.forEach(t => clearTimeout(t));
+  _tlsTimers = [];
+  document.getElementById('tls-lane').innerHTML = '';
+  document.getElementById('tls-client-events').innerHTML = '';
+  document.getElementById('tls-server-events').innerHTML = '';
+  document.getElementById('tls-log').innerHTML = '';
+  document.getElementById('tls-btn').disabled = true;
+
+  TLS_STEPS.forEach(step => {
+    const t = setTimeout(() => {
+      addTLSMsg(step.msg, step.side);
+      if (step.client) addTLSEvent('client', step.client);
+      if (step.server) addTLSEvent('server', step.server);
+      tlsLog(step.log[0], step.log[1]);
+      if (step.msg.includes('Application')) {
+        tlsViewed = true;
+        document.getElementById('tls-btn').disabled = false;
+        saveState();
+        checkReflectionLock();
+      }
+    }, step.delay);
+    _tlsTimers.push(t);
+  });
+}
+
+function resetTLS() {
+  _tlsTimers.forEach(t => clearTimeout(t));
+  _tlsTimers = [];
+  document.getElementById('tls-lane').innerHTML = '';
+  document.getElementById('tls-client-events').innerHTML = '';
+  document.getElementById('tls-server-events').innerHTML = '';
+  document.getElementById('tls-log').innerHTML = '';
+  document.getElementById('tls-btn').disabled = false;
+}
+
+// ── Entropy Demo ──
+function showEntropyDemo() {
+  const arr = new Uint8Array(32);
+  crypto.getRandomValues(arr);
+  const hex = Array.from(arr).map(b => b.toString(16).padStart(2,'0')).join('');
+  const div = document.getElementById('entropy-output');
+  div.style.display = 'block';
+  div.innerHTML = `<span style="color:#8b949e">Generated via </span><span style="color:#3fb950">crypto.getRandomValues()</span><span style="color:#8b949e"> (CSPRNG):</span>
+<span style="color:#a371f7">${hex}</span>
+<span style="color:#555">Click again for a completely different value — true unpredictability.</span>`;
+}
+
+// ── Lock ──
+function checkReflectionLock() {
+  const checks = [
+    { label: 'Answer the mini quiz correctly',                        done: quizPassed },
+    { label: 'Complete the Diffie-Hellman key exchange walkthrough',  done: dhCompleted },
+    { label: 'Tamper a signed message and observe verification failure', done: sigTamperTested },
+    { label: 'Watch the full TLS handshake animation',                done: tlsViewed },
+  ];
+  const allDone = checks.every(c => c.done);
+  document.getElementById('reflection-lock').style.display = allDone ? 'none' : 'block';
+  document.getElementById('submission-area').classList.toggle('sub-area-locked', !allDone);
+  updateObjOverlay(checks);
+}
+
+// ── Quiz ──
+const HINTS4 = {
+  A: 'RSA encryption of 100 MB would be extremely slow — RSA operates on small blocks (key size) and is designed for encrypting short data like symmetric keys.',
+  C: 'Diffie-Hellman establishes a shared secret but doesn\'t directly encrypt arbitrary data.',
+  D: 'Hashing + RSA encrypting the hash is a digital signature — it provides authenticity, not confidentiality.',
+};
+function check(choice, btn) {
+  quizAttempts++;
+  const correct = choice === 'B';
+  markBtn(btn, correct);
+  if (correct) {
+    quizPassed = true;
+    showFeedback(true, '<strong>Correct!</strong> This is hybrid encryption — the standard approach used by TLS, PGP, and SSH. RSA encrypts only the small AES key (fast), while AES-GCM encrypts the large file (very fast). The receiver uses their RSA private key to decrypt the AES key, then AES to decrypt the file. Best of both worlds: RSA\'s security model + AES\'s performance.');
+    saveState();
+    checkReflectionLock();
+  } else {
+    showFeedback(false, HINTS4[choice]);
+    saveState();
+    checkReflectionLock();
+  }
+}
+
+// ── Submission ──
+function submitReflection() {
+  const reflection  = document.getElementById('learning-reflection').value;
+  const studentName = (document.getElementById('student-name').value || '').trim();
+  if (!studentName) { alert('Please enter your full name.'); document.getElementById('student-name').focus(); return; }
+  if (reflection.trim().length < 100) { alert('Please write at least 100 characters.'); return; }
+  const labFeedback = (document.getElementById('lab-feedback').value || '').trim();
+  const submittedAt = new Date().toISOString();
+  const submission = {
+    studentName, openedAt, submittedAt,
+    timeOnPageMs: new Date(submittedAt) - new Date(openedAt),
+    quizPassed, quizAttempts,
+    dhCompleted, sigTamperTested, tlsViewed,
+    reflection, labFeedback, labCompleted: 'Module 4 Lab'
+  };
+  localStorage.setItem('week4-lab-submission', JSON.stringify(submission));
+  const _fb = document.getElementById('submission-feedback');
+  const _alreadySaved = document.getElementById('export-pdf-btn').style.display !== 'none';
+  _fb.innerHTML = _alreadySaved
+    ? '✅ Updated! Export PDF will reflect your latest changes.'
+    : '✅ Saved! Edit and re-save anytime — Export PDF always uses your latest version.';
+  _fb.style.display = 'block';
+  document.getElementById('export-pdf-btn').style.display = 'inline-block';
+  saveState();
+}
+
+function exportPDF() {
+  const data = JSON.parse(localStorage.getItem('week4-lab-submission') || '{}');
+  document.getElementById('ps-name').textContent      = data.studentName || '—';
+  document.getElementById('ps-opened').textContent    = data.openedAt    ? fmtTs(data.openedAt)    : '—';
+  document.getElementById('ps-submitted').textContent = data.submittedAt ? fmtTs(data.submittedAt) : '—';
+  document.getElementById('ps-duration').textContent  = data.timeOnPageMs != null ? fmtDur(data.timeOnPageMs) : '—';
+  document.getElementById('ps-interactions').innerHTML = `
+    <table>
+      <tr><td>Quiz:</td><td>${data.quizPassed ? '✅ Passed' : '❌ Not passed'} (${data.quizAttempts || 0} attempt${data.quizAttempts !== 1 ? 's' : ''})</td></tr>
+      <tr><td>DH Key Exchange:</td><td>${data.dhCompleted     ? '✅ Completed' : '❌ Not done'}</td></tr>
+      <tr><td>Signature Tamper Test:</td><td>${data.sigTamperTested ? '✅ Completed' : '❌ Not done'}</td></tr>
+      <tr><td>TLS Handshake:</td><td>${data.tlsViewed ? '✅ Watched' : '❌ Not viewed'}</td></tr>
+    </table>`;
+  document.getElementById('ps-reflection').textContent = data.reflection  || '—';
+  document.getElementById('ps-feedback').textContent   = data.labFeedback || '—';
+  document.getElementById('print-summary').style.display = 'block';
+  // Set document.title → used by browser as the suggested PDF filename
+  const _origTitle = document.title;
+  const _pdfState  = JSON.parse(localStorage.getItem('lab04-state') || '{}');
+  const _pdfName   = (_pdfState.studentName || '').trim()
+                     || (document.getElementById('student-name') ? document.getElementById('student-name').value.trim() : '');
+  if (_pdfName) {
+    const _slug = _pdfName.replace(/[^\w\s\-]/g, '').trim();
+    document.title = _slug + ' — ' + _origTitle;
+  }
+  window.print();
+  setTimeout(() => {
+    document.title = _origTitle;
+    document.getElementById('print-summary').style.display = 'none';
+  }, 500);
+}
+
+function fmtTs(iso) { return new Date(iso).toLocaleString(); }
+function fmtDur(ms) {
+  const s = Math.floor(ms/1000), m = Math.floor(s/60), h = Math.floor(m/60);
+  if (h > 0) return `${h}h ${m%60}m ${s%60}s`;
+  if (m > 0) return `${m}m ${s%60}s`;
+  return `${s}s`;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadState();
+  runSignature();
+  checkReflectionLock();
+});
+</script>
+</body>
+</html>
