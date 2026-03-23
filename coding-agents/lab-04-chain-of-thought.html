@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lab 04 — Chain of Thought &amp; ReAct</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0d1117; color: #e6edf3; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
+  nav { background: #161b22; border-bottom: 1px solid #30363d; padding: 0 24px; height: 56px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+  .nav-brand { font-size: 16px; font-weight: 600; }
+  .nav-back { color: #58a6ff; text-decoration: none; font-size: 14px; }
+  .nav-back:hover { opacity: .75; }
+  main { max-width: 960px; margin: 0 auto; padding: 32px 24px 64px; }
+  h1 { font-size: 28px; font-weight: 700; margin-bottom: 4px; }
+  .subtitle { color: #8b949e; font-size: 15px; margin-bottom: 28px; }
+  .lab-badge { display: inline-block; background: #1f2937; border: 1px solid #30363d; border-radius: 20px; padding: 2px 12px; font-size: 12px; color: #8b949e; margin-bottom: 12px; letter-spacing: .5px; text-transform: uppercase; }
+  .canvas-wrap { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 16px; margin-bottom: 20px; overflow: hidden; }
+  canvas { display: block; width: 100%; border-radius: 8px; }
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 20px; }
+  button { background: #21262d; border: 1px solid #30363d; color: #e6edf3; padding: 8px 16px; border-radius: 8px; font-size: 13px; cursor: pointer; transition: background .15s, border-color .15s; font-family: inherit; }
+  button:hover:not(:disabled) { background: #30363d; border-color: #58a6ff; }
+  button.primary { background: #1f3a5f; border-color: #58a6ff; color: #58a6ff; }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  select { background: #21262d; border: 1px solid #30363d; color: #e6edf3; padding: 8px 12px; border-radius: 8px; font-size: 13px; cursor: pointer; font-family: inherit; }
+  .slider-group { display: flex; align-items: center; gap: 8px; }
+  input[type=range] { accent-color: #58a6ff; width: 100px; }
+  .label { font-size: 12px; color: #8b949e; }
+  .insight { background: #161b22; border: 1px solid #30363d; border-radius: 12px; overflow: hidden; }
+  .insight-body { padding: 20px; display: grid; gap: 20px; }
+  .insight-label { font-size: 11px; text-transform: uppercase; letter-spacing: .8px; color: #8b949e; margin-bottom: 10px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; padding: 8px 12px; color: #8b949e; font-weight: 600; border-bottom: 1px solid #30363d; }
+  td { padding: 8px 12px; border-bottom: 1px solid #21262d; }
+  tr:last-child td { border-bottom: none; }
+  .good { color: #3fb950; }
+  .mid { color: #d29922; }
+  .bad { color: #f78166; }
+  .tip-box { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 14px 16px; font-size: 13px; color: #e6edf3; line-height: 1.7; }
+  .tip-box strong { color: #bc8cff; }
+  .step-indicator { display: flex; gap: 6px; align-items: center; font-size: 12px; color: #8b949e; margin-top: 8px; }
+  .step-pip { width: 8px; height: 8px; border-radius: 50%; background: #30363d; transition: background .3s; }
+  .step-pip.active { background: #58a6ff; }
+  .step-pip.done { background: #3fb950; }
+  /* ── Explanation Sections ── */
+  .explain-section { margin-top: 40px; }
+  .explain-section + .explain-section { margin-top: 32px; }
+  .explain-h2 { font-size: 18px; font-weight: 700; color: #e6edf3; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid #30363d; display: flex; align-items: center; gap: 10px; }
+  .explain-h2 .ehead-icon { font-size: 20px; }
+  .explain-p { color: #8b949e; font-size: 14px; line-height: 1.8; margin-bottom: 12px; }
+  .explain-p strong { color: #e6edf3; }
+  .explain-p code { background: #21262d; border: 1px solid #30363d; border-radius: 4px; padding: 1px 6px; font-family: 'SF Mono','Fira Code',monospace; font-size: 12px; color: #a5d6ff; }
+  .explain-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; margin-bottom: 16px; }
+  .explain-card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 18px 20px; }
+  .explain-card-title { font-size: 13px; font-weight: 700; color: #e6edf3; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .explain-card p { font-size: 13px; color: #8b949e; line-height: 1.7; }
+  .explain-card code { background: #21262d; border-radius: 3px; padding: 1px 5px; font-family: monospace; font-size: 11px; color: #a5d6ff; }
+  .steps-list { counter-reset: step; list-style: none; display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
+  .steps-list li { counter-increment: step; display: flex; gap: 14px; }
+  .steps-list li::before { content: counter(step); min-width: 28px; height: 28px; background: #21262d; border: 1px solid #30363d; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #58a6ff; flex-shrink: 0; margin-top: 2px; }
+  .steps-list li .step-body { flex: 1; }
+  .steps-list li .step-title { font-size: 14px; font-weight: 600; color: #e6edf3; margin-bottom: 3px; }
+  .steps-list li .step-desc { font-size: 13px; color: #8b949e; line-height: 1.7; }
+  .callout { border-radius: 10px; padding: 16px 20px; margin-bottom: 16px; display: flex; gap: 14px; }
+  .callout-info { background: #0d2137; border: 1px solid #1f4068; }
+  .callout-warn { background: #2d1f00; border: 1px solid #5a3e00; }
+  .callout-tip  { background: #0d2d0d; border: 1px solid #1f5c1f; }
+  .callout-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .callout-body { flex: 1; }
+  .callout-title { font-size: 13px; font-weight: 700; margin-bottom: 5px; }
+  .callout-info .callout-title { color: #58a6ff; }
+  .callout-warn .callout-title { color: #e3b341; }
+  .callout-tip  .callout-title { color: #3fb950; }
+  .callout-body p { font-size: 13px; color: #8b949e; line-height: 1.7; }
+  .callout-body p strong { color: #e6edf3; }
+  .takeaways { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 20px 24px; }
+  .takeaway-item { display: flex; gap: 12px; padding: 8px 0; }
+  .takeaway-item + .takeaway-item { border-top: 1px solid #21262d; }
+  .takeaway-bullet { color: #58a6ff; font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+  .takeaway-text { font-size: 13px; color: #8b949e; line-height: 1.7; }
+  .takeaway-text strong { color: #e6edf3; }
+  .real-world-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+  .rw-badge { background: #21262d; border: 1px solid #30363d; border-radius: 20px; padding: 5px 14px; font-size: 12px; color: #8b949e; display: flex; align-items: center; gap: 6px; }
+  .rw-badge strong { color: #e6edf3; }
+  .pitfall-list { display: flex; flex-direction: column; gap: 10px; }
+  .pitfall { background: #1a0d0d; border: 1px solid #3d1515; border-radius: 8px; padding: 14px 18px; }
+  .pitfall-title { font-size: 13px; font-weight: 700; color: #f85149; margin-bottom: 5px; }
+  .pitfall p { font-size: 13px; color: #8b949e; line-height: 1.65; }
+  .pitfall p strong { color: #e6edf3; }
+  .compare-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 16px; }
+  .compare-table th { padding: 10px 14px; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: #8b949e; border-bottom: 1px solid #30363d; }
+  .compare-table td { padding: 10px 14px; border-bottom: 1px solid #21262d; color: #8b949e; vertical-align: top; }
+  .compare-table td:first-child { color: #e6edf3; font-weight: 600; }
+  .compare-table tr:last-child td { border-bottom: none; }
+  .divider { border: none; border-top: 1px solid #21262d; margin: 40px 0; }
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-brand">🤖 Coding Agents</div>
+  <a class="nav-back" href="../index.html">← Playground</a>
+</nav>
+<main>
+  <div class="lab-badge">Lab 04</div>
+  <h1>Chain of Thought &amp; ReAct</h1>
+  <p class="subtitle">Comparing direct answers, CoT reasoning, and the Thought/Action/Observation loop</p>
+
+  <div class="canvas-wrap">
+    <canvas id="canvas" height="360"></canvas>
+  </div>
+
+  <div class="controls">
+    <select id="problemSelect">
+      <option value="math">Math problem</option>
+      <option value="qa">Multi-hop QA</option>
+      <option value="debug">Code debugging</option>
+      <option value="plan">Planning task</option>
+    </select>
+    <button id="btnRunAll" class="primary">Run All</button>
+    <button id="btnStep">Step ReAct</button>
+    <button id="btnReset">Reset</button>
+    <div class="slider-group">
+      <span class="label">Speed</span>
+      <input type="range" id="speedSlider" min="0.5" max="3" step="0.1" value="1">
+      <span id="speedLabel" class="label">1.0×</span>
+    </div>
+  </div>
+
+  <div class="step-indicator" id="stepIndicator"></div>
+
+  <div class="insight">
+    <div class="insight-body">
+      <div>
+        <div class="insight-label">Approach Comparison</div>
+        <table id="compTable">
+          <thead>
+            <tr><th>Metric</th><th>Direct Answer</th><th>Chain of Thought</th><th>ReAct</th></tr>
+          </thead>
+          <tbody id="compBody"></tbody>
+        </table>
+      </div>
+      <div>
+        <div class="insight-label">When to use each approach</div>
+        <div class="tip-box" id="tipBox"></div>
+      </div>
+    </div>
+  </div>
+
+<hr class="divider">
+
+<div class="explain-section">
+  <div class="explain-h2"><span class="ehead-icon">📖</span> Concept Overview</div>
+  <p class="explain-p"><strong>Chain-of-Thought (CoT)</strong> prompting is a technique where you instruct the LLM to reason step-by-step before giving its final answer. Instead of immediately outputting "42", the model first writes out its reasoning: "The user wants X, so I need to Y, which means Z, therefore the answer is 42." This seemingly simple change dramatically improves accuracy on multi-step problems — the model is less likely to make reasoning errors because each step is explicitly verified before the next.</p>
+  <p class="explain-p">The <strong>ReAct pattern</strong> (Reasoning + Acting) extends CoT into an interactive loop. Rather than reasoning all the way to a final answer in one pass, the model alternates between <strong>Thought</strong> (internal reasoning about what to do next), <strong>Action</strong> (a tool call to gather information or perform an action), and <strong>Observation</strong> (the result of that action). This interleaving allows the model to update its reasoning based on real-world feedback — correcting course when a search returns unexpected results or a tool call fails.</p>
+  <p class="explain-p">ReAct is particularly powerful because it grounds reasoning in reality. A pure CoT model might reason its way to a wrong answer confidently; a ReAct agent observes actual evidence and adjusts. This is why ReAct-style agents are the dominant architecture for tasks requiring real-world information retrieval or multi-step execution.</p>
+</div>
+
+<div class="explain-section">
+  <div class="explain-h2"><span class="ehead-icon">⚖️</span> Comparing the Three Approaches</div>
+  <table class="compare-table">
+    <tr>
+      <th>Approach</th>
+      <th>How It Works</th>
+      <th>Best For</th>
+      <th>Token Cost</th>
+      <th>Self-Correction</th>
+    </tr>
+    <tr>
+      <td>Direct Answer</td>
+      <td>Input → immediate output, no intermediate reasoning</td>
+      <td>Simple factual Q&amp;A, classification, short completions</td>
+      <td>Lowest</td>
+      <td>None — errors are silent</td>
+    </tr>
+    <tr>
+      <td>Chain of Thought</td>
+      <td>Input → step-by-step reasoning → answer (one pass)</td>
+      <td>Math, logic puzzles, multi-step deductions with known facts</td>
+      <td>Medium (2–5× direct)</td>
+      <td>Partial — catches reasoning errors</td>
+    </tr>
+    <tr>
+      <td>ReAct</td>
+      <td>Thought → Action → Observation → Thought → ... → Answer</td>
+      <td>Research, code execution, any task needing real-world data</td>
+      <td>Highest (varies by # of steps)</td>
+      <td>Strong — grounded in real observations</td>
+    </tr>
+  </table>
+</div>
+
+<div class="explain-section">
+  <div class="explain-h2"><span class="ehead-icon">⚙️</span> How to Implement ReAct</div>
+  <ol class="steps-list">
+    <li>
+      <div class="step-body">
+        <div class="step-title">Set the pattern in the system prompt</div>
+        <div class="step-desc">Tell the model explicitly: "Before each action, write a Thought explaining your reasoning. After receiving a tool result, write an Observation summarizing what you learned. Alternate Thought/Action/Observation until you have enough information to give a final Answer." Explicit instruction is required — models don't do this by default.</div>
+      </div>
+    </li>
+    <li>
+      <div class="step-body">
+        <div class="step-title">Parse and execute Action blocks</div>
+        <div class="step-desc">Your agent runtime needs to detect when the model emits an <code>Action:</code> block, parse the tool name and arguments, execute the tool, and inject the result as an <code>Observation:</code> message before continuing generation. This can be done with stop sequences or by using the model's native tool-use API.</div>
+      </div>
+    </li>
+    <li>
+      <div class="step-body">
+        <div class="step-title">Let Thoughts be private</div>
+        <div class="step-desc">In most agent UIs, the Thought blocks are hidden from users — they're the model's scratchpad. Only the final Answer is shown. This is similar to how Claude's extended thinking works: the reasoning is used internally but not surfaced to the end user.</div>
+      </div>
+    </li>
+    <li>
+      <div class="step-body">
+        <div class="step-title">Handle dead ends gracefully</div>
+        <div class="step-desc">Sometimes the model's Thought leads to an Action that returns an error or irrelevant result. A good ReAct implementation catches this in the Observation phase: "The search returned no results. I should try a different query." This self-correction ability is ReAct's key advantage over pure CoT.</div>
+      </div>
+    </li>
+  </ol>
+</div>
+
+<div class="explain-section">
+  <div class="callout callout-info">
+    <div class="callout-icon">💡</div>
+    <div class="callout-body">
+      <div class="callout-title">Extended Thinking vs. Chain-of-Thought</div>
+      <p>Modern models like Claude 3.7 Sonnet support "extended thinking" — a first-class API feature where the model's reasoning is done in a separate hidden scratchpad before producing its response. This is similar to CoT but with a key difference: <strong>the reasoning tokens don't count against the visible context</strong> and can use a much larger budget. Extended thinking consistently outperforms standard CoT on complex reasoning tasks.</p>
+    </div>
+  </div>
+  <div class="callout callout-tip">
+    <div class="callout-icon">✅</div>
+    <div class="callout-body">
+      <div class="callout-title">When NOT to use ReAct</div>
+      <p>ReAct adds significant latency (multiple round-trips) and token cost. For tasks with stable, known answers (writing a poem, translating text, simple code completions), ReAct is overkill. Reserve it for tasks that genuinely require external information or multi-step execution. Use direct answers for everything else.</p>
+    </div>
+  </div>
+</div>
+
+<div class="explain-section">
+  <div class="explain-h2"><span class="ehead-icon">🌍</span> Where CoT and ReAct Appear</div>
+  <div class="real-world-row">
+    <div class="rw-badge">🤖 <strong>Claude Code</strong> — thinks before each tool call; shows reasoning in the UI</div>
+    <div class="rw-badge">🔬 <strong>Devin</strong> — full ReAct loop: plan → execute → observe → replan</div>
+    <div class="rw-badge">📚 <strong>Original ReAct paper (2022)</strong> — Yao et al., showed ReAct beats CoT on HotpotQA, Fever, AlfWorld</div>
+    <div class="rw-badge">🧠 <strong>Claude Extended Thinking</strong> — model-native CoT with budget control</div>
+    <div class="rw-badge">🔍 <strong>Perplexity Pro Search</strong> — Thought/Search/Synthesize visible in UI</div>
+  </div>
+</div>
+
+<div class="explain-section">
+  <div class="explain-h2"><span class="ehead-icon">✅</span> Key Takeaways</div>
+  <div class="takeaways">
+    <div class="takeaway-item">
+      <div class="takeaway-bullet">→</div>
+      <div class="takeaway-text"><strong>Thinking before answering dramatically improves accuracy.</strong> CoT works because it forces the model to commit to each reasoning step before moving on, catching errors early rather than in the final answer.</div>
+    </div>
+    <div class="takeaway-item">
+      <div class="takeaway-bullet">→</div>
+      <div class="takeaway-text"><strong>ReAct grounds reasoning in reality.</strong> By interleaving actions and observations with thoughts, the model can't hallucinate its way to a confident wrong answer — it must confront real-world feedback.</div>
+    </div>
+    <div class="takeaway-item">
+      <div class="takeaway-bullet">→</div>
+      <div class="takeaway-text"><strong>There's a cost-accuracy tradeoff.</strong> Direct answers are fast and cheap. CoT is slower and more accurate. ReAct is slowest but most reliable for complex tasks. Match the approach to the task complexity.</div>
+    </div>
+    <div class="takeaway-item">
+      <div class="takeaway-bullet">→</div>
+      <div class="takeaway-text"><strong>Thoughts are the agent's scratchpad.</strong> They don't need to be perfect prose — they're working memory. What matters is that reasoning happens explicitly before action, not that it's beautiful.</div>
+    </div>
+  </div>
+</div>
+</main>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+function resize() {
+  const w = canvas.parentElement.clientWidth - 32;
+  canvas.width = w;
+  canvas.height = 360;
+}
+resize();
+window.addEventListener('resize', () => { resize(); renderAll(); });
+
+// Problems
+const PROBLEMS = {
+  math: {
+    label: 'Math problem',
+    question: 'If a train travels at 80 km/h for 2.5 hours, then at 60 km/h for 1.5 hours, what is the total distance?',
+    direct: [
+      { text: '260 km', type: 'answer' }
+    ],
+    cot: [
+      { text: 'Step 1: First segment distance', type: 'step' },
+      { text: '80 km/h × 2.5 h = 200 km', type: 'calc' },
+      { text: 'Step 2: Second segment distance', type: 'step' },
+      { text: '60 km/h × 1.5 h = 90 km', type: 'calc' },
+      { text: 'Step 3: Total distance = 200 + 90', type: 'step' },
+      { text: 'Answer: 290 km', type: 'answer' }
+    ],
+    react: [
+      { text: 'Thought: I need to calculate each segment.', type: 'thought' },
+      { text: 'Action: calculate(80 * 2.5)', type: 'action' },
+      { text: 'Observation: 200', type: 'obs' },
+      { text: 'Thought: Now the second segment.', type: 'thought' },
+      { text: 'Action: calculate(60 * 1.5)', type: 'action' },
+      { text: 'Observation: 90', type: 'obs' },
+      { text: 'Thought: Sum both results.', type: 'thought' },
+      { text: 'Action: calculate(200 + 90)', type: 'action' },
+      { text: 'Observation: 290', type: 'obs' },
+      { text: 'Answer: 290 km', type: 'answer' }
+    ],
+    metrics: { directAcc: 'Low', cotAcc: 'High', reactAcc: 'High', directTok: '~20', cotTok: '~120', reactTok: '~250', tip: 'For structured math, <strong>CoT</strong> is optimal — it forces step-by-step arithmetic without the overhead of tool calls. ReAct is overkill here unless you need a real calculator tool for precision.' }
+  },
+  qa: {
+    label: 'Multi-hop QA',
+    question: 'Who is the CEO of the company that made the model that scored highest on HumanEval in 2023?',
+    direct: [
+      { text: 'Sam Altman (OpenAI, GPT-4)', type: 'answer' }
+    ],
+    cot: [
+      { text: 'Step 1: Which model topped HumanEval in 2023?', type: 'step' },
+      { text: 'Likely GPT-4 — OpenAI released it in 2023', type: 'calc' },
+      { text: 'Step 2: Who made GPT-4?', type: 'step' },
+      { text: 'OpenAI', type: 'calc' },
+      { text: 'Step 3: CEO of OpenAI?', type: 'step' },
+      { text: 'Answer: Sam Altman', type: 'answer' }
+    ],
+    react: [
+      { text: 'Thought: I need current benchmark data.', type: 'thought' },
+      { text: 'Action: web_search("HumanEval top model 2023")', type: 'action' },
+      { text: 'Observation: GPT-4 scored 87% on HumanEval', type: 'obs' },
+      { text: 'Thought: GPT-4 is from OpenAI. Check CEO.', type: 'thought' },
+      { text: 'Action: web_search("OpenAI CEO 2023")', type: 'action' },
+      { text: 'Observation: Sam Altman, reinstated Nov 2023', type: 'obs', highlight: true },
+      { text: 'Thought: Confirmed. Altman is current CEO.', type: 'thought' },
+      { text: 'Answer: Sam Altman', type: 'answer' }
+    ],
+    metrics: { directAcc: 'Medium', cotAcc: 'Medium', reactAcc: 'High', directTok: '~30', cotTok: '~150', reactTok: '~320', tip: 'Multi-hop QA over facts that may be stale is where <strong>ReAct shines</strong>. Direct/CoT rely on training data which may be wrong or outdated. ReAct can search for each hop and verify.' }
+  },
+  debug: {
+    label: 'Code debugging',
+    question: 'Fix: `result = [x for x in range(10) if x % 2 = 0]`',
+    direct: [
+      { text: 'Change = to ==: `x % 2 == 0`', type: 'answer' }
+    ],
+    cot: [
+      { text: 'Step 1: Parse the list comprehension', type: 'step' },
+      { text: 'Iterates x in range(10), filters x%2=0', type: 'calc' },
+      { text: 'Step 2: Identify the syntax error', type: 'step' },
+      { text: '`=` is assignment, not comparison', type: 'calc' },
+      { text: 'Step 3: Correct operator is `==`', type: 'step' },
+      { text: 'Answer: `if x % 2 == 0`', type: 'answer' }
+    ],
+    react: [
+      { text: 'Thought: There is a syntax error. Let me run it.', type: 'thought' },
+      { text: 'Action: bash("python3 -c \'[x for x in range(10) if x%2=0]\'")', type: 'action' },
+      { text: 'Observation: SyntaxError: invalid syntax — `=`', type: 'obs' },
+      { text: 'Thought: Confirmed, = should be ==. Fix it.', type: 'thought' },
+      { text: 'Action: bash("python3 -c \'[x for x in range(10) if x%2==0]\'")', type: 'action' },
+      { text: 'Observation: [0, 2, 4, 6, 8] ✓', type: 'obs', highlight: true },
+      { text: 'Thought: Test passes. Fix is verified.', type: 'thought' },
+      { text: 'Answer: `if x % 2 == 0` (verified by running)', type: 'answer' }
+    ],
+    metrics: { directAcc: 'High', cotAcc: 'High', reactAcc: 'High', directTok: '~40', cotTok: '~130', reactTok: '~350', tip: 'For simple bugs, direct/CoT is sufficient. <strong>ReAct is valuable for complex bugs</strong> where running the code reveals hidden runtime errors that static analysis would miss.' }
+  },
+  plan: {
+    label: 'Planning task',
+    question: 'Set up a new Python web project: create repo, install Flask, write a hello-world app, run tests.',
+    direct: [
+      { text: 'mkdir app; pip install flask; write app.py; pytest', type: 'answer' }
+    ],
+    cot: [
+      { text: 'Step 1: Create project directory', type: 'step' },
+      { text: 'mkdir my-app && cd my-app', type: 'calc' },
+      { text: 'Step 2: Install dependencies', type: 'step' },
+      { text: 'pip install flask pytest', type: 'calc' },
+      { text: 'Step 3: Write app.py with hello-world route', type: 'step' },
+      { text: 'Step 4: Write test_app.py and run pytest', type: 'step' },
+      { text: 'Answer: Plan complete (not executed)', type: 'answer' }
+    ],
+    react: [
+      { text: 'Thought: I should create the directory first.', type: 'thought' },
+      { text: 'Action: bash("mkdir my-app && cd my-app && git init")', type: 'action' },
+      { text: 'Observation: Initialized empty Git repository', type: 'obs' },
+      { text: 'Thought: Now install dependencies.', type: 'thought' },
+      { text: 'Action: bash("pip install flask pytest 2>&1")', type: 'action' },
+      { text: 'Observation: Successfully installed flask-3.0.0', type: 'obs' },
+      { text: 'Thought: Write the app and tests.', type: 'thought' },
+      { text: 'Action: write_file("app.py", "from flask import Flask...")', type: 'action' },
+      { text: 'Observation: Written 312 bytes', type: 'obs' },
+      { text: 'Action: bash("pytest -v 2>&1")', type: 'action' },
+      { text: 'Observation: 1 passed in 0.4s ✓', type: 'obs', highlight: true },
+      { text: 'Answer: Project set up and tests passing!', type: 'answer' }
+    ],
+    metrics: { directAcc: 'Low', cotAcc: 'Medium', reactAcc: 'High', directTok: '~50', cotTok: '~160', reactTok: '~500', tip: '<strong>ReAct is essential for multi-step execution tasks</strong>. Direct and CoT produce plans, but ReAct actually executes each step and verifies via observations — catching failures like missing dependencies before they cascade.' }
+  }
+};
+
+let problem = 'math';
+let speed = 1.0;
+let colStates = { direct: [], cot: [], react: [] }; // lines visible
+let colMaxLines = { direct: 0, cot: 0, react: 0 };
+let reactStep = 0;
+let isRunning = false;
+let animTimers = [];
+
+// Column layout
+function getColumns() {
+  const W = canvas.width;
+  const pad = 12;
+  const cols = 3;
+  const gap = 10;
+  const colW = (W - pad * 2 - gap * (cols - 1)) / cols;
+  return [
+    { x: pad, w: colW, key: 'direct', label: 'Direct Answer', col: '#8b949e' },
+    { x: pad + colW + gap, w: colW, key: 'cot', label: 'Chain of Thought', col: '#58a6ff' },
+    { x: pad + (colW + gap) * 2, w: colW, key: 'react', label: 'ReAct', col: '#bc8cff' }
+  ];
+}
+
+const TYPE_STYLES = {
+  thought: { bg: '#bc8cff22', border: '#bc8cff88', text: '#bc8cff', prefix: '💭 ' },
+  action:  { bg: '#58a6ff22', border: '#58a6ff88', text: '#58a6ff', prefix: '⚡ ' },
+  obs:     { bg: '#3fb95022', border: '#3fb95088', text: '#3fb950', prefix: '👁 ' },
+  step:    { bg: '#d2992222', border: '#d2992288', text: '#d29922', prefix: '→ ' },
+  calc:    { bg: '#21262d',   border: '#30363d',   text: '#8b949e', prefix: '   ' },
+  answer:  { bg: '#3fb95033', border: '#3fb950',   text: '#3fb950', prefix: '✓ ' }
+};
+
+const LINE_H = 34;
+const HEADER_H = 60;
+const Q_H = 48;
+
+function renderAll() {
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0, 0, W, H);
+
+  const p = PROBLEMS[problem];
+  const columns = getColumns();
+
+  // Question bar
+  ctx.fillStyle = '#161b22';
+  ctx.fillRect(0, 0, W, Q_H);
+  ctx.strokeStyle = '#30363d';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(0, Q_H);
+  ctx.lineTo(W, Q_H);
+  ctx.stroke();
+  ctx.fillStyle = '#e6edf3';
+  ctx.font = '600 12px -apple-system,sans-serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  const qText = p.question.length > 90 ? p.question.substring(0, 90) + '…' : p.question;
+  ctx.fillText('Q: ' + qText, 16, Q_H / 2);
+
+  // Column headers
+  columns.forEach(col => {
+    ctx.fillStyle = col.col + '22';
+    ctx.fillRect(col.x, Q_H + 4, col.w, HEADER_H - 8);
+    ctx.strokeStyle = col.col + '88';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(col.x, Q_H + 4, col.w, HEADER_H - 8);
+    ctx.fillStyle = col.col;
+    ctx.font = '600 12px -apple-system,sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(col.label, col.x + col.w / 2, Q_H + HEADER_H / 2);
+  });
+
+  // Lines
+  const startY = Q_H + HEADER_H + 8;
+  columns.forEach(col => {
+    const lines = colStates[col.key];
+    const allLines = p[col.key];
+    lines.forEach((lineIdx, i) => {
+      const line = allLines[lineIdx];
+      if (!line) return;
+      const s = TYPE_STYLES[line.type];
+      const y = startY + i * (LINE_H + 4);
+      if (y + LINE_H > H) return;
+
+      // Highlight glow for "catching error" moments
+      if (line.highlight) {
+        const grd = ctx.createLinearGradient(col.x, y, col.x + col.w, y);
+        grd.addColorStop(0, '#3fb95000');
+        grd.addColorStop(0.5, '#3fb95044');
+        grd.addColorStop(1, '#3fb95000');
+        ctx.fillStyle = grd;
+        ctx.fillRect(col.x - 4, y - 2, col.w + 8, LINE_H + 4);
+      }
+
+      ctx.fillStyle = s.bg;
+      ctx.strokeStyle = s.border;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(col.x, y, col.w, LINE_H, 5);
+      ctx.fill();
+      ctx.stroke();
+
+      // Text
+      ctx.fillStyle = s.text;
+      ctx.font = '11px -apple-system,sans-serif';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      const maxW = col.w - 12;
+      const fullText = s.prefix + line.text;
+      const displayText = measureFit(fullText, maxW);
+      ctx.fillText(displayText, col.x + 6, y + LINE_H / 2);
+    });
+  });
+}
+
+function measureFit(text, maxW) {
+  ctx.font = '11px -apple-system,sans-serif';
+  if (ctx.measureText(text).width <= maxW) return text;
+  while (text.length > 4 && ctx.measureText(text + '…').width > maxW) {
+    text = text.slice(0, -1);
+  }
+  return text + '…';
+}
+
+// Add a line to a column with delay
+function addLine(colKey, lineIdx, delayMs) {
+  return new Promise(resolve => {
+    const t = setTimeout(() => {
+      colStates[colKey].push(lineIdx);
+      resolve();
+    }, delayMs);
+    animTimers.push(t);
+  });
+}
+
+async function runAll() {
+  if (isRunning) return;
+  isRunning = true;
+  setControlsDisabled(true);
+  resetState();
+
+  const p = PROBLEMS[problem];
+  const interval = 500 / speed;
+
+  // Run all columns simultaneously
+  const runCol = async (key) => {
+    const lines = p[key];
+    for (let i = 0; i < lines.length; i++) {
+      await addLine(key, i, i * interval);
+    }
+    colMaxLines[key] = lines.length;
+  };
+
+  await Promise.all([runCol('direct'), runCol('cot'), runCol('react')]);
+
+  reactStep = p.react.length;
+  updateStepIndicator();
+  isRunning = false;
+  setControlsDisabled(false);
+}
+
+function stepReact() {
+  if (isRunning) return;
+  const p = PROBLEMS[problem];
+  if (reactStep >= p.react.length) return;
+  colStates.react.push(reactStep);
+  reactStep++;
+  updateStepIndicator();
+}
+
+function resetState() {
+  colStates = { direct: [], cot: [], react: [] };
+  colMaxLines = { direct: 0, cot: 0, react: 0 };
+  reactStep = 0;
+  animTimers.forEach(clearTimeout);
+  animTimers = [];
+  updateStepIndicator();
+}
+
+function updateStepIndicator() {
+  const p = PROBLEMS[problem];
+  const total = p.react.length;
+  const ind = document.getElementById('stepIndicator');
+  ind.innerHTML = '<span style="font-size:12px;color:#8b949e;margin-right:6px">ReAct steps:</span>';
+  for (let i = 0; i < total; i++) {
+    const pip = document.createElement('div');
+    pip.className = 'step-pip' + (i < reactStep ? (i < total - 1 ? ' done' : ' active') : '');
+    ind.appendChild(pip);
+  }
+  const label = document.createElement('span');
+  label.style.marginLeft = '6px';
+  label.style.fontSize = '12px';
+  label.style.color = '#8b949e';
+  label.textContent = `${reactStep} / ${total}`;
+  ind.appendChild(label);
+}
+
+function updateInsight() {
+  const p = PROBLEMS[problem];
+  const m = p.metrics;
+
+  function acc(v) {
+    if (v === 'High') return `<span class="good">High</span>`;
+    if (v === 'Medium') return `<span class="mid">Medium</span>`;
+    return `<span class="bad">Low</span>`;
+  }
+
+  document.getElementById('compBody').innerHTML = `
+    <tr><td>Accuracy</td><td>${acc(m.directAcc)}</td><td>${acc(m.cotAcc)}</td><td>${acc(m.reactAcc)}</td></tr>
+    <tr><td>Token cost</td><td>${m.directTok}</td><td>${m.cotTok}</td><td>${m.reactTok}</td></tr>
+    <tr><td>Latency</td><td class="good">Low</td><td class="mid">Medium</td><td class="bad">High</td></tr>
+    <tr><td>Needs tools?</td><td class="good">No</td><td class="good">No</td><td class="mid">Yes</td></tr>
+    <tr><td>Self-corrects?</td><td class="bad">No</td><td class="mid">Partially</td><td class="good">Yes (via obs)</td></tr>
+  `;
+
+  document.getElementById('tipBox').innerHTML = m.tip;
+}
+
+function setControlsDisabled(disabled) {
+  document.getElementById('btnRunAll').disabled = disabled;
+  document.getElementById('btnStep').disabled = disabled;
+  document.getElementById('problemSelect').disabled = disabled;
+}
+
+// Controls
+document.getElementById('btnRunAll').addEventListener('click', runAll);
+document.getElementById('btnStep').addEventListener('click', stepReact);
+document.getElementById('btnReset').addEventListener('click', () => {
+  isRunning = false;
+  animTimers.forEach(clearTimeout);
+  animTimers = [];
+  resetState();
+  setControlsDisabled(false);
+});
+document.getElementById('problemSelect').addEventListener('change', e => {
+  problem = e.target.value;
+  isRunning = false;
+  animTimers.forEach(clearTimeout);
+  animTimers = [];
+  resetState();
+  setControlsDisabled(false);
+  updateInsight();
+});
+document.getElementById('speedSlider').addEventListener('input', e => {
+  speed = parseFloat(e.target.value);
+  document.getElementById('speedLabel').textContent = speed.toFixed(1) + '×';
+});
+
+// Render loop
+function loop() {
+  renderAll();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+updateInsight();
+updateStepIndicator();
+</script>
+</body>
+</html>

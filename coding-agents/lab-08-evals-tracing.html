@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evals & Observability — Coding Agents</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0d1117; color: #e6edf3; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
+  a { color: #58a6ff; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  nav { background: #161b22; border-bottom: 1px solid #30363d; padding: 0 24px; height: 56px; display: flex; align-items: center; gap: 24px; }
+  nav .brand { font-weight: 700; font-size: 1.05rem; color: #e6edf3; }
+  nav .back { font-size: 0.875rem; color: #8b949e; }
+  nav .back:hover { color: #58a6ff; }
+  nav .spacer { flex: 1; }
+  nav .lab-title { font-size: 0.875rem; color: #8b949e; }
+
+  .container { max-width: 960px; margin: 0 auto; padding: 24px 16px; }
+  h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 6px; }
+  .subtitle { color: #8b949e; font-size: 0.9rem; margin-bottom: 24px; }
+
+  .main-grid { display: grid; grid-template-columns: 1fr 300px; gap: 16px; }
+  @media (max-width: 700px) { .main-grid { grid-template-columns: 1fr; } }
+
+  .panel { background: #161b22; border: 1px solid #30363d; border-radius: 8px; overflow: hidden; }
+  .panel-header { padding: 12px 16px; border-bottom: 1px solid #30363d; font-size: 0.8rem; font-weight: 600; color: #8b949e; text-transform: uppercase; letter-spacing: 0.05em; display:flex; align-items:center; justify-content:space-between; }
+
+  canvas { display: block; width: 100%; background: #0d1117; }
+
+  .controls { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+  label { font-size: 0.8rem; color: #8b949e; display: block; margin-bottom: 4px; }
+  select, button { width: 100%; padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; border: 1px solid #30363d; cursor: pointer; }
+  select { background: #0d1117; color: #e6edf3; }
+  button { background: #21262d; color: #e6edf3; font-weight: 600; transition: background 0.15s; }
+  button:hover:not(:disabled) { background: #30363d; }
+  button.primary { background: #1f6feb; border-color: #388bfd; }
+  button.primary:hover:not(:disabled) { background: #388bfd; }
+  button.success { background: #196c2e; border-color: #2ea043; }
+  button.success:hover:not(:disabled) { background: #2ea043; }
+  button.warn-btn { background: #5a3e1b; border-color: #e3b341; }
+  button.warn-btn:hover:not(:disabled) { background: #6d4c1e; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .threshold-row { display: flex; align-items: center; gap: 8px; }
+  .threshold-row input { flex:1; accent-color: #f85149; }
+  .threshold-row span { font-size: 0.8rem; color: #8b949e; min-width: 32px; text-align: right; font-family: monospace; }
+
+  /* Batch grid */
+  .batch-grid { display: grid; grid-template-columns: repeat(10,1fr); gap: 4px; padding: 10px 14px; }
+  .batch-cell { aspect-ratio: 1; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; cursor: default; }
+  .batch-cell.pass { background: #196c2e; color: #3fb950; }
+  .batch-cell.fail { background: #6e1f1f; color: #f85149; }
+  .batch-cell.pending { background: #21262d; color: #30363d; }
+
+  /* Score bars */
+  .score-section { padding: 10px 14px; }
+  .score-row { display: flex; align-items: center; gap: 8px; margin: 5px 0; }
+  .score-name { font-size: 0.78rem; color: #8b949e; width: 90px; flex-shrink: 0; }
+  .score-track { flex:1; height: 8px; background: #21262d; border-radius: 4px; overflow: hidden; }
+  .score-fill { height: 100%; border-radius: 4px; transition: width 0.6s ease; }
+  .score-pct { font-size: 0.75rem; font-family: monospace; color: #e6edf3; width: 36px; text-align: right; }
+  .grade-badge { font-size: 2rem; font-weight: 900; text-align: center; padding: 6px 0; font-family: monospace; }
+
+  /* Insight */
+  .insight { padding: 14px; font-size: 0.82rem; line-height: 1.6; }
+  .insight h3 { font-size: 0.85rem; font-weight: 700; color: #58a6ff; margin-bottom: 8px; }
+  .stat-row { display: flex; justify-content: space-between; margin: 5px 0; padding: 5px 8px; background: #0d1117; border-radius: 4px; }
+  .stat-label { color: #8b949e; }
+  .stat-value { color: #e6edf3; font-weight: 600; font-family: monospace; }
+  .info-box { background: #0d1117; border-left: 3px solid #58a6ff; padding: 8px 10px; border-radius: 0 4px 4px 0; margin-top: 10px; font-size: 0.78rem; color: #8b949e; line-height: 1.5; }
+  .info-box.warn { border-color: #e3b341; }
+  .info-box.error { border-color: #f85149; }
+  .info-box.success { border-color: #3fb950; }
+  .rec-list { list-style: none; margin: 6px 0; }
+  .rec-list li { padding: 2px 0 2px 14px; position: relative; color: #8b949e; font-size: 0.78rem; }
+  .rec-list li::before { content: '→'; position: absolute; left: 0; color: #58a6ff; }
+
+  /* warning banner */
+  .unsafe-banner { background: #3d1f00; border: 1px solid #e3b341; border-radius: 6px; padding: 8px 12px; font-size: 0.8rem; color: #e3b341; display: none; margin: 10px 14px; }
+  .unsafe-banner.visible { display: block; }
+
+  /* assertion dialog */
+  .modal { display: none; position: fixed; inset: 0; background: #0d111799; z-index: 100; align-items: center; justify-content: center; }
+  .modal.open { display: flex; }
+  .modal-box { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 24px; width: 340px; }
+  .modal-box h3 { font-size: 1rem; margin-bottom: 12px; }
+  .modal-box input, .modal-box select { width: 100%; padding: 8px; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; color: #e6edf3; font-size: 0.85rem; margin-bottom: 10px; }
+  .modal-actions { display: flex; gap: 8px; margin-top: 4px; }
+  .modal-actions button { flex: 1; }
+
+  /* ── Explanation Sections ── */
+  .explain-section { margin-top: 40px; }
+  .explain-section + .explain-section { margin-top: 32px; }
+  .explain-h2 { font-size: 18px; font-weight: 700; color: #e6edf3; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid #30363d; display: flex; align-items: center; gap: 10px; }
+  .explain-h2 .ehead-icon { font-size: 20px; }
+  .explain-p { color: #8b949e; font-size: 14px; line-height: 1.8; margin-bottom: 12px; }
+  .explain-p strong { color: #e6edf3; }
+  .explain-p code { background: #21262d; border: 1px solid #30363d; border-radius: 4px; padding: 1px 6px; font-family: 'SF Mono','Fira Code',monospace; font-size: 12px; color: #a5d6ff; }
+  .explain-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; margin-bottom: 16px; }
+  .explain-card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 18px 20px; }
+  .explain-card-title { font-size: 13px; font-weight: 700; color: #e6edf3; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .explain-card p { font-size: 13px; color: #8b949e; line-height: 1.7; }
+  .explain-card code { background: #21262d; border-radius: 3px; padding: 1px 5px; font-family: monospace; font-size: 11px; color: #a5d6ff; }
+  .steps-list { counter-reset: step; list-style: none; display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
+  .steps-list li { counter-increment: step; display: flex; gap: 14px; }
+  .steps-list li::before { content: counter(step); min-width: 28px; height: 28px; background: #21262d; border: 1px solid #30363d; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #58a6ff; flex-shrink: 0; margin-top: 2px; }
+  .steps-list li .step-body { flex: 1; }
+  .steps-list li .step-title { font-size: 14px; font-weight: 600; color: #e6edf3; margin-bottom: 3px; }
+  .steps-list li .step-desc { font-size: 13px; color: #8b949e; line-height: 1.7; }
+  .callout { border-radius: 10px; padding: 16px 20px; margin-bottom: 16px; display: flex; gap: 14px; }
+  .callout-info { background: #0d2137; border: 1px solid #1f4068; }
+  .callout-warn { background: #2d1f00; border: 1px solid #5a3e00; }
+  .callout-tip  { background: #0d2d0d; border: 1px solid #1f5c1f; }
+  .callout-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .callout-body { flex: 1; }
+  .callout-title { font-size: 13px; font-weight: 700; margin-bottom: 5px; }
+  .callout-info .callout-title { color: #58a6ff; }
+  .callout-warn .callout-title { color: #e3b341; }
+  .callout-tip  .callout-title { color: #3fb950; }
+  .callout-body p { font-size: 13px; color: #8b949e; line-height: 1.7; }
+  .callout-body p strong { color: #e6edf3; }
+  .takeaways { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 20px 24px; }
+  .takeaway-item { display: flex; gap: 12px; padding: 8px 0; }
+  .takeaway-item + .takeaway-item { border-top: 1px solid #21262d; }
+  .takeaway-bullet { color: #58a6ff; font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+  .takeaway-text { font-size: 13px; color: #8b949e; line-height: 1.7; }
+  .takeaway-text strong { color: #e6edf3; }
+  .real-world-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+  .rw-badge { background: #21262d; border: 1px solid #30363d; border-radius: 20px; padding: 5px 14px; font-size: 12px; color: #8b949e; display: flex; align-items: center; gap: 6px; }
+  .rw-badge strong { color: #e6edf3; }
+  .pitfall-list { display: flex; flex-direction: column; gap: 10px; }
+  .pitfall { background: #1a0d0d; border: 1px solid #3d1515; border-radius: 8px; padding: 14px 18px; }
+  .pitfall-title { font-size: 13px; font-weight: 700; color: #f85149; margin-bottom: 5px; }
+  .pitfall p { font-size: 13px; color: #8b949e; line-height: 1.65; }
+  .pitfall p strong { color: #e6edf3; }
+  .compare-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 16px; }
+  .compare-table th { padding: 10px 14px; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: #8b949e; border-bottom: 1px solid #30363d; }
+  .compare-table td { padding: 10px 14px; border-bottom: 1px solid #21262d; color: #8b949e; vertical-align: top; }
+  .compare-table td:first-child { color: #e6edf3; font-weight: 600; }
+  .compare-table tr:last-child td { border-bottom: none; }
+  .divider { border: none; border-top: 1px solid #21262d; margin: 40px 0; }
+</style>
+</head>
+<body>
+<nav>
+  <span class="brand">🤖 Coding Agents</span>
+  <a class="back" href="../index.html">← Playground</a>
+  <span class="spacer"></span>
+  <span class="lab-title">Lab 08 — Evals &amp; Observability</span>
+</nav>
+
+<div class="container">
+  <h1>Evals &amp; Observability</h1>
+  <p class="subtitle">Measuring agent quality with traces, scoring rubrics, and batch evaluation suites</p>
+
+  <div class="main-grid">
+    <div>
+      <!-- Trace canvas -->
+      <div class="panel">
+        <div class="panel-header">
+          <span>Waterfall Trace</span>
+          <span id="traceDuration" style="font-size:0.75rem;color:#8b949e;font-family:monospace;">—</span>
+        </div>
+        <canvas id="traceCanvas" height="200"></canvas>
+      </div>
+
+      <!-- Unsafe banner -->
+      <div class="unsafe-banner" id="unsafeBanner">
+        ⚠ SAFETY ALERT: This run contains unsafe content. Safety score = 0. Manual review required before deployment.
+      </div>
+
+      <!-- Score bars -->
+      <div class="panel" style="margin-top:16px;">
+        <div class="panel-header">
+          <span>Scoring Rubric</span>
+          <span class="grade-badge" id="gradeBadge" style="font-size:1.2rem;padding:0;">—</span>
+        </div>
+        <div class="score-section" id="scoreBars">
+          <div class="score-row"><span class="score-name">Correctness</span><div class="score-track"><div class="score-fill" id="sf-0" style="width:0%;background:#3fb950;"></div></div><span class="score-pct" id="sp-0">—</span></div>
+          <div class="score-row"><span class="score-name">Completeness</span><div class="score-track"><div class="score-fill" id="sf-1" style="width:0%;background:#58a6ff;"></div></div><span class="score-pct" id="sp-1">—</span></div>
+          <div class="score-row"><span class="score-name">Efficiency</span><div class="score-track"><div class="score-fill" id="sf-2" style="width:0%;background:#bc8cff;"></div></div><span class="score-pct" id="sp-2">—</span></div>
+          <div class="score-row"><span class="score-name">Safety</span><div class="score-track"><div class="score-fill" id="sf-3" style="width:0%;background:#f85149;"></div></div><span class="score-pct" id="sp-3">—</span></div>
+          <div class="score-row"><span class="score-name">Faithfulness</span><div class="score-track"><div class="score-fill" id="sf-4" style="width:0%;background:#e3b341;"></div></div><span class="score-pct" id="sp-4">—</span></div>
+          <div id="customScores"></div>
+        </div>
+      </div>
+
+      <!-- Batch grid -->
+      <div class="panel" style="margin-top:16px;">
+        <div class="panel-header">
+          <span>Batch Eval Suite</span>
+          <span id="batchSummary" style="font-size:0.75rem;color:#8b949e;">—</span>
+        </div>
+        <div class="batch-grid" id="batchGrid">
+          <!-- 10 cells -->
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div class="panel" style="margin-top:16px;">
+        <div class="panel-header">Controls</div>
+        <div class="controls">
+          <div>
+            <label>Run type</label>
+            <select id="runSelect">
+              <option value="good">Good run</option>
+              <option value="partial">Partial run</option>
+              <option value="failed">Failed run</option>
+              <option value="unsafe">Unsafe run</option>
+            </select>
+          </div>
+          <button class="primary" id="runEvalBtn">▶ Run Eval</button>
+          <button class="success" id="batchBtn">⊞ Batch Eval (10 runs)</button>
+          <button class="warn-btn" id="assertBtn">+ Add Assertion</button>
+          <div>
+            <label>Latency threshold (ms)</label>
+            <div class="threshold-row">
+              <input type="range" id="thresholdSlider" min="200" max="2000" value="800" step="50">
+              <span id="thresholdVal">800ms</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" style="align-self: start;">
+      <div class="panel-header">Insight</div>
+      <div class="insight" id="insight">
+        <h3>About This Lab</h3>
+        <p style="color:#8b949e;">Select a run type and click <strong>Run Eval</strong> to replay a trace and score the agent run.</p>
+        <div class="info-box">Evals are how teams measure agent quality at scale. A good eval suite combines: automated assertions, LLM-as-judge scoring, human rubrics, and regression tests.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+<hr class="divider">
+
+<div class="explain-section">
+  <div class="explain-h2"><span class="ehead-icon">📖</span> Concept Overview</div>
+  <p class="explain-p"><strong>Evals</strong> (evaluations) are the discipline of systematically measuring agent quality. Unlike traditional software where correctness is binary (tests pass or fail), agent outputs are often probabilistic, context-dependent, and partially correct. Evals provide structured frameworks for measuring quality across multiple dimensions: does the agent accomplish the task? Is its reasoning sound? Does it stay within budget? Does it behave safely?</p>
+  <p class="explain-p"><strong>Tracing</strong> is the observability layer — recording exactly what the agent did, when, at what cost, and with what outcome. A trace is like a flight data recorder for your agent: if something goes wrong, you can replay the exact sequence of LLM calls, tool invocations, token counts, and latency measurements. Without tracing, debugging production agent failures is essentially impossible — you're trying to understand a complex dynamic system with no data.</p>
+  <p class="explain-p">Together, evals and tracing enable the <strong>agent development flywheel</strong>: define success criteria (evals), run agents against a test suite, trace the failures, identify patterns, improve the agent (better prompts, better tools, better logic), and run evals again. This systematic improvement cycle is what separates production-quality agents from demos that work once.</p>
+</div>
+
+<div class="explain-section">
+  <div class="explain-h2"><span class="ehead-icon">📊</span> Eval Methodologies</div>
+  <div class="explain-grid">
+    <div class="explain-card">
+      <div class="explain-card-title">✅ Deterministic assertions</div>
+      <p>Exact checks: "Did the agent create a file called <code>output.json</code>?", "Does the response contain the word 'error'?", "Did the agent call fewer than 5 tools?". Fast, cheap, reliable. Best for: structural requirements, format validation, safety checks that must never fail.</p>
+    </div>
+    <div class="explain-card">
+      <div class="explain-card-title">🤖 LLM-as-judge</div>
+      <p>A separate (often stronger) LLM scores the agent's output on a rubric: correctness, completeness, helpfulness (1–5). Flexible, can handle open-ended tasks, but adds latency and cost. Best for: subjective quality dimensions that can't be expressed as exact checks.</p>
+    </div>
+    <div class="explain-card">
+      <div class="explain-card-title">👤 Human evaluation</div>
+      <p>Human raters score agent outputs on quality dimensions. Gold standard for final quality assessment. Expensive and slow. Best for: establishing ground truth baselines, validating LLM-judge accuracy, high-stakes domains (medical, legal).</p>
+    </div>
+    <div class="explain-card">
+      <div class="explain-card-title">📈 Trajectory evaluation</div>
+      <p>Evaluate the agent's process, not just its final output. Did it take the most efficient path? Did it avoid unnecessary tool calls? Did it correctly identify and recover from errors? Process quality often predicts future generalization better than final-answer quality.</p>
+    </div>
+  </div>
+</div>
+
+<div class="explain-section">
+  <div class="explain-h2"><span class="ehead-icon">🔍</span> Reading a Waterfall Trace</div>
+  <ol class="steps-list">
+    <li>
+      <div class="step-body">
+        <div class="step-title">Identify the span types</div>
+        <div class="step-desc">Each horizontal bar is a "span" — a unit of work with a start time and duration. LLM calls (purple) show where the model was thinking. Tool calls (blue) show external actions. Errors (red) show failures. The trace timeline reads left-to-right chronologically.</div>
+      </div>
+    </li>
+    <li>
+      <div class="step-body">
+        <div class="step-title">Find the critical path</div>
+        <div class="step-desc">The span that ends latest determines the total latency. If two spans overlap on the timeline, they ran in parallel. The sequential chain from start to the rightmost point is the critical path — the sequence you must optimize to reduce overall latency.</div>
+      </div>
+    </li>
+    <li>
+      <div class="step-body">
+        <div class="step-title">Look for retries and errors</div>
+        <div class="step-desc">Retry spans appear as repeated blocks for the same operation. A cluster of retries followed by a success means a transient failure was handled. A cluster ending in a terminal error is a bug. The observation before a retry (what the agent saw) often reveals the root cause.</div>
+      </div>
+    </li>
+    <li>
+      <div class="step-body">
+        <div class="step-title">Calculate per-component costs</div>
+        <div class="step-desc">Each LLM span has a token count. Sum input tokens × price/M + output tokens × price/M for each span. Tool calls have their own costs (API fees, compute time). The cost breakdown by component reveals where budget optimizations have the most impact.</div>
+      </div>
+    </li>
+    <li>
+      <div class="step-body">
+        <div class="step-title">Correlate trace patterns with eval scores</div>
+        <div class="step-desc">The most powerful insight comes from comparing traces of high-scoring vs. low-scoring runs. Do failing runs have more retries? Longer LLM spans (more tokens, slower reasoning)? Different tool call sequences? Pattern-matching across many traces reveals systematic agent weaknesses.</div>
+      </div>
+    </li>
+  </ol>
+</div>
+
+<div class="explain-section">
+  <div class="callout callout-info">
+    <div class="callout-icon">💡</div>
+    <div class="callout-body">
+      <div class="callout-title">The eval test suite: treat agents like software</div>
+      <p>The best agent teams maintain a <strong>regression test suite</strong> — a set of representative tasks with ground-truth expected outputs. Every agent change (new prompt, new tool, new model version) is run against the full suite before deployment. This catches regressions that human intuition misses: a prompt change that improves task A may silently break task B.</p>
+    </div>
+  </div>
+  <div class="callout callout-tip">
+    <div class="callout-icon">✅</div>
+    <div class="callout-body">
+      <div class="callout-title">Start with failure analysis, not success optimization</div>
+      <p>When building evals, first classify your <strong>failure modes</strong>: what does the agent get wrong? How often? Under what conditions? This is more actionable than measuring average success rate. A 90% success rate with 10% catastrophic failures is much worse than 80% success with all failures being minor.</p>
+    </div>
+  </div>
+</div>
+
+<div class="explain-section">
+  <div class="explain-h2"><span class="ehead-icon">📐</span> Designing a Scoring Rubric</div>
+  <div class="explain-grid">
+    <div class="explain-card">
+      <div class="explain-card-title">✔️ Correctness (0–100)</div>
+      <p>Did the agent accomplish the primary objective? For code tasks: do the tests pass? For research tasks: are the facts accurate? Correctness is usually the highest-weight criterion — an incorrect answer that's efficient and safe is still wrong.</p>
+    </div>
+    <div class="explain-card">
+      <div class="explain-card-title">📋 Completeness (0–100)</div>
+      <p>Did the agent address all parts of the task? A response that correctly answers one sub-question but ignores two others scores poorly on completeness. Use a checklist of required outputs and score one point per item delivered.</p>
+    </div>
+    <div class="explain-card">
+      <div class="explain-card-title">⚡ Efficiency (0–100)</div>
+      <p>Did the agent accomplish the task with minimal wasted steps? Penalize unnecessary tool calls, excessive retries, and bloated responses. Efficiency matters for cost and latency at scale. A correct answer using 10× more tokens than necessary is a problem.</p>
+    </div>
+    <div class="explain-card">
+      <div class="explain-card-title">🛡️ Safety (0–100)</div>
+      <p>Did the agent stay within appropriate boundaries? Did it avoid leaking sensitive data, executing dangerous commands, or taking irreversible actions without confirmation? Safety is often a binary gate — a 0 here should disqualify the run regardless of other scores.</p>
+    </div>
+  </div>
+</div>
+
+<div class="explain-section">
+  <div class="explain-h2"><span class="ehead-icon">🌍</span> Observability Platforms for Agents</div>
+  <div class="real-world-row">
+    <div class="rw-badge">🔭 <strong>LangSmith</strong> — tracing + evals + datasets for LangChain-based agents</div>
+    <div class="rw-badge">📡 <strong>Weave (W&amp;B)</strong> — experiment tracking + LLM tracing + eval framework</div>
+    <div class="rw-badge">🔍 <strong>Braintrust</strong> — eval-first platform with LLM-as-judge and human eval</div>
+    <div class="rw-badge">📊 <strong>Arize Phoenix</strong> — open-source LLM observability and tracing</div>
+    <div class="rw-badge">🤖 <strong>Anthropic Console</strong> — prompt testing, evals, and usage tracing for Claude</div>
+  </div>
+</div>
+
+<div class="explain-section">
+  <div class="explain-h2"><span class="ehead-icon">🪤</span> Common Pitfalls</div>
+  <div class="pitfall-list">
+    <div class="pitfall">
+      <div class="pitfall-title">Optimizing the eval, not the agent</div>
+      <p>If you tune the agent heavily against a small fixed eval set, it will score well on that set but fail in production. <strong>Fix:</strong> Maintain a held-out test set never used during development. Continuously add new eval cases from production failures.</p>
+    </div>
+    <div class="pitfall">
+      <div class="pitfall-title">P50 hiding P95/P99 failures</div>
+      <p>Average success rate looks great, but 5% of runs are catastrophic. Users remember their worst experience. <strong>Fix:</strong> Always report P95 and P99 metrics alongside P50. Treat tail failures with the same urgency as average performance issues.</p>
+    </div>
+    <div class="pitfall">
+      <div class="pitfall-title">Tracing without sampling strategy</div>
+      <p>Tracing every LLM call in production generates enormous amounts of data and cost. <strong>Fix:</strong> Sample traces (100% for errors, 10% for slow runs, 1% for normal runs). Use structured logging with consistent correlation IDs to enable cross-request debugging.</p>
+    </div>
+  </div>
+</div>
+
+<div class="explain-section">
+  <div class="explain-h2"><span class="ehead-icon">✅</span> Key Takeaways</div>
+  <div class="takeaways">
+    <div class="takeaway-item">
+      <div class="takeaway-bullet">→</div>
+      <div class="takeaway-text"><strong>You can't improve what you don't measure.</strong> Evals are not optional for production agents — they're the feedback signal that drives every improvement. Define success criteria before writing a single line of agent code.</div>
+    </div>
+    <div class="takeaway-item">
+      <div class="takeaway-bullet">→</div>
+      <div class="takeaway-text"><strong>Traces are your debugging superpower.</strong> When an agent fails in production, a complete trace gives you the exact sequence of calls, inputs, and outputs to understand why. Without it, you're guessing.</div>
+    </div>
+    <div class="takeaway-item">
+      <div class="takeaway-bullet">→</div>
+      <div class="takeaway-text"><strong>Safety is a gate, not a criterion.</strong> An agent that passes safety checks 99% of the time has a 1% chance of serious harm. Safety failures should immediately fail the run, regardless of correctness or efficiency scores.</div>
+    </div>
+    <div class="takeaway-item">
+      <div class="takeaway-bullet">→</div>
+      <div class="takeaway-text"><strong>The eval flywheel is the competitive moat.</strong> Teams that systematically run evals, trace failures, and improve based on data outpace teams that rely on intuition. Invest in eval infrastructure early — it compounds over time.</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- Assertion Modal -->
+<div class="modal" id="assertModal">
+  <div class="modal-box">
+    <h3>Add Custom Assertion</h3>
+    <label style="font-size:0.8rem;color:#8b949e;margin-bottom:4px;display:block;">Criterion name</label>
+    <input type="text" id="assertName" placeholder="e.g. Conciseness" maxlength="24">
+    <label style="font-size:0.8rem;color:#8b949e;margin-bottom:4px;display:block;">Evaluation type</label>
+    <select id="assertType">
+      <option>LLM-as-judge</option>
+      <option>Regex match</option>
+      <option>Contains keyword</option>
+      <option>Length constraint</option>
+    </select>
+    <label style="font-size:0.8rem;color:#8b949e;margin-bottom:4px;display:block;">Weight (%)</label>
+    <input type="number" id="assertWeight" value="10" min="1" max="50">
+    <div class="modal-actions">
+      <button id="assertCancel">Cancel</button>
+      <button class="primary" id="assertSave">Add</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const traceCanvas = document.getElementById('traceCanvas');
+const tctx = traceCanvas.getContext('2d');
+function resizeTrace() { traceCanvas.width = traceCanvas.parentElement.clientWidth; traceCanvas.height = 200; }
+resizeTrace();
+window.addEventListener('resize', resizeTrace);
+
+// ── Run definitions ───────────────────────────────────────────────────────────
+const RUNS = {
+  good: {
+    label: 'Good Run',
+    spans: [
+      { label:'Agent Run',    start:0,   end:1850, type:'agent',   error:false },
+      { label:'LLM Call 1',   start:30,  end:540,  type:'llm',     error:false },
+      { label:'Tool: search', start:560, end:820,  type:'tool',    error:false },
+      { label:'LLM Call 2',   start:840, end:1260, type:'llm',     error:false },
+      { label:'Tool: write',  start:1280,end:1510, type:'tool',    error:false },
+      { label:'LLM Call 3',   start:1530,end:1820, type:'llm',     error:false },
+    ],
+    scores: [92, 88, 85, 100, 90],
+    cost: 0.018, tokens: 4200,
+    p50: 420, p95: 1650, p99: 1820,
+    batchPass: [1,1,1,1,1,1,1,1,1,0],
+    recs: ['Minor: add retry logic for flaky tools', 'Consider caching search results', 'LLM Call 3 could be merged with Call 2'],
+    description: 'Well-structured run: short spans, no retries, high scores across all criteria.'
+  },
+  partial: {
+    label: 'Partial Run',
+    spans: [
+      { label:'Agent Run',    start:0,    end:3200,  type:'agent',  error:false },
+      { label:'LLM Call 1',   start:30,   end:680,   type:'llm',    error:false },
+      { label:'Tool: search', start:700,  end:1100,  type:'tool',   error:false },
+      { label:'LLM Call 2',   start:1120, end:1820,  type:'llm',    error:false },
+      { label:'Tool: search', start:1840, end:2200,  type:'tool',   error:false, retry:true },
+      { label:'LLM Call 3',   start:2220, end:3100,  type:'llm',    error:false },
+    ],
+    scores: [70, 62, 55, 100, 74],
+    cost: 0.031, tokens: 7100,
+    p50: 710, p95: 2800, p99: 3100,
+    batchPass: [1,1,0,1,1,0,1,0,1,1],
+    recs: ['Duplicate search tool calls waste tokens', 'LLM Call 2 is a latency bottleneck', 'Completeness low — add a final synthesis step', 'Efficiency hurt by retry loop'],
+    description: 'The agent had to retry a tool call, inflating cost and latency. Completeness and efficiency suffer.'
+  },
+  failed: {
+    label: 'Failed Run',
+    spans: [
+      { label:'Agent Run',    start:0,    end:2600,  type:'agent',  error:true },
+      { label:'LLM Call 1',   start:30,   end:750,   type:'llm',    error:false },
+      { label:'Tool: search', start:770,  end:1050,  type:'tool',   error:false },
+      { label:'LLM Call 2',   start:1070, end:1880,  type:'llm',    error:false },
+      { label:'Tool: write',  start:1900, end:2100,  type:'tool',   error:true },
+      { label:'LLM Call 3',   start:2120, end:2560,  type:'llm',    error:true },
+    ],
+    scores: [28, 35, 40, 98, 22],
+    cost: 0.024, tokens: 5500,
+    p50: 780, p95: 2400, p99: 2560,
+    batchPass: [0,0,1,0,0,0,1,0,0,0],
+    recs: ['Tool: write failed — check file permissions and path', 'LLM Call 3 produced hallucinated output after tool error', 'Add error-handling assertions to eval suite', 'Faithfulness is very low — the agent went off-task after failure'],
+    description: 'A tool failure cascaded into LLM hallucination. Without evals, this would have shipped undetected.'
+  },
+  unsafe: {
+    label: 'Unsafe Run',
+    spans: [
+      { label:'Agent Run',    start:0,    end:2100,  type:'agent',  error:false },
+      { label:'LLM Call 1',   start:30,   end:620,   type:'llm',    error:false },
+      { label:'Tool: search', start:640,  end:900,   type:'tool',   error:false },
+      { label:'LLM Call 2',   start:920,  end:1540,  type:'llm',    error:false },
+      { label:'Tool: write',  start:1560, end:1800,  type:'tool',   error:false },
+      { label:'LLM Call 3',   start:1820, end:2060,  type:'llm',    error:false },
+    ],
+    scores: [78, 80, 72, 0, 65],
+    cost: 0.020, tokens: 4600,
+    p50: 580, p95: 1900, p99: 2060,
+    batchPass: [1,1,0,1,0,1,0,1,0,1],
+    recs: ['CRITICAL: Safety score is 0 — output contains harmful content', 'Add safety classifier to eval pipeline', 'Block deployment until safety review passes', 'Consider constitutional AI constraints in system prompt'],
+    description: 'This run looks successful by most metrics but contains unsafe output. Evals caught what unit tests miss.'
+  }
+};
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let state = {
+  runType: 'good',
+  phase: 'idle', // idle | animating | done
+  spanProgress: [], // 0..1 for each span
+  scoreProgress: [0,0,0,0,0],
+  latencyThreshold: 800,
+  batchCells: Array(10).fill('pending'),
+  batchRunning: false,
+  customAssertions: [],
+  animT: 0,
+  rafId: null,
+};
+
+function currentRun() { return RUNS[state.runType]; }
+
+// ── Trace canvas draw ─────────────────────────────────────────────────────────
+function drawTrace() {
+  const run = currentRun();
+  const w = traceCanvas.width, h = traceCanvas.height;
+  tctx.clearRect(0,0,w,h);
+
+  const labelW = 100, rightPad = 16;
+  const totalMs = run.spans[0].end;
+  const trackW = w - labelW - rightPad;
+  const rowH = Math.floor((h - 20) / run.spans.length);
+
+  const typeColors = { agent:'#bc8cff', llm:'#a371f7', tool:'#58a6ff' };
+
+  // axis
+  tctx.fillStyle = '#30363d';
+  tctx.fillRect(labelW, h-14, trackW, 1);
+
+  // time ticks
+  const tickCount = 5;
+  for (let i=0;i<=tickCount;i++) {
+    const x = labelW + (trackW/tickCount)*i;
+    const ms = Math.round((totalMs/tickCount)*i);
+    tctx.fillStyle = '#30363d';
+    tctx.fillRect(x, 8, 1, h-22);
+    tctx.fillStyle = '#8b949e';
+    tctx.font = '8px monospace';
+    tctx.textAlign = 'center';
+    tctx.fillText(ms+'ms', x, h-4);
+  }
+
+  // threshold line
+  const thX = labelW + (state.latencyThreshold / totalMs) * trackW;
+  if (state.latencyThreshold < totalMs) {
+    tctx.beginPath();
+    tctx.strokeStyle = '#f8514988';
+    tctx.lineWidth = 1.5;
+    tctx.setLineDash([4,3]);
+    tctx.moveTo(thX, 6); tctx.lineTo(thX, h-16);
+    tctx.stroke();
+    tctx.setLineDash([]);
+    tctx.fillStyle = '#f85149';
+    tctx.font = '8px sans-serif';
+    tctx.textAlign = 'center';
+    tctx.fillText('⚠ '+state.latencyThreshold+'ms', thX, 5);
+  }
+
+  // spans
+  run.spans.forEach((span, i) => {
+    const progress = state.spanProgress[i] || 0;
+    const y = 10 + i * rowH;
+    const x1 = labelW + (span.start / totalMs) * trackW;
+    const x2 = labelW + (span.end / totalMs) * trackW;
+    const bw = (x2 - x1) * progress;
+
+    // label
+    tctx.fillStyle = '#8b949e';
+    tctx.font = '9px -apple-system,sans-serif';
+    tctx.textAlign = 'right';
+    tctx.fillText(span.label, labelW-6, y + rowH/2 + 3);
+
+    // bar bg
+    tctx.fillStyle = '#21262d';
+    tctx.beginPath(); tctx.roundRect(x1, y+3, x2-x1, rowH-8, 3); tctx.fill();
+
+    if (bw > 0) {
+      let col = typeColors[span.type] || '#58a6ff';
+      if (span.error) col = '#f85149';
+      if (span.retry) col = '#e3b341';
+
+      // slow highlight
+      const slow = (span.end - span.start) > state.latencyThreshold;
+      if (slow && !span.error) col = '#e3b341';
+
+      tctx.fillStyle = col+'bb';
+      tctx.beginPath(); tctx.roundRect(x1, y+3, bw, rowH-8, 3); tctx.fill();
+      tctx.strokeStyle = col;
+      tctx.lineWidth = 1;
+      tctx.beginPath(); tctx.roundRect(x1, y+3, bw, rowH-8, 3); tctx.stroke();
+
+      // duration label
+      if (bw > 32) {
+        const dur = span.end - span.start;
+        tctx.fillStyle = '#e6edf3';
+        tctx.font = '8px monospace';
+        tctx.textAlign = 'left';
+        tctx.fillText(dur+'ms', x1+4, y+rowH/2+3);
+      }
+
+      if (span.error) {
+        tctx.fillStyle = '#f85149';
+        tctx.font = '700 9px sans-serif';
+        tctx.textAlign = 'center';
+        tctx.fillText('ERROR', x1+bw/2, y+rowH/2+3);
+      }
+      if (span.retry) {
+        tctx.fillStyle = '#e3b341';
+        tctx.font = '700 9px sans-serif';
+        tctx.textAlign = 'center';
+        tctx.fillText('RETRY', x1+bw/2, y+rowH/2+3);
+      }
+    }
+  });
+
+  // legend
+  const types = [['llm','LLM Call','#a371f7'],['tool','Tool Call','#58a6ff'],['error','Error','#f85149'],['slow','Slow span','#e3b341']];
+  let lx = labelW;
+  tctx.font = '8px sans-serif';
+  types.forEach(([,label,color]) => {
+    tctx.fillStyle = color+'88';
+    tctx.fillRect(lx, h-13, 10, 6);
+    tctx.strokeStyle = color; tctx.lineWidth=1;
+    tctx.strokeRect(lx, h-13, 10, 6);
+    tctx.fillStyle = '#8b949e'; tctx.textAlign='left';
+    tctx.fillText(label, lx+13, h-8);
+    lx += tctx.measureText(label).width + 26;
+  });
+}
+
+// ── Score bars ────────────────────────────────────────────────────────────────
+function renderScores() {
+  const run = currentRun();
+  const labels = ['Correctness','Completeness','Efficiency','Safety','Faithfulness'];
+  let total = 0, count = 0;
+
+  for (let i=0;i<5;i++) {
+    const target = run.scores[i];
+    const cur = Math.round(state.scoreProgress[i]);
+    document.getElementById(`sf-${i}`).style.width = cur+'%';
+    document.getElementById(`sp-${i}`).textContent = cur+'%';
+    total += cur; count++;
+  }
+
+  // custom assertions
+  const customEl = document.getElementById('customScores');
+  const colors = ['#79c0ff','#ffa657','#56d364'];
+  customEl.innerHTML = state.customAssertions.map((a,i) => `
+    <div class="score-row">
+      <span class="score-name" style="font-size:0.72rem;">${a.name}</span>
+      <div class="score-track"><div class="score-fill" style="width:${a.score}%;background:${colors[i%3]};"></div></div>
+      <span class="score-pct">${a.score}%</span>
+    </div>`).join('');
+  state.customAssertions.forEach(a => { total += a.score; count++; });
+
+  const avg = count ? total/count : 0;
+  let grade, gcolor;
+  if (avg >= 90) { grade='A'; gcolor='#3fb950'; }
+  else if (avg >= 80) { grade='B'; gcolor='#58a6ff'; }
+  else if (avg >= 70) { grade='C'; gcolor='#e3b341'; }
+  else if (avg >= 55) { grade='D'; gcolor='#f0883e'; }
+  else { grade='F'; gcolor='#f85149'; }
+
+  if (state.phase !== 'idle') {
+    const badge = document.getElementById('gradeBadge');
+    badge.textContent = grade;
+    badge.style.color = gcolor;
+  }
+}
+
+// ── Batch grid ────────────────────────────────────────────────────────────────
+function renderBatch() {
+  const el = document.getElementById('batchGrid');
+  const cells = state.batchCells;
+  el.innerHTML = cells.map((c,i) => {
+    const cls = c === 'pass' ? 'pass' : c === 'fail' ? 'fail' : 'pending';
+    const icon = c === 'pass' ? '✓' : c === 'fail' ? '✕' : (i+1);
+    return `<div class="batch-cell ${cls}">${icon}</div>`;
+  }).join('');
+  const passes = cells.filter(c=>c==='pass').length;
+  const done = cells.filter(c=>c!=='pending').length;
+  document.getElementById('batchSummary').textContent = done ? `${passes}/${done} pass` : '—';
+}
+
+// ── Animation ─────────────────────────────────────────────────────────────────
+let rafId = null;
+function startAnimation() {
+  const run = currentRun();
+  state.phase = 'animating';
+  state.spanProgress = run.spans.map(()=>0);
+  state.scoreProgress = [0,0,0,0,0];
+  state.animT = 0;
+  document.getElementById('traceDuration').textContent = '…';
+  document.getElementById('gradeBadge').textContent = '—';
+  document.getElementById('unsafeBanner').classList.remove('visible');
+
+  const totalMs = run.spans[0].end;
+  const duration = 2200; // animation duration ms
+  const startTime = performance.now();
+
+  function frame(now) {
+    const elapsed = now - startTime;
+    const t = Math.min(elapsed / duration, 1);
+    state.animT = t;
+
+    // advance spans based on time
+    const simMs = t * totalMs;
+    run.spans.forEach((span, i) => {
+      if (simMs >= span.start) {
+        const spanLen = span.end - span.start;
+        state.spanProgress[i] = Math.min((simMs - span.start) / spanLen, 1);
+      }
+    });
+
+    // animate scores (start at 60% of animation)
+    if (t > 0.6) {
+      const st = (t - 0.6) / 0.4;
+      for (let i=0;i<5;i++) {
+        state.scoreProgress[i] = run.scores[i] * Math.min(st * 1.5, 1);
+      }
+    }
+
+    drawTrace();
+    renderScores();
+
+    if (t < 1) {
+      rafId = requestAnimationFrame(frame);
+    } else {
+      state.phase = 'done';
+      state.scoreProgress = run.scores.slice();
+      renderScores();
+      document.getElementById('traceDuration').textContent = totalMs+'ms total';
+      if (state.runType === 'unsafe') {
+        document.getElementById('unsafeBanner').classList.add('visible');
+      }
+      updateInsight();
+      document.getElementById('runEvalBtn').disabled = false;
+    }
+  }
+  rafId = requestAnimationFrame(frame);
+}
+
+// draw idle state
+function drawIdle() {
+  const run = currentRun();
+  state.spanProgress = run.spans.map(()=>0);
+  drawTrace();
+  renderBatch();
+}
+
+// ── Controls ──────────────────────────────────────────────────────────────────
+document.getElementById('runSelect').addEventListener('change', e => {
+  if (rafId) { cancelAnimationFrame(rafId); rafId=null; }
+  state.runType = e.target.value;
+  state.phase = 'idle';
+  state.scoreProgress = [0,0,0,0,0];
+  state.batchCells = Array(10).fill('pending');
+  document.getElementById('gradeBadge').textContent = '—';
+  document.getElementById('traceDuration').textContent = '—';
+  document.getElementById('unsafeBanner').classList.remove('visible');
+  document.getElementById('runEvalBtn').disabled = false;
+  drawIdle();
+  renderBatch();
+  updateInsight();
+});
+
+document.getElementById('runEvalBtn').addEventListener('click', () => {
+  if (rafId) cancelAnimationFrame(rafId);
+  document.getElementById('runEvalBtn').disabled = true;
+  state.batchCells = Array(10).fill('pending');
+  renderBatch();
+  updateInsight();
+  startAnimation();
+});
+
+document.getElementById('batchBtn').addEventListener('click', () => {
+  if (state.batchRunning) return;
+  state.batchRunning = true;
+  state.batchCells = Array(10).fill('pending');
+  renderBatch();
+  const run = currentRun();
+  let i = 0;
+  function nextCell() {
+    if (i >= 10) { state.batchRunning = false; renderBatch(); updateInsight(); return; }
+    const result = run.batchPass[i] ? 'pass' : 'fail';
+    state.batchCells[i] = result;
+    i++;
+    renderBatch();
+    setTimeout(nextCell, 180);
+  }
+  nextCell();
+});
+
+document.getElementById('thresholdSlider').addEventListener('input', function() {
+  state.latencyThreshold = +this.value;
+  document.getElementById('thresholdVal').textContent = this.value+'ms';
+  drawTrace();
+});
+
+document.getElementById('assertBtn').addEventListener('click', () => {
+  document.getElementById('assertModal').classList.add('open');
+});
+document.getElementById('assertCancel').addEventListener('click', () => {
+  document.getElementById('assertModal').classList.remove('open');
+});
+document.getElementById('assertSave').addEventListener('click', () => {
+  const name = document.getElementById('assertName').value.trim() || 'Custom';
+  const type = document.getElementById('assertType').value;
+  const weight = +document.getElementById('assertWeight').value;
+  // simulate a score based on run type
+  const scoreMap = { good: 85, partial: 62, failed: 30, unsafe: 55 };
+  const score = Math.round(scoreMap[state.runType] * (0.8 + Math.random()*0.4));
+  state.customAssertions.push({ name, type, weight, score: Math.min(score,100) });
+  document.getElementById('assertModal').classList.remove('open');
+  renderScores();
+  updateInsight();
+});
+
+// close modal on backdrop click
+document.getElementById('assertModal').addEventListener('click', function(e) {
+  if (e.target === this) this.classList.remove('open');
+});
+
+// ── Insight ───────────────────────────────────────────────────────────────────
+function updateInsight() {
+  const el = document.getElementById('insight');
+  const run = currentRun();
+
+  if (state.phase === 'idle' && state.animT === 0) {
+    el.innerHTML = `<h3>About This Lab</h3>
+      <p style="color:#8b949e;">Select a run type and click <strong>Run Eval</strong> to replay a trace and score the agent.</p>
+      <div class="info-box">Evals combine trace observability (what happened, when) with rubric scoring (how good was the output). Together they make agent behavior debuggable and improvable.</div>`;
+    return;
+  }
+
+  const passes = state.batchCells.filter(c=>c==='pass').length;
+  const done = state.batchCells.filter(c=>c!=='pending').length;
+  const avg = state.scoreProgress.reduce((a,b)=>a+b,0)/5;
+
+  const recHTML = run.recs.map(r=>`<li>${r}</li>`).join('');
+  let safetyNote = '';
+  if (state.runType === 'unsafe' && state.phase === 'done') {
+    safetyNote = `<div class="info-box error">⚠ Safety = 0. Despite high other scores, this run must be blocked from production. A single safety failure overrides overall grade.</div>`;
+  }
+
+  el.innerHTML = `
+    <h3>${run.label}</h3>
+    <div class="stat-row"><span class="stat-label">Avg score</span><span class="stat-value">${avg.toFixed(0)}%</span></div>
+    <div class="stat-row"><span class="stat-label">P50 latency</span><span class="stat-value">${run.p50}ms</span></div>
+    <div class="stat-row"><span class="stat-label">P95 latency</span><span class="stat-value">${run.p95}ms</span></div>
+    <div class="stat-row"><span class="stat-label">P99 latency</span><span class="stat-value">${run.p99}ms</span></div>
+    <div class="stat-row"><span class="stat-label">Cost / run</span><span class="stat-value">$${run.cost.toFixed(3)}</span></div>
+    <div class="stat-row"><span class="stat-label">Tokens used</span><span class="stat-value">${run.tokens.toLocaleString()}</span></div>
+    ${done ? `<div class="stat-row"><span class="stat-label">Batch pass rate</span><span class="stat-value">${passes}/${done} (${Math.round(passes/done*100)}%)</span></div>` : ''}
+    ${safetyNote}
+    <div style="margin:10px 0 4px;color:#8b949e;font-size:0.75rem;font-weight:600;">Recommendations</div>
+    <ul class="rec-list">${recHTML}</ul>
+    <div class="info-box" style="margin-top:8px;">${run.description}</div>`;
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+drawIdle();
+renderBatch();
+updateInsight();
+
+// continuous redraw for idle state
+function idleLoop() {
+  if (state.phase === 'idle') drawTrace();
+  requestAnimationFrame(idleLoop);
+}
+idleLoop();
+</script>
+</body>
+</html>

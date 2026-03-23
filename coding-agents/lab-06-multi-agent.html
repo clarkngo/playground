@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Multi-Agent Orchestration — Coding Agents</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0d1117; color: #e6edf3; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
+  a { color: #58a6ff; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  nav { background: #161b22; border-bottom: 1px solid #30363d; padding: 0 24px; height: 56px; display: flex; align-items: center; gap: 24px; }
+  nav .brand { font-weight: 700; font-size: 1.05rem; color: #e6edf3; }
+  nav .back { font-size: 0.875rem; color: #8b949e; }
+  nav .back:hover { color: #58a6ff; }
+  nav .spacer { flex: 1; }
+  nav .lab-title { font-size: 0.875rem; color: #8b949e; }
+
+  .container { max-width: 960px; margin: 0 auto; padding: 24px 16px; }
+  h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 6px; }
+  .subtitle { color: #8b949e; font-size: 0.9rem; margin-bottom: 24px; }
+
+  .main-grid { display: grid; grid-template-columns: 1fr 300px; gap: 16px; }
+  @media (max-width: 700px) { .main-grid { grid-template-columns: 1fr; } }
+
+  .panel { background: #161b22; border: 1px solid #30363d; border-radius: 8px; overflow: hidden; }
+  .panel-header { padding: 12px 16px; border-bottom: 1px solid #30363d; font-size: 0.8rem; font-weight: 600; color: #8b949e; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; justify-content: space-between; }
+  canvas { display: block; width: 100%; background: #0d1117; }
+
+  .controls { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+  label { font-size: 0.8rem; color: #8b949e; display: block; margin-bottom: 4px; }
+  select, button { width: 100%; padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; border: 1px solid #30363d; cursor: pointer; }
+  select { background: #0d1117; color: #e6edf3; }
+  button { background: #21262d; color: #e6edf3; font-weight: 600; transition: background 0.15s; }
+  button:hover:not(:disabled) { background: #30363d; }
+  button.primary { background: #1f6feb; border-color: #388bfd; }
+  button.primary:hover:not(:disabled) { background: #388bfd; }
+  button.danger { background: #6e1f1f; border-color: #f85149; }
+  button.danger:hover:not(:disabled) { background: #da3633; }
+  button.active { background: #6e40c9; border-color: #bc8cff; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .cost-bar { background: #0d1117; border-radius: 6px; padding: 10px 14px; }
+  .cost-row { display: flex; align-items: center; gap: 8px; margin: 4px 0; }
+  .cost-label { font-size: 0.78rem; color: #8b949e; width: 72px; flex-shrink: 0; }
+  .cost-track { flex: 1; height: 6px; background: #21262d; border-radius: 3px; overflow: hidden; }
+  .cost-fill { height: 100%; border-radius: 3px; transition: width 0.4s; }
+  .cost-val { font-size: 0.75rem; font-family: monospace; color: #e6edf3; width: 40px; text-align: right; }
+  .total-cost { display: flex; justify-content: space-between; margin-top: 8px; padding-top: 8px; border-top: 1px solid #30363d; font-weight: 700; }
+
+  .insight { padding: 14px; font-size: 0.82rem; line-height: 1.6; }
+  .insight h3 { font-size: 0.85rem; font-weight: 700; color: #58a6ff; margin-bottom: 8px; }
+  .subtask-list { list-style: none; margin: 6px 0; }
+  .subtask-list li { padding: 3px 0 3px 16px; position: relative; font-size: 0.8rem; }
+  .subtask-list li::before { position: absolute; left: 0; font-size: 0.7rem; top: 4px; }
+  .subtask-list li.pending { color: #8b949e; }
+  .subtask-list li.pending::before { content: '○'; }
+  .subtask-list li.busy { color: #e6edf3; }
+  .subtask-list li.busy::before { content: '⚙'; color: #58a6ff; }
+  .subtask-list li.done { color: #3fb950; }
+  .subtask-list li.done::before { content: '✓'; color: #3fb950; }
+  .subtask-list li.failed { color: #f85149; }
+  .subtask-list li.failed::before { content: '✕'; color: #f85149; }
+  .subtask-list li.retrying { color: #e3b341; }
+  .subtask-list li.retrying::before { content: '↻'; color: #e3b341; }
+  .stat-row { display: flex; justify-content: space-between; margin: 5px 0; padding: 5px 8px; background: #0d1117; border-radius: 4px; }
+  .stat-label { color: #8b949e; }
+  .stat-value { color: #e6edf3; font-weight: 600; font-family: monospace; }
+  .info-box { background: #0d1117; border-left: 3px solid #58a6ff; padding: 8px 10px; border-radius: 0 4px 4px 0; margin-top: 10px; font-size: 0.78rem; color: #8b949e; line-height: 1.5; }
+  .info-box.warn { border-color: #f85149; }
+  .info-box.success { border-color: #3fb950; }
+
+  /* ── Explanation Sections ── */
+  .explain-section { margin-top: 40px; }
+  .explain-section + .explain-section { margin-top: 32px; }
+  .explain-h2 { font-size: 18px; font-weight: 700; color: #e6edf3; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid #30363d; display: flex; align-items: center; gap: 10px; }
+  .explain-h2 .ehead-icon { font-size: 20px; }
+  .explain-p { color: #8b949e; font-size: 14px; line-height: 1.8; margin-bottom: 12px; }
+  .explain-p strong { color: #e6edf3; }
+  .explain-p code { background: #21262d; border: 1px solid #30363d; border-radius: 4px; padding: 1px 6px; font-family: 'SF Mono','Fira Code',monospace; font-size: 12px; color: #a5d6ff; }
+  .explain-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; margin-bottom: 16px; }
+  .explain-card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 18px 20px; }
+  .explain-card-title { font-size: 13px; font-weight: 700; color: #e6edf3; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .explain-card p { font-size: 13px; color: #8b949e; line-height: 1.7; }
+  .explain-card code { background: #21262d; border-radius: 3px; padding: 1px 5px; font-family: monospace; font-size: 11px; color: #a5d6ff; }
+  .steps-list { counter-reset: step; list-style: none; display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
+  .steps-list li { counter-increment: step; display: flex; gap: 14px; }
+  .steps-list li::before { content: counter(step); min-width: 28px; height: 28px; background: #21262d; border: 1px solid #30363d; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #58a6ff; flex-shrink: 0; margin-top: 2px; }
+  .steps-list li .step-body { flex: 1; }
+  .steps-list li .step-title { font-size: 14px; font-weight: 600; color: #e6edf3; margin-bottom: 3px; }
+  .steps-list li .step-desc { font-size: 13px; color: #8b949e; line-height: 1.7; }
+  .callout { border-radius: 10px; padding: 16px 20px; margin-bottom: 16px; display: flex; gap: 14px; }
+  .callout-info { background: #0d2137; border: 1px solid #1f4068; }
+  .callout-warn { background: #2d1f00; border: 1px solid #5a3e00; }
+  .callout-tip  { background: #0d2d0d; border: 1px solid #1f5c1f; }
+  .callout-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .callout-body { flex: 1; }
+  .callout-title { font-size: 13px; font-weight: 700; margin-bottom: 5px; }
+  .callout-info .callout-title { color: #58a6ff; }
+  .callout-warn .callout-title { color: #e3b341; }
+  .callout-tip  .callout-title { color: #3fb950; }
+  .callout-body p { font-size: 13px; color: #8b949e; line-height: 1.7; }
+  .callout-body p strong { color: #e6edf3; }
+  .takeaways { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 20px 24px; }
+  .takeaway-item { display: flex; gap: 12px; padding: 8px 0; }
+  .takeaway-item + .takeaway-item { border-top: 1px solid #21262d; }
+  .takeaway-bullet { color: #58a6ff; font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+  .takeaway-text { font-size: 13px; color: #8b949e; line-height: 1.7; }
+  .takeaway-text strong { color: #e6edf3; }
+  .real-world-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+  .rw-badge { background: #21262d; border: 1px solid #30363d; border-radius: 20px; padding: 5px 14px; font-size: 12px; color: #8b949e; display: flex; align-items: center; gap: 6px; }
+  .rw-badge strong { color: #e6edf3; }
+  .pitfall-list { display: flex; flex-direction: column; gap: 10px; }
+  .pitfall { background: #1a0d0d; border: 1px solid #3d1515; border-radius: 8px; padding: 14px 18px; }
+  .pitfall-title { font-size: 13px; font-weight: 700; color: #f85149; margin-bottom: 5px; }
+  .pitfall p { font-size: 13px; color: #8b949e; line-height: 1.65; }
+  .pitfall p strong { color: #e6edf3; }
+  .compare-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 16px; }
+  .compare-table th { padding: 10px 14px; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: #8b949e; border-bottom: 1px solid #30363d; }
+  .compare-table td { padding: 10px 14px; border-bottom: 1px solid #21262d; color: #8b949e; vertical-align: top; }
+  .compare-table td:first-child { color: #e6edf3; font-weight: 600; }
+  .compare-table tr:last-child td { border-bottom: none; }
+  .divider { border: none; border-top: 1px solid #21262d; margin: 40px 0; }
+</style>
+</head>
+<body>
+<nav>
+  <span class="brand">🤖 Coding Agents</span>
+  <a class="back" href="../index.html">← Playground</a>
+  <span class="spacer"></span>
+  <span class="lab-title">Lab 06 — Multi-Agent Orchestration</span>
+</nav>
+
+<div class="container">
+  <h1>Multi-Agent Orchestration</h1>
+  <p class="subtitle">Orchestrator + specialized subagents, message passing, parallel execution, and cost tracking</p>
+
+  <div class="main-grid">
+    <div>
+      <div class="panel">
+        <div class="panel-header">
+          <span>Agent Network</span>
+          <span id="statusBadge" style="font-size:0.75rem;color:#8b949e;">idle</span>
+        </div>
+        <canvas id="canvas" height="340"></canvas>
+      </div>
+      <div class="panel" style="margin-top:16px;">
+        <div class="panel-header">Token Cost Meter</div>
+        <div class="cost-bar" id="costMeter">
+          <div class="cost-row"><span class="cost-label">Researcher</span><div class="cost-track"><div class="cost-fill" id="cf-0" style="width:0%;background:#58a6ff;"></div></div><span class="cost-val" id="cv-0">$0.000</span></div>
+          <div class="cost-row"><span class="cost-label">Coder</span><div class="cost-track"><div class="cost-fill" id="cf-1" style="width:0%;background:#3fb950;"></div></div><span class="cost-val" id="cv-1">$0.000</span></div>
+          <div class="cost-row"><span class="cost-label">Reviewer</span><div class="cost-track"><div class="cost-fill" id="cf-2" style="width:0%;background:#e3b341;"></div></div><span class="cost-val" id="cv-2">$0.000</span></div>
+          <div class="cost-row"><span class="cost-label">Writer</span><div class="cost-track"><div class="cost-fill" id="cf-3" style="width:0%;background:#f778ba;"></div></div><span class="cost-val" id="cv-3">$0.000</span></div>
+          <div class="cost-row"><span class="cost-label">Orchestrator</span><div class="cost-track"><div class="cost-fill" id="cf-4" style="width:0%;background:#bc8cff;"></div></div><span class="cost-val" id="cv-4">$0.000</span></div>
+          <div class="total-cost"><span style="color:#8b949e;">Total</span><span id="totalCost" style="color:#e6edf3;font-family:monospace;">$0.000</span></div>
+        </div>
+      </div>
+      <div class="panel" style="margin-top:16px;">
+        <div class="panel-header">Controls</div>
+        <div class="controls">
+          <div>
+            <label>Task</label>
+            <select id="taskSelect">
+              <option value="0">Build feature X</option>
+              <option value="1">Review PR</option>
+              <option value="2">Write documentation</option>
+              <option value="3">Fix bug</option>
+            </select>
+          </div>
+          <button class="primary" id="dispatchBtn">📡 Dispatch Task</button>
+          <button class="danger" id="failBtn" disabled>💥 Inject Failure</button>
+          <button id="memBtn">🧠 Shared Memory</button>
+        </div>
+      </div>
+    </div>
+    <div class="panel" style="align-self: start;">
+      <div class="panel-header">Insight</div>
+      <div class="insight" id="insight">
+        <h3>About This Lab</h3>
+        <p style="color:#8b949e;">Select a task and click <strong>Dispatch Task</strong> to watch the orchestrator coordinate specialized subagents.</p>
+        <div class="info-box">Multi-agent systems achieve parallelism by delegating to specialized agents. The orchestrator breaks a task into subtasks, dispatches them, collects results, and synthesizes the final answer.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+<hr class="divider">
+
+<div class="explain-section">
+  <div class="explain-h2"><span class="ehead-icon">📖</span> Concept Overview</div>
+  <p class="explain-p"><strong>Multi-agent systems</strong> are networks of individual AI agents that collaborate to accomplish tasks that are too complex, too long, or too specialized for a single agent. Each agent has its own context window, its own set of tools, and potentially its own specialized system prompt. An <strong>orchestrator</strong> agent coordinates the others — breaking down the high-level goal, assigning subtasks to the most capable specialist, and synthesizing results.</p>
+  <p class="explain-p">The case for multiple agents rests on three pillars. First, <strong>specialization</strong>: a coding agent trained on code reviews performs better at reviewing than a generalist. Second, <strong>parallelism</strong>: multiple agents can work simultaneously, dramatically reducing wall-clock time for tasks that can be parallelized. Third, <strong>context isolation</strong>: each agent gets a clean, focused context for its subtask rather than a cluttered mega-context trying to track everything at once.</p>
+  <p class="explain-p">The main challenges are <strong>coordination overhead</strong> (messages between agents cost tokens and introduce latency), <strong>state synchronization</strong> (agents working in parallel may conflict if they modify the same resources), and <strong>error propagation</strong> (one agent's failure can block downstream agents). Well-designed multi-agent systems address these through explicit message protocols, shared memory stores, and graceful failure handling.</p>
+</div>
+
+<div class="explain-section">
+  <div class="explain-h2"><span class="ehead-icon">⚙️</span> Orchestration Patterns</div>
+  <div class="explain-grid">
+    <div class="explain-card">
+      <div class="explain-card-title">🎯 Hierarchical (Manager-Worker)</div>
+      <p>One orchestrator LLM breaks down the task and delegates to worker agents. Workers report back; orchestrator synthesizes. Simple and predictable. Best for: tasks with a clear overall goal that decomposes into independent subtasks. Used by: CrewAI, AutoGen with a manager.</p>
+    </div>
+    <div class="explain-card">
+      <div class="explain-card-title">🔄 Pipeline (Sequential Handoff)</div>
+      <p>Agent A's output becomes Agent B's input. Each agent adds its specialization. No orchestrator needed — the pipeline structure IS the coordination. Best for: content generation (research → draft → review → edit). Deterministic, easy to debug.</p>
+    </div>
+    <div class="explain-card">
+      <div class="explain-card-title">🤝 Peer-to-Peer (Collaborative)</div>
+      <p>Agents communicate directly with each other, no central coordinator. Better for emergence and self-organization, but harder to debug. Requires a shared messaging protocol. Best for: simulation, debate-style reasoning, adversarial verification.</p>
+    </div>
+    <div class="explain-card">
+      <div class="explain-card-title">🗳️ Ensemble (Voting)</div>
+      <p>Multiple agents independently solve the same problem; answers are aggregated by voting or averaging. Increases reliability at the cost of N× compute. Best for: high-stakes decisions (medical, legal, security), where false negatives are costly.</p>
+    </div>
+  </div>
+</div>
+
+<div class="explain-section">
+  <div class="explain-h2"><span class="ehead-icon">💰</span> Token Cost &amp; Latency Math</div>
+  <p class="explain-p">Multi-agent costs add up quickly. Consider a task where the orchestrator uses 5K tokens and delegates to 4 specialists each using 8K tokens. Total: 5K + (4 × 8K) = <strong>37K tokens</strong> — versus maybe 20K for a single capable agent. However, if all 4 specialists run in parallel, <strong>wall-clock time is the cost of one specialist</strong>, not four. The math often favors multi-agent for latency even when it's more expensive in total tokens.</p>
+  <div class="callout callout-warn">
+    <div class="callout-icon">⚠️</div>
+    <div class="callout-body">
+      <div class="callout-title">Communication overhead compounds</div>
+      <p>Every message between agents costs tokens on both sides — the sender's context and the receiver's context. A 10-agent system where each agent sends status updates to all others generates O(n²) messages. <strong>Use a shared memory store instead of broadcast messaging</strong> for large multi-agent systems.</p>
+    </div>
+  </div>
+</div>
+
+<div class="explain-section">
+  <div class="explain-h2"><span class="ehead-icon">🔗</span> Shared Memory &amp; State Coordination</div>
+  <ol class="steps-list">
+    <li>
+      <div class="step-body">
+        <div class="step-title">Shared file / scratchpad</div>
+        <div class="step-desc">All agents read and write to a shared file (e.g., <code>plan.md</code>, <code>state.json</code>). Simple and transparent. Risk: concurrent writes can conflict. Mitigate with file locking or optimistic concurrency control.</div>
+      </div>
+    </li>
+    <li>
+      <div class="step-body">
+        <div class="step-title">Message queue</div>
+        <div class="step-desc">Agents post messages to named queues; other agents consume from them. Decoupled and asynchronous. The orchestrator can monitor queue depths to detect bottlenecks. Good for: producer-consumer patterns where output of one agent feeds another.</div>
+      </div>
+    </li>
+    <li>
+      <div class="step-body">
+        <div class="step-title">Vector memory store</div>
+        <div class="step-desc">Agents write discoveries, decisions, and summaries to a shared vector database. Other agents query it semantically: "What has been learned about the authentication module?" Scales well; enables rich cross-agent knowledge sharing without passing massive context blocks.</div>
+      </div>
+    </li>
+    <li>
+      <div class="step-body">
+        <div class="step-title">Structured state machine</div>
+        <div class="step-desc">The orchestrator maintains an explicit state object: task status, agent assignments, results so far. Each agent reads its assignment from the state and writes its result back. The orchestrator controls transitions. Most auditable and reliable approach for production systems.</div>
+      </div>
+    </li>
+  </ol>
+</div>
+
+<div class="explain-section">
+  <div class="explain-h2"><span class="ehead-icon">🌍</span> Multi-Agent Frameworks</div>
+  <div class="real-world-row">
+    <div class="rw-badge">🤖 <strong>Claude Code sub-agents</strong> — Agent tool spawns isolated subagents with their own context</div>
+    <div class="rw-badge">🕸️ <strong>LangGraph</strong> — stateful multi-agent DAGs with persistent memory</div>
+    <div class="rw-badge">👥 <strong>CrewAI</strong> — role-based agents (researcher, writer, reviewer) with defined workflows</div>
+    <div class="rw-badge">🤝 <strong>AutoGen</strong> — conversational multi-agent with human-in-the-loop support</div>
+    <div class="rw-badge">🔬 <strong>Swarm (OpenAI)</strong> — lightweight agent handoff without persistent orchestrator</div>
+  </div>
+</div>
+
+<div class="explain-section">
+  <div class="explain-h2"><span class="ehead-icon">🪤</span> Common Pitfalls</div>
+  <div class="pitfall-list">
+    <div class="pitfall">
+      <div class="pitfall-title">Cascading failures</div>
+      <p>Agent A fails, so Agent B (which depends on A's output) also fails, so Agent C fails. The whole system collapses from one error. <strong>Fix:</strong> Design agents to handle missing/incomplete input gracefully. Add timeout and retry logic at the orchestrator level. Use fallback strategies.</p>
+    </div>
+    <div class="pitfall">
+      <div class="pitfall-title">Context explosion at the orchestrator</div>
+      <p>The orchestrator collects results from all agents and accumulates them in its context. For 10 agents each returning 5K tokens, the orchestrator's context hits 50K+ tokens rapidly. <strong>Fix:</strong> Have the orchestrator summarize or extract key points from each agent's result rather than accumulating raw outputs.</p>
+    </div>
+    <div class="pitfall">
+      <div class="pitfall-title">Agents working at cross-purposes</div>
+      <p>Two agents both decide to refactor the same module independently, producing conflicting changes. <strong>Fix:</strong> Use resource locking or a task assignment system that tracks which agents "own" which files or components.</p>
+    </div>
+  </div>
+</div>
+
+<div class="explain-section">
+  <div class="explain-h2"><span class="ehead-icon">✅</span> Key Takeaways</div>
+  <div class="takeaways">
+    <div class="takeaway-item">
+      <div class="takeaway-bullet">→</div>
+      <div class="takeaway-text"><strong>Specialization beats generalization for complex tasks.</strong> A specialist agent with a focused system prompt and relevant tools consistently outperforms a generalist agent trying to do everything.</div>
+    </div>
+    <div class="takeaway-item">
+      <div class="takeaway-bullet">→</div>
+      <div class="takeaway-text"><strong>Parallelism is the main latency win.</strong> Sequential single-agent tasks take O(n) time. Parallel multi-agent tasks approach O(1) for the critical path. This multiplier justifies the coordination overhead for complex, time-sensitive work.</div>
+    </div>
+    <div class="takeaway-item">
+      <div class="takeaway-bullet">→</div>
+      <div class="takeaway-text"><strong>Coordination overhead is real.</strong> Don't add agents for small tasks — the orchestration cost (tokens, latency, complexity) may exceed the benefit. Multi-agent shines for tasks that genuinely decompose into independent parallel workstreams.</div>
+    </div>
+    <div class="takeaway-item">
+      <div class="takeaway-bullet">→</div>
+      <div class="takeaway-text"><strong>Shared memory is better than message flooding.</strong> Rather than sending large results between agents, write to a shared store and let agents pull what they need. This reduces coupling and prevents context explosion.</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+function resize() { canvas.width = canvas.parentElement.clientWidth; canvas.height = 340; }
+resize();
+window.addEventListener('resize', () => { resize(); });
+
+// Agents layout
+const AGENTS = [
+  { id:'orchestrator', label:'Orchestrator', color:'#bc8cff', role:'Plans & coordinates' },
+  { id:'researcher',   label:'Researcher',   color:'#58a6ff', role:'Finds information' },
+  { id:'coder',        label:'Coder',        color:'#3fb950', role:'Writes code' },
+  { id:'reviewer',     label:'Reviewer',     color:'#e3b341', role:'Reviews output' },
+  { id:'writer',       label:'Writer',       color:'#f778ba', role:'Writes prose' },
+];
+
+const TASK_DEFS = [
+  {
+    name: "Build feature X",
+    steps: [
+      { from:'orchestrator', to:'researcher', msg:'Research requirements & patterns', duration:1200, agent:0 },
+      { from:'orchestrator', to:'coder',      msg:'Implement feature skeleton', duration:1500, agent:1 },
+      { from:'orchestrator', to:'writer',     msg:'Draft user story', duration:900, agent:3 },
+      { from:'coder',        to:'reviewer',   msg:'Review implementation', duration:1100, agent:2 },
+      { from:'reviewer',     to:'orchestrator', msg:'LGTM with minor fixes', duration:600, agent:4 },
+      { from:'orchestrator', to:'coder',      msg:'Apply review feedback', duration:800, agent:1 },
+      { from:'orchestrator', to:'writer',     msg:'Update release notes', duration:700, agent:3 },
+    ],
+    costs: [0.012, 0.024, 0.008, 0.015, 0.006],
+    parallelSaving: '47%',
+    subtasks: ['Research best practices', 'Implement feature skeleton', 'Draft user story', 'Review implementation', 'Apply feedback', 'Update release notes'],
+    description: 'Research, implementation, and documentation run in parallel before review merges everything.'
+  },
+  {
+    name: "Review PR",
+    steps: [
+      { from:'orchestrator', to:'researcher', msg:'Check related issues & history', duration:900, agent:0 },
+      { from:'orchestrator', to:'coder',      msg:'Analyze code diff for bugs', duration:1300, agent:1 },
+      { from:'orchestrator', to:'writer',     msg:'Check docs accuracy', duration:800, agent:3 },
+      { from:'coder',        to:'reviewer',   msg:'Run static analysis report', duration:1000, agent:2 },
+      { from:'reviewer',     to:'orchestrator', msg:'Issues found: 2 medium', duration:500, agent:4 },
+      { from:'orchestrator', to:'writer',     msg:'Write review summary', duration:700, agent:3 },
+    ],
+    costs: [0.008, 0.018, 0.006, 0.011, 0.004],
+    parallelSaving: '52%',
+    subtasks: ['Check issue history', 'Analyze code diff', 'Verify docs', 'Static analysis', 'Synthesize review'],
+    description: 'Parallel review across code quality, documentation, and history dramatically speeds up PR review.'
+  },
+  {
+    name: "Write documentation",
+    steps: [
+      { from:'orchestrator', to:'researcher', msg:'Gather existing docs & API spec', duration:1000, agent:0 },
+      { from:'orchestrator', to:'coder',      msg:'Extract code examples', duration:900, agent:1 },
+      { from:'researcher',   to:'writer',     msg:'Reference material ready', duration:500, agent:3 },
+      { from:'coder',        to:'writer',     msg:'Code snippets ready', duration:500, agent:3 },
+      { from:'orchestrator', to:'writer',     msg:'Draft full documentation', duration:1400, agent:3 },
+      { from:'writer',       to:'reviewer',   msg:'Review draft for accuracy', duration:1000, agent:2 },
+      { from:'reviewer',     to:'orchestrator', msg:'Draft approved', duration:400, agent:4 },
+    ],
+    costs: [0.010, 0.009, 0.022, 0.013, 0.003],
+    parallelSaving: '38%',
+    subtasks: ['Gather API spec', 'Extract code examples', 'Draft documentation', 'Technical review', 'Final approval'],
+    description: 'Research and code extraction happen in parallel, feeding the writer agent who produces the full docs.'
+  },
+  {
+    name: "Fix bug",
+    steps: [
+      { from:'orchestrator', to:'researcher', msg:'Search error logs & similar issues', duration:900, agent:0 },
+      { from:'orchestrator', to:'coder',      msg:'Analyze stack trace', duration:1100, agent:1 },
+      { from:'researcher',   to:'orchestrator', msg:'Found root cause in DB query', duration:400, agent:4 },
+      { from:'coder',        to:'orchestrator', msg:'Confirmed — query timeout', duration:300, agent:4 },
+      { from:'orchestrator', to:'coder',      msg:'Fix query with index hint', duration:1200, agent:1 },
+      { from:'coder',        to:'reviewer',   msg:'Review the fix', duration:800, agent:2 },
+      { from:'reviewer',     to:'orchestrator', msg:'Fix verified, tests pass', duration:400, agent:4 },
+    ],
+    costs: [0.007, 0.016, 0.005, 0.009, 0.004],
+    parallelSaving: '41%',
+    subtasks: ['Search error logs', 'Analyze stack trace', 'Diagnose root cause', 'Implement fix', 'Review & verify'],
+    description: 'Bug diagnosis parallelizes log search and code analysis before converging on a targeted fix.'
+  }
+];
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let state = {
+  taskIdx: 0,
+  phase: 'idle',
+  agentStatus: { orchestrator:'idle', researcher:'idle', coder:'idle', reviewer:'idle', writer:'idle' },
+  costs: [0,0,0,0,0],
+  messages: [],
+  showMemory: false,
+  failureInjected: false,
+  stepIdx: 0,
+  subtaskStatus: [],
+  animT: 0,
+  raf: null,
+};
+
+// Packets flying
+let packets = [];
+let spinAngle = 0;
+let pulseT = 0;
+
+function getAgentPos(id) {
+  const w = canvas.width, h = canvas.height;
+  const cx = w/2, cy = h/2;
+  if (id === 'orchestrator') return { x:cx, y:cy };
+  const r = Math.min(w,h)*0.32;
+  const angles = { researcher:-90, coder:-18, reviewer:54, writer:-162 };
+  // 4 agents around center
+  const order = ['researcher','coder','reviewer','writer'];
+  const idx = order.indexOf(id);
+  const a = (idx * 90 - 90) * Math.PI/180;
+  return { x: cx + Math.cos(a)*r, y: cy + Math.sin(a)*r };
+}
+
+function nodeR(id) { return id === 'orchestrator' ? 38 : 26; }
+function agentColor(id) { return AGENTS.find(a=>a.id===id)?.color || '#e6edf3'; }
+
+function drawFrame() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  spinAngle += 0.04;
+  pulseT += 0.03;
+
+  // shared memory node
+  if (state.showMemory) {
+    const cx = canvas.width/2, cy = canvas.height/2;
+    const mx = cx, my = cy - canvas.height*0.36;
+    ctx.beginPath();
+    ctx.arc(mx, my, 18, 0, Math.PI*2);
+    ctx.fillStyle = '#30363d44';
+    ctx.fill();
+    ctx.strokeStyle = '#58a6ff';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([3,3]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#58a6ff';
+    ctx.font = '10px sans-serif';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('MEM', mx, my);
+    // lines to all agents
+    for (const ag of AGENTS) {
+      const p = getAgentPos(ag.id);
+      ctx.beginPath();
+      ctx.moveTo(mx, my+18);
+      ctx.lineTo(p.x, p.y);
+      ctx.strokeStyle = '#58a6ff22';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([2,4]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  }
+
+  // draw edges between orchestrator and subagents
+  const oPos = getAgentPos('orchestrator');
+  for (const ag of AGENTS) {
+    if (ag.id === 'orchestrator') continue;
+    const p = getAgentPos(ag.id);
+    ctx.beginPath();
+    ctx.moveTo(oPos.x, oPos.y);
+    ctx.lineTo(p.x, p.y);
+    ctx.strokeStyle = '#30363d';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  // draw packets
+  for (const pk of packets) {
+    pk.t += 0.025;
+    if (pk.t > 1) { pk.done = true; continue; }
+    const x = pk.sx + (pk.ex-pk.sx)*pk.t;
+    const y = pk.sy + (pk.ey-pk.sy)*pk.t;
+    ctx.beginPath();
+    ctx.arc(x,y,5,0,Math.PI*2);
+    ctx.fillStyle = pk.color;
+    ctx.fill();
+    ctx.fillStyle = '#0d1117';
+    ctx.font = '7px sans-serif';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('✉', x, y);
+    // label
+    if (pk.label) {
+      ctx.font = '8px sans-serif';
+      ctx.fillStyle = '#8b949e';
+      ctx.textAlign = 'center';
+      ctx.fillText(pk.label.slice(0,16), x, y-10);
+    }
+  }
+  packets = packets.filter(p=>!p.done);
+
+  // draw agent nodes
+  for (const ag of AGENTS) {
+    const p = getAgentPos(ag.id);
+    const r = nodeR(ag.id);
+    const st = state.agentStatus[ag.id];
+    const col = agentColor(ag.id);
+
+    // pulse for orchestrator
+    if (ag.id === 'orchestrator') {
+      const pr = r + 8 + Math.sin(pulseT)*4;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, pr, 0, Math.PI*2);
+      const g = ctx.createRadialGradient(p.x,p.y,r,p.x,p.y,pr);
+      g.addColorStop(0, col+'30');
+      g.addColorStop(1, 'transparent');
+      ctx.fillStyle = g;
+      ctx.fill();
+    }
+
+    // node bg
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, r, 0, Math.PI*2);
+    ctx.fillStyle = col+'18';
+    ctx.fill();
+    ctx.strokeStyle = st === 'busy' ? col : '#30363d';
+    ctx.lineWidth = ag.id==='orchestrator' ? 2.5 : 2;
+    ctx.stroke();
+
+    // busy spinner
+    if (st === 'busy') {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, r+6, spinAngle, spinAngle+Math.PI*1.2);
+      ctx.strokeStyle = col+'99';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+
+    // token bar
+    const agIdx = AGENTS.indexOf(ag);
+    const maxCost = Math.max(...state.costs, 0.001);
+    const frac = state.costs[agIdx] / maxCost;
+    const bw = r*2, bh = 5;
+    const bx = p.x - r, by = p.y + r + 4;
+    ctx.fillStyle = '#21262d';
+    ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, 2); ctx.fill();
+    ctx.fillStyle = col;
+    ctx.beginPath(); ctx.roundRect(bx, by, bw*frac, bh, 2); ctx.fill();
+
+    // label
+    ctx.fillStyle = '#e6edf3';
+    ctx.font = `${ag.id==='orchestrator'?'700 ':''} 10px -apple-system,sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(ag.label, p.x, p.y);
+
+    // status dot
+    const dotColor = st==='busy' ? col : st==='done' ? '#3fb950' : st==='failed' ? '#f85149' : '#30363d';
+    ctx.beginPath();
+    ctx.arc(p.x+r-4, p.y-r+4, 4, 0, Math.PI*2);
+    ctx.fillStyle = dotColor;
+    ctx.fill();
+  }
+
+  requestAnimationFrame(drawFrame);
+}
+
+drawFrame();
+
+// ── Task execution ────────────────────────────────────────────────────────────
+function sendPacket(fromId, toId, msg, color) {
+  const from = getAgentPos(fromId), to = getAgentPos(toId);
+  packets.push({ sx:from.x, sy:from.y, ex:to.x, ey:to.y, t:0, color, label:msg, done:false });
+}
+
+let taskTimeout = null;
+function clearTaskTimeout() { if (taskTimeout) { clearTimeout(taskTimeout); taskTimeout = null; } }
+
+function dispatch() {
+  clearTaskTimeout();
+  const task = TASK_DEFS[state.taskIdx];
+  state.phase = 'running';
+  state.agentStatus = { orchestrator:'busy', researcher:'idle', coder:'idle', reviewer:'idle', writer:'idle' };
+  state.costs = [0,0,0,0,0];
+  state.failureInjected = false;
+  state.stepIdx = 0;
+  state.subtaskStatus = task.subtasks.map(()=>'pending');
+  packets = [];
+  updateCostMeter();
+  document.getElementById('failBtn').disabled = false;
+  document.getElementById('dispatchBtn').disabled = true;
+  document.getElementById('statusBadge').textContent = 'running';
+  document.getElementById('statusBadge').style.color = '#58a6ff';
+  updateInsight();
+  runStep();
+}
+
+function runStep() {
+  const task = TASK_DEFS[state.taskIdx];
+  if (state.stepIdx >= task.steps.length) {
+    finishTask();
+    return;
+  }
+  const step = task.steps[state.stepIdx];
+  const color = agentColor(step.from);
+
+  // set busy
+  state.agentStatus[step.to] = 'busy';
+  if (step.to !== 'orchestrator') {
+    const subIdx = ['researcher','coder','writer','reviewer'].indexOf(step.to);
+    if (subIdx >= 0 && state.subtaskStatus[state.stepIdx] !== undefined) {
+      state.subtaskStatus[state.stepIdx] = 'busy';
+    }
+  }
+
+  sendPacket(step.from, step.to, step.msg, color);
+
+  taskTimeout = setTimeout(() => {
+    state.agentStatus[step.to] = 'idle';
+    // accumulate cost
+    state.costs[step.agent] += task.costs[step.agent] * 0.3;
+    if (state.subtaskStatus[state.stepIdx] !== undefined) state.subtaskStatus[state.stepIdx] = 'done';
+    sendPacket(step.to, step.from, 'done', agentColor(step.to));
+    updateCostMeter();
+    updateInsight();
+    state.stepIdx++;
+    taskTimeout = setTimeout(runStep, 400);
+  }, step.duration);
+}
+
+function finishTask() {
+  state.phase = 'done';
+  const task = TASK_DEFS[state.taskIdx];
+  state.agentStatus = { orchestrator:'done', researcher:'done', coder:'done', reviewer:'done', writer:'done' };
+  // finalize costs
+  state.costs = task.costs.slice();
+  updateCostMeter();
+  document.getElementById('dispatchBtn').disabled = false;
+  document.getElementById('failBtn').disabled = true;
+  document.getElementById('statusBadge').textContent = 'done';
+  document.getElementById('statusBadge').style.color = '#3fb950';
+  updateInsight();
+}
+
+function injectFailure() {
+  if (state.phase !== 'running') return;
+  state.failureInjected = true;
+  // Mark coder as failed
+  state.agentStatus['coder'] = 'failed';
+  clearTaskTimeout();
+  document.getElementById('failBtn').disabled = true;
+  updateInsight();
+  // retry after delay
+  taskTimeout = setTimeout(() => {
+    state.agentStatus['coder'] = 'busy';
+    sendPacket('orchestrator', 'coder', 'Retry (handoff)', '#e3b341');
+    updateInsight();
+    taskTimeout = setTimeout(() => {
+      state.agentStatus['coder'] = 'idle';
+      state.failureInjected = false;
+      state.stepIdx++;
+      runStep();
+    }, 1200);
+  }, 1000);
+}
+
+function updateCostMeter() {
+  const task = TASK_DEFS[state.taskIdx];
+  const maxC = Math.max(...task.costs, 0.001);
+  let total = 0;
+  for (let i=0; i<5; i++) {
+    const c = state.costs[i] || 0;
+    total += c;
+    document.getElementById(`cf-${i}`).style.width = (c/maxC*100).toFixed(1)+'%';
+    document.getElementById(`cv-${i}`).textContent = '$'+c.toFixed(3);
+  }
+  document.getElementById('totalCost').textContent = '$'+total.toFixed(3);
+}
+
+// ── Insight ───────────────────────────────────────────────────────────────────
+function updateInsight() {
+  const task = TASK_DEFS[state.taskIdx];
+  const el = document.getElementById('insight');
+
+  if (state.phase === 'idle') {
+    el.innerHTML = `<h3>About This Lab</h3>
+      <p style="color:#8b949e;">Select a task and click <strong>Dispatch Task</strong> to watch the orchestrator coordinate specialized subagents.</p>
+      <div class="info-box">Multi-agent systems achieve parallelism by delegating to specialized agents. The orchestrator plans, dispatches, and synthesizes results.</div>`;
+    return;
+  }
+
+  const subtaskHTML = task.subtasks.map((s,i) => {
+    const st = state.subtaskStatus[i] || 'pending';
+    return `<li class="${st}">${s}</li>`;
+  }).join('');
+
+  const totalCost = state.costs.reduce((a,b)=>a+b,0);
+  const seqTime = task.steps.reduce((a,s)=>a+s.duration,0);
+  const parallelTime = Math.round(seqTime * (1 - parseFloat(task.parallelSaving)/100));
+
+  let failNote = '';
+  if (state.failureInjected) {
+    failNote = `<div class="info-box warn">⚠ Coder agent failed — orchestrator is retrying with a fresh call. Failure isolation prevents cascade.</div>`;
+  }
+
+  let phaseNote = '';
+  if (state.phase === 'done') {
+    phaseNote = `<div class="info-box success">✓ Task complete. Parallelism saved ~${task.parallelSaving} of wall-clock time vs sequential execution.</div>`;
+  } else {
+    phaseNote = `<div class="info-box">Step ${state.stepIdx+1} of ${task.steps.length} — dispatching to subagents.</div>`;
+  }
+
+  el.innerHTML = `
+    <h3>${task.name}</h3>
+    <ul class="subtask-list">${subtaskHTML}</ul>
+    <div class="stat-row"><span class="stat-label">Total cost</span><span class="stat-value">$${totalCost.toFixed(3)}</span></div>
+    <div class="stat-row"><span class="stat-label">Parallel saving</span><span class="stat-value">${task.parallelSaving}</span></div>
+    <div class="stat-row"><span class="stat-label">Sequential</span><span class="stat-value">${(seqTime/1000).toFixed(1)}s</span></div>
+    <div class="stat-row"><span class="stat-label">Parallel est.</span><span class="stat-value">${(parallelTime/1000).toFixed(1)}s</span></div>
+    ${failNote}${phaseNote}
+    <div class="info-box" style="margin-top:6px;">${task.description}</div>`;
+}
+
+// ── Controls ──────────────────────────────────────────────────────────────────
+document.getElementById('taskSelect').addEventListener('change', e => {
+  clearTaskTimeout();
+  state.taskIdx = +e.target.value;
+  state.phase = 'idle';
+  state.agentStatus = { orchestrator:'idle', researcher:'idle', coder:'idle', reviewer:'idle', writer:'idle' };
+  state.costs = [0,0,0,0,0];
+  packets = [];
+  document.getElementById('dispatchBtn').disabled = false;
+  document.getElementById('failBtn').disabled = true;
+  document.getElementById('statusBadge').textContent = 'idle';
+  document.getElementById('statusBadge').style.color = '#8b949e';
+  updateCostMeter();
+  updateInsight();
+});
+
+document.getElementById('dispatchBtn').addEventListener('click', dispatch);
+document.getElementById('failBtn').addEventListener('click', injectFailure);
+document.getElementById('memBtn').addEventListener('click', function() {
+  state.showMemory = !state.showMemory;
+  this.className = state.showMemory ? 'active' : '';
+  this.textContent = state.showMemory ? '🧠 Hide Shared Memory' : '🧠 Shared Memory';
+});
+
+updateInsight();
+</script>
+</body>
+</html>

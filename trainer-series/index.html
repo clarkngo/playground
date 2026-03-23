@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>System Design Trainer Series</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:#0d1117;color:#c9d1d9;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;min-height:100vh;overflow-x:hidden}
+a{text-decoration:none}
+
+/* ── Nav ── */
+.navbar{background:#161b22;border-bottom:1px solid #30363d;padding:.75rem 1.5rem;display:flex;align-items:center;gap:.5rem;position:relative;z-index:100}
+.navbar-brand{font-size:1rem;font-weight:700;color:#e6edf3}
+.navbar a.back{color:#8b949e;font-size:.85rem;margin-left:auto;transition:color .2s}
+.navbar a.back:hover{color:#3fb950}
+
+/* ── Hero ── */
+.hero{position:relative;overflow:hidden;padding:3rem 1.5rem 2.5rem;text-align:center;min-height:200px;display:flex;align-items:center;justify-content:center}
+#heroCanvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.hero-content{position:relative;z-index:1}
+.hero-eyebrow{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:#3fb950;margin-bottom:.85rem;display:flex;align-items:center;justify-content:center;gap:.5rem}
+.hero-eyebrow::before,.hero-eyebrow::after{content:'';width:32px;height:1px;background:linear-gradient(90deg,transparent,#3fb95060)}
+.hero-eyebrow::after{background:linear-gradient(90deg,#3fb95060,transparent)}
+.hero-title{font-size:2.4rem;font-weight:800;color:#e6edf3;line-height:1.18;margin-bottom:.85rem;letter-spacing:-.02em}
+.hero-title span{background:linear-gradient(135deg,#3fb950,#1f6feb);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-sub{color:#8b949e;font-size:.98rem;max-width:540px;margin:0 auto 1.5rem;line-height:1.65}
+.hero-badges{display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap}
+.h-badge{padding:.22rem .7rem;border-radius:12px;font-size:.72rem;font-weight:600;border:1px solid;letter-spacing:.02em}
+.hb-g{background:#0d2d0d;color:#3fb950;border-color:#2d5c2d}
+.hb-b{background:#0d1f3a;color:#58a6ff;border-color:#1c3d6e}
+.hb-o{background:#2a1a06;color:#f0883e;border-color:#5a3310}
+.hb-p{background:#1a0d2a;color:#bc8cff;border-color:#3d1c6e}
+
+/* ── Container ── */
+.container{max-width:1020px;margin:0 auto;padding:2.25rem 1.5rem 3rem}
+
+/* ── Section groups ── */
+.section-group{margin-bottom:2.75rem}
+.section-group-label{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#8b949e;margin-bottom:.9rem;padding-bottom:.4rem;border-bottom:1px solid #21262d;display:flex;align-items:center;gap:.5rem}
+.section-group-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,#21262d,transparent)}
+
+/* ── Grid ── */
+.labs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:.9rem}
+
+/* ── Card ── */
+.lab-card{display:flex;align-items:stretch;background:#161b22;border:1px solid #30363d;border-radius:10px;overflow:hidden;color:#c9d1d9;transition:border-color .25s,transform .2s,box-shadow .25s;position:relative;opacity:0}
+.lab-card:hover{transform:translateY(-3px)}
+.card-g:hover{border-color:#3fb950;box-shadow:0 8px 28px rgba(63,185,80,.14)}
+.card-b:hover{border-color:#58a6ff;box-shadow:0 8px 28px rgba(88,166,255,.14)}
+.card-o:hover{border-color:#f0883e;box-shadow:0 8px 28px rgba(240,136,62,.14)}
+.card-p:hover{border-color:#bc8cff;box-shadow:0 8px 28px rgba(188,140,255,.14)}
+
+/* ── Viz panel ── */
+.lab-viz{width:84px;min-height:84px;flex-shrink:0;background:#0d1117;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;border-right:1px solid #21262d}
+
+/* ── Card body ── */
+.lab-body{flex:1;padding:.9rem 1rem;min-width:0;display:flex;flex-direction:column;justify-content:center}
+.lab-num{font-size:.65rem;font-weight:700;color:#484f58;margin-bottom:.2rem;letter-spacing:.04em}
+.lab-title{font-size:.9rem;font-weight:600;line-height:1.32;margin-bottom:.28rem;color:#e6edf3}
+.lab-desc{font-size:.74rem;color:#8b949e;line-height:1.45;flex:1}
+.lab-tag{display:inline-block;font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:.1rem .42rem;border-radius:8px;margin-top:.38rem}
+.tag-g{background:#0d2d0d;color:#3fb950}
+.tag-b{background:#0d1f3a;color:#58a6ff}
+.tag-o{background:#2a1a06;color:#f0883e}
+.tag-p{background:#1a0d2a;color:#bc8cff}
+
+/* ─────────────────────────────────────────
+   VIZ ANIMATIONS
+───────────────────────────────────────── */
+
+/* 01 – URL Shortener: long bar shrinks to short bar */
+.viz-url{display:flex;flex-direction:column;align-items:center;gap:4px;width:72px}
+.url-long{height:6px;background:#3fb950;border-radius:3px;width:64px}
+.url-arrow{width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:6px solid #8b949e}
+.url-short{height:6px;background:#2ea043;border-radius:3px;width:22px}
+@keyframes urlShrink{0%,20%{width:64px;opacity:1}50%{width:22px;opacity:1}80%,100%{width:22px;opacity:.6}}
+@keyframes urlGrow{0%,20%{width:0;opacity:0}50%,80%{width:22px;opacity:1}100%{width:22px;opacity:.6}}
+.url-long{animation:urlShrink 2.5s ease infinite}
+.url-short{animation:urlGrow 2.5s ease infinite}
+
+/* 02 – Chat System: speech bubbles with bouncing dots */
+.viz-chat{display:flex;align-items:center;gap:6px;padding:0 8px}
+.chat-bub{width:22px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:6px;font-weight:700}
+.cb-l{background:#1f6feb40;border:1px solid #1f6feb;color:#58a6ff}
+.cb-r{background:#2ea04340;border:1px solid #2ea043;color:#3fb950}
+.chat-dots{display:flex;flex-direction:column;gap:3px}
+.chat-dot{width:5px;height:5px;border-radius:50%;background:#8b949e}
+@keyframes chatBounce1{0%,100%{transform:translateX(0);background:#58a6ff}50%{transform:translateX(8px);background:#3fb950}}
+@keyframes chatBounce2{0%,100%{transform:translateX(0);background:#3fb950}50%{transform:translateX(-8px);background:#58a6ff}}
+.chat-dot:nth-child(1){animation:chatBounce1 1.4s ease infinite}
+.chat-dot:nth-child(2){animation:chatBounce2 1.4s .3s ease infinite}
+
+/* 03 – News Feed: stacked cards sliding in */
+.viz-feed{display:flex;flex-direction:column;gap:3px;width:60px;overflow:hidden}
+.feed-item{height:8px;border-radius:3px;border:1px solid #3fb95060;background:#0d2d0d}
+@keyframes feedSlide{0%{transform:translateX(40px);opacity:0}30%,80%{transform:translateX(0);opacity:1}100%{transform:translateX(-40px);opacity:0}}
+.feed-item:nth-child(1){width:56px;animation:feedSlide 2.2s 0s ease infinite}
+.feed-item:nth-child(2){width:48px;animation:feedSlide 2.2s .25s ease infinite}
+.feed-item:nth-child(3){width:52px;animation:feedSlide 2.2s .5s ease infinite}
+.feed-item:nth-child(4){width:44px;animation:feedSlide 2.2s .75s ease infinite}
+
+/* 04 – Rate Limiter: dots into bucket with overflow */
+.viz-rlimit{display:flex;flex-direction:column;align-items:center;gap:3px}
+.rl-bucket{width:34px;height:28px;border:2px solid #3fb95080;border-top:none;border-radius:0 0 5px 5px;overflow:hidden;position:relative;background:#0d2d0d20}
+@keyframes rlFill{0%,10%{height:0}40%,65%{height:24px}70%{height:24px}75%{background:#3fb950}76%{background:#f85149}100%{height:0}}
+.rl-fill{position:absolute;bottom:0;left:0;right:0;background:#3fb950;animation:rlFill 3s ease infinite}
+@keyframes rlDrop{0%{top:-6px;opacity:1}70%{top:2px;opacity:1}100%{top:2px;opacity:0}}
+.rl-token{position:absolute;top:-6px;left:50%;transform:translateX(-50%);width:6px;height:6px;background:#3fb950;border-radius:50%;animation:rlDrop 1s ease infinite}
+@keyframes rlFlash{0%,70%{box-shadow:none}75%,85%{box-shadow:0 0 8px #f8514980}100%{box-shadow:none}}
+.rl-bucket{animation:rlFlash 3s ease infinite}
+
+/* 05 – Notification System: bell with radiating icons */
+.viz-notify{position:relative;width:60px;height:60px;display:flex;align-items:center;justify-content:center}
+.notif-bell{font-size:18px;position:relative;z-index:2}
+@keyframes bellRing{0%,80%,100%{transform:rotate(0)}85%{transform:rotate(12deg)}90%{transform:rotate(-12deg)}95%{transform:rotate(6deg)}}
+.notif-bell{animation:bellRing 2.5s ease infinite}
+.notif-icon{position:absolute;font-size:9px;opacity:0}
+@keyframes iconRadiate{0%{opacity:0;transform:translate(0,0) scale(.5)}30%{opacity:1;transform:var(--ni-pos) scale(1)}70%{opacity:1;transform:var(--ni-pos) scale(1)}100%{opacity:0;transform:var(--ni-pos) scale(.5)}}
+.ni1{--ni-pos:translate(-18px,-14px);animation:iconRadiate 2.5s .2s ease infinite}
+.ni2{--ni-pos:translate(18px,-14px);animation:iconRadiate 2.5s .5s ease infinite}
+.ni3{--ni-pos:translate(0px,20px);animation:iconRadiate 2.5s .8s ease infinite}
+
+/* 06 – Key-Value Store: boxes shuffling into hash buckets */
+.viz-kv{display:flex;flex-direction:column;gap:3px;align-items:center;width:68px}
+.kv-pair{display:flex;gap:2px;font-size:6.5px;font-weight:700;font-family:monospace}
+.kv-k{padding:1px 4px;background:#0d1f3a;color:#58a6ff;border:1px solid #1c3d6e;border-radius:2px}
+.kv-v{padding:1px 4px;background:#0d2d0d;color:#3fb950;border:1px solid #2d5c2d;border-radius:2px}
+@keyframes kvShuffle{0%,30%{transform:translateX(0);opacity:1}50%{transform:translateX(8px);opacity:.4}70%,100%{transform:translateX(0);opacity:1}}
+.kv-pair:nth-child(1){animation:kvShuffle 2s 0s ease infinite}
+.kv-pair:nth-child(2){animation:kvShuffle 2s .4s ease infinite}
+.kv-pair:nth-child(3){animation:kvShuffle 2s .8s ease infinite}
+
+/* 07 – Search Autocomplete: typing text with dropdown */
+.viz-search{display:flex;flex-direction:column;align-items:center;gap:2px;width:68px}
+.srch-bar{width:62px;height:12px;background:#161b22;border:1px solid #30363d;border-radius:3px;position:relative;overflow:hidden}
+.srch-text{position:absolute;top:1px;left:3px;font-size:7px;font-family:monospace;color:#e6edf3;white-space:nowrap}
+@keyframes srchType{0%{width:0}40%,100%{width:40px}}
+.srch-text{overflow:hidden;animation:srchType 3s steps(8) infinite}
+.srch-dd{width:62px;display:flex;flex-direction:column;gap:1px}
+.srch-item{height:7px;border-radius:2px;background:#21262d;border:1px solid #30363d}
+@keyframes srchAppear{0%,30%{opacity:0;transform:scaleY(0)}50%,85%{opacity:1;transform:scaleY(1)}100%{opacity:0;transform:scaleY(0)}}
+.srch-item:nth-child(1){animation:srchAppear 3s .4s ease infinite}
+.srch-item:nth-child(2){animation:srchAppear 3s .55s ease infinite}
+.srch-item:nth-child(3){animation:srchAppear 3s .7s ease infinite}
+
+/* 08 – Video Streaming: play button with buffering circle */
+.viz-video{position:relative;width:50px;height:50px;display:flex;align-items:center;justify-content:center}
+.vid-play{width:0;height:0;border-top:10px solid transparent;border-bottom:10px solid transparent;border-left:16px solid #bc8cff;margin-left:3px;position:relative;z-index:2}
+.vid-ring{position:absolute;inset:0;border:2px solid transparent;border-top-color:#bc8cff;border-radius:50%;animation:vidSpin 1.2s linear infinite}
+.vid-ring2{position:absolute;inset:4px;border:2px solid transparent;border-bottom-color:#bc8cff50;border-radius:50%;animation:vidSpin 2s linear reverse infinite}
+@keyframes vidSpin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
+
+/* 09 – Distributed Cache: grid with HIT/MISS flashing */
+.viz-dcache{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;width:54px}
+.dc-cell{height:12px;border-radius:2px;font-size:5.5px;font-weight:700;display:flex;align-items:center;justify-content:center;border:1px solid}
+@keyframes dcHit{0%,40%{background:#0d2d0d;color:#3fb950;border-color:#2d5c2d}50%,90%{background:#2a0d10;color:#f85149;border-color:#5a1f20}95%,100%{background:#0d2d0d;color:#3fb950;border-color:#2d5c2d}}
+.dc-cell:nth-child(1){animation:dcHit 2.4s 0s ease infinite}
+.dc-cell:nth-child(2){animation:dcHit 2.4s .3s ease infinite}
+.dc-cell:nth-child(3){animation:dcHit 2.4s .6s ease infinite}
+.dc-cell:nth-child(4){animation:dcHit 2.4s .9s ease infinite}
+.dc-cell:nth-child(5){animation:dcHit 2.4s 1.2s ease infinite}
+.dc-cell:nth-child(6){animation:dcHit 2.4s 1.5s ease infinite}
+.dc-cell:nth-child(7){animation:dcHit 2.4s 1.8s ease infinite}
+.dc-cell:nth-child(8){animation:dcHit 2.4s .15s ease infinite}
+.dc-cell:nth-child(9){animation:dcHit 2.4s .45s ease infinite}
+
+/* 10 – Ride-Sharing: pin and car converging */
+.viz-ride{display:flex;align-items:center;justify-content:center;gap:2px;width:68px;position:relative}
+.ride-pin{font-size:16px;position:relative}
+.ride-car{font-size:14px;position:relative}
+@keyframes ridePin{0%,100%{transform:translateX(-12px)}50%{transform:translateX(0)}}
+@keyframes rideCar{0%,100%{transform:translateX(12px)}50%{transform:translateX(0)}}
+.ride-pin{animation:ridePin 2.5s ease infinite}
+.ride-car{animation:rideCar 2.5s ease infinite}
+.ride-pulse{position:absolute;top:50%;left:50%;width:6px;height:6px;background:#3fb950;border-radius:50%;transform:translate(-50%,-50%)}
+@keyframes ridePulse{0%,40%{opacity:0;transform:translate(-50%,-50%) scale(0)}50%{opacity:1;transform:translate(-50%,-50%) scale(1)}60%,100%{opacity:0;transform:translate(-50%,-50%) scale(3)}}
+.ride-pulse{animation:ridePulse 2.5s ease infinite}
+
+/* ── Card entrance ── */
+@keyframes cardIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+
+/* ── Footer ── */
+footer{text-align:center;padding:2rem 1rem;color:#484f58;font-size:.8rem;border-top:1px solid #21262d;margin-top:.5rem}
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <span class="navbar-brand">&#127919; System Design Trainer</span>
+  <a href="../index.html" class="back">&larr; Playground</a>
+</nav>
+
+<!-- Hero with live canvas -->
+<div class="hero">
+  <canvas id="heroCanvas"></canvas>
+  <div class="hero-content">
+    <div class="hero-eyebrow">Interview Trainer</div>
+    <h1 class="hero-title">System Design<br><span>Interview Trainer</span></h1>
+    <p class="hero-sub">10 interactive trainers &mdash; practice designing real systems step by step, from requirements to architecture to trade-offs.</p>
+    <div class="hero-badges">
+      <span class="h-badge hb-g">Classic Problems</span>
+      <span class="h-badge hb-b">Real-Time Systems</span>
+      <span class="h-badge hb-o">Data-Intensive</span>
+      <span class="h-badge hb-p">Media &amp; Scale</span>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- ── CLASSIC INTERVIEW PROBLEMS ── -->
+  <div class="section-group sec-classic">
+    <div class="section-group-label">Classic Interview Problems</div>
+    <div class="labs-grid">
+
+      <a href="01-url-shortener.html" class="lab-card card-g">
+        <div class="lab-viz">
+          <div class="viz-url">
+            <div class="url-long"></div>
+            <div class="url-arrow"></div>
+            <div class="url-short"></div>
+          </div>
+        </div>
+        <div class="lab-body">
+          <div class="lab-num">Trainer 01</div>
+          <div class="lab-title">Design a URL Shortener</div>
+          <div class="lab-desc">bit.ly from scratch &mdash; hashing, base62, read-heavy optimization, caching, and analytics</div>
+          <span class="lab-tag tag-g">Classic</span>
+        </div>
+      </a>
+
+      <a href="03-news-feed.html" class="lab-card card-g">
+        <div class="lab-viz">
+          <div class="viz-feed">
+            <div class="feed-item"></div>
+            <div class="feed-item"></div>
+            <div class="feed-item"></div>
+            <div class="feed-item"></div>
+          </div>
+        </div>
+        <div class="lab-body">
+          <div class="lab-num">Trainer 03</div>
+          <div class="lab-title">Design a News Feed</div>
+          <div class="lab-desc">Twitter/Facebook feed &mdash; fan-out strategies, ranking, cache invalidation, celebrity problem</div>
+          <span class="lab-tag tag-g">Classic</span>
+        </div>
+      </a>
+
+      <a href="04-rate-limiter.html" class="lab-card card-g">
+        <div class="lab-viz">
+          <div class="viz-rlimit">
+            <div class="rl-bucket">
+              <div class="rl-fill"></div>
+              <div class="rl-token"></div>
+            </div>
+          </div>
+        </div>
+        <div class="lab-body">
+          <div class="lab-num">Trainer 04</div>
+          <div class="lab-title">Design a Rate Limiter</div>
+          <div class="lab-desc">Token bucket, sliding window, distributed limiting with Redis &mdash; protect your APIs</div>
+          <span class="lab-tag tag-g">Classic</span>
+        </div>
+      </a>
+
+    </div>
+  </div>
+
+  <!-- ── REAL-TIME SYSTEMS ── -->
+  <div class="section-group sec-realtime">
+    <div class="section-group-label">Real-Time Systems</div>
+    <div class="labs-grid">
+
+      <a href="02-chat-system.html" class="lab-card card-b">
+        <div class="lab-viz">
+          <div class="viz-chat">
+            <div class="chat-bub cb-l">A</div>
+            <div class="chat-dots">
+              <div class="chat-dot"></div>
+              <div class="chat-dot"></div>
+            </div>
+            <div class="chat-bub cb-r">B</div>
+          </div>
+        </div>
+        <div class="lab-body">
+          <div class="lab-num">Trainer 02</div>
+          <div class="lab-title">Design a Chat System</div>
+          <div class="lab-desc">WhatsApp/Slack &mdash; WebSocket, presence, message ordering, group fanout, offline delivery</div>
+          <span class="lab-tag tag-b">Real-Time</span>
+        </div>
+      </a>
+
+      <a href="05-notification-system.html" class="lab-card card-b">
+        <div class="lab-viz">
+          <div class="viz-notify">
+            <div class="notif-bell">&#128276;</div>
+            <div class="notif-icon ni1">&#128241;</div>
+            <div class="notif-icon ni2">&#9993;</div>
+            <div class="notif-icon ni3">&#128172;</div>
+          </div>
+        </div>
+        <div class="lab-body">
+          <div class="lab-num">Trainer 05</div>
+          <div class="lab-title">Design a Notification System</div>
+          <div class="lab-desc">Push, email, SMS at scale &mdash; multi-channel delivery, dedup, priority queues, templates</div>
+          <span class="lab-tag tag-b">Real-Time</span>
+        </div>
+      </a>
+
+      <a href="10-ride-sharing.html" class="lab-card card-b">
+        <div class="lab-viz">
+          <div class="viz-ride">
+            <div class="ride-pin">&#128205;</div>
+            <div class="ride-pulse"></div>
+            <div class="ride-car">&#128663;</div>
+          </div>
+        </div>
+        <div class="lab-body">
+          <div class="lab-num">Trainer 10</div>
+          <div class="lab-title">Design a Ride-Sharing Service</div>
+          <div class="lab-desc">Uber/Lyft &mdash; geospatial indexing, real-time matching, surge pricing, ETA, trip state machine</div>
+          <span class="lab-tag tag-b">Real-Time</span>
+        </div>
+      </a>
+
+    </div>
+  </div>
+
+  <!-- ── DATA-INTENSIVE SYSTEMS ── -->
+  <div class="section-group sec-data">
+    <div class="section-group-label">Data-Intensive Systems</div>
+    <div class="labs-grid">
+
+      <a href="06-key-value-store.html" class="lab-card card-o">
+        <div class="lab-viz">
+          <div class="viz-kv">
+            <div class="kv-pair"><span class="kv-k">id</span><span class="kv-v">42</span></div>
+            <div class="kv-pair"><span class="kv-k">usr</span><span class="kv-v">AB</span></div>
+            <div class="kv-pair"><span class="kv-k">ttl</span><span class="kv-v">60</span></div>
+          </div>
+        </div>
+        <div class="lab-body">
+          <div class="lab-num">Trainer 06</div>
+          <div class="lab-title">Design a Key-Value Store</div>
+          <div class="lab-desc">DynamoDB/Redis &mdash; consistent hashing, replication, conflict resolution, gossip protocol</div>
+          <span class="lab-tag tag-o">Data</span>
+        </div>
+      </a>
+
+      <a href="07-search-autocomplete.html" class="lab-card card-o">
+        <div class="lab-viz">
+          <div class="viz-search">
+            <div class="srch-bar">
+              <div class="srch-text">design_</div>
+            </div>
+            <div class="srch-dd">
+              <div class="srch-item"></div>
+              <div class="srch-item"></div>
+              <div class="srch-item"></div>
+            </div>
+          </div>
+        </div>
+        <div class="lab-body">
+          <div class="lab-num">Trainer 07</div>
+          <div class="lab-title">Design Search Autocomplete</div>
+          <div class="lab-desc">Google suggestions &mdash; trie data structure, frequency ranking, distributed trie, query filtering</div>
+          <span class="lab-tag tag-o">Data</span>
+        </div>
+      </a>
+
+      <a href="09-distributed-cache.html" class="lab-card card-o">
+        <div class="lab-viz">
+          <div class="viz-dcache">
+            <div class="dc-cell">HIT</div>
+            <div class="dc-cell">HIT</div>
+            <div class="dc-cell">MIS</div>
+            <div class="dc-cell">MIS</div>
+            <div class="dc-cell">HIT</div>
+            <div class="dc-cell">HIT</div>
+            <div class="dc-cell">HIT</div>
+            <div class="dc-cell">MIS</div>
+            <div class="dc-cell">HIT</div>
+          </div>
+        </div>
+        <div class="lab-body">
+          <div class="lab-num">Trainer 09</div>
+          <div class="lab-title">Design a Distributed Cache</div>
+          <div class="lab-desc">Memcached/Redis Cluster &mdash; LRU/LFU eviction, cache-aside, hot key mitigation, thundering herd</div>
+          <span class="lab-tag tag-o">Data</span>
+        </div>
+      </a>
+
+    </div>
+  </div>
+
+  <!-- ── MEDIA & SCALE ── -->
+  <div class="section-group sec-media">
+    <div class="section-group-label">Media &amp; Scale</div>
+    <div class="labs-grid">
+
+      <a href="08-video-streaming.html" class="lab-card card-p">
+        <div class="lab-viz">
+          <div class="viz-video">
+            <div class="vid-ring"></div>
+            <div class="vid-ring2"></div>
+            <div class="vid-play"></div>
+          </div>
+        </div>
+        <div class="lab-body">
+          <div class="lab-num">Trainer 08</div>
+          <div class="lab-title">Design a Video Streaming Platform</div>
+          <div class="lab-desc">YouTube/Netflix &mdash; upload pipeline, transcoding, adaptive bitrate, CDN, view counting at scale</div>
+          <span class="lab-tag tag-p">Media</span>
+        </div>
+      </a>
+
+    </div>
+  </div>
+
+  <footer>Practice step by step &middot; No server required &middot; No data collected</footer>
+</div>
+
+<script>
+// ───────────────────────────────────────────
+//  HERO CANVAS — whiteboard architecture drawing
+// ───────────────────────────────────────────
+(function() {
+  const canvas = document.getElementById('heroCanvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, raf;
+  const DPR = window.devicePixelRatio || 1;
+
+  // 3 architecture diagrams to cycle through
+  const architectures = [
+    // Arch 0: Client -> LB -> 2 App Servers -> Cache -> DB
+    {
+      boxes: [
+        { label:'Client', x:.08, y:.5, w:52, h:22, color:'#e6edf3' },
+        { label:'LB',     x:.27, y:.5, w:36, h:22, color:'#58a6ff' },
+        { label:'App 1',  x:.46, y:.28, w:44, h:20, color:'#3fb950' },
+        { label:'App 2',  x:.46, y:.72, w:44, h:20, color:'#3fb950' },
+        { label:'Cache',  x:.67, y:.5, w:44, h:22, color:'#f0883e' },
+        { label:'DB',     x:.86, y:.5, w:36, h:22, color:'#bc8cff' },
+      ],
+      lines: [[0,1],[1,2],[1,3],[2,4],[3,4],[4,5]]
+    },
+    // Arch 1: Client -> API Gateway -> Auth + Service A + Service B -> MQ -> DB
+    {
+      boxes: [
+        { label:'Client',  x:.06, y:.5,  w:48, h:22, color:'#e6edf3' },
+        { label:'Gateway', x:.24, y:.5,  w:52, h:22, color:'#1f6feb' },
+        { label:'Auth',    x:.44, y:.2,  w:38, h:18, color:'#f85149' },
+        { label:'Svc A',   x:.44, y:.5,  w:38, h:18, color:'#3fb950' },
+        { label:'Svc B',   x:.44, y:.8,  w:38, h:18, color:'#3fb950' },
+        { label:'Queue',   x:.64, y:.5,  w:42, h:22, color:'#f0883e' },
+        { label:'DB',      x:.84, y:.5,  w:36, h:22, color:'#bc8cff' },
+      ],
+      lines: [[0,1],[1,2],[1,3],[1,4],[3,5],[4,5],[5,6]]
+    },
+    // Arch 2: Users -> CDN + LB -> App -> Cache + DB (read replica)
+    {
+      boxes: [
+        { label:'Users',   x:.06, y:.5,  w:44, h:22, color:'#e6edf3' },
+        { label:'CDN',     x:.25, y:.25, w:36, h:20, color:'#f85149' },
+        { label:'LB',      x:.25, y:.75, w:36, h:20, color:'#58a6ff' },
+        { label:'App',     x:.46, y:.5,  w:36, h:22, color:'#3fb950' },
+        { label:'Redis',   x:.66, y:.28, w:40, h:20, color:'#f0883e' },
+        { label:'Primary', x:.66, y:.72, w:48, h:20, color:'#bc8cff' },
+        { label:'Replica', x:.88, y:.72, w:48, h:20, color:'#bc8cff' },
+      ],
+      lines: [[0,1],[0,2],[2,3],[3,4],[3,5],[5,6]]
+    }
+  ];
+
+  let currentArch = 0;
+  let phase = 'draw'; // 'draw' | 'hold' | 'erase'
+  let progress = 0;
+  const DRAW_SPEED = 0.004;
+  const ERASE_SPEED = 0.006;
+  const HOLD_FRAMES = 180;
+  let holdCount = 0;
+
+  function resize() {
+    const hero = canvas.parentElement;
+    W = hero.clientWidth; H = hero.clientHeight;
+    canvas.width = W * DPR; canvas.height = H * DPR;
+    canvas.style.width = W+'px'; canvas.style.height = H+'px';
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  }
+
+  function getBoxRect(box) {
+    const cx = box.x * W;
+    const cy = box.y * H;
+    return { x: cx - box.w/2, y: cy - box.h/2, w: box.w, h: box.h, cx, cy };
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    const arch = architectures[currentArch];
+    let alpha = 1;
+
+    if (phase === 'draw') {
+      progress += DRAW_SPEED;
+      if (progress >= 1) { progress = 1; phase = 'hold'; holdCount = 0; }
+      alpha = 1;
+    } else if (phase === 'hold') {
+      holdCount++;
+      if (holdCount >= HOLD_FRAMES) { phase = 'erase'; progress = 1; }
+      alpha = 1;
+    } else if (phase === 'erase') {
+      progress -= ERASE_SPEED;
+      if (progress <= 0) {
+        progress = 0;
+        phase = 'draw';
+        currentArch = (currentArch + 1) % architectures.length;
+      }
+      alpha = progress;
+    }
+
+    const totalElements = arch.boxes.length + arch.lines.length;
+    const drawProgress = phase === 'erase' ? 1 : progress;
+
+    ctx.globalAlpha = phase === 'erase' ? alpha : 1;
+
+    // Draw lines
+    arch.lines.forEach((line, i) => {
+      const elemIdx = arch.boxes.length + i;
+      const elemProgress = Math.max(0, Math.min(1, (drawProgress * totalElements - elemIdx) * 1.5));
+      if (elemProgress <= 0) return;
+
+      const fromR = getBoxRect(arch.boxes[line[0]]);
+      const toR = getBoxRect(arch.boxes[line[1]]);
+
+      ctx.save();
+      ctx.globalAlpha *= elemProgress;
+      ctx.beginPath();
+      ctx.moveTo(fromR.cx, fromR.cy);
+      const endX = fromR.cx + (toR.cx - fromR.cx) * elemProgress;
+      const endY = fromR.cy + (toR.cy - fromR.cy) * elemProgress;
+      ctx.lineTo(endX, endY);
+      ctx.strokeStyle = '#30363d';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([4, 3]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Arrow
+      if (elemProgress > 0.9) {
+        const angle = Math.atan2(toR.cy - fromR.cy, toR.cx - fromR.cx);
+        ctx.beginPath();
+        ctx.moveTo(endX, endY);
+        ctx.lineTo(endX - 6*Math.cos(angle - .4), endY - 6*Math.sin(angle - .4));
+        ctx.moveTo(endX, endY);
+        ctx.lineTo(endX - 6*Math.cos(angle + .4), endY - 6*Math.sin(angle + .4));
+        ctx.strokeStyle = '#484f58';
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+      }
+      ctx.restore();
+    });
+
+    // Draw boxes
+    arch.boxes.forEach((box, i) => {
+      const elemProgress = Math.max(0, Math.min(1, (drawProgress * totalElements - i) * 2));
+      if (elemProgress <= 0) return;
+
+      const r = getBoxRect(box);
+      ctx.save();
+      ctx.globalAlpha *= elemProgress;
+
+      // Box
+      ctx.strokeStyle = box.color + '80';
+      ctx.lineWidth = 1.5;
+      ctx.fillStyle = '#161b22';
+      const radius = 4;
+      ctx.beginPath();
+      ctx.roundRect(r.x, r.y, r.w * elemProgress, r.h, radius);
+      ctx.fill();
+      ctx.stroke();
+
+      // Label
+      if (elemProgress > 0.6) {
+        ctx.fillStyle = box.color;
+        ctx.font = '600 8px -apple-system, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.globalAlpha *= Math.min(1, (elemProgress - 0.6) * 2.5);
+        ctx.fillText(box.label, r.cx, r.cy);
+      }
+      ctx.restore();
+    });
+
+    ctx.globalAlpha = 1;
+    raf = requestAnimationFrame(draw);
+  }
+
+  window.addEventListener('resize', () => { cancelAnimationFrame(raf); resize(); raf = requestAnimationFrame(draw); });
+  resize();
+  raf = requestAnimationFrame(draw);
+})();
+
+// ───────────────────────────────────────────
+//  STAGGERED CARD ENTRANCE
+// ───────────────────────────────────────────
+document.querySelectorAll('.lab-card').forEach((card, i) => {
+  card.style.animation = `cardIn .45s ease ${i * 55}ms forwards`;
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CDN: Edge Caching & Global Distribution</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0d1117; color: #c9d1d9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
+  nav { background: #161b22; border-bottom: 1px solid #30363d; padding: 12px 24px; display: flex; align-items: center; gap: 16px; flex-shrink: 0; }
+  nav .brand { font-weight: 700; font-size: 16px; color: #f0f6fc; }
+  nav a { color: #58a6ff; text-decoration: none; font-size: 14px; }
+  nav a:hover { text-decoration: underline; }
+  .main { display: flex; flex: 1; overflow: hidden; }
+  .canvas-area { flex: 1; position: relative; overflow: hidden; }
+  canvas { display: block; }
+  .sidebar { width: 300px; min-width: 300px; background: #161b22; border-left: 1px solid #30363d; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+  .panel { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 14px; }
+  .panel h3 { font-size: 12px; font-weight: 600; color: #8b949e; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+  .btn { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 14px; border-radius: 6px; border: 1px solid #30363d; background: #21262d; color: #c9d1d9; font-size: 13px; cursor: pointer; transition: all 0.2s; font-family: inherit; width: 100%; margin-bottom: 6px; }
+  .btn:hover { background: #30363d; }
+  .btn.primary { background: #1f6feb; border-color: #388bfd; color: #fff; }
+  .btn.primary:hover { background: #388bfd; }
+  .btn.warn { background: #9e6a0322; border-color: #d29922; color: #d29922; }
+  .btn.warn:hover { background: #d2992233; }
+  label { font-size: 12px; color: #8b949e; display: block; margin-bottom: 4px; margin-top: 8px; }
+  input[type=range] { width: 100%; accent-color: #58a6ff; margin-bottom: 4px; }
+  .metric { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid #21262d; font-size: 12px; }
+  .metric:last-child { border-bottom: none; }
+  .metric-val { font-weight: 700; font-size: 13px; }
+  .pop-list { display: flex; flex-direction: column; gap: 4px; }
+  .pop-item { display: flex; align-items: center; justify-content: space-between; padding: 5px 8px; background: #161b22; border-radius: 5px; border: 1px solid #21262d; font-size: 11px; }
+  .cache-bar { height: 4px; background: #21262d; border-radius: 2px; margin-top: 3px; }
+  .cache-fill { height: 100%; border-radius: 2px; transition: width 0.5s; }
+  .req-type { display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 600; }
+  .req-type.hit { background: rgba(63,185,80,0.2); color: #3fb950; }
+  .req-type.miss { background: rgba(248,81,73,0.2); color: #f85149; }
+  .log-entry { font-size: 11px; padding: 3px 8px; border-radius: 4px; border-left: 3px solid; margin-bottom: 3px; }
+  .log-entry.hit { background: rgba(63,185,80,0.1); border-color: #3fb950; color: #3fb950; }
+  .log-entry.miss { background: rgba(248,81,73,0.1); border-color: #f85149; color: #f85149; }
+  .log-entry.info { background: rgba(88,166,255,0.1); border-color: #58a6ff; color: #58a6ff; }
+</style>
+</head>
+<body>
+<nav>
+  <span class="brand">System Design Labs</span>
+  <span style="color:#30363d">|</span>
+  <a href="index.html">← System Design Labs</a>
+  <span style="flex:1"></span>
+  <span style="font-size:13px;color:#8b949e">12 — CDN</span>
+</nav>
+<div class="main">
+  <div class="canvas-area">
+    <canvas id="canvas"></canvas>
+  </div>
+  <div class="sidebar">
+    <div class="panel">
+      <h3>Controls</h3>
+      <button class="btn primary" onclick="newRequest()">🌐 New Request</button>
+      <button class="btn warn" onclick="invalidateCache()">🗑 Invalidate Cache</button>
+      <label>Cache Hit Rate: <span id="hitRateVal">70</span>%</label>
+      <input type="range" min="0" max="100" value="70" id="hitSlider" oninput="document.getElementById('hitRateVal').textContent=this.value;hitRate=+this.value">
+      <label>TTL: <span id="ttlVal">30</span>s</label>
+      <input type="range" min="5" max="120" value="30" id="ttlSlider" oninput="document.getElementById('ttlVal').textContent=this.value;ttl=+this.value">
+      <button class="btn" onclick="autoMode=!autoMode;document.getElementById('autoBtn').textContent=autoMode?'⏸ Stop Auto':'▶ Auto Requests'" id="autoBtn" style="margin-top:4px;">▶ Auto Requests</button>
+    </div>
+
+    <div class="panel">
+      <h3>Global Metrics</h3>
+      <div class="metric"><span>Total Requests</span><span class="metric-val" id="mTotal">0</span></div>
+      <div class="metric"><span>Cache Hits</span><span class="metric-val" style="color:#3fb950" id="mHits">0</span></div>
+      <div class="metric"><span>Cache Misses</span><span class="metric-val" style="color:#f85149" id="mMisses">0</span></div>
+      <div class="metric"><span>Hit Rate</span><span class="metric-val" style="color:#7ee787" id="mHitPct">0%</span></div>
+      <div class="metric"><span>Avg Latency (hit)</span><span class="metric-val" style="color:#3fb950" id="mHitLat">—</span></div>
+      <div class="metric"><span>Avg Latency (miss)</span><span class="metric-val" style="color:#f85149" id="mMissLat">—</span></div>
+      <div class="metric"><span>Bandwidth Saved</span><span class="metric-val" style="color:#58a6ff" id="mBW">0%</span></div>
+    </div>
+
+    <div class="panel">
+      <h3>PoP Cache Status</h3>
+      <div class="pop-list" id="popList"></div>
+    </div>
+
+    <div class="panel">
+      <h3>Request Log</h3>
+      <div id="log" style="max-height:150px;overflow-y:auto;"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+let hitRate = 70, ttl = 30;
+let totalReqs = 0, hits = 0, misses = 0;
+let autoMode = false, autoTimer = 0;
+let particles = [];
+
+function resize() { canvas.width = canvas.parentElement.clientWidth; canvas.height = canvas.parentElement.clientHeight; }
+resize();
+window.addEventListener('resize', resize);
+
+// PoP definitions
+const POPS = [
+  { id: 'us-west', label: 'US-West', flag: '🌎', cached: false, ttlLeft: 0, hits: 0, xFrac: 0.18, yFrac: 0.42 },
+  { id: 'us-east', label: 'US-East', flag: '🌎', cached: false, ttlLeft: 0, hits: 0, xFrac: 0.32, yFrac: 0.38 },
+  { id: 'eu', label: 'EU', flag: '🌍', cached: false, ttlLeft: 0, hits: 0, xFrac: 0.5, yFrac: 0.28 },
+  { id: 'asia', label: 'Asia', flag: '🌏', cached: false, ttlLeft: 0, hits: 0, xFrac: 0.72, yFrac: 0.38 },
+  { id: 'latam', label: 'LATAM', flag: '🌎', cached: false, ttlLeft: 0, hits: 0, xFrac: 0.3, yFrac: 0.65 },
+  { id: 'au', label: 'AU', flag: '🌏', cached: false, ttlLeft: 0, hits: 0, xFrac: 0.75, yFrac: 0.68 },
+];
+
+function getOrigin() { return { x: canvas.width / 2, y: canvas.height / 2 }; }
+
+function getPopPos(pop) {
+  return { x: pop.xFrac * canvas.width, y: pop.yFrac * canvas.height };
+}
+
+function getUserPos() {
+  const pop = POPS[Math.floor(Math.random() * POPS.length)];
+  const pos = getPopPos(pop);
+  // Random offset near the pop
+  return {
+    x: pos.x + (Math.random() - 0.5) * 80,
+    y: pos.y + (Math.random() - 0.5) * 60,
+    nearestPop: pop
+  };
+}
+
+function invalidateCache() {
+  POPS.forEach(p => { p.cached = false; p.ttlLeft = 0; });
+  addLog('All PoP caches invalidated', 'info');
+  buildPopList();
+}
+
+function addLog(msg, type) {
+  const el = document.getElementById('log');
+  const div = document.createElement('div');
+  div.className = `log-entry ${type}`;
+  div.textContent = `${new Date().toLocaleTimeString()} ${msg}`;
+  el.prepend(div);
+  while (el.children.length > 15) el.removeChild(el.lastChild);
+}
+
+function buildPopList() {
+  const el = document.getElementById('popList');
+  el.innerHTML = '';
+  POPS.forEach(pop => {
+    const div = document.createElement('div');
+    div.className = 'pop-item';
+    const ttlDisplay = pop.cached ? `TTL: ${pop.ttlLeft.toFixed(0)}s` : 'EMPTY';
+    div.innerHTML = `
+      <div>
+        <div>${pop.flag} ${pop.label}</div>
+        <div class="cache-bar"><div class="cache-fill" style="width:${pop.cached ? (pop.ttlLeft / ttl * 100) : 0}%;background:${pop.cached ? '#3fb950' : '#30363d'}"></div></div>
+      </div>
+      <div style="text-align:right">
+        <div style="color:${pop.cached ? '#3fb950' : '#8b949e'}">${ttlDisplay}</div>
+        <div style="color:#8b949e">${pop.hits} hits</div>
+      </div>
+    `;
+    el.appendChild(div);
+  });
+}
+
+function updateMetrics() {
+  document.getElementById('mTotal').textContent = totalReqs;
+  document.getElementById('mHits').textContent = hits;
+  document.getElementById('mMisses').textContent = misses;
+  const pct = totalReqs > 0 ? Math.round(hits / totalReqs * 100) : 0;
+  document.getElementById('mHitPct').textContent = pct + '%';
+  document.getElementById('mHitLat').textContent = '12ms';
+  document.getElementById('mMissLat').textContent = '180ms';
+  document.getElementById('mBW').textContent = pct + '%';
+}
+
+function newRequest() {
+  totalReqs++;
+  const user = getUserPos();
+  const pop = user.nearestPop;
+  const popPos = getPopPos(pop);
+  const origin = getOrigin();
+  const isHit = pop.cached && (Math.random() * 100 < hitRate);
+
+  if (isHit) {
+    hits++;
+    pop.hits++;
+    addLog(`HIT — ${pop.label} served from cache (12ms)`, 'hit');
+    // User → PoP (green, fast)
+    particles.push({ sx: user.x, sy: user.y, tx: popPos.x, ty: popPos.y, color: '#3fb950', life: 1, speed: 0.05, type: 'hit' });
+    // PoP → User (response back)
+    setTimeout(() => {
+      particles.push({ sx: popPos.x, sy: popPos.y, tx: user.x, ty: user.y, color: '#7ee787', life: 1, speed: 0.06, type: 'response' });
+    }, 400);
+  } else {
+    misses++;
+    addLog(`MISS — ${pop.label} fetching from origin (180ms)`, 'miss');
+    // User → PoP (yellow)
+    particles.push({ sx: user.x, sy: user.y, tx: popPos.x, ty: popPos.y, color: '#d29922', life: 1, speed: 0.04, type: 'miss' });
+    // PoP → Origin (blue)
+    setTimeout(() => {
+      particles.push({
+        sx: popPos.x, sy: popPos.y, tx: origin.x, ty: origin.y,
+        color: '#58a6ff', life: 1, speed: 0.025, type: 'origin',
+        onDone: () => {
+          // Cache fill at PoP
+          pop.cached = true;
+          pop.ttlLeft = ttl;
+          // Response back
+          setTimeout(() => {
+            particles.push({ sx: origin.x, sy: origin.y, tx: popPos.x, ty: popPos.y, color: '#58a6ff', life: 1, speed: 0.025 });
+            setTimeout(() => {
+              particles.push({ sx: popPos.x, sy: popPos.y, tx: user.x, ty: user.y, color: '#7ee787', life: 1, speed: 0.05 });
+            }, 600);
+          }, 100);
+        }
+      });
+    }, 500);
+  }
+
+  updateMetrics();
+  buildPopList();
+}
+
+function drawOrigin() {
+  const o = getOrigin();
+  ctx.save();
+  ctx.shadowColor = '#f0883e';
+  ctx.shadowBlur = 16;
+  ctx.beginPath();
+  ctx.arc(o.x, o.y, 32, 0, Math.PI * 2);
+  ctx.fillStyle = '#1a0a00';
+  ctx.fill();
+  ctx.strokeStyle = '#f0883e';
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+  ctx.restore();
+  ctx.font = '22px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('🖥', o.x, o.y + 4);
+  ctx.fillStyle = '#f0f6fc';
+  ctx.font = 'bold 10px -apple-system, sans-serif';
+  ctx.fillText('Origin', o.x, o.y + 20);
+}
+
+function drawPop(pop) {
+  const pos = getPopPos(pop);
+  const r = 26;
+  const color = pop.cached ? '#3fb950' : '#30363d';
+
+  ctx.save();
+  if (pop.cached) { ctx.shadowColor = '#3fb950'; ctx.shadowBlur = 10; }
+  ctx.beginPath();
+  ctx.arc(pos.x, pos.y, r, 0, Math.PI * 2);
+  ctx.fillStyle = pop.cached ? '#0a1a0a' : '#161b22';
+  ctx.fill();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.restore();
+
+  // TTL arc
+  if (pop.cached && pop.ttlLeft > 0) {
+    const progress = pop.ttlLeft / ttl;
+    ctx.save();
+    ctx.strokeStyle = '#3fb950';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(pos.x, pos.y, r + 5, -Math.PI / 2, -Math.PI / 2 + progress * Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  ctx.font = '14px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(pop.flag, pos.x, pos.y - 4);
+  ctx.fillStyle = pop.cached ? '#3fb950' : '#8b949e';
+  ctx.font = 'bold 9px -apple-system, sans-serif';
+  ctx.fillText(pop.label, pos.x, pos.y + 10);
+  if (pop.cached) {
+    ctx.fillStyle = '#3fb950';
+    ctx.font = '9px monospace';
+    ctx.fillText(pop.ttlLeft.toFixed(0) + 's', pos.x, pos.y + 20);
+  }
+
+  // Connection to origin
+  const o = getOrigin();
+  ctx.save();
+  ctx.strokeStyle = '#21262d';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(pos.x, pos.y);
+  ctx.lineTo(o.x, o.y);
+  ctx.stroke();
+  ctx.restore();
+}
+
+// World map dots (decorative)
+const mapDots = [];
+for (let i = 0; i < 200; i++) {
+  mapDots.push({ xF: Math.random(), yF: Math.random() * 0.8 + 0.1, s: Math.random() * 2 + 0.5 });
+}
+
+function drawWorldMap() {
+  mapDots.forEach(d => {
+    ctx.fillStyle = '#21262d';
+    ctx.beginPath();
+    ctx.arc(d.xF * canvas.width, d.yF * canvas.height, d.s, 0, Math.PI * 2);
+    ctx.fill();
+  });
+}
+
+let lastTime = 0;
+function draw(ts) {
+  const dt = Math.min((ts - lastTime) / 1000, 0.1);
+  lastTime = ts;
+
+  // TTL countdown
+  POPS.forEach(pop => {
+    if (pop.cached) {
+      pop.ttlLeft = Math.max(0, pop.ttlLeft - dt);
+      if (pop.ttlLeft <= 0) pop.cached = false;
+    }
+  });
+
+  // Auto mode
+  if (autoMode) {
+    autoTimer += dt;
+    if (autoTimer >= 1.5) { autoTimer = 0; newRequest(); }
+  }
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Title
+  ctx.fillStyle = '#f0f6fc';
+  ctx.font = 'bold 17px -apple-system, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('CDN: Edge Caching & Global Distribution', canvas.width / 2, 24);
+  ctx.fillStyle = '#8b949e';
+  ctx.font = '11px -apple-system, sans-serif';
+  ctx.fillText('Requests route to nearest PoP — cache HIT (green) or MISS → origin (blue)', canvas.width / 2, 40);
+
+  drawWorldMap();
+
+  // PoPs
+  POPS.forEach(drawPop);
+  drawOrigin();
+
+  // Particles
+  particles = particles.filter(p => p.life > 0);
+  particles.forEach(p => {
+    p.life -= p.speed;
+    const t = 1 - p.life;
+    const px = p.sx + (p.tx - p.sx) * t;
+    const py = p.sy + (p.ty - p.sy) * t;
+    if (t >= 1 && p.onDone && !p.calledDone) { p.calledDone = true; p.onDone(); }
+
+    ctx.save();
+    ctx.globalAlpha = Math.min(p.life * 3, 1);
+    ctx.beginPath();
+    ctx.arc(px, py, 7, 0, Math.PI * 2);
+    ctx.fillStyle = p.color;
+    ctx.shadowColor = p.color;
+    ctx.shadowBlur = 12;
+    ctx.fill();
+    ctx.restore();
+  });
+
+  // Legend
+  const lx = 16, ly = canvas.height - 70;
+  [[' Cache HIT (PoP)', '#3fb950'], [' Cache MISS (→ Origin)', '#f85149'], [' Data flow', '#58a6ff']].forEach(([label, color], i) => {
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(lx + 5, ly + i * 22, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#8b949e';
+    ctx.font = '11px -apple-system, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(label, lx + 14, ly + i * 22 + 4);
+  });
+
+  buildPopList();
+  requestAnimationFrame(draw);
+}
+
+requestAnimationFrame(t => { lastTime = t; requestAnimationFrame(draw); });
+buildPopList();
+</script>
+</body>
+</html>

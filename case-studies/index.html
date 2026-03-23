@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>System Design Case Studies</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:#0d1117;color:#c9d1d9;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;min-height:100vh;overflow-x:hidden}
+a{text-decoration:none}
+
+/* ── Nav ── */
+.navbar{background:#161b22;border-bottom:1px solid #30363d;padding:.75rem 1.5rem;display:flex;align-items:center;gap:.5rem;position:relative;z-index:100}
+.navbar-brand{font-size:1rem;font-weight:700;color:#e6edf3}
+.navbar a.back{color:#8b949e;font-size:.85rem;margin-left:auto;transition:color .2s}
+.navbar a.back:hover{color:#f0883e}
+
+/* ── Hero ── */
+.hero{position:relative;overflow:hidden;padding:3.5rem 1.5rem 3rem;text-align:center;height:200px;display:flex;align-items:center;justify-content:center}
+#heroCanvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.hero-content{position:relative;z-index:1}
+.hero-eyebrow{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:#f0883e;margin-bottom:.85rem;display:flex;align-items:center;justify-content:center;gap:.5rem}
+.hero-eyebrow::before,.hero-eyebrow::after{content:'';width:32px;height:1px;background:linear-gradient(90deg,transparent,#f0883e60)}
+.hero-eyebrow::after{background:linear-gradient(90deg,#f0883e60,transparent)}
+.hero-title{font-size:2.2rem;font-weight:800;color:#e6edf3;line-height:1.18;margin-bottom:.85rem;letter-spacing:-.02em}
+.hero-title span{background:linear-gradient(135deg,#f0883e,#f85149);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-sub{color:#8b949e;font-size:.92rem;max-width:560px;margin:0 auto 1.5rem;line-height:1.65}
+.hero-badges{display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap}
+.h-badge{padding:.22rem .7rem;border-radius:12px;font-size:.72rem;font-weight:600;border:1px solid;letter-spacing:.02em}
+.hb-g{background:#0d2d0d;color:#7ee787;border-color:#2d5c2d}
+.hb-b{background:#0d1f3a;color:#58a6ff;border-color:#1c3d6e}
+.hb-o{background:#2a1a06;color:#f0883e;border-color:#5a3310}
+.hb-r{background:#2a0d10;color:#f85149;border-color:#5a1f20}
+
+/* ── Container ── */
+.container{max-width:1020px;margin:0 auto;padding:2.25rem 1.5rem 3rem}
+
+/* ── Section groups ── */
+.section-group{margin-bottom:2.75rem}
+.section-group-label{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#8b949e;margin-bottom:.9rem;padding-bottom:.4rem;border-bottom:1px solid #21262d;display:flex;align-items:center;gap:.5rem}
+.section-group-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,#21262d,transparent)}
+
+/* ── Grid ── */
+.labs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:.9rem}
+
+/* ── Card ── */
+.lab-card{display:flex;align-items:stretch;background:#161b22;border:1px solid #30363d;border-radius:10px;overflow:hidden;color:#c9d1d9;transition:border-color .25s,transform .2s,box-shadow .25s;position:relative;opacity:0}
+.lab-card:hover{transform:translateY(-3px)}
+.card-g:hover{border-color:#3fb950;box-shadow:0 8px 28px rgba(63,185,80,.14)}
+.card-b:hover{border-color:#58a6ff;box-shadow:0 8px 28px rgba(88,166,255,.14)}
+.card-o:hover{border-color:#f0883e;box-shadow:0 8px 28px rgba(240,136,62,.14)}
+.card-r:hover{border-color:#f85149;box-shadow:0 8px 28px rgba(248,81,73,.14)}
+
+/* ── Viz panel ── */
+.lab-viz{width:84px;min-height:84px;flex-shrink:0;background:#0d1117;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;border-right:1px solid #21262d}
+
+/* ── Card body ── */
+.lab-body{flex:1;padding:.9rem 1rem;min-width:0;display:flex;flex-direction:column;justify-content:center}
+.lab-num{font-size:.65rem;font-weight:700;color:#484f58;margin-bottom:.2rem;letter-spacing:.04em}
+.lab-title{font-size:.9rem;font-weight:600;line-height:1.32;margin-bottom:.28rem;color:#e6edf3}
+.lab-desc{font-size:.74rem;color:#8b949e;line-height:1.45;flex:1}
+.lab-tag{display:inline-block;font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:.1rem .42rem;border-radius:8px;margin-top:.38rem}
+.tag-g{background:#0d2d0d;color:#7ee787}
+.tag-b{background:#0d1f3a;color:#58a6ff}
+.tag-o{background:#2a1a06;color:#f0883e}
+.tag-r{background:#2a0d10;color:#f85149}
+
+/* ─────────────────────────────────────────
+   VIZ ANIMATIONS
+───────────────────────────────────────── */
+
+/* 01 – Netflix Monolith Split */
+.viz-mono{position:relative;width:60px;height:60px;display:flex;align-items:center;justify-content:center}
+.mono-big{position:absolute;width:20px;height:20px;background:#3fb950;border-radius:3px}
+.mono-dot{position:absolute;width:6px;height:6px;background:#7ee787;border-radius:50%;opacity:0}
+@keyframes monoSplit{0%,30%{width:20px;height:20px;border-radius:3px;opacity:1}50%{width:8px;height:8px;border-radius:50%;opacity:.6}60%,100%{width:0;height:0;opacity:0}}
+.mono-big{animation:monoSplit 4s ease infinite}
+@keyframes dotOut1{0%,35%{opacity:0;transform:translate(0,0) scale(0)}50%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:.8;transform:translate(-18px,-18px) scale(1)}}
+@keyframes dotOut2{0%,35%{opacity:0;transform:translate(0,0) scale(0)}50%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:.8;transform:translate(18px,-18px) scale(1)}}
+@keyframes dotOut3{0%,35%{opacity:0;transform:translate(0,0) scale(0)}50%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:.8;transform:translate(-18px,18px) scale(1)}}
+@keyframes dotOut4{0%,35%{opacity:0;transform:translate(0,0) scale(0)}50%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:.8;transform:translate(18px,18px) scale(1)}}
+@keyframes dotOut5{0%,35%{opacity:0;transform:translate(0,0) scale(0)}50%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:.8;transform:translate(0,-22px) scale(1)}}
+@keyframes dotOut6{0%,35%{opacity:0;transform:translate(0,0) scale(0)}50%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:.8;transform:translate(-22px,0) scale(1)}}
+@keyframes dotOut7{0%,35%{opacity:0;transform:translate(0,0) scale(0)}50%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:.8;transform:translate(22px,0) scale(1)}}
+@keyframes dotOut8{0%,35%{opacity:0;transform:translate(0,0) scale(0)}50%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:.8;transform:translate(0,22px) scale(1)}}
+.md1{animation:dotOut1 4s ease infinite}.md2{animation:dotOut2 4s ease infinite}
+.md3{animation:dotOut3 4s ease infinite}.md4{animation:dotOut4 4s ease infinite}
+.md5{animation:dotOut5 4s ease infinite}.md6{animation:dotOut6 4s ease infinite}
+.md7{animation:dotOut7 4s ease infinite}.md8{animation:dotOut8 4s ease infinite}
+
+/* 02 – Twitter Fan-out */
+.viz-fan{position:relative;width:66px;height:60px}
+.fan-src{position:absolute;left:6px;top:50%;transform:translateY(-50%);width:12px;height:12px;background:#58a6ff;border-radius:50%}
+.fan-dst{position:absolute;right:6px;width:8px;height:8px;background:#58a6ff40;border:1px solid #58a6ff;border-radius:50%}
+.fan-dst:nth-child(2){top:6px}.fan-dst:nth-child(3){top:50%;transform:translateY(-50%)}.fan-dst:nth-child(4){bottom:6px}
+.fan-arrow{position:absolute;left:20px;height:1px;background:#30363d;width:28px}
+.fan-arrow:nth-child(5){top:10px;transform:rotate(12deg)}.fan-arrow:nth-child(6){top:50%}.fan-arrow:nth-child(7){bottom:10px;transform:rotate(-12deg)}
+@keyframes fanPulse{0%{left:20px;opacity:0;width:4px;height:4px}30%{opacity:1}100%{left:42px;opacity:0;width:4px;height:4px}}
+.fan-pk{position:absolute;width:4px;height:4px;background:#58a6ff;border-radius:50%;animation:fanPulse 1.5s ease infinite}
+.fp1{top:8px;animation-delay:0s}.fp2{top:28px;animation-delay:.3s}.fp3{bottom:8px;animation-delay:.6s}
+
+/* 03 – Instagram Growth */
+.viz-grow{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
+.grow-dot{border-radius:50%;background:#7ee787;border:1.5px solid #3fb950}
+@keyframes growUp{0%,100%{width:8px;height:8px;opacity:.5}50%{width:28px;height:28px;opacity:1}}
+.grow-dot{animation:growUp 3s ease infinite}
+.grow-num{font-size:7px;font-weight:700;color:#7ee787;font-family:monospace}
+@keyframes countUp{0%{content:'0'}25%{content:'250K'}50%{content:'500K'}75%{content:'750K'}100%{content:'1M'}}
+
+/* 04 – Amazon Dynamo Ring */
+.viz-dynamo{position:relative;width:58px;height:58px}
+@keyframes ringRot{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+.dynamo-ring{position:absolute;inset:3px;border:2px solid #30363d;border-radius:50%;animation:ringRot 12s linear infinite}
+.dy-dot{position:absolute;width:8px;height:8px;border-radius:50%;transform:translate(-50%,-50%)}
+@keyframes dyPulse{0%,100%{transform:translate(-50%,-50%) scale(1);opacity:.7}50%{transform:translate(-50%,-50%) scale(1.4);opacity:1}}
+.dy1{background:#58a6ff;top:0;left:50%;animation:dyPulse 2s 0s ease infinite}
+.dy2{background:#58a6ff;top:50%;right:-4px;animation:dyPulse 2s .5s ease infinite}
+.dy3{background:#58a6ff;bottom:0;left:50%;animation:dyPulse 2s 1s ease infinite}
+.dy4{background:#58a6ff;top:50%;left:-4px;animation:dyPulse 2s 1.5s ease infinite}
+
+/* 05 – Discord Migration */
+.viz-migrate{display:flex;align-items:center;gap:3px;padding:0 4px}
+.mig-db{padding:3px 4px;border-radius:3px;font-size:6px;font-weight:700;border:1px solid;white-space:nowrap}
+.mig1{background:#0d2d0d;border-color:#3fb950;color:#7ee787}
+.mig2{background:#0d1f3a;border-color:#58a6ff;color:#58a6ff}
+.mig3{background:#2a1a06;border-color:#f0883e;color:#f0883e}
+.mig-arr{width:8px;height:1px;background:#30363d;position:relative}
+@keyframes migDot{0%{left:0;opacity:1}100%{left:6px;opacity:0}}
+.mig-arr::after{content:'';position:absolute;top:-2px;width:4px;height:4px;border-radius:50%;background:#8b949e;animation:migDot 1.2s ease infinite}
+.mig-arr:nth-child(4)::after{animation-delay:.6s}
+
+/* 06 – Uber Shards Fill */
+.viz-shards{display:flex;flex-direction:column;gap:4px;padding:0 8px;width:100%}
+.shard-bar{height:8px;background:#21262d;border-radius:3px;overflow:hidden;position:relative}
+.shard-fill{position:absolute;left:0;top:0;height:100%;border-radius:3px}
+@keyframes shardFill1{0%{width:0}50%{width:90%}100%{width:90%}}
+@keyframes shardFill2{0%,20%{width:0}70%{width:75%}100%{width:75%}}
+@keyframes shardFill3{0%,40%{width:0}90%{width:60%}100%{width:60%}}
+@keyframes shardFill4{0%,60%{width:0}100%{width:45%}}
+.sf1{background:#58a6ff;animation:shardFill1 3s ease infinite}
+.sf2{background:#58a6ff;animation:shardFill2 3s ease infinite}
+.sf3{background:#58a6ff;animation:shardFill3 3s ease infinite}
+.sf4{background:#58a6ff;animation:shardFill4 3s ease infinite}
+
+/* 07 – Spanner Globe */
+.viz-globe{position:relative;width:58px;height:58px}
+.globe-outline{position:absolute;inset:3px;border:1.5px solid #58a6ff40;border-radius:50%}
+.globe-eq{position:absolute;top:50%;left:3px;right:3px;height:1px;background:#58a6ff30}
+.globe-mer{position:absolute;left:50%;top:3px;bottom:3px;width:1px;background:#58a6ff30}
+.g-dot{position:absolute;width:7px;height:7px;border-radius:50%;background:#58a6ff;transform:translate(-50%,-50%)}
+@keyframes gSync{0%,100%{opacity:.4;box-shadow:none}50%{opacity:1;box-shadow:0 0 6px #58a6ff}}
+.gd1{top:15%;left:30%;animation:gSync 2s 0s ease infinite}
+.gd2{top:15%;right:20%;animation:gSync 2s 0s ease infinite}
+.gd3{top:70%;left:25%;animation:gSync 2s 0s ease infinite}
+.gd4{top:55%;right:18%;animation:gSync 2s 0s ease infinite}
+.gd5{top:45%;left:50%;animation:gSync 2s 0s ease infinite}
+
+/* 08 – GitHub Split Brain */
+.viz-split{display:flex;align-items:center;gap:4px;padding:0 4px}
+.split-node{width:18px;height:18px;border-radius:50%;border:2px solid #58a6ff;background:#0d1f3a;display:flex;align-items:center;justify-content:center;font-size:5.5px;font-weight:700;color:#58a6ff}
+.split-link{width:16px;height:2px;border-radius:1px;position:relative}
+@keyframes splitBreak{0%,40%{background:#3fb950;box-shadow:none}50%,80%{background:#f85149;box-shadow:0 0 4px #f85149}90%,100%{background:#3fb950}}
+.split-link{animation:splitBreak 4s ease infinite}
+@keyframes nodeDesync{0%,40%{border-color:#58a6ff;background:#0d1f3a}50%,80%{border-color:#f85149;background:#2a0d10}90%,100%{border-color:#58a6ff;background:#0d1f3a}}
+.sn2{animation:nodeDesync 4s ease infinite}
+
+/* 09 – Cloudflare Clock */
+.viz-clock{position:relative;width:44px;height:44px}
+.clock-face{position:absolute;inset:0;border:2px solid #f0883e60;border-radius:50%;background:#0d1117}
+.clock-center{position:absolute;top:50%;left:50%;width:4px;height:4px;border-radius:50%;background:#f0883e;transform:translate(-50%,-50%);z-index:2}
+.clock-hand{position:absolute;bottom:50%;left:50%;width:2px;height:16px;background:#f0883e;border-radius:1px;transform-origin:bottom center}
+@keyframes clockTick{0%{transform:rotate(0deg)}70%{transform:rotate(252deg)}75%{transform:rotate(216deg)}80%{transform:rotate(288deg)}100%{transform:rotate(360deg)}}
+.clock-hand{animation:clockTick 3s linear infinite}
+.clock-min{height:12px;background:#f0883e80;animation:clockTick 18s linear infinite}
+
+/* 10 – Slack WebSocket */
+.viz-ws{position:relative;width:60px;height:60px}
+.ws-hub{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:12px;height:12px;background:#f0883e;border-radius:50%;z-index:2}
+.ws-node{position:absolute;width:7px;height:7px;background:#f0883e40;border:1px solid #f0883e;border-radius:50%}
+.wn1{top:4px;left:50%;transform:translateX(-50%)}.wn2{bottom:4px;left:50%;transform:translateX(-50%)}
+.wn3{top:50%;left:4px;transform:translateY(-50%)}.wn4{top:50%;right:4px;transform:translateY(-50%)}
+.wn5{top:10px;left:8px}.wn6{top:10px;right:8px}.wn7{bottom:10px;left:8px}.wn8{bottom:10px;right:8px}
+.ws-line{position:absolute;background:#f0883e30;z-index:1}
+.wl-v{width:1px;top:16px;bottom:16px;left:50%;transform:translateX(-50%)}
+.wl-h{height:1px;left:12px;right:12px;top:50%;transform:translateY(-50%)}
+.wl-d1{width:1px;height:30px;top:50%;left:50%;transform:translate(-50%,-50%) rotate(45deg)}
+.wl-d2{width:1px;height:30px;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-45deg)}
+@keyframes wsPulse{0%,100%{opacity:.3;transform:translate(-50%,-50%) scale(.85)}50%{opacity:1;transform:translate(-50%,-50%) scale(1.15)}}
+.ws-hub{animation:wsPulse 1.5s ease infinite}
+@keyframes wsEdge{0%,100%{opacity:.3;box-shadow:none}50%{opacity:1;box-shadow:0 0 4px #f0883e}}
+.wn1{animation:wsEdge 2s 0s ease infinite}.wn2{animation:wsEdge 2s .25s ease infinite}
+.wn3{animation:wsEdge 2s .5s ease infinite}.wn4{animation:wsEdge 2s .75s ease infinite}
+.wn5{animation:wsEdge 2s 1s ease infinite}.wn6{animation:wsEdge 2s 1.25s ease infinite}
+.wn7{animation:wsEdge 2s 1.5s ease infinite}.wn8{animation:wsEdge 2s 1.75s ease infinite}
+
+/* ── Card entrance ── */
+@keyframes cardIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+
+/* ── Footer ── */
+footer{text-align:center;padding:2rem 1rem;color:#484f58;font-size:.8rem;border-top:1px solid #21262d;margin-top:.5rem}
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <span class="navbar-brand">&#128214; System Design Case Studies</span>
+  <a href="../index.html" class="back">&larr; Playground</a>
+</nav>
+
+<!-- Hero with live canvas -->
+<div class="hero">
+  <canvas id="heroCanvas"></canvas>
+  <div class="hero-content">
+    <div class="hero-eyebrow">Real Engineering Stories</div>
+    <h1 class="hero-title">System Design<br><span>Case Studies</span></h1>
+    <p class="hero-sub">10 true stories from Netflix, Twitter, Amazon, Discord, and more &mdash; the outages, migrations, and design decisions that shaped modern distributed systems.</p>
+    <div class="hero-badges">
+      <span class="h-badge hb-g">Scaling Stories</span>
+      <span class="h-badge hb-b">Data Architecture</span>
+      <span class="h-badge hb-r">Outages &amp; Failures</span>
+      <span class="h-badge hb-o">Real-Time Systems</span>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- ── SCALING STORIES ── -->
+  <div class="section-group sec-scaling">
+    <div class="section-group-label">Scaling Stories</div>
+    <div class="labs-grid">
+
+      <a href="01-netflix-microservices.html" class="lab-card card-g">
+        <div class="lab-viz">
+          <div class="viz-mono">
+            <div class="mono-big"></div>
+            <div class="mono-dot md1"></div>
+            <div class="mono-dot md2"></div>
+            <div class="mono-dot md3"></div>
+            <div class="mono-dot md4"></div>
+            <div class="mono-dot md5"></div>
+            <div class="mono-dot md6"></div>
+            <div class="mono-dot md7"></div>
+            <div class="mono-dot md8"></div>
+          </div>
+        </div>
+        <div class="lab-body">
+          <div class="lab-num">Case 01</div>
+          <div class="lab-title">Netflix: The Great Monolith Migration</div>
+          <div class="lab-desc">How a 3-day database outage pushed Netflix to decompose their monolith into 700+ microservices over 8 years.</div>
+          <span class="lab-tag tag-g">Scaling</span>
+        </div>
+      </a>
+
+      <a href="02-twitter-timeline.html" class="lab-card card-g">
+        <div class="lab-viz">
+          <div class="viz-fan">
+            <div class="fan-src"></div>
+            <div class="fan-dst"></div>
+            <div class="fan-dst"></div>
+            <div class="fan-dst"></div>
+            <div class="fan-arrow"></div>
+            <div class="fan-arrow"></div>
+            <div class="fan-arrow"></div>
+            <div class="fan-pk fp1"></div>
+            <div class="fan-pk fp2"></div>
+            <div class="fan-pk fp3"></div>
+          </div>
+        </div>
+        <div class="lab-body">
+          <div class="lab-num">Case 02</div>
+          <div class="lab-title">Twitter: The Timeline Architecture Problem</div>
+          <div class="lab-desc">Fan-out-on-write vs read, the celebrity tweet thundering herd, and the hybrid push/pull solution.</div>
+          <span class="lab-tag tag-g">Scaling</span>
+        </div>
+      </a>
+
+      <a href="09-instagram-scaling-day1.html" class="lab-card card-g">
+        <div class="lab-viz">
+          <div class="viz-grow">
+            <div class="grow-dot"></div>
+            <div class="grow-num">1M</div>
+          </div>
+        </div>
+        <div class="lab-body">
+          <div class="lab-num">Case 09</div>
+          <div class="lab-title">Instagram: 0 to 1 Million Users in 2 Months</div>
+          <div class="lab-desc">How 2 engineers on 1 AWS server scaled Django/PostgreSQL to a million users with pragmatic choices.</div>
+          <span class="lab-tag tag-g">Scaling</span>
+        </div>
+      </a>
+
+    </div>
+  </div>
+
+  <!-- ── DATA ARCHITECTURE ── -->
+  <div class="section-group sec-data">
+    <div class="section-group-label">Data Architecture</div>
+    <div class="labs-grid">
+
+      <a href="03-amazon-dynamo.html" class="lab-card card-b">
+        <div class="lab-viz">
+          <div class="viz-dynamo">
+            <div class="dynamo-ring">
+              <div class="dy-dot dy1"></div>
+              <div class="dy-dot dy2"></div>
+              <div class="dy-dot dy3"></div>
+              <div class="dy-dot dy4"></div>
+            </div>
+          </div>
+        </div>
+        <div class="lab-body">
+          <div class="lab-num">Case 03</div>
+          <div class="lab-title">Amazon: Dynamo and the Always-Available Shopping Cart</div>
+          <div class="lab-desc">100ms latency = 1% sales loss. Why Amazon built an eventually-consistent key-value store with vector clocks.</div>
+          <span class="lab-tag tag-b">Data</span>
+        </div>
+      </a>
+
+      <a href="04-discord-message-storage.html" class="lab-card card-b">
+        <div class="lab-viz">
+          <div class="viz-migrate">
+            <div class="mig-db mig1">MNG</div>
+            <div class="mig-arr"></div>
+            <div class="mig-db mig2">CAS</div>
+            <div class="mig-arr"></div>
+            <div class="mig-db mig3">SCY</div>
+          </div>
+        </div>
+        <div class="lab-body">
+          <div class="lab-num">Case 04</div>
+          <div class="lab-title">Discord: Scaling to Trillions of Messages</div>
+          <div class="lab-desc">From MongoDB to Cassandra to ScyllaDB &mdash; chasing hot partitions and GC pauses across 200 billion messages.</div>
+          <span class="lab-tag tag-b">Data</span>
+        </div>
+      </a>
+
+      <a href="06-uber-schemaless.html" class="lab-card card-b">
+        <div class="lab-viz">
+          <div class="viz-shards">
+            <div class="shard-bar"><div class="shard-fill sf1"></div></div>
+            <div class="shard-bar"><div class="shard-fill sf2"></div></div>
+            <div class="shard-bar"><div class="shard-fill sf3"></div></div>
+            <div class="shard-bar"><div class="shard-fill sf4"></div></div>
+          </div>
+        </div>
+        <div class="lab-body">
+          <div class="lab-num">Case 06</div>
+          <div class="lab-title">Uber: Schemaless and the Trip Database</div>
+          <div class="lab-desc">When no database fits your write throughput needs, you build your own on top of MySQL.</div>
+          <span class="lab-tag tag-b">Data</span>
+        </div>
+      </a>
+
+      <a href="10-google-spanner.html" class="lab-card card-b">
+        <div class="lab-viz">
+          <div class="viz-globe">
+            <div class="globe-outline"></div>
+            <div class="globe-eq"></div>
+            <div class="globe-mer"></div>
+            <div class="g-dot gd1"></div>
+            <div class="g-dot gd2"></div>
+            <div class="g-dot gd3"></div>
+            <div class="g-dot gd4"></div>
+            <div class="g-dot gd5"></div>
+          </div>
+        </div>
+        <div class="lab-body">
+          <div class="lab-num">Case 10</div>
+          <div class="lab-title">Google Spanner: The Database That Uses Atomic Clocks</div>
+          <div class="lab-desc">Globally-distributed strong consistency &mdash; defying the CAP theorem with GPS receivers and atomic clocks.</div>
+          <span class="lab-tag tag-b">Data</span>
+        </div>
+      </a>
+
+    </div>
+  </div>
+
+  <!-- ── OUTAGES & FAILURES ── -->
+  <div class="section-group sec-outages">
+    <div class="section-group-label">Outages &amp; Failures</div>
+    <div class="labs-grid">
+
+      <a href="05-github-outage-mysql.html" class="lab-card card-r">
+        <div class="lab-viz">
+          <div class="viz-split">
+            <div class="split-node">P</div>
+            <div class="split-link"></div>
+            <div class="split-node sn2">R</div>
+          </div>
+        </div>
+        <div class="lab-body">
+          <div class="lab-num">Case 05</div>
+          <div class="lab-title">GitHub: The 24-Hour Outage</div>
+          <div class="lab-desc">A 43-second network partition caused split-brain MySQL replication and a full day of degraded service.</div>
+          <span class="lab-tag tag-r">Outage</span>
+        </div>
+      </a>
+
+      <a href="08-cloudflare-leap-second.html" class="lab-card card-r">
+        <div class="lab-viz">
+          <div class="viz-clock">
+            <div class="clock-face"></div>
+            <div class="clock-hand"></div>
+            <div class="clock-hand clock-min"></div>
+            <div class="clock-center"></div>
+          </div>
+        </div>
+        <div class="lab-body">
+          <div class="lab-num">Case 08</div>
+          <div class="lab-title">Cloudflare: The Leap Second Bug</div>
+          <div class="lab-desc">When Go's time.Now() went backwards on New Year's 2017, DNS failed for millions.</div>
+          <span class="lab-tag tag-r">Outage</span>
+        </div>
+      </a>
+
+    </div>
+  </div>
+
+  <!-- ── REAL-TIME SYSTEMS ── -->
+  <div class="section-group sec-realtime">
+    <div class="section-group-label">Real-Time Systems</div>
+    <div class="labs-grid">
+
+      <a href="07-slack-real-time.html" class="lab-card card-o">
+        <div class="lab-viz">
+          <div class="viz-ws">
+            <div class="ws-line wl-v"></div>
+            <div class="ws-line wl-h"></div>
+            <div class="ws-line wl-d1"></div>
+            <div class="ws-line wl-d2"></div>
+            <div class="ws-hub"></div>
+            <div class="ws-node wn1"></div>
+            <div class="ws-node wn2"></div>
+            <div class="ws-node wn3"></div>
+            <div class="ws-node wn4"></div>
+            <div class="ws-node wn5"></div>
+            <div class="ws-node wn6"></div>
+            <div class="ws-node wn7"></div>
+            <div class="ws-node wn8"></div>
+          </div>
+        </div>
+        <div class="lab-body">
+          <div class="lab-num">Case 07</div>
+          <div class="lab-title">Slack: Rebuilding Real-Time Messaging</div>
+          <div class="lab-desc">Hitting the WebSocket ceiling at 10K connections/server and building the message server layer.</div>
+          <span class="lab-tag tag-o">Real-Time</span>
+        </div>
+      </a>
+
+    </div>
+  </div>
+
+  <footer>True stories from real engineering teams &middot; No server required</footer>
+</div>
+
+<script>
+// ───────────────────────────────────────────
+//  HERO CANVAS — heartbeat monitor ECG
+// ───────────────────────────────────────────
+(function() {
+  const canvas = document.getElementById('heroCanvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, raf;
+  const DPR = window.devicePixelRatio || 1;
+
+  function resize() {
+    const hero = canvas.parentElement;
+    W = hero.clientWidth; H = hero.clientHeight;
+    canvas.width = W * DPR; canvas.height = H * DPR;
+    canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  }
+
+  // Floating labels
+  const labels = [
+    { text: '99.99%', x: 0.15, y: 0.25, vx: 0.08, vy: 0.04, phase: 0 },
+    { text: '200ms', x: 0.55, y: 0.18, vx: -0.06, vy: 0.05, phase: 1.5 },
+    { text: '10K RPS', x: 0.82, y: 0.35, vx: 0.05, vy: -0.03, phase: 3.0 },
+  ];
+
+  // ECG cycle: ~8 seconds total, 5s normal, 1.5s flatline, 1.5s recovery
+  const CYCLE = 8;
+  const NORMAL_END = 5;
+  const FLAT_END = 6.5;
+
+  function ecgY(xNorm, cycleT) {
+    // xNorm: 0-1 across width, cycleT: time in cycle
+    const mid = H * 0.55;
+    const amp = H * 0.12;
+
+    if (cycleT > NORMAL_END && cycleT < FLAT_END) {
+      // Flatline
+      return mid;
+    }
+
+    // Normal heartbeat: sine wave with spikes
+    const freq = 3.0;
+    const phase = xNorm * Math.PI * 2 * freq;
+    let y = Math.sin(phase) * amp;
+
+    // Add QRS complex spike every cycle
+    const beatPhase = (xNorm * freq) % 1;
+    if (beatPhase > 0.4 && beatPhase < 0.5) {
+      y -= amp * 1.8 * Math.sin((beatPhase - 0.4) / 0.1 * Math.PI);
+    }
+    if (beatPhase > 0.5 && beatPhase < 0.55) {
+      y += amp * 0.8 * Math.sin((beatPhase - 0.5) / 0.05 * Math.PI);
+    }
+
+    return mid + y;
+  }
+
+  function getECGColor(cycleT) {
+    if (cycleT < NORMAL_END) return { r: 63, g: 185, b: 80, hex: '#3fb950' }; // green
+    if (cycleT < FLAT_END) return { r: 248, g: 81, b: 73, hex: '#f85149' }; // red
+    // Recovery: lerp red -> green
+    const t = (cycleT - FLAT_END) / (CYCLE - FLAT_END);
+    const r = Math.round(248 + (63 - 248) * t);
+    const g = Math.round(81 + (185 - 81) * t);
+    const b = Math.round(73 + (80 - 73) * t);
+    return { r, g, b, hex: `rgb(${r},${g},${b})` };
+  }
+
+  let startTime = 0;
+  function draw(ts) {
+    if (!startTime) startTime = ts;
+    const elapsed = (ts - startTime) * 0.001;
+    const cycleT = elapsed % CYCLE;
+
+    ctx.clearRect(0, 0, W, H);
+
+    // Draw ECG trace
+    const color = getECGColor(cycleT);
+    const scrollOffset = (elapsed * 80) % W;
+
+    ctx.beginPath();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = color.hex;
+    ctx.shadowColor = color.hex;
+    ctx.shadowBlur = 8;
+
+    const steps = Math.floor(W / 2);
+    for (let i = 0; i <= steps; i++) {
+      const xNorm = i / steps;
+      const x = xNorm * W;
+      const adjustedX = (xNorm + elapsed * 0.15) % 1;
+      const y = ecgY(adjustedX, cycleT);
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // Faint grid lines
+    ctx.strokeStyle = '#30363d30';
+    ctx.lineWidth = 0.5;
+    for (let gy = 0; gy < H; gy += 20) {
+      ctx.beginPath();
+      ctx.moveTo(0, gy);
+      ctx.lineTo(W, gy);
+      ctx.stroke();
+    }
+    for (let gx = 0; gx < W; gx += 20) {
+      ctx.beginPath();
+      ctx.moveTo(gx, 0);
+      ctx.lineTo(gx, H);
+      ctx.stroke();
+    }
+
+    // Floating labels
+    labels.forEach(lb => {
+      const t = elapsed;
+      const px = (lb.x + Math.sin(t * lb.vx + lb.phase) * 0.03) * W;
+      const py = (lb.y + Math.cos(t * lb.vy + lb.phase) * 0.04) * H;
+      const pulse = 0.5 + 0.5 * Math.sin(t * 1.5 + lb.phase);
+      const alpha = 0.15 + pulse * 0.25;
+
+      ctx.font = '700 11px -apple-system, monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = `rgba(240,136,62,${alpha})`;
+      ctx.fillText(lb.text, px, py);
+    });
+
+    raf = requestAnimationFrame(draw);
+  }
+
+  window.addEventListener('resize', () => { cancelAnimationFrame(raf); resize(); startTime = 0; raf = requestAnimationFrame(draw); });
+  resize();
+  raf = requestAnimationFrame(draw);
+})();
+
+// ───────────────────────────────────────────
+//  STAGGERED CARD ENTRANCE
+// ───────────────────────────────────────────
+document.querySelectorAll('.lab-card').forEach((card, i) => {
+  card.style.animation = `cardIn .45s ease ${i * 55}ms forwards`;
+});
+</script>
+</body>
+</html>

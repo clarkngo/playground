@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CAP Theorem: Pick Two</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0d1117; color: #c9d1d9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
+  nav { background: #161b22; border-bottom: 1px solid #30363d; padding: 12px 24px; display: flex; align-items: center; gap: 16px; }
+  nav .brand { font-weight: 700; font-size: 16px; color: #f0f6fc; }
+  nav a { color: #58a6ff; text-decoration: none; font-size: 14px; }
+  nav a:hover { text-decoration: underline; }
+  .container { display: flex; gap: 0; height: calc(100vh - 49px); }
+  canvas { display: block; background: #0d1117; }
+  .sidebar { width: 320px; min-width: 320px; background: #161b22; border-left: 1px solid #30363d; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+  .panel { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 16px; }
+  .panel h3 { font-size: 13px; font-weight: 600; color: #8b949e; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+  .btn { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 6px; border: 1px solid #30363d; background: #21262d; color: #c9d1d9; font-size: 13px; cursor: pointer; transition: all 0.2s; font-family: inherit; }
+  .btn:hover { background: #30363d; border-color: #8b949e; }
+  .btn.primary { background: #238636; border-color: #2ea043; color: #fff; }
+  .btn.primary:hover { background: #2ea043; }
+  .btn.danger { background: #da3633; border-color: #f85149; color: #fff; }
+  .btn.danger:hover { background: #f85149; }
+  .btn.warning { background: #9e6a03; border-color: #d29922; color: #fff; }
+  .btn.warning:hover { background: #d29922; }
+  .controls { display: flex; flex-direction: column; gap: 8px; }
+  .choice-btns { display: flex; gap: 8px; margin-top: 8px; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+  .badge.c { background: rgba(0,200,100,0.2); color: #3fb950; border: 1px solid #3fb950; }
+  .badge.a { background: rgba(88,166,255,0.2); color: #58a6ff; border: 1px solid #58a6ff; }
+  .badge.p { background: rgba(240,136,62,0.2); color: #f0883e; border: 1px solid #f0883e; }
+  .system-list { display: flex; flex-direction: column; gap: 6px; }
+  .sys-row { display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; background: #161b22; border-radius: 6px; border: 1px solid #21262d; }
+  .sys-name { font-size: 13px; font-weight: 600; }
+  .sys-badges { display: flex; gap: 4px; }
+  .log { display: flex; flex-direction: column; gap: 4px; max-height: 160px; overflow-y: auto; }
+  .log-entry { font-size: 12px; padding: 4px 8px; border-radius: 4px; border-left: 3px solid; }
+  .log-entry.success { background: rgba(63,185,80,0.1); border-color: #3fb950; color: #3fb950; }
+  .log-entry.error { background: rgba(248,81,73,0.1); border-color: #f85149; color: #f85149; }
+  .log-entry.stale { background: rgba(240,136,62,0.1); border-color: #f0883e; color: #f0883e; }
+  .log-entry.info { background: rgba(88,166,255,0.1); border-color: #58a6ff; color: #58a6ff; }
+  .state-indicator { display: flex; align-items: center; gap: 8px; padding: 10px; background: #161b22; border-radius: 6px; border: 1px solid #30363d; }
+  .state-dot { width: 12px; height: 12px; border-radius: 50%; }
+  .canvas-wrap { flex: 1; position: relative; overflow: hidden; }
+  .partition-choice { display: none; flex-direction: column; gap: 8px; }
+  .partition-choice.visible { display: flex; }
+  .section-title { font-size: 14px; font-weight: 600; color: #f0f6fc; margin-bottom: 6px; }
+  .metric { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #21262d; font-size: 13px; }
+  .metric:last-child { border-bottom: none; }
+  .metric-val { font-weight: 600; }
+  .metric-val.green { color: #3fb950; }
+  .metric-val.red { color: #f85149; }
+  .metric-val.orange { color: #f0883e; }
+</style>
+</head>
+<body>
+<nav>
+  <span class="brand">System Design Labs</span>
+  <span style="color:#30363d">|</span>
+  <a href="index.html">← System Design Labs</a>
+  <span style="flex:1"></span>
+  <span style="font-size:13px;color:#8b949e">07 — CAP Theorem</span>
+</nav>
+<div class="container">
+  <div class="canvas-wrap">
+    <canvas id="canvas"></canvas>
+  </div>
+  <div class="sidebar">
+    <div class="panel">
+      <h3>Controls</h3>
+      <div class="controls">
+        <div class="state-indicator" id="stateIndicator">
+          <div class="state-dot" id="stateDot" style="background:#3fb950"></div>
+          <span id="stateText" style="font-size:13px;">Network: Healthy</span>
+        </div>
+        <button class="btn danger" id="partitionBtn" onclick="simulatePartition()">⚡ Simulate Network Partition</button>
+        <div class="partition-choice" id="partitionChoice">
+          <div style="font-size:12px;color:#8b949e;padding:4px 0;">Partition detected! Choose your guarantee:</div>
+          <button class="btn primary" onclick="chooseConsistency()" style="background:#1f6feb;border-color:#388bfd;">
+            🔒 Choose Consistency (CP)
+          </button>
+          <button class="btn warning" onclick="chooseAvailability()">
+            ⚡ Choose Availability (AP)
+          </button>
+        </div>
+        <button class="btn" onclick="reset()">↺ Reset</button>
+        <button class="btn" onclick="sendWrite()" id="writeBtn">✍ Send Write Request</button>
+        <button class="btn" onclick="sendRead()" id="readBtn">📖 Send Read Request</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Current State</h3>
+      <div id="metrics">
+        <div class="metric"><span>Network</span><span class="metric-val green" id="mNetwork">Healthy</span></div>
+        <div class="metric"><span>Mode</span><span class="metric-val" id="mMode" style="color:#8b949e">—</span></div>
+        <div class="metric"><span>Writes OK</span><span class="metric-val green" id="mWrites">0</span></div>
+        <div class="metric"><span>Reads OK</span><span class="metric-val green" id="mReads">0</span></div>
+        <div class="metric"><span>Errors</span><span class="metric-val red" id="mErrors">0</span></div>
+        <div class="metric"><span>Stale Reads</span><span class="metric-val orange" id="mStale">0</span></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>CAP Systems</h3>
+      <div class="system-list">
+        <div class="sys-row" id="cp-zone">
+          <div>
+            <div class="sys-name" style="color:#3fb950">CP Systems</div>
+            <div style="font-size:11px;color:#8b949e;margin-top:2px;">HBase · ZooKeeper · etcd</div>
+          </div>
+          <div class="sys-badges"><span class="badge c">C</span><span class="badge p">P</span></div>
+        </div>
+        <div class="sys-row" id="ap-zone">
+          <div>
+            <div class="sys-name" style="color:#58a6ff">AP Systems</div>
+            <div style="font-size:11px;color:#8b949e;margin-top:2px;">Cassandra · CouchDB · DynamoDB</div>
+          </div>
+          <div class="sys-badges"><span class="badge a">A</span><span class="badge p">P</span></div>
+        </div>
+        <div class="sys-row" style="opacity:0.4">
+          <div>
+            <div class="sys-name" style="color:#8b949e">CA Systems</div>
+            <div style="font-size:11px;color:#8b949e;margin-top:2px;">Only without partitions</div>
+          </div>
+          <div class="sys-badges"><span class="badge c">C</span><span class="badge a">A</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>What Each Guarantees</h3>
+      <div id="guaranteesText" style="font-size:12px;line-height:1.7;color:#8b949e;">
+        <div style="margin-bottom:8px;"><span style="color:#3fb950">●</span> <b>Consistency:</b> Every read gets the most recent write or an error.</div>
+        <div style="margin-bottom:8px;"><span style="color:#58a6ff">●</span> <b>Availability:</b> Every request gets a response (may be stale).</div>
+        <div><span style="color:#f0883e">●</span> <b>Partition Tolerance:</b> System continues operating despite network failures.</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Request Log</h3>
+      <div class="log" id="log"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+function resize() {
+  const wrap = canvas.parentElement;
+  canvas.width = wrap.clientWidth;
+  canvas.height = wrap.clientHeight;
+}
+resize();
+window.addEventListener('resize', () => { resize(); });
+
+// State
+let state = {
+  partitioned: false,
+  mode: null, // 'cp' or 'ap'
+  n1offline: false,
+  writes: 0, reads: 0, errors: 0, stale: 0,
+  particles: [],
+  nodeData: { N1: 'v1', N2: 'v1', N3: 'v1' },
+  version: 1,
+  flashNodes: {},
+  partitionFlash: 0,
+};
+
+function nodePositions() {
+  const cx = canvas.width / 2;
+  const cy = canvas.height / 2 - 20;
+  const r = Math.min(canvas.width, canvas.height) * 0.28;
+  return {
+    N1: { x: cx, y: cy - r, label: 'N1', role: 'Primary' },
+    N2: { x: cx - r * Math.sin(Math.PI * 2 / 3), y: cy - r * Math.cos(Math.PI * 2 / 3), label: 'N2', role: 'Replica' },
+    N3: { x: cx + r * Math.sin(Math.PI * 2 / 3), y: cy - r * Math.cos(Math.PI * 2 / 3), label: 'N3', role: 'Replica' },
+  };
+}
+
+class Particle {
+  constructor(from, to, color, label, onDone) {
+    this.from = { ...from };
+    this.to = { ...to };
+    this.color = color;
+    this.label = label;
+    this.progress = 0;
+    this.speed = 0.018 + Math.random() * 0.01;
+    this.onDone = onDone;
+    this.done = false;
+    this.size = 7;
+  }
+  update() {
+    this.progress += this.speed;
+    if (this.progress >= 1) { this.progress = 1; if (!this.done) { this.done = true; if (this.onDone) this.onDone(); } }
+  }
+  draw(ctx) {
+    const x = this.from.x + (this.to.x - this.from.x) * this.progress;
+    const y = this.from.y + (this.to.y - this.from.y) * this.progress;
+    ctx.save();
+    ctx.shadowColor = this.color;
+    ctx.shadowBlur = 12;
+    ctx.beginPath();
+    ctx.arc(x, y, this.size, 0, Math.PI * 2);
+    ctx.fillStyle = this.color;
+    ctx.fill();
+    ctx.restore();
+    if (this.label) {
+      ctx.fillStyle = '#f0f6fc';
+      ctx.font = 'bold 9px -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(this.label, x, y - 14);
+    }
+  }
+}
+
+function addLog(msg, type) {
+  const log = document.getElementById('log');
+  const entry = document.createElement('div');
+  entry.className = `log-entry ${type}`;
+  entry.textContent = `${new Date().toLocaleTimeString()} ${msg}`;
+  log.prepend(entry);
+  while (log.children.length > 12) log.removeChild(log.lastChild);
+}
+
+function updateMetrics() {
+  document.getElementById('mWrites').textContent = state.writes;
+  document.getElementById('mReads').textContent = state.reads;
+  document.getElementById('mErrors').textContent = state.errors;
+  document.getElementById('mStale').textContent = state.stale;
+}
+
+function simulatePartition() {
+  if (state.partitioned) return;
+  state.partitioned = true;
+  state.mode = null;
+  state.partitionFlash = 1;
+  document.getElementById('partitionChoice').classList.add('visible');
+  document.getElementById('partitionBtn').disabled = true;
+  document.getElementById('stateDot').style.background = '#f0883e';
+  document.getElementById('stateText').textContent = 'Network: PARTITIONED';
+  document.getElementById('mNetwork').textContent = 'Partitioned';
+  document.getElementById('mNetwork').style.color = '#f0883e';
+  document.getElementById('mMode').textContent = 'Choose...';
+  addLog('Network partition detected between N1 and N2!', 'error');
+}
+
+function chooseConsistency() {
+  state.mode = 'cp';
+  state.n1offline = true;
+  document.getElementById('partitionChoice').classList.remove('visible');
+  document.getElementById('mMode').textContent = 'CP (Consistency)';
+  document.getElementById('mMode').style.color = '#3fb950';
+  document.getElementById('cp-zone').style.boxShadow = '0 0 0 2px #3fb950';
+  addLog('CP mode: N1 goes offline to maintain consistency', 'info');
+  document.getElementById('stateDot').style.background = '#3fb950';
+  document.getElementById('stateText').textContent = 'Mode: CP — N1 Offline';
+}
+
+function chooseAvailability() {
+  state.mode = 'ap';
+  state.n1offline = false;
+  document.getElementById('partitionChoice').classList.remove('visible');
+  document.getElementById('mMode').textContent = 'AP (Availability)';
+  document.getElementById('mMode').style.color = '#58a6ff';
+  document.getElementById('ap-zone').style.boxShadow = '0 0 0 2px #58a6ff';
+  addLog('AP mode: N1 serves stale data to remain available', 'info');
+  document.getElementById('stateDot').style.background = '#58a6ff';
+  document.getElementById('stateText').textContent = 'Mode: AP — Stale Data';
+}
+
+function reset() {
+  state.partitioned = false;
+  state.mode = null;
+  state.n1offline = false;
+  state.particles = [];
+  state.nodeData = { N1: `v${state.version}`, N2: `v${state.version}`, N3: `v${state.version}` };
+  document.getElementById('partitionChoice').classList.remove('visible');
+  document.getElementById('partitionBtn').disabled = false;
+  document.getElementById('stateDot').style.background = '#3fb950';
+  document.getElementById('stateText').textContent = 'Network: Healthy';
+  document.getElementById('mNetwork').textContent = 'Healthy';
+  document.getElementById('mNetwork').style.color = '#3fb950';
+  document.getElementById('mMode').textContent = '—';
+  document.getElementById('mMode').style.color = '#8b949e';
+  document.getElementById('cp-zone').style.boxShadow = '';
+  document.getElementById('ap-zone').style.boxShadow = '';
+  addLog('System reset — network restored', 'success');
+}
+
+function sendWrite() {
+  const nodes = nodePositions();
+  state.version++;
+  const newVal = `v${state.version}`;
+
+  if (state.partitioned && state.n1offline) {
+    // CP: write goes to N2/N3, N1 stays offline
+    state.particles.push(new Particle(
+      { x: nodes.N2.x, y: nodes.N2.y - 60 }, nodes.N2, '#3fb950', 'WRITE',
+      () => {
+        state.nodeData.N2 = newVal;
+        state.nodeData.N3 = newVal;
+        state.flashNodes.N2 = 20;
+        state.flashNodes.N3 = 20;
+        state.writes++;
+        updateMetrics();
+        addLog(`Write ${newVal} to N2/N3 (N1 offline)`, 'success');
+        // Replicate N2→N3
+        setTimeout(() => {
+          state.particles.push(new Particle(nodes.N2, nodes.N3, '#3fb950', null, null));
+        }, 300);
+      }
+    ));
+  } else if (state.partitioned && state.mode === 'ap') {
+    // AP: write to N2/N3, N1 diverges
+    state.particles.push(new Particle(
+      { x: nodes.N1.x, y: nodes.N1.y - 60 }, nodes.N1, '#f0883e', 'WRITE',
+      () => {
+        state.nodeData.N2 = newVal;
+        state.nodeData.N3 = newVal;
+        // N1 stays at old value — diverged
+        state.flashNodes.N1 = 20;
+        state.flashNodes.N2 = 20;
+        state.writes++;
+        updateMetrics();
+        addLog(`Write diverged: N2/N3=${newVal}, N1=${state.nodeData.N1} (stale)`, 'stale');
+      }
+    ));
+  } else {
+    // Normal: replicate to all
+    state.particles.push(new Particle(
+      { x: nodes.N1.x, y: nodes.N1.y - 60 }, nodes.N1, '#3fb950', 'WRITE',
+      () => {
+        state.nodeData.N1 = newVal;
+        state.flashNodes.N1 = 20;
+        state.writes++;
+        updateMetrics();
+        setTimeout(() => {
+          state.particles.push(new Particle(nodes.N1, nodes.N2, '#3fb950', null, () => { state.nodeData.N2 = newVal; state.flashNodes.N2 = 15; }));
+          state.particles.push(new Particle(nodes.N1, nodes.N3, '#3fb950', null, () => { state.nodeData.N3 = newVal; state.flashNodes.N3 = 15; }));
+        }, 200);
+        addLog(`Write ${newVal} replicated to all nodes`, 'success');
+      }
+    ));
+  }
+}
+
+function sendRead() {
+  const nodes = nodePositions();
+  if (state.n1offline && state.partitioned) {
+    state.errors++;
+    updateMetrics();
+    addLog('READ N1 → ERROR: Node offline (CP mode)', 'error');
+    state.flashNodes.N1 = 20;
+    return;
+  }
+  if (state.partitioned && state.mode === 'ap') {
+    state.stale++;
+    state.reads++;
+    updateMetrics();
+    state.flashNodes.N1 = 20;
+    addLog(`READ N1 → STALE ${state.nodeData.N1} (AP mode)`, 'stale');
+    state.particles.push(new Particle(
+      { x: nodes.N1.x + 80, y: nodes.N1.y }, nodes.N1, '#f0883e', 'READ', null
+    ));
+    return;
+  }
+  state.reads++;
+  updateMetrics();
+  state.flashNodes.N1 = 20;
+  addLog(`READ N1 → ${state.nodeData.N1}`, 'success');
+  state.particles.push(new Particle(
+    { x: nodes.N1.x + 80, y: nodes.N1.y }, nodes.N1, '#3fb950', 'READ', null
+  ));
+}
+
+function drawNode(name, node, flash) {
+  const r = 36;
+  const offline = state.n1offline && name === 'N1' && state.partitioned;
+  ctx.save();
+
+  // Glow
+  if (flash > 0) {
+    ctx.shadowColor = flash > 0 ? '#3fb950' : 'transparent';
+    ctx.shadowBlur = 20 * (flash / 20);
+  }
+  if (offline) { ctx.shadowColor = '#f85149'; ctx.shadowBlur = 20; }
+
+  // Circle
+  ctx.beginPath();
+  ctx.arc(node.x, node.y, r, 0, Math.PI * 2);
+  ctx.fillStyle = offline ? '#1a0a0a' : (flash > 0 ? '#0d2b1a' : '#161b22');
+  ctx.fill();
+  ctx.strokeStyle = offline ? '#f85149' : (flash > 0 ? '#3fb950' : '#30363d');
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.restore();
+
+  // Label
+  ctx.fillStyle = offline ? '#f85149' : '#f0f6fc';
+  ctx.font = 'bold 15px -apple-system, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(name, node.x, node.y - 6);
+
+  // Role
+  ctx.fillStyle = '#8b949e';
+  ctx.font = '10px -apple-system, sans-serif';
+  ctx.fillText(node.role, node.x, node.y + 8);
+
+  // Data version
+  const dataColor = (state.partitioned && name === 'N1' && state.mode === 'ap') ? '#f0883e' : '#3fb950';
+  ctx.fillStyle = offline ? '#f85149' : dataColor;
+  ctx.font = 'bold 11px monospace';
+  ctx.fillText(offline ? 'OFFLINE' : state.nodeData[name], node.x, node.y + 22);
+}
+
+function drawLine(a, b, cut, color) {
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(a.x, a.y);
+  ctx.lineTo(b.x, b.y);
+  ctx.strokeStyle = color || '#30363d';
+  ctx.lineWidth = 2;
+  if (cut) {
+    ctx.setLineDash([6, 4]);
+    ctx.strokeStyle = '#f85149';
+  }
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  if (cut) {
+    // Draw red X at midpoint
+    const mx = (a.x + b.x) / 2;
+    const my = (a.y + b.y) / 2;
+    ctx.font = 'bold 20px sans-serif';
+    ctx.fillStyle = '#f85149';
+    ctx.textAlign = 'center';
+    ctx.shadowColor = '#f85149';
+    ctx.shadowBlur = 10;
+    ctx.fillText('✕', mx, my + 7);
+    ctx.shadowBlur = 0;
+  }
+  ctx.restore();
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const nodes = nodePositions();
+
+  // Legend zones
+  const lx = 24, ly = canvas.height - 90;
+  const zones = [
+    { label: 'C — Consistency', color: '#3fb950' },
+    { label: 'A — Availability', color: '#58a6ff' },
+    { label: 'P — Partition Tolerance', color: '#f0883e' },
+  ];
+  zones.forEach((z, i) => {
+    ctx.fillStyle = z.color;
+    ctx.beginPath();
+    ctx.arc(lx + 6, ly + i * 22 + 5, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#8b949e';
+    ctx.font = '12px -apple-system, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(z.label, lx + 18, ly + i * 22 + 9);
+  });
+
+  // Draw edges
+  drawLine(nodes.N1, nodes.N2, state.partitioned, state.partitioned ? '#f85149' : '#30363d');
+  drawLine(nodes.N2, nodes.N3, false, state.partitioned && state.mode ? '#3fb950' : '#30363d');
+  drawLine(nodes.N1, nodes.N3, false, state.partitioned && state.mode && !state.n1offline ? '#3fb950' : '#30363d');
+
+  // Partition flash effect
+  if (state.partitionFlash > 0) {
+    ctx.fillStyle = `rgba(248,81,73,${state.partitionFlash * 0.04})`;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    state.partitionFlash = Math.max(0, state.partitionFlash - 2);
+  }
+
+  // Draw nodes
+  Object.entries(nodes).forEach(([name, node]) => {
+    const flash = state.flashNodes[name] || 0;
+    drawNode(name, node, flash);
+    if (flash > 0) state.flashNodes[name] = flash - 1;
+  });
+
+  // Update & draw particles
+  state.particles = state.particles.filter(p => !p.done || p.progress < 1);
+  state.particles.forEach(p => { p.update(); p.draw(ctx); });
+
+  // Title
+  ctx.fillStyle = '#f0f6fc';
+  ctx.font = 'bold 18px -apple-system, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('CAP Theorem: Pick Two', canvas.width / 2, 34);
+  ctx.fillStyle = '#8b949e';
+  ctx.font = '12px -apple-system, sans-serif';
+  ctx.fillText('A distributed system can only guarantee 2 of 3 properties', canvas.width / 2, 54);
+
+  requestAnimationFrame(draw);
+}
+
+draw();
+</script>
+</body>
+</html>

@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Planning & Task Decomposition — Coding Agents</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0d1117; color: #e6edf3; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
+  a { color: #58a6ff; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  nav { background: #161b22; border-bottom: 1px solid #30363d; padding: 0 24px; height: 56px; display: flex; align-items: center; gap: 24px; }
+  nav .brand { font-weight: 700; font-size: 1.05rem; color: #e6edf3; }
+  nav .back { font-size: 0.875rem; color: #8b949e; }
+  nav .back:hover { color: #58a6ff; }
+  nav .spacer { flex: 1; }
+  nav .lab-title { font-size: 0.875rem; color: #8b949e; }
+
+  .container { max-width: 960px; margin: 0 auto; padding: 24px 16px; }
+  h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 6px; }
+  .subtitle { color: #8b949e; font-size: 0.9rem; margin-bottom: 24px; }
+
+  .main-grid { display: grid; grid-template-columns: 1fr 300px; gap: 16px; }
+  @media (max-width: 700px) { .main-grid { grid-template-columns: 1fr; } }
+
+  .panel { background: #161b22; border: 1px solid #30363d; border-radius: 8px; overflow: hidden; }
+  .panel-header { padding: 12px 16px; border-bottom: 1px solid #30363d; font-size: 0.8rem; font-weight: 600; color: #8b949e; text-transform: uppercase; letter-spacing: 0.05em; }
+
+  canvas { display: block; width: 100%; background: #0d1117; cursor: default; }
+
+  .controls { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+  label { font-size: 0.8rem; color: #8b949e; display: block; margin-bottom: 4px; }
+  select, button { width: 100%; padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; border: 1px solid #30363d; cursor: pointer; }
+  select { background: #0d1117; color: #e6edf3; }
+  button { background: #21262d; color: #e6edf3; font-weight: 600; transition: background 0.15s; }
+  button:hover { background: #30363d; }
+  button.primary { background: #1f6feb; border-color: #388bfd; }
+  button.primary:hover { background: #388bfd; }
+  button.success { background: #196c2e; border-color: #2ea043; }
+  button.success:hover { background: #2ea043; }
+  button.danger { background: #6e1f1f; border-color: #f85149; }
+  button.danger:hover { background: #da3633; }
+  button.active { background: #6e40c9; border-color: #bc8cff; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .insight { padding: 14px; font-size: 0.82rem; line-height: 1.6; }
+  .insight h3 { font-size: 0.85rem; font-weight: 700; color: #58a6ff; margin-bottom: 8px; }
+  .insight .task-list { list-style: none; margin: 8px 0; }
+  .insight .task-list li { padding: 3px 0; padding-left: 16px; position: relative; color: #8b949e; }
+  .insight .task-list li::before { content: '○'; position: absolute; left: 0; font-size: 0.7rem; top: 4px; }
+  .insight .task-list li.done { color: #3fb950; }
+  .insight .task-list li.done::before { content: '✓'; color: #3fb950; }
+  .insight .task-list li.active { color: #e6edf3; font-weight: 600; }
+  .insight .task-list li.active::before { content: '▶'; color: #58a6ff; }
+  .insight .task-list li.blocked { color: #f85149; }
+  .insight .task-list li.blocked::before { content: '✕'; color: #f85149; }
+  .insight .task-list li.critical { color: #e3b341; }
+  .stat-row { display: flex; justify-content: space-between; margin: 6px 0; padding: 5px 8px; background: #0d1117; border-radius: 4px; }
+  .stat-label { color: #8b949e; }
+  .stat-value { color: #e6edf3; font-weight: 600; font-family: monospace; }
+  .info-box { background: #0d1117; border-left: 3px solid #58a6ff; padding: 8px 10px; border-radius: 0 4px 4px 0; margin-top: 10px; font-size: 0.78rem; color: #8b949e; line-height: 1.5; }
+  .info-box.warn { border-color: #e3b341; }
+
+  /* ── Explanation Sections ── */
+  .explain-section { margin-top: 40px; }
+  .explain-section + .explain-section { margin-top: 32px; }
+  .explain-h2 { font-size: 18px; font-weight: 700; color: #e6edf3; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid #30363d; display: flex; align-items: center; gap: 10px; }
+  .explain-h2 .ehead-icon { font-size: 20px; }
+  .explain-p { color: #8b949e; font-size: 14px; line-height: 1.8; margin-bottom: 12px; }
+  .explain-p strong { color: #e6edf3; }
+  .explain-p code { background: #21262d; border: 1px solid #30363d; border-radius: 4px; padding: 1px 6px; font-family: 'SF Mono','Fira Code',monospace; font-size: 12px; color: #a5d6ff; }
+  .explain-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; margin-bottom: 16px; }
+  .explain-card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 18px 20px; }
+  .explain-card-title { font-size: 13px; font-weight: 700; color: #e6edf3; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .explain-card p { font-size: 13px; color: #8b949e; line-height: 1.7; }
+  .explain-card code { background: #21262d; border-radius: 3px; padding: 1px 5px; font-family: monospace; font-size: 11px; color: #a5d6ff; }
+  .steps-list { counter-reset: step; list-style: none; display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
+  .steps-list li { counter-increment: step; display: flex; gap: 14px; }
+  .steps-list li::before { content: counter(step); min-width: 28px; height: 28px; background: #21262d; border: 1px solid #30363d; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #58a6ff; flex-shrink: 0; margin-top: 2px; }
+  .steps-list li .step-body { flex: 1; }
+  .steps-list li .step-title { font-size: 14px; font-weight: 600; color: #e6edf3; margin-bottom: 3px; }
+  .steps-list li .step-desc { font-size: 13px; color: #8b949e; line-height: 1.7; }
+  .callout { border-radius: 10px; padding: 16px 20px; margin-bottom: 16px; display: flex; gap: 14px; }
+  .callout-info { background: #0d2137; border: 1px solid #1f4068; }
+  .callout-warn { background: #2d1f00; border: 1px solid #5a3e00; }
+  .callout-tip  { background: #0d2d0d; border: 1px solid #1f5c1f; }
+  .callout-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .callout-body { flex: 1; }
+  .callout-title { font-size: 13px; font-weight: 700; margin-bottom: 5px; }
+  .callout-info .callout-title { color: #58a6ff; }
+  .callout-warn .callout-title { color: #e3b341; }
+  .callout-tip  .callout-title { color: #3fb950; }
+  .callout-body p { font-size: 13px; color: #8b949e; line-height: 1.7; }
+  .callout-body p strong { color: #e6edf3; }
+  .takeaways { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 20px 24px; }
+  .takeaway-item { display: flex; gap: 12px; padding: 8px 0; }
+  .takeaway-item + .takeaway-item { border-top: 1px solid #21262d; }
+  .takeaway-bullet { color: #58a6ff; font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+  .takeaway-text { font-size: 13px; color: #8b949e; line-height: 1.7; }
+  .takeaway-text strong { color: #e6edf3; }
+  .real-world-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+  .rw-badge { background: #21262d; border: 1px solid #30363d; border-radius: 20px; padding: 5px 14px; font-size: 12px; color: #8b949e; display: flex; align-items: center; gap: 6px; }
+  .rw-badge strong { color: #e6edf3; }
+  .pitfall-list { display: flex; flex-direction: column; gap: 10px; }
+  .pitfall { background: #1a0d0d; border: 1px solid #3d1515; border-radius: 8px; padding: 14px 18px; }
+  .pitfall-title { font-size: 13px; font-weight: 700; color: #f85149; margin-bottom: 5px; }
+  .pitfall p { font-size: 13px; color: #8b949e; line-height: 1.65; }
+  .pitfall p strong { color: #e6edf3; }
+  .compare-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 16px; }
+  .compare-table th { padding: 10px 14px; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: #8b949e; border-bottom: 1px solid #30363d; }
+  .compare-table td { padding: 10px 14px; border-bottom: 1px solid #21262d; color: #8b949e; vertical-align: top; }
+  .compare-table td:first-child { color: #e6edf3; font-weight: 600; }
+  .compare-table tr:last-child td { border-bottom: none; }
+  .divider { border: none; border-top: 1px solid #21262d; margin: 40px 0; }
+</style>
+</head>
+<body>
+<nav>
+  <span class="brand">🤖 Coding Agents</span>
+  <a class="back" href="../index.html">← Playground</a>
+  <span class="spacer"></span>
+  <span class="lab-title">Lab 05 — Planning & Task Decomposition</span>
+</nav>
+
+<div class="container">
+  <h1>Planning & Task Decomposition</h1>
+  <p class="subtitle">How agents break goals into subgoals, build dependency graphs (DAGs), and find critical paths</p>
+
+  <div class="main-grid">
+    <div>
+      <div class="panel">
+        <div class="panel-header">Task Decomposition Graph</div>
+        <canvas id="canvas" height="340"></canvas>
+      </div>
+      <div class="panel" style="margin-top:16px;">
+        <div class="panel-header">Controls</div>
+        <div class="controls">
+          <div>
+            <label>Goal</label>
+            <select id="goalSelect">
+              <option value="0">Build a web app</option>
+              <option value="1">Debug production issue</option>
+              <option value="2">Research &amp; write report</option>
+              <option value="3">Refactor codebase</option>
+            </select>
+          </div>
+          <button class="primary" id="planBtn">⚡ Plan Goal</button>
+          <button class="success" id="execBtn" disabled>▶ Execute</button>
+          <button class="danger" id="blockerBtn" disabled>🚧 Add Blocker</button>
+          <button id="critPathBtn" disabled>🔍 Show Critical Path</button>
+        </div>
+      </div>
+    </div>
+    <div class="panel" style="align-self: start;">
+      <div class="panel-header">Insight</div>
+      <div class="insight" id="insight">
+        <h3>About This Lab</h3>
+        <p style="color:#8b949e;">Select a goal and click <strong>Plan Goal</strong> to watch an agent decompose it into a dependency graph (DAG).</p>
+        <div class="info-box" style="margin-top:12px;">
+          Real agents use planning to reason ahead: they identify dependencies, parallelize independent tasks, and track critical paths — the sequence of tasks that determines overall completion time.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+<hr class="divider">
+
+<div class="explain-section">
+  <div class="explain-h2"><span class="ehead-icon">📖</span> Concept Overview</div>
+  <p class="explain-p"><strong>Planning</strong> is what separates capable agents from reactive ones. A reactive agent simply picks the next action based on the current observation. A planning agent first builds a mental model of how to reach the goal — decomposing it into subtasks, identifying dependencies, and ordering execution to minimize wasted effort. This matters enormously for tasks with more than a few steps, where a naive approach leads to circular work or missed prerequisites.</p>
+  <p class="explain-p">The output of planning is typically a <strong>task DAG</strong> — a directed acyclic graph where nodes are subtasks and edges represent dependencies ("Task B cannot start until Task A is complete"). The DAG makes explicit which tasks can be parallelized (no dependencies between them) and which must be sequential. Finding the <strong>critical path</strong> through the DAG — the longest chain of dependent tasks — tells you the minimum possible time to complete the work, no matter how much parallelism you add.</p>
+  <p class="explain-p">Real coding agents use planning implicitly (the LLM reasons about order in its thoughts) or explicitly (outputting a structured plan that gets stored and executed step-by-step). Explicit planning is more robust for long-horizon tasks because the agent can check off completed steps, detect blockers, and replan when circumstances change — without relying on the model to remember what it's done from context alone.</p>
+</div>
+
+<div class="explain-section">
+  <div class="explain-h2"><span class="ehead-icon">⚙️</span> How Agents Plan</div>
+  <ol class="steps-list">
+    <li>
+      <div class="step-body">
+        <div class="step-title">Goal clarification</div>
+        <div class="step-desc">Before planning, the agent clarifies what "done" looks like. Ambiguous goals produce unfocused plans. A good agent asks: "What are the success criteria? What constraints exist (time, budget, tools available)? Are there known blockers?" This context shapes the entire plan.</div>
+      </div>
+    </li>
+    <li>
+      <div class="step-body">
+        <div class="step-title">Top-down decomposition</div>
+        <div class="step-desc">Break the goal into 3–5 high-level subgoals. Then recursively break each subgoal into concrete, actionable tasks. Stop decomposing when tasks are small enough to complete in one agent loop iteration. Overly granular plans are hard to track; overly coarse plans miss dependencies.</div>
+      </div>
+    </li>
+    <li>
+      <div class="step-body">
+        <div class="step-title">Dependency identification</div>
+        <div class="step-desc">For each task pair, ask: "Can B start before A finishes?" If no, add a directed edge A → B. Common dependency patterns: setup must precede implementation; tests must follow implementation; documentation follows all code tasks. Capture these explicitly rather than assuming the executor will figure them out.</div>
+      </div>
+    </li>
+    <li>
+      <div class="step-body">
+        <div class="step-title">Critical path analysis</div>
+        <div class="step-desc">Run a longest-path algorithm on the DAG. The critical path is the sequence of dependent tasks that determines the total duration. Tasks not on the critical path have "slack" — they can be delayed or deprioritized without affecting the overall completion time. Focus optimization effort on critical path tasks.</div>
+      </div>
+    </li>
+    <li>
+      <div class="step-body">
+        <div class="step-title">Execution with replanning</div>
+        <div class="step-desc">Execute tasks in topological order, respecting dependencies. When a task completes, mark it done and unlock dependent tasks. When a task is blocked (tool failure, missing information), update the DAG and recompute the critical path. A good planner treats the plan as a living document, not a fixed script.</div>
+      </div>
+    </li>
+  </ol>
+</div>
+
+<div class="explain-section">
+  <div class="callout callout-info">
+    <div class="callout-icon">💡</div>
+    <div class="callout-body">
+      <div class="callout-title">Planning vs. ReAct: when to use which</div>
+      <p>ReAct (Lab 04) works well for tasks where the next step depends on what you just discovered. Planning works better when the task structure is known upfront and parallelism matters. In practice, <strong>the best agents combine both</strong>: a top-level planner generates the DAG, then each leaf task is executed with a mini ReAct loop that handles unexpected observations within that subtask.</p>
+    </div>
+  </div>
+  <div class="callout callout-warn">
+    <div class="callout-icon">⚠️</div>
+    <div class="callout-body">
+      <div class="callout-title">Over-planning wastes time</div>
+      <p>Generating a 50-step plan before taking any action is often a mistake — the world changes, early steps reveal new information, and half the plan becomes invalid. <strong>Prefer short plans with frequent replanning checkpoints.</strong> Plan 3–5 steps ahead, execute, observe, then replan based on what you learned.</p>
+    </div>
+  </div>
+</div>
+
+<div class="explain-section">
+  <div class="explain-h2"><span class="ehead-icon">📋</span> Plan Representation Formats</div>
+  <div class="explain-grid">
+    <div class="explain-card">
+      <div class="explain-card-title">📝 Numbered list</div>
+      <p>Simplest format. Good for sequential tasks with no parallelism. The model outputs "1. Do X, 2. Do Y, 3. Do Z" and executes in order. Easy to parse, easy to track, but loses dependency structure.</p>
+    </div>
+    <div class="explain-card">
+      <div class="explain-card-title">🌳 Hierarchical outline</div>
+      <p>Nested lists showing subgoals and their leaf tasks. Captures hierarchy but not cross-branch dependencies. Good for documentation-style plans where humans review before execution.</p>
+    </div>
+    <div class="explain-card">
+      <div class="explain-card-title">🔗 JSON DAG</div>
+      <p>Explicit graph: each task has an <code>id</code>, <code>description</code>, <code>depends_on</code> list, and <code>status</code>. Parseable, executable, queryable. The format used by most production agent frameworks (LangGraph, CrewAI, etc.).</p>
+    </div>
+    <div class="explain-card">
+      <div class="explain-card-title">📋 Markdown TODO with checkboxes</div>
+      <p>Human-readable format that Claude Code uses. Tasks are <code>- [ ] Task description</code>; checked off as completed. Simple, auditable, and the model can easily read and update its own plan file.</p>
+    </div>
+  </div>
+</div>
+
+<div class="explain-section">
+  <div class="explain-h2"><span class="ehead-icon">🌍</span> Planning in Real Agents</div>
+  <div class="real-world-row">
+    <div class="rw-badge">🤖 <strong>Claude Code</strong> — TodoWrite tool creates explicit task lists; checks off as it works</div>
+    <div class="rw-badge">🔬 <strong>Devin</strong> — multi-step plan generated upfront; replanned on blockers</div>
+    <div class="rw-badge">🕸️ <strong>LangGraph</strong> — DAG-native framework; nodes are agents, edges are control flow</div>
+    <div class="rw-badge">👥 <strong>CrewAI</strong> — hierarchical planning: manager agent delegates to worker agents</div>
+    <div class="rw-badge">🏗️ <strong>OpenAI Assistants</strong> — implicit planning via extended chain-of-thought</div>
+  </div>
+</div>
+
+<div class="explain-section">
+  <div class="explain-h2"><span class="ehead-icon">🪤</span> Common Pitfalls</div>
+  <div class="pitfall-list">
+    <div class="pitfall">
+      <div class="pitfall-title">Circular dependencies</div>
+      <p>Task A depends on B which depends on A. This creates a deadlock the agent can never resolve. <strong>Fix:</strong> Validate the plan is a true DAG (no cycles) before execution. Most graph libraries include cycle detection.</p>
+    </div>
+    <div class="pitfall">
+      <div class="pitfall-title">Ignoring the critical path</div>
+      <p>Agents that execute tasks in arbitrary order (or alphabetical order) waste time on non-critical tasks while the bottleneck sits idle. <strong>Fix:</strong> Always schedule critical path tasks first; run non-critical parallel tasks only when resources permit.</p>
+    </div>
+    <div class="pitfall">
+      <div class="pitfall-title">Plan-execution gap</div>
+      <p>The plan says "do X" but the agent does Y because it "knows better" based on what it observed. This drift makes plans untrustworthy. <strong>Fix:</strong> If the agent deviates from the plan, it must explicitly update the plan — not silently diverge from it.</p>
+    </div>
+  </div>
+</div>
+
+<div class="explain-section">
+  <div class="explain-h2"><span class="ehead-icon">✅</span> Key Takeaways</div>
+  <div class="takeaways">
+    <div class="takeaway-item">
+      <div class="takeaway-bullet">→</div>
+      <div class="takeaway-text"><strong>Planning enables parallelism.</strong> Without a DAG, agents execute sequentially. A DAG makes explicit which tasks can run in parallel, often cutting total time by 50–80% for complex projects.</div>
+    </div>
+    <div class="takeaway-item">
+      <div class="takeaway-bullet">→</div>
+      <div class="takeaway-text"><strong>The critical path is your bottleneck.</strong> Optimizing non-critical tasks doesn't speed up the overall project. Identify the critical path first and focus effort there.</div>
+    </div>
+    <div class="takeaway-item">
+      <div class="takeaway-bullet">→</div>
+      <div class="takeaway-text"><strong>Plans must be living documents.</strong> A plan that can't be updated in response to new information is a liability. Build replanning into the agent loop, not as an afterthought.</div>
+    </div>
+    <div class="takeaway-item">
+      <div class="takeaway-bullet">→</div>
+      <div class="takeaway-text"><strong>Explicit plans are auditable.</strong> When an agent writes out its plan (in a TODO list, JSON, or document), humans can review, approve, or redirect before expensive execution begins.</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+function resize() {
+  const w = canvas.parentElement.clientWidth;
+  canvas.width = w;
+  canvas.height = 340;
+}
+resize();
+window.addEventListener('resize', () => { resize(); draw(); });
+
+// ── DAG definitions ──────────────────────────────────────────────────────────
+const GOALS = [
+  {
+    name: "Build a web app",
+    nodes: [
+      { id:0, label:"Build Web App", type:"goal", x:.5, y:.08 },
+      { id:1, label:"Design UI", type:"sub", x:.25, y:.25, deps:[0] },
+      { id:2, label:"Setup Backend", type:"sub", x:.75, y:.25, deps:[0] },
+      { id:3, label:"Build Components", type:"leaf", x:.15, y:.48, deps:[1] },
+      { id:4, label:"Write CSS/Styles", type:"leaf", x:.38, y:.48, deps:[1] },
+      { id:5, label:"Setup DB", type:"leaf", x:.62, y:.48, deps:[2] },
+      { id:6, label:"Build API", type:"leaf", x:.85, y:.48, deps:[2] },
+      { id:7, label:"Integrate Frontend", type:"sub", x:.38, y:.70, deps:[3,4,6] },
+      { id:8, label:"Write Tests", type:"leaf", x:.62, y:.70, deps:[5,6] },
+      { id:9, label:"Deploy", type:"leaf", x:.5, y:.88, deps:[7,8] },
+    ],
+    critPath: [0,2,6,7,9],
+    description: "A typical web app requires parallel frontend and backend tracks that converge at integration and deployment."
+  },
+  {
+    name: "Debug production issue",
+    nodes: [
+      { id:0, label:"Debug Prod Issue", type:"goal", x:.5, y:.08 },
+      { id:1, label:"Reproduce Bug", type:"sub", x:.5, y:.25, deps:[0] },
+      { id:2, label:"Check Logs", type:"leaf", x:.2, y:.45, deps:[1] },
+      { id:3, label:"Profile Code", type:"leaf", x:.5, y:.45, deps:[1] },
+      { id:4, label:"Inspect DB", type:"leaf", x:.8, y:.45, deps:[1] },
+      { id:5, label:"Identify Root Cause", type:"sub", x:.5, y:.62, deps:[2,3,4] },
+      { id:6, label:"Write Fix", type:"leaf", x:.3, y:.78, deps:[5] },
+      { id:7, label:"Write Regression Test", type:"leaf", x:.7, y:.78, deps:[5] },
+      { id:8, label:"Deploy Hotfix", type:"leaf", x:.5, y:.92, deps:[6,7] },
+    ],
+    critPath: [0,1,3,5,6,8],
+    description: "Debugging follows a funnel: reproduce → gather evidence in parallel → identify root cause → fix + test → deploy."
+  },
+  {
+    name: "Research & write report",
+    nodes: [
+      { id:0, label:"Research Report", type:"goal", x:.5, y:.08 },
+      { id:1, label:"Define Scope", type:"sub", x:.5, y:.24, deps:[0] },
+      { id:2, label:"Search Papers", type:"leaf", x:.18, y:.42, deps:[1] },
+      { id:3, label:"Search Web", type:"leaf", x:.42, y:.42, deps:[1] },
+      { id:4, label:"Interview Experts", type:"leaf", x:.68, y:.42, deps:[1] },
+      { id:5, label:"Check Datasets", type:"leaf", x:.88, y:.42, deps:[1] },
+      { id:6, label:"Synthesize Findings", type:"sub", x:.38, y:.62, deps:[2,3,4] },
+      { id:7, label:"Analyze Data", type:"sub", x:.72, y:.62, deps:[4,5] },
+      { id:8, label:"Write Draft", type:"leaf", x:.38, y:.80, deps:[6,7] },
+      { id:9, label:"Review & Edit", type:"leaf", x:.62, y:.80, deps:[8] },
+      { id:10, label:"Publish", type:"leaf", x:.5, y:.93, deps:[9] },
+    ],
+    critPath: [0,1,4,7,8,9,10],
+    description: "Research parallelizes source gathering, but synthesis and writing are sequential bottlenecks."
+  },
+  {
+    name: "Refactor codebase",
+    nodes: [
+      { id:0, label:"Refactor Codebase", type:"goal", x:.5, y:.07 },
+      { id:1, label:"Audit Code", type:"sub", x:.5, y:.22, deps:[0] },
+      { id:2, label:"Identify Patterns", type:"leaf", x:.25, y:.38, deps:[1] },
+      { id:3, label:"Map Dependencies", type:"leaf", x:.75, y:.38, deps:[1] },
+      { id:4, label:"Extract Utils", type:"leaf", x:.15, y:.56, deps:[2] },
+      { id:5, label:"Break Monolith", type:"leaf", x:.42, y:.56, deps:[2,3] },
+      { id:6, label:"Update Interfaces", type:"leaf", x:.68, y:.56, deps:[3] },
+      { id:7, label:"Add Type Safety", type:"leaf", x:.88, y:.56, deps:[3] },
+      { id:8, label:"Run Test Suite", type:"sub", x:.38, y:.74, deps:[4,5,6,7] },
+      { id:9, label:"Update Docs", type:"leaf", x:.68, y:.74, deps:[6,7] },
+      { id:10, label:"Code Review", type:"leaf", x:.5, y:.90, deps:[8,9] },
+    ],
+    critPath: [0,1,3,5,8,10],
+    description: "Refactoring must map all dependencies before touching code — the dependency map is the critical blocker."
+  }
+];
+
+// ── State ────────────────────────────────────────────────────────────────────
+let state = {
+  goalIdx: 0,
+  phase: 'idle', // idle | planning | planned | executing | done
+  visibleNodes: [],
+  visibleEdges: [],
+  nodeStatus: {}, // 0=pending,1=active,2=done,3=blocked
+  showCritPath: false,
+  blockerNode: null,
+  animFrame: 0,
+  execOrder: [],
+  execIdx: 0,
+};
+
+function currentGoal() { return GOALS[state.goalIdx]; }
+
+function computeExecOrder(nodes, blocked) {
+  const visited = new Set();
+  const order = [];
+  function visit(id) {
+    if (visited.has(id)) return;
+    const n = nodes.find(x => x.id === id);
+    for (const d of (n.deps || [])) visit(d);
+    visited.add(id);
+    if (id !== 0 && !blocked.has(id)) order.push(id);
+  }
+  for (const n of nodes) visit(n.id);
+  return order;
+}
+
+// ── Drawing ──────────────────────────────────────────────────────────────────
+const NODE_COLORS = {
+  goal: '#bc8cff',
+  sub: '#58a6ff',
+  leaf_pending: '#30363d',
+  leaf_done: '#3fb950',
+  leaf_active: '#e3b341',
+  leaf_blocked: '#f85149',
+};
+
+function nodePos(n) {
+  return { x: n.x * canvas.width, y: 30 + n.y * (canvas.height - 50) };
+}
+
+function nodeRadius(n) {
+  if (n.type === 'goal') return 28;
+  if (n.type === 'sub') return 22;
+  return 18;
+}
+
+let particles = [];
+let planAnimTimer = 0;
+let planOrder = [];
+let planIdx = 0;
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const goal = currentGoal();
+
+  // draw edges
+  for (const e of state.visibleEdges) {
+    const from = goal.nodes.find(n => n.id === e.from);
+    const to = goal.nodes.find(n => n.id === e.to);
+    if (!from || !to) continue;
+    const fp = nodePos(from), tp = nodePos(to);
+    const isCrit = state.showCritPath && goal.critPath.includes(e.from) && goal.critPath.includes(e.to)
+      && goal.critPath.indexOf(e.to) === goal.critPath.indexOf(e.from) + 1;
+
+    ctx.beginPath();
+    ctx.strokeStyle = isCrit ? '#e3b341' : '#30363d';
+    ctx.lineWidth = isCrit ? 2.5 : 1.5;
+    ctx.setLineDash(isCrit ? [] : [4,4]);
+
+    // draw arrow
+    const dx = tp.x - fp.x, dy = tp.y - fp.y;
+    const len = Math.sqrt(dx*dx+dy*dy);
+    const r = nodeRadius(to);
+    const ex = tp.x - (dx/len)*r, ey = tp.y - (dy/len)*(r+2);
+
+    ctx.moveTo(fp.x, fp.y);
+    ctx.lineTo(ex, ey);
+    ctx.stroke();
+
+    // arrowhead
+    const angle = Math.atan2(ey - fp.y, ex - fp.x);
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.fillStyle = isCrit ? '#e3b341' : '#30363d';
+    ctx.moveTo(ex, ey);
+    ctx.lineTo(ex - 8*Math.cos(angle-0.4), ey - 8*Math.sin(angle-0.4));
+    ctx.lineTo(ex - 8*Math.cos(angle+0.4), ey - 8*Math.sin(angle+0.4));
+    ctx.closePath();
+    ctx.fill();
+    ctx.setLineDash([]);
+  }
+
+  // draw nodes
+  for (const id of state.visibleNodes) {
+    const n = goal.nodes.find(x => x.id === id);
+    if (!n) continue;
+    const p = nodePos(n);
+    const r = nodeRadius(n);
+    const st = state.nodeStatus[id] || 0;
+
+    let col;
+    if (n.type === 'goal') col = '#bc8cff';
+    else if (n.type === 'sub') col = st === 2 ? '#3fb950' : st === 3 ? '#f85149' : '#58a6ff';
+    else col = st === 2 ? '#3fb950' : st === 3 ? '#f85149' : st === 1 ? '#e3b341' : '#21262d';
+
+    const isCrit = state.showCritPath && goal.critPath.includes(id);
+
+    // glow for active/critical
+    if (st === 1 || isCrit) {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, r+5, 0, Math.PI*2);
+      const grd = ctx.createRadialGradient(p.x,p.y,r,p.x,p.y,r+5);
+      const gc = st === 1 ? '#e3b34140' : '#e3b34130';
+      grd.addColorStop(0, gc);
+      grd.addColorStop(1, 'transparent');
+      ctx.fillStyle = grd;
+      ctx.fill();
+    }
+
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, r, 0, Math.PI*2);
+    ctx.fillStyle = col + '22';
+    ctx.fill();
+    ctx.strokeStyle = col;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // label
+    ctx.fillStyle = '#e6edf3';
+    ctx.font = `${n.type==='goal'?'700 ':''} ${n.type==='goal'?11:10}px -apple-system,sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const words = n.label.split(' ');
+    if (words.length <= 2) {
+      ctx.fillText(n.label, p.x, p.y);
+    } else {
+      ctx.fillText(words.slice(0,2).join(' '), p.x, p.y-6);
+      ctx.fillText(words.slice(2).join(' '), p.x, p.y+6);
+    }
+
+    // checkmark / X
+    if (st === 2) {
+      ctx.fillStyle = '#3fb950';
+      ctx.font = '14px sans-serif';
+      ctx.fillText('✓', p.x + r - 4, p.y - r + 4);
+    }
+    if (st === 3) {
+      ctx.fillStyle = '#f85149';
+      ctx.font = '12px sans-serif';
+      ctx.fillText('✕', p.x + r - 4, p.y - r + 4);
+    }
+  }
+
+  // particles
+  particles = particles.filter(p => p.life > 0);
+  for (const p of particles) {
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+    ctx.fillStyle = p.color + Math.floor(p.life*255).toString(16).padStart(2,'0');
+    ctx.fill();
+    p.x += p.vx; p.y += p.vy; p.life -= 0.025; p.r *= 0.97;
+  }
+
+  // legend
+  if (state.phase !== 'idle') {
+    const items = [
+      { color:'#bc8cff', label:'Goal' },
+      { color:'#58a6ff', label:'Sub-task' },
+      { color:'#3fb950', label:'Done' },
+      { color:'#f85149', label:'Blocked' },
+      { color:'#e3b341', label:'Critical' },
+    ];
+    let lx = 12, ly = canvas.height - 18;
+    ctx.font = '10px sans-serif';
+    for (const it of items) {
+      ctx.beginPath(); ctx.arc(lx+5, ly, 5, 0, Math.PI*2);
+      ctx.fillStyle = it.color+'44'; ctx.fill();
+      ctx.strokeStyle = it.color; ctx.lineWidth=1.5; ctx.stroke();
+      ctx.fillStyle = '#8b949e'; ctx.textAlign='left'; ctx.textBaseline='middle';
+      ctx.fillText(it.label, lx+14, ly);
+      lx += ctx.measureText(it.label).width + 26;
+    }
+  }
+}
+
+function spawnParticles(x, y, color, n=8) {
+  for (let i=0;i<n;i++) {
+    const a = Math.random()*Math.PI*2;
+    const s = 0.5+Math.random()*2;
+    particles.push({ x, y, vx: Math.cos(a)*s, vy: Math.sin(a)*s, r: 3+Math.random()*3, life:1, color });
+  }
+}
+
+// ── Planning animation ────────────────────────────────────────────────────────
+function startPlanning() {
+  const goal = currentGoal();
+  state.phase = 'planning';
+  state.visibleNodes = [];
+  state.visibleEdges = [];
+  state.nodeStatus = {};
+  state.blockerNode = null;
+  state.showCritPath = false;
+  particles = [];
+
+  // BFS order
+  planOrder = [];
+  const q = [0];
+  const seen = new Set([0]);
+  while (q.length) {
+    const id = q.shift();
+    planOrder.push(id);
+    const n = goal.nodes.find(x=>x.id===id);
+    for (const dep of (n.deps||[])) {
+      // children: find nodes that have this id in their deps
+    }
+    // add children
+    for (const nd of goal.nodes) {
+      if (nd.deps && nd.deps.includes(id) && !seen.has(nd.id)) {
+        seen.add(nd.id);
+        q.push(nd.id);
+      }
+    }
+  }
+  planIdx = 0;
+  updateInsight();
+  animatePlan();
+}
+
+function animatePlan() {
+  if (planIdx >= planOrder.length) {
+    state.phase = 'planned';
+    document.getElementById('execBtn').disabled = false;
+    document.getElementById('blockerBtn').disabled = false;
+    document.getElementById('critPathBtn').disabled = false;
+    updateInsight();
+    draw();
+    return;
+  }
+  const id = planOrder[planIdx++];
+  state.visibleNodes.push(id);
+  const goal = currentGoal();
+  const n = goal.nodes.find(x=>x.id===id);
+  const p = nodePos(n);
+  spawnParticles(p.x, p.y, '#bc8cff', 6);
+
+  // add edges from this node to its deps (deps = parents)
+  for (const dep of (n.deps||[])) {
+    if (state.visibleNodes.includes(dep)) {
+      state.visibleEdges.push({ from:dep, to:id });
+    }
+  }
+  draw();
+  setTimeout(animatePlan, 280);
+}
+
+// ── Execute animation ─────────────────────────────────────────────────────────
+function startExec() {
+  const goal = currentGoal();
+  const blocked = new Set(state.blockerNode !== null ? [state.blockerNode] : []);
+  state.execOrder = computeExecOrder(goal.nodes, blocked);
+  state.execIdx = 0;
+  state.phase = 'executing';
+  document.getElementById('execBtn').disabled = true;
+  document.getElementById('blockerBtn').disabled = true;
+  updateInsight();
+  animateExec();
+}
+
+function animateExec() {
+  if (state.execIdx >= state.execOrder.length) {
+    state.phase = 'done';
+    updateInsight();
+    draw();
+    return;
+  }
+  const id = state.execOrder[state.execIdx++];
+  state.nodeStatus[id] = 1; // active
+  draw();
+  setTimeout(() => {
+    state.nodeStatus[id] = 2; // done
+    const goal = currentGoal();
+    const n = goal.nodes.find(x=>x.id===id);
+    const p = nodePos(n);
+    spawnParticles(p.x, p.y, '#3fb950', 10);
+    updateInsight();
+    draw();
+    setTimeout(animateExec, 350);
+  }, 600);
+}
+
+// ── Controls ──────────────────────────────────────────────────────────────────
+document.getElementById('goalSelect').addEventListener('change', e => {
+  state.goalIdx = +e.target.value;
+  state.phase = 'idle';
+  state.visibleNodes = [];
+  state.visibleEdges = [];
+  state.nodeStatus = {};
+  state.blockerNode = null;
+  state.showCritPath = false;
+  particles = [];
+  document.getElementById('execBtn').disabled = true;
+  document.getElementById('blockerBtn').disabled = true;
+  document.getElementById('critPathBtn').disabled = true;
+  updateInsight();
+  draw();
+});
+
+document.getElementById('planBtn').addEventListener('click', startPlanning);
+
+document.getElementById('execBtn').addEventListener('click', startExec);
+
+document.getElementById('blockerBtn').addEventListener('click', () => {
+  const goal = currentGoal();
+  // pick a non-root, non-terminal leaf to block
+  const candidates = goal.nodes.filter(n => n.id !== 0 && n.type === 'leaf' && !goal.critPath.includes(n.id));
+  if (!candidates.length) return;
+  const pick = candidates[Math.floor(Math.random()*candidates.length)];
+  state.blockerNode = pick.id;
+  state.nodeStatus[pick.id] = 3;
+  const p = nodePos(pick);
+  spawnParticles(p.x, p.y, '#f85149', 12);
+  draw();
+  updateInsight();
+});
+
+document.getElementById('critPathBtn').addEventListener('click', function() {
+  state.showCritPath = !state.showCritPath;
+  this.className = state.showCritPath ? 'active' : '';
+  this.textContent = state.showCritPath ? '🔍 Hide Critical Path' : '🔍 Show Critical Path';
+  draw();
+  updateInsight();
+});
+
+// ── Insight ───────────────────────────────────────────────────────────────────
+function updateInsight() {
+  const goal = currentGoal();
+  const el = document.getElementById('insight');
+
+  if (state.phase === 'idle') {
+    el.innerHTML = `<h3>About This Lab</h3>
+      <p style="color:#8b949e;">Select a goal and click <strong>Plan Goal</strong> to watch an agent decompose it into a dependency graph (DAG).</p>
+      <div class="info-box">Real agents use planning to reason ahead: they identify dependencies, parallelize independent tasks, and track critical paths.</div>`;
+    return;
+  }
+
+  const taskItems = goal.nodes.filter(n=>n.id!==0).map(n=>{
+    let cls = '';
+    const st = state.nodeStatus[n.id] || 0;
+    if (st===2) cls='done';
+    else if (st===3) cls='blocked';
+    else if (st===1) cls='active';
+    else if (state.showCritPath && goal.critPath.includes(n.id)) cls='critical';
+    return `<li class="${cls}">${n.label}</li>`;
+  }).join('');
+
+  const cpLen = goal.critPath.length - 1;
+  const doneCount = Object.values(state.nodeStatus).filter(v=>v===2).length;
+  const total = goal.nodes.length - 1;
+
+  let statusMsg = '';
+  if (state.phase === 'planning') statusMsg = `<div class="info-box">Building plan… (${state.visibleNodes.length}/${goal.nodes.length} nodes)</div>`;
+  else if (state.phase === 'planned') statusMsg = `<div class="info-box">Plan ready. Click <strong>Execute</strong> to run tasks in dependency order.</div>`;
+  else if (state.phase === 'executing') statusMsg = `<div class="info-box">Executing… (${doneCount}/${total} tasks complete)</div>`;
+  else if (state.phase === 'done') statusMsg = `<div class="info-box">✓ All tasks complete! Goal achieved.</div>`;
+
+  const blockerNote = state.blockerNode !== null ? `<div class="info-box warn">⚠ Blocker on "<strong>${goal.nodes.find(n=>n.id===state.blockerNode)?.label}</strong>" — tasks depending on it are skipped.</div>` : '';
+
+  el.innerHTML = `
+    <h3>${goal.name}</h3>
+    <ul class="task-list">${taskItems}</ul>
+    <div class="stat-row"><span class="stat-label">Critical path</span><span class="stat-value">${cpLen} steps</span></div>
+    <div class="stat-row"><span class="stat-label">Tasks done</span><span class="stat-value">${doneCount} / ${total}</span></div>
+    <div class="stat-row"><span class="stat-label">Parallelism</span><span class="stat-value">${goal.nodes.filter(n=>n.type==='leaf').length} leaves</span></div>
+    ${statusMsg}${blockerNote}
+    <div class="info-box" style="margin-top:8px;">${goal.description}</div>`;
+}
+
+// init
+updateInsight();
+draw();
+</script>
+</body>
+</html>

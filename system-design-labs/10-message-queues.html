@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Message Queues: Producers & Consumers</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0d1117; color: #c9d1d9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
+  nav { background: #161b22; border-bottom: 1px solid #30363d; padding: 12px 24px; display: flex; align-items: center; gap: 16px; flex-shrink: 0; }
+  nav .brand { font-weight: 700; font-size: 16px; color: #f0f6fc; }
+  nav a { color: #58a6ff; text-decoration: none; font-size: 14px; }
+  nav a:hover { text-decoration: underline; }
+  .main { display: flex; flex: 1; overflow: hidden; }
+  .canvas-area { flex: 1; position: relative; overflow: hidden; }
+  canvas { display: block; }
+  .sidebar { width: 300px; min-width: 300px; background: #161b22; border-left: 1px solid #30363d; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+  .panel { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 14px; }
+  .panel h3 { font-size: 12px; font-weight: 600; color: #8b949e; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+  label { font-size: 12px; color: #8b949e; display: block; margin-bottom: 4px; margin-top: 8px; }
+  input[type=range] { width: 100%; accent-color: #f85149; margin-bottom: 4px; }
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #21262d; font-size: 13px; }
+  .toggle-row:last-child { border-bottom: none; }
+  .toggle { position: relative; width: 36px; height: 20px; }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider { position: absolute; inset: 0; background: #30363d; border-radius: 20px; cursor: pointer; transition: 0.3s; }
+  .toggle-slider:before { content: ''; position: absolute; width: 14px; height: 14px; left: 3px; top: 3px; background: #8b949e; border-radius: 50%; transition: 0.3s; }
+  .toggle input:checked + .toggle-slider { background: #f85149; }
+  .toggle input:checked + .toggle-slider:before { transform: translateX(16px); background: #fff; }
+  .metric { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #21262d; font-size: 13px; }
+  .metric:last-child { border-bottom: none; }
+  .metric-val { font-weight: 700; font-size: 14px; }
+  .depth-bar { height: 16px; background: #21262d; border-radius: 8px; overflow: hidden; margin-top: 6px; }
+  .depth-fill { height: 100%; border-radius: 8px; transition: width 0.3s, background 0.3s; }
+</style>
+</head>
+<body>
+<nav>
+  <span class="brand">System Design Labs</span>
+  <span style="color:#30363d">|</span>
+  <a href="index.html">← System Design Labs</a>
+  <span style="flex:1"></span>
+  <span style="font-size:13px;color:#8b949e">10 — Message Queues</span>
+</nav>
+<div class="main">
+  <div class="canvas-area">
+    <canvas id="canvas"></canvas>
+  </div>
+  <div class="sidebar">
+    <div class="panel">
+      <h3>Controls</h3>
+      <label>Producer Rate: <span id="prodVal">5</span> msg/s</label>
+      <input type="range" min="1" max="20" value="5" id="prodSlider" oninput="document.getElementById('prodVal').textContent=this.value;producerRate=+this.value">
+      <label>Consumer Count: <span id="consVal">2</span></label>
+      <input type="range" min="1" max="5" value="2" id="consSlider" oninput="document.getElementById('consVal').textContent=this.value;consumerCount=+this.value">
+      <label>Queue Capacity: <span id="capVal">20</span></label>
+      <input type="range" min="5" max="50" value="20" id="capSlider" oninput="document.getElementById('capVal').textContent=this.value;queueCapacity=+this.value">
+      <div class="toggle-row" style="margin-top:8px;">
+        <span>Dead Letter Queue</span>
+        <label class="toggle"><input type="checkbox" id="dlqToggle" onchange="dlqEnabled=this.checked"><span class="toggle-slider"></span></label>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Queue Depth</h3>
+      <div class="metric"><span>Depth</span><span class="metric-val" id="mDepth" style="color:#7ee787">0</span></div>
+      <div class="depth-bar"><div class="depth-fill" id="depthFill" style="width:0%;background:#7ee787"></div></div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:#8b949e;margin-top:4px;">
+        <span>0</span><span>80%</span><span>100%</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Throughput Metrics</h3>
+      <div class="metric"><span>Produced/s</span><span class="metric-val" style="color:#58a6ff" id="mProduced">0</span></div>
+      <div class="metric"><span>Consumed/s</span><span class="metric-val" style="color:#7ee787" id="mConsumed">0</span></div>
+      <div class="metric"><span>Total Produced</span><span class="metric-val" id="mTotalProd">0</span></div>
+      <div class="metric"><span>Total Consumed</span><span class="metric-val" id="mTotalCons">0</span></div>
+      <div class="metric"><span>DLQ Count</span><span class="metric-val" style="color:#f85149" id="mDLQ">0</span></div>
+      <div class="metric"><span>Lag</span><span class="metric-val" style="color:#d29922" id="mLag">0.0s</span></div>
+      <div class="metric"><span>Dropped</span><span class="metric-val" style="color:#f85149" id="mDropped">0</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+let producerRate = 5, consumerCount = 2, queueCapacity = 20, dlqEnabled = false;
+let queue = [], dlq = [];
+let particles = [];
+let totalProd = 0, totalCons = 0, dropped = 0;
+let prodAccum = 0, consAccum = 0;
+let prodPerSec = 0, consPerSec = 0;
+let prodCount = 0, consCount = 0;
+let metricTimer = 0;
+let pulseT = 0;
+let msgColors = ['#58a6ff', '#f0883e', '#a5d6ff', '#7ee787', '#d29922', '#f778ba'];
+
+function resize() { canvas.width = canvas.parentElement.clientWidth; canvas.height = canvas.parentElement.clientHeight; }
+resize();
+window.addEventListener('resize', resize);
+
+function layout() {
+  const cx = canvas.width / 2, cy = canvas.height / 2;
+  const producers = [
+    { x: 80, y: cy - 100 },
+    { x: 80, y: cy },
+    { x: 80, y: cy + 100 },
+  ];
+  const consumers = Array.from({ length: 5 }, (_, i) => ({
+    x: canvas.width - 80,
+    y: cy - 120 + i * 60
+  }));
+  const queue = { x: cx - 100, y: cy - 24, w: 200, h: 48 };
+  const dlqBox = { x: cx - 100, y: cy + 100, w: 200, h: 36 };
+  return { producers, consumers, queue: queue, dlqBox };
+}
+
+function drawProducer(x, y, i) {
+  ctx.save();
+  ctx.beginPath();
+  ctx.roundRect(x - 44, y - 22, 88, 44, 8);
+  ctx.fillStyle = '#161b22';
+  ctx.fill();
+  ctx.strokeStyle = '#58a6ff';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.fillStyle = '#f0f6fc';
+  ctx.font = 'bold 12px -apple-system, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(`P${i + 1}`, x, y - 4);
+  ctx.fillStyle = '#8b949e';
+  ctx.font = '10px -apple-system, sans-serif';
+  ctx.fillText('Producer', x, y + 10);
+  ctx.restore();
+}
+
+function drawConsumer(x, y, i, active) {
+  if (i >= consumerCount) {
+    ctx.save();
+    ctx.globalAlpha = 0.2;
+  }
+  ctx.save();
+  ctx.beginPath();
+  ctx.roundRect(x - 44, y - 20, 88, 40, 8);
+  ctx.fillStyle = '#161b22';
+  ctx.fill();
+  ctx.strokeStyle = active ? '#7ee787' : '#30363d';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.fillStyle = active ? '#7ee787' : '#8b949e';
+  ctx.font = 'bold 12px -apple-system, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(`C${i + 1}`, x, y - 4);
+  ctx.fillStyle = '#8b949e';
+  ctx.font = '10px -apple-system, sans-serif';
+  ctx.fillText(i < consumerCount ? 'Active' : 'Idle', x, y + 10);
+  ctx.restore();
+  if (i >= consumerCount) ctx.restore();
+}
+
+function drawQueue(qBox, nearFull, pulsing) {
+  const pct = Math.min(queue.length / queueCapacity, 1);
+  const qColor = pct > 0.8 ? '#f85149' : pct > 0.5 ? '#d29922' : '#7ee787';
+
+  // Queue container
+  ctx.save();
+  if (pulsing && pct > 0.8) {
+    ctx.shadowColor = '#f85149';
+    ctx.shadowBlur = 20 + Math.sin(pulseT * 10) * 10;
+  }
+  ctx.beginPath();
+  ctx.roundRect(qBox.x, qBox.y, qBox.w, qBox.h, 6);
+  ctx.fillStyle = '#161b22';
+  ctx.fill();
+  ctx.strokeStyle = qColor;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.restore();
+
+  // Fill
+  if (pct > 0) {
+    ctx.fillStyle = qColor + '44';
+    ctx.beginPath();
+    ctx.roundRect(qBox.x + 2, qBox.y + 2, (qBox.w - 4) * pct, qBox.h - 4, 4);
+    ctx.fill();
+  }
+
+  // Message slots visualization
+  const slotW = (qBox.w - 8) / Math.max(queueCapacity, 10);
+  const visCount = Math.min(queue.length, Math.floor((qBox.w - 8) / 6));
+  for (let i = 0; i < Math.min(queueCapacity, Math.floor((qBox.w - 8) / 7)); i++) {
+    const sx = qBox.x + 4 + i * ((qBox.w - 8) / Math.min(queueCapacity, 28));
+    const filled = i < visCount;
+    ctx.fillStyle = filled ? (queue[i] ? queue[i].color : '#7ee787') : '#21262d';
+    ctx.beginPath();
+    ctx.roundRect(sx, qBox.y + 8, 5, qBox.h - 16, 2);
+    ctx.fill();
+  }
+
+  // Labels
+  ctx.fillStyle = '#f0f6fc';
+  ctx.font = 'bold 12px -apple-system, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Message Queue', qBox.x + qBox.w / 2, qBox.y - 10);
+  ctx.fillStyle = qColor;
+  ctx.font = '11px -apple-system, sans-serif';
+  ctx.fillText(`${queue.length} / ${queueCapacity}`, qBox.x + qBox.w / 2, qBox.y + qBox.h + 14);
+
+  if (pct > 0.8) {
+    ctx.fillStyle = '#f85149';
+    ctx.font = 'bold 11px -apple-system, sans-serif';
+    ctx.fillText('⚠ BACKPRESSURE', qBox.x + qBox.w / 2, qBox.y - 24);
+  }
+
+  // Update UI
+  document.getElementById('mDepth').textContent = queue.length;
+  document.getElementById('mDepth').style.color = qColor;
+  const fillEl = document.getElementById('depthFill');
+  fillEl.style.width = (pct * 100) + '%';
+  fillEl.style.background = qColor;
+}
+
+function drawDLQ(dlqBox) {
+  if (!dlqEnabled) return;
+  ctx.save();
+  ctx.beginPath();
+  ctx.roundRect(dlqBox.x, dlqBox.y, dlqBox.w, dlqBox.h, 6);
+  ctx.fillStyle = '#2a0a0a';
+  ctx.fill();
+  ctx.strokeStyle = '#f85149';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([4, 3]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
+  ctx.fillStyle = '#f85149';
+  ctx.font = 'bold 11px -apple-system, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(`Dead Letter Queue (${dlq.length})`, dlqBox.x + dlqBox.w / 2, dlqBox.y + dlqBox.h / 2 + 4);
+}
+
+let lastTime = 0;
+let consumerTimers = [0, 0, 0, 0, 0];
+const CONSUME_TIME = 0.4; // seconds per message
+
+function draw(ts) {
+  const dt = Math.min((ts - lastTime) / 1000, 0.1);
+  lastTime = ts;
+  pulseT += dt;
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const L = layout();
+
+  // Title
+  ctx.fillStyle = '#f0f6fc';
+  ctx.font = 'bold 18px -apple-system, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Message Queues: Producers & Consumers', canvas.width / 2, 32);
+
+  // Produce messages
+  prodAccum += producerRate * dt;
+  while (prodAccum >= 1) {
+    prodAccum--;
+    prodCount++;
+    totalProd++;
+    const color = msgColors[Math.floor(Math.random() * msgColors.length)];
+    if (queue.length < queueCapacity) {
+      queue.push({ id: totalProd, color });
+      // Particle from random producer to queue
+      const pi = Math.floor(Math.random() * 3);
+      const prod = L.producers[pi];
+      particles.push({
+        x: prod.x + 44, y: prod.y,
+        tx: L.queue.x, ty: L.queue.y + L.queue.h / 2,
+        color, life: 1, speed: 0.04, type: 'msg'
+      });
+    } else {
+      dropped++;
+      document.getElementById('mDropped').textContent = dropped;
+    }
+  }
+
+  // Consume messages
+  for (let i = 0; i < consumerCount; i++) {
+    consumerTimers[i] += dt;
+    if (consumerTimers[i] >= CONSUME_TIME && queue.length > 0) {
+      consumerTimers[i] = 0;
+      const msg = queue.shift();
+      consCount++;
+      totalCons++;
+
+      // 10% chance of failure → DLQ
+      if (dlqEnabled && Math.random() < 0.1) {
+        dlq.push(msg);
+        document.getElementById('mDLQ').textContent = dlq.length;
+        const cons = L.consumers[i];
+        particles.push({
+          x: L.queue.x + L.queue.w, y: L.queue.y + L.queue.h / 2,
+          tx: L.dlqBox.x + L.dlqBox.w / 2, ty: L.dlqBox.y,
+          color: '#f85149', life: 1, speed: 0.04, type: 'msg'
+        });
+      } else {
+        const cons = L.consumers[i];
+        particles.push({
+          x: L.queue.x + L.queue.w, y: L.queue.y + L.queue.h / 2,
+          tx: cons.x - 44, ty: cons.y,
+          color: msg.color, life: 1, speed: 0.04, type: 'msg'
+        });
+      }
+    }
+  }
+
+  // Metric update
+  metricTimer += dt;
+  if (metricTimer >= 1) {
+    metricTimer = 0;
+    prodPerSec = prodCount; consPerSec = consCount;
+    prodCount = 0; consCount = 0;
+    document.getElementById('mProduced').textContent = prodPerSec;
+    document.getElementById('mConsumed').textContent = consPerSec;
+    document.getElementById('mTotalProd').textContent = totalProd;
+    document.getElementById('mTotalCons').textContent = totalCons;
+    const lag = consumerCount > 0 ? (queue.length / (consumerCount / CONSUME_TIME)).toFixed(1) : '∞';
+    document.getElementById('mLag').textContent = lag + 's';
+  }
+
+  // Connection lines
+  ctx.strokeStyle = '#21262d';
+  ctx.lineWidth = 1.5;
+  L.producers.forEach(p => {
+    ctx.beginPath();
+    ctx.moveTo(p.x + 44, p.y);
+    ctx.lineTo(L.queue.x, L.queue.y + L.queue.h / 2);
+    ctx.stroke();
+  });
+  for (let i = 0; i < 5; i++) {
+    const cons = L.consumers[i];
+    ctx.globalAlpha = i < consumerCount ? 1 : 0.2;
+    ctx.beginPath();
+    ctx.moveTo(L.queue.x + L.queue.w, L.queue.y + L.queue.h / 2);
+    ctx.lineTo(cons.x - 44, cons.y);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+  if (dlqEnabled) {
+    ctx.strokeStyle = '#f85149';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    ctx.moveTo(L.queue.x + L.queue.w / 2, L.queue.y + L.queue.h);
+    ctx.lineTo(L.dlqBox.x + L.dlqBox.w / 2, L.dlqBox.y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // Draw elements
+  L.producers.forEach((p, i) => drawProducer(p.x, p.y, i));
+  L.consumers.forEach((c, i) => drawConsumer(c.x, c.y, i, consumerTimers[i] > CONSUME_TIME * 0.5 && queue.length > 0));
+  const pct = queue.length / queueCapacity;
+  drawQueue(L.queue, pct > 0.8, pct > 0.8);
+  drawDLQ(L.dlqBox);
+
+  // Particles
+  particles = particles.filter(p => p.life > 0);
+  particles.forEach(p => {
+    p.life -= p.speed;
+    const t = 1 - p.life;
+    const px = p.x + (p.tx - p.x) * t;
+    const py = p.y + (p.ty - p.y) * t;
+    ctx.save();
+    ctx.globalAlpha = Math.min(p.life * 3, 1);
+    ctx.beginPath();
+    ctx.arc(px, py, 6, 0, Math.PI * 2);
+    ctx.fillStyle = p.color;
+    ctx.shadowColor = p.color;
+    ctx.shadowBlur = 10;
+    ctx.fill();
+    ctx.restore();
+  });
+
+  requestAnimationFrame(draw);
+}
+
+requestAnimationFrame(t => { lastTime = t; requestAnimationFrame(draw); });
+</script>
+</body>
+</html>

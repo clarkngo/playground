@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Do I Still Need to Code? — Coding Agents</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0d1117; color: #e6edf3; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
+  a { color: #58a6ff; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  nav { background: #161b22; border-bottom: 1px solid #30363d; padding: 0 24px; height: 56px; display: flex; align-items: center; gap: 24px; }
+  nav .brand { font-weight: 700; font-size: 1.05rem; color: #e6edf3; }
+  nav .back { font-size: 0.875rem; color: #8b949e; }
+  nav .back:hover { color: #58a6ff; }
+  nav .spacer { flex: 1; }
+  nav .lab-title { font-size: 0.875rem; color: #8b949e; }
+
+  .container { max-width: 960px; margin: 0 auto; padding: 24px 16px 60px; }
+  h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 6px; }
+  .subtitle { color: #8b949e; font-size: 0.9rem; margin-bottom: 28px; }
+
+  /* ── Hero Canvas ── */
+  .hero-panel { background: #161b22; border: 1px solid #30363d; border-radius: 10px; overflow: hidden; margin-bottom: 32px; }
+  #heroCanvas { display: block; width: 100%; }
+
+  /* ── Skill Chart ── */
+  .skill-chart { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 20px 24px; margin-bottom: 32px; }
+  .skill-chart h2 { font-size: 1rem; font-weight: 700; margin-bottom: 4px; }
+  .skill-chart .sc-subtitle { font-size: 0.78rem; color: #8b949e; margin-bottom: 18px; }
+  .sc-legend { display: flex; gap: 16px; margin-bottom: 18px; flex-wrap: wrap; }
+  .sc-legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: #8b949e; }
+  .sc-legend-dot { width: 10px; height: 10px; border-radius: 2px; }
+  .skill-row { margin-bottom: 14px; }
+  .skill-label { font-size: 0.78rem; color: #e6edf3; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; }
+  .skill-label:hover { color: #58a6ff; }
+  .skill-bars { display: flex; flex-direction: column; gap: 3px; }
+  .bar-row { display: flex; align-items: center; gap: 8px; }
+  .bar-tag { font-size: 0.65rem; color: #8b949e; width: 26px; flex-shrink: 0; text-align: right; }
+  .bar-track { flex: 1; height: 10px; background: #21262d; border-radius: 5px; overflow: hidden; position: relative; }
+  .bar-fill { height: 100%; border-radius: 5px; width: 0; transition: width 0.8s cubic-bezier(.4,0,.2,1); }
+  .bar-value-label { font-size: 0.65rem; color: #8b949e; width: 60px; flex-shrink: 0; }
+  .skill-tooltip { display: none; background: #21262d; border: 1px solid #30363d; border-radius: 6px; padding: 8px 12px; font-size: 0.75rem; color: #8b949e; line-height: 1.5; margin-top: 5px; }
+  .skill-row.open .skill-tooltip { display: block; }
+
+  /* ── Scenario Tester ── */
+  .scenario-panel { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 20px 24px; margin-bottom: 32px; }
+  .scenario-panel h2 { font-size: 1rem; font-weight: 700; margin-bottom: 4px; }
+  .sc-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; flex-wrap: wrap; gap: 8px; }
+  .score-badge { background: #21262d; border: 1px solid #30363d; border-radius: 20px; padding: 4px 14px; font-size: 0.8rem; font-family: monospace; color: #e6edf3; }
+  .scenario-card { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 18px 20px; }
+  .scenario-num { font-size: 0.7rem; color: #8b949e; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+  .scenario-task { font-size: 1rem; font-weight: 600; color: #e6edf3; margin-bottom: 6px; }
+  .scenario-desc { font-size: 0.82rem; color: #8b949e; margin-bottom: 18px; line-height: 1.6; }
+  .scenario-choices { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+  .choice-btn { padding: 8px 16px; border-radius: 6px; border: 1px solid #30363d; background: #21262d; color: #e6edf3; font-size: 0.82rem; cursor: pointer; transition: all 0.15s; }
+  .choice-btn:hover { border-color: #58a6ff; color: #58a6ff; }
+  .choice-btn.correct-pick { background: #196c2e; border-color: #3fb950; color: #3fb950; }
+  .choice-btn.wrong-pick { background: #6e1f1f; border-color: #f85149; color: #f85149; }
+  .reveal-box { display: none; background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 14px 16px; margin-top: 10px; animation: fadeSlide 0.3s ease; }
+  .reveal-box.show { display: block; }
+  .reveal-correct { font-size: 0.78rem; font-weight: 700; margin-bottom: 6px; }
+  .reveal-correct.green { color: #3fb950; }
+  .reveal-correct.red { color: #f85149; }
+  .reveal-explain { font-size: 0.8rem; color: #8b949e; line-height: 1.65; }
+  .scenario-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; }
+  .nav-btn { padding: 7px 18px; border-radius: 6px; border: 1px solid #30363d; background: #21262d; color: #e6edf3; font-size: 0.82rem; cursor: pointer; transition: background 0.15s; }
+  .nav-btn:hover:not(:disabled) { background: #30363d; }
+  .nav-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .nav-btn.primary { background: #1f6feb; border-color: #388bfd; }
+  .nav-btn.primary:hover:not(:disabled) { background: #388bfd; }
+  .scenario-progress { display: flex; gap: 4px; }
+  .prog-dot { width: 8px; height: 8px; border-radius: 50%; background: #30363d; transition: background 0.2s; }
+  .prog-dot.done { background: #3fb950; }
+  .prog-dot.active { background: #58a6ff; }
+  .final-result { text-align: center; padding: 20px; }
+  .final-score { font-size: 2rem; font-weight: 900; font-family: monospace; color: #58a6ff; }
+  .final-insight { font-size: 0.85rem; color: #8b949e; margin-top: 8px; line-height: 1.6; }
+
+  /* ── Code Review Challenge ── */
+  .review-panel { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 20px 24px; margin-bottom: 32px; }
+  .review-panel h2 { font-size: 1rem; font-weight: 700; margin-bottom: 4px; }
+  .review-subtitle { font-size: 0.78rem; color: #8b949e; margin-bottom: 18px; }
+  .snippet-tabs { display: flex; gap: 0; margin-bottom: 16px; border-bottom: 1px solid #30363d; }
+  .snip-tab { padding: 8px 16px; font-size: 0.8rem; color: #8b949e; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.15s; margin-bottom: -1px; }
+  .snip-tab:hover { color: #e6edf3; }
+  .snip-tab.active { color: #58a6ff; border-bottom-color: #58a6ff; }
+  .snip-tab.solved { color: #3fb950; }
+  .code-block { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; overflow: hidden; font-family: 'SF Mono','Fira Code','Cascadia Code',monospace; font-size: 0.8rem; }
+  .code-line { display: flex; align-items: stretch; padding: 0; cursor: pointer; transition: background 0.1s; border-left: 3px solid transparent; }
+  .code-line:hover { background: #161b22; }
+  .code-line.bug-line { border-left-color: #f85149; background: #200d0d; }
+  .code-line.flash-wrong { animation: flashWrong 0.4s ease; }
+  .code-line-num { width: 36px; text-align: right; padding: 4px 8px; color: #30363d; user-select: none; flex-shrink: 0; font-size: 0.75rem; line-height: 1.6; }
+  .code-line-content { padding: 4px 10px; flex: 1; line-height: 1.6; white-space: pre; }
+  .bug-explain { display: none; background: #200d0d; border: 1px solid #3d1515; border-radius: 6px; padding: 12px 16px; margin-top: 10px; font-size: 0.8rem; color: #8b949e; line-height: 1.65; animation: fadeSlide 0.3s ease; }
+  .bug-explain.show { display: block; }
+  .bug-explain strong { color: #f85149; }
+  .bug-explain .fix { color: #3fb950; }
+  .review-score { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+  .review-score-label { font-size: 0.78rem; color: #8b949e; }
+  .review-dots { display: flex; gap: 5px; }
+  .review-dot { width: 12px; height: 12px; border-radius: 50%; background: #30363d; transition: background 0.3s; }
+  .review-dot.found { background: #3fb950; }
+  .all-found-msg { display: none; margin-top: 12px; background: #0d2d0d; border: 1px solid #1f5c1f; border-radius: 6px; padding: 12px 16px; font-size: 0.82rem; color: #3fb950; line-height: 1.6; }
+  .all-found-msg.show { display: block; }
+
+  /* Syntax highlighting */
+  .kw { color: #ff7b72; }
+  .fn { color: #d2a8ff; }
+  .str { color: #a5d6ff; }
+  .cm { color: #8b949e; font-style: italic; }
+  .num { color: #79c0ff; }
+  .bl { color: #58a6ff; }
+  .bug { color: #f85149; text-decoration: underline wavy #f85149; }
+
+  /* ── Explain Sections ── */
+  .explain-section { margin-top: 40px; }
+  .explain-section + .explain-section { margin-top: 32px; }
+  .explain-h2 { font-size: 18px; font-weight: 700; color: #e6edf3; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid #30363d; display: flex; align-items: center; gap: 10px; }
+  .explain-h2 .ehead-icon { font-size: 20px; }
+  .explain-p { color: #8b949e; font-size: 14px; line-height: 1.8; margin-bottom: 12px; }
+  .explain-p strong { color: #e6edf3; }
+  .explain-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; margin-bottom: 16px; }
+  .explain-card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 18px 20px; }
+  .explain-card-title { font-size: 13px; font-weight: 700; color: #e6edf3; margin-bottom: 8px; }
+  .explain-card p { font-size: 13px; color: #8b949e; line-height: 1.7; }
+  .explain-card ul { padding-left: 16px; font-size: 13px; color: #8b949e; line-height: 1.9; }
+  .callout { border-radius: 10px; padding: 16px 20px; margin-bottom: 16px; display: flex; gap: 14px; }
+  .callout-info { background: #0d2137; border: 1px solid #1f4068; }
+  .callout-warn { background: #2d1f00; border: 1px solid #5a3e00; }
+  .callout-tip  { background: #0d2d0d; border: 1px solid #1f5c1f; }
+  .callout-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .callout-body { flex: 1; }
+  .callout-title { font-size: 13px; font-weight: 700; margin-bottom: 5px; }
+  .callout-info .callout-title { color: #58a6ff; }
+  .callout-warn .callout-title { color: #e3b341; }
+  .callout-tip  .callout-title { color: #3fb950; }
+  .callout-body p { font-size: 13px; color: #8b949e; line-height: 1.7; }
+  .callout-body p strong { color: #e6edf3; }
+  .takeaways { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 20px 24px; }
+  .takeaway-item { display: flex; gap: 12px; padding: 10px 0; }
+  .takeaway-item + .takeaway-item { border-top: 1px solid #21262d; }
+  .takeaway-bullet { color: #58a6ff; font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+  .takeaway-text { font-size: 13px; color: #8b949e; line-height: 1.7; }
+  .takeaway-text strong { color: #e6edf3; }
+  .pitfall { background: #1a0d0d; border: 1px solid #3d1515; border-radius: 8px; padding: 14px 18px; margin-bottom: 10px; }
+  .pitfall-title { font-size: 13px; font-weight: 700; color: #f85149; margin-bottom: 5px; }
+  .pitfall p { font-size: 13px; color: #8b949e; line-height: 1.65; }
+  .divider { border: none; border-top: 1px solid #21262d; margin: 40px 0; }
+
+  @keyframes fadeSlide {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes flashWrong {
+    0%   { background: #3d1515; }
+    50%  { background: #5a0000; }
+    100% { background: transparent; }
+  }
+
+  @media (max-width: 640px) {
+    .explain-grid { grid-template-columns: 1fr; }
+    .scenario-choices { flex-direction: column; }
+    .choice-btn { text-align: center; }
+  }
+</style>
+</head>
+<body>
+<nav>
+  <span class="brand">🤖 Coding Agents</span>
+  <a class="back" href="../index.html">← Playground</a>
+  <span class="spacer"></span>
+  <span class="lab-title">Lab 09 — The Developer's Role</span>
+</nav>
+
+<div class="container">
+  <h1>Do I Still Need to Code?</h1>
+  <p class="subtitle">The Developer's Role in the Age of AI Agents — a nuanced, honest answer</p>
+
+  <!-- ── Section 1: Hero Canvas ── -->
+  <div class="hero-panel">
+    <canvas id="heroCanvas" width="800" height="300"></canvas>
+  </div>
+
+  <!-- ── Section 2: Skill Shift Chart ── -->
+  <div class="skill-chart">
+    <div class="sc-head" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:4px;">
+      <h2>The Skill Shift — What Changed &amp; Why</h2>
+    </div>
+    <p class="sc-subtitle">Click any skill to see why it changed. Two bars: <em>before AI agents</em> vs <em>now</em>.</p>
+    <div class="sc-legend">
+      <span class="sc-legend-item"><span class="sc-legend-dot" style="background:#f85149"></span>Decreased value</span>
+      <span class="sc-legend-item"><span class="sc-legend-dot" style="background:#3fb950"></span>Increased value</span>
+      <span class="sc-legend-item"><span class="sc-legend-dot" style="background:#8b949e"></span>Before</span>
+    </div>
+    <div id="skillChart"></div>
+  </div>
+
+  <!-- ── Section 3: Scenario Tester ── -->
+  <div class="scenario-panel">
+    <div class="sc-head">
+      <div>
+        <h2>"Can AI Handle This?" — Scenario Tester</h2>
+        <p style="font-size:0.78rem;color:#8b949e;margin-top:3px;">6 real tasks. Guess who handles each one.</p>
+      </div>
+      <span class="score-badge" id="scoreBadge">0 / 6 correct</span>
+    </div>
+    <div id="scenarioArea"></div>
+    <div class="scenario-nav">
+      <button class="nav-btn" id="prevBtn" disabled>← Prev</button>
+      <div class="scenario-progress" id="progDots"></div>
+      <button class="nav-btn primary" id="nextBtn" disabled>Next →</button>
+    </div>
+  </div>
+
+  <!-- ── Section 4: Code Review Challenge ── -->
+  <div class="review-panel">
+    <h2>Spot the Bug — AI Code Review Challenge</h2>
+    <p class="review-subtitle">Each snippet was "generated by AI." Find the subtle bug. Click the line you think is wrong.</p>
+    <div class="snippet-tabs" id="snippetTabs"></div>
+    <div id="snippetArea"></div>
+    <div class="review-score">
+      <span class="review-score-label">Bugs found:</span>
+      <div class="review-dots" id="reviewDots"></div>
+    </div>
+    <div class="all-found-msg" id="allFoundMsg">
+      All 3 bugs found. This is why "understanding code" still matters — AI generates plausible-looking code that contains real, exploitable flaws. You can only catch what you understand.
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ── Section 5: The Answer ── -->
+  <div class="explain-section">
+    <h2 class="explain-h2"><span class="ehead-icon">🎯</span> You Still Need Code — But Differently</h2>
+    <p class="explain-p">The honest answer is not "AI replaces developers" or "nothing has changed." The honest answer is that <strong>the skill mix has shifted</strong>, and understanding exactly how it shifted is what separates developers who thrive with AI from those who struggle.</p>
+
+    <div class="explain-grid">
+      <div class="explain-card" style="border-color: #3d1515;">
+        <div class="explain-card-title" style="color:#f85149;">🔴 Less Important Now</div>
+        <ul>
+          <li>Memorizing API signatures</li>
+          <li>Writing boilerplate code</li>
+          <li>Copy-pasting from Stack Overflow</li>
+          <li>Remembering exact syntax</li>
+          <li>Writing repetitive CRUD code</li>
+        </ul>
+      </div>
+      <div class="explain-card" style="border-color: #5a3e00;">
+        <div class="explain-card-title" style="color:#e3b341;">🟡 Same Importance</div>
+        <ul>
+          <li>Problem-solving mindset</li>
+          <li>Logical &amp; systems thinking</li>
+          <li>Learning agility</li>
+          <li>Communication with stakeholders</li>
+          <li>Breaking problems into steps</li>
+        </ul>
+      </div>
+      <div class="explain-card" style="border-color: #1f5c1f;">
+        <div class="explain-card-title" style="color:#3fb950;">🟢 More Important Now</div>
+        <ul>
+          <li>Code review &amp; verification</li>
+          <li>Architecture &amp; system design</li>
+          <li>Debugging AI-generated code</li>
+          <li>Security judgment</li>
+          <li>Requirements clarity</li>
+          <li>Testing strategy &amp; edge cases</li>
+          <li>Reading &amp; understanding code</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="callout callout-info">
+      <span class="callout-icon">⚡</span>
+      <div class="callout-body">
+        <div class="callout-title">The Multiplier Argument</div>
+        <p>AI turns a <strong>10× developer into a 100× developer</strong> — but it doesn't turn a non-developer into a 10× developer. The better you understand code and systems, the better you can direct, verify, and course-correct the AI. Vague prompts produce mediocre code. Precise architectural direction produces excellent code.</p>
+      </div>
+    </div>
+
+    <div class="callout callout-warn">
+      <span class="callout-icon">⚠️</span>
+      <div class="callout-body">
+        <div class="callout-title">The Verification Principle</div>
+        <p>You are responsible for everything you ship — whether you wrote it or the AI did. You can only verify what you understand. An AI-generated SQL query, auth system, or API endpoint that you can't read is a liability. <strong>The bar for "understanding code" hasn't dropped; your need to WRITE it has.</strong></p>
+      </div>
+    </div>
+
+    <div class="callout callout-tip">
+      <span class="callout-icon">✨</span>
+      <div class="callout-body">
+        <div class="callout-title">The Taste Argument</div>
+        <p>Great engineers know what good code looks like. AI produces <strong>average code by default</strong>. The skill that separates 10× engineers in the AI age is the judgment to know when AI's output is merely functional vs. when it's excellent — and the ability to steer it toward excellence. That judgment comes from years of reading and writing code.</p>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ── Section 6: Takeaways ── -->
+  <div class="explain-section">
+    <h2 class="explain-h2"><span class="ehead-icon">📌</span> Key Takeaways</h2>
+    <div class="takeaways">
+      <div class="takeaway-item">
+        <span class="takeaway-bullet">→</span>
+        <div class="takeaway-text"><strong>The skill mix changes, not the need.</strong> Less syntax memorization, more systems thinking, code review, and architectural judgment. The role evolves; it does not disappear.</div>
+      </div>
+      <div class="takeaway-item">
+        <span class="takeaway-bullet">→</span>
+        <div class="takeaway-text"><strong>AI amplifies your understanding.</strong> The deeper your knowledge, the more precisely you can direct AI. Shallow knowledge produces shallow results even with the best tools. Expertise is still the multiplier.</div>
+      </div>
+      <div class="takeaway-item">
+        <span class="takeaway-bullet">→</span>
+        <div class="takeaway-text"><strong>You're the verifier now.</strong> Every line of AI-generated code is your responsibility when it ships. Review capability is the new core skill — you cannot review what you cannot read.</div>
+      </div>
+      <div class="takeaway-item">
+        <span class="takeaway-bullet">→</span>
+        <div class="takeaway-text"><strong>The floor for "vibe coding" is real.</strong> Simple CRUD apps, scripts, and prototypes? Minimal coding knowledge needed. Complex systems, security-sensitive code, high-scale architecture? Deep expertise is <em>more</em> valuable than ever.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────────────
+// SECTION 1: Hero Canvas — Human-AI Task Routing
+// ─────────────────────────────────────────────────────────────────
+window.__startHeroCanvas = (function() {
+  const canvas = document.getElementById('heroCanvas');
+  const ctx = canvas.getContext('2d');
+
+  function resize() {
+    const rect = canvas.parentElement.getBoundingClientRect();
+    const w = rect.width > 0 ? rect.width : (canvas.parentElement.offsetWidth || 800);
+    canvas.width = Math.floor(w);
+    canvas.height = 300;
+  }
+
+  window.addEventListener('resize', resize);
+
+  const TASKS = [
+    { label: 'Write CRUD endpoint', route: 'ai' },
+    { label: 'Choose DB architecture', route: 'human' },
+    { label: 'Review for SQL injection', route: 'both' },
+    { label: 'Fix production bug', route: 'both' },
+    { label: 'Write tests', route: 'both' },
+    { label: 'Understand requirements', route: 'human' },
+    { label: 'Refactor 10k lines', route: 'both' },
+    { label: 'Spot off-by-one', route: 'human' },
+  ];
+
+  const tokens = [];
+  let taskIdx = 0;
+  let spawnTimer = 0;
+  let t = 0;
+
+  function spawnToken() {
+    const task = TASKS[taskIdx % TASKS.length];
+    taskIdx++;
+    const w = canvas.width;
+    const baseToken = {
+      label: task.label,
+      route: task.route,
+      x: w / 2,
+      y: 30,
+      alpha: 1,
+      phase: 'fall', // fall → route → arrive → fade
+      vx: 0,
+      vy: 1.2,
+      age: 0,
+      targetX: null,
+      targetY: null,
+    };
+
+    if (task.route === 'both') {
+      tokens.push({ ...baseToken, routeTarget: 'ai',    id: Date.now() + 0.1 });
+      tokens.push({ ...baseToken, routeTarget: 'human', id: Date.now() + 0.2 });
+    } else {
+      tokens.push({ ...baseToken, routeTarget: task.route, id: Date.now() });
+    }
+  }
+
+  function drawNode(x, y, label, icon, color, glowColor, pulse) {
+    const r = 32;
+    // Glow
+    const grd = ctx.createRadialGradient(x, y, r * 0.5, x, y, r * 2 + pulse * 8);
+    grd.addColorStop(0, glowColor + '55');
+    grd.addColorStop(1, glowColor + '00');
+    ctx.fillStyle = grd;
+    ctx.beginPath();
+    ctx.arc(x, y, r * 2 + pulse * 8, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Circle
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fillStyle = '#161b22';
+    ctx.fill();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Icon
+    ctx.fillStyle = color;
+    ctx.font = '18px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(icon, x, y - 2);
+
+    // Label
+    ctx.fillStyle = color;
+    ctx.font = '700 11px -apple-system, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText(label, x, y + r + 6);
+  }
+
+  function drawCenterNode(x, y, pulse) {
+    const r = 22;
+    ctx.beginPath();
+    ctx.arc(x, y, r + pulse * 4, 0, Math.PI * 2);
+    ctx.fillStyle = '#8b949e22';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fillStyle = '#161b22';
+    ctx.fill();
+    ctx.strokeStyle = '#30363d';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.fillStyle = '#8b949e';
+    ctx.font = '14px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('📝', x, y);
+    ctx.font = '600 10px -apple-system, sans-serif';
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = '#8b949e';
+    ctx.fillText('Shared', x, y + r + 5);
+    ctx.fillText('Workspace', x, y + r + 16);
+  }
+
+  function getNodePos(which) {
+    const w = canvas.width;
+    const cy = 165;
+    if (which === 'human') return { x: w * 0.18, y: cy };
+    if (which === 'ai')    return { x: w * 0.82, y: cy };
+    return { x: w / 2, y: cy };
+  }
+
+  function drawToken(tok) {
+    const color = tok.routeTarget === 'ai' ? '#58a6ff' : '#e3b341';
+    const r = 5;
+    ctx.save();
+    ctx.globalAlpha = tok.alpha;
+    ctx.beginPath();
+    ctx.arc(tok.x, tok.y, r, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 8;
+    ctx.fill();
+
+    // Label
+    ctx.font = '10px -apple-system, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillStyle = color;
+    ctx.shadowBlur = 0;
+    const maxW = 100;
+    ctx.fillText(tok.label, tok.x, tok.y - r - 2);
+    ctx.restore();
+  }
+
+  function frame() {
+    t++;
+    const w = canvas.width;
+    const cy = 165;
+    ctx.clearRect(0, 0, w, 300);
+
+    const pulse = (Math.sin(t * 0.04) + 1) / 2;
+    const huPulse = (Math.sin(t * 0.035) + 1) / 2;
+
+    // Draw connector lines
+    const hPos = getNodePos('human');
+    const aPos = getNodePos('ai');
+    const cPos = getNodePos('center');
+
+    ctx.setLineDash([4, 6]);
+    ctx.strokeStyle = '#30363d';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(hPos.x + 32, hPos.y);
+    ctx.lineTo(cPos.x - 22, cPos.y);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(cPos.x + 22, cPos.y);
+    ctx.lineTo(aPos.x - 32, aPos.y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    drawNode(hPos.x, hPos.y, 'Developer', '👤', '#e3b341', '#e3b341', huPulse);
+    drawNode(aPos.x, aPos.y, 'AI Agent',  '🤖', '#bc8cff', '#bc8cff', pulse);
+    drawCenterNode(cPos.x, cPos.y, pulse * 0.5);
+
+    // Spawn tokens
+    spawnTimer++;
+    if (spawnTimer > 90) {
+      spawnTimer = 0;
+      spawnToken();
+    }
+
+    // Update + draw tokens
+    for (let i = tokens.length - 1; i >= 0; i--) {
+      const tok = tokens[i];
+      tok.age++;
+
+      if (tok.phase === 'fall') {
+        tok.y += tok.vy;
+        // Reached mid-screen y
+        if (tok.y >= cy - 10) {
+          tok.phase = 'route';
+          const dest = getNodePos(tok.routeTarget);
+          tok.targetX = dest.x;
+          tok.targetY = dest.y;
+        }
+      } else if (tok.phase === 'route') {
+        const dx = tok.targetX - tok.x;
+        const dy = tok.targetY - tok.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const speed = tok.routeTarget === 'ai' ? 3.5 : 2.2;
+        if (dist < speed + 1) {
+          tok.phase = 'arrive';
+        } else {
+          tok.x += (dx / dist) * speed;
+          tok.y += (dy / dist) * speed;
+        }
+      } else if (tok.phase === 'arrive') {
+        tok.alpha -= 0.025;
+        if (tok.alpha <= 0) {
+          tokens.splice(i, 1);
+          continue;
+        }
+      }
+
+      drawToken(tok);
+    }
+
+    // Legend
+    ctx.font = '11px -apple-system, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#58a6ff';
+    ctx.beginPath(); ctx.arc(12, 278, 4, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#8b949e';
+    ctx.fillText('AI handles', 20, 278);
+    ctx.fillStyle = '#e3b341';
+    ctx.beginPath(); ctx.arc(100, 278, 4, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#8b949e';
+    ctx.fillText('Human judgment', 108, 278);
+
+    requestAnimationFrame(frame);
+  }
+
+  function start() { resize(); frame(); }
+  return start;
+})();
+
+// Start the hero canvas after layout is ready
+window.addEventListener('load', function() { window.__startHeroCanvas(); });
+if (document.readyState === 'complete') { setTimeout(function() { window.__startHeroCanvas(); }, 0); }
+
+// ─────────────────────────────────────────────────────────────────
+// SECTION 2: Skill Shift Chart
+// ─────────────────────────────────────────────────────────────────
+(function() {
+  const SKILLS = [
+    {
+      label: 'Memorizing API syntax',
+      was: 80, now: 15,
+      direction: 'down',
+      why: `AI knows every API signature cold. Asking "how do I open a file in Python" is now trivial. This skill had high value when documentation was hard to search; now it's irrelevant.`,
+    },
+    {
+      label: 'Writing boilerplate code',
+      was: 55, now: 8,
+      direction: 'down',
+      why: `AI generates CRUD endpoints, data models, and scaffolding in seconds. What took a developer an hour now takes seconds. Pure boilerplate writing is nearly obsolete.`,
+    },
+    {
+      label: 'Googling Stack Overflow',
+      was: 80, now: 20,
+      direction: 'down',
+      why: `AI answers most common implementation questions directly — with code, explanation, and even error handling. Stack Overflow search is still useful for edge cases and validation, but much less so for everyday tasks.`,
+    },
+    {
+      label: 'Code review & verification',
+      was: 60, now: 98,
+      direction: 'up',
+      why: `You now review AI output constantly. AI generates plausible-looking but sometimes subtly broken code. The ability to read, understand, and critically evaluate code is now the #1 developer skill.`,
+    },
+    {
+      label: 'Architecture & system design',
+      was: 85, now: 100,
+      direction: 'up',
+      why: `AI cannot make architectural decisions — it has no context about your team, your constraints, your SLAs, or your business model. Judgment about system structure is more valuable than ever because AI amplifies both good and bad architectural choices.`,
+    },
+    {
+      label: 'Debugging complex systems',
+      was: 85, now: 98,
+      direction: 'up',
+      why: `AI-generated bugs are often subtle and systemic — off-by-one errors in async code, race conditions, unexpected interactions between modules. Debugging requires understanding the whole system, something AI cannot do for you.`,
+    },
+    {
+      label: 'Security thinking',
+      was: 65, now: 98,
+      direction: 'up',
+      why: `AI confidently generates insecure code — SQL injection, timing attacks, missing rate limits, insecure defaults. Security judgment cannot be outsourced to AI because AI doesn't know your threat model or compliance requirements.`,
+    },
+    {
+      label: 'Translating requirements to specs',
+      was: 85, now: 100,
+      direction: 'up',
+      why: `AI dramatically amplifies precise requirements and fails on vague ones. The clearer your spec, the better the output. Developers who can turn ambiguous stakeholder requests into precise, unambiguous specifications become 10x more valuable.`,
+    },
+    {
+      label: 'Testing strategy & edge cases',
+      was: 65, now: 95,
+      direction: 'up',
+      why: `AI writes the obvious tests. But the critical edge cases — what happens when the card network goes down mid-transaction, or the database hits capacity at midnight — require domain understanding. Testing strategy requires knowing your business.`,
+    },
+    {
+      label: 'Reading & understanding code',
+      was: 85, now: 100,
+      direction: 'up',
+      why: `You must read and comprehend every significant block of AI-generated code before shipping it. This was always important; now it's non-negotiable. You cannot review what you cannot read.`,
+    },
+  ];
+
+  const VALUE_LABELS = { 8: 'Near zero', 15: 'Very low', 20: 'Low', 55: 'Medium', 60: 'Medium', 65: 'Medium', 80: 'High', 85: 'High', 95: 'Critical', 98: 'Critical', 100: 'Critical' };
+  function valLabel(v) {
+    if (v <= 15) return 'Very low';
+    if (v <= 25) return 'Low';
+    if (v <= 65) return 'Medium';
+    if (v <= 88) return 'High';
+    return 'Critical';
+  }
+
+  const container = document.getElementById('skillChart');
+  SKILLS.forEach((skill, idx) => {
+    const wasColor = '#8b949e';
+    const nowColor = skill.direction === 'up' ? '#3fb950' : '#f85149';
+
+    const row = document.createElement('div');
+    row.className = 'skill-row';
+    row.innerHTML = `
+      <div class="skill-label">
+        <span>${skill.label}</span>
+        <span style="font-size:0.7rem;color:${nowColor};">${skill.direction === 'up' ? '↑ More important' : '↓ Less important'}</span>
+      </div>
+      <div class="skill-bars">
+        <div class="bar-row">
+          <span class="bar-tag">Before</span>
+          <div class="bar-track"><div class="bar-fill" id="bar-was-${idx}" style="background:${wasColor};"></div></div>
+          <span class="bar-value-label" style="color:#8b949e;">${valLabel(skill.was)}</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-tag">Now</span>
+          <div class="bar-track"><div class="bar-fill" id="bar-now-${idx}" style="background:${nowColor};"></div></div>
+          <span class="bar-value-label" style="color:${nowColor};">${valLabel(skill.now)}</span>
+        </div>
+      </div>
+      <div class="skill-tooltip">${skill.why}</div>
+    `;
+    row.querySelector('.skill-label').addEventListener('click', () => {
+      row.classList.toggle('open');
+    });
+    container.appendChild(row);
+  });
+
+  // Animate bars in on load with stagger
+  let animated = false;
+  function animateBars() {
+    if (animated) return;
+    animated = true;
+    SKILLS.forEach((skill, idx) => {
+      setTimeout(() => {
+        const wasBar = document.getElementById(`bar-was-${idx}`);
+        const nowBar = document.getElementById(`bar-now-${idx}`);
+        if (wasBar) wasBar.style.width = skill.was + '%';
+        if (nowBar) nowBar.style.width = skill.now + '%';
+      }, idx * 80);
+    });
+  }
+
+  // Trigger on intersection
+  const obs = new IntersectionObserver(entries => {
+    if (entries[0].isIntersecting) animateBars();
+  }, { threshold: 0.1 });
+  obs.observe(document.getElementById('skillChart'));
+})();
+
+// ─────────────────────────────────────────────────────────────────
+// SECTION 3: Scenario Tester
+// ─────────────────────────────────────────────────────────────────
+(function() {
+  const SCENARIOS = [
+    {
+      task: '"Write a REST endpoint to create a user"',
+      desc: 'You need a POST /users endpoint in Express (or FastAPI, or Spring Boot). Standard fields: name, email, password hash.',
+      choices: ['AI handles it', 'Human needed', 'Both needed'],
+      correct: 0,
+      correctLabel: 'AI handles it',
+      explain: 'Boilerplate CRUD is exactly what AI excels at. It knows Express, FastAPI, Spring Boot patterns cold — route setup, validation, error codes, response format. A developer with AI can have this running in under a minute. This is table-stakes boilerplate.',
+    },
+    {
+      task: '"Our checkout service is slow intermittently — figure out why"',
+      desc: 'Users are reporting timeouts during peak hours. You see p99 latency spikes to 8 seconds. Happens ~3x per day.',
+      choices: ['AI handles it', 'Human needed', 'Both needed'],
+      correct: 2,
+      correctLabel: 'Both needed',
+      explain: 'Debugging requires understanding YOUR system — architecture, data volumes, deployment environment, recent changes. AI can suggest candidates (N+1 queries, connection pool exhaustion, lock contention) but human context is essential to know which to investigate first. You need both: AI for breadth, human judgment for depth.',
+    },
+    {
+      task: '"Should we use PostgreSQL or DynamoDB for this feature?"',
+      desc: 'A new notification inbox feature. ~50k users, mostly reads, needs to be fast, and we want to keep infra costs low.',
+      choices: ['AI handles it', 'Human needed', 'Both needed'],
+      correct: 1,
+      correctLabel: 'Human needed',
+      explain: 'Architecture decisions require knowing YOUR read/write patterns, team expertise, existing infrastructure, budget, SLA requirements, and what else the database will need to support in 2 years. AI gives you generic trade-off tables. The right answer requires context only you have — this is irreducibly a human judgment call.',
+    },
+    {
+      task: '"Write 50 unit tests for this payment processing function"',
+      desc: 'A function that charges a card, handles declines, retries on network errors, and logs the result.',
+      choices: ['AI handles it', 'Human needed', 'Both needed'],
+      correct: 2,
+      correctLabel: 'Both needed',
+      explain: 'AI writes the obvious happy-path and sad-path tests fast. But the critical edge cases — what happens when the card network goes down mid-transaction? What if the charge succeeds but the log write fails? What about idempotency on retry? — require domain understanding of YOUR payment business rules. Both needed.',
+    },
+    {
+      task: '"Is this AI-generated authentication code secure?"',
+      desc: 'AI wrote a JWT auth system with refresh tokens. It looks reasonable. Should you ship it?',
+      choices: ['AI handles it', 'Human needed', 'Both needed'],
+      correct: 1,
+      correctLabel: 'Human needed',
+      explain: 'AI confidently generates auth code with subtle, real flaws: timing attacks in token comparison, missing rate limiting on login endpoints, insecure defaults for token expiration, missing CSRF protection. You need genuine security knowledge to catch what AI misses — and what AI misses here can be catastrophic. AI can assist with a review checklist, but judgment is human.',
+    },
+    {
+      task: '"Refactor this 2,000-line legacy class into smaller modules"',
+      desc: 'A God class that handles user accounts, billing, notifications, and audit logging. Tests are sparse.',
+      choices: ['AI handles it', 'Human needed', 'Both needed'],
+      correct: 2,
+      correctLabel: 'Both needed',
+      explain: 'AI is great at the mechanical extraction and cleanup. But human judgment determines WHAT the modules should be — business domain boundaries, not just size. What to test first before refactoring. What to leave alone. Where the hidden coupling lives. The strategy is human; the execution is collaborative.',
+    },
+  ];
+
+  let current = 0;
+  let score = 0;
+  const answered = new Array(SCENARIOS.length).fill(null); // null | true | false
+
+  function updateScore() {
+    document.getElementById('scoreBadge').textContent = `${score} / ${SCENARIOS.length} correct`;
+  }
+
+  function buildDots() {
+    const dots = document.getElementById('progDots');
+    dots.innerHTML = '';
+    SCENARIOS.forEach((_, i) => {
+      const d = document.createElement('div');
+      d.className = 'prog-dot' + (i === current ? ' active' : '') + (answered[i] !== null ? ' done' : '');
+      dots.appendChild(d);
+    });
+  }
+
+  function renderScenario(idx) {
+    if (idx >= SCENARIOS.length) {
+      // Final screen
+      const pct = Math.round(score / SCENARIOS.length * 100);
+      let insight = '';
+      if (score <= 2) insight = 'The human-AI boundary is subtle. The key insight: AI handles well-defined, stateless tasks. Anything requiring knowledge of YOUR system, security judgment, or architectural trade-offs still needs a human in the loop.';
+      else if (score <= 4) insight = 'Good intuition. You correctly identified most tasks where human judgment is essential. The hardest cases are the "Both needed" ones — AI assistance is real, but so is the human context requirement.';
+      else insight = 'Excellent judgment. You understand exactly where the human-AI boundary lies: AI excels at well-defined implementation tasks; humans are irreplaceable for context, security, architecture, and verification.';
+
+      document.getElementById('scenarioArea').innerHTML = `
+        <div class="final-result">
+          <div class="final-score">${score} / ${SCENARIOS.length}</div>
+          <div style="font-size:0.75rem;color:#8b949e;margin-top:4px;">${pct}% correct</div>
+          <div class="final-insight">${insight}</div>
+          <button class="nav-btn primary" style="margin-top:16px;" onclick="restartScenarios()">↺ Try Again</button>
+        </div>
+      `;
+      document.getElementById('prevBtn').disabled = true;
+      document.getElementById('nextBtn').disabled = true;
+      return;
+    }
+
+    const sc = SCENARIOS[idx];
+    const alreadyAnswered = answered[idx] !== null;
+
+    let choicesHTML = sc.choices.map((c, ci) => {
+      let cls = 'choice-btn';
+      if (alreadyAnswered) {
+        if (ci === sc.correct) cls += ' correct-pick';
+        else if (ci === answered[idx] && answered[idx] !== sc.correct) cls += ' wrong-pick';
+      }
+      return `<button class="${cls}" data-ci="${ci}" ${alreadyAnswered ? 'disabled' : ''}>${c}</button>`;
+    }).join('');
+
+    let revealHTML = '';
+    if (alreadyAnswered) {
+      const wasCorrect = answered[idx] === sc.correct;
+      revealHTML = `<div class="reveal-box show">
+        <div class="reveal-correct ${wasCorrect ? 'green' : 'red'}">${wasCorrect ? '✓ Correct!' : '✗ Not quite.'} Answer: ${sc.correctLabel}</div>
+        <div class="reveal-explain">${sc.explain}</div>
+      </div>`;
+    }
+
+    document.getElementById('scenarioArea').innerHTML = `
+      <div class="scenario-card">
+        <div class="scenario-num">Scenario ${idx + 1} of ${SCENARIOS.length}</div>
+        <div class="scenario-task">${sc.task}</div>
+        <div class="scenario-desc">${sc.desc}</div>
+        <div style="font-size:0.78rem;color:#8b949e;margin-bottom:10px;">What do you think?</div>
+        <div class="scenario-choices">${choicesHTML}</div>
+        ${revealHTML}
+      </div>
+    `;
+
+    // Wire up choice buttons
+    document.querySelectorAll('.choice-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const ci = parseInt(btn.dataset.ci);
+        const wasCorrect = ci === sc.correct;
+        if (wasCorrect) score++;
+        answered[idx] = ci;
+        updateScore();
+        renderScenario(idx);
+        buildDots();
+        document.getElementById('nextBtn').disabled = false;
+      });
+    });
+
+    // Nav buttons
+    document.getElementById('prevBtn').disabled = (idx === 0);
+    document.getElementById('nextBtn').disabled = (answered[idx] === null && idx < SCENARIOS.length);
+    if (idx === SCENARIOS.length - 1 && answered[idx] !== null) {
+      document.getElementById('nextBtn').textContent = 'See Results →';
+      document.getElementById('nextBtn').disabled = false;
+    } else {
+      document.getElementById('nextBtn').textContent = 'Next →';
+    }
+
+    buildDots();
+  }
+
+  window.restartScenarios = function() {
+    current = 0; score = 0;
+    for (let i = 0; i < answered.length; i++) answered[i] = null;
+    updateScore();
+    renderScenario(0);
+    buildDots();
+    document.getElementById('prevBtn').disabled = true;
+    document.getElementById('nextBtn').disabled = true;
+    document.getElementById('nextBtn').textContent = 'Next →';
+  };
+
+  document.getElementById('prevBtn').addEventListener('click', () => {
+    if (current > 0) { current--; renderScenario(current); }
+  });
+  document.getElementById('nextBtn').addEventListener('click', () => {
+    current++;
+    renderScenario(current);
+    if (current >= SCENARIOS.length) {
+      document.getElementById('nextBtn').disabled = true;
+    }
+  });
+
+  buildDots();
+  renderScenario(0);
+  updateScore();
+})();
+
+// ─────────────────────────────────────────────────────────────────
+// SECTION 4: Code Review Challenge
+// ─────────────────────────────────────────────────────────────────
+(function() {
+  const SNIPPETS = [
+    {
+      title: 'Python Auth',
+      lang: 'python',
+      bugLine: 1, // 0-indexed
+      lines: [
+        { code: '<span class="kw">def</span> <span class="fn">verify_token</span>(token, expected):', plain: 'def verify_token(token, expected):' },
+        { code: '    <span class="kw">if</span> token == expected:  <span class="cm"># BUG: timing attack</span>', plain: '    if token == expected:  # BUG: timing attack', isBug: true },
+        { code: '        <span class="kw">return</span> <span class="bl">True</span>', plain: '        return True' },
+        { code: '    <span class="kw">return</span> <span class="bl">False</span>', plain: '    return False' },
+      ],
+      explain: '<strong>Bug: Timing attack vulnerability.</strong> String comparison with <code>==</code> short-circuits on the first unequal byte, leaking information about where tokens differ via response time. An attacker can measure timing to guess the token byte by byte. <span class="fix">Fix: use <code>hmac.compare_digest(token, expected)</code></span> which runs in constant time regardless of where the strings differ.',
+    },
+    {
+      title: 'JS Async Bug',
+      lang: 'javascript',
+      bugLine: 2,
+      lines: [
+        { code: '<span class="kw">async function</span> <span class="fn">getUsers</span>() {', plain: 'async function getUsers() {' },
+        { code: '  <span class="kw">const</span> users = <span class="kw">await</span> db.<span class="fn">query</span>(<span class="str">\'SELECT * FROM users\'</span>);', plain: '  const users = await db.query(...)' },
+        { code: '  users.<span class="fn">forEach</span>(<span class="kw">async</span> (user) => {  <span class="cm"># BUG: forEach won\'t await</span>', plain: '  users.forEach(async (user) => {', isBug: true },
+        { code: '    <span class="kw">await</span> <span class="fn">sendWelcomeEmail</span>(user.email);', plain: '    await sendWelcomeEmail(user.email);' },
+        { code: '  });', plain: '  });' },
+        { code: '  <span class="kw">return</span> users;', plain: '  return users;' },
+        { code: '}', plain: '}' },
+      ],
+      explain: '<strong>Bug: forEach ignores async callbacks.</strong> <code>Array.forEach</code> does not understand Promises. Each iteration starts the async function and immediately moves on without waiting for it to finish. Emails are fire-and-forgotten — you have no way to know if they succeeded, failed, or threw. The function returns before any emails are sent. <span class="fix">Fix: use <code>for...of</code> with await, or <code>Promise.all(users.map(...))</code>.</span>',
+    },
+    {
+      title: 'SQL Injection',
+      lang: 'javascript',
+      bugLine: 3,
+      lines: [
+        { code: 'app.<span class="fn">get</span>(<span class="str">\'/user\'</span>, <span class="kw">async</span> (req, res) => {', plain: "app.get('/user', async (req, res) => {" },
+        { code: '  <span class="kw">const</span> id = req.query.id;', plain: '  const id = req.query.id;' },
+        { code: '  <span class="kw">const</span> user = <span class="kw">await</span> db.<span class="fn">query</span>(', plain: '  const user = await db.query(' },
+        { code: '    <span class="str">`SELECT * FROM users WHERE id = <span class="bug">${id}</span>`</span>', plain: '    `SELECT * FROM users WHERE id = ${id}`', isBug: true },
+        { code: '  );', plain: '  );' },
+        { code: '  res.<span class="fn">json</span>(user);', plain: '  res.json(user);' },
+        { code: '});', plain: '});' },
+      ],
+      explain: '<strong>Bug: SQL injection.</strong> Unsanitized user input is directly interpolated into the SQL query. An attacker can send <code>id=1 OR 1=1</code> to dump the entire table, or <code>id=1; DROP TABLE users;--</code> to destroy data. This is one of the most common and dangerous vulnerabilities in web applications. <span class="fix">Fix: use parameterized queries: <code>db.query(\'SELECT * FROM users WHERE id = $1\', [id])</code>.</span>',
+    },
+  ];
+
+  let currentSnip = 0;
+  const solved = new Array(SNIPPETS.length).fill(false);
+
+  function updateReviewDots() {
+    const dots = document.getElementById('reviewDots');
+    dots.innerHTML = '';
+    SNIPPETS.forEach((_, i) => {
+      const d = document.createElement('div');
+      d.className = 'review-dot' + (solved[i] ? ' found' : '');
+      dots.appendChild(d);
+    });
+    if (solved.every(Boolean)) {
+      document.getElementById('allFoundMsg').classList.add('show');
+    }
+  }
+
+  function buildTabs() {
+    const tabs = document.getElementById('snippetTabs');
+    tabs.innerHTML = '';
+    SNIPPETS.forEach((sn, i) => {
+      const tab = document.createElement('div');
+      tab.className = 'snip-tab' + (i === currentSnip ? ' active' : '') + (solved[i] ? ' solved' : '');
+      tab.textContent = (solved[i] ? '✓ ' : '') + sn.title;
+      tab.addEventListener('click', () => { currentSnip = i; buildTabs(); renderSnippet(i); });
+      tabs.appendChild(tab);
+    });
+  }
+
+  function renderSnippet(idx) {
+    const sn = SNIPPETS[idx];
+    const area = document.getElementById('snippetArea');
+    const explainId = `bug-explain-${idx}`;
+
+    const linesHTML = sn.lines.map((line, li) => {
+      const isBug = li === sn.bugLine;
+      return `<div class="code-line${isBug && solved[idx] ? ' bug-line' : ''}" data-li="${li}" data-snip="${idx}">
+        <span class="code-line-num">${li + 1}</span>
+        <span class="code-line-content">${line.code}</span>
+      </div>`;
+    }).join('');
+
+    area.innerHTML = `
+      <div class="code-block" id="code-block-${idx}">${linesHTML}</div>
+      <div class="bug-explain${solved[idx] ? ' show' : ''}" id="${explainId}">${sn.explain}</div>
+    `;
+
+    area.querySelectorAll('.code-line').forEach(el => {
+      el.addEventListener('click', () => {
+        const li = parseInt(el.dataset.li);
+        const si = parseInt(el.dataset.snip);
+        const snip = SNIPPETS[si];
+        if (solved[si]) return;
+
+        if (li === snip.bugLine) {
+          // Correct!
+          solved[si] = true;
+          el.classList.add('bug-line');
+          document.getElementById(`bug-explain-${si}`).classList.add('show');
+          updateReviewDots();
+          buildTabs();
+        } else {
+          // Wrong
+          el.classList.add('flash-wrong');
+          el.addEventListener('animationend', () => el.classList.remove('flash-wrong'), { once: true });
+        }
+      });
+    });
+  }
+
+  buildTabs();
+  renderSnippet(0);
+  updateReviewDots();
+})();
+</script>
+</body>
+</html>

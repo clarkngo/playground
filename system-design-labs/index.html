@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>System Design Labs</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:#0d1117;color:#c9d1d9;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;min-height:100vh;overflow-x:hidden}
+a{text-decoration:none}
+
+/* ── Nav ── */
+.navbar{background:#161b22;border-bottom:1px solid #30363d;padding:.75rem 1.5rem;display:flex;align-items:center;gap:.5rem;position:relative;z-index:100}
+.navbar-brand{font-size:1rem;font-weight:700;color:#e6edf3}
+.navbar a.back{color:#8b949e;font-size:.85rem;margin-left:auto;transition:color .2s}
+.navbar a.back:hover{color:#58a6ff}
+
+/* ── Hero ── */
+.hero{position:relative;overflow:hidden;padding:4.5rem 1.5rem 3.5rem;text-align:center;min-height:300px;display:flex;align-items:center;justify-content:center}
+#heroCanvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.hero-content{position:relative;z-index:1}
+.hero-eyebrow{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:#7ee787;margin-bottom:.85rem;display:flex;align-items:center;justify-content:center;gap:.5rem}
+.hero-eyebrow::before,.hero-eyebrow::after{content:'';width:32px;height:1px;background:linear-gradient(90deg,transparent,#3fb95060)}
+.hero-eyebrow::after{background:linear-gradient(90deg,#3fb95060,transparent)}
+.hero-title{font-size:2.4rem;font-weight:800;color:#e6edf3;line-height:1.18;margin-bottom:.85rem;letter-spacing:-.02em}
+.hero-title span{background:linear-gradient(135deg,#7ee787,#58a6ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-sub{color:#8b949e;font-size:.98rem;max-width:500px;margin:0 auto 1.5rem;line-height:1.65}
+.hero-badges{display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap}
+.h-badge{padding:.22rem .7rem;border-radius:12px;font-size:.72rem;font-weight:600;border:1px solid;letter-spacing:.02em}
+.hb-g{background:#0d2d0d;color:#7ee787;border-color:#2d5c2d}
+.hb-b{background:#0d1f3a;color:#58a6ff;border-color:#1c3d6e}
+.hb-o{background:#2a1a06;color:#f0883e;border-color:#5a3310}
+.hb-r{background:#2a0d10;color:#f85149;border-color:#5a1f20}
+
+/* ── Container ── */
+.container{max-width:1020px;margin:0 auto;padding:2.25rem 1.5rem 3rem}
+
+/* ── Section groups ── */
+.section-group{margin-bottom:2.75rem}
+.section-group-label{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#8b949e;margin-bottom:.9rem;padding-bottom:.4rem;border-bottom:1px solid #21262d;display:flex;align-items:center;gap:.5rem}
+.section-group-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,#21262d,transparent)}
+
+/* ── Grid ── */
+.labs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:.9rem}
+
+/* ── Card ── */
+.lab-card{display:flex;align-items:stretch;background:#161b22;border:1px solid #30363d;border-radius:10px;overflow:hidden;color:#c9d1d9;transition:border-color .25s,transform .2s,box-shadow .25s;position:relative;opacity:0}
+.lab-card:hover{transform:translateY(-3px)}
+.card-g:hover{border-color:#3fb950;box-shadow:0 8px 28px rgba(63,185,80,.14)}
+.card-b:hover{border-color:#58a6ff;box-shadow:0 8px 28px rgba(88,166,255,.14)}
+.card-o:hover{border-color:#f0883e;box-shadow:0 8px 28px rgba(240,136,62,.14)}
+.card-r:hover{border-color:#f85149;box-shadow:0 8px 28px rgba(248,81,73,.14)}
+
+/* ── Viz panel ── */
+.lab-viz{width:84px;min-height:84px;flex-shrink:0;background:#0d1117;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;border-right:1px solid #21262d}
+
+/* ── Card body ── */
+.lab-body{flex:1;padding:.9rem 1rem;min-width:0;display:flex;flex-direction:column;justify-content:center}
+.lab-num{font-size:.65rem;font-weight:700;color:#484f58;margin-bottom:.2rem;letter-spacing:.04em}
+.lab-title{font-size:.9rem;font-weight:600;line-height:1.32;margin-bottom:.28rem;color:#e6edf3}
+.lab-desc{font-size:.74rem;color:#8b949e;line-height:1.45;flex:1}
+.lab-tag{display:inline-block;font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:.1rem .42rem;border-radius:8px;margin-top:.38rem}
+.tag-g{background:#0d2d0d;color:#7ee787}
+.tag-b{background:#0d1f3a;color:#58a6ff}
+.tag-o{background:#2a1a06;color:#f0883e}
+.tag-r{background:#2a0d10;color:#f85149}
+
+/* ─────────────────────────────────────────
+   VIZ ANIMATIONS
+───────────────────────────────────────── */
+
+/* 01 – Scalability */
+.viz-scale{display:flex;align-items:flex-end;gap:5px;padding:0 8px}
+.sc-bar{width:13px;border-radius:2px 2px 0 0}
+@keyframes scA{0%,100%{height:22px}50%{height:40px}}
+@keyframes scB{0%,100%{height:38px}50%{height:22px}}
+.sc-bar:nth-child(1){background:#3fb950;animation:scA 1.8s ease infinite}
+.sc-bar:nth-child(2){background:#58a6ff;animation:scB 1.8s .15s ease infinite}
+.sc-bar:nth-child(3){background:#3fb950;animation:scA 1.8s .3s ease infinite}
+
+/* 02 – Load Balancer */
+.viz-lb{display:flex;flex-direction:column;align-items:center;gap:4px;width:100%;padding:6px 8px}
+.lb-top{width:22px;height:12px;background:#58a6ff30;border:1px solid #58a6ff;border-radius:3px}
+.lb-line-v{width:1px;height:6px;background:#30363d}
+.lb-row{display:flex;gap:5px}
+.lb-srv{width:14px;height:10px;border-radius:2px;border:1px solid #58a6ff50;background:#0d1117}
+@keyframes lbFill{0%,100%{background:#0d1117;border-color:#58a6ff50}50%{background:#58a6ff40;border-color:#58a6ff}}
+.lb-srv:nth-child(1){animation:lbFill 1.5s 0s ease infinite}
+.lb-srv:nth-child(2){animation:lbFill 1.5s .5s ease infinite}
+.lb-srv:nth-child(3){animation:lbFill 1.5s 1s ease infinite}
+
+/* 03 – Caching */
+.viz-cache{display:flex;flex-direction:column;gap:4px;align-items:center;width:82%}
+.c-row{padding:2px 7px;border-radius:3px;font-size:8px;font-weight:700;font-family:monospace;letter-spacing:.04em;border:1px solid;text-align:center}
+@keyframes cHit{0%,45%{background:#0d2d0d;color:#7ee787;border-color:#3fb95060}55%,90%{background:#2a0d10;color:#f85149;border-color:#f8514960}95%,100%{background:#0d2d0d;color:#7ee787;border-color:#3fb95060}}
+.c-row:nth-child(1){animation:cHit 3s 0s ease infinite}
+.c-row:nth-child(2){animation:cHit 3s .5s ease infinite}
+.c-row:nth-child(3){animation:cHit 3s 1s ease infinite}
+
+/* 04 – DB Replication */
+.viz-repl{display:flex;align-items:center;gap:3px;padding:0 4px}
+.db-box{padding:3px 5px;border-radius:3px;font-size:7px;font-weight:700;letter-spacing:.03em;border:1px solid;white-space:nowrap}
+.db-pri{background:#0d1f3a;color:#58a6ff;border-color:#1c3d6e}
+.db-rep{background:#161b22;color:#484f58;border-color:#30363d;font-size:6.5px}
+.db-reps{display:flex;flex-direction:column;gap:3px}
+.db-mid{display:flex;flex-direction:column;align-items:center;gap:2px}
+.db-arr{width:12px;height:1px;background:#30363d;position:relative}
+@keyframes syncDot{0%{left:0;opacity:1;background:#58a6ff}80%{left:10px;opacity:.4;background:#3fb950}100%{left:12px;opacity:0}}
+.db-arr::after{content:'';position:absolute;top:-2px;width:5px;height:5px;border-radius:50%;animation:syncDot 1.3s ease infinite}
+.db-arr:nth-child(2)::after{animation-delay:.65s}
+
+/* 05 – Consistent Hashing */
+.viz-ring{position:relative;width:58px;height:58px}
+.ring-c{position:absolute;inset:3px;border:2px solid #30363d;border-radius:50%}
+@keyframes rdot{0%,100%{transform:scale(1);opacity:.7}50%{transform:scale(1.5);opacity:1}}
+.r-dot{position:absolute;width:8px;height:8px;border-radius:50%;transform:translate(-50%,-50%)}
+.rd1{background:#58a6ff;top:3px;left:50%;animation:rdot 2s 0s ease infinite}
+.rd2{background:#7ee787;top:50%;right:3px;transform:translate(0,-50%);animation:rdot 2s .5s ease infinite}
+.rd3{background:#f0883e;bottom:3px;left:50%;animation:rdot 2s 1s ease infinite}
+.rd4{background:#f85149;top:50%;left:3px;transform:translate(0,-50%);animation:rdot 2s 1.5s ease infinite}
+@keyframes ringKey{0%{stroke-dashoffset:160}100%{stroke-dashoffset:0}}
+.ring-key{animation:ringKey 4s linear infinite}
+
+/* 06 – Sharding */
+.viz-shard{display:grid;grid-template-columns:1fr 1fr;gap:3px;width:60px}
+.sh{height:22px;border-radius:3px;border:1px solid;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700}
+@keyframes shPop{0%,100%{opacity:.5;transform:scale(.96)}50%{opacity:1;transform:scale(1)}}
+.sh1{background:#0d2d0d;border-color:#3fb950;color:#7ee787;animation:shPop 2s 0s ease infinite}
+.sh2{background:#0d1f3a;border-color:#58a6ff;color:#58a6ff;animation:shPop 2s .5s ease infinite}
+.sh3{background:#2a1a06;border-color:#f0883e;color:#f0883e;animation:shPop 2s 1s ease infinite}
+.sh4{background:#2a0d10;border-color:#f85149;color:#f85149;animation:shPop 2s 1.5s ease infinite}
+
+/* 07 – CAP */
+.viz-cap{position:relative;width:66px;height:58px}
+.cap-n{position:absolute;width:22px;height:16px;border:1px solid;border-radius:3px;font-size:6.5px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.cap-c{top:0;left:0;background:#0d2d0d;border-color:#3fb950;color:#7ee787}
+.cap-a{top:0;right:0;background:#0d1f3a;border-color:#58a6ff;color:#58a6ff}
+.cap-p{bottom:0;left:50%;transform:translateX(-50%);background:#2a1a06;border-color:#f0883e;color:#f0883e}
+@keyframes capFail{0%,60%,100%{opacity:1}70%,90%{opacity:.15}}
+.cap-p{animation:capFail 4s ease infinite}
+svg.cap-lines{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.cap-edge{stroke:#30363d;stroke-width:1;fill:none}
+.cap-edge-fail{stroke:#f0883e40;stroke-width:1;fill:none;animation:capFail 4s ease infinite}
+
+/* 08 – Rate Limiting */
+.viz-rate{display:flex;flex-direction:column;align-items:center;gap:5px}
+.bucket{width:36px;height:34px;border:2px solid #f0883e80;border-top:none;border-radius:0 0 5px 5px;overflow:hidden;position:relative;background:#2a1a0620}
+@keyframes bucketFill{0%,100%{height:0;opacity:0}25%,70%{height:28px;opacity:1}85%,99%{height:2px;opacity:.6}}
+.bucket-fill{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(0deg,#f0883e,#f0883e60);animation:bucketFill 3s ease infinite}
+@keyframes tokenDrop{0%{top:-8px;opacity:1}80%{top:0;opacity:1}100%{top:0;opacity:0}}
+.bucket-token{position:absolute;top:-8px;left:50%;transform:translateX(-50%);width:8px;height:8px;background:#f0883e;border-radius:50%;animation:tokenDrop 3s 0s ease infinite}
+.bucket-label{font-size:8px;color:#f0883e;font-weight:700}
+
+/* 09 – Circuit Breaker */
+.viz-cb{display:flex;align-items:center;gap:4px;padding:0 6px}
+.cb-line{width:8px;height:2px;background:#8b949e;border-radius:1px}
+@keyframes cbSwitch{0%,55%,100%{transform:rotate(0deg);background:#7ee787}60%,85%{transform:rotate(-28deg);background:#f85149}}
+.cb-sw{width:18px;height:2px;border-radius:1px;transform-origin:left center;animation:cbSwitch 3.5s ease infinite}
+@keyframes cbDot{0%,55%,100%{background:#7ee787;box-shadow:0 0 4px #7ee787}60%,85%{background:#f85149;box-shadow:0 0 4px #f85149}}
+.cb-dot{width:7px;height:7px;border-radius:50%;border:1.5px solid;border-color:inherit;animation:cbDot 3.5s ease infinite}
+
+/* 10 – Message Queue */
+.viz-mq{display:flex;flex-direction:column;gap:4px;align-items:center}
+.mq-track{width:68px;height:11px;background:#21262d;border-radius:10px;overflow:hidden;position:relative}
+@keyframes mqMsg{0%{left:-14px;opacity:0}10%{opacity:1}85%{opacity:1}100%{left:68px;opacity:0}}
+.mq-msg{position:absolute;top:50%;transform:translateY(-50%);width:14px;height:7px;border-radius:3px;animation:mqMsg 1.6s ease infinite}
+.mq-track:nth-child(1) .mq-msg{background:#7ee787;animation-delay:0s}
+.mq-track:nth-child(2) .mq-msg{background:#58a6ff;animation-delay:.53s}
+.mq-track:nth-child(3) .mq-msg{background:#f0883e;animation-delay:1.06s}
+
+/* 11 – Microservices */
+.viz-svc{display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px;width:68px}
+.sv{height:15px;border-radius:2px;border:1px solid;display:flex;align-items:center;justify-content:center;font-size:5.5px;font-weight:700}
+@keyframes svPulse{0%,100%{opacity:.3;transform:scale(.95)}50%{opacity:1;transform:scale(1)}}
+.sv1{background:#0d2d0d;border-color:#3fb950;color:#7ee787;animation:svPulse 2s 0s ease infinite}
+.sv2{background:#0d1f3a;border-color:#58a6ff;color:#58a6ff;animation:svPulse 2s .33s ease infinite}
+.sv3{background:#2a1a06;border-color:#f0883e;color:#f0883e;animation:svPulse 2s .66s ease infinite}
+.sv4{background:#2a0d10;border-color:#f85149;color:#f85149;animation:svPulse 2s 1s ease infinite}
+.sv5{background:#1a1a0d;border-color:#e3b341;color:#e3b341;animation:svPulse 2s 1.33s ease infinite}
+.sv6{background:#0d2030;border-color:#79c0ff;color:#79c0ff;animation:svPulse 2s 1.66s ease infinite}
+
+/* 12 – CDN */
+.viz-cdn{position:relative;width:66px;height:60px}
+.cdn-origin{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:14px;height:14px;background:#f8514940;border:2px solid #f85149;border-radius:50%;z-index:2}
+@keyframes cdnRing{0%{transform:translate(-50%,-50%) scale(1);opacity:.8}100%{transform:translate(-50%,-50%) scale(3.2);opacity:0}}
+.cdn-ring{position:absolute;top:50%;left:50%;width:14px;height:14px;border:1.5px solid #f85149;border-radius:50%;animation:cdnRing 2.2s ease-out infinite}
+.cdn-ring:nth-child(2){animation-delay:.7s}
+.cdn-edge{position:absolute;width:10px;height:10px;background:#58a6ff;border-radius:50%;border:1px solid #79c0ff}
+@keyframes edgePulse{0%,100%{opacity:.4;transform:scale(.85)}50%{opacity:1;transform:scale(1)}}
+.ce1{top:4px;left:6px;animation:edgePulse 1.8s .1s ease infinite}
+.ce2{top:4px;right:6px;animation:edgePulse 1.8s .5s ease infinite}
+.ce3{bottom:4px;left:3px;animation:edgePulse 1.8s .9s ease infinite}
+.ce4{bottom:4px;right:3px;animation:edgePulse 1.8s 1.3s ease infinite}
+.ce5{top:50%;right:2px;transform:translateY(-50%);animation:edgePulse 1.8s 1.7s ease infinite}
+
+/* ── Card entrance ── */
+@keyframes cardIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+
+/* ── Footer ── */
+footer{text-align:center;padding:2rem 1rem;color:#484f58;font-size:.8rem;border-top:1px solid #21262d;margin-top:.5rem}
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <span class="navbar-brand">⚙️ System Design Labs</span>
+  <a href="../index.html" class="back">← Playground</a>
+</nav>
+
+<!-- Hero with live canvas -->
+<div class="hero">
+  <canvas id="heroCanvas"></canvas>
+  <div class="hero-content">
+    <div class="hero-eyebrow">Interactive Labs</div>
+    <h1 class="hero-title">⚙️ System<br><span>Design Labs</span></h1>
+    <p class="hero-sub">12 animated labs spanning scalability, data infrastructure, resilience patterns, and distributed architecture.</p>
+    <div class="hero-badges">
+      <span class="h-badge hb-g">Foundations</span>
+      <span class="h-badge hb-b">Data Layer</span>
+      <span class="h-badge hb-o">Resilience</span>
+      <span class="h-badge hb-r">Architecture</span>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- ── FOUNDATIONS ── -->
+  <div class="section-group">
+    <div class="section-group-label">Foundations</div>
+    <div class="labs-grid">
+
+      <a href="01-scalability.html" class="lab-card card-g">
+        <div class="lab-viz">
+          <div class="viz-scale">
+            <div class="sc-bar"></div>
+            <div class="sc-bar"></div>
+            <div class="sc-bar"></div>
+          </div>
+        </div>
+        <div class="lab-body">
+          <div class="lab-num">Lab 01</div>
+          <div class="lab-title">Scalability — Horizontal vs Vertical</div>
+          <div class="lab-desc">Add servers or upgrade hardware. See how each strategy affects throughput, cost, and failure modes.</div>
+          <span class="lab-tag tag-g">Foundations</span>
+        </div>
+      </a>
+
+      <a href="02-load-balancing.html" class="lab-card card-b">
+        <div class="lab-viz">
+          <div class="viz-lb">
+            <div class="lb-top"></div>
+            <div class="lb-line-v"></div>
+            <div class="lb-row">
+              <div class="lb-srv"></div>
+              <div class="lb-srv"></div>
+              <div class="lb-srv"></div>
+            </div>
+          </div>
+        </div>
+        <div class="lab-body">
+          <div class="lab-num">Lab 02</div>
+          <div class="lab-title">Load Balancing — Algorithms & Strategies</div>
+          <div class="lab-desc">Round-robin, least connections, and weighted routing. Watch requests distribute in real-time.</div>
+          <span class="lab-tag tag-b">Foundations</span>
+        </div>
+      </a>
+
+      <a href="03-caching.html" class="lab-card card-g">
+        <div class="lab-viz">
+          <div class="viz-cache">
+            <div class="c-row">HIT</div>
+            <div class="c-row">MISS</div>
+            <div class="c-row">HIT</div>
+          </div>
+        </div>
+        <div class="lab-body">
+          <div class="lab-num">Lab 03</div>
+          <div class="lab-title">Caching — Hit Rate, TTL & Eviction</div>
+          <div class="lab-desc">LRU, TTL expiry, write-through vs write-back. See how hit rate slashes database load.</div>
+          <span class="lab-tag tag-g">Foundations</span>
+        </div>
+      </a>
+
+    </div>
+  </div>
+
+  <!-- ── DATA LAYER ── -->
+  <div class="section-group">
+    <div class="section-group-label">Data Layer</div>
+    <div class="labs-grid">
+
+      <a href="04-db-replication.html" class="lab-card card-b">
+        <div class="lab-viz">
+          <div class="viz-repl">
+            <div class="db-box db-pri">PRI</div>
+            <div class="db-mid">
+              <div class="db-arr"></div>
+              <div class="db-arr"></div>
+            </div>
+            <div class="db-reps">
+              <div class="db-box db-rep">REP</div>
+              <div class="db-box db-rep">REP</div>
+            </div>
+          </div>
+        </div>
+        <div class="lab-body">
+          <div class="lab-num">Lab 04</div>
+          <div class="lab-title">Database Replication — Primary-Replica</div>
+          <div class="lab-desc">Synchronous vs async replication, replication lag, and read-scaling trade-offs.</div>
+          <span class="lab-tag tag-b">Data Layer</span>
+        </div>
+      </a>
+
+      <a href="05-consistent-hashing.html" class="lab-card card-b">
+        <div class="lab-viz">
+          <div class="viz-ring">
+            <svg width="58" height="58" viewBox="0 0 58 58" style="position:absolute;inset:0">
+              <circle cx="29" cy="29" r="24" fill="none" stroke="#30363d" stroke-width="2"
+                stroke-dasharray="160" class="ring-key"/>
+            </svg>
+            <div class="r-dot rd1"></div>
+            <div class="r-dot rd2"></div>
+            <div class="r-dot rd3"></div>
+            <div class="r-dot rd4"></div>
+          </div>
+        </div>
+        <div class="lab-body">
+          <div class="lab-num">Lab 05</div>
+          <div class="lab-title">Consistent Hashing — Ring Architecture</div>
+          <div class="lab-desc">Add and remove nodes with minimal key remapping. Virtual nodes, hot-spot prevention.</div>
+          <span class="lab-tag tag-b">Data Layer</span>
+        </div>
+      </a>
+
+      <a href="06-sharding.html" class="lab-card card-b">
+        <div class="lab-viz">
+          <div class="viz-shard">
+            <div class="sh sh1">S0</div>
+            <div class="sh sh2">S1</div>
+            <div class="sh sh3">S2</div>
+            <div class="sh sh4">S3</div>
+          </div>
+        </div>
+        <div class="lab-body">
+          <div class="lab-num">Lab 06</div>
+          <div class="lab-title">Database Sharding — Horizontal Partitioning</div>
+          <div class="lab-desc">Range, hash, and directory sharding. Cross-shard queries, resharding costs, hotspots.</div>
+          <span class="lab-tag tag-b">Data Layer</span>
+        </div>
+      </a>
+
+    </div>
+  </div>
+
+  <!-- ── RESILIENCE ── -->
+  <div class="section-group">
+    <div class="section-group-label">Resilience</div>
+    <div class="labs-grid">
+
+      <a href="07-cap-theorem.html" class="lab-card card-o">
+        <div class="lab-viz">
+          <div class="viz-cap">
+            <svg class="cap-lines" viewBox="0 0 66 58">
+              <line x1="11" y1="8" x2="55" y2="8" class="cap-edge"/>
+              <line x1="11" y1="8" x2="33" y2="50" class="cap-edge"/>
+              <line x1="55" y1="8" x2="33" y2="50" class="cap-edge-fail"/>
+            </svg>
+            <div class="cap-n cap-c">C</div>
+            <div class="cap-n cap-a">A</div>
+            <div class="cap-n cap-p">P</div>
+          </div>
+        </div>
+        <div class="lab-body">
+          <div class="lab-num">Lab 07</div>
+          <div class="lab-title">CAP Theorem — Pick Two</div>
+          <div class="lab-desc">Consistency, Availability, Partition Tolerance. Explore CP vs AP systems and real-world trade-offs.</div>
+          <span class="lab-tag tag-o">Resilience</span>
+        </div>
+      </a>
+
+      <a href="08-rate-limiting.html" class="lab-card card-o">
+        <div class="lab-viz">
+          <div class="viz-rate">
+            <div class="bucket">
+              <div class="bucket-fill"></div>
+              <div class="bucket-token"></div>
+            </div>
+            <div class="bucket-label">tokens</div>
+          </div>
+        </div>
+        <div class="lab-body">
+          <div class="lab-num">Lab 08</div>
+          <div class="lab-title">Rate Limiting — Token Bucket & Sliding Window</div>
+          <div class="lab-desc">Token bucket, leaky bucket, fixed and sliding windows. Burst tolerance and fairness.</div>
+          <span class="lab-tag tag-o">Resilience</span>
+        </div>
+      </a>
+
+      <a href="09-circuit-breaker.html" class="lab-card card-o">
+        <div class="lab-viz">
+          <div class="viz-cb">
+            <div class="cb-line"></div>
+            <div class="cb-sw"></div>
+            <div class="cb-dot"></div>
+            <div class="cb-line"></div>
+          </div>
+        </div>
+        <div class="lab-body">
+          <div class="lab-num">Lab 09</div>
+          <div class="lab-title">Circuit Breaker — Failure Isolation</div>
+          <div class="lab-desc">Open, half-open, closed states. Cascading failure prevention and automatic recovery.</div>
+          <span class="lab-tag tag-o">Resilience</span>
+        </div>
+      </a>
+
+    </div>
+  </div>
+
+  <!-- ── ARCHITECTURE ── -->
+  <div class="section-group">
+    <div class="section-group-label">Architecture</div>
+    <div class="labs-grid">
+
+      <a href="10-message-queues.html" class="lab-card card-r">
+        <div class="lab-viz">
+          <div class="viz-mq">
+            <div class="mq-track"><div class="mq-msg"></div></div>
+            <div class="mq-track"><div class="mq-msg"></div></div>
+            <div class="mq-track"><div class="mq-msg"></div></div>
+          </div>
+        </div>
+        <div class="lab-body">
+          <div class="lab-num">Lab 10</div>
+          <div class="lab-title">Message Queues — Async & Event-Driven</div>
+          <div class="lab-desc">Producers, consumers, backpressure, dead-letter queues. Kafka vs RabbitMQ patterns.</div>
+          <span class="lab-tag tag-r">Architecture</span>
+        </div>
+      </a>
+
+      <a href="11-microservices.html" class="lab-card card-r">
+        <div class="lab-viz">
+          <div class="viz-svc">
+            <div class="sv sv1">API</div>
+            <div class="sv sv2">DB</div>
+            <div class="sv sv3">Q</div>
+            <div class="sv sv4">AUTH</div>
+            <div class="sv sv5">CDN</div>
+            <div class="sv sv6">CACHE</div>
+          </div>
+        </div>
+        <div class="lab-body">
+          <div class="lab-num">Lab 11</div>
+          <div class="lab-title">Microservices — Service Mesh & API Gateway</div>
+          <div class="lab-desc">Service discovery, sidecar proxy, API gateway patterns, and monolith-to-microservices migration.</div>
+          <span class="lab-tag tag-r">Architecture</span>
+        </div>
+      </a>
+
+      <a href="12-cdn.html" class="lab-card card-r">
+        <div class="lab-viz">
+          <div class="viz-cdn">
+            <div class="cdn-ring"></div>
+            <div class="cdn-ring"></div>
+            <div class="cdn-origin"></div>
+            <div class="cdn-edge ce1"></div>
+            <div class="cdn-edge ce2"></div>
+            <div class="cdn-edge ce3"></div>
+            <div class="cdn-edge ce4"></div>
+            <div class="cdn-edge ce5"></div>
+          </div>
+        </div>
+        <div class="lab-body">
+          <div class="lab-num">Lab 12</div>
+          <div class="lab-title">CDN — Edge Caching & Global Distribution</div>
+          <div class="lab-desc">PoP placement, cache invalidation, origin shield, and latency reduction by geography.</div>
+          <span class="lab-tag tag-r">Architecture</span>
+        </div>
+      </a>
+
+    </div>
+  </div>
+
+  <footer>Runs fully in-browser · No server required · No data collected</footer>
+</div>
+
+<script>
+// ───────────────────────────────────────────
+//  HERO CANVAS — live distributed system
+// ───────────────────────────────────────────
+(function() {
+  const canvas = document.getElementById('heroCanvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, nodes, edges, packets, raf;
+  const DPR = window.devicePixelRatio || 1;
+
+  const NODE_DATA = [
+    { label:'Client',   color:'#e6edf3', x:.12, y:.5  },
+    { label:'CDN',      color:'#f85149', x:.28, y:.22 },
+    { label:'LB',       color:'#58a6ff', x:.32, y:.5  },
+    { label:'API₁',     color:'#7ee787', x:.50, y:.28 },
+    { label:'API₂',     color:'#7ee787', x:.50, y:.72 },
+    { label:'Cache',    color:'#e3b341', x:.65, y:.28 },
+    { label:'Queue',    color:'#f0883e', x:.65, y:.72 },
+    { label:'DB',       color:'#bc8cff', x:.82, y:.5  },
+  ];
+
+  const EDGE_DATA = [
+    [0,1],[0,2],[1,2],[2,3],[2,4],[3,5],[3,6],[4,5],[4,6],[5,7],[6,7]
+  ];
+
+  function resize() {
+    const hero = canvas.parentElement;
+    W = hero.clientWidth; H = hero.clientHeight;
+    canvas.width  = W * DPR; canvas.height = H * DPR;
+    canvas.style.width = W+'px'; canvas.style.height = H+'px';
+    ctx.scale(DPR, DPR);
+    buildScene();
+  }
+
+  function buildScene() {
+    nodes = NODE_DATA.map((n, i) => ({
+      ...n,
+      px: n.x * W, py: n.y * H,
+      r: 14,
+      phase: (i / NODE_DATA.length) * Math.PI * 2,
+    }));
+    edges = EDGE_DATA.map(([a, b]) => ({ a, b }));
+    packets = [];
+    // Seed initial packets
+    for (let i = 0; i < 6; i++) spawnPacket();
+  }
+
+  function spawnPacket() {
+    const e = edges[Math.floor(Math.random() * edges.length)];
+    packets.push({
+      edgeIdx: edges.indexOf(e),
+      a: e.a, b: e.b,
+      t: Math.random(),
+      speed: .003 + Math.random() * .004,
+      color: nodes[e.a].color,
+      r: 3,
+    });
+  }
+
+  let last = 0;
+  function draw(ts) {
+    const dt = ts - last; last = ts;
+    ctx.clearRect(0, 0, W, H);
+
+    const t = ts * .001;
+
+    // Edges
+    edges.forEach(({ a, b }) => {
+      const na = nodes[a], nb = nodes[b];
+      const grad = ctx.createLinearGradient(na.px, na.py, nb.px, nb.py);
+      grad.addColorStop(0, na.color + '30');
+      grad.addColorStop(1, nb.color + '30');
+      ctx.beginPath();
+      ctx.moveTo(na.px, na.py);
+      ctx.lineTo(nb.px, nb.py);
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    });
+
+    // Packets
+    packets.forEach((pk, i) => {
+      pk.t += pk.speed;
+      if (pk.t >= 1) {
+        // Hop to next random edge from destination node
+        const newEdgeCandidates = edges.filter(e => e.a === pk.b || e.b === pk.b);
+        if (newEdgeCandidates.length) {
+          const ne = newEdgeCandidates[Math.floor(Math.random() * newEdgeCandidates.length)];
+          pk.a = ne.a; pk.b = ne.b;
+          if (ne.b === pk.b) { const tmp = pk.a; pk.a = pk.b; pk.b = tmp; }
+          pk.t = 0;
+          pk.color = nodes[pk.a].color;
+        } else {
+          pk.t = 0;
+        }
+      }
+      const na = nodes[pk.a], nb = nodes[pk.b];
+      const x = na.px + (nb.px - na.px) * pk.t;
+      const y = na.py + (nb.py - na.py) * pk.t;
+      ctx.beginPath();
+      ctx.arc(x, y, pk.r, 0, Math.PI * 2);
+      ctx.fillStyle = pk.color + 'cc';
+      ctx.fill();
+      // Glow
+      ctx.beginPath();
+      ctx.arc(x, y, pk.r * 2, 0, Math.PI * 2);
+      const g = ctx.createRadialGradient(x, y, 0, x, y, pk.r * 2);
+      g.addColorStop(0, pk.color + '40');
+      g.addColorStop(1, 'transparent');
+      ctx.fillStyle = g;
+      ctx.fill();
+    });
+
+    // Nodes
+    nodes.forEach((n, i) => {
+      const pulse = Math.sin(t * 1.4 + n.phase) * .12 + .88;
+      // Outer glow ring
+      const gr = ctx.createRadialGradient(n.px, n.py, n.r, n.px, n.py, n.r * 2.8);
+      gr.addColorStop(0, n.color + '20');
+      gr.addColorStop(1, 'transparent');
+      ctx.beginPath();
+      ctx.arc(n.px, n.py, n.r * 2.8, 0, Math.PI * 2);
+      ctx.fillStyle = gr;
+      ctx.fill();
+
+      // Node circle
+      ctx.beginPath();
+      ctx.arc(n.px, n.py, n.r * pulse, 0, Math.PI * 2);
+      ctx.fillStyle = '#161b22';
+      ctx.fill();
+      ctx.strokeStyle = n.color + 'cc';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Label
+      ctx.fillStyle = n.color;
+      ctx.font = `600 9px -apple-system, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(n.label, n.px, n.py);
+    });
+
+    // Spawn packets occasionally
+    if (Math.random() < .008 && packets.length < 12) spawnPacket();
+
+    raf = requestAnimationFrame(draw);
+  }
+
+  window.addEventListener('resize', () => { cancelAnimationFrame(raf); resize(); raf = requestAnimationFrame(draw); });
+  resize();
+  raf = requestAnimationFrame(draw);
+})();
+
+// ───────────────────────────────────────────
+//  STAGGERED CARD ENTRANCE
+// ───────────────────────────────────────────
+document.querySelectorAll('.lab-card').forEach((card, i) => {
+  card.style.animationDelay = `${i * 55}ms`;
+  card.style.animation = `cardIn .45s ease ${i * 55}ms forwards`;
+});
+</script>
+</body>
+</html>

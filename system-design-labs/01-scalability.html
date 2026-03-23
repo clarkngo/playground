@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scalability: Horizontal vs Vertical</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0d1117; color: #c9d1d9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
+  nav { background: #161b22; border-bottom: 1px solid #30363d; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; }
+  .navbar-brand { font-size: 1.1rem; font-weight: 600; color: #7ee787; }
+  nav a { color: #58a6ff; text-decoration: none; font-size: 0.9rem; }
+  nav a:hover { text-decoration: underline; }
+  .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
+  h1 { font-size: 1.6rem; color: #e6edf3; margin-bottom: 6px; }
+  .subtitle { color: #8b949e; margin-bottom: 24px; font-size: 0.95rem; }
+
+  .mode-tabs { display: flex; gap: 0; margin-bottom: 20px; border: 1px solid #30363d; border-radius: 8px; overflow: hidden; width: fit-content; }
+  .mode-tab { padding: 10px 28px; background: #161b22; border: none; color: #8b949e; cursor: pointer; font-size: 0.95rem; font-family: inherit; transition: all 0.2s; }
+  .mode-tab.active { background: #1f6feb; color: #fff; font-weight: 600; }
+  .mode-tab:hover:not(.active) { background: #21262d; color: #c9d1d9; }
+
+  .main-grid { display: grid; grid-template-columns: 1fr 300px; gap: 20px; }
+  .canvas-card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; overflow: hidden; }
+  canvas { display: block; width: 100%; }
+
+  .side-panel { display: flex; flex-direction: column; gap: 16px; }
+  .panel-card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 18px; }
+  .panel-card h3 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; color: #8b949e; margin-bottom: 14px; }
+
+  .btn { width: 100%; padding: 10px; border: 1px solid #30363d; border-radius: 6px; background: #21262d; color: #c9d1d9; cursor: pointer; font-size: 0.9rem; font-family: inherit; transition: all 0.2s; margin-bottom: 8px; }
+  .btn:hover { background: #30363d; border-color: #58a6ff; color: #58a6ff; }
+  .btn.green { border-color: #3fb950; color: #7ee787; }
+  .btn.green:hover { background: #1a3a1f; }
+  .btn.red { border-color: #f85149; color: #f85149; }
+  .btn.red:hover { background: #3a1a1a; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #21262d; }
+  .stat-row:last-child { border-bottom: none; }
+  .stat-label { font-size: 0.85rem; color: #8b949e; }
+  .stat-value { font-size: 1rem; font-weight: 600; color: #7ee787; font-variant-numeric: tabular-nums; }
+
+  .rps-display { text-align: center; padding: 12px 0; }
+  .rps-number { font-size: 2.4rem; font-weight: 700; color: #7ee787; font-variant-numeric: tabular-nums; }
+  .rps-label { font-size: 0.8rem; color: #8b949e; margin-top: 2px; }
+
+  .pros-cons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .pros, .cons { background: #0d1117; border-radius: 6px; padding: 10px; }
+  .pros { border-left: 2px solid #3fb950; }
+  .cons { border-left: 2px solid #f85149; }
+  .pros h4 { color: #7ee787; font-size: 0.78rem; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .cons h4 { color: #f85149; font-size: 0.78rem; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .pros li, .cons li { font-size: 0.78rem; color: #8b949e; margin-left: 12px; margin-bottom: 3px; line-height: 1.4; }
+
+  .insight { background: #1a2a1a; border: 1px solid #3fb950; border-radius: 6px; padding: 12px; margin-top: 12px; }
+  .insight p { font-size: 0.82rem; color: #7ee787; line-height: 1.5; }
+</style>
+</head>
+<body>
+<nav>
+  <span class="navbar-brand">⚙️ Scalability: Horizontal vs Vertical</span>
+  <a href="index.html">← System Design Labs</a>
+</nav>
+<div class="container">
+  <h1>Scalability: Horizontal vs Vertical Scaling</h1>
+  <p class="subtitle">Explore how systems grow to handle increased load — by adding more machines or upgrading existing ones.</p>
+
+  <div class="mode-tabs">
+    <button class="mode-tab active" onclick="setMode('horizontal')">⟷ Horizontal Scaling</button>
+    <button class="mode-tab" onclick="setMode('vertical')">↑ Vertical Scaling</button>
+  </div>
+
+  <div class="main-grid">
+    <div class="canvas-card">
+      <canvas id="canvas" height="420"></canvas>
+    </div>
+    <div class="side-panel">
+      <div class="panel-card">
+        <h3>Controls</h3>
+        <button class="btn green" id="addBtn" onclick="handleAdd()">+ Add Server</button>
+        <button class="btn red" id="removeBtn" onclick="handleRemove()">− Remove Server</button>
+        <button class="btn" onclick="togglePause()" id="pauseBtn">⏸ Pause</button>
+      </div>
+
+      <div class="panel-card">
+        <h3>Live Metrics</h3>
+        <div class="rps-display">
+          <div class="rps-number" id="rpsDisplay">0</div>
+          <div class="rps-label">Requests / Second</div>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Active Servers</span>
+          <span class="stat-value" id="serverCount">1</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Total Processed</span>
+          <span class="stat-value" id="totalProcessed">0</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Dropped Packets</span>
+          <span class="stat-value" style="color:#f85149" id="droppedCount">0</span>
+        </div>
+      </div>
+
+      <div class="panel-card" id="prosConsPanel">
+        <h3>Analysis</h3>
+        <div class="pros-cons" id="prosConsContent"></div>
+        <div class="insight" id="insightBox"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let W, H;
+let mode = 'horizontal';
+let paused = false;
+let servers = [];
+let packets = [];
+let totalProcessed = 0;
+let droppedCount = 0;
+let rps = 0;
+let rpsAccum = 0;
+let lastRpsTime = Date.now();
+let frame = 0;
+let animId;
+
+const VERTICAL_LEVELS = [
+  { label: '1 Core / 1GB',  cpuCap: 1, ramCap: 1, color: '#3fb950', width: 80, maxRPS: 60 },
+  { label: '2 Core / 4GB',  cpuCap: 2, ramCap: 4, color: '#58a6ff', width: 110, maxRPS: 140 },
+  { label: '4 Core / 8GB',  cpuCap: 4, ramCap: 8, color: '#d29922', width: 145, maxRPS: 260 },
+  { label: '8 Core / 16GB', cpuCap: 8, ramCap: 16, color: '#bc8cff', width: 185, maxRPS: 420 },
+  { label: '16C / 32GB',    cpuCap: 16, ramCap: 32, color: '#f85149', width: 230, maxRPS: 650 },
+];
+let verticalLevel = 0;
+let cpuLoad = 0, ramLoad = 0;
+
+function resize() {
+  W = canvas.parentElement.clientWidth;
+  H = 420;
+  canvas.width = W;
+  canvas.height = H;
+}
+
+function setMode(m) {
+  mode = m;
+  packets = [];
+  document.querySelectorAll('.mode-tab').forEach((t, i) => {
+    t.classList.toggle('active', (i === 0 && m === 'horizontal') || (i === 1 && m === 'vertical'));
+  });
+  if (m === 'horizontal') {
+    servers = [{ x: 0, y: 0, load: 0, connections: 0 }];
+    verticalLevel = 0;
+    document.getElementById('addBtn').textContent = '+ Add Server';
+    document.getElementById('removeBtn').textContent = '− Remove Server';
+    document.getElementById('addBtn').disabled = false;
+    document.getElementById('removeBtn').disabled = servers.length <= 1;
+  } else {
+    verticalLevel = 0;
+    document.getElementById('addBtn').textContent = '⬆ Upgrade Server';
+    document.getElementById('removeBtn').textContent = '⬇ Downgrade Server';
+    document.getElementById('addBtn').disabled = verticalLevel >= VERTICAL_LEVELS.length - 1;
+    document.getElementById('removeBtn').disabled = verticalLevel <= 0;
+  }
+  updateProsConsPanel();
+}
+
+function handleAdd() {
+  if (mode === 'horizontal') {
+    if (servers.length < 8) servers.push({ x: 0, y: 0, load: 0, connections: 0 });
+    document.getElementById('removeBtn').disabled = false;
+    if (servers.length >= 8) document.getElementById('addBtn').disabled = true;
+  } else {
+    if (verticalLevel < VERTICAL_LEVELS.length - 1) verticalLevel++;
+    document.getElementById('removeBtn').disabled = false;
+    if (verticalLevel >= VERTICAL_LEVELS.length - 1) document.getElementById('addBtn').disabled = true;
+  }
+  updateProsConsPanel();
+}
+
+function handleRemove() {
+  if (mode === 'horizontal') {
+    if (servers.length > 1) servers.pop();
+    document.getElementById('addBtn').disabled = false;
+    if (servers.length <= 1) document.getElementById('removeBtn').disabled = true;
+  } else {
+    if (verticalLevel > 0) verticalLevel--;
+    document.getElementById('addBtn').disabled = false;
+    if (verticalLevel <= 0) document.getElementById('removeBtn').disabled = true;
+  }
+  updateProsConsPanel();
+}
+
+function togglePause() {
+  paused = !paused;
+  document.getElementById('pauseBtn').textContent = paused ? '▶ Resume' : '⏸ Pause';
+  if (!paused) animate();
+}
+
+function spawnPacket() {
+  packets.push({
+    x: 0, y: H / 2,
+    tx: 0, ty: 0,
+    targetServer: -1,
+    phase: 'traveling',
+    alpha: 1,
+    color: '#7ee787',
+    progress: 0,
+    speed: 2.2 + Math.random() * 1.5,
+  });
+}
+
+function layoutServers() {
+  if (mode === 'horizontal') {
+    const n = servers.length;
+    const sW = 72, sH = 52;
+    const startX = W * 0.38;
+    const endX = W - 40;
+    const spacing = n > 1 ? (endX - startX - sW) / (n - 1) : 0;
+    servers.forEach((s, i) => {
+      s.x = startX + i * (n > 1 ? spacing : 0) + sW / 2;
+      s.y = H / 2;
+      s.w = sW; s.h = sH;
+    });
+  }
+}
+
+function drawHorizontal() {
+  layoutServers();
+
+  // Source emitter
+  const srcX = 60, srcY = H / 2;
+  ctx.save();
+  ctx.shadowColor = '#7ee787'; ctx.shadowBlur = 10;
+  ctx.fillStyle = '#1a3a1f'; ctx.strokeStyle = '#3fb950';
+  ctx.lineWidth = 2;
+  roundRect(ctx, srcX - 28, srcY - 22, 56, 44, 8);
+  ctx.fill(); ctx.stroke();
+  ctx.restore();
+  ctx.fillStyle = '#7ee787'; ctx.font = 'bold 10px -apple-system,sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('CLIENT', srcX, srcY - 4);
+  ctx.fillText('TRAFFIC', srcX, srcY + 9);
+
+  // Faint guide lines to each server
+  servers.forEach(s => {
+    ctx.save();
+    ctx.setLineDash([4, 6]);
+    ctx.strokeStyle = '#21262d';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(srcX + 28, srcY); ctx.lineTo(s.x - s.w / 2, s.y);
+    ctx.stroke();
+    ctx.restore();
+  });
+
+  // Draw servers
+  servers.forEach((s, i) => {
+    const load = Math.min(s.connections / 5, 1);
+    const hue = load < 0.5 ? '#3fb950' : load < 0.8 ? '#d29922' : '#f85149';
+    ctx.save();
+    ctx.shadowColor = hue; ctx.shadowBlur = 8;
+    ctx.fillStyle = '#1a2530'; ctx.strokeStyle = hue;
+    ctx.lineWidth = 2;
+    roundRect(ctx, s.x - s.w / 2, s.y - s.h / 2, s.w, s.h, 6);
+    ctx.fill(); ctx.stroke();
+    ctx.restore();
+    ctx.fillStyle = '#e6edf3'; ctx.font = 'bold 11px -apple-system,sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(`SRV ${i + 1}`, s.x, s.y - 8);
+    ctx.fillStyle = '#8b949e'; ctx.font = '9px -apple-system,sans-serif';
+    ctx.fillText(`${s.connections} conn`, s.x, s.y + 6);
+
+    // Load bar
+    const bw = s.w - 12, bh = 5;
+    const bx = s.x - bw / 2, by = s.y + 14;
+    ctx.fillStyle = '#21262d';
+    roundRect(ctx, bx, by, bw, bh, 2); ctx.fill();
+    ctx.fillStyle = hue;
+    roundRect(ctx, bx, by, bw * load, bh, 2); ctx.fill();
+  });
+
+  // Server count label
+  ctx.fillStyle = '#8b949e'; ctx.font = '12px -apple-system,sans-serif'; ctx.textAlign = 'left';
+  ctx.fillText(`${servers.length} server${servers.length > 1 ? 's' : ''} active`, 20, H - 16);
+
+  document.getElementById('serverCount').textContent = servers.length;
+}
+
+function drawVertical() {
+  const lv = VERTICAL_LEVELS[verticalLevel];
+  const sW = lv.width;
+  const sH = 100 + verticalLevel * 28;
+  const sx = W / 2, sy = H / 2;
+
+  // Source
+  const srcX = 80, srcY = H / 2;
+  ctx.save(); ctx.shadowColor = '#7ee787'; ctx.shadowBlur = 10;
+  ctx.fillStyle = '#1a3a1f'; ctx.strokeStyle = '#3fb950'; ctx.lineWidth = 2;
+  roundRect(ctx, srcX - 28, srcY - 22, 56, 44, 8); ctx.fill(); ctx.stroke();
+  ctx.restore();
+  ctx.fillStyle = '#7ee787'; ctx.font = 'bold 10px -apple-system,sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('CLIENT', srcX, srcY - 4); ctx.fillText('TRAFFIC', srcX, srcY + 9);
+
+  ctx.save(); ctx.setLineDash([4, 6]); ctx.strokeStyle = '#21262d'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(srcX + 28, srcY); ctx.lineTo(sx - sW / 2, sy); ctx.stroke();
+  ctx.restore();
+
+  ctx.save(); ctx.shadowColor = lv.color; ctx.shadowBlur = 14;
+  ctx.fillStyle = '#0d1a2a'; ctx.strokeStyle = lv.color; ctx.lineWidth = 2.5;
+  roundRect(ctx, sx - sW / 2, sy - sH / 2, sW, sH, 10); ctx.fill(); ctx.stroke();
+  ctx.restore();
+
+  ctx.fillStyle = '#e6edf3'; ctx.font = 'bold 13px -apple-system,sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('SERVER', sx, sy - sH / 2 + 20);
+  ctx.fillStyle = lv.color; ctx.font = 'bold 10px -apple-system,sans-serif';
+  ctx.fillText(lv.label, sx, sy - sH / 2 + 34);
+
+  // CPU bar
+  const bx = sx - sW / 2 + 10, bw = sW - 20;
+  drawBar(bx, sy - 20, bw, 10, cpuLoad, '#58a6ff', 'CPU');
+  drawBar(bx, sy + 2, bw, 10, ramLoad, '#bc8cff', 'RAM');
+
+  document.getElementById('serverCount').textContent = `Tier ${verticalLevel + 1}`;
+}
+
+function drawBar(x, y, w, h, val, color, label) {
+  ctx.fillStyle = '#8b949e'; ctx.font = '9px -apple-system,sans-serif'; ctx.textAlign = 'left';
+  ctx.fillText(label, x, y - 2);
+  ctx.fillStyle = '#21262d';
+  roundRect(ctx, x, y, w, h, 3); ctx.fill();
+  const pct = Math.min(val, 1);
+  ctx.fillStyle = pct > 0.85 ? '#f85149' : color;
+  roundRect(ctx, x, y, w * pct, h, 3); ctx.fill();
+  ctx.fillStyle = '#c9d1d9'; ctx.font = '9px -apple-system,sans-serif'; ctx.textAlign = 'right';
+  ctx.fillText(Math.round(pct * 100) + '%', x + w, y - 2);
+}
+
+function updatePackets() {
+  if (mode === 'horizontal') {
+    // Assign target server on spawn
+    packets.forEach(p => {
+      if (p.targetServer === -1 && servers.length > 0) {
+        // Pick server with fewest connections
+        let best = 0;
+        servers.forEach((s, i) => { if (s.connections < servers[best].connections) best = i; });
+        p.targetServer = best;
+        p.tx = servers[best].x;
+        p.ty = servers[best].y;
+      }
+    });
+
+    packets.forEach(p => {
+      if (p.phase === 'traveling') {
+        const s = servers[p.targetServer];
+        if (!s) { p.phase = 'done'; return; }
+        const dx = p.tx - p.x, dy = p.ty - p.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < p.speed + 2) {
+          p.x = p.tx; p.y = p.ty;
+          p.phase = 'processing';
+          p.timer = 18 + Math.floor(Math.random() * 20);
+          if (s) s.connections++;
+        } else {
+          p.x += (dx / dist) * p.speed;
+          p.y += (dy / dist) * p.speed;
+        }
+      } else if (p.phase === 'processing') {
+        p.timer--;
+        if (p.timer <= 0) {
+          const s = servers[p.targetServer];
+          if (s && s.connections > 0) s.connections--;
+          p.phase = 'done';
+          totalProcessed++;
+          rpsAccum++;
+        }
+      }
+    });
+    packets = packets.filter(p => p.phase !== 'done');
+
+    // Update rps
+    const now = Date.now();
+    if (now - lastRpsTime >= 1000) {
+      rps = rpsAccum;
+      rpsAccum = 0;
+      lastRpsTime = now;
+    }
+
+    // Simulate load on servers
+    servers.forEach(s => {
+      s.load = Math.min(s.connections / 5, 1);
+    });
+
+  } else {
+    // Vertical
+    const lv = VERTICAL_LEVELS[verticalLevel];
+    const now = Date.now();
+    if (now - lastRpsTime >= 1000) {
+      rps = rpsAccum;
+      rpsAccum = 0;
+      lastRpsTime = now;
+    }
+    // Drive CPU/RAM from packet count
+    const active = packets.filter(p => p.phase === 'processing').length;
+    const cap = lv.maxRPS / 60 * 18; // expected concurrent
+    cpuLoad += (Math.min(active / Math.max(cap, 1), 1) - cpuLoad) * 0.08;
+    ramLoad += (Math.min(active / Math.max(cap * 1.3, 1), 1) - ramLoad) * 0.05;
+
+    packets.forEach(p => {
+      if (p.phase === 'traveling') {
+        const dx = p.tx - p.x, dy = p.ty - p.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < p.speed + 2) {
+          p.phase = 'processing';
+          p.timer = 18 + Math.floor(Math.random() * 20);
+        } else {
+          p.x += (dx / dist) * p.speed;
+          p.y += (dy / dist) * p.speed;
+        }
+      } else if (p.phase === 'processing') {
+        p.timer--;
+        if (p.timer <= 0) { p.phase = 'done'; totalProcessed++; rpsAccum++; }
+      }
+    });
+    packets = packets.filter(p => p.phase !== 'done');
+  }
+
+  // RPS display
+  document.getElementById('rpsDisplay').textContent = rps;
+  document.getElementById('totalProcessed').textContent = totalProcessed;
+  document.getElementById('droppedCount').textContent = droppedCount;
+}
+
+function drawPackets() {
+  packets.forEach(p => {
+    if (p.phase === 'processing') {
+      ctx.save();
+      ctx.globalAlpha = 0.7;
+      ctx.fillStyle = '#7ee787';
+      ctx.shadowColor = '#7ee787'; ctx.shadowBlur = 6;
+      ctx.beginPath(); ctx.arc(p.x + (Math.random() - 0.5) * 4, p.y + (Math.random() - 0.5) * 4, 3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    } else {
+      ctx.save();
+      ctx.fillStyle = p.color;
+      ctx.shadowColor = p.color; ctx.shadowBlur = 8;
+      ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+  });
+}
+
+function animate() {
+  if (paused) return;
+  ctx.clearRect(0, 0, W, H);
+  frame++;
+
+  // Spawn packets
+  const spawnRate = mode === 'horizontal' ? Math.max(3, 10 - servers.length) : Math.max(2, 8 - verticalLevel * 1.2);
+  if (frame % Math.round(spawnRate) === 0) {
+    if (mode === 'horizontal') {
+      spawnPacket();
+    } else {
+      const lv = VERTICAL_LEVELS[verticalLevel];
+      packets.push({
+        x: 80, y: H / 2, tx: W / 2, ty: H / 2,
+        targetServer: 0, phase: 'traveling', color: '#7ee787',
+        speed: 2.5 + Math.random() * 1.5, timer: 0,
+      });
+    }
+  }
+
+  if (mode === 'horizontal') drawHorizontal();
+  else drawVertical();
+
+  updatePackets();
+  drawPackets();
+  animId = requestAnimationFrame(animate);
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function updateProsConsPanel() {
+  const isH = mode === 'horizontal';
+  document.getElementById('prosConsContent').innerHTML = isH ? `
+    <div class="pros"><h4>Pros</h4><ul>
+      <li>No single point of failure</li><li>Theoretically unlimited scale</li><li>Cheap commodity hardware</li><li>Easy incremental growth</li></ul></div>
+    <div class="cons"><h4>Cons</h4><ul>
+      <li>Network complexity</li><li>Data consistency challenges</li><li>Load balancing needed</li><li>Not all apps support it</li></ul></div>
+  ` : `
+    <div class="pros"><h4>Pros</h4><ul>
+      <li>Simple architecture</li><li>No code changes needed</li><li>Low latency (no network hop)</li><li>Easy for stateful apps</li></ul></div>
+    <div class="cons"><h4>Cons</h4><ul>
+      <li>Hardware limits exist</li><li>Single point of failure</li><li>Very expensive at top tier</li><li>Downtime to upgrade</li></ul></div>
+  `;
+  document.getElementById('insightBox').innerHTML = isH
+    ? `<p>With ${servers.length} server${servers.length > 1 ? 's' : ''}, you get ~${servers.length}x throughput. Adding servers <strong>linearly scales</strong> your capacity — the core principle of horizontal scaling.</p>`
+    : `<p>Tier ${verticalLevel + 1}: <strong>${VERTICAL_LEVELS[verticalLevel].label}</strong>. Vertical scaling gives a ${VERTICAL_LEVELS[verticalLevel].maxRPS} RPS ceiling before you hit hardware limits.</p>`;
+}
+
+window.addEventListener('resize', () => { resize(); });
+resize();
+setMode('horizontal');
+animate();
+</script>
+</body>
+</html>

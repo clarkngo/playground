@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Load Balancing: Algorithms</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0d1117; color: #c9d1d9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
+  nav { background: #161b22; border-bottom: 1px solid #30363d; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; }
+  .navbar-brand { font-size: 1.1rem; font-weight: 600; color: #58a6ff; }
+  nav a { color: #58a6ff; text-decoration: none; font-size: 0.9rem; }
+  nav a:hover { text-decoration: underline; }
+  .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
+  h1 { font-size: 1.6rem; color: #e6edf3; margin-bottom: 6px; }
+  .subtitle { color: #8b949e; margin-bottom: 24px; font-size: 0.95rem; }
+
+  .algo-tabs { display: flex; gap: 0; margin-bottom: 20px; border: 1px solid #30363d; border-radius: 8px; overflow: hidden; width: fit-content; }
+  .algo-tab { padding: 10px 24px; background: #161b22; border: none; color: #8b949e; cursor: pointer; font-size: 0.9rem; font-family: inherit; transition: all 0.2s; border-right: 1px solid #30363d; }
+  .algo-tab:last-child { border-right: none; }
+  .algo-tab.active { background: #1f6feb; color: #fff; font-weight: 600; }
+  .algo-tab:hover:not(.active) { background: #21262d; color: #c9d1d9; }
+
+  .main-grid { display: grid; grid-template-columns: 1fr 300px; gap: 20px; }
+  .canvas-card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; overflow: hidden; }
+  canvas { display: block; }
+
+  .side-panel { display: flex; flex-direction: column; gap: 16px; }
+  .panel-card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 18px; }
+  .panel-card h3 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; color: #8b949e; margin-bottom: 14px; }
+
+  .btn { width: 100%; padding: 10px; border: 1px solid #30363d; border-radius: 6px; background: #21262d; color: #c9d1d9; cursor: pointer; font-size: 0.9rem; font-family: inherit; transition: all 0.2s; margin-bottom: 8px; }
+  .btn:hover { background: #30363d; border-color: #58a6ff; color: #58a6ff; }
+  .btn.blue { border-color: #1f6feb; color: #58a6ff; }
+  .btn.blue:hover { background: #1a2a3a; }
+
+  .server-stats { display: flex; flex-direction: column; gap: 8px; }
+  .srv-row { display: flex; align-items: center; gap: 8px; }
+  .srv-label { font-size: 0.8rem; color: #8b949e; width: 44px; flex-shrink: 0; }
+  .srv-bar-bg { flex: 1; background: #21262d; border-radius: 4px; height: 8px; overflow: hidden; }
+  .srv-bar-fill { height: 100%; border-radius: 4px; transition: width 0.3s; }
+  .srv-count { font-size: 0.8rem; font-variant-numeric: tabular-nums; width: 28px; text-align: right; color: #58a6ff; }
+
+  .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid #21262d; }
+  .stat-row:last-child { border-bottom: none; }
+  .stat-label { font-size: 0.82rem; color: #8b949e; }
+  .stat-value { font-size: 0.95rem; font-weight: 600; color: #58a6ff; font-variant-numeric: tabular-nums; }
+
+  .algo-explain { background: #0d1a2a; border: 1px solid #1f6feb; border-radius: 6px; padding: 12px; }
+  .algo-explain p { font-size: 0.82rem; color: #8b949e; line-height: 1.55; }
+  .algo-explain strong { color: #58a6ff; }
+
+  .weight-controls { display: none; }
+  .weight-controls.visible { display: block; }
+  .w-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; font-size: 0.82rem; }
+  .w-row span { color: #8b949e; }
+  .weight-badge { background: #1f6feb; color: #fff; border-radius: 10px; padding: 2px 8px; font-size: 0.75rem; font-weight: 600; }
+</style>
+</head>
+<body>
+<nav>
+  <span class="navbar-brand">⚙️ Load Balancing: Algorithms</span>
+  <a href="index.html">← System Design Labs</a>
+</nav>
+<div class="container">
+  <h1>Load Balancing: Algorithms</h1>
+  <p class="subtitle">See how different load balancing algorithms distribute requests across your server fleet.</p>
+
+  <div class="algo-tabs">
+    <button class="algo-tab active" onclick="setAlgo('rr')">Round Robin</button>
+    <button class="algo-tab" onclick="setAlgo('lc')">Least Connections</button>
+    <button class="algo-tab" onclick="setAlgo('wt')">Weighted</button>
+  </div>
+
+  <div class="main-grid">
+    <div class="canvas-card">
+      <canvas id="canvas"></canvas>
+    </div>
+    <div class="side-panel">
+      <div class="panel-card">
+        <h3>Controls</h3>
+        <button class="btn blue" onclick="burstRequests()">⚡ Burst 10 Requests</button>
+        <button class="btn" onclick="togglePause()" id="pauseBtn">⏸ Pause</button>
+        <div class="weight-controls" id="weightControls">
+          <div style="margin-top:8px; padding-top:8px; border-top:1px solid #30363d;">
+            <div style="font-size:0.78rem;color:#8b949e;margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;">Server Weights</div>
+            <div class="w-row"><span>Server 1</span><span class="weight-badge">1x</span></div>
+            <div class="w-row"><span>Server 2</span><span class="weight-badge">2x</span></div>
+            <div class="w-row"><span>Server 3</span><span class="weight-badge">3x</span></div>
+            <div class="w-row"><span>Server 4</span><span class="weight-badge">4x</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-card">
+        <h3>Connection Load</h3>
+        <div class="server-stats" id="serverStats"></div>
+      </div>
+
+      <div class="panel-card">
+        <h3>Totals</h3>
+        <div class="stat-row"><span class="stat-label">Total Requests</span><span class="stat-value" id="totalReq">0</span></div>
+        <div class="stat-row"><span class="stat-label">Completed</span><span class="stat-value" id="completedReq">0</span></div>
+        <div class="stat-row"><span class="stat-label">Req / Sec</span><span class="stat-value" id="rpsVal">0</span></div>
+      </div>
+
+      <div class="panel-card">
+        <h3>How It Works</h3>
+        <div class="algo-explain" id="algoExplain"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let W, H;
+let algo = 'rr';
+let paused = false;
+let frame = 0;
+let rrIndex = 0;
+const WEIGHTS = [1, 2, 3, 4];
+let weightTokens = []; // round-robin tokens for weighted
+let totalReq = 0, completedReq = 0, rpsAccum = 0, rps = 0;
+let lastRpsTime = Date.now();
+
+const NUM_SERVERS = 4;
+const SERVER_COLORS = ['#58a6ff', '#7ee787', '#d29922', '#bc8cff'];
+
+let servers = Array.from({ length: NUM_SERVERS }, (_, i) => ({
+  id: i, connections: 0, total: 0, health: 1,
+  flashTimer: 0, x: 0, y: 0, w: 90, h: 54,
+}));
+
+let packets = [];
+let lbNode = { x: 0, y: 0 };
+
+function resize() {
+  W = canvas.parentElement.clientWidth;
+  H = 420;
+  canvas.width = W;
+  canvas.height = H;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+  layoutNodes();
+}
+
+function layoutNodes() {
+  lbNode = { x: W * 0.22, y: H / 2, w: 90, h: 54 };
+  const gap = (H - 80) / (NUM_SERVERS - 1);
+  servers.forEach((s, i) => {
+    s.x = W * 0.68;
+    s.y = 60 + i * gap;
+  });
+}
+
+function setAlgo(a) {
+  algo = a;
+  rrIndex = 0;
+  buildWeightTokens();
+  document.querySelectorAll('.algo-tab').forEach((t, i) => {
+    t.classList.toggle('active', ['rr', 'lc', 'wt'][i] === a);
+  });
+  document.getElementById('weightControls').classList.toggle('visible', a === 'wt');
+  updateAlgoExplain();
+}
+
+function buildWeightTokens() {
+  weightTokens = [];
+  WEIGHTS.forEach((w, i) => { for (let j = 0; j < w; j++) weightTokens.push(i); });
+  weightTokens.sort(() => Math.random() - 0.5); // not actually shuffled for determinism
+  weightTokens = [];
+  WEIGHTS.forEach((w, i) => { for (let j = 0; j < w; j++) weightTokens.push(i); });
+}
+
+function pickServer() {
+  if (algo === 'rr') {
+    const idx = rrIndex % NUM_SERVERS;
+    rrIndex++;
+    return idx;
+  } else if (algo === 'lc') {
+    let best = 0;
+    servers.forEach((s, i) => { if (s.connections < servers[best].connections) best = i; });
+    return best;
+  } else {
+    // Weighted round robin
+    const idx = weightTokens[rrIndex % weightTokens.length];
+    rrIndex++;
+    return idx;
+  }
+}
+
+function spawnPacket() {
+  const target = pickServer();
+  const p = {
+    x: 30, y: H / 2,
+    sx: 30, sy: H / 2,
+    mx: lbNode.x, my: H / 2, // midpoint (LB)
+    tx: servers[target].x, ty: servers[target].y,
+    target, phase: 'to-lb', progress: 0,
+    speed: 0.035 + Math.random() * 0.02,
+    color: SERVER_COLORS[target],
+    alpha: 1, completeTimer: 0,
+  };
+  packets.push(p);
+  totalReq++;
+}
+
+function burstRequests() {
+  for (let i = 0; i < 10; i++) setTimeout(spawnPacket, i * 60);
+}
+
+function togglePause() {
+  paused = !paused;
+  document.getElementById('pauseBtn').textContent = paused ? '▶ Resume' : '⏸ Pause';
+  if (!paused) animate();
+}
+
+function lerp(a, b, t) { return a + (b - a) * t; }
+
+function updatePackets() {
+  packets.forEach(p => {
+    if (p.phase === 'to-lb') {
+      p.progress = Math.min(p.progress + p.speed * 2, 1);
+      p.x = lerp(p.sx, p.mx, p.progress);
+      p.y = lerp(p.sy, p.my, p.progress);
+      if (p.progress >= 1) { p.phase = 'to-srv'; p.progress = 0; }
+    } else if (p.phase === 'to-srv') {
+      p.progress = Math.min(p.progress + p.speed, 1);
+      p.x = lerp(p.mx, p.tx, p.progress);
+      p.y = lerp(p.my, p.ty, p.progress);
+      if (p.progress >= 1) {
+        p.phase = 'processing';
+        p.timer = 40 + Math.floor(Math.random() * 40);
+        servers[p.target].connections++;
+        servers[p.target].flashTimer = 10;
+      }
+    } else if (p.phase === 'processing') {
+      p.timer--;
+      if (p.timer <= 0) {
+        servers[p.target].connections = Math.max(0, servers[p.target].connections - 1);
+        servers[p.target].total++;
+        p.phase = 'done';
+        completedReq++; rpsAccum++;
+      }
+    }
+  });
+  packets = packets.filter(p => p.phase !== 'done');
+  servers.forEach(s => { if (s.flashTimer > 0) s.flashTimer--; });
+}
+
+function drawScene() {
+  ctx.clearRect(0, 0, W, H);
+
+  // Client emitter
+  drawBox(20, H / 2, 60, 44, '#1a2a1a', '#3fb950', 'CLIENT', '#7ee787');
+  ctx.fillStyle = '#8b949e'; ctx.font = '9px -apple-system,sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('→→→', (20 + lbNode.x) / 2, H / 2 + 1);
+
+  // Lines from LB to each server
+  servers.forEach((s, i) => {
+    ctx.save();
+    ctx.setLineDash([5, 6]); ctx.strokeStyle = '#21262d'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(lbNode.x + lbNode.w / 2, lbNode.y); ctx.lineTo(s.x - s.w / 2, s.y);
+    ctx.stroke(); ctx.restore();
+  });
+
+  // LB node
+  const lbPulse = 0.5 + 0.5 * Math.sin(frame * 0.06);
+  ctx.save();
+  ctx.shadowColor = `rgba(88,166,255,${lbPulse})`; ctx.shadowBlur = 14;
+  drawBox(lbNode.x, lbNode.y, lbNode.w, lbNode.h, '#0d1a2a', '#58a6ff', 'LOAD', '#58a6ff', 'BALANCER');
+  ctx.restore();
+
+  // Servers
+  servers.forEach((s, i) => {
+    const load = Math.min(s.connections / 8, 1);
+    const baseColor = SERVER_COLORS[i];
+    const flashAlpha = s.flashTimer / 10;
+    ctx.save();
+    ctx.shadowColor = baseColor; ctx.shadowBlur = flashAlpha * 18;
+    const bg = s.flashTimer > 0 ? lerpColor('#0d1a2a', '#1a2030', flashAlpha) : '#0d1117';
+    drawBox(s.x, s.y, s.w, s.h, bg, baseColor, `SRV ${i + 1}`, baseColor);
+    ctx.restore();
+
+    // Connection counter
+    ctx.fillStyle = '#c9d1d9'; ctx.font = 'bold 12px -apple-system,sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(`${s.connections} conn`, s.x, s.y + 7);
+
+    // Mini load bar
+    const bw = s.w - 14, bx = s.x - bw / 2, by = s.y + 16;
+    ctx.fillStyle = '#21262d'; roundRect(ctx, bx, by, bw, 5, 2); ctx.fill();
+    ctx.fillStyle = load > 0.8 ? '#f85149' : load > 0.5 ? '#d29922' : baseColor;
+    if (bw * load > 0) { roundRect(ctx, bx, by, bw * load, 5, 2); ctx.fill(); }
+
+    // Weight badge if weighted mode
+    if (algo === 'wt') {
+      const w = WEIGHTS[i];
+      ctx.fillStyle = '#1f6feb'; roundRect(ctx, s.x + s.w / 2 + 4, s.y - 14, 24, 16, 4); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.font = 'bold 10px -apple-system,sans-serif';
+      ctx.fillText(`${w}x`, s.x + s.w / 2 + 16, s.y - 3);
+    }
+  });
+
+  // Packets
+  packets.forEach(p => {
+    if (p.phase === 'processing') return;
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, p.alpha);
+    ctx.fillStyle = p.color;
+    ctx.shadowColor = p.color; ctx.shadowBlur = 10;
+    ctx.beginPath(); ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  });
+
+  // Processing dots on servers (jittering)
+  packets.filter(p => p.phase === 'processing').forEach(p => {
+    ctx.save();
+    ctx.globalAlpha = 0.6 + 0.4 * Math.sin(frame * 0.3 + p.target);
+    ctx.fillStyle = p.color; ctx.shadowColor = p.color; ctx.shadowBlur = 6;
+    ctx.beginPath();
+    ctx.arc(p.tx + (Math.random() - 0.5) * 22, p.ty + (Math.random() - 0.5) * 16, 3.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  });
+}
+
+function drawBox(cx, cy, w, h, bg, border, line1, c1, line2) {
+  ctx.fillStyle = bg; ctx.strokeStyle = border; ctx.lineWidth = 1.8;
+  roundRect(ctx, cx - w / 2, cy - h / 2, w, h, 6); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = c1 || border; ctx.font = 'bold 11px -apple-system,sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText(line1, cx, cy - (line2 ? 5 : 4));
+  if (line2) { ctx.fillStyle = '#8b949e'; ctx.font = '9px -apple-system,sans-serif'; ctx.fillText(line2, cx, cy + 8); }
+}
+
+function updateUI() {
+  const now = Date.now();
+  if (now - lastRpsTime >= 1000) { rps = rpsAccum; rpsAccum = 0; lastRpsTime = now; }
+  document.getElementById('totalReq').textContent = totalReq;
+  document.getElementById('completedReq').textContent = completedReq;
+  document.getElementById('rpsVal').textContent = rps;
+
+  const maxConn = Math.max(...servers.map(s => s.connections), 1);
+  document.getElementById('serverStats').innerHTML = servers.map((s, i) => `
+    <div class="srv-row">
+      <span class="srv-label" style="color:${SERVER_COLORS[i]}">SRV ${i + 1}</span>
+      <div class="srv-bar-bg">
+        <div class="srv-bar-fill" style="width:${(s.connections / Math.max(maxConn, 1)) * 100}%;background:${SERVER_COLORS[i]}"></div>
+      </div>
+      <span class="srv-count">${s.connections}</span>
+    </div>
+  `).join('');
+}
+
+function updateAlgoExplain() {
+  const texts = {
+    rr: `<strong>Round Robin</strong> rotates requests evenly across all servers in sequence: 1→2→3→4→1→2... Simple and fair, but ignores actual server load.`,
+    lc: `<strong>Least Connections</strong> routes each new request to whichever server currently has the fewest active connections — great for variable request durations.`,
+    wt: `<strong>Weighted</strong> distributes more traffic to higher-capacity servers. Server 4 (4x weight) gets 4× as many requests as Server 1 (1x weight).`,
+  };
+  document.getElementById('algoExplain').innerHTML = `<p>${texts[algo]}</p>`;
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath(); ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r); ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function lerpColor(a, b, t) {
+  const pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16);
+  const ar = (pa >> 16) & 255, ag = (pa >> 8) & 255, ab = pa & 255;
+  const br = (pb >> 16) & 255, bg = (pb >> 8) & 255, bb = pb & 255;
+  const r = Math.round(ar + (br - ar) * t), g = Math.round(ag + (bg - ag) * t), bv = Math.round(ab + (bb - ab) * t);
+  return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${bv.toString(16).padStart(2,'0')}`;
+}
+
+let animId;
+function animate() {
+  if (paused) return;
+  frame++;
+  if (frame % 8 === 0) spawnPacket();
+  updatePackets();
+  drawScene();
+  updateUI();
+  animId = requestAnimationFrame(animate);
+}
+
+window.addEventListener('resize', () => { resize(); });
+resize();
+buildWeightTokens();
+setAlgo('rr');
+animate();
+</script>
+</body>
+</html>

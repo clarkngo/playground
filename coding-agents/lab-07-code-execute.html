@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Code Execution & Sandboxing — Coding Agents</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0d1117; color: #e6edf3; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
+  a { color: #58a6ff; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  nav { background: #161b22; border-bottom: 1px solid #30363d; padding: 0 24px; height: 56px; display: flex; align-items: center; gap: 24px; }
+  nav .brand { font-weight: 700; font-size: 1.05rem; color: #e6edf3; }
+  nav .back { font-size: 0.875rem; color: #8b949e; }
+  nav .back:hover { color: #58a6ff; }
+  nav .spacer { flex: 1; }
+  nav .lab-title { font-size: 0.875rem; color: #8b949e; }
+
+  .container { max-width: 960px; margin: 0 auto; padding: 24px 16px; }
+  h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 6px; }
+  .subtitle { color: #8b949e; font-size: 0.9rem; margin-bottom: 24px; }
+
+  .main-grid { display: grid; grid-template-columns: 1fr 300px; gap: 16px; }
+  @media (max-width: 700px) { .main-grid { grid-template-columns: 1fr; } }
+
+  .panel { background: #161b22; border: 1px solid #30363d; border-radius: 8px; overflow: hidden; }
+  .panel-header { padding: 12px 16px; border-bottom: 1px solid #30363d; font-size: 0.8rem; font-weight: 600; color: #8b949e; text-transform: uppercase; letter-spacing: 0.05em; display:flex; align-items:center; gap:8px; }
+
+  canvas { display: block; width: 100%; background: #0d1117; }
+
+  .controls { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+  label { font-size: 0.8rem; color: #8b949e; display: block; margin-bottom: 4px; }
+  select, button { width: 100%; padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; border: 1px solid #30363d; cursor: pointer; }
+  select { background: #0d1117; color: #e6edf3; }
+  button { background: #21262d; color: #e6edf3; font-weight: 600; transition: background 0.15s; }
+  button:hover:not(:disabled) { background: #30363d; }
+  button.primary { background: #1f6feb; border-color: #388bfd; }
+  button.primary:hover:not(:disabled) { background: #388bfd; }
+  button.danger { background: #6e1f1f; border-color: #f85149; }
+  button.danger:hover:not(:disabled) { background: #da3633; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .tab-row { display: flex; border-bottom: 1px solid #30363d; }
+  .tab { padding: 8px 14px; font-size: 0.8rem; cursor: pointer; color: #8b949e; border-bottom: 2px solid transparent; background: none; border-radius: 0; width: auto; text-align: left; }
+  .tab.active { color: #58a6ff; border-bottom-color: #58a6ff; }
+  .tab:hover:not(.active) { color: #e6edf3; background: none; }
+
+  .iter-slider { display: flex; align-items: center; gap: 10px; }
+  .iter-slider input { flex:1; accent-color: #58a6ff; }
+  .iter-slider span { font-size: 0.8rem; color: #8b949e; width: 20px; }
+
+  /* insight panel */
+  .insight { padding: 14px; font-size: 0.82rem; line-height: 1.6; }
+  .insight h3 { font-size: 0.85rem; font-weight: 700; color: #58a6ff; margin-bottom: 8px; }
+  .stat-row { display: flex; justify-content: space-between; margin: 5px 0; padding: 5px 8px; background: #0d1117; border-radius: 4px; }
+  .stat-label { color: #8b949e; }
+  .stat-value { color: #e6edf3; font-weight: 600; font-family: monospace; }
+  .code-block { background: #0d1117; border: 1px solid #30363d; border-radius: 4px; padding: 8px 10px; font-family: 'SFMono-Regular', Consolas, monospace; font-size: 0.72rem; line-height: 1.5; white-space: pre; overflow-x: auto; margin: 8px 0; }
+  .code-block .kw { color: #ff7b72; }
+  .code-block .fn { color: #d2a8ff; }
+  .code-block .str { color: #a5d6ff; }
+  .code-block .cm { color: #8b949e; }
+  .code-block .num { color: #79c0ff; }
+  .output-block { background: #0d1117; border: 1px solid #30363d; border-left: 3px solid #3fb950; border-radius: 4px; padding: 8px 10px; font-family: monospace; font-size: 0.72rem; line-height: 1.5; white-space: pre; margin: 8px 0; }
+  .output-block.error { border-left-color: #f85149; color: #f85149; }
+  .info-box { background: #0d1117; border-left: 3px solid #58a6ff; padding: 8px 10px; border-radius: 0 4px 4px 0; margin-top: 10px; font-size: 0.78rem; color: #8b949e; line-height: 1.5; }
+  .info-box.warn { border-color: #e3b341; }
+  .info-box.error { border-color: #f85149; }
+
+  /* ── Explanation Sections ── */
+  .explain-section { margin-top: 40px; }
+  .explain-section + .explain-section { margin-top: 32px; }
+  .explain-h2 { font-size: 18px; font-weight: 700; color: #e6edf3; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid #30363d; display: flex; align-items: center; gap: 10px; }
+  .explain-h2 .ehead-icon { font-size: 20px; }
+  .explain-p { color: #8b949e; font-size: 14px; line-height: 1.8; margin-bottom: 12px; }
+  .explain-p strong { color: #e6edf3; }
+  .explain-p code { background: #21262d; border: 1px solid #30363d; border-radius: 4px; padding: 1px 6px; font-family: 'SF Mono','Fira Code',monospace; font-size: 12px; color: #a5d6ff; }
+  .explain-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; margin-bottom: 16px; }
+  .explain-card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 18px 20px; }
+  .explain-card-title { font-size: 13px; font-weight: 700; color: #e6edf3; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .explain-card p { font-size: 13px; color: #8b949e; line-height: 1.7; }
+  .explain-card code { background: #21262d; border-radius: 3px; padding: 1px 5px; font-family: monospace; font-size: 11px; color: #a5d6ff; }
+  .steps-list { counter-reset: step; list-style: none; display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
+  .steps-list li { counter-increment: step; display: flex; gap: 14px; }
+  .steps-list li::before { content: counter(step); min-width: 28px; height: 28px; background: #21262d; border: 1px solid #30363d; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #58a6ff; flex-shrink: 0; margin-top: 2px; }
+  .steps-list li .step-body { flex: 1; }
+  .steps-list li .step-title { font-size: 14px; font-weight: 600; color: #e6edf3; margin-bottom: 3px; }
+  .steps-list li .step-desc { font-size: 13px; color: #8b949e; line-height: 1.7; }
+  .callout { border-radius: 10px; padding: 16px 20px; margin-bottom: 16px; display: flex; gap: 14px; }
+  .callout-info { background: #0d2137; border: 1px solid #1f4068; }
+  .callout-warn { background: #2d1f00; border: 1px solid #5a3e00; }
+  .callout-tip  { background: #0d2d0d; border: 1px solid #1f5c1f; }
+  .callout-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .callout-body { flex: 1; }
+  .callout-title { font-size: 13px; font-weight: 700; margin-bottom: 5px; }
+  .callout-info .callout-title { color: #58a6ff; }
+  .callout-warn .callout-title { color: #e3b341; }
+  .callout-tip  .callout-title { color: #3fb950; }
+  .callout-body p { font-size: 13px; color: #8b949e; line-height: 1.7; }
+  .callout-body p strong { color: #e6edf3; }
+  .takeaways { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 20px 24px; }
+  .takeaway-item { display: flex; gap: 12px; padding: 8px 0; }
+  .takeaway-item + .takeaway-item { border-top: 1px solid #21262d; }
+  .takeaway-bullet { color: #58a6ff; font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+  .takeaway-text { font-size: 13px; color: #8b949e; line-height: 1.7; }
+  .takeaway-text strong { color: #e6edf3; }
+  .real-world-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+  .rw-badge { background: #21262d; border: 1px solid #30363d; border-radius: 20px; padding: 5px 14px; font-size: 12px; color: #8b949e; display: flex; align-items: center; gap: 6px; }
+  .rw-badge strong { color: #e6edf3; }
+  .pitfall-list { display: flex; flex-direction: column; gap: 10px; }
+  .pitfall { background: #1a0d0d; border: 1px solid #3d1515; border-radius: 8px; padding: 14px 18px; }
+  .pitfall-title { font-size: 13px; font-weight: 700; color: #f85149; margin-bottom: 5px; }
+  .pitfall p { font-size: 13px; color: #8b949e; line-height: 1.65; }
+  .pitfall p strong { color: #e6edf3; }
+  .compare-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 16px; }
+  .compare-table th { padding: 10px 14px; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: #8b949e; border-bottom: 1px solid #30363d; }
+  .compare-table td { padding: 10px 14px; border-bottom: 1px solid #21262d; color: #8b949e; vertical-align: top; }
+  .compare-table td:first-child { color: #e6edf3; font-weight: 600; }
+  .compare-table tr:last-child td { border-bottom: none; }
+  .divider { border: none; border-top: 1px solid #21262d; margin: 40px 0; }
+</style>
+</head>
+<body>
+<nav>
+  <span class="brand">🤖 Coding Agents</span>
+  <a class="back" href="../index.html">← Playground</a>
+  <span class="spacer"></span>
+  <span class="lab-title">Lab 07 — Code Execution & Sandboxing</span>
+</nav>
+
+<div class="container">
+  <h1>Code Execution & Sandboxing</h1>
+  <p class="subtitle">Agent writes code → sandbox executes → output feeds back into context → agent iterates</p>
+
+  <div class="main-grid">
+    <div>
+      <div class="panel">
+        <div class="panel-header">Execution Pipeline</div>
+        <canvas id="canvas" height="300"></canvas>
+      </div>
+      <div class="panel" style="margin-top:16px;">
+        <div class="panel-header">Controls</div>
+        <div class="controls">
+          <div>
+            <label>Scenario</label>
+            <select id="scenarioSelect">
+              <option value="0">Fix a bug</option>
+              <option value="1">Analyze data</option>
+              <option value="2">Generate a chart</option>
+              <option value="3">Run tests</option>
+            </select>
+          </div>
+          <div>
+            <label>Sandbox Mode</label>
+            <div class="tab-row">
+              <button class="tab active" data-sb="Python REPL">Python REPL</button>
+              <button class="tab" data-sb="Node.js">Node.js</button>
+              <button class="tab" data-sb="Bash">Bash</button>
+            </div>
+          </div>
+          <button class="primary" id="runBtn">▶ Write &amp; Execute</button>
+          <button class="danger" id="errorBtn">⚡ Introduce Error</button>
+          <div>
+            <label>Replay iterations</label>
+            <div class="iter-slider">
+              <input type="range" id="iterSlider" min="1" max="4" value="1">
+              <span id="iterVal">1</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="panel" style="align-self: start;">
+      <div class="panel-header">Insight</div>
+      <div class="insight" id="insight">
+        <h3>About This Lab</h3>
+        <p style="color:#8b949e;">Select a scenario and click <strong>Write &amp; Execute</strong> to watch an agent write code, run it in a sandbox, and iterate on the output.</p>
+        <div class="info-box">Code execution is a superpower for agents — it grounds them in reality. Each iteration the agent sees real stdout/stderr and can self-correct, something pure language models cannot do.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+<hr class="divider">
+
+<div class="explain-section">
+  <div class="explain-h2"><span class="ehead-icon">📖</span> Concept Overview</div>
+  <p class="explain-p"><strong>Code execution</strong> is one of the most powerful capabilities an agent can have. Instead of reasoning about what code would produce, the agent can actually run code and observe the real output. This closes a critical loop: hypotheses about code behavior can be verified empirically rather than inferred. The result is an agent that can debug, analyze data, generate visualizations, run tests, and build software with real feedback at each step.</p>
+  <p class="explain-p">Code execution requires a <strong>sandbox</strong> — an isolated environment where code runs safely, without access to the host system's sensitive files, network services, or credentials. The sandbox enforces resource limits (CPU time, memory, network access) and captures stdout, stderr, and exit codes. This output is then injected back into the agent's context as the "observation" that drives the next reasoning step.</p>
+  <p class="explain-p">The power of code execution emerges through <strong>iteration</strong>. The agent writes code, runs it, sees an error, reads the error, writes a fix, runs again. This loop can repeat dozens of times autonomously. Crucially, errors become information rather than failures — they tell the agent exactly what went wrong and where. An agent with code execution converges to correct solutions through empirical feedback in a way that no amount of static reasoning can match.</p>
+</div>
+
+<div class="explain-section">
+  <div class="explain-h2"><span class="ehead-icon">🔒</span> Sandboxing Architecture</div>
+  <div class="explain-grid">
+    <div class="explain-card">
+      <div class="explain-card-title">🐳 Container isolation (Docker)</div>
+      <p>Each execution spawns a fresh container. Strong isolation, reproducible environment, no state leakage between runs. Overhead: ~500ms startup. Used by: Devin, E2B, most production code execution APIs. Ideal for untrusted or user-submitted code.</p>
+    </div>
+    <div class="explain-card">
+      <div class="explain-card-title">⚡ In-process sandbox (Pyodide/Deno)</div>
+      <p>Python or JS runs inside the agent process using WebAssembly or V8 isolates. Near-zero startup time. Limited syscall access provides some isolation. Used by: ChatGPT Code Interpreter (Pyodide variant), browser-based agents. Fast but weaker isolation.</p>
+    </div>
+    <div class="explain-card">
+      <div class="explain-card-title">🖥️ VM snapshot</div>
+      <p>Execution restores to a known-good VM snapshot, runs code, captures output, reverts. Very strong isolation and reproducibility. High overhead (seconds per execution). Used by: research systems where determinism is critical.</p>
+    </div>
+    <div class="explain-card">
+      <div class="explain-card-title">🔐 Host process (trusted agent)</div>
+      <p>Code runs directly in the host process with no sandbox. Maximum capability, zero overhead — but requires a fully trusted agent. Used by: Claude Code, GitHub Copilot on developer machines. Acceptable when the user controls and has consented to the environment.</p>
+    </div>
+  </div>
+</div>
+
+<div class="explain-section">
+  <div class="explain-h2"><span class="ehead-icon">⚙️</span> The Code-Execute-Observe Loop</div>
+  <ol class="steps-list">
+    <li>
+      <div class="step-body">
+        <div class="step-title">Agent writes code</div>
+        <div class="step-desc">Based on the task and any prior observations, the agent generates code. Good agents write small, testable chunks rather than large monoliths — this makes errors easier to isolate and fix. The code is passed to the sandbox via a <code>run_code</code> or <code>bash</code> tool call.</div>
+      </div>
+    </li>
+    <li>
+      <div class="step-body">
+        <div class="step-title">Sandbox executes</div>
+        <div class="step-desc">The sandbox runs the code with time and memory limits. It captures stdout, stderr, return value, and any generated files. If the code times out or hits a memory limit, the sandbox returns a timeout error rather than hanging indefinitely.</div>
+      </div>
+    </li>
+    <li>
+      <div class="step-body">
+        <div class="step-title">Output injected as observation</div>
+        <div class="step-desc">The sandbox output (stdout + stderr + exit code) is formatted and injected into the agent's context as a tool result. The agent now "sees" exactly what the code produced — including any error tracebacks, which are rich debugging signals.</div>
+      </div>
+    </li>
+    <li>
+      <div class="step-body">
+        <div class="step-title">Agent reads output and reasons</div>
+        <div class="step-desc">The agent reads the output. If it's correct, it moves on. If there's an error, it reads the traceback, identifies the cause, and writes a fix in the next iteration. This self-correction loop is what makes code-execution agents so capable at debugging.</div>
+      </div>
+    </li>
+    <li>
+      <div class="step-body">
+        <div class="step-title">Iterate until done</div>
+        <div class="step-desc">The loop continues until the output matches expectations, tests pass, or a maximum iteration count is reached. Good agents track their iteration count and use it to diagnose stuck states: "I've tried 5 different approaches for this error — I should try a completely different strategy or ask for help."</div>
+      </div>
+    </li>
+  </ol>
+</div>
+
+<div class="explain-section">
+  <div class="callout callout-info">
+    <div class="callout-icon">💡</div>
+    <div class="callout-body">
+      <div class="callout-title">Why errors are features, not bugs</div>
+      <p>A Python traceback contains the exact file, line number, and error type that caused the failure. For an LLM, this is <strong>far more useful than asking it to predict behavior</strong>. Studies show that agents with code execution converge to correct solutions 2–5× faster than agents that reason about code without running it. The error message is the highest-signal feedback available.</p>
+    </div>
+  </div>
+  <div class="callout callout-warn">
+    <div class="callout-icon">⚠️</div>
+    <div class="callout-body">
+      <div class="callout-title">Context bloat from long outputs</div>
+      <p>If the sandbox produces thousands of lines of output (a large dataframe, verbose logs, test suite output), injecting all of it into context is wasteful. <strong>Always truncate or summarize long outputs</strong> — keep the first and last N lines, or extract just the error message from a verbose traceback. The agent rarely needs the full output to reason correctly.</p>
+    </div>
+  </div>
+</div>
+
+<div class="explain-section">
+  <div class="explain-h2"><span class="ehead-icon">🌍</span> Code Execution in Real Systems</div>
+  <div class="real-world-row">
+    <div class="rw-badge">🤖 <strong>Claude Code</strong> — Bash tool runs commands on developer's machine; full host access</div>
+    <div class="rw-badge">💬 <strong>ChatGPT Code Interpreter</strong> — Python sandbox via Pyodide; supports file I/O and charts</div>
+    <div class="rw-badge">🔬 <strong>Devin</strong> — full dev environment: terminal, browser, editor; Docker-based isolation</div>
+    <div class="rw-badge">⚡ <strong>E2B</strong> — cloud sandbox API; 50ms cold start; supports Python, JS, shell</div>
+    <div class="rw-badge">🏗️ <strong>GitHub Copilot Workspace</strong> — runs tests in CI after agent-generated changes</div>
+  </div>
+</div>
+
+<div class="explain-section">
+  <div class="explain-h2"><span class="ehead-icon">🪤</span> Common Pitfalls</div>
+  <div class="pitfall-list">
+    <div class="pitfall">
+      <div class="pitfall-title">Infinite retry loops on systematic errors</div>
+      <p>The agent keeps trying the same approach because it doesn't recognize that the error is fundamental (wrong library version, wrong API, misunderstood requirement). <strong>Fix:</strong> After N failed attempts, explicitly prompt the agent to try a completely different approach or escalate to the user.</p>
+    </div>
+    <div class="pitfall">
+      <div class="pitfall-title">Stateful sandbox confusion</div>
+      <p>If the sandbox is stateful (variables persist between executions), the agent may be confused by leftover state from previous iterations. <strong>Fix:</strong> Either use fresh sandboxes for each major step, or explicitly track and display the current sandbox state in the agent's context.</p>
+    </div>
+    <div class="pitfall">
+      <div class="pitfall-title">Dangerous code execution without review</div>
+      <p>An agent that can run arbitrary bash has the power to delete files, exfiltrate data, or make API calls with real consequences. <strong>Fix:</strong> Show the user what code will be run before execution for high-risk operations. Implement allowlists for shell commands in sensitive environments.</p>
+    </div>
+  </div>
+</div>
+
+<div class="explain-section">
+  <div class="explain-h2"><span class="ehead-icon">✅</span> Key Takeaways</div>
+  <div class="takeaways">
+    <div class="takeaway-item">
+      <div class="takeaway-bullet">→</div>
+      <div class="takeaway-text"><strong>Running code beats reasoning about code.</strong> Empirical feedback from execution is more reliable than static analysis. Agents with code execution tools consistently outperform those without on software tasks.</div>
+    </div>
+    <div class="takeaway-item">
+      <div class="takeaway-bullet">→</div>
+      <div class="takeaway-text"><strong>Error messages are high-signal observations.</strong> A traceback tells the agent exactly what went wrong. Design agents to read and reason about errors carefully rather than dismissing them or blindly retrying.</div>
+    </div>
+    <div class="takeaway-item">
+      <div class="takeaway-bullet">→</div>
+      <div class="takeaway-text"><strong>Sandbox choice reflects the trust model.</strong> Full host access (Claude Code) maximizes capability for trusted users. Container sandboxes protect the host for untrusted agents. Match sandbox isolation to the risk level of the use case.</div>
+    </div>
+    <div class="takeaway-item">
+      <div class="takeaway-bullet">→</div>
+      <div class="takeaway-text"><strong>Truncate long outputs aggressively.</strong> A full dataframe printout or verbose test log rarely adds useful information. Keep outputs concise to conserve context tokens for reasoning rather than raw data.</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+function resize() { canvas.width = canvas.parentElement.clientWidth; canvas.height = 300; }
+resize();
+window.addEventListener('resize', resize);
+
+// ── Scenario definitions ──────────────────────────────────────────────────────
+const SCENARIOS = [
+  {
+    name: "Fix a bug",
+    iterations: [
+      {
+        code: `<span class="kw">def</span> <span class="fn">calculate_avg</span>(nums):
+    total = <span class="fn">sum</span>(nums)
+    <span class="kw">return</span> total / <span class="fn">len</span>(nums)
+
+result = <span class="fn">calculate_avg</span>([])
+<span class="fn">print</span>(result)`,
+        output: `ZeroDivisionError: division by zero
+  File "script.py", line 5`,
+        isError: true,
+        thought: "Hmm, empty list causes division by zero. Need to handle that edge case.",
+        tokens: 312
+      },
+      {
+        code: `<span class="kw">def</span> <span class="fn">calculate_avg</span>(nums):
+    <span class="kw">if not</span> nums:
+        <span class="kw">return</span> <span class="num">0.0</span>
+    <span class="kw">return</span> <span class="fn">sum</span>(nums) / <span class="fn">len</span>(nums)
+
+<span class="fn">print</span>(<span class="fn">calculate_avg</span>([]))    <span class="cm"># → 0.0</span>
+<span class="fn">print</span>(<span class="fn">calculate_avg</span>([<span class="num">1</span>,<span class="num">2</span>,<span class="num">3</span>])) <span class="cm"># → 2.0</span>`,
+        output: `0.0\n2.0`,
+        isError: false,
+        thought: "Fixed! Guard clause handles the empty case. Tests pass.",
+        tokens: 284
+      }
+    ],
+    description: "Agent reads the ZeroDivisionError, identifies the missing guard clause, and fixes it in iteration 2."
+  },
+  {
+    name: "Analyze data",
+    iterations: [
+      {
+        code: `<span class="kw">import</span> json
+
+<span class="kw">with</span> <span class="fn">open</span>(<span class="str">'sales.json'</span>) <span class="kw">as</span> f:
+    data = json.<span class="fn">load</span>(f)
+
+<span class="fn">print</span>(data[<span class="str">'summary'</span>])`,
+        output: `FileNotFoundError: 'sales.json' not found`,
+        isError: true,
+        thought: "File missing — I should generate sample data inline instead.",
+        tokens: 198
+      },
+      {
+        code: `data = {<span class="str">'Q1'</span>:<span class="num">142000</span>, <span class="str">'Q2'</span>:<span class="num">167000</span>,
+        <span class="str">'Q3'</span>:<span class="num">189000</span>, <span class="str">'Q4'</span>:<span class="num">213000</span>}
+total = <span class="fn">sum</span>(data.values())
+growth = (data[<span class="str">'Q4'</span>]-data[<span class="str">'Q1'</span>])/data[<span class="str">'Q1'</span>]
+<span class="fn">print</span>(<span class="str">f"Total: ${total:,}"</span>)
+<span class="fn">print</span>(<span class="str">f"YoY Growth: {growth:.1%}"</span>)`,
+        output: `Total: $711,000\nYoY Growth: 50.0%`,
+        isError: false,
+        thought: "Good! 50% year-over-year growth. Let me also compute the trend.",
+        tokens: 267
+      },
+      {
+        code: `quarters = [<span class="num">142</span>,<span class="num">167</span>,<span class="num">189</span>,<span class="num">213</span>]
+diffs = [quarters[i]-quarters[i<span class="num">-1</span>]
+         <span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="num">1</span>,<span class="fn">len</span>(quarters))]
+<span class="fn">print</span>(<span class="str">"QoQ deltas:"</span>, diffs)
+<span class="fn">print</span>(<span class="str">"Avg growth/Q:"</span>, <span class="fn">sum</span>(diffs)//<span class="fn">len</span>(diffs))`,
+        output: `QoQ deltas: [25, 22, 24]\nAvg growth/Q: 23`,
+        isError: false,
+        thought: "Consistent ~$23K growth per quarter. Analysis complete.",
+        tokens: 231
+      }
+    ],
+    description: "Agent adapts when the file is missing, then iteratively deepens the analysis by computing growth rates and trends."
+  },
+  {
+    name: "Generate a chart",
+    iterations: [
+      {
+        code: `<span class="kw">import</span> matplotlib.pyplot <span class="kw">as</span> plt
+x = [<span class="num">1</span>,<span class="num">2</span>,<span class="num">3</span>,<span class="num">4</span>]
+y = [<span class="num">10</span>,<span class="num">14</span>,<span class="num">9</span>,<span class="num">18</span>]
+plt.<span class="fn">plot</span>(x, y)
+plt.<span class="fn">savefig</span>(<span class="str">'chart.png'</span>)`,
+        output: `ModuleNotFoundError: No module named 'matplotlib'`,
+        isError: true,
+        thought: "Matplotlib not available. I'll use ASCII chart instead.",
+        tokens: 156
+      },
+      {
+        code: `<span class="kw">def</span> <span class="fn">ascii_bar</span>(label, val, mx):
+    bar = <span class="str">'█'</span> * <span class="fn">int</span>(val/mx*<span class="num">20</span>)
+    <span class="fn">print</span>(<span class="str">f"{label:6} {bar} {val}"</span>)
+
+data = {<span class="str">'Mon'</span>:<span class="num">10</span>,<span class="str">'Tue'</span>:<span class="num">14</span>,<span class="str">'Wed'</span>:<span class="num">9</span>,<span class="str">'Thu'</span>:<span class="num">18</span>}
+mx = <span class="fn">max</span>(data.values())
+<span class="kw">for</span> k,v <span class="kw">in</span> data.<span class="fn">items</span>(): <span class="fn">ascii_bar</span>(k,v,mx)`,
+        output: `Mon    ███████████ 10\nTue    ███████████████ 14\nWed    ██████████ 9\nThu    ████████████████████ 18`,
+        isError: false,
+        thought: "ASCII chart works perfectly. Readable and no dependencies needed.",
+        tokens: 289
+      }
+    ],
+    description: "When a library is unavailable, the agent pivots to a pure-stdlib solution — a hallmark of adaptive self-correction."
+  },
+  {
+    name: "Run tests",
+    iterations: [
+      {
+        code: `<span class="kw">import</span> unittest
+
+<span class="kw">class</span> <span class="fn">TestParser</span>(unittest.TestCase):
+    <span class="kw">def</span> <span class="fn">test_parse_int</span>(self):
+        self.<span class="fn">assertEqual</span>(<span class="fn">parse</span>(<span class="str">"42"</span>), <span class="num">42</span>)
+    <span class="kw">def</span> <span class="fn">test_parse_neg</span>(self):
+        self.<span class="fn">assertEqual</span>(<span class="fn">parse</span>(<span class="str">"-7"</span>), <span class="num">-7</span>)
+
+unittest.<span class="fn">main</span>(verbosity=<span class="num">2</span>)`,
+        output: `NameError: name 'parse' is not defined`,
+        isError: true,
+        thought: "I need to define the parse() function first before running tests.",
+        tokens: 201
+      },
+      {
+        code: `<span class="kw">def</span> <span class="fn">parse</span>(s):
+    <span class="kw">return</span> <span class="fn">int</span>(s.<span class="fn">strip</span>())
+
+<span class="cm"># run tests inline</span>
+tests = [(<span class="str">"42"</span>,<span class="num">42</span>),(<span class="str">"-7"</span>,<span class="num">-7</span>),(<span class="str">" 0 "</span>,<span class="num">0</span>)]
+<span class="kw">for</span> inp, exp <span class="kw">in</span> tests:
+    got = <span class="fn">parse</span>(inp)
+    status = <span class="str">"PASS"</span> <span class="kw">if</span> got==exp <span class="kw">else</span> <span class="str">"FAIL"</span>
+    <span class="fn">print</span>(<span class="str">f"{status}: parse({inp!r}) = {got}"</span>)`,
+        output: `PASS: parse('42') = 42\nPASS: parse('-7') = -7\nPASS: parse(' 0 ') = 0`,
+        isError: false,
+        thought: "All 3 tests passing. Let me add an edge case for non-numeric input.",
+        tokens: 312
+      },
+      {
+        code: `<span class="kw">def</span> <span class="fn">parse</span>(s):
+    <span class="kw">try</span>:
+        <span class="kw">return</span> <span class="fn">int</span>(s.<span class="fn">strip</span>())
+    <span class="kw">except</span> ValueError:
+        <span class="kw">return</span> <span class="kw">None</span>
+
+<span class="fn">print</span>(<span class="fn">parse</span>(<span class="str">"abc"</span>))  <span class="cm"># should be None</span>
+<span class="fn">print</span>(<span class="fn">parse</span>(<span class="str">"99"</span>))   <span class="cm"># should be 99</span>`,
+        output: `None\n99`,
+        isError: false,
+        thought: "Edge cases handled. Function is robust. Tests complete.",
+        tokens: 198
+      }
+    ],
+    description: "Agent discovers missing function, rewrites to define it, then proactively adds edge-case tests — classic TDD loop."
+  }
+];
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let state = {
+  scenarioIdx: 0,
+  sbMode: 'Python REPL',
+  iteration: 0,
+  maxIter: 1,
+  phase: 'idle', // idle | writing | flying | executing | returning | done
+  forceError: false,
+  animT: 0,
+  raf: null,
+  typedChars: 0,
+  totalChars: 0,
+  particles: [],
+  gearAngle: 0,
+  codeY: 0,
+  outputX: 0,
+  ctxLines: 0,
+};
+
+function currentScenario() { return SCENARIOS[state.scenarioIdx]; }
+function currentIter() {
+  const sc = currentScenario();
+  const idx = Math.min(state.iteration, sc.iterations.length - 1);
+  const iter = sc.iterations[idx];
+  if (state.forceError && state.iteration === 0) {
+    return { ...iter, isError: true, output: iter.isError ? iter.output : `RuntimeError: unexpected error\n  at line 3` };
+  }
+  return iter;
+}
+
+// ── Drawing ───────────────────────────────────────────────────────────────────
+function draw() {
+  const w = canvas.width, h = canvas.height;
+  ctx.clearRect(0,0,w,h);
+  state.gearAngle += state.phase === 'executing' ? 0.06 : 0.01;
+
+  const pW = (w - 60) / 3;
+  const panels = [
+    { x: 10,          w: pW, label:'Agent', color:'#bc8cff' },
+    { x: 20 + pW,     w: pW, label:'Sandbox', color: state.phase === 'executing' ? '#e3b341' : state.phase === 'done' && currentIter().isError ? '#f85149' : '#3fb950' },
+    { x: 30 + pW*2,   w: pW, label:'Context', color:'#58a6ff' },
+  ];
+
+  for (const p of panels) {
+    // bg
+    ctx.fillStyle = '#161b22';
+    ctx.beginPath(); ctx.roundRect(p.x, 10, p.w, h-20, 6); ctx.fill();
+    ctx.strokeStyle = p.color+'66';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash(p.label==='Sandbox' ? [4,4] : []);
+    ctx.beginPath(); ctx.roundRect(p.x, 10, p.w, h-20, 6); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // header
+    ctx.fillStyle = p.color;
+    ctx.font = '700 11px -apple-system,sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(p.label, p.x + p.w/2, 28);
+
+    // divider
+    ctx.strokeStyle = p.color+'44';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(p.x+8, 36); ctx.lineTo(p.x+p.w-8, 36); ctx.stroke();
+  }
+
+  const ag = panels[0], sb = panels[1], ct = panels[2];
+
+  // ── Agent panel: code typing ──
+  if (state.phase !== 'idle') {
+    const iter = currentIter();
+    const strippedCode = iter.code.replace(/<[^>]+>/g,'');
+    const chars = state.phase === 'writing' ? Math.min(state.typedChars, strippedCode.length) : strippedCode.length;
+    const lines = strippedCode.slice(0,chars).split('\n');
+
+    ctx.fillStyle = '#0d1117';
+    ctx.beginPath(); ctx.roundRect(ag.x+6, 42, ag.w-12, h-60, 4); ctx.fill();
+
+    ctx.fillStyle = '#e6edf3';
+    ctx.font = '8.5px SFMono-Regular,Consolas,monospace';
+    ctx.textAlign = 'left';
+    lines.forEach((line,i) => {
+      ctx.fillText(line.slice(0, 28), ag.x+10, 56 + i*12);
+    });
+
+    // cursor blink
+    if (state.phase === 'writing' && Math.floor(Date.now()/500)%2===0) {
+      const lastLine = lines[lines.length-1];
+      const lx = ag.x+10 + ctx.measureText(lastLine.slice(0,28)).width;
+      const ly = 56 + (lines.length-1)*12;
+      ctx.fillStyle = '#bc8cff';
+      ctx.fillRect(lx+1, ly-8, 2, 10);
+    }
+
+    // thought bubble (above agent)
+    if (state.phase === 'done' || state.phase === 'returning') {
+      const thought = iter.thought;
+      ctx.fillStyle = '#21262d';
+      ctx.beginPath(); ctx.roundRect(ag.x+4, 42, ag.w-8, 28, 4); ctx.fill();
+      ctx.strokeStyle = '#bc8cff44'; ctx.lineWidth=1; ctx.stroke();
+      ctx.fillStyle = '#bc8cff'; ctx.font='8px -apple-system,sans-serif';
+      ctx.textAlign='center';
+      const tw = thought.slice(0, 30);
+      ctx.fillText('💭 ' + tw, ag.x+ag.w/2, 60);
+      if (thought.length > 30) ctx.fillText(thought.slice(30,60), ag.x+ag.w/2, 72);
+    }
+  }
+
+  // ── Sandbox: gear + status ──
+  if (state.phase === 'executing') {
+    const cx = sb.x + sb.w/2, cy = h/2;
+    // gear
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(state.gearAngle);
+    ctx.strokeStyle = '#e3b341';
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(0, 0, 22, 0, Math.PI*2); ctx.stroke();
+    for (let i=0;i<8;i++) {
+      const a = i*Math.PI/4;
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(a)*18, Math.sin(a)*18);
+      ctx.lineTo(Math.cos(a)*28, Math.sin(a)*28);
+      ctx.stroke();
+    }
+    ctx.restore();
+    ctx.fillStyle = '#e3b341';
+    ctx.font = '10px sans-serif'; ctx.textAlign='center';
+    ctx.fillText('Executing…', sb.x+sb.w/2, cy+40);
+    ctx.fillText(state.sbMode, sb.x+sb.w/2, cy+54);
+  }
+
+  if (state.phase === 'done' || state.phase === 'returning') {
+    const iter = currentIter();
+    const col = iter.isError ? '#f85149' : '#3fb950';
+    const icon = iter.isError ? '✕' : '✓';
+    ctx.fillStyle = col;
+    ctx.font = '700 22px sans-serif'; ctx.textAlign='center';
+    ctx.fillText(icon, sb.x+sb.w/2, h/2-8);
+    ctx.font = '9px -apple-system,sans-serif';
+    ctx.fillText(iter.isError ? 'Error' : 'Success', sb.x+sb.w/2, h/2+10);
+    ctx.fillStyle = '#8b949e'; ctx.font='8px sans-serif';
+    ctx.fillText(state.sbMode, sb.x+sb.w/2, h/2+24);
+  }
+
+  // ── Context panel: conversation lines ──
+  if (state.phase !== 'idle') {
+    const lines = [];
+    for (let i=0;i<=state.iteration;i++) {
+      const sc = currentScenario();
+      if (i < sc.iterations.length) {
+        const it = sc.iterations[i];
+        lines.push({ text:`[iter ${i+1}] Code written`, color:'#bc8cff' });
+        if (i < state.iteration || state.phase === 'done' || state.phase === 'returning') {
+          lines.push({ text: it.isError ? `stdout: ERROR` : `stdout: OK`, color: it.isError?'#f85149':'#3fb950' });
+          lines.push({ text: it.output.split('\n')[0].slice(0,22), color:'#8b949e' });
+        }
+      }
+    }
+
+    ctx.fillStyle = '#0d1117';
+    ctx.beginPath(); ctx.roundRect(ct.x+6, 42, ct.w-12, h-60, 4); ctx.fill();
+
+    const startL = Math.max(0, lines.length - 14);
+    ctx.font = '8px SFMono-Regular,Consolas,monospace';
+    lines.slice(startL).forEach((l,i) => {
+      ctx.fillStyle = l.color;
+      ctx.textAlign='left';
+      ctx.fillText(l.text.slice(0,22), ct.x+10, 56+i*11);
+    });
+
+    // context usage bar
+    const used = Math.min(lines.length / 20, 1);
+    ctx.fillStyle = '#21262d';
+    ctx.beginPath(); ctx.roundRect(ct.x+6, h-24, ct.w-12, 8, 2); ctx.fill();
+    ctx.fillStyle = used > 0.7 ? '#e3b341' : '#58a6ff';
+    ctx.beginPath(); ctx.roundRect(ct.x+6, h-24, (ct.w-12)*used, 8, 2); ctx.fill();
+    ctx.fillStyle = '#8b949e'; ctx.font='7px sans-serif'; ctx.textAlign='center';
+    ctx.fillText(`ctx ${Math.round(used*100)}%`, ct.x+ct.w/2, h-30);
+  }
+
+  // ── Animated packet flying ──
+  if (state.phase === 'flying' || state.phase === 'returning') {
+    const t = state.animT;
+    const fromP = state.phase==='flying' ? ag : sb;
+    const toP = state.phase==='flying' ? sb : ct;
+    const fx = fromP.x + fromP.w, fy = h/2;
+    const tx = toP.x, ty = h/2;
+    const px = fx + (tx-fx)*t, py = fy;
+
+    ctx.beginPath(); ctx.arc(px, py, 7, 0, Math.PI*2);
+    ctx.fillStyle = state.phase==='flying' ? '#bc8cff' : (currentIter().isError ? '#f85149' : '#3fb950');
+    ctx.fill();
+    ctx.fillStyle = '#0d1117'; ctx.font='8px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(state.phase==='flying'?'◊':'◈', px, py);
+    ctx.textBaseline = 'alphabetic';
+  }
+
+  // iteration progress dots
+  const sc = currentScenario();
+  const dotCount = sc.iterations.length;
+  const dotStartX = w/2 - (dotCount-1)*12;
+  for (let i=0;i<dotCount;i++) {
+    ctx.beginPath(); ctx.arc(dotStartX+i*24, h-6, 4, 0, Math.PI*2);
+    ctx.fillStyle = i < state.iteration ? '#3fb950' : i===state.iteration && state.phase!=='idle' ? '#58a6ff' : '#30363d';
+    ctx.fill();
+  }
+}
+
+// ── Animation loop ─────────────────────────────────────────────────────────────
+let rafId = null;
+function animate() {
+  draw();
+  rafId = requestAnimationFrame(animate);
+}
+animate();
+
+// ── Execution pipeline ────────────────────────────────────────────────────────
+let execTimeout = null;
+function clearET() { if (execTimeout) { clearTimeout(execTimeout); execTimeout=null; } }
+
+function runIteration() {
+  const sc = currentScenario();
+  if (state.iteration >= Math.min(state.maxIter, sc.iterations.length)) {
+    state.phase = 'done';
+    updateInsight();
+    document.getElementById('runBtn').disabled = false;
+    return;
+  }
+
+  // phase: writing
+  state.phase = 'writing';
+  const iter = currentIter();
+  const strippedCode = iter.code.replace(/<[^>]+>/g,'');
+  state.typedChars = 0;
+  state.totalChars = strippedCode.length;
+  updateInsight();
+
+  const typeSpeed = 18; // chars per tick
+  function typeCode() {
+    state.typedChars += typeSpeed;
+    if (state.typedChars >= state.totalChars) {
+      state.typedChars = state.totalChars;
+      // fly to sandbox
+      state.phase = 'flying';
+      state.animT = 0;
+      flyToSandbox();
+    } else {
+      execTimeout = setTimeout(typeCode, 40);
+    }
+  }
+  typeCode();
+}
+
+function flyToSandbox() {
+  state.animT = 0;
+  const step = () => {
+    state.animT += 0.08;
+    if (state.animT >= 1) {
+      state.phase = 'executing';
+      updateInsight();
+      execTimeout = setTimeout(() => {
+        state.phase = 'returning';
+        state.animT = 0;
+        returnToContext();
+      }, 1200);
+      return;
+    }
+    execTimeout = setTimeout(step, 20);
+  };
+  step();
+}
+
+function returnToContext() {
+  state.animT = 0;
+  const step = () => {
+    state.animT += 0.08;
+    if (state.animT >= 1) {
+      state.phase = 'done';
+      updateInsight();
+      const sc = currentScenario();
+      state.iteration++;
+      if (state.iteration < Math.min(state.maxIter, sc.iterations.length)) {
+        execTimeout = setTimeout(runIteration, 600);
+      } else {
+        document.getElementById('runBtn').disabled = false;
+        document.getElementById('errorBtn').disabled = false;
+      }
+      return;
+    }
+    execTimeout = setTimeout(step, 20);
+  };
+  step();
+}
+
+// ── Controls ──────────────────────────────────────────────────────────────────
+document.getElementById('scenarioSelect').addEventListener('change', e => {
+  clearET();
+  state.scenarioIdx = +e.target.value;
+  state.iteration = 0;
+  state.phase = 'idle';
+  state.forceError = false;
+  state.maxIter = +document.getElementById('iterSlider').value;
+  updateInsight();
+});
+
+document.querySelectorAll('.tab[data-sb]').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.tab[data-sb]').forEach(b=>b.classList.remove('active'));
+    this.classList.add('active');
+    state.sbMode = this.dataset.sb;
+  });
+});
+
+document.getElementById('runBtn').addEventListener('click', () => {
+  clearET();
+  state.iteration = 0;
+  state.phase = 'idle';
+  state.forceError = false;
+  state.maxIter = +document.getElementById('iterSlider').value;
+  document.getElementById('runBtn').disabled = true;
+  document.getElementById('errorBtn').disabled = false;
+  runIteration();
+});
+
+document.getElementById('errorBtn').addEventListener('click', () => {
+  if (state.phase === 'idle' || state.phase === 'done') {
+    state.forceError = true;
+    state.iteration = 0;
+    state.maxIter = Math.min(2, currentScenario().iterations.length);
+    document.getElementById('runBtn').disabled = true;
+    document.getElementById('errorBtn').disabled = true;
+    runIteration();
+  }
+});
+
+document.getElementById('iterSlider').addEventListener('input', function() {
+  state.maxIter = +this.value;
+  document.getElementById('iterVal').textContent = this.value;
+});
+
+// ── Insight ───────────────────────────────────────────────────────────────────
+function updateInsight() {
+  const sc = currentScenario();
+  const el = document.getElementById('insight');
+
+  if (state.phase === 'idle') {
+    el.innerHTML = `<h3>About This Lab</h3>
+      <p style="color:#8b949e;">Select a scenario and click <strong>Write &amp; Execute</strong> to watch the code-execute loop.</p>
+      <div class="info-box">Each iteration the agent sees real stdout/stderr and can self-correct — grounding language model outputs in runtime reality.</div>`;
+    return;
+  }
+
+  const iterNum = Math.min(state.iteration + 1, sc.iterations.length);
+  const iter = currentIter();
+  const totalIter = Math.min(state.maxIter, sc.iterations.length);
+
+  const phaseLabel = { writing:'Writing code…', flying:'Sending to sandbox…', executing:'Executing…', returning:'Reading output…', done:'Iteration complete' }[state.phase] || '';
+
+  let errorNote = '';
+  if (state.phase === 'done' && iter.isError) {
+    errorNote = `<div class="info-box error">⚠ Sandbox returned an error. Agent will self-correct in next iteration.</div>`;
+  } else if (state.phase === 'done' && !iter.isError) {
+    errorNote = `<div class="info-box" style="border-color:#3fb950;">✓ Execution succeeded. Output injected into context.</div>`;
+  }
+
+  el.innerHTML = `
+    <h3>${sc.name}</h3>
+    <div class="stat-row"><span class="stat-label">Iteration</span><span class="stat-value">${iterNum} / ${totalIter}</span></div>
+    <div class="stat-row"><span class="stat-label">Phase</span><span class="stat-value" style="color:#58a6ff;">${phaseLabel}</span></div>
+    <div class="stat-row"><span class="stat-label">Sandbox</span><span class="stat-value">${state.sbMode}</span></div>
+    <div class="stat-row"><span class="stat-label">~Tokens used</span><span class="stat-value">${iter.tokens}</span></div>
+    <div style="margin:8px 0 2px;color:#8b949e;font-size:0.75rem;">Code</div>
+    <div class="code-block">${iter.code.slice(0, 300)}</div>
+    ${(state.phase === 'done' || state.phase === 'returning') ? `<div style="margin:6px 0 2px;color:#8b949e;font-size:0.75rem;">Output</div><div class="output-block ${iter.isError?'error':''}">${iter.output}</div>` : ''}
+    ${errorNote}
+    <div class="info-box" style="margin-top:6px;">${sc.description}</div>`;
+}
+
+updateInsight();
+</script>
+</body>
+</html>

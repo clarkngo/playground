@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Microservices: Service Mesh & API Gateway</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0d1117; color: #c9d1d9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
+  nav { background: #161b22; border-bottom: 1px solid #30363d; padding: 12px 24px; display: flex; align-items: center; gap: 16px; flex-shrink: 0; }
+  nav .brand { font-weight: 700; font-size: 16px; color: #f0f6fc; }
+  nav a { color: #58a6ff; text-decoration: none; font-size: 14px; }
+  nav a:hover { text-decoration: underline; }
+  .main { display: flex; flex: 1; overflow: hidden; }
+  .canvas-area { flex: 1; position: relative; overflow: hidden; }
+  canvas { display: block; }
+  .sidebar { width: 300px; min-width: 300px; background: #161b22; border-left: 1px solid #30363d; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+  .panel { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 14px; }
+  .panel h3 { font-size: 12px; font-weight: 600; color: #8b949e; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+  .btn { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 14px; border-radius: 6px; border: 1px solid #30363d; background: #21262d; color: #c9d1d9; font-size: 13px; cursor: pointer; transition: all 0.2s; font-family: inherit; width: 100%; margin-bottom: 6px; }
+  .btn:hover { background: #30363d; }
+  .btn.primary { background: #238636; border-color: #2ea043; color: #fff; }
+  .btn.primary:hover { background: #2ea043; }
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid #21262d; font-size: 13px; }
+  .toggle-row:last-child { border-bottom: none; }
+  .toggle { position: relative; width: 36px; height: 20px; flex-shrink: 0; }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider { position: absolute; inset: 0; background: #30363d; border-radius: 20px; cursor: pointer; transition: 0.3s; }
+  .toggle-slider:before { content: ''; position: absolute; width: 14px; height: 14px; left: 3px; top: 3px; background: #8b949e; border-radius: 50%; transition: 0.3s; }
+  .toggle input:checked + .toggle-slider { background: #f85149; }
+  .toggle input:checked + .toggle-slider:before { transform: translateX(16px); background: #fff; }
+  .svc-list { display: flex; flex-direction: column; gap: 4px; }
+  .svc-item { display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; background: #161b22; border-radius: 6px; border: 1px solid #21262d; font-size: 12px; cursor: pointer; transition: all 0.2s; }
+  .svc-item:hover { border-color: #30363d; }
+  .svc-status { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .log-entry { font-size: 11px; padding: 3px 8px; border-radius: 4px; border-left: 3px solid; margin-bottom: 3px; }
+  .log-entry.ok { background: rgba(63,185,80,0.1); border-color: #3fb950; color: #3fb950; }
+  .log-entry.fail { background: rgba(248,81,73,0.1); border-color: #f85149; color: #f85149; }
+  .log-entry.async { background: rgba(88,166,255,0.1); border-color: #58a6ff; color: #58a6ff; }
+  .log-entry.info { background: rgba(210,153,34,0.1); border-color: #d29922; color: #d29922; }
+  .step-item { display: flex; align-items: flex-start; gap: 8px; padding: 5px 0; border-bottom: 1px solid #21262d; font-size: 12px; }
+  .step-item:last-child { border-bottom: none; }
+  .step-num { width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+</style>
+</head>
+<body>
+<nav>
+  <span class="brand">System Design Labs</span>
+  <span style="color:#30363d">|</span>
+  <a href="index.html">← System Design Labs</a>
+  <span style="flex:1"></span>
+  <span style="font-size:13px;color:#8b949e">11 — Microservices</span>
+</nav>
+<div class="main">
+  <div class="canvas-area">
+    <canvas id="canvas"></canvas>
+  </div>
+  <div class="sidebar">
+    <div class="panel">
+      <h3>Controls</h3>
+      <button class="btn primary" onclick="placeOrder()" id="orderBtn">🛒 Place Order</button>
+      <div class="toggle-row" style="margin-top:4px;">
+        <span>Sidecar Proxies</span>
+        <label class="toggle"><input type="checkbox" id="sidecarToggle" onchange="sidecarEnabled=this.checked"><span class="toggle-slider"></span></label>
+      </div>
+      <div class="toggle-row">
+        <span>Service Discovery</span>
+        <label class="toggle"><input type="checkbox" id="discoveryToggle" onchange="discoveryEnabled=this.checked"><span class="toggle-slider"></span></label>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Service Status (click to toggle)</h3>
+      <div class="svc-list" id="svcList"></div>
+    </div>
+
+    <div class="panel">
+      <h3>Request Flow (Place Order)</h3>
+      <div id="stepsList">
+        <div class="step-item"><div class="step-num" style="background:#21262d;color:#8b949e">1</div><div>Client → API Gateway</div></div>
+        <div class="step-item"><div class="step-num" style="background:#21262d;color:#8b949e">2</div><div>Gateway → Auth Service</div></div>
+        <div class="step-item"><div class="step-num" style="background:#21262d;color:#8b949e">3</div><div>Gateway → Product Service</div></div>
+        <div class="step-item"><div class="step-num" style="background:#21262d;color:#8b949e">4</div><div>Gateway → Order Service</div></div>
+        <div class="step-item"><div class="step-num" style="background:#21262d;color:#8b949e">5</div><div>Order → Notification (async)</div></div>
+        <div class="step-item"><div class="step-num" style="background:#21262d;color:#8b949e">6</div><div>Order → User History</div></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Request Log</h3>
+      <div id="log" style="max-height:160px;overflow-y:auto;"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+let sidecarEnabled = false, discoveryEnabled = false;
+
+const SERVICES = [
+  { id: 'auth', label: 'Auth', icon: '🔐', color: '#f0883e', online: true },
+  { id: 'user', label: 'User', icon: '👤', color: '#58a6ff', online: true },
+  { id: 'product', label: 'Product', icon: '📦', color: '#7ee787', online: true },
+  { id: 'order', label: 'Order', icon: '📋', color: '#d29922', online: true },
+  { id: 'notify', label: 'Notify', icon: '🔔', color: '#a5d6ff', online: true },
+];
+
+function resize() { canvas.width = canvas.parentElement.clientWidth; canvas.height = canvas.parentElement.clientHeight; }
+resize();
+window.addEventListener('resize', resize);
+
+function layout() {
+  const cx = canvas.width / 2;
+  const gatewayY = 90;
+  const svcY = canvas.height * 0.52;
+  const spacing = Math.min((canvas.width - 120) / 5, 140);
+  const startX = cx - spacing * 2;
+
+  const gateway = { x: cx, y: gatewayY, w: 160, h: 50 };
+  const client = { x: cx, y: 32 };
+  const svcs = SERVICES.map((s, i) => ({ ...s, x: startX + i * spacing, y: svcY }));
+  const registry = { x: canvas.width - 70, y: svcY };
+  return { gateway, client, svcs, registry };
+}
+
+let particles = [];
+let orderRunning = false;
+
+function addLog(msg, type) {
+  const el = document.getElementById('log');
+  const div = document.createElement('div');
+  div.className = `log-entry ${type}`;
+  div.textContent = `${new Date().toLocaleTimeString()} ${msg}`;
+  el.prepend(div);
+  while (el.children.length > 15) el.removeChild(el.lastChild);
+}
+
+function highlightStep(stepIdx, ok) {
+  const items = document.querySelectorAll('.step-item .step-num');
+  if (items[stepIdx]) {
+    items[stepIdx].style.background = ok ? '#3fb950' : '#f85149';
+    items[stepIdx].style.color = '#fff';
+    setTimeout(() => {
+      items[stepIdx].style.background = '#21262d';
+      items[stepIdx].style.color = '#8b949e';
+    }, 2000);
+  }
+}
+
+function spawnParticle(from, to, color, delay, onDone) {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      particles.push({
+        sx: from.x, sy: from.y,
+        tx: to.x, ty: to.y,
+        color, progress: 0, speed: 0.025,
+        done: false, resolved: false,
+        onDone: () => { if (onDone) onDone(); resolve(); }
+      });
+    }, delay);
+  });
+}
+
+async function placeOrder() {
+  if (orderRunning) return;
+  orderRunning = true;
+  document.getElementById('orderBtn').disabled = true;
+  document.getElementById('orderBtn').textContent = '⏳ Processing...';
+
+  const L = layout();
+  const gw = { x: L.gateway.x, y: L.gateway.y + L.gateway.h / 2 };
+  const getS = id => { const s = L.svcs.find(s => s.id === id); return s ? { x: s.x, y: s.y - 30 } : null; };
+
+  // Step 1: Client → Gateway
+  addLog('Client → API Gateway', 'info');
+  highlightStep(0, true);
+  await spawnParticle({ x: L.client.x, y: L.client.y + 10 }, gw, '#f0f6fc', 0);
+
+  // Step 2: Gateway → Auth
+  const authSvc = SERVICES.find(s => s.id === 'auth');
+  if (!authSvc.online) {
+    addLog('Auth Service OFFLINE — request blocked', 'fail');
+    highlightStep(1, false);
+    orderRunning = false;
+    document.getElementById('orderBtn').disabled = false;
+    document.getElementById('orderBtn').textContent = '🛒 Place Order';
+    return;
+  }
+  addLog('Gateway → Auth Service (token check)', 'ok');
+  highlightStep(1, true);
+  await spawnParticle(gw, getS('auth'), '#f0883e', 0);
+  await spawnParticle(getS('auth'), gw, '#f0883e', 100);
+
+  // Step 3: Gateway → Product
+  const prodSvc = SERVICES.find(s => s.id === 'product');
+  if (!prodSvc.online) {
+    addLog('Product Service OFFLINE — cannot check inventory', 'fail');
+    highlightStep(2, false);
+    orderRunning = false;
+    document.getElementById('orderBtn').disabled = false;
+    document.getElementById('orderBtn').textContent = '🛒 Place Order';
+    return;
+  }
+  addLog('Gateway → Product Service (check inventory)', 'ok');
+  highlightStep(2, true);
+  await spawnParticle(gw, getS('product'), '#7ee787', 0);
+  await spawnParticle(getS('product'), gw, '#7ee787', 100);
+
+  // Step 4: Gateway → Order
+  const orderSvc = SERVICES.find(s => s.id === 'order');
+  if (!orderSvc.online) {
+    addLog('Order Service OFFLINE — order failed', 'fail');
+    highlightStep(3, false);
+    orderRunning = false;
+    document.getElementById('orderBtn').disabled = false;
+    document.getElementById('orderBtn').textContent = '🛒 Place Order';
+    return;
+  }
+  addLog('Gateway → Order Service (create order)', 'ok');
+  highlightStep(3, true);
+  await spawnParticle(gw, getS('order'), '#d29922', 0);
+  await spawnParticle(getS('order'), gw, '#d29922', 200);
+
+  // Step 5: Order → Notification (async)
+  addLog('Order → Notification (async fire-and-forget)', 'async');
+  highlightStep(4, SERVICES.find(s => s.id === 'notify').online);
+  spawnParticle(getS('order'), getS('notify'), '#a5d6ff', 0);
+
+  // Step 6: Order → User
+  const userSvc = SERVICES.find(s => s.id === 'user');
+  addLog('Order → User Service (update history)', userSvc.online ? 'ok' : 'fail');
+  highlightStep(5, userSvc.online);
+  if (userSvc.online) {
+    await spawnParticle(getS('order'), getS('user'), '#58a6ff', 200);
+  }
+
+  addLog('✓ Order placed successfully', 'ok');
+
+  setTimeout(() => {
+    orderRunning = false;
+    document.getElementById('orderBtn').disabled = false;
+    document.getElementById('orderBtn').textContent = '🛒 Place Order';
+  }, 800);
+}
+
+function buildSvcList() {
+  const el = document.getElementById('svcList');
+  el.innerHTML = '';
+  SERVICES.forEach((s, i) => {
+    const div = document.createElement('div');
+    div.className = 'svc-item';
+    div.onclick = () => { s.online = !s.online; buildSvcList(); };
+    div.innerHTML = `
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div class="svc-status" style="background:${s.online ? s.color : '#30363d'}"></div>
+        <span>${s.icon} ${s.label}</span>
+      </div>
+      <span style="font-size:11px;color:${s.online ? '#3fb950' : '#f85149'}">${s.online ? 'Online' : 'Offline'}</span>
+    `;
+    el.appendChild(div);
+  });
+}
+buildSvcList();
+
+function drawGateway(gw) {
+  ctx.save();
+  ctx.shadowColor = '#f85149';
+  ctx.shadowBlur = 10;
+  ctx.beginPath();
+  ctx.roundRect(gw.x - gw.w / 2, gw.y, gw.w, gw.h, 8);
+  ctx.fillStyle = '#1a0d00';
+  ctx.fill();
+  ctx.strokeStyle = '#f0883e';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.restore();
+  ctx.fillStyle = '#f0f6fc';
+  ctx.font = 'bold 13px -apple-system, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('🌐 API Gateway', gw.x, gw.y + 22);
+  ctx.fillStyle = '#8b949e';
+  ctx.font = '10px -apple-system, sans-serif';
+  ctx.fillText('Auth · Rate Limit · Route · LB', gw.x, gw.y + 38);
+}
+
+function drawService(svc) {
+  const w = 90, h = 60;
+  const x = svc.x - w / 2, y = svc.y - h / 2;
+
+  ctx.save();
+  if (svc.online) { ctx.shadowColor = svc.color; ctx.shadowBlur = 8; }
+  ctx.beginPath();
+  ctx.roundRect(x, y, w, h, 8);
+  ctx.fillStyle = svc.online ? '#161b22' : '#0d1117';
+  ctx.fill();
+  ctx.strokeStyle = svc.online ? svc.color : '#30363d';
+  ctx.lineWidth = svc.online ? 2 : 1;
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.font = '18px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(svc.icon, svc.x, svc.y - 8);
+  ctx.fillStyle = svc.online ? '#f0f6fc' : '#8b949e';
+  ctx.font = 'bold 11px -apple-system, sans-serif';
+  ctx.fillText(svc.label, svc.x, svc.y + 8);
+  ctx.fillStyle = svc.online ? svc.color : '#f85149';
+  ctx.font = '9px -apple-system, sans-serif';
+  ctx.fillText(svc.online ? 'Online' : 'OFFLINE', svc.x, svc.y + 22);
+
+  // Sidecar proxy
+  if (sidecarEnabled && svc.online) {
+    ctx.save();
+    ctx.strokeStyle = '#58a6ff';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([2, 2]);
+    ctx.strokeRect(x - 6, y - 6, w + 12, h + 12);
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#58a6ff';
+    ctx.font = '8px -apple-system, sans-serif';
+    ctx.fillText('proxy', svc.x, y - 9);
+    ctx.restore();
+  }
+
+  // Offline X
+  if (!svc.online) {
+    ctx.fillStyle = '#f85149';
+    ctx.font = 'bold 18px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('✕', svc.x, svc.y + 5);
+  }
+}
+
+function drawConnections(L) {
+  const gw = L.gateway;
+  const gwB = { x: gw.x, y: gw.y + gw.h };
+
+  L.svcs.forEach(svc => {
+    const isOrderOrUser = svc.id === 'order' || svc.id === 'user' || svc.id === 'notify';
+    ctx.save();
+    ctx.strokeStyle = svc.online ? '#30363d' : '#1a1a1a';
+    ctx.lineWidth = 1.5;
+    // Gateway to top services
+    if (svc.id !== 'user' && svc.id !== 'notify') {
+      ctx.beginPath();
+      ctx.moveTo(gwB.x, gwB.y);
+      ctx.lineTo(svc.x, svc.y - 30);
+      ctx.stroke();
+    }
+    ctx.restore();
+  });
+
+  // Order → Notify (async, dashed blue)
+  const orderS = L.svcs.find(s => s.id === 'order');
+  const notifyS = L.svcs.find(s => s.id === 'notify');
+  const userS = L.svcs.find(s => s.id === 'user');
+  ctx.save();
+  ctx.strokeStyle = '#58a6ff44';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([5, 4]);
+  ctx.beginPath();
+  ctx.moveTo(orderS.x, orderS.y + 30);
+  ctx.lineTo(notifyS.x, notifyS.y + 30);
+  ctx.stroke();
+  // Order → User
+  ctx.beginPath();
+  ctx.moveTo(orderS.x, orderS.y + 30);
+  ctx.lineTo(userS.x, userS.y + 30);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
+
+  // Service discovery lines
+  if (discoveryEnabled) {
+    L.svcs.forEach(svc => {
+      ctx.save();
+      ctx.strokeStyle = '#d2992244';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([2, 4]);
+      ctx.beginPath();
+      ctx.moveTo(svc.x + 45, svc.y);
+      ctx.lineTo(L.registry.x - 30, L.registry.y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+    });
+  }
+}
+
+function drawRegistry(reg) {
+  if (!discoveryEnabled) return;
+  ctx.save();
+  ctx.strokeStyle = '#d29922';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.roundRect(reg.x - 28, reg.y - 24, 56, 48, 6);
+  ctx.fillStyle = '#1a1400';
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+  ctx.fillStyle = '#d29922';
+  ctx.font = '14px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('📋', reg.x, reg.y - 4);
+  ctx.font = '9px -apple-system, sans-serif';
+  ctx.fillText('Registry', reg.x, reg.y + 12);
+}
+
+let lastTime = 0;
+function draw(ts) {
+  const dt = Math.min((ts - lastTime) / 1000, 0.1);
+  lastTime = ts;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const L = layout();
+
+  // Title
+  ctx.fillStyle = '#f0f6fc';
+  ctx.font = 'bold 17px -apple-system, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Microservices: Service Mesh & API Gateway', canvas.width / 2, 22);
+
+  // Client
+  ctx.fillStyle = '#8b949e';
+  ctx.font = '20px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('💻', L.client.x, L.client.y + 6);
+  ctx.fillStyle = '#8b949e';
+  ctx.font = '10px -apple-system, sans-serif';
+  ctx.fillText('Client', L.client.x, L.client.y + 20);
+
+  // Arrow client → gateway
+  ctx.strokeStyle = '#30363d';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(L.client.x, L.client.y + 10);
+  ctx.lineTo(L.gateway.x, L.gateway.y);
+  ctx.stroke();
+
+  drawConnections(L);
+  drawGateway(L.gateway);
+  L.svcs.forEach(drawService);
+  drawRegistry(L.registry);
+
+  // Particles
+  particles = particles.filter(p => !p.done);
+  particles.forEach(p => {
+    p.progress += p.speed;
+    if (p.progress >= 1) {
+      p.progress = 1;
+      p.done = true;
+      if (p.onDone && !p.resolved) { p.resolved = true; p.onDone(); }
+    }
+    const px = p.sx + (p.tx - p.sx) * p.progress;
+    const py = p.sy + (p.ty - p.sy) * p.progress;
+    const alpha = Math.sin(p.progress * Math.PI);
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.beginPath();
+    ctx.arc(px, py, 8, 0, Math.PI * 2);
+    ctx.fillStyle = p.color;
+    ctx.shadowColor = p.color;
+    ctx.shadowBlur = 14;
+    ctx.fill();
+    ctx.restore();
+  });
+
+  // Labels for async connections
+  const orderS = L.svcs.find(s => s.id === 'order');
+  const notifyS = L.svcs.find(s => s.id === 'notify');
+  const userS = L.svcs.find(s => s.id === 'user');
+  ctx.fillStyle = '#58a6ff88';
+  ctx.font = '9px -apple-system, sans-serif';
+  ctx.textAlign = 'center';
+  const mx1 = (orderS.x + notifyS.x) / 2;
+  ctx.fillText('async', mx1, orderS.y + 44);
+  const mx2 = (orderS.x + userS.x) / 2;
+  ctx.fillText('sync', mx2, orderS.y + 44);
+
+  requestAnimationFrame(draw);
+}
+
+requestAnimationFrame(t => { lastTime = t; requestAnimationFrame(draw); });
+</script>
+</body>
+</html>

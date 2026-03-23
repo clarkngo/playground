@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Uber: Schemaless and the Trip Database</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0d1117;color:#e6edf3;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;line-height:1.7}
+a{color:#58a6ff;text-decoration:none}
+a:hover{text-decoration:underline}
+nav{background:#161b22;border-bottom:1px solid #30363d;padding:16px 24px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100}
+.nav-brand{font-size:1.2rem;font-weight:700}
+.nav-back{color:#8b949e;font-size:0.9rem}
+.container{max-width:900px;margin:0 auto;padding:0 24px 60px}
+.hero{text-align:center;padding:60px 20px;background:linear-gradient(135deg,#161b22 0%,#1a1e2a 50%,#1c1a22 100%);border:1px solid #30363d;border-radius:12px;margin:32px 0}
+.hero-company{font-size:0.95rem;color:#f0883e;text-transform:uppercase;letter-spacing:2px;margin-bottom:8px}
+.hero-title{font-size:2.2rem;font-weight:800;margin-bottom:12px}
+.hero-date{color:#8b949e;font-size:0.95rem;margin-bottom:8px}
+.hero-tagline{color:#8b949e;font-size:1.1rem;font-style:italic}
+.timeline-wrapper{overflow-x:auto;margin:40px 0;padding:20px 0}
+.timeline{display:flex;align-items:flex-start;min-width:700px;position:relative;padding:0 20px}
+.timeline::before{content:'';position:absolute;top:16px;left:20px;right:20px;height:3px;background:#30363d;border-radius:2px}
+.timeline-item{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;min-width:120px}
+.timeline-dot{width:14px;height:14px;background:#f0883e;border-radius:50%;margin-bottom:12px;position:relative;z-index:1;border:3px solid #0d1117}
+.timeline-date{font-size:0.75rem;color:#f0883e;font-weight:600;margin-bottom:4px}
+.timeline-label{font-size:0.8rem;color:#8b949e;text-align:center;max-width:120px}
+.story-section{margin:48px 0}
+.story-section h2{font-size:1.5rem;font-weight:700;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #30363d;color:#e6edf3}
+.story-section p{margin-bottom:16px;color:#c9d1d9;font-size:1rem}
+.canvas-section{margin:48px 0;text-align:center}
+.canvas-section h2{font-size:1.5rem;font-weight:700;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #30363d}
+canvas{background:#0d1117;border:1px solid #30363d;border-radius:8px;max-width:100%}
+.toggle-btn{margin-top:16px;padding:10px 28px;background:#f0883e;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:0.95rem;font-weight:600;transition:background 0.2s}
+.toggle-btn:hover{background:#d87a35}
+.decision-section{margin:48px 0;background:#161b22;border:1px solid #30363d;border-radius:12px;padding:32px}
+.decision-section h2{font-size:1.5rem;font-weight:700;margin-bottom:8px}
+.decision-prompt{color:#8b949e;margin-bottom:20px;font-size:1.05rem}
+.decision-options{display:flex;flex-direction:column;gap:12px}
+.decision-opt{padding:16px 20px;background:#0d1117;border:2px solid #30363d;border-radius:8px;cursor:pointer;transition:all 0.2s;text-align:left;font-size:0.95rem;color:#e6edf3}
+.decision-opt:hover{border-color:#58a6ff}
+.decision-opt.correct{border-color:#3fb950;background:rgba(63,185,80,0.1)}
+.decision-opt.incorrect{border-color:#f85149;background:rgba(248,81,73,0.08)}
+.decision-explanation{margin-top:20px;padding:20px;background:rgba(63,185,80,0.08);border:1px solid #3fb950;border-radius:8px;display:none;color:#c9d1d9}
+.metrics-panel{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin:48px 0}
+.metric-card{background:#161b22;border:1px solid #30363d;border-radius:10px;padding:20px;text-align:center}
+.metric-value{font-size:1.6rem;font-weight:800;color:#f0883e}
+.metric-label{font-size:0.85rem;color:#8b949e;margin-top:4px}
+.lessons{margin:48px 0}
+.lessons h2{font-size:1.5rem;font-weight:700;margin-bottom:20px;padding-bottom:8px;border-bottom:1px solid #30363d}
+.lesson-card{background:#161b22;border:1px solid #30363d;border-radius:10px;padding:20px;margin-bottom:14px}
+.lesson-card strong{color:#58a6ff}
+.lesson-card p{color:#8b949e;margin-top:6px;font-size:0.95rem}
+.takeaways{margin:48px 0}
+.takeaways h2{font-size:1.5rem;font-weight:700;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #30363d}
+.takeaway-item{padding:10px 0 10px 24px;position:relative;color:#c9d1d9;font-size:1rem}
+.takeaway-item::before{content:'\2192';position:absolute;left:0;color:#f0883e;font-weight:700}
+</style>
+</head>
+<body>
+<nav>
+<span class="nav-brand">&#128214; Case Studies</span>
+<a href="index.html" class="nav-back">&larr; All Case Studies</a>
+</nav>
+<div class="container">
+<div class="hero">
+<div class="hero-company">Uber Engineering</div>
+<h1 class="hero-title">Schemaless and the Trip Database</h1>
+<div class="hero-date">2014 &mdash; 2016</div>
+<div class="hero-tagline">When no database could handle your write throughput, so you built your own on top of MySQL</div>
+</div>
+
+<div class="timeline-wrapper">
+<div class="timeline">
+<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-date">2013</div><div class="timeline-label">Uber growth explodes, trips double monthly</div></div>
+<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-date">Early 2014</div><div class="timeline-label">PostgreSQL hits scaling ceiling</div></div>
+<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-date">Mid 2014</div><div class="timeline-label">Evaluate Cassandra, HBase, others</div></div>
+<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-date">Late 2014</div><div class="timeline-label">Schemaless designed and built</div></div>
+<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-date">2015</div><div class="timeline-label">Trip storage migrated to Schemaless</div></div>
+<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-date">2016</div><div class="timeline-label">Millions of trips/day on Schemaless</div></div>
+</div>
+</div>
+
+<div class="story-section">
+<h2>The Growth Explosion</h2>
+<p>In 2013, Uber was experiencing the kind of growth that breaks infrastructure. The company was expanding into new cities at a blistering pace, and each new city meant a multiplicative increase in trip volume. Rides were doubling on a near-monthly basis, and the engineering team found themselves in a race against their own success.</p>
+<p>At the heart of Uber is the trip record. Every ride generates a complex data object: pickup location, dropoff location, route taken, fare calculation, driver information, rider details, payment processing, surge pricing data, and more. These records needed to be written reliably, quickly, and at enormous scale. Losing even a single trip record could mean a lost payment or a billing dispute.</p>
+<p>The engineering team knew their existing PostgreSQL-based storage would not survive the year. They needed a plan, and they needed it fast.</p>
+</div>
+
+<div class="story-section">
+<h2>PostgreSQL Hits the Wall</h2>
+<p>Uber had been running on PostgreSQL, a rock-solid relational database beloved by engineers everywhere. But PostgreSQL was designed for vertical scaling: you make the server bigger, you optimize queries, you add read replicas. Horizontal scaling, splitting data across multiple independent database servers, was not a first-class feature.</p>
+<p>The trip database was generating write volumes that a single PostgreSQL primary could not absorb. Write-ahead log shipping to replicas introduced lag. Schema migrations on tables with hundreds of millions of rows took hours and required maintenance windows. Adding columns to the trip table was becoming a multi-day project.</p>
+<p>Uber tried to shard PostgreSQL manually, but the operational complexity was enormous. Each shard needed its own backup strategy, its own monitoring, its own failover plan. The team was spending more time managing the database than building features.</p>
+</div>
+
+<div class="story-section">
+<h2>Evaluating the Alternatives</h2>
+<p>The team conducted a thorough evaluation of existing distributed databases. Cassandra was the first candidate, known for its write-heavy performance and linear scalability. However, Cassandra brought its own operational challenges: compaction storms could spike latency unpredictably, the data model required careful denormalization, and the team had limited operational experience with it.</p>
+<p>HBase was also considered for its strong consistency guarantees and integration with the Hadoop ecosystem. But HBase had a steep operational learning curve and depended on HDFS and ZooKeeper, adding complexity to the stack. The Java garbage collection pauses were also a concern for latency-sensitive trip writes.</p>
+<p>After weeks of evaluation, a radical idea emerged from the team: what if they built their own storage system, but did it in the most pragmatic way possible? Instead of building a database from scratch, they could build a thin layer on top of something they already understood deeply: MySQL.</p>
+</div>
+
+<div class="story-section">
+<h2>Designing Schemaless</h2>
+<p>The design of Schemaless was elegant in its simplicity. Each record (called a "cell") consisted of just four fields: a row UUID, a column name, a JSON blob, and a monotonically increasing version number. There were no schemas, no ALTER TABLE statements, no migration scripts. If you wanted to add a new field, you just started writing it in the JSON blob.</p>
+<p>The append-only design was a deliberate choice. When a trip record needed updating (say, the fare was recalculated), Schemaless would write a new version of the cell rather than updating in place. This meant writes never blocked on reads, historical data was always preserved, and debugging billing disputes became trivial because you could see every version of a trip record.</p>
+<p>Underneath, Schemaless used MySQL as its storage engine. Each MySQL instance held a set of shards, and a routing layer directed reads and writes to the correct shard based on the row UUID. MySQL handled the hard problems of data durability, replication, and crash recovery. Schemaless handled the hard problems of sharding, schema flexibility, and write ordering.</p>
+</div>
+
+<div class="story-section">
+<h2>The Cell Architecture</h2>
+<p>One of the most innovative aspects of Schemaless was its cell-based architecture for geographic isolation. Uber operated a separate Schemaless "cell" (a complete, independent cluster) for each major geographic region. A trip in San Francisco would be stored in the US West cell. A trip in London would be stored in the Europe cell.</p>
+<p>This cell architecture had enormous advantages. A failure in one cell could not cascade to another. Latency was kept low because data was stored close to where it was generated. Compliance with data residency regulations became straightforward because data physically stayed within its region.</p>
+<p>Each cell was fully self-contained with its own set of MySQL shards, its own Schemaless API servers, and its own async workers that built secondary indexes. If the Europe cell went down, rides in the US were completely unaffected.</p>
+</div>
+
+<div class="story-section">
+<h2>Scaling to Millions</h2>
+<p>By 2015, Schemaless was handling the vast majority of trip storage. The migration from PostgreSQL was done incrementally, with a dual-write strategy: new trips were written to both PostgreSQL and Schemaless, with Schemaless becoming the source of truth once the team was confident in its reliability.</p>
+<p>The async worker system handled secondary indexing. When a new trip cell was written, workers would pick up the change from a changelog and update any secondary indexes (such as looking up trips by rider ID or driver ID). This kept the write path fast and simple while still allowing flexible querying.</p>
+<p>By 2016, Schemaless was handling millions of trips per day across multiple geographic cells. Write latency remained under 5 milliseconds. The system had proven itself through multiple traffic spikes, including New Year's Eve surges that pushed traffic to many times the normal volume.</p>
+</div>
+
+<div class="story-section">
+<h2>Build vs. Buy: The Aftermath</h2>
+<p>Building Schemaless was not without cost. The team had to maintain a custom storage system, train new engineers on its internals, and build operational tooling from scratch. When a MySQL shard needed to be split, the team had to handle the resharding process themselves.</p>
+<p>But the decision paid enormous dividends. By building on MySQL, Uber leveraged decades of MySQL operational knowledge. DBAs could use familiar tools for backups and monitoring. MySQL replication provided a proven mechanism for data durability. And the thin Schemaless layer was simple enough that the entire team could understand and debug it.</p>
+<p>Schemaless went on to store not just trip data but also other high-write-volume datasets at Uber. It became a foundational piece of infrastructure that supported the company through its period of hypergrowth, proving that sometimes the best database is the one you build yourself, on top of something you trust.</p>
+</div>
+
+<div class="canvas-section">
+<h2>Architecture Diagram</h2>
+<canvas id="archCanvas" width="860" height="280"></canvas>
+<br>
+<button class="toggle-btn" id="toggleBtn">Show After</button>
+</div>
+
+<div class="decision-section">
+<h2>What Would You Do?</h2>
+<p class="decision-prompt">Your trip database is growing 10x/year. No existing solution handles your write volume. What do you do?</p>
+<div class="decision-options">
+<div class="decision-opt" data-choice="a" onclick="handleDecision(this,'a')">A) Use Cassandra &mdash; it is designed for write-heavy workloads</div>
+<div class="decision-opt" data-choice="b" onclick="handleDecision(this,'b')">B) Build a custom storage layer on top of MySQL, leveraging MySQL's reliability</div>
+<div class="decision-opt" data-choice="c" onclick="handleDecision(this,'c')">C) Shard PostgreSQL horizontally with Citus or similar</div>
+</div>
+<div class="decision-explanation" id="decisionExplanation"></div>
+</div>
+
+<h2 style="font-size:1.5rem;font-weight:700;margin:48px 0 20px;padding-bottom:8px;border-bottom:1px solid #30363d">Key Metrics</h2>
+<div class="metrics-panel">
+<div class="metric-card"><div class="metric-value">Millions</div><div class="metric-label">Trips stored per day</div></div>
+<div class="metric-card"><div class="metric-value">&lt;5ms</div><div class="metric-label">Write latency</div></div>
+<div class="metric-card"><div class="metric-value">3x</div><div class="metric-label">Data replication factor</div></div>
+<div class="metric-card"><div class="metric-value">Append-Only</div><div class="metric-label">Never update, never delete</div></div>
+<div class="metric-card"><div class="metric-value">MySQL</div><div class="metric-label">Battle-tested storage engine underneath</div></div>
+</div>
+
+<div class="lessons">
+<h2>Lessons Extracted</h2>
+<div class="lesson-card"><strong>Build on what you trust.</strong><p>By using MySQL as the storage engine, Uber avoided building the hardest parts of a database (durability, replication, crash recovery) and leveraged decades of MySQL operational tooling.</p></div>
+<div class="lesson-card"><strong>Append-only simplifies everything.</strong><p>Never updating or deleting data eliminated entire categories of bugs: lost updates, write conflicts, and data corruption. Every version of every record was preserved forever.</p></div>
+<div class="lesson-card"><strong>Geographic isolation prevents cascading failures.</strong><p>The cell architecture meant that a failure in one region could never affect another. This was critical for a service where downtime meant stranded riders.</p></div>
+<div class="lesson-card"><strong>Schema flexibility enables velocity.</strong><p>By storing data as JSON blobs, teams could add new fields without migrations. This removed a major bottleneck in the development process.</p></div>
+<div class="lesson-card"><strong>Async secondary indexing keeps the write path fast.</strong><p>By building indexes asynchronously, the critical write path remained simple and fast, while still supporting flexible queries for analytics and operations.</p></div>
+</div>
+
+<div class="takeaways">
+<h2>Key Takeaways</h2>
+<div class="takeaway-item">Sometimes the best database is a thin layer on top of a database you already understand deeply.</div>
+<div class="takeaway-item">Append-only, immutable data models trade storage cost for simplicity, debuggability, and reliability.</div>
+<div class="takeaway-item">Geographic cell isolation is a powerful pattern for global-scale systems that need fault boundaries.</div>
+<div class="takeaway-item">Evaluate existing solutions thoroughly, but do not be afraid to build when your requirements are truly unique.</div>
+</div>
+</div>
+
+<script>
+const canvas = document.getElementById(`archCanvas`);
+const ctx = canvas.getContext(`2d`);
+let showAfter = false;
+let transition = 0;
+
+function drawRoundedRect(x, y, w, h, r, fill, stroke) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+  if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+  if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1.5; ctx.stroke(); }
+}
+
+function drawArrow(x1, y1, x2, y2, color) {
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  const angle = Math.atan2(y2 - y1, x2 - x1);
+  ctx.beginPath();
+  ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - 8 * Math.cos(angle - 0.4), y2 - 8 * Math.sin(angle - 0.4));
+  ctx.lineTo(x2 - 8 * Math.cos(angle + 0.4), y2 - 8 * Math.sin(angle + 0.4));
+  ctx.closePath();
+  ctx.fillStyle = color;
+  ctx.fill();
+}
+
+function drawBefore(t) {
+  const alpha = 1 - t;
+  ctx.globalAlpha = alpha;
+  ctx.font = `bold 13px -apple-system, sans-serif`;
+  ctx.textAlign = `center`;
+
+  drawRoundedRect(340, 20, 180, 50, 8, `#1c2333`, `#f0883e`);
+  ctx.fillStyle = `#f0883e`;
+  ctx.fillText(`Application Servers`, 430, 50);
+
+  drawArrow(430, 70, 430, 110, `#58a6ff`);
+
+  drawRoundedRect(320, 110, 220, 60, 8, `#1c2333`, `#f85149`);
+  ctx.fillStyle = `#f85149`;
+  ctx.fillText(`PostgreSQL Primary`, 430, 140);
+  ctx.font = `11px -apple-system, sans-serif`;
+  ctx.fillStyle = `#8b949e`;
+  ctx.fillText(`(maxing out writes)`, 430, 158);
+
+  drawArrow(430, 170, 330, 210, `#8b949e`);
+  drawArrow(430, 170, 530, 210, `#8b949e`);
+
+  ctx.font = `bold 12px -apple-system, sans-serif`;
+  drawRoundedRect(250, 210, 160, 45, 8, `#1c2333`, `#30363d`);
+  ctx.fillStyle = `#8b949e`;
+  ctx.fillText(`Read Replica 1`, 330, 237);
+
+  drawRoundedRect(450, 210, 160, 45, 8, `#1c2333`, `#30363d`);
+  ctx.fillStyle = `#8b949e`;
+  ctx.fillText(`Read Replica 2`, 530, 237);
+
+  ctx.font = `italic 12px -apple-system, sans-serif`;
+  ctx.fillStyle = `#f85149`;
+  ctx.fillText(`\u26A0 Single write bottleneck`, 430, 275);
+
+  ctx.globalAlpha = 1;
+}
+
+function drawAfter(t) {
+  ctx.globalAlpha = t;
+  ctx.font = `bold 13px -apple-system, sans-serif`;
+  ctx.textAlign = `center`;
+
+  drawRoundedRect(350, 8, 160, 40, 8, `#1c2333`, `#f0883e`);
+  ctx.fillStyle = `#f0883e`;
+  ctx.fillText(`Application`, 430, 33);
+
+  drawArrow(430, 48, 430, 72, `#58a6ff`);
+
+  drawRoundedRect(330, 72, 200, 40, 8, `#1c2333`, `#58a6ff`);
+  ctx.fillStyle = `#58a6ff`;
+  ctx.fillText(`Schemaless API`, 430, 97);
+
+  drawArrow(430, 112, 430, 136, `#58a6ff`);
+
+  drawRoundedRect(340, 136, 180, 40, 8, `#1c2333`, `#3fb950`);
+  ctx.fillStyle = `#3fb950`;
+  ctx.fillText(`Shard Router`, 430, 161);
+
+  const shardX = [120, 280, 440, 600, 720];
+  const shardLabels = [`Shard 1`, `Shard 2`, `Shard 3`, `Shard N-1`, `Shard N`];
+  for (let i = 0; i < 5; i++) {
+    drawArrow(430, 176, shardX[i], 200, `#3fb950`);
+    drawRoundedRect(shardX[i] - 55, 200, 110, 36, 6, `#1c2333`, `#f0883e`);
+    ctx.font = `bold 11px -apple-system, sans-serif`;
+    ctx.fillStyle = `#f0883e`;
+    ctx.fillText(shardLabels[i], shardX[i], 222);
+    ctx.font = `10px -apple-system, sans-serif`;
+    ctx.fillStyle = `#8b949e`;
+    ctx.fillText(`MySQL`, shardX[i], 233);
+  }
+
+  drawRoundedRect(660, 100, 140, 36, 6, `#1c2333`, `#8b949e`);
+  ctx.font = `bold 11px -apple-system, sans-serif`;
+  ctx.fillStyle = `#8b949e`;
+  ctx.fillText(`Async Workers`, 730, 122);
+  drawArrow(600, 156, 660, 118, `#8b949e`);
+
+  ctx.font = `10px -apple-system, sans-serif`;
+  ctx.fillStyle = `#8b949e`;
+  ctx.fillText(`(secondary indexes)`, 730, 148);
+
+  ctx.font = `italic 12px -apple-system, sans-serif`;
+  ctx.fillStyle = `#3fb950`;
+  ctx.fillText(`\u2713 Horizontally scalable writes`, 430, 270);
+
+  ctx.globalAlpha = 1;
+}
+
+function render() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if (transition < 1 && showAfter) {
+    transition = Math.min(1, transition + 0.04);
+  } else if (transition > 0 && !showAfter) {
+    transition = Math.max(0, transition - 0.04);
+  }
+  drawBefore(transition);
+  drawAfter(transition);
+  requestAnimationFrame(render);
+}
+render();
+
+document.getElementById(`toggleBtn`).addEventListener(`click`, function() {
+  showAfter = !showAfter;
+  this.textContent = showAfter ? `Show Before` : `Show After`;
+});
+
+function handleDecision(el, choice) {
+  const opts = document.querySelectorAll(`.decision-opt`);
+  opts.forEach(o => { o.classList.remove(`correct`, `incorrect`); o.style.pointerEvents = `none`; });
+  if (choice === `b`) {
+    el.classList.add(`correct`);
+  } else {
+    el.classList.add(`incorrect`);
+    document.querySelector(`[data-choice="b"]`).classList.add(`correct`);
+  }
+  const explanation = document.getElementById(`decisionExplanation`);
+  explanation.style.display = `block`;
+  explanation.innerHTML = `<strong style="color:#3fb950">Uber chose B: Build a custom storage layer on top of MySQL.</strong><br><br>The team recognized that MySQL was battle-tested for data durability, replication, and crash recovery. Rather than adopting a new database with unknown operational characteristics, they built Schemaless as a thin, well-understood layer on top of MySQL. This gave them horizontal write scalability through application-level sharding while keeping MySQL for what it does best: reliably storing data. Cassandra (option A) was considered but rejected due to operational complexity and unpredictable compaction behavior. Sharding PostgreSQL (option C) was also considered but the tooling was immature at the time and the operational burden was too high.`;
+}
+</script>
+</body>
+</html>

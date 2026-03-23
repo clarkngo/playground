@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Circuit Breaker: Failure Isolation</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0d1117; color: #c9d1d9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
+  nav { background: #161b22; border-bottom: 1px solid #30363d; padding: 12px 24px; display: flex; align-items: center; gap: 16px; flex-shrink: 0; }
+  nav .brand { font-weight: 700; font-size: 16px; color: #f0f6fc; }
+  nav a { color: #58a6ff; text-decoration: none; font-size: 14px; }
+  nav a:hover { text-decoration: underline; }
+  .main { display: flex; flex: 1; overflow: hidden; }
+  .canvas-area { flex: 1; position: relative; overflow: hidden; }
+  canvas { display: block; }
+  .sidebar { width: 320px; min-width: 320px; background: #161b22; border-left: 1px solid #30363d; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+  .panel { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 14px; }
+  .panel h3 { font-size: 12px; font-weight: 600; color: #8b949e; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+  .btn { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 14px; border-radius: 6px; border: 1px solid #30363d; background: #21262d; color: #c9d1d9; font-size: 13px; cursor: pointer; transition: all 0.2s; font-family: inherit; width: 100%; margin-bottom: 6px; }
+  .btn:hover { background: #30363d; }
+  .btn.active-fail { background: #da363322; border-color: #f85149; color: #f85149; }
+  label { font-size: 12px; color: #8b949e; display: block; margin-bottom: 4px; margin-top: 8px; }
+  input[type=range] { width: 100%; accent-color: #f0883e; margin-bottom: 4px; }
+  .state-box { padding: 12px; border-radius: 8px; border: 2px solid; text-align: center; transition: all 0.4s; }
+  .state-box.closed { border-color: #3fb950; background: #3fb95011; }
+  .state-box.open { border-color: #f85149; background: #f8514911; }
+  .state-box.half-open { border-color: #d29922; background: #d2992211; }
+  .state-name { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+  .state-desc { font-size: 11px; color: #8b949e; }
+  .log-entry { font-size: 11px; padding: 4px 8px; border-radius: 4px; border-left: 3px solid; margin-bottom: 3px; }
+  .log-entry.success { background: rgba(63,185,80,0.1); border-color: #3fb950; color: #3fb950; }
+  .log-entry.fail { background: rgba(248,81,73,0.1); border-color: #f85149; color: #f85149; }
+  .log-entry.fast-fail { background: rgba(210,153,34,0.1); border-color: #d29922; color: #d29922; }
+  .log-entry.info { background: rgba(88,166,255,0.1); border-color: #58a6ff; color: #58a6ff; }
+  .metric { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid #21262d; font-size: 12px; }
+  .metric:last-child { border-bottom: none; }
+  .metric-val { font-weight: 700; font-size: 13px; }
+  .state-machine { display: flex; align-items: center; justify-content: space-around; padding: 8px 0; }
+  .sm-state { padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; border: 2px solid; opacity: 0.4; transition: all 0.3s; }
+  .sm-state.active { opacity: 1; transform: scale(1.1); }
+  .sm-arrow { color: #30363d; font-size: 16px; }
+  .toggle-fail { background: #21262d; border: 1px solid #30363d; color: #c9d1d9; cursor: pointer; padding: 8px 14px; border-radius: 6px; font-family: inherit; font-size: 13px; width: 100%; margin-bottom: 6px; text-align: center; display: block; transition: all 0.2s; }
+  .toggle-fail.on { background: #da363322; border-color: #f85149; color: #f85149; }
+  .toggle-fail:hover { background: #30363d; }
+  .toggle-fail.on:hover { background: #da363344; }
+</style>
+</head>
+<body>
+<nav>
+  <span class="brand">System Design Labs</span>
+  <span style="color:#30363d">|</span>
+  <a href="index.html">← System Design Labs</a>
+  <span style="flex:1"></span>
+  <span style="font-size:13px;color:#8b949e">09 — Circuit Breaker</span>
+</nav>
+<div class="main">
+  <div class="canvas-area">
+    <canvas id="canvas"></canvas>
+  </div>
+  <div class="sidebar">
+    <div class="panel">
+      <div class="state-box closed" id="stateBox">
+        <div class="state-name" id="stateName" style="color:#3fb950">CLOSED</div>
+        <div class="state-desc" id="stateDesc">Requests flowing normally</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>State Machine</h3>
+      <div class="state-machine">
+        <div class="sm-state active" id="sm-closed" style="border-color:#3fb950;color:#3fb950">CLOSED</div>
+        <div class="sm-arrow">→</div>
+        <div class="sm-state" id="sm-open" style="border-color:#f85149;color:#f85149">OPEN</div>
+        <div class="sm-arrow">→</div>
+        <div class="sm-state" id="sm-half" style="border-color:#d29922;color:#d29922">HALF</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Controls</h3>
+      <button class="btn" onclick="sendRequest()" style="background:#238636;border-color:#2ea043;color:#fff;">⚡ Send Request</button>
+      <button class="toggle-fail" id="failToggle" onclick="toggleFail()">💥 Simulate Failure: OFF</button>
+      <label>Failure Threshold: <span id="threshVal">5</span> failures</label>
+      <input type="range" min="3" max="10" value="5" id="threshSlider" oninput="document.getElementById('threshVal').textContent=this.value;failThresh=+this.value">
+      <label>Recovery Timeout: <span id="recVal">5</span>s</label>
+      <input type="range" min="3" max="10" value="5" id="recSlider" oninput="document.getElementById('recVal').textContent=this.value;recoveryTime=+this.value">
+      <button class="btn" onclick="resetBreaker()">↺ Reset Breaker</button>
+    </div>
+
+    <div class="panel">
+      <h3>Metrics</h3>
+      <div class="metric"><span>Circuit State</span><span class="metric-val" id="mState" style="color:#3fb950">CLOSED</span></div>
+      <div class="metric"><span>Failure Count</span><span class="metric-val" id="mFails" style="color:#f85149">0</span></div>
+      <div class="metric"><span>Failure Rate</span><span class="metric-val orange" id="mFailRate">0%</span></div>
+      <div class="metric"><span>Requests Blocked</span><span class="metric-val" id="mBlocked" style="color:#d29922">0</span></div>
+      <div class="metric"><span>Recovery In</span><span class="metric-val" id="mRecovery" style="color:#8b949e">—</span></div>
+    </div>
+
+    <div class="panel">
+      <h3>Request Log</h3>
+      <div id="log" style="max-height:180px;overflow-y:auto;"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+function resize() { canvas.width = canvas.parentElement.clientWidth; canvas.height = canvas.parentElement.clientHeight; }
+resize();
+window.addEventListener('resize', resize);
+
+let state = 'closed'; // closed | open | half-open
+let failMode = false;
+let failThresh = 5;
+let recoveryTime = 5;
+let consecutiveFails = 0;
+let openTimer = 0;
+let totalReqs = 0, totalFails = 0, blocked = 0;
+let particles = [];
+let log = [];
+let lightningT = 0;
+let stateFlash = 0;
+
+// Colors
+const C = { closed: '#3fb950', open: '#f85149', half: '#d29922' };
+
+function toggleFail() {
+  failMode = !failMode;
+  const btn = document.getElementById('failToggle');
+  btn.textContent = `💥 Simulate Failure: ${failMode ? 'ON' : 'OFF'}`;
+  btn.classList.toggle('on', failMode);
+}
+
+function transitionTo(s) {
+  state = s;
+  stateFlash = 30;
+  const box = document.getElementById('stateBox');
+  box.className = `state-box ${s === 'half-open' ? 'half-open' : s}`;
+  const colors = { closed: '#3fb950', open: '#f85149', 'half-open': '#d29922' };
+  const names = { closed: 'CLOSED', open: 'OPEN', 'half-open': 'HALF-OPEN' };
+  const descs = {
+    closed: 'Requests flowing normally',
+    open: `Fail fast — recovering in ${recoveryTime}s`,
+    'half-open': 'Testing — one request allowed'
+  };
+  document.getElementById('stateName').textContent = names[s];
+  document.getElementById('stateName').style.color = colors[s];
+  document.getElementById('stateDesc').textContent = descs[s];
+  document.getElementById('mState').textContent = names[s];
+  document.getElementById('mState').style.color = colors[s];
+  ['closed','open','half-open'].forEach(st => {
+    const el = document.getElementById(`sm-${st === 'half-open' ? 'half' : st}`);
+    el.classList.toggle('active', st === s);
+  });
+}
+
+function sendRequest() {
+  totalReqs++;
+  const nodes = getNodes();
+
+  if (state === 'open') {
+    blocked++;
+    document.getElementById('mBlocked').textContent = blocked;
+    addLog('FAST FAIL — Circuit is OPEN', 'fast-fail');
+    // Fast fail animation
+    particles.push({ type: 'fastfail', x: nodes.client.x + 60, y: nodes.client.y, life: 1 });
+    return;
+  }
+
+  if (state === 'half-open') {
+    // Test request
+    if (failMode) {
+      totalFails++;
+      addLog('HALF-OPEN test FAILED → back to OPEN', 'fail');
+      particles.push({ type: 'req', x: nodes.client.x, y: nodes.client.y, tx: nodes.cb.x, ty: nodes.cb.y, color: '#f85149', life: 1, phase: 0, onMid: () => transitionTo('open') });
+      openTimer = recoveryTime;
+      consecutiveFails = 0;
+    } else {
+      addLog('HALF-OPEN test SUCCEEDED → CLOSED', 'success');
+      particles.push({ type: 'req', x: nodes.client.x, y: nodes.client.y, tx: nodes.cb.x, ty: nodes.cb.y, color: '#3fb950', life: 1, phase: 0, onMid: () => transitionTo('closed') });
+      consecutiveFails = 0;
+    }
+    updateMetrics();
+    return;
+  }
+
+  // CLOSED state
+  if (failMode) {
+    totalFails++;
+    consecutiveFails++;
+    addLog(`FAIL (${consecutiveFails}/${failThresh})`, 'fail');
+    particles.push({ type: 'req', x: nodes.client.x, y: nodes.client.y, tx: nodes.service.x, ty: nodes.service.y, color: '#f85149', life: 1, phase: 0, passedCB: false });
+    if (consecutiveFails >= failThresh) {
+      setTimeout(() => { transitionTo('open'); openTimer = recoveryTime; addLog('Threshold reached — OPEN', 'info'); }, 500);
+    }
+  } else {
+    consecutiveFails = 0;
+    addLog('SUCCESS', 'success');
+    particles.push({ type: 'req', x: nodes.client.x, y: nodes.client.y, tx: nodes.service.x, ty: nodes.service.y, color: '#3fb950', life: 1, phase: 0, passedCB: false });
+  }
+  updateMetrics();
+}
+
+function resetBreaker() {
+  transitionTo('closed');
+  consecutiveFails = 0; openTimer = 0;
+  totalReqs = 0; totalFails = 0; blocked = 0;
+  particles = [];
+  document.getElementById('mFails').textContent = '0';
+  document.getElementById('mFailRate').textContent = '0%';
+  document.getElementById('mBlocked').textContent = '0';
+  addLog('Breaker reset', 'info');
+}
+
+function addLog(msg, type) {
+  const el = document.getElementById('log');
+  const div = document.createElement('div');
+  div.className = `log-entry ${type}`;
+  div.textContent = `${new Date().toLocaleTimeString()} ${msg}`;
+  el.prepend(div);
+  while (el.children.length > 12) el.removeChild(el.lastChild);
+}
+
+function updateMetrics() {
+  document.getElementById('mFails').textContent = consecutiveFails;
+  const rate = totalReqs > 0 ? Math.round(totalFails / totalReqs * 100) : 0;
+  document.getElementById('mFailRate').textContent = rate + '%';
+}
+
+function getNodes() {
+  const cx = canvas.width / 2, cy = canvas.height / 2;
+  const spacing = Math.min(canvas.width / 4, 200);
+  return {
+    client: { x: cx - spacing * 1.5, y: cy, label: 'Client', icon: '💻' },
+    cb: { x: cx, y: cy, label: 'Circuit Breaker', icon: '⚡' },
+    service: { x: cx + spacing * 1.5, y: cy, label: 'Service', icon: '🔧' },
+  };
+}
+
+function drawBox(x, y, w, h, color, label, sublabel, icon) {
+  ctx.save();
+  ctx.beginPath();
+  ctx.roundRect(x - w / 2, y - h / 2, w, h, 8);
+  ctx.fillStyle = '#161b22';
+  ctx.fill();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.font = '20px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(icon, x, y - 8);
+  ctx.fillStyle = '#f0f6fc';
+  ctx.font = 'bold 13px -apple-system, sans-serif';
+  ctx.fillText(label, x, y + 10);
+  if (sublabel) {
+    ctx.fillStyle = '#8b949e';
+    ctx.font = '10px -apple-system, sans-serif';
+    ctx.fillText(sublabel, x, y + 24);
+  }
+}
+
+function drawArrow(x1, y1, x2, y2, color, label) {
+  const dx = x2 - x1, dy = y2 - y1;
+  const len = Math.sqrt(dx * dx + dy * dy);
+  const nx = dx / len, ny = dy / len;
+  const gap = 70;
+  const sx = x1 + nx * gap, sy = y1 + ny * gap;
+  const ex = x2 - nx * gap, ey = y2 - ny * gap;
+
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.setLineDash([6, 4]);
+  ctx.beginPath();
+  ctx.moveTo(sx, sy);
+  ctx.lineTo(ex, ey);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Arrowhead
+  const angle = Math.atan2(ey - sy, ex - sx);
+  ctx.beginPath();
+  ctx.moveTo(ex, ey);
+  ctx.lineTo(ex - 10 * Math.cos(angle - 0.4), ey - 10 * Math.sin(angle - 0.4));
+  ctx.moveTo(ex, ey);
+  ctx.lineTo(ex - 10 * Math.cos(angle + 0.4), ey - 10 * Math.sin(angle + 0.4));
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawCircuitBreaker(nodes, dt) {
+  const { cb } = nodes;
+  const r = 44;
+  const color = C[state === 'half-open' ? 'half' : state === 'closed' ? 'closed' : 'open'];
+
+  // Glow
+  ctx.save();
+  ctx.shadowColor = color;
+  ctx.shadowBlur = stateFlash > 0 ? 40 : 16;
+  ctx.beginPath();
+  ctx.arc(cb.x, cb.y, r, 0, Math.PI * 2);
+  ctx.fillStyle = '#0d1117';
+  ctx.fill();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 3;
+  ctx.stroke();
+  ctx.restore();
+
+  // State icon
+  const icons = { closed: '⬤', open: '○', 'half-open': '◑' };
+  ctx.fillStyle = color;
+  ctx.font = 'bold 22px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(icons[state], cb.x, cb.y + 2);
+
+  ctx.fillStyle = '#f0f6fc';
+  ctx.font = 'bold 11px -apple-system, sans-serif';
+  ctx.fillText('Circuit', cb.x, cb.y + 20);
+  ctx.fillText('Breaker', cb.x, cb.y + 32);
+
+  // Open timer arc
+  if (state === 'open' && openTimer > 0) {
+    const progress = openTimer / recoveryTime;
+    ctx.save();
+    ctx.strokeStyle = '#d29922';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(cb.x, cb.y, r + 8, -Math.PI / 2, -Math.PI / 2 + progress * Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+    document.getElementById('mRecovery').textContent = openTimer.toFixed(1) + 's';
+  } else {
+    document.getElementById('mRecovery').textContent = state === 'open' ? '0s' : '—';
+  }
+
+  if (stateFlash > 0) stateFlash--;
+}
+
+function drawParticles(nodes, dt) {
+  particles = particles.filter(p => p.life > 0);
+  particles.forEach(p => {
+    if (p.type === 'fastfail') {
+      p.x += 3;
+      p.life -= 0.03;
+      ctx.save();
+      ctx.globalAlpha = p.life;
+      ctx.fillStyle = '#d29922';
+      ctx.font = 'bold 12px -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('FAST FAIL', p.x, p.y - 10);
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 8, 0, Math.PI * 2);
+      ctx.fillStyle = '#d29922';
+      ctx.shadowColor = '#d29922';
+      ctx.shadowBlur = 10;
+      ctx.fill();
+      ctx.restore();
+      return;
+    }
+
+    if (p.type === 'req') {
+      p.life -= 0.015;
+      const t = 1 - p.life;
+      p.cx = p.x + (p.tx - p.x) * Math.min(t * 2, 1);
+      p.cy = p.y + (p.ty - p.y) * Math.min(t * 2, 1);
+
+      if (t > 0.5 && p.onMid && !p.calledMid) { p.calledMid = true; p.onMid(); }
+
+      ctx.save();
+      ctx.globalAlpha = Math.min(p.life * 2, 1);
+      ctx.beginPath();
+      ctx.arc(p.cx, p.cy, 9, 0, Math.PI * 2);
+      ctx.fillStyle = p.color;
+      ctx.shadowColor = p.color;
+      ctx.shadowBlur = 14;
+      ctx.fill();
+      ctx.restore();
+    }
+  });
+}
+
+let lastTime = 0;
+function draw(ts) {
+  const dt = Math.min((ts - lastTime) / 1000, 0.1);
+  lastTime = ts;
+
+  if (state === 'open') {
+    openTimer = Math.max(0, openTimer - dt);
+    if (openTimer <= 0) { transitionTo('half-open'); addLog('Recovery timeout — trying HALF-OPEN', 'info'); }
+  }
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const nodes = getNodes();
+
+  // Title
+  ctx.fillStyle = '#f0f6fc';
+  ctx.font = 'bold 18px -apple-system, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Circuit Breaker: Failure Isolation', canvas.width / 2, 34);
+  ctx.fillStyle = '#8b949e';
+  ctx.font = '12px -apple-system, sans-serif';
+  ctx.fillText('Protects downstream services from cascading failures', canvas.width / 2, 54);
+
+  // Connection lines
+  const lineColor = state === 'closed' ? '#3fb95055' : state === 'open' ? '#f8514955' : '#d2992255';
+  drawArrow(nodes.client.x, nodes.client.y, nodes.cb.x, nodes.cb.y, lineColor, '');
+  const rightColor = state === 'open' ? '#30363d' : lineColor;
+  drawArrow(nodes.cb.x, nodes.cb.y, nodes.service.x, nodes.service.y, rightColor, '');
+
+  // Draw client & service
+  const stateColor = state === 'closed' ? C.closed : state === 'open' ? C.open : C.half;
+  drawBox(nodes.client.x, nodes.client.y, 110, 80, '#30363d', 'Client', `${totalReqs} requests sent`, '💻');
+  drawBox(nodes.service.x, nodes.service.y, 110, 80, failMode ? '#f85149' : '#30363d', 'Service', failMode ? 'FAILING' : 'Healthy', failMode ? '🔥' : '🔧');
+
+  // Draw circuit breaker (special)
+  drawCircuitBreaker(nodes, dt);
+
+  // Fail mode blocker
+  if (state === 'open') {
+    const mx = (nodes.cb.x + nodes.service.x) / 2;
+    const my = nodes.cb.y;
+    ctx.fillStyle = '#f85149';
+    ctx.font = 'bold 20px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.shadowColor = '#f85149';
+    ctx.shadowBlur = 15;
+    ctx.fillText('✕', mx, my + 7);
+    ctx.shadowBlur = 0;
+  }
+
+  // Failure gauge
+  if (state === 'closed' || state === 'half-open') {
+    const gx = canvas.width / 2, gy = canvas.height - 60;
+    const gw = 200;
+    ctx.fillStyle = '#21262d';
+    ctx.beginPath();
+    ctx.roundRect(gx - gw / 2, gy, gw, 12, 6);
+    ctx.fill();
+    const pct = Math.min(1, consecutiveFails / failThresh);
+    ctx.fillStyle = pct > 0.7 ? '#f85149' : pct > 0.4 ? '#d29922' : '#3fb950';
+    if (pct > 0) {
+      ctx.beginPath();
+      ctx.roundRect(gx - gw / 2, gy, gw * pct, 12, 6);
+      ctx.fill();
+    }
+    ctx.fillStyle = '#8b949e';
+    ctx.font = '11px -apple-system, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(`Failure count: ${consecutiveFails} / ${failThresh}`, gx, gy - 6);
+  }
+
+  drawParticles(nodes, dt);
+  requestAnimationFrame(draw);
+}
+
+requestAnimationFrame(t => { lastTime = t; requestAnimationFrame(draw); });
+transitionTo('closed');
+</script>
+</body>
+</html>

@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lab 03 — Context Windows &amp; Memory</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0d1117; color: #e6edf3; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
+  nav { background: #161b22; border-bottom: 1px solid #30363d; padding: 0 24px; height: 56px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+  .nav-brand { font-size: 16px; font-weight: 600; }
+  .nav-back { color: #58a6ff; text-decoration: none; font-size: 14px; }
+  .nav-back:hover { opacity: .75; }
+  main { max-width: 960px; margin: 0 auto; padding: 32px 24px 64px; }
+  h1 { font-size: 28px; font-weight: 700; margin-bottom: 4px; }
+  .subtitle { color: #8b949e; font-size: 15px; margin-bottom: 28px; }
+  .lab-badge { display: inline-block; background: #1f2937; border: 1px solid #30363d; border-radius: 20px; padding: 2px 12px; font-size: 12px; color: #8b949e; margin-bottom: 12px; letter-spacing: .5px; text-transform: uppercase; }
+  .canvas-wrap { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 16px; margin-bottom: 20px; position: relative; }
+  canvas { display: block; width: 100%; border-radius: 8px; }
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 20px; }
+  button { background: #21262d; border: 1px solid #30363d; color: #e6edf3; padding: 8px 16px; border-radius: 8px; font-size: 13px; cursor: pointer; transition: background .15s, border-color .15s; font-family: inherit; }
+  button:hover { background: #30363d; border-color: #58a6ff; }
+  button.sys { border-color: #bc8cff; color: #bc8cff; }
+  button.user { border-color: #58a6ff; color: #58a6ff; }
+  button.asst { border-color: #3fb950; color: #3fb950; }
+  button.tool { border-color: #f78166; color: #f78166; }
+  select { background: #21262d; border: 1px solid #30363d; color: #e6edf3; padding: 8px 12px; border-radius: 8px; font-size: 13px; cursor: pointer; font-family: inherit; }
+  select:focus { outline: none; border-color: #58a6ff; }
+  .tab-row { display: flex; gap: 4px; margin-bottom: 20px; }
+  .tab { padding: 7px 14px; border-radius: 8px 8px 0 0; font-size: 13px; cursor: pointer; border: 1px solid #30363d; border-bottom: none; color: #8b949e; background: #161b22; transition: .15s; }
+  .tab.active { color: #e6edf3; background: #21262d; border-color: #58a6ff; }
+  .insight { background: #161b22; border: 1px solid #30363d; border-radius: 12px; overflow: hidden; }
+  .insight-body { padding: 20px; display: grid; gap: 16px; }
+  .insight-label { font-size: 11px; text-transform: uppercase; letter-spacing: .8px; color: #8b949e; margin-bottom: 8px; }
+  .progress-wrap { background: #0d1117; border-radius: 8px; overflow: hidden; height: 10px; }
+  .progress-bar { height: 10px; border-radius: 8px; transition: width .4s, background .4s; }
+  .token-stat { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .token-count { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .token-limit { font-size: 13px; color: #8b949e; }
+  .strategy-desc { font-size: 14px; color: #8b949e; line-height: 1.65; }
+  .kept-dropped { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .kd-box { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 12px; }
+  .kd-title { font-size: 12px; font-weight: 600; margin-bottom: 6px; }
+  .kd-items { font-size: 12px; color: #8b949e; line-height: 1.7; }
+  pre { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 11px; line-height: 1.6; color: #e6edf3; white-space: pre-wrap; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 10px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 14px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #8b949e; }
+  .legend-dot { width: 12px; height: 12px; border-radius: 3px; }
+  .reset-btn { margin-left: auto; font-size: 12px; padding: 5px 12px; }
+  /* ── Explanation Sections ── */
+  .explain-section { margin-top: 40px; }
+  .explain-section + .explain-section { margin-top: 32px; }
+  .explain-h2 { font-size: 18px; font-weight: 700; color: #e6edf3; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid #30363d; display: flex; align-items: center; gap: 10px; }
+  .explain-h2 .ehead-icon { font-size: 20px; }
+  .explain-p { color: #8b949e; font-size: 14px; line-height: 1.8; margin-bottom: 12px; }
+  .explain-p strong { color: #e6edf3; }
+  .explain-p code { background: #21262d; border: 1px solid #30363d; border-radius: 4px; padding: 1px 6px; font-family: 'SF Mono','Fira Code',monospace; font-size: 12px; color: #a5d6ff; }
+  .explain-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; margin-bottom: 16px; }
+  .explain-card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 18px 20px; }
+  .explain-card-title { font-size: 13px; font-weight: 700; color: #e6edf3; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .explain-card p { font-size: 13px; color: #8b949e; line-height: 1.7; }
+  .explain-card code { background: #21262d; border-radius: 3px; padding: 1px 5px; font-family: monospace; font-size: 11px; color: #a5d6ff; }
+  .steps-list { counter-reset: step; list-style: none; display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
+  .steps-list li { counter-increment: step; display: flex; gap: 14px; }
+  .steps-list li::before { content: counter(step); min-width: 28px; height: 28px; background: #21262d; border: 1px solid #30363d; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #58a6ff; flex-shrink: 0; margin-top: 2px; }
+  .steps-list li .step-body { flex: 1; }
+  .steps-list li .step-title { font-size: 14px; font-weight: 600; color: #e6edf3; margin-bottom: 3px; }
+  .steps-list li .step-desc { font-size: 13px; color: #8b949e; line-height: 1.7; }
+  .callout { border-radius: 10px; padding: 16px 20px; margin-bottom: 16px; display: flex; gap: 14px; }
+  .callout-info { background: #0d2137; border: 1px solid #1f4068; }
+  .callout-warn { background: #2d1f00; border: 1px solid #5a3e00; }
+  .callout-tip  { background: #0d2d0d; border: 1px solid #1f5c1f; }
+  .callout-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .callout-body { flex: 1; }
+  .callout-title { font-size: 13px; font-weight: 700; margin-bottom: 5px; }
+  .callout-info .callout-title { color: #58a6ff; }
+  .callout-warn .callout-title { color: #e3b341; }
+  .callout-tip  .callout-title { color: #3fb950; }
+  .callout-body p { font-size: 13px; color: #8b949e; line-height: 1.7; }
+  .callout-body p strong { color: #e6edf3; }
+  .takeaways { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 20px 24px; }
+  .takeaway-item { display: flex; gap: 12px; padding: 8px 0; }
+  .takeaway-item + .takeaway-item { border-top: 1px solid #21262d; }
+  .takeaway-bullet { color: #58a6ff; font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+  .takeaway-text { font-size: 13px; color: #8b949e; line-height: 1.7; }
+  .takeaway-text strong { color: #e6edf3; }
+  .real-world-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+  .rw-badge { background: #21262d; border: 1px solid #30363d; border-radius: 20px; padding: 5px 14px; font-size: 12px; color: #8b949e; display: flex; align-items: center; gap: 6px; }
+  .rw-badge strong { color: #e6edf3; }
+  .pitfall-list { display: flex; flex-direction: column; gap: 10px; }
+  .pitfall { background: #1a0d0d; border: 1px solid #3d1515; border-radius: 8px; padding: 14px 18px; }
+  .pitfall-title { font-size: 13px; font-weight: 700; color: #f85149; margin-bottom: 5px; }
+  .pitfall p { font-size: 13px; color: #8b949e; line-height: 1.65; }
+  .pitfall p strong { color: #e6edf3; }
+  .compare-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 16px; }
+  .compare-table th { padding: 10px 14px; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: #8b949e; border-bottom: 1px solid #30363d; }
+  .compare-table td { padding: 10px 14px; border-bottom: 1px solid #21262d; color: #8b949e; vertical-align: top; }
+  .compare-table td:first-child { color: #e6edf3; font-weight: 600; }
+  .compare-table tr:last-child td { border-bottom: none; }
+  .divider { border: none; border-top: 1px solid #21262d; margin: 40px 0; }
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-brand">🤖 Coding Agents</div>
+  <a class="nav-back" href="../index.html">← Playground</a>
+</nav>
+<main>
+  <div class="lab-badge">Lab 03</div>
+  <h1>Context Windows &amp; Memory</h1>
+  <p class="subtitle">Token limits, truncation strategies, and retrieval-augmented generation (RAG)</p>
+
+  <div class="canvas-wrap">
+    <canvas id="canvas" height="300"></canvas>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#bc8cff"></div>System prompt</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#58a6ff"></div>User message</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#3fb950"></div>Assistant message</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#f78166"></div>Tool result</div>
+  </div>
+
+  <div class="controls">
+    <button id="btnUser" class="user">+ User Message</button>
+    <button id="btnAsst" class="asst">+ Assistant Message</button>
+    <button id="btnTool" class="tool">+ Tool Result</button>
+    <select id="sizeSelect">
+      <option value="4096">4K context</option>
+      <option value="8192">8K context</option>
+      <option value="32768" selected>32K context</option>
+      <option value="131072">128K context</option>
+    </select>
+    <button id="btnReset" class="reset-btn">Reset</button>
+  </div>
+
+  <div class="tab-row">
+    <div class="tab active" data-strategy="sliding">Sliding Window</div>
+    <div class="tab" data-strategy="summarize">Summarize</div>
+    <div class="tab" data-strategy="rag">RAG</div>
+  </div>
+
+  <div class="insight">
+    <div class="insight-body">
+      <div>
+        <div class="token-stat">
+          <div>
+            <div class="insight-label">Token Usage</div>
+            <div class="token-count" id="tokenCount">512 / 32,768</div>
+          </div>
+          <div class="token-limit" id="pctLabel">1.6% full</div>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-bar" id="progressBar" style="width:1.6%;background:#3fb950"></div>
+        </div>
+      </div>
+      <div>
+        <div class="insight-label">Active Strategy</div>
+        <div class="strategy-desc" id="strategyDesc"></div>
+      </div>
+      <div class="kept-dropped">
+        <div class="kd-box">
+          <div class="kd-title" style="color:#3fb950">Kept in Context</div>
+          <div class="kd-items" id="keptList"></div>
+        </div>
+        <div class="kd-box">
+          <div class="kd-title" style="color:#f78166">Truncated / Offloaded</div>
+          <div class="kd-items" id="droppedList"></div>
+        </div>
+      </div>
+      <div id="ragPanel" style="display:none">
+        <div class="insight-label">RAG — Vector DB Retrieval</div>
+        <pre id="ragPre"></pre>
+      </div>
+    </div>
+  </div>
+
+<hr class="divider">
+
+<div class="explain-section">
+  <div class="explain-h2"><span class="ehead-icon">📖</span> Concept Overview</div>
+  <p class="explain-p">The <strong>context window</strong> is an LLM's working memory — everything the model can "see" at once. It includes the system prompt, the full conversation history, tool definitions, tool results, and any documents that have been loaded. Modern models range from 8K tokens (≈6,000 words) to 1M+ tokens (≈750,000 words), but cost and latency scale with window size.</p>
+  <p class="explain-p">For short tasks, the context window is sufficient — the whole conversation fits comfortably. For long-running agents (debugging a large codebase, processing a legal document, running a multi-day research project), the window fills up. When the limit is hit, something must be dropped. The <strong>truncation strategy</strong> determines what gets kept and what gets lost — and a poor strategy can cause the agent to "forget" critical earlier context.</p>
+  <p class="explain-p"><strong>Memory</strong> is the broader system beyond the immediate context window. It includes: in-context memory (what's in the window right now), external memory (a vector database or file system the agent can query), episodic memory (summaries of past sessions), and semantic memory (facts extracted from prior interactions). Real production agents layer multiple memory systems to achieve reliable long-horizon behavior.</p>
+</div>
+
+<div class="explain-section">
+  <div class="explain-h2"><span class="ehead-icon">⚙️</span> Truncation Strategies Explained</div>
+  <div class="explain-grid">
+    <div class="explain-card">
+      <div class="explain-card-title">🪟 Sliding Window</div>
+      <p>Keep the most recent N tokens. Drop the oldest messages when the window fills. Simple and predictable, but the agent loses all memory of early context — which may include the original task description or critical decisions. Best for: short, stateless tasks where recent context is all that matters.</p>
+    </div>
+    <div class="explain-card">
+      <div class="explain-card-title">📝 Summarization</div>
+      <p>When the window fills, call the LLM again to summarize the oldest portion of the conversation. The summary replaces the original text. Slower (requires an extra LLM call) but preserves semantic content much better than truncation. Best for: long conversations where the gist of early context matters.</p>
+    </div>
+    <div class="explain-card">
+      <div class="explain-card-title">🔍 RAG (Retrieval-Augmented Generation)</div>
+      <p>Store all past interactions in a vector database. Before each LLM call, retrieve the top-K most semantically relevant chunks and inject them into the context. The context stays small; memory is effectively unlimited. Best for: knowledge-heavy agents that need to recall specific facts from a large history.</p>
+    </div>
+    <div class="explain-card">
+      <div class="explain-card-title">🗜️ Selective Retention</div>
+      <p>Classify each message by importance (system prompt = keep always; user goals = keep; intermediate tool results = compress; raw file contents = drop after processing). Priority-based retention keeps the highest-value content. Best for: complex agents with heterogeneous context types.</p>
+    </div>
+  </div>
+</div>
+
+<div class="explain-section">
+  <div class="callout callout-info">
+    <div class="callout-icon">💡</div>
+    <div class="callout-body">
+      <div class="callout-title">Token counting: what actually uses space?</div>
+      <p>In a typical agent conversation, the token breakdown is approximately: <strong>System prompt (5–15%)</strong>, Tool definitions (10–20%), Conversation history (20–40%), Tool results / file contents (30–60%). Tool results — especially raw file reads or search results — are the biggest context consumers. Compressing them (extracting only the relevant parts) is usually the highest-leverage optimization.</p>
+    </div>
+  </div>
+  <div class="callout callout-warn">
+    <div class="callout-icon">⚠️</div>
+    <div class="callout-body">
+      <div class="callout-title">"Lost in the middle" problem</div>
+      <p>Research shows LLMs perform worst at recalling information placed in the <strong>middle</strong> of a long context — they reliably remember the beginning and end but lose track of content in between. This is critical for agent design: <strong>put the most important instructions at the start and end of the context</strong>, not buried in the middle.</p>
+    </div>
+  </div>
+</div>
+
+<div class="explain-section">
+  <div class="explain-h2"><span class="ehead-icon">🏗️</span> Building a Memory Architecture</div>
+  <ol class="steps-list">
+    <li>
+      <div class="step-body">
+        <div class="step-title">In-context (working memory)</div>
+        <div class="step-desc">The active context window. Everything currently available to the LLM. Fast (no retrieval needed) but finite. Manage carefully: compress tool results, drop completed sub-task history, keep the goal and constraints always visible.</div>
+      </div>
+    </li>
+    <li>
+      <div class="step-body">
+        <div class="step-title">External memory (vector store / file system)</div>
+        <div class="step-desc">Documents, code files, past conversation summaries stored outside the model. Retrieved on demand via embedding similarity search. The agent queries: "Find past conversations about X" and gets relevant chunks injected into context. Enables unlimited long-term memory.</div>
+      </div>
+    </li>
+    <li>
+      <div class="step-body">
+        <div class="step-title">Episodic memory (session summaries)</div>
+        <div class="step-desc">At the end of each session, generate a structured summary: what the user asked for, what was accomplished, what's still pending, what was learned. Store these summaries and inject them at the start of future sessions. The agent "remembers" past work without replaying full transcripts.</div>
+      </div>
+    </li>
+    <li>
+      <div class="step-body">
+        <div class="step-title">Semantic memory (fact extraction)</div>
+        <div class="step-desc">Extract stable facts from interactions — user preferences, project constraints, domain-specific terminology — and store them in a structured knowledge base. Unlike episodic memory (what happened), semantic memory stores what is true. Inject the most relevant facts into every session's system prompt.</div>
+      </div>
+    </li>
+  </ol>
+</div>
+
+<div class="explain-section">
+  <div class="explain-h2"><span class="ehead-icon">🌍</span> Real-World Context Management</div>
+  <div class="real-world-row">
+    <div class="rw-badge">🤖 <strong>Claude Code</strong> — compact command summarizes context; /clear resets; CLAUDE.md persists project memory</div>
+    <div class="rw-badge">🧠 <strong>MemGPT</strong> — explicit paging: "main context" + "archival memory" with explicit load/save</div>
+    <div class="rw-badge">🔍 <strong>Cursor AI</strong> — codebase indexing + RAG to retrieve relevant code snippets per query</div>
+    <div class="rw-badge">📚 <strong>NotebookLM</strong> — sources stored externally; retrieved per question with citations</div>
+  </div>
+</div>
+
+<div class="explain-section">
+  <div class="explain-h2"><span class="ehead-icon">✅</span> Key Takeaways</div>
+  <div class="takeaways">
+    <div class="takeaway-item">
+      <div class="takeaway-bullet">→</div>
+      <div class="takeaway-text"><strong>The context window is finite and precious.</strong> Every token you put in the context is a token of attention the model spends. Waste less on raw data; spend more on reasoning and goals.</div>
+    </div>
+    <div class="takeaway-item">
+      <div class="takeaway-bullet">→</div>
+      <div class="takeaway-text"><strong>No single strategy fits all tasks.</strong> Short tasks → sliding window. Long conversations → summarization. Knowledge-intensive agents → RAG. Most production agents combine all three.</div>
+    </div>
+    <div class="takeaway-item">
+      <div class="takeaway-bullet">→</div>
+      <div class="takeaway-text"><strong>The "lost in the middle" problem is real.</strong> Put your most critical instructions at the start (system prompt) and repeat them at the end if they're essential. Don't bury key constraints in the middle of a long history.</div>
+    </div>
+    <div class="takeaway-item">
+      <div class="takeaway-bullet">→</div>
+      <div class="takeaway-text"><strong>Memory is a system, not a feature.</strong> Long-horizon agents need layered memory: in-context for immediate work, external stores for past knowledge, episodic for session continuity, semantic for stable facts.</div>
+    </div>
+  </div>
+</div>
+</main>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+function resize() {
+  const w = canvas.parentElement.clientWidth - 32;
+  canvas.width = w;
+  canvas.height = 300;
+}
+resize();
+window.addEventListener('resize', () => resize());
+
+// Block types
+const TYPES = {
+  system:    { color: '#bc8cff', label: 'SYS', tokens: 512,  weight: 2 },
+  user:      { color: '#58a6ff', label: 'USR', tokens: 180,  weight: 1 },
+  assistant: { color: '#3fb950', label: 'AST', tokens: 220,  weight: 1 },
+  tool:      { color: '#f78166', label: 'TLR', tokens: 380,  weight: 2 }
+};
+
+let strategy = 'sliding';
+let contextLimit = 32768;
+let blocks = [
+  { type: 'system',    id: 0, alpha: 1, y: 0 },
+  { type: 'user',      id: 1, alpha: 1, y: 0 },
+  { type: 'assistant', id: 2, alpha: 1, y: 0 }
+];
+let nextId = 3;
+let animParticles = [];
+
+// RAG memory chunks
+const RAG_CHUNKS = [
+  { id: 'c1', text: 'ADR-001: PostgreSQL chosen for ACID compliance', score: 0.92 },
+  { id: 'c2', text: 'Auth uses JWT with 1h expiry', score: 0.87 },
+  { id: 'c3', text: 'Microservices boundary at API gateway', score: 0.74 },
+  { id: 'c4', text: 'Rate limiting: 100 req/min per user', score: 0.63 },
+  { id: 'c5', text: 'Deploy via GitHub Actions to AWS ECS', score: 0.51 }
+];
+
+function totalTokens() {
+  return blocks.reduce((s, b) => s + TYPES[b.type].tokens, 0);
+}
+
+function getLayout() {
+  const W = canvas.width, H = canvas.height;
+  const tapeY = H * 0.22;
+  const tapeH = H * 0.38;
+  const tapeX = 20;
+  const tapeW = strategy === 'rag' ? W * 0.62 : W - 40;
+  return { W, H, tapeY, tapeH, tapeX, tapeW };
+}
+
+function draw() {
+  const { W, H, tapeY, tapeH, tapeX, tapeW } = getLayout();
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0, 0, W, H);
+
+  const total = totalTokens();
+  const fillRatio = Math.min(total / contextLimit, 1);
+
+  // Track background
+  ctx.beginPath();
+  ctx.roundRect(tapeX, tapeY, tapeW, tapeH, 8);
+  ctx.fillStyle = '#161b22';
+  ctx.fill();
+  ctx.strokeStyle = '#30363d';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // Context limit line
+  ctx.strokeStyle = '#f78166';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([5, 4]);
+  ctx.beginPath();
+  ctx.moveTo(tapeX + tapeW, tapeY - 8);
+  ctx.lineTo(tapeX + tapeW, tapeY + tapeH + 8);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Limit label
+  ctx.fillStyle = '#f78166';
+  ctx.font = '10px -apple-system,sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('limit', tapeX + tapeW, tapeY - 14);
+
+  // Draw blocks
+  let xCursor = tapeX + 4;
+  const maxFillW = tapeW - 8;
+
+  blocks.forEach((block, i) => {
+    const t = TYPES[block.type];
+    const blockW = Math.max(20, (t.tokens / contextLimit) * maxFillW);
+    const isDropped = strategy !== 'rag' && block._dropped;
+
+    ctx.globalAlpha = block.alpha * (isDropped ? 0.25 : 1);
+    ctx.beginPath();
+    ctx.roundRect(xCursor, tapeY + 4, blockW - 3, tapeH - 8, 5);
+    ctx.fillStyle = t.color + (isDropped ? '44' : '33');
+    ctx.fill();
+    ctx.strokeStyle = t.color + (isDropped ? '55' : 'cc');
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // Label
+    if (blockW > 28) {
+      ctx.fillStyle = t.color;
+      ctx.font = '600 10px -apple-system,sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(t.label, xCursor + blockW/2 - 1.5, tapeY + tapeH/2);
+    }
+    ctx.globalAlpha = 1;
+    xCursor += blockW - 3 + 2;
+  });
+
+  // Fill progress indicator below tape
+  const fillW = Math.min(fillRatio * tapeW, tapeW);
+  const fillColor = fillRatio > 0.85 ? '#f78166' : fillRatio > 0.6 ? '#d29922' : '#3fb950';
+  ctx.beginPath();
+  ctx.roundRect(tapeX, tapeY + tapeH + 12, fillW, 6, 3);
+  ctx.fillStyle = fillColor + '99';
+  ctx.fill();
+  ctx.strokeStyle = fillColor;
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // Percentage label
+  ctx.fillStyle = fillColor;
+  ctx.font = '11px -apple-system,sans-serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(`${Math.round(fillRatio * 100)}% used`, tapeX, tapeY + tapeH + 28);
+
+  // RAG panel
+  if (strategy === 'rag') {
+    drawRAGPanel();
+  }
+
+  // Particles
+  animParticles = animParticles.filter(p => {
+    p.life -= 0.025;
+    if (p.life <= 0) return false;
+    p.x += p.vx;
+    p.y += p.vy;
+    ctx.globalAlpha = p.life;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    ctx.fillStyle = p.color;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    return true;
+  });
+
+  // Title
+  ctx.fillStyle = '#8b949e';
+  ctx.font = '12px -apple-system,sans-serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('← Context window (left to right, oldest to newest) →', tapeX, tapeY - 22);
+}
+
+let ragSearchAnim = { dots: [], active: false };
+
+function drawRAGPanel() {
+  const { W, H, tapeY, tapeH, tapeX, tapeW } = getLayout();
+  const panX = tapeX + tapeW + 20;
+  const panW = W - panX - 10;
+  const panY = tapeY - 30;
+  const panH = tapeH + 40;
+
+  // Panel bg
+  ctx.beginPath();
+  ctx.roundRect(panX, panY, panW, panH, 8);
+  ctx.fillStyle = '#161b22';
+  ctx.fill();
+  ctx.strokeStyle = '#bc8cff55';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  ctx.fillStyle = '#bc8cff';
+  ctx.font = '600 11px -apple-system,sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('Vector DB', panX + panW/2, panY + 16);
+
+  // Chunks
+  RAG_CHUNKS.forEach((chunk, i) => {
+    const cy = panY + 32 + i * 22;
+    const isRetrieved = chunk.score > 0.7;
+
+    ctx.beginPath();
+    ctx.roundRect(panX + 6, cy, panW - 12, 18, 4);
+    ctx.fillStyle = isRetrieved ? '#bc8cff22' : '#21262d';
+    ctx.fill();
+    ctx.strokeStyle = isRetrieved ? '#bc8cff88' : '#30363d';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    ctx.fillStyle = isRetrieved ? '#bc8cff' : '#8b949e';
+    ctx.font = `${isRetrieved ? 600 : 400} 9px -apple-system,sans-serif`;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    const txt = chunk.text.substring(0, Math.floor((panW - 36) / 6));
+    ctx.fillText(txt, panX + 10, cy + 9);
+
+    // Score bar
+    ctx.beginPath();
+    ctx.roundRect(panX + panW - 28, cy + 4, 20 * chunk.score, 10, 2);
+    ctx.fillStyle = isRetrieved ? '#bc8cff99' : '#30363d';
+    ctx.fill();
+  });
+
+  // Animated search dots
+  if (ragSearchAnim.active) {
+    ragSearchAnim.dots.forEach(d => {
+      d.t += 0.03;
+      const ox = Math.sin(d.t * 2.3 + d.phase) * 8;
+      const oy = Math.cos(d.t * 1.7 + d.phase) * 8;
+      ctx.beginPath();
+      ctx.arc(d.x + ox, d.y + oy, 3, 0, Math.PI * 2);
+      ctx.fillStyle = '#bc8cff';
+      ctx.globalAlpha = 0.7;
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    });
+  }
+}
+
+function spawnParticles(x, y, color, count = 8) {
+  for (let i = 0; i < count; i++) {
+    animParticles.push({
+      x, y,
+      vx: (Math.random() - 0.5) * 4,
+      vy: (Math.random() - 0.5) * 4,
+      r: Math.random() * 4 + 2,
+      color,
+      life: 1
+    });
+  }
+}
+
+function addBlock(type) {
+  const { tapeX, tapeW, tapeY, tapeH } = getLayout();
+  const total = totalTokens();
+  const newToks = TYPES[type].tokens;
+
+  blocks.push({ type, id: nextId++, alpha: 0, _dropped: false });
+
+  // Fade in
+  const b = blocks[blocks.length - 1];
+  let alpha = 0;
+  const fadeIn = () => {
+    alpha += 0.06;
+    b.alpha = Math.min(alpha, 1);
+    if (alpha < 1) requestAnimationFrame(fadeIn);
+  };
+  requestAnimationFrame(fadeIn);
+
+  // Particles at end of tape
+  const fillRatio = Math.min(total / contextLimit, 1);
+  const px = tapeX + 4 + fillRatio * (tapeW - 8);
+  spawnParticles(px, tapeY + tapeH/2, TYPES[type].color);
+
+  // Check if we need truncation
+  const newTotal = total + newToks;
+  if (newTotal > contextLimit * 0.9) {
+    applyTruncation();
+  }
+
+  if (strategy === 'rag') {
+    ragSearchAnim.active = true;
+    const panX = tapeX + tapeW + 20;
+    ragSearchAnim.dots = RAG_CHUNKS.slice(0, 3).map((_, i) => ({
+      x: panX + 20 + i * 15, y: tapeY + 50 + i * 22, t: Math.random() * Math.PI * 2, phase: Math.random() * Math.PI
+    }));
+    setTimeout(() => { ragSearchAnim.active = false; }, 1500);
+    updateRAGInsight();
+  }
+
+  updateInsight();
+}
+
+function applyTruncation() {
+  if (strategy === 'sliding') {
+    // Mark oldest non-system blocks as dropped
+    let dropped = 0;
+    for (let i = 0; i < blocks.length; i++) {
+      if (blocks[i].type !== 'system' && !blocks[i]._dropped) {
+        blocks[i]._dropped = true;
+        dropped++;
+        if (totalActiveTokens() <= contextLimit * 0.7) break;
+      }
+    }
+  } else if (strategy === 'summarize') {
+    // Remove oldest user/asst pairs
+    for (let i = 0; i < blocks.length; i++) {
+      if (['user','assistant'].includes(blocks[i].type) && !blocks[i]._dropped) {
+        blocks[i]._dropped = true;
+        if (totalActiveTokens() <= contextLimit * 0.75) break;
+      }
+    }
+    // Add summary block
+    if (!blocks.find(b => b.type === 'system' && b._summary)) {
+      // visual only
+    }
+  }
+}
+
+function totalActiveTokens() {
+  return blocks.filter(b => !b._dropped).reduce((s, b) => s + TYPES[b.type].tokens, 0);
+}
+
+function updateInsight() {
+  const total = totalTokens();
+  const active = totalActiveTokens();
+  const limit = contextLimit;
+  const pct = Math.min((total / limit) * 100, 100).toFixed(1);
+  const fillColor = pct > 85 ? '#f78166' : pct > 60 ? '#d29922' : '#3fb950';
+
+  document.getElementById('tokenCount').textContent = `${active.toLocaleString()} / ${limit.toLocaleString()}`;
+  document.getElementById('pctLabel').textContent = `${pct}% full`;
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressBar').style.background = fillColor;
+
+  const kept = [], dropped = [];
+  blocks.forEach(b => {
+    const label = `${TYPES[b.type].label}: ~${TYPES[b.type].tokens} tok`;
+    if (b._dropped) dropped.push(label); else kept.push(label);
+  });
+
+  document.getElementById('keptList').textContent = kept.join('\n') || '—';
+  document.getElementById('droppedList').textContent = dropped.join('\n') || 'Nothing truncated yet';
+
+  const descs = {
+    sliding: `<strong>Sliding Window</strong> — keeps only the most recent N tokens. Oldest turns are simply dropped when the window fills. Fast and simple, but the model loses long-term memory. Good for short tasks where history beyond a few turns doesn't matter.`,
+    summarize: `<strong>Summarize & Replace</strong> — when the window fills, old turns are compressed into a short summary by a secondary LLM call. The summary is inserted as a system message. Preserves key facts at the cost of extra latency and one LLM call.`,
+    rag: `<strong>RAG (Retrieval-Augmented Generation)</strong> — relevant chunks from a vector database are retrieved at query time and injected into context. The full conversation history is stored externally. Scales to infinite history but requires a vector DB and embedding model.`
+  };
+  document.getElementById('strategyDesc').innerHTML = descs[strategy];
+}
+
+function updateRAGInsight() {
+  const relevant = RAG_CHUNKS.filter(c => c.score > 0.7);
+  document.getElementById('ragPanel').style.display = 'block';
+  document.getElementById('ragPre').textContent =
+`// Similarity search triggered by new user message
+// Retrieved ${relevant.length} chunks above threshold (score > 0.7):
+
+${relevant.map(c => `[score=${c.score}] "${c.text}"`).join('\n')}
+
+// These chunks are injected into context before the LLM call:
+{
+  "role": "system",
+  "content": "Relevant context:\\n${relevant.map(c => '- ' + c.text).join('\\n')}"
+}`;
+}
+
+// Tabs
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    strategy = tab.dataset.strategy;
+    // Reset dropped state
+    blocks.forEach(b => b._dropped = false);
+    if (strategy !== 'rag') {
+      document.getElementById('ragPanel').style.display = 'none';
+    }
+    updateInsight();
+  });
+});
+
+// Controls
+document.getElementById('btnUser').addEventListener('click', () => addBlock('user'));
+document.getElementById('btnAsst').addEventListener('click', () => addBlock('assistant'));
+document.getElementById('btnTool').addEventListener('click', () => addBlock('tool'));
+
+document.getElementById('sizeSelect').addEventListener('change', e => {
+  contextLimit = parseInt(e.target.value);
+  blocks.forEach(b => b._dropped = false);
+  updateInsight();
+});
+
+document.getElementById('btnReset').addEventListener('click', () => {
+  blocks = [
+    { type: 'system',    id: 0, alpha: 1, _dropped: false },
+    { type: 'user',      id: 1, alpha: 1, _dropped: false },
+    { type: 'assistant', id: 2, alpha: 1, _dropped: false }
+  ];
+  nextId = 3;
+  animParticles = [];
+  ragSearchAnim.active = false;
+  document.getElementById('ragPanel').style.display = 'none';
+  updateInsight();
+});
+
+// Animation loop
+function loop() {
+  draw();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+updateInsight();
+</script>
+</body>
+</html>

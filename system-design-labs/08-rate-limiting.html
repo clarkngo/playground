@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rate Limiting: Algorithms Compared</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0d1117; color: #c9d1d9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
+  nav { background: #161b22; border-bottom: 1px solid #30363d; padding: 12px 24px; display: flex; align-items: center; gap: 16px; flex-shrink: 0; }
+  nav .brand { font-weight: 700; font-size: 16px; color: #f0f6fc; }
+  nav a { color: #58a6ff; text-decoration: none; font-size: 14px; }
+  nav a:hover { text-decoration: underline; }
+  .main { display: flex; flex: 1; overflow: hidden; }
+  .left { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .tabs { display: flex; background: #161b22; border-bottom: 1px solid #30363d; padding: 0 16px; }
+  .tab { padding: 12px 20px; font-size: 13px; cursor: pointer; color: #8b949e; border-bottom: 2px solid transparent; transition: all 0.2s; white-space: nowrap; }
+  .tab.active { color: #f0883e; border-bottom-color: #f0883e; }
+  .tab:hover:not(.active) { color: #c9d1d9; }
+  .canvas-area { flex: 1; position: relative; overflow: hidden; }
+  canvas { display: block; }
+  .sidebar { width: 300px; min-width: 300px; background: #161b22; border-left: 1px solid #30363d; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+  .panel { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 14px; }
+  .panel h3 { font-size: 12px; font-weight: 600; color: #8b949e; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 6px; border: 1px solid #30363d; background: #21262d; color: #c9d1d9; font-size: 13px; cursor: pointer; transition: all 0.2s; font-family: inherit; width: 100%; justify-content: center; margin-bottom: 6px; }
+  .btn:hover { background: #30363d; }
+  .btn.accent { background: #f0883e22; border-color: #f0883e; color: #f0883e; }
+  .btn.accent:hover { background: #f0883e44; }
+  label { font-size: 12px; color: #8b949e; display: block; margin-bottom: 4px; }
+  input[type=range] { width: 100%; accent-color: #f0883e; margin-bottom: 8px; }
+  .score { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #21262d; }
+  .score:last-child { border-bottom: none; }
+  .score-label { font-size: 13px; }
+  .score-val { font-size: 14px; font-weight: 700; }
+  .green { color: #3fb950; }
+  .red { color: #f85149; }
+  .orange { color: #f0883e; }
+  .blue { color: #58a6ff; }
+  .desc { font-size: 12px; color: #8b949e; line-height: 1.6; }
+  .bar-chart { display: flex; align-items: flex-end; gap: 3px; height: 60px; margin-top: 8px; }
+  .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .bar-seg { width: 100%; border-radius: 2px 2px 0 0; transition: height 0.2s; }
+  .chart-wrap { background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 10px; }
+</style>
+</head>
+<body>
+<nav>
+  <span class="brand">System Design Labs</span>
+  <span style="color:#30363d">|</span>
+  <a href="index.html">← System Design Labs</a>
+  <span style="flex:1"></span>
+  <span style="font-size:13px;color:#8b949e">08 — Rate Limiting</span>
+</nav>
+<div class="main">
+  <div class="left">
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab(0)">🪣 Token Bucket</div>
+      <div class="tab" onclick="switchTab(1)">💧 Leaky Bucket</div>
+      <div class="tab" onclick="switchTab(2)">🪟 Fixed Window</div>
+      <div class="tab" onclick="switchTab(3)">📊 Sliding Window</div>
+    </div>
+    <div class="canvas-area">
+      <canvas id="canvas"></canvas>
+    </div>
+  </div>
+  <div class="sidebar">
+    <div class="panel">
+      <h3>Controls</h3>
+      <label>Rate Limit: <span id="rateVal">10</span> req/s</label>
+      <input type="range" min="5" max="30" value="10" id="rateSlider" oninput="document.getElementById('rateVal').textContent=this.value;rateLimit=+this.value">
+      <label>Burst Size: <span id="burstVal">15</span></label>
+      <input type="range" min="5" max="40" value="15" id="burstSlider" oninput="document.getElementById('burstVal').textContent=this.value;burstSize=+this.value">
+      <button class="btn accent" onclick="sendBurst()">⚡ Send Burst</button>
+      <button class="btn" onclick="sendSingle()">→ Send Single Request</button>
+      <button class="btn" onclick="resetAll()">↺ Reset</button>
+    </div>
+    <div class="panel">
+      <h3>Scoreboard</h3>
+      <div class="score"><span class="score-label">Allowed</span><span class="score-val green" id="allowed">0</span></div>
+      <div class="score"><span class="score-label">Rejected</span><span class="score-val red" id="rejected">0</span></div>
+      <div class="score"><span class="score-label">Total</span><span class="score-val blue" id="total">0</span></div>
+      <div class="score"><span class="score-label">Rejection Rate</span><span class="score-val orange" id="rejRate">0%</span></div>
+    </div>
+    <div class="panel">
+      <h3>Last 10s Timeline</h3>
+      <div class="chart-wrap">
+        <div class="bar-chart" id="barChart"></div>
+        <div style="display:flex;justify-content:space-between;margin-top:4px;">
+          <span style="font-size:10px;color:#8b949e">10s ago</span>
+          <span style="font-size:10px;color:#8b949e">now</span>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:6px;">
+          <span style="font-size:10px;color:#3fb950">■ Allowed</span>
+          <span style="font-size:10px;color:#f85149">■ Rejected</span>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <h3>How It Works</h3>
+      <div class="desc" id="howItWorks">
+        Tokens accumulate at a fixed rate up to the bucket capacity. Each request consumes one token. Burst traffic is handled gracefully up to the bucket limit.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let rateLimit = 10, burstSize = 15;
+let currentTab = 0;
+let allowed = 0, rejected = 0;
+let timeline = Array(10).fill(null).map(() => ({ a: 0, r: 0 }));
+let secondTimer = 0;
+let lastTime = 0;
+
+// Token Bucket state
+let tokens = 15;
+let particles = [];
+let tokenFill = 0; // accumulator
+
+// Leaky Bucket state
+let leakyLevel = 0; // 0-1
+let leakyParticles = [];
+let leakyQueue = [];
+let leakyOutput = [];
+
+// Fixed Window state
+let fixedCount = 0;
+let fixedWindowStart = 0;
+let fixedWindowT = 0;
+let fixedRequests = [];
+
+// Sliding Window state
+let slidingRequests = []; // timestamps
+let slidingParticles = [];
+let slidingNow = 0;
+
+const descriptions = [
+  'Tokens accumulate at a fixed rate up to the bucket capacity. Each request consumes one token. Burst traffic is handled gracefully up to bucket size — then requests are rejected until tokens refill.',
+  'Requests drip into a queue at any rate; they drip OUT at a fixed rate. Overflow is rejected. This smooths out bursts but can introduce latency. Great for enforcing steady throughput.',
+  'A counter is reset every window period. All requests within the window are counted. When the limit is hit, requests are rejected until the next window. Downside: allows 2x burst at window boundaries.',
+  'A rolling time window tracks request timestamps. The count of requests in the last N milliseconds is checked. Smoother than fixed window — no boundary bursts, more accurate rate enforcement.'
+];
+
+function resize() {
+  canvas.width = canvas.parentElement.clientWidth;
+  canvas.height = canvas.parentElement.clientHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+function switchTab(i) {
+  currentTab = i;
+  document.querySelectorAll('.tab').forEach((t, j) => t.classList.toggle('active', i === j));
+  document.getElementById('howItWorks').textContent = descriptions[i];
+  resetAll();
+}
+
+function updateScoreboard() {
+  document.getElementById('allowed').textContent = allowed;
+  document.getElementById('rejected').textContent = rejected;
+  document.getElementById('total').textContent = allowed + rejected;
+  const rate = (allowed + rejected) > 0 ? Math.round(rejected / (allowed + rejected) * 100) : 0;
+  document.getElementById('rejRate').textContent = rate + '%';
+}
+
+function updateBarChart() {
+  const chart = document.getElementById('barChart');
+  chart.innerHTML = '';
+  const maxVal = Math.max(1, ...timeline.map(t => t.a + t.r));
+  timeline.forEach(t => {
+    const col = document.createElement('div');
+    col.className = 'bar-col';
+    const total = t.a + t.r;
+    const aH = Math.round((t.a / maxVal) * 52);
+    const rH = Math.round((t.r / maxVal) * 52);
+    col.innerHTML = `<div class="bar-seg" style="background:#f85149;height:${rH}px"></div><div class="bar-seg" style="background:#3fb950;height:${aH}px"></div>`;
+    chart.appendChild(col);
+  });
+}
+
+function recordRequest(pass) {
+  if (pass) allowed++; else rejected++;
+  timeline[timeline.length - 1][pass ? 'a' : 'r']++;
+  updateScoreboard();
+  updateBarChart();
+}
+
+function sendBurst() {
+  const n = burstSize;
+  for (let i = 0; i < n; i++) {
+    setTimeout(() => sendSingle(), i * 30);
+  }
+}
+
+function sendSingle() {
+  switch (currentTab) {
+    case 0: tokenBucketRequest(); break;
+    case 1: leakyBucketRequest(); break;
+    case 2: fixedWindowRequest(); break;
+    case 3: slidingWindowRequest(); break;
+  }
+}
+
+// ---- Token Bucket ----
+function tokenBucketRequest() {
+  if (tokens >= 1) {
+    tokens--;
+    recordRequest(true);
+    particles.push({ x: 80, y: canvas.height / 2, color: '#3fb950', life: 1, speed: 4, pass: true });
+  } else {
+    recordRequest(false);
+    particles.push({ x: 80, y: canvas.height / 2, color: '#f85149', life: 1, speed: 4, pass: false });
+  }
+}
+
+// ---- Leaky Bucket ----
+function leakyBucketRequest() {
+  if (leakyLevel < 1) {
+    leakyLevel = Math.min(1, leakyLevel + 1 / burstSize);
+    leakyQueue.push({ y: 0.1 + leakyLevel * 0.7, life: 1 });
+    recordRequest(true);
+  } else {
+    recordRequest(false);
+    leakyParticles.push({ x: canvas.width * 0.35, y: canvas.height * 0.3, vy: -2, color: '#f85149', life: 1 });
+  }
+}
+
+// ---- Fixed Window ----
+function fixedWindowRequest() {
+  if (fixedCount < rateLimit) {
+    fixedCount++;
+    recordRequest(true);
+    fixedRequests.push({ x: 100, pass: true, life: 1 });
+  } else {
+    recordRequest(false);
+    fixedRequests.push({ x: 100, pass: false, life: 1 });
+  }
+}
+
+// ---- Sliding Window ----
+function slidingWindowRequest() {
+  const now = Date.now();
+  const windowMs = 1000;
+  slidingRequests = slidingRequests.filter(t => now - t < windowMs);
+  if (slidingRequests.length < rateLimit) {
+    slidingRequests.push(now);
+    recordRequest(true);
+    slidingParticles.push({ x: 60, y: canvas.height * 0.5, color: '#3fb950', life: 1, pass: true });
+  } else {
+    recordRequest(false);
+    slidingParticles.push({ x: 60, y: canvas.height * 0.5, color: '#f85149', life: 1, pass: false });
+  }
+}
+
+function resetAll() {
+  tokens = rateLimit; leakyLevel = 0; fixedCount = 0;
+  particles = []; leakyParticles = []; leakyQueue = []; leakyOutput = [];
+  fixedRequests = []; slidingRequests = []; slidingParticles = [];
+  allowed = 0; rejected = 0;
+  timeline = Array(10).fill(null).map(() => ({ a: 0, r: 0 }));
+  updateScoreboard(); updateBarChart();
+}
+
+// ============ DRAW FUNCTIONS ============
+
+function drawTokenBucket(dt) {
+  // Refill tokens
+  tokenFill += rateLimit * dt;
+  if (tokenFill >= 1) {
+    const add = Math.floor(tokenFill);
+    tokens = Math.min(burstSize, tokens + add);
+    tokenFill -= add;
+  }
+
+  const cx = canvas.width / 2, cy = canvas.height / 2;
+  const bw = 160, bh = 220;
+  const bx = cx - bw / 2, by = cy - bh / 2;
+
+  // Bucket outline
+  ctx.strokeStyle = '#30363d';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(bx, by);
+  ctx.lineTo(bx, by + bh);
+  ctx.lineTo(bx + bw, by + bh);
+  ctx.lineTo(bx + bw, by);
+  ctx.stroke();
+
+  // Fill
+  const fillH = (tokens / burstSize) * (bh - 4);
+  const fillY = by + bh - fillH - 2;
+  const grad = ctx.createLinearGradient(bx, fillY, bx, by + bh);
+  grad.addColorStop(0, tokens < burstSize * 0.3 ? '#f8514944' : '#f0883e44');
+  grad.addColorStop(1, tokens < burstSize * 0.3 ? '#f85149aa' : '#f0883eaa');
+  ctx.fillStyle = grad;
+  ctx.fillRect(bx + 2, fillY, bw - 4, fillH);
+
+  // Token circles
+  const cols = 5;
+  for (let i = 0; i < Math.floor(tokens); i++) {
+    const row = Math.floor(i / cols), col = i % cols;
+    const tx = bx + 18 + col * 28;
+    const ty = by + bh - 20 - row * 28;
+    ctx.beginPath();
+    ctx.arc(tx, ty, 10, 0, Math.PI * 2);
+    ctx.fillStyle = '#f0883e';
+    ctx.fill();
+    ctx.fillStyle = '#0d1117';
+    ctx.font = 'bold 8px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('T', tx, ty + 3);
+  }
+
+  // Labels
+  ctx.fillStyle = '#f0f6fc';
+  ctx.font = 'bold 15px -apple-system, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Token Bucket', cx, by - 20);
+  ctx.fillStyle = '#8b949e';
+  ctx.font = '12px -apple-system, sans-serif';
+  ctx.fillText(`${Math.floor(tokens)} / ${burstSize} tokens`, cx, by - 4);
+
+  // Refill rate arrow
+  ctx.fillStyle = '#3fb950';
+  ctx.font = '11px -apple-system, sans-serif';
+  ctx.textAlign = 'right';
+  ctx.fillText(`+${rateLimit} tokens/s`, bx - 10, by + bh / 2);
+  ctx.strokeStyle = '#3fb950';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(bx - 8, by + bh / 2 - 30);
+  ctx.lineTo(bx - 8, by + bh / 2 + 20);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(bx - 8, by + bh / 2 + 20);
+  ctx.lineTo(bx - 4, by + bh / 2 + 10);
+  ctx.moveTo(bx - 8, by + bh / 2 + 20);
+  ctx.lineTo(bx - 12, by + bh / 2 + 10);
+  ctx.stroke();
+
+  // Particles
+  particles = particles.filter(p => p.life > 0);
+  particles.forEach(p => {
+    p.x += p.speed;
+    p.life -= 0.025;
+    ctx.save();
+    ctx.globalAlpha = p.life;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y + (Math.random() - 0.5) * 2, 8, 0, Math.PI * 2);
+    ctx.fillStyle = p.color;
+    ctx.shadowColor = p.color;
+    ctx.shadowBlur = 10;
+    ctx.fill();
+    ctx.restore();
+  });
+
+  // Status text
+  ctx.fillStyle = tokens >= 1 ? '#3fb950' : '#f85149';
+  ctx.font = 'bold 13px -apple-system, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(tokens >= 1 ? '✓ Accepting Requests' : '✗ Bucket Empty — Requests Rejected', cx, by + bh + 30);
+}
+
+function drawLeakyBucket(dt) {
+  // Drain
+  leakyLevel = Math.max(0, leakyLevel - rateLimit * dt / burstSize);
+
+  const cx = canvas.width / 2, cy = canvas.height / 2;
+  const bw = 150, bh = 200;
+  const bx = cx - bw / 2, by = cy - bh / 2 - 20;
+
+  // Bucket
+  ctx.strokeStyle = '#30363d';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(bx, by);
+  ctx.lineTo(bx, by + bh);
+  ctx.lineTo(bx + bw, by + bh);
+  ctx.lineTo(bx + bw, by);
+  ctx.stroke();
+
+  // Water level
+  const fillH = leakyLevel * (bh - 4);
+  const fillY = by + bh - fillH - 2;
+  const waterColor = leakyLevel > 0.85 ? '#f85149' : '#58a6ff';
+  ctx.fillStyle = waterColor + '55';
+  ctx.fillRect(bx + 2, fillY, bw - 4, fillH);
+  if (fillH > 2) {
+    ctx.fillStyle = waterColor + 'aa';
+    ctx.fillRect(bx + 2, fillY, bw - 4, 4);
+  }
+
+  // Drip at bottom
+  if (leakyLevel > 0) {
+    const dripY = by + bh + 8 + Math.sin(Date.now() / 200) * 4;
+    ctx.beginPath();
+    ctx.arc(cx, dripY, 5, 0, Math.PI * 2);
+    ctx.fillStyle = '#58a6ff';
+    ctx.fill();
+  }
+
+  ctx.fillStyle = '#f0f6fc';
+  ctx.font = 'bold 15px -apple-system, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Leaky Bucket', cx, by - 20);
+  ctx.fillStyle = '#8b949e';
+  ctx.font = '12px -apple-system, sans-serif';
+  ctx.fillText(`Level: ${Math.round(leakyLevel * 100)}%  |  Drain: ${rateLimit} req/s`, cx, by - 4);
+
+  // Overflow particles
+  leakyParticles = leakyParticles.filter(p => p.life > 0);
+  leakyParticles.forEach(p => {
+    p.x += (Math.random() - 0.5) * 2;
+    p.y += p.vy;
+    p.vy += 0.1;
+    p.life -= 0.02;
+    ctx.save();
+    ctx.globalAlpha = p.life;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+    ctx.fillStyle = p.color;
+    ctx.fill();
+    ctx.restore();
+  });
+
+  // Output arrow
+  ctx.strokeStyle = '#3fb950';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  ctx.moveTo(cx, by + bh + 20);
+  ctx.lineTo(cx, by + bh + 60);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#3fb950';
+  ctx.font = '11px -apple-system, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Fixed output rate', cx, by + bh + 75);
+
+  ctx.fillStyle = leakyLevel > 0.9 ? '#f85149' : '#3fb950';
+  ctx.font = 'bold 13px -apple-system, sans-serif';
+  ctx.fillText(leakyLevel > 0.9 ? '⚠ Overflow — Rejecting' : '✓ Processing at fixed rate', cx, by - 42);
+}
+
+function drawFixedWindow(dt) {
+  fixedWindowT += dt;
+  if (fixedWindowT >= 1) {
+    fixedWindowT -= 1;
+    fixedCount = 0;
+    timeline.shift(); timeline.push({ a: 0, r: 0 });
+    updateBarChart();
+  }
+
+  const cx = canvas.width / 2, cy = canvas.height / 2;
+  const ww = canvas.width * 0.7, wh = 80;
+  const wx = cx - ww / 2, wy = cy - wh / 2;
+
+  // Window outline
+  const progress = fixedWindowT;
+  ctx.strokeStyle = '#f0883e';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(wx, wy, ww, wh);
+
+  // Progress bar
+  ctx.fillStyle = '#f0883e22';
+  ctx.fillRect(wx, wy, ww * progress, wh);
+
+  // Request slots
+  const cols = 10, rows = 3, slotW = ww / cols, slotH = wh / rows;
+  let slotI = 0;
+  for (let i = 0; i < rateLimit; i++) {
+    const col = i % cols, row = Math.floor(i / cols);
+    const sx = wx + col * slotW + 4, sy = wy + row * slotH + 4;
+    const sw = slotW - 8, sh = slotH - 8;
+    ctx.fillStyle = i < fixedCount ? '#3fb95088' : '#21262d';
+    ctx.beginPath();
+    ctx.roundRect(sx, sy, sw, sh, 3);
+    ctx.fill();
+  }
+
+  ctx.fillStyle = '#f0f6fc';
+  ctx.font = 'bold 15px -apple-system, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Fixed Window', cx, wy - 30);
+
+  ctx.fillStyle = '#8b949e';
+  ctx.font = '12px -apple-system, sans-serif';
+  ctx.fillText(`Window resets in ${(1 - fixedWindowT).toFixed(2)}s  |  Count: ${fixedCount}/${rateLimit}`, cx, wy - 14);
+
+  // Timer arc
+  ctx.strokeStyle = '#f0883e';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.arc(cx, wy + wh + 50, 30, -Math.PI / 2, -Math.PI / 2 + progress * Math.PI * 2);
+  ctx.stroke();
+  ctx.strokeStyle = '#21262d';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.arc(cx, wy + wh + 50, 30, -Math.PI / 2 + progress * Math.PI * 2, -Math.PI / 2 + Math.PI * 2);
+  ctx.stroke();
+  ctx.fillStyle = '#f0883e';
+  ctx.font = 'bold 11px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText((1 - fixedWindowT).toFixed(1) + 's', cx, wy + wh + 55);
+
+  ctx.fillStyle = fixedCount >= rateLimit ? '#f85149' : '#3fb950';
+  ctx.font = 'bold 13px -apple-system, sans-serif';
+  ctx.fillText(fixedCount >= rateLimit ? '✗ Window Full — Rejecting' : '✓ Accepting Requests', cx, wy - 50);
+}
+
+function drawSlidingWindow(dt) {
+  slidingNow = Date.now();
+  const windowMs = 1000;
+  slidingRequests = slidingRequests.filter(t => slidingNow - t < windowMs);
+  const count = slidingRequests.length;
+
+  const cx = canvas.width / 2, cy = canvas.height / 2;
+  const ww = canvas.width * 0.7, wy = cy;
+
+  // Timeline bar
+  const barH = 16;
+  ctx.fillStyle = '#21262d';
+  ctx.beginPath();
+  ctx.roundRect(cx - ww / 2, wy - barH / 2, ww, barH, 4);
+  ctx.fill();
+
+  // Request dots on timeline
+  slidingRequests.forEach(ts => {
+    const age = (slidingNow - ts) / windowMs;
+    const px = cx + ww / 2 - age * ww;
+    const alpha = 1 - age * 0.5;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.beginPath();
+    ctx.arc(px, wy, 7, 0, Math.PI * 2);
+    ctx.fillStyle = '#3fb950';
+    ctx.shadowColor = '#3fb950';
+    ctx.shadowBlur = 8;
+    ctx.fill();
+    ctx.restore();
+  });
+
+  // Window bracket
+  ctx.strokeStyle = '#f0883e';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(cx - ww / 2, wy - 30, ww, 60);
+  ctx.fillStyle = '#f0883e22';
+  ctx.fillRect(cx - ww / 2, wy - 30, ww, 60);
+
+  // Labels
+  ctx.fillStyle = '#8b949e';
+  ctx.font = '11px -apple-system, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('1s ago', cx - ww / 2, wy + 48);
+  ctx.textAlign = 'right';
+  ctx.fillText('now', cx + ww / 2, wy + 48);
+
+  ctx.fillStyle = '#f0f6fc';
+  ctx.font = 'bold 15px -apple-system, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Sliding Window', cx, wy - 50);
+  ctx.fillStyle = '#8b949e';
+  ctx.font = '12px -apple-system, sans-serif';
+  ctx.fillText(`Requests in last 1s: ${count} / ${rateLimit}`, cx, wy - 34);
+
+  // Count arc
+  const arc = (count / rateLimit) * Math.PI * 2;
+  ctx.strokeStyle = '#21262d';
+  ctx.lineWidth = 8;
+  ctx.beginPath();
+  ctx.arc(cx, wy + 100, 36, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.strokeStyle = count >= rateLimit ? '#f85149' : '#3fb950';
+  ctx.beginPath();
+  ctx.arc(cx, wy + 100, 36, -Math.PI / 2, -Math.PI / 2 + arc);
+  ctx.stroke();
+  ctx.fillStyle = count >= rateLimit ? '#f85149' : '#3fb950';
+  ctx.font = 'bold 14px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText(`${count}/${rateLimit}`, cx, wy + 105);
+
+  ctx.fillStyle = count >= rateLimit ? '#f85149' : '#3fb950';
+  ctx.font = 'bold 13px -apple-system, sans-serif';
+  ctx.fillText(count >= rateLimit ? '✗ Window Full — Rejecting' : '✓ Accepting Requests', cx, wy - 70);
+}
+
+function draw(ts) {
+  const dt = Math.min((ts - lastTime) / 1000, 0.1);
+  lastTime = ts;
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  secondTimer += dt;
+  if (secondTimer >= 1) {
+    secondTimer -= 1;
+    timeline.shift();
+    timeline.push({ a: 0, r: 0 });
+    updateBarChart();
+  }
+
+  switch (currentTab) {
+    case 0: drawTokenBucket(dt); break;
+    case 1: drawLeakyBucket(dt); break;
+    case 2: drawFixedWindow(dt); break;
+    case 3: drawSlidingWindow(dt); break;
+  }
+
+  requestAnimationFrame(draw);
+}
+
+requestAnimationFrame(t => { lastTime = t; requestAnimationFrame(draw); });
+updateBarChart();
+</script>
+</body>
+</html>

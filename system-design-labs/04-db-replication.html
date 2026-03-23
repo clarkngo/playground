@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Database Replication: Primary-Replica</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0d1117; color: #c9d1d9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
+  nav { background: #161b22; border-bottom: 1px solid #30363d; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; }
+  .navbar-brand { font-size: 1.1rem; font-weight: 600; color: #58a6ff; }
+  nav a { color: #58a6ff; text-decoration: none; font-size: 0.9rem; }
+  nav a:hover { text-decoration: underline; }
+  .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
+  h1 { font-size: 1.6rem; color: #e6edf3; margin-bottom: 6px; }
+  .subtitle { color: #8b949e; margin-bottom: 24px; font-size: 0.95rem; }
+
+  .main-grid { display: grid; grid-template-columns: 1fr 300px; gap: 20px; }
+  .canvas-card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; overflow: hidden; }
+  canvas { display: block; }
+
+  .side-panel { display: flex; flex-direction: column; gap: 16px; }
+  .panel-card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 18px; }
+  .panel-card h3 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; color: #8b949e; margin-bottom: 14px; }
+
+  .btn { width: 100%; padding: 10px; border: 1px solid #30363d; border-radius: 6px; background: #21262d; color: #c9d1d9; cursor: pointer; font-size: 0.88rem; font-family: inherit; transition: all 0.2s; margin-bottom: 8px; }
+  .btn:hover { background: #30363d; border-color: #58a6ff; color: #58a6ff; }
+  .btn.blue { border-color: #1f6feb; color: #58a6ff; }
+  .btn.blue:hover { background: #0d1a2a; }
+  .btn.active-toggle { background: #1a2a3a; border-color: #58a6ff; color: #58a6ff; }
+
+  label { font-size: 0.82rem; color: #8b949e; display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  input[type=range] { width: 100px; accent-color: #58a6ff; }
+
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .toggle-label { font-size: 0.82rem; color: #8b949e; }
+  .toggle-switch { display: flex; gap: 0; border: 1px solid #30363d; border-radius: 6px; overflow: hidden; }
+  .toggle-opt { padding: 5px 12px; background: #21262d; border: none; color: #8b949e; cursor: pointer; font-size: 0.78rem; font-family: inherit; transition: all 0.2s; }
+  .toggle-opt.active { background: #1f6feb; color: #fff; font-weight: 600; }
+  .toggle-opt:hover:not(.active) { background: #30363d; }
+
+  .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid #21262d; }
+  .stat-row:last-child { border-bottom: none; }
+  .stat-label { font-size: 0.82rem; color: #8b949e; }
+  .stat-value { font-size: 0.9rem; font-weight: 600; color: #58a6ff; font-variant-numeric: tabular-nums; }
+
+  .lag-bars { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+  .lag-row { display: flex; align-items: center; gap: 8px; font-size: 0.78rem; }
+  .lag-label { width: 52px; color: #8b949e; }
+  .lag-bar-bg { flex: 1; background: #21262d; border-radius: 3px; height: 6px; }
+  .lag-bar-fill { height: 100%; border-radius: 3px; transition: width 0.3s, background 0.3s; }
+  .lag-val { width: 44px; text-align: right; color: #58a6ff; font-variant-numeric: tabular-nums; }
+
+  .mode-badge { display: inline-block; padding: 3px 10px; border-radius: 10px; font-size: 0.75rem; font-weight: 600; }
+  .mode-sync { background: #1a3a1f; color: #7ee787; border: 1px solid #3fb950; }
+  .mode-async { background: #1a2a3a; color: #58a6ff; border: 1px solid #1f6feb; }
+
+  .insight { background: #0d1a2a; border: 1px solid #1f6feb; border-radius: 6px; padding: 12px; margin-top: 8px; }
+  .insight p { font-size: 0.82rem; color: #8b949e; line-height: 1.5; }
+  .insight strong { color: #58a6ff; }
+</style>
+</head>
+<body>
+<nav>
+  <span class="navbar-brand">⚙️ Database Replication: Primary-Replica</span>
+  <a href="index.html">← System Design Labs</a>
+</nav>
+<div class="container">
+  <h1>Database Replication: Primary-Replica</h1>
+  <p class="subtitle">Watch how writes propagate from the Primary to Replica databases, and how replication lag affects consistency.</p>
+
+  <div class="main-grid">
+    <div class="canvas-card">
+      <canvas id="canvas"></canvas>
+    </div>
+    <div class="side-panel">
+      <div class="panel-card">
+        <h3>Controls</h3>
+        <button class="btn blue" onclick="doWrite()">✏️ Write to Primary</button>
+        <button class="btn" id="readToggleBtn" onclick="toggleReads()">📖 Enable Reads (Off)</button>
+        <div style="margin:10px 0 4px;">
+          <label>Replication Lag: <input type="range" id="lagSlider" min="0" max="500" value="80" oninput="setLag(+this.value)"> <span id="lagVal">80</span>ms</label>
+        </div>
+        <div class="toggle-row">
+          <span class="toggle-label">Sync Mode:</span>
+          <div class="toggle-switch">
+            <button class="toggle-opt active" id="syncBtn" onclick="setSyncMode('sync')">Sync</button>
+            <button class="toggle-opt" id="asyncBtn" onclick="setSyncMode('async')">Async</button>
+          </div>
+        </div>
+        <div id="modeBadge" class="mode-badge mode-sync">Synchronous Replication</div>
+      </div>
+
+      <div class="panel-card">
+        <h3>Replica Lag</h3>
+        <div class="lag-bars" id="lagBars"></div>
+      </div>
+
+      <div class="panel-card">
+        <h3>Throughput</h3>
+        <div class="stat-row"><span class="stat-label">Total Writes</span><span class="stat-value" id="totalWrites">0</span></div>
+        <div class="stat-row"><span class="stat-label">Reads Served</span><span class="stat-value" id="readsServed">0</span></div>
+        <div class="stat-row"><span class="stat-label">Sync Acks</span><span class="stat-value" id="syncAcks">0</span></div>
+        <div class="stat-row"><span class="stat-label">Mode</span><span class="stat-value" id="modeVal">Sync</span></div>
+      </div>
+
+      <div class="panel-card">
+        <h3>Insight</h3>
+        <div class="insight" id="insightBox"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let W, H;
+let lagMs = 80;
+let syncMode = 'sync';
+let readsEnabled = false;
+let totalWrites = 0, readsServed = 0, syncAcks = 0;
+let frame = 0;
+
+const NUM_REPLICAS = 3;
+let primary = { x: 0, y: 0, w: 100, h: 64, flashTimer: 0, writeVersion: 0 };
+let replicas = Array.from({ length: NUM_REPLICAS }, (_, i) => ({
+  id: i, x: 0, y: 0, w: 100, h: 54,
+  lagMs: 0, syncing: false, syncProgress: 0, flashTimer: 0,
+  version: 0, blocked: false,
+}));
+
+let packets = []; // {x,y,tx,ty,progress,color,phase,target,readPkt}
+let readPackets = [];
+let primaryBlocked = false;
+let primaryBlockTimer = 0;
+let readTimer = 0;
+
+function resize() {
+  W = canvas.parentElement.clientWidth;
+  H = 420;
+  canvas.width = W; canvas.height = H;
+  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+  layout();
+}
+
+function layout() {
+  primary.x = W * 0.25; primary.y = H / 2;
+  const gap = (H - 80) / (NUM_REPLICAS - 1);
+  replicas.forEach((r, i) => { r.x = W * 0.72; r.y = 60 + i * gap; });
+}
+
+function setLag(v) {
+  lagMs = v;
+  document.getElementById('lagVal').textContent = v;
+  updateInsight();
+}
+
+function setSyncMode(m) {
+  syncMode = m;
+  ['syncBtn','asyncBtn'].forEach((id, i) => {
+    document.getElementById(id).classList.toggle('active', (i === 0 && m === 'sync') || (i === 1 && m === 'async'));
+  });
+  const badge = document.getElementById('modeBadge');
+  badge.className = 'mode-badge ' + (m === 'sync' ? 'mode-sync' : 'mode-async');
+  badge.textContent = m === 'sync' ? 'Synchronous Replication' : 'Asynchronous Replication';
+  document.getElementById('modeVal').textContent = m === 'sync' ? 'Sync' : 'Async';
+  updateInsight();
+}
+
+function toggleReads() {
+  readsEnabled = !readsEnabled;
+  const btn = document.getElementById('readToggleBtn');
+  btn.textContent = readsEnabled ? '📖 Disable Reads (On)' : '📖 Enable Reads (Off)';
+  btn.classList.toggle('active-toggle', readsEnabled);
+}
+
+function doWrite() {
+  if (primaryBlocked) return;
+  totalWrites++;
+  primary.flashTimer = 30;
+  primary.writeVersion++;
+  const v = primary.writeVersion;
+
+  if (syncMode === 'sync') {
+    primaryBlocked = true;
+    primaryBlockTimer = lagMs / 16.67 + 30;
+  }
+
+  // Send replication packets to all replicas
+  replicas.forEach((r, i) => {
+    const delay = Math.round(lagMs * (0.8 + Math.random() * 0.4));
+    setTimeout(() => {
+      packets.push({
+        sx: primary.x + primary.w / 2, sy: primary.y,
+        tx: r.x - r.w / 2, ty: r.y,
+        x: primary.x + primary.w / 2, y: primary.y,
+        progress: 0, speed: 0.02 + Math.random() * 0.01,
+        color: '#58a6ff', target: i, version: v,
+        phase: 'traveling',
+      });
+    }, delay * (2 / 3)); // visual head start
+
+    setTimeout(() => {
+      r.flashTimer = 30; r.version = v;
+      if (syncMode === 'sync') syncAcks++;
+      document.getElementById('syncAcks').textContent = syncAcks;
+    }, delay);
+  });
+}
+
+function updateInsight() {
+  const m = syncMode;
+  const l = lagMs;
+  document.getElementById('insightBox').innerHTML = `<p>
+    ${m === 'sync' ? `<strong>Synchronous:</strong> The primary waits for all replicas to acknowledge. With ${l}ms lag, each write blocks for ~${l}ms — strong consistency, higher latency.`
+    : `<strong>Asynchronous:</strong> The primary returns immediately and syncs later. With ${l}ms lag, replicas may serve stale data briefly — great for read throughput.`}
+  </p>`;
+}
+
+function drawScene() {
+  ctx.clearRect(0, 0, W, H);
+
+  // Connection lines (dashed)
+  replicas.forEach(r => {
+    ctx.save();
+    ctx.setLineDash([6, 5]); ctx.strokeStyle = '#21262d'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(primary.x + primary.w / 2, primary.y); ctx.lineTo(r.x - r.w / 2, r.y);
+    ctx.stroke(); ctx.restore();
+
+    if (readsEnabled) {
+      ctx.save();
+      ctx.setLineDash([3, 6]); ctx.strokeStyle = '#1f4a1f'; ctx.lineWidth = 1;
+      // Read line from client to replica
+      ctx.beginPath(); ctx.moveTo(50, r.y); ctx.lineTo(r.x - r.w / 2, r.y); ctx.stroke();
+      ctx.restore();
+    }
+  });
+
+  // Primary blocked indicator
+  if (primaryBlocked) {
+    ctx.save();
+    ctx.font = '11px -apple-system,sans-serif'; ctx.fillStyle = '#d29922'; ctx.textAlign = 'center';
+    ctx.fillText('⏳ waiting for ack...', primary.x, primary.y - primary.h / 2 - 10);
+    ctx.restore();
+  }
+
+  // Primary DB
+  const primFlash = primary.flashTimer / 30;
+  ctx.save();
+  ctx.shadowColor = `rgba(88,166,255,${0.3 + primFlash * 0.5})`; ctx.shadowBlur = 12 + primFlash * 10;
+  drawDB(primary.x, primary.y, primary.w, primary.h,
+    primaryBlocked ? '#1a1a10' : '#0d1a2a', '#1f6feb',
+    'PRIMARY', '#58a6ff', `v${primary.writeVersion}`, primaryBlocked ? '#d29922' : '#8b949e');
+  ctx.restore();
+
+  // Replicas
+  replicas.forEach((r, i) => {
+    const rFlash = r.flashTimer / 30;
+    const synced = r.version === primary.writeVersion;
+    const color = synced ? '#3fb950' : '#d29922';
+    ctx.save();
+    ctx.shadowColor = `rgba(88,166,255,${rFlash * 0.6})`; ctx.shadowBlur = rFlash * 12;
+    drawDB(r.x, r.y, r.w, r.h, '#0d1117', synced ? '#3fb950' : '#30363d',
+      `REPLICA ${i + 1}`, color, `v${r.version}`, synced ? '#7ee787' : '#d29922');
+    ctx.restore();
+
+    // Syncing badge
+    if (!synced) {
+      ctx.fillStyle = '#d29922'; ctx.font = '9px -apple-system,sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('⟳ syncing', r.x, r.y + r.h / 2 + 12);
+    }
+  });
+
+  // Client
+  drawSimpleBox(50, H / 2, 60, 40, '#1a2a1a', '#3fb950', 'APP', '#7ee787');
+
+  // Packets (write propagation)
+  packets.forEach(p => {
+    if (p.phase !== 'traveling') return;
+    ctx.save();
+    ctx.fillStyle = p.color; ctx.shadowColor = p.color; ctx.shadowBlur = 10;
+    ctx.beginPath(); ctx.arc(p.x, p.y, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  });
+
+  // Read packets
+  readPackets.forEach(p => {
+    ctx.save();
+    ctx.fillStyle = '#7ee787'; ctx.shadowColor = '#7ee787'; ctx.shadowBlur = 8;
+    ctx.globalAlpha = p.alpha;
+    ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  });
+
+  // Lag labels on lines
+  replicas.forEach((r, i) => {
+    const midX = (primary.x + primary.w / 2 + r.x - r.w / 2) / 2;
+    const midY = (primary.y + r.y) / 2;
+    ctx.fillStyle = '#30363d'; ctx.font = '9px -apple-system,sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(`~${lagMs}ms`, midX, midY - 6);
+  });
+}
+
+function drawDB(cx, cy, w, h, bg, border, label1, c1, label2, c2) {
+  ctx.fillStyle = bg; ctx.strokeStyle = border; ctx.lineWidth = 2;
+  // Cylinder shape (simplified as rounded rect + ellipse top)
+  roundRect(ctx, cx - w / 2, cy - h / 2, w, h, 6); ctx.fill(); ctx.stroke();
+  // Top cap
+  ctx.beginPath();
+  ctx.ellipse(cx, cy - h / 2 + 6, w / 2 - 1, 8, 0, 0, Math.PI * 2);
+  ctx.fillStyle = bg; ctx.fill();
+  ctx.strokeStyle = border; ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.fillStyle = c1; ctx.font = 'bold 10px -apple-system,sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText(label1, cx, cy + 2);
+  ctx.fillStyle = c2; ctx.font = '9px -apple-system,sans-serif';
+  ctx.fillText(label2, cx, cy + 14);
+}
+
+function drawSimpleBox(cx, cy, w, h, bg, border, label, c) {
+  ctx.fillStyle = bg; ctx.strokeStyle = border; ctx.lineWidth = 1.5;
+  roundRect(ctx, cx - w / 2, cy - h / 2, w, h, 5); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = c; ctx.font = 'bold 10px -apple-system,sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText(label, cx, cy + 4);
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath(); ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r); ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function updatePackets() {
+  packets.forEach(p => {
+    if (p.phase !== 'traveling') return;
+    p.progress = Math.min(p.progress + p.speed, 1);
+    p.x = p.sx + (p.tx - p.sx) * p.progress;
+    p.y = p.sy + (p.ty - p.sy) * p.progress;
+    if (p.progress >= 1) p.phase = 'done';
+  });
+  packets = packets.filter(p => p.phase !== 'done');
+
+  // Primary block timer
+  if (primaryBlocked) {
+    primaryBlockTimer--;
+    if (primaryBlockTimer <= 0) primaryBlocked = false;
+  }
+
+  // Flash timers
+  primary.flashTimer = Math.max(0, primary.flashTimer - 1);
+  replicas.forEach(r => { r.flashTimer = Math.max(0, r.flashTimer - 1); });
+
+  // Read packets
+  if (readsEnabled) {
+    readTimer++;
+    if (readTimer % 18 === 0) {
+      const targetReplica = replicas[Math.floor(Math.random() * NUM_REPLICAS)];
+      readsServed++;
+      readPackets.push({
+        sx: 50, sy: H / 2, tx: targetReplica.x - targetReplica.w / 2, ty: targetReplica.y,
+        x: 50, y: H / 2, progress: 0, speed: 0.04, alpha: 1, phase: 'out',
+      });
+      document.getElementById('readsServed').textContent = readsServed;
+    }
+  }
+
+  readPackets.forEach(p => {
+    p.progress = Math.min(p.progress + p.speed, 1);
+    p.x = p.sx + (p.tx - p.sx) * p.progress;
+    p.y = p.sy + (p.ty - p.sy) * p.progress;
+    if (p.progress >= 1) { p.alpha -= 0.06; }
+  });
+  readPackets = readPackets.filter(p => p.alpha > 0);
+}
+
+function updateLagBars() {
+  const html = replicas.map((r, i) => {
+    const lagPct = lagMs / 500;
+    const synced = r.version === primary.writeVersion;
+    const color = synced ? '#3fb950' : lagPct > 0.6 ? '#f85149' : '#d29922';
+    return `<div class="lag-row">
+      <span class="lag-label">Replica ${i + 1}</span>
+      <div class="lag-bar-bg"><div class="lag-bar-fill" style="width:${lagPct * 100}%;background:${color}"></div></div>
+      <span class="lag-val" style="color:${color}">${lagMs}ms</span>
+    </div>`;
+  }).join('');
+  document.getElementById('lagBars').innerHTML = html;
+  document.getElementById('totalWrites').textContent = totalWrites;
+}
+
+let animId;
+function animate() {
+  frame++;
+  updatePackets();
+  drawScene();
+  updateLagBars();
+  animId = requestAnimationFrame(animate);
+}
+
+window.addEventListener('resize', () => { resize(); });
+resize();
+updateInsight();
+animate();
+</script>
+</body>
+</html>

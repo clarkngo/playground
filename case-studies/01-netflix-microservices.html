@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Netflix: The Great Monolith Migration</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0d1117;color:#e6edf3;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;line-height:1.7}
+a{color:#58a6ff;text-decoration:none}a:hover{text-decoration:underline}
+nav{background:#161b22;border-bottom:1px solid #30363d;padding:16px 24px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100}
+.brand{font-size:1.2rem;font-weight:700}.back{color:#8b949e;font-size:.9rem}
+.container{max-width:900px;margin:0 auto;padding:24px 20px}
+.hero{background:linear-gradient(135deg,#1a1e24 0%,#2d1b1b 100%);border:1px solid #30363d;border-radius:12px;padding:48px 36px;margin-bottom:36px;text-align:center}
+.hero h1{font-size:2.2rem;margin-bottom:8px}.hero .tagline{color:#f0883e;font-size:1.1rem;margin-bottom:6px}.hero .meta{color:#8b949e;font-size:.9rem}
+.timeline-wrapper{overflow-x:auto;margin-bottom:36px;padding:12px 0}
+.timeline{display:flex;align-items:flex-start;min-width:700px;position:relative;padding:20px 10px}
+.timeline::before{content:'';position:absolute;top:30px;left:10px;right:10px;height:3px;background:#30363d;border-radius:2px}
+.timeline-item{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;z-index:1}
+.timeline-dot{width:16px;height:16px;background:#f0883e;border-radius:50%;margin-bottom:12px;border:3px solid #0d1117;box-shadow:0 0 0 2px #f0883e}
+.timeline-date{font-size:.75rem;color:#f0883e;font-weight:600;margin-bottom:4px}
+.timeline-label{font-size:.8rem;color:#8b949e;text-align:center;max-width:120px}
+section.story{margin-bottom:32px}
+section.story h2{font-size:1.5rem;color:#e6edf3;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #30363d}
+section.story p{color:#c9d1d9;margin-bottom:14px;font-size:.97rem}
+.canvas-section{margin-bottom:36px}
+.canvas-section h2{font-size:1.5rem;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #30363d}
+.toggle-btn{display:inline-block;padding:8px 20px;background:#f0883e;color:#0d1117;border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:.9rem;margin-bottom:12px;transition:background .2s}
+.toggle-btn:hover{background:#d4772e}
+canvas{display:block;width:100%;border:1px solid #30363d;border-radius:8px;background:#0d1117}
+.decision-section{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:28px;margin-bottom:36px}
+.decision-section h2{font-size:1.4rem;margin-bottom:8px}.decision-section .prompt{color:#8b949e;margin-bottom:18px;font-size:.95rem}
+.choices{display:flex;flex-direction:column;gap:10px}
+.choice-btn{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:14px 18px;color:#e6edf3;cursor:pointer;text-align:left;font-size:.93rem;transition:border-color .2s}
+.choice-btn:hover{border-color:#58a6ff}.choice-btn.correct{border-color:#3fb950;background:#0d1b0e}.choice-btn.wrong{border-color:#f85149;background:#1b0d0d}
+.reveal{margin-top:16px;padding:16px;background:#0d1117;border:1px solid #3fb950;border-radius:8px;display:none;font-size:.93rem;color:#c9d1d9}
+.metrics-panel{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:36px}
+.metric{background:#161b22;border:1px solid #30363d;border-radius:10px;padding:20px;text-align:center}
+.metric .value{font-size:1.7rem;font-weight:700;color:#f0883e}.metric .label{font-size:.8rem;color:#8b949e;margin-top:4px}
+.lessons{margin-bottom:36px}
+.lessons h2{font-size:1.5rem;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #30363d}
+.lesson-card{background:#161b22;border-left:3px solid #f0883e;border-radius:0 8px 8px 0;padding:16px 20px;margin-bottom:12px;font-size:.93rem;color:#c9d1d9}
+.takeaways{margin-bottom:48px}
+.takeaways h2{font-size:1.5rem;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #30363d}
+.takeaway{display:flex;align-items:baseline;gap:10px;margin-bottom:10px;font-size:.95rem;color:#c9d1d9}
+.takeaway::before{content:'→';color:#f0883e;font-weight:700;flex-shrink:0}
+</style>
+</head>
+<body>
+<nav><span class="brand">📖 Case Studies</span><a href="index.html" class="back">← All Case Studies</a></nav>
+<div class="container">
+
+<div class="hero">
+<h1>Netflix: The Great Monolith Migration</h1>
+<div class="tagline">How a 3-day outage launched the microservices revolution</div>
+<div class="meta">August 2008 — January 2016 | Cloud Architecture &amp; Microservices</div>
+</div>
+
+<div class="timeline-wrapper">
+<div class="timeline">
+<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-date">Aug 2008</div><div class="timeline-label">3-day database outage</div></div>
+<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-date">2009</div><div class="timeline-label">Decision to migrate to AWS</div></div>
+<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-date">2010-2011</div><div class="timeline-label">Strangler fig pattern begins</div></div>
+<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-date">2011</div><div class="timeline-label">Chaos Monkey released</div></div>
+<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-date">2012-2013</div><div class="timeline-label">Netflix OSS toolkit published</div></div>
+<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-date">Jan 2016</div><div class="timeline-label">Migration complete</div></div>
+</div>
+</div>
+
+<section class="story">
+<h2>The Outage That Changed Everything</h2>
+<p>In August 2008, Netflix was primarily a DVD-by-mail service with a growing streaming ambition. Their entire operation ran on a single monolithic Java application backed by an Oracle database in their own data center. When a corruption event took down that database, DVD shipments halted for three full days. Millions of DVDs sat unshipped. Customer trust eroded. Revenue stopped flowing.</p>
+<p>For a company that processed and shipped over a million DVDs per day, three days of downtime was existential. The engineering team knew that no amount of patching could fix the fundamental problem: a single database was a single point of failure for the entire business. They needed a fundamentally different architecture, one where no single component failure could take down the whole system.</p>
+</section>
+
+<section class="story">
+<h2>The Bold Decision: Moving to the Cloud</h2>
+<p>In 2009, Netflix made a decision that seemed radical at the time: they would move their entire infrastructure to Amazon Web Services. This was years before cloud-first was conventional wisdom. AWS itself was still young. Many engineers inside Netflix were skeptical. Running a streaming video service — one of the most bandwidth-intensive workloads imaginable — on someone else's infrastructure felt reckless.</p>
+<p>But the logic was sound. AWS offered horizontal scalability that Netflix's data centers never could. Instead of buying and racking servers months in advance, they could spin up capacity in minutes. More importantly, the cloud's distributed nature forced them to design for failure, which was precisely the discipline they needed.</p>
+</section>
+
+<section class="story">
+<h2>The Strangler Fig Pattern</h2>
+<p>Netflix's architects knew that a big-bang rewrite would be suicide. Rewriting a complex system from scratch while simultaneously running a business that depended on it had killed many companies before. Instead, they adopted what Martin Fowler would later popularize as the Strangler Fig pattern, named after tropical fig trees that slowly envelop and replace their host trees.</p>
+<p>The approach was methodical: identify a piece of functionality at the edge of the monolith, build a new microservice that replicated it, route traffic to the new service, verify it worked, then remove the old code from the monolith. Each extraction was small enough to be low-risk but meaningful enough to make progress. Over years, the monolith shrank while the ecosystem of microservices grew around it.</p>
+<p>One of the first services extracted was the member-facing non-streaming components — movie metadata, reviews, and the queuing system. These were relatively independent, had clear APIs, and their failure wouldn't prevent someone from watching a movie. This gave the team room to learn and iterate on their microservice patterns before tackling the harder problems.</p>
+</section>
+
+<section class="story">
+<h2>Building the Toolkit: Netflix OSS</h2>
+<p>As the migration progressed, Netflix engineers discovered that the tools they needed simply didn't exist. They needed a service discovery mechanism so that hundreds of services could find each other — they built Eureka. They needed an intelligent API gateway that could route requests, handle authentication, and shed load — they built Zuul. They needed a way to prevent cascade failures when one service went down — they built Hystrix, the circuit breaker library.</p>
+<p>Rather than keep these tools proprietary, Netflix open-sourced them. This was strategically brilliant: by making their tools the industry standard, they ensured a steady stream of external contributions, attracted engineering talent who wanted to work on these problems, and established Netflix as the definitive voice in cloud-native architecture. Hystrix, Eureka, Zuul, and Ribbon became foundational components of Spring Cloud and influenced an entire generation of distributed systems.</p>
+</section>
+
+<section class="story">
+<h2>Chaos Engineering: Breaking Things on Purpose</h2>
+<p>Perhaps Netflix's most culturally significant contribution was Chaos Monkey, a tool that randomly terminated production instances during business hours. The premise was counterintuitive but powerful: if your system can't handle a server dying at 2 PM on a Tuesday, it definitely can't handle one dying at 2 AM on Christmas Eve. By constantly injecting failures, Netflix forced every team to build resilient services.</p>
+<p>Chaos Monkey grew into the Simian Army — a suite of chaos tools. Latency Monkey injected artificial delays. Chaos Gorilla simulated the loss of an entire AWS availability zone. Chaos Kong simulated the loss of an entire AWS region. Each tool probed a different failure mode, and each failure uncovered assumptions that engineers didn't know they were making.</p>
+<p>The philosophy was simple: failures are inevitable in distributed systems, so the only rational strategy is to make your system comfortable with failure. This approach, later formalized as "chaos engineering," has been adopted by Google, Amazon, Microsoft, and hundreds of other companies.</p>
+</section>
+
+<section class="story">
+<h2>The Final Push: 2014–2016</h2>
+<p>By 2014, the vast majority of Netflix's systems ran on AWS, but the last remnants of the monolith — the most deeply entangled components — were the hardest to extract. These were the billing system, the content ingestion pipeline, and the core streaming infrastructure. Each one touched dozens of other components and had years of accumulated business logic baked in.</p>
+<p>The team used a dual-write strategy for the final migration: every transaction was written to both the old system and the new microservices simultaneously. Traffic was gradually shifted to the new services while engineers monitored for discrepancies. Any mismatch triggered an alert and an automatic fallback to the old system.</p>
+<p>In January 2016, Netflix shut down its last data center. The eight-year migration was complete. Netflix now ran entirely on AWS across three regions, with over 700 microservices handling everything from user authentication to video encoding to content recommendations. The company that nearly died from a single database failure had become the gold standard for distributed systems resilience.</p>
+</section>
+
+<section class="story">
+<h2>The Legacy</h2>
+<p>Netflix's migration reshaped the entire software industry. The Netflix OSS stack became the blueprint for microservice architectures everywhere. Chaos engineering became a discipline with its own conferences, tools, and certification programs. The strangler fig pattern became the default strategy for legacy modernization.</p>
+<p>More broadly, Netflix proved that even the most daunting architectural transformation is achievable if you approach it incrementally, build the right tooling, and maintain the courage to break things intentionally. Their journey from a monolith that couldn't survive a database failure to a system that routinely shrugs off the simulated loss of entire AWS regions remains one of the most instructive stories in software engineering.</p>
+</section>
+
+<div class="canvas-section">
+<h2>Architecture Diagram</h2>
+<button class="toggle-btn" id="archToggle" onclick="toggleArch()">Show After</button>
+<canvas id="archCanvas" width="900" height="280"></canvas>
+</div>
+
+<div class="decision-section">
+<h2>What Would You Do?</h2>
+<p class="prompt">It's 2009. Your monolith just had a catastrophic failure. Your database corruption took the entire DVD shipping business offline for 3 days. Management wants a plan. What's your migration strategy?</p>
+<div class="choices">
+<div class="choice-btn" onclick="choose(this,false)">A) Big bang rewrite from scratch — stop all feature development and rebuild the entire system as microservices on AWS over 18 months.</div>
+<div class="choice-btn" onclick="choose(this,true)">B) Strangler fig: incrementally extract services while keeping the monolith running. Migrate piece by piece over years.</div>
+<div class="choice-btn" onclick="choose(this,false)">C) Just add more servers and fix the database — invest in better hardware, add replicas, and improve backup procedures.</div>
+</div>
+<div class="reveal" id="reveal">Netflix chose <strong>B — the Strangler Fig pattern</strong>. Rather than risk a big-bang rewrite (which has a notoriously high failure rate for complex systems), they methodically extracted services from the monolith one at a time. Each extraction was small enough to be reversible if something went wrong. The monolith continued serving traffic throughout, meaning there was never a moment where the company was betting everything on unproven new code. This approach took 8 years — far longer than a rewrite would have promised — but it actually worked, which is more than most rewrites can say.</div>
+</div>
+
+<h2 style="font-size:1.5rem;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #30363d">Key Metrics</h2>
+<div class="metrics-panel">
+<div class="metric"><div class="value">700+</div><div class="label">Microservices</div></div>
+<div class="metric"><div class="value">200M+</div><div class="label">Global Subscribers</div></div>
+<div class="metric"><div class="value">15%</div><div class="label">Global Internet Bandwidth</div></div>
+<div class="metric"><div class="value">8 yrs</div><div class="label">Migration Duration</div></div>
+<div class="metric"><div class="value">0</div><div class="label">Downtime Deployments</div></div>
+</div>
+
+<div class="lessons">
+<h2>Lessons Extracted</h2>
+<div class="lesson-card"><strong>Strangler fig beats big bang.</strong> Incremental migration lets you learn as you go, reduces risk, and keeps the business running. Big-bang rewrites fail far more often than they succeed.</div>
+<div class="lesson-card"><strong>Reduce the blast radius.</strong> A failure in one microservice shouldn't cascade to the entire system. Circuit breakers, bulkheads, and graceful degradation are essential patterns for resilience.</div>
+<div class="lesson-card"><strong>Chaos engineering builds confidence.</strong> You can only trust your system's resilience if you've tested it by actually breaking things. Scheduled, controlled failure injection reveals hidden dependencies and assumptions.</div>
+<div class="lesson-card"><strong>Open-source creates ecosystems.</strong> By open-sourcing their tools, Netflix attracted top talent, got free contributions from the community, and became the de facto authority on cloud-native architecture.</div>
+<div class="lesson-card"><strong>Design for failure, not just success.</strong> Every distributed system will experience failures. The question isn't whether, but how gracefully you handle them.</div>
+</div>
+
+<div class="takeaways">
+<h2>Key Takeaways</h2>
+<div class="takeaway">Incremental migration is slower but dramatically more likely to succeed than a full rewrite.</div>
+<div class="takeaway">Building internal tools and open-sourcing them can transform your engineering culture and hiring pipeline.</div>
+<div class="takeaway">Intentionally injecting failure into production is the only way to truly verify resilience.</div>
+<div class="takeaway">A catastrophic outage, properly leveraged, can be the catalyst for transformational change.</div>
+</div>
+
+</div>
+
+<script>
+const canvas=document.getElementById('archCanvas'),ctx=canvas.getContext('2d');
+let showAfter=false,animProgress=0,animating=false;
+function lerp(a,b,t){return a+(b-a)*t}
+function drawBox(x,y,w,h,label,color,alpha){ctx.globalAlpha=alpha;ctx.fillStyle=color;ctx.strokeStyle='#30363d';ctx.lineWidth=1;ctx.beginPath();ctx.roundRect(x,y,w,h,6);ctx.fill();ctx.stroke();ctx.fillStyle='#e6edf3';ctx.font='bold 11px sans-serif';ctx.textAlign='center';ctx.fillText(label,x+w/2,y+h/2+4);ctx.globalAlpha=1}
+function drawLine(x1,y1,x2,y2,color,alpha){ctx.globalAlpha=alpha;ctx.strokeStyle=color;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();ctx.globalAlpha=1}
+function drawArrow(x1,y1,x2,y2,color,alpha){ctx.globalAlpha=alpha;ctx.strokeStyle=color;ctx.fillStyle=color;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();const a=Math.atan2(y2-y1,x2-x1);ctx.beginPath();ctx.moveTo(x2,y2);ctx.lineTo(x2-8*Math.cos(a-0.4),y2-8*Math.sin(a-0.4));ctx.lineTo(x2-8*Math.cos(a+0.4),y2-8*Math.sin(a+0.4));ctx.fill();ctx.globalAlpha=1}
+function draw(){
+ctx.clearRect(0,0,900,280);
+const t=animProgress;
+const bef=1-t,aft=t;
+// Before: Monolith
+if(bef>0.01){
+drawBox(300,60,300,160,'MONOLITH\n(Java + Oracle)','#6e3630',bef);
+drawBox(350,240,200,30,'Oracle Database','#f85149',bef);
+drawArrow(450,220,450,240,'#f85149',bef);
+ctx.globalAlpha=bef;ctx.fillStyle='#8b949e';ctx.font='11px sans-serif';ctx.textAlign='center';
+ctx.fillText('Single Point of Failure',450,35);ctx.globalAlpha=1;
+}
+// After: Microservices
+if(aft>0.01){
+const services=[{l:'User',x:80,y:80,c:'#58a6ff'},{l:'Catalog',x:230,y:80,c:'#58a6ff'},{l:'Recommend',x:380,y:80,c:'#58a6ff'},{l:'Streaming',x:530,y:80,c:'#58a6ff'},{l:'Billing',x:680,y:80,c:'#58a6ff'}];
+const lbX=390,lbY=20;
+drawBox(lbX-60,lbY,120,30,'Load Balancer','#3fb950',aft);
+services.forEach(s=>{
+drawBox(s.x,s.y,110,50,s.l,s.c.replace('ff','44'),aft);
+drawArrow(lbX,lbY+30,s.x+55,s.y,'#3fb950',aft*0.5);
+});
+// Service mesh lines
+for(let i=0;i<services.length-1;i++){
+drawLine(services[i].x+110,services[i].y+25,services[i+1].x,services[i+1].y+25,'#f0883e',aft*0.4);
+}
+// Databases
+services.forEach(s=>{
+drawBox(s.x+15,s.y+70,80,30,'DB','#30363d',aft);
+drawLine(s.x+55,s.y+50,s.x+55,s.y+70,'#8b949e',aft*0.5);
+});
+// Eureka / Zuul labels
+ctx.globalAlpha=aft;ctx.fillStyle='#f0883e';ctx.font='bold 10px sans-serif';ctx.textAlign='center';
+ctx.fillText('Zuul Gateway',lbX,lbY-5);
+ctx.fillText('Eureka Service Discovery',lbX,185);
+drawBox(lbX-80,190,160,25,'Eureka','#f0883e33',aft);
+ctx.globalAlpha=1;
+// Hystrix
+ctx.globalAlpha=aft;ctx.fillStyle='#f85149';ctx.font='9px sans-serif';
+ctx.fillText('Circuit Breakers (Hystrix)',lbX,235);ctx.globalAlpha=1;
+}
+}
+function animate(){
+if(!animating)return;
+const target=showAfter?1:0;
+const diff=target-animProgress;
+if(Math.abs(diff)<0.01){animProgress=target;animating=false;draw();return}
+animProgress+=diff*0.08;
+draw();requestAnimationFrame(animate);
+}
+function toggleArch(){
+showAfter=!showAfter;
+document.getElementById('archToggle').textContent=showAfter?'Show Before':'Show After';
+animating=true;animate();
+}
+draw();
+
+function choose(el,correct){
+document.querySelectorAll('.choice-btn').forEach(b=>{b.style.pointerEvents='none'});
+el.classList.add(correct?'correct':'wrong');
+if(correct){document.querySelectorAll('.choice-btn').forEach(b=>{if(b!==el)b.style.opacity='0.4'})}
+else{document.querySelectorAll('.choice-btn').forEach(b=>{if(b!==el&&b.textContent.includes('Strangler'))b.classList.add('correct')})}
+document.getElementById('reveal').style.display='block';
+}
+</script>
+</body>
+</html>

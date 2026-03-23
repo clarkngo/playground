@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lab 01 — The Agent Loop</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0d1117; color: #e6edf3; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
+  nav { background: #161b22; border-bottom: 1px solid #30363d; padding: 0 24px; height: 56px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+  .nav-brand { font-size: 16px; font-weight: 600; color: #e6edf3; display: flex; align-items: center; gap: 8px; }
+  .nav-back { color: #58a6ff; text-decoration: none; font-size: 14px; display: flex; align-items: center; gap: 6px; transition: opacity .2s; }
+  .nav-back:hover { opacity: .75; }
+  main { max-width: 960px; margin: 0 auto; padding: 32px 24px 64px; }
+  h1 { font-size: 28px; font-weight: 700; margin-bottom: 4px; }
+  .subtitle { color: #8b949e; font-size: 15px; margin-bottom: 28px; }
+  .lab-badge { display: inline-block; background: #1f2937; border: 1px solid #30363d; border-radius: 20px; padding: 2px 12px; font-size: 12px; color: #8b949e; margin-bottom: 12px; letter-spacing: .5px; text-transform: uppercase; }
+  .canvas-wrap { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 16px; margin-bottom: 20px; }
+  canvas { display: block; width: 100%; border-radius: 8px; }
+  .controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 20px; }
+  button { background: #21262d; border: 1px solid #30363d; color: #e6edf3; padding: 8px 18px; border-radius: 8px; font-size: 14px; cursor: pointer; transition: background .15s, border-color .15s; font-family: inherit; }
+  button:hover { background: #30363d; border-color: #58a6ff; }
+  button.active { background: #1f3a5f; border-color: #58a6ff; color: #58a6ff; }
+  button.primary { background: #1f3a5f; border-color: #58a6ff; color: #58a6ff; }
+  button.primary:hover { background: #2d5282; }
+  label { color: #8b949e; font-size: 13px; }
+  select { background: #21262d; border: 1px solid #30363d; color: #e6edf3; padding: 8px 12px; border-radius: 8px; font-size: 14px; cursor: pointer; font-family: inherit; }
+  select:focus { outline: none; border-color: #58a6ff; }
+  .slider-group { display: flex; align-items: center; gap: 10px; }
+  input[type=range] { accent-color: #58a6ff; width: 120px; }
+  .insight { background: #161b22; border: 1px solid #30363d; border-radius: 12px; overflow: hidden; }
+  .insight-header { padding: 14px 20px; border-bottom: 1px solid #30363d; display: flex; align-items: center; gap: 10px; }
+  .phase-dot { width: 12px; height: 12px; border-radius: 50%; }
+  .insight-title { font-size: 15px; font-weight: 600; }
+  .insight-body { padding: 20px; display: grid; gap: 16px; }
+  .insight-desc { color: #8b949e; font-size: 14px; line-height: 1.6; }
+  .insight-card { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 14px; }
+  .insight-card-label { font-size: 11px; text-transform: uppercase; letter-spacing: .8px; color: #8b949e; margin-bottom: 8px; }
+  pre { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12px; line-height: 1.6; color: #e6edf3; white-space: pre-wrap; word-break: break-all; }
+  .token-key { color: #79c0ff; }
+  .token-str { color: #a5d6ff; }
+  .token-num { color: #f47067; }
+  .token-bool { color: #bc8cff; }
+  .token-thought { color: #bc8cff; }
+  /* ── Explanation Sections ── */
+  .explain-section { margin-top: 40px; }
+  .explain-section + .explain-section { margin-top: 32px; }
+  .explain-h2 { font-size: 18px; font-weight: 700; color: #e6edf3; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid #30363d; display: flex; align-items: center; gap: 10px; }
+  .explain-h2 .ehead-icon { font-size: 20px; }
+  .explain-p { color: #8b949e; font-size: 14px; line-height: 1.8; margin-bottom: 12px; }
+  .explain-p strong { color: #e6edf3; }
+  .explain-p code { background: #21262d; border: 1px solid #30363d; border-radius: 4px; padding: 1px 6px; font-family: 'SF Mono','Fira Code',monospace; font-size: 12px; color: #a5d6ff; }
+  .explain-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; margin-bottom: 16px; }
+  .explain-card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 18px 20px; }
+  .explain-card-title { font-size: 13px; font-weight: 700; color: #e6edf3; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .explain-card p { font-size: 13px; color: #8b949e; line-height: 1.7; }
+  .explain-card code { background: #21262d; border-radius: 3px; padding: 1px 5px; font-family: monospace; font-size: 11px; color: #a5d6ff; }
+  .steps-list { counter-reset: step; list-style: none; display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
+  .steps-list li { counter-increment: step; display: flex; gap: 14px; }
+  .steps-list li::before { content: counter(step); min-width: 28px; height: 28px; background: #21262d; border: 1px solid #30363d; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #58a6ff; flex-shrink: 0; margin-top: 2px; }
+  .steps-list li .step-body { flex: 1; }
+  .steps-list li .step-title { font-size: 14px; font-weight: 600; color: #e6edf3; margin-bottom: 3px; }
+  .steps-list li .step-desc { font-size: 13px; color: #8b949e; line-height: 1.7; }
+  .callout { border-radius: 10px; padding: 16px 20px; margin-bottom: 16px; display: flex; gap: 14px; }
+  .callout-info { background: #0d2137; border: 1px solid #1f4068; }
+  .callout-warn { background: #2d1f00; border: 1px solid #5a3e00; }
+  .callout-tip  { background: #0d2d0d; border: 1px solid #1f5c1f; }
+  .callout-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .callout-body { flex: 1; }
+  .callout-title { font-size: 13px; font-weight: 700; margin-bottom: 5px; }
+  .callout-info .callout-title { color: #58a6ff; }
+  .callout-warn .callout-title { color: #e3b341; }
+  .callout-tip  .callout-title { color: #3fb950; }
+  .callout-body p { font-size: 13px; color: #8b949e; line-height: 1.7; }
+  .callout-body p strong { color: #e6edf3; }
+  .takeaways { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 20px 24px; }
+  .takeaway-item { display: flex; gap: 12px; padding: 8px 0; }
+  .takeaway-item + .takeaway-item { border-top: 1px solid #21262d; }
+  .takeaway-bullet { color: #58a6ff; font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+  .takeaway-text { font-size: 13px; color: #8b949e; line-height: 1.7; }
+  .takeaway-text strong { color: #e6edf3; }
+  .real-world-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+  .rw-badge { background: #21262d; border: 1px solid #30363d; border-radius: 20px; padding: 5px 14px; font-size: 12px; color: #8b949e; display: flex; align-items: center; gap: 6px; }
+  .rw-badge strong { color: #e6edf3; }
+  .pitfall-list { display: flex; flex-direction: column; gap: 10px; }
+  .pitfall { background: #1a0d0d; border: 1px solid #3d1515; border-radius: 8px; padding: 14px 18px; }
+  .pitfall-title { font-size: 13px; font-weight: 700; color: #f85149; margin-bottom: 5px; }
+  .pitfall p { font-size: 13px; color: #8b949e; line-height: 1.65; }
+  .pitfall p strong { color: #e6edf3; }
+  .compare-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 16px; }
+  .compare-table th { padding: 10px 14px; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: #8b949e; border-bottom: 1px solid #30363d; }
+  .compare-table td { padding: 10px 14px; border-bottom: 1px solid #21262d; color: #8b949e; vertical-align: top; }
+  .compare-table td:first-child { color: #e6edf3; font-weight: 600; }
+  .compare-table tr:last-child td { border-bottom: none; }
+  .divider { border: none; border-top: 1px solid #21262d; margin: 40px 0; }
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-brand">🤖 Coding Agents</div>
+  <a class="nav-back" href="../index.html">← Playground</a>
+</nav>
+<main>
+  <div class="lab-badge">Lab 01</div>
+  <h1>The Agent Loop</h1>
+  <p class="subtitle">Perceive → Think → Act → Observe — the heartbeat of every AI agent</p>
+
+  <div class="canvas-wrap">
+    <canvas id="canvas" height="320"></canvas>
+  </div>
+
+  <div class="controls">
+    <button id="btnStep" class="primary">Step Once</button>
+    <button id="btnAuto">Auto Run</button>
+    <div class="slider-group">
+      <label>Speed</label>
+      <input type="range" id="speedSlider" min="0.5" max="3" step="0.1" value="1">
+      <label id="speedLabel">1.0×</label>
+    </div>
+    <select id="scenarioSelect">
+      <option value="search">Search the web</option>
+      <option value="code">Write code</option>
+      <option value="file">Read a file</option>
+    </select>
+  </div>
+
+  <div class="insight" id="insight">
+    <div class="insight-header">
+      <div class="phase-dot" id="insightDot"></div>
+      <div class="insight-title" id="insightTitle">PERCEIVE</div>
+    </div>
+    <div class="insight-body">
+      <div class="insight-desc" id="insightDesc"></div>
+      <div class="insight-card" id="insightCard">
+        <div class="insight-card-label" id="insightCardLabel"></div>
+        <pre id="insightCode"></pre>
+      </div>
+    </div>
+  </div>
+
+<hr class="divider">
+
+<!-- CONCEPT OVERVIEW -->
+<div class="explain-section">
+  <div class="explain-h2"><span class="ehead-icon">📖</span> Concept Overview</div>
+  <p class="explain-p">The <strong>agent loop</strong> is the fundamental execution pattern that every AI agent follows, regardless of how sophisticated it appears. At its core, an agent is simply a program that runs this loop repeatedly: it senses its environment, reasons about what to do, takes an action, and then observes the consequences. This cycle repeats until the task is complete or a stopping condition is met.</p>
+  <p class="explain-p">What makes modern LLM-based agents different from older rule-based systems is the <strong>THINK</strong> phase. Instead of matching inputs to hand-coded rules, the agent uses a large language model to reason in natural language about what action to take. This reasoning can be made explicit through techniques like <code>chain-of-thought</code> prompting, where the model "thinks out loud" before deciding on an action.</p>
+  <p class="explain-p">The loop is also called the <strong>sense-plan-act</strong> cycle in classical AI, or the <strong>perception-action loop</strong> in robotics. The LLM agent version adds an explicit observation step after acting — feeding tool results back into context — which closes the feedback loop and allows the agent to adapt based on what actually happened.</p>
+</div>
+
+<!-- HOW IT WORKS -->
+<div class="explain-section">
+  <div class="explain-h2"><span class="ehead-icon">⚙️</span> How It Works, Step by Step</div>
+  <ol class="steps-list">
+    <li>
+      <div class="step-body">
+        <div class="step-title">PERCEIVE — Read the environment</div>
+        <div class="step-desc">The agent receives input: a user message, a new file, a tool result, or a system event. This input is appended to the agent's <strong>context window</strong> — the running conversation log that the LLM can read. The context is the agent's only "memory" of what has happened so far.</div>
+      </div>
+    </li>
+    <li>
+      <div class="step-body">
+        <div class="step-title">THINK — Reason about what to do</div>
+        <div class="step-desc">The LLM generates a response to the current context. If chain-of-thought prompting is enabled, the model first produces a <code>&lt;thought&gt;</code> block (internal reasoning that isn't shown to the user) before deciding on its action. This is where the model plans, selects a tool, and prepares arguments.</div>
+      </div>
+    </li>
+    <li>
+      <div class="step-body">
+        <div class="step-title">ACT — Execute a tool call or respond</div>
+        <div class="step-desc">The model emits either a natural-language response (ending the loop) or a structured <strong>tool call</strong> — a JSON object specifying which function to run and with what arguments. The agent runtime intercepts this, routes it to the appropriate tool (search engine, code executor, file system, API), and runs it.</div>
+      </div>
+    </li>
+    <li>
+      <div class="step-body">
+        <div class="step-title">OBSERVE — Inject the result into context</div>
+        <div class="step-desc">The tool's output (stdout, JSON, error message, file contents) is appended to the context window as a new "tool result" message. The agent can now read what actually happened. If the result is incomplete or an error occurred, the next THINK phase can reason about how to recover.</div>
+      </div>
+    </li>
+    <li>
+      <div class="step-body">
+        <div class="step-title">Repeat until done</div>
+        <div class="step-desc">The loop runs until the model decides the task is complete (responds with a final answer rather than a tool call) or until a hard limit is hit — such as a maximum number of steps, a token budget, or a timeout. Well-designed agents include explicit stopping criteria to prevent infinite loops.</div>
+      </div>
+    </li>
+  </ol>
+</div>
+
+<!-- CALLOUTS -->
+<div class="explain-section">
+  <div class="callout callout-info">
+    <div class="callout-icon">💡</div>
+    <div class="callout-body">
+      <div class="callout-title">Why the loop matters for reliability</div>
+      <p>Each iteration of the loop is a checkpoint. If a tool fails, the agent observes the error and can retry with different arguments, choose a different tool, or ask the user for clarification. This makes agents more robust than a single-shot LLM call — they can <strong>self-correct</strong> in real time rather than hallucinating an answer.</p>
+    </div>
+  </div>
+  <div class="callout callout-warn">
+    <div class="callout-icon">⚠️</div>
+    <div class="callout-body">
+      <div class="callout-title">The loop has a cost: tokens accumulate</div>
+      <p>Every iteration appends more content to the context. Tool results, intermediate thoughts, and action history all consume tokens. A task requiring 20 tool calls might use 50,000+ tokens by the end. This is why <strong>context management</strong> (Lab 03) and <strong>planning</strong> (Lab 05) are so important — they reduce unnecessary loop iterations.</p>
+    </div>
+  </div>
+</div>
+
+<!-- REAL WORLD -->
+<div class="explain-section">
+  <div class="explain-h2"><span class="ehead-icon">🌍</span> Where You'll See This in Real Systems</div>
+  <div class="real-world-row">
+    <div class="rw-badge">🤖 <strong>Claude Code</strong> — uses the loop to read files, run tests, edit code, verify changes</div>
+    <div class="rw-badge">🐙 <strong>GitHub Copilot Agent</strong> — loop drives PR review, issue triage, code fixes</div>
+    <div class="rw-badge">🔬 <strong>Devin</strong> — long-horizon loop (hundreds of iterations) for software engineering</div>
+    <div class="rw-badge">🔍 <strong>Perplexity AI</strong> — search → read page → synthesize loop for research queries</div>
+    <div class="rw-badge">🏗️ <strong>AutoGPT</strong> — popularized agentic loops in 2023 for autonomous task completion</div>
+  </div>
+</div>
+
+<!-- COMMON PITFALLS -->
+<div class="explain-section">
+  <div class="explain-h2"><span class="ehead-icon">🪤</span> Common Pitfalls</div>
+  <div class="pitfall-list">
+    <div class="pitfall">
+      <div class="pitfall-title">Infinite loops / getting stuck</div>
+      <p>An agent may repeatedly call the same tool with the same arguments if it doesn't reason about past failures. <strong>Fix:</strong> Inject a "steps taken so far" summary into each THINK phase, or use a max-iterations guard.</p>
+    </div>
+    <div class="pitfall">
+      <div class="pitfall-title">Context overflow</div>
+      <p>After many iterations, the context window fills up. Older messages get truncated, and the agent "forgets" what it did early in the task. <strong>Fix:</strong> Summarize old turns, use RAG for long-term memory, or compress tool results.</p>
+    </div>
+    <div class="pitfall">
+      <div class="pitfall-title">Acting before thinking</div>
+      <p>Without chain-of-thought, models sometimes jump to an action that seems obvious but misses important context. <strong>Fix:</strong> Always prompt the model to reason in a <code>&lt;thought&gt;</code> block before emitting a tool call.</p>
+    </div>
+  </div>
+</div>
+
+<!-- KEY TAKEAWAYS -->
+<div class="explain-section">
+  <div class="explain-h2"><span class="ehead-icon">✅</span> Key Takeaways</div>
+  <div class="takeaways">
+    <div class="takeaway-item">
+      <div class="takeaway-bullet">→</div>
+      <div class="takeaway-text"><strong>Every agent is a loop.</strong> No matter how complex — Devin, Claude Code, AutoGPT — they all reduce to: perceive, think, act, observe, repeat.</div>
+    </div>
+    <div class="takeaway-item">
+      <div class="takeaway-bullet">→</div>
+      <div class="takeaway-text"><strong>The context window is the agent's working memory.</strong> Each loop iteration reads from and writes to this shared space. Managing it carefully is essential for long-horizon tasks.</div>
+    </div>
+    <div class="takeaway-item">
+      <div class="takeaway-bullet">→</div>
+      <div class="takeaway-text"><strong>The OBSERVE step is what makes agents adaptive.</strong> Feeding actual tool results back in (not just assumed results) is what allows self-correction and real-world grounding.</div>
+    </div>
+    <div class="takeaway-item">
+      <div class="takeaway-bullet">→</div>
+      <div class="takeaway-text"><strong>Loop cost grows with task complexity.</strong> Budget your token allowance per task and implement stopping conditions — agents that loop forever are expensive and unpredictable.</div>
+    </div>
+  </div>
+</div>
+</main>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+// Phases
+const PHASES = ['PERCEIVE','THINK','ACT','OBSERVE'];
+const PHASE_COLORS = { PERCEIVE:'#58a6ff', THINK:'#bc8cff', ACT:'#3fb950', OBSERVE:'#f78166' };
+
+const SCENARIOS = {
+  search: {
+    label: 'Search the web',
+    PERCEIVE: {
+      desc: 'The agent receives the user\'s natural-language query. This becomes the raw input that drives all subsequent reasoning.',
+      cardLabel: 'Raw user input',
+      code: 'User: "What is the current market cap of Apple Inc?"'
+    },
+    THINK: {
+      desc: 'The LLM processes the query. It identifies that a real-time web search is needed since its training data is stale.',
+      cardLabel: 'LLM reasoning (chain-of-thought)',
+      code: `<thought>The user wants current financial data.\nMy training cutoff is 2024 so I cannot answer directly.\nI should call the web_search tool with a precise query.\nBest query: "Apple Inc market cap 2025"</thought>`
+    },
+    ACT: {
+      desc: 'The model emits a structured JSON tool call. The agent runtime intercepts this and routes it to the search engine.',
+      cardLabel: 'Tool call emitted',
+      code: `{
+  "tool": "web_search",
+  "parameters": {
+    "query": "Apple Inc market cap 2025",
+    "max_results": 3
+  }
+}`
+    },
+    OBSERVE: {
+      desc: 'The search engine returns results. These are injected back into the context so the model can read and synthesize them.',
+      cardLabel: 'Tool result injected into context',
+      code: `[
+  {
+    "title": "Apple Market Cap — $3.2T",
+    "snippet": "As of March 2025, Apple's market cap stands at approximately $3.2 trillion...",
+    "url": "https://example.com/apple"
+  }
+]`
+    }
+  },
+  code: {
+    label: 'Write code',
+    PERCEIVE: {
+      desc: 'The agent receives a coding task. It reads the task description, any attached files, and existing codebase context.',
+      cardLabel: 'Raw user input',
+      code: 'User: "Add input validation to the login() function in auth.py"'
+    },
+    THINK: {
+      desc: 'The LLM plans the implementation. It reasons about edge cases, the existing code style, and which tools it needs.',
+      cardLabel: 'LLM reasoning (chain-of-thought)',
+      code: `<thought>I need to see the current login() function first.\nI'll read auth.py, then write a patch.\nValidation should cover: empty fields, email format,\npassword length >= 8 chars. I'll use regex for email.</thought>`
+    },
+    ACT: {
+      desc: 'The model calls readFile first to inspect the current code, then will call writeFile with the updated version.',
+      cardLabel: 'Tool call emitted',
+      code: `{
+  "tool": "read_file",
+  "parameters": {
+    "path": "src/auth.py",
+    "encoding": "utf-8"
+  }
+}`
+    },
+    OBSERVE: {
+      desc: 'The file contents are returned. The agent can now read the current implementation and plan its patch precisely.',
+      cardLabel: 'Tool result injected into context',
+      code: `def login(email, password):
+    user = db.find_user(email)
+    if user and user.check_password(password):
+        return generate_token(user)
+    return None`
+    }
+  },
+  file: {
+    label: 'Read a file',
+    PERCEIVE: {
+      desc: 'The agent is given a file analysis task. It receives the filename and the question to answer about the file\'s contents.',
+      cardLabel: 'Raw user input',
+      code: 'User: "Summarize the key decisions in ./docs/architecture.md"'
+    },
+    THINK: {
+      desc: 'The LLM decides it needs to read the file. It notes that it should look for headings and decision records specifically.',
+      cardLabel: 'LLM reasoning (chain-of-thought)',
+      code: `<thought>I need to read architecture.md to summarize it.\nI don't have its contents yet — I must call read_file.\nAfter reading I'll identify: ADRs, key trade-offs,\ntechnology choices, and rationale sections.</thought>`
+    },
+    ACT: {
+      desc: 'The model issues a read_file call. Notice the tool call is pure JSON — the runtime parses this and executes it.',
+      cardLabel: 'Tool call emitted',
+      code: `{
+  "tool": "read_file",
+  "parameters": {
+    "path": "./docs/architecture.md",
+    "encoding": "utf-8"
+  }
+}`
+    },
+    OBSERVE: {
+      desc: 'File contents stream back into context. The agent now has the information it needs to produce a grounded summary.',
+      cardLabel: 'Tool result injected into context',
+      code: `# Architecture Decisions
+
+## ADR-001: Use PostgreSQL
+**Status:** Accepted
+We chose PostgreSQL over MongoDB because our data
+has strong relational structure and we need ACID...
+
+## ADR-002: Microservices boundary
+**Status:** Accepted
+Split auth, billing, and core services at the API
+gateway layer to allow independent deployments...`
+    }
+  }
+};
+
+// Canvas sizing
+function resize() {
+  const w = canvas.parentElement.clientWidth - 32;
+  canvas.width = w;
+  canvas.height = 320;
+}
+resize();
+window.addEventListener('resize', () => { resize(); draw(); });
+
+// State
+let currentPhase = 0;
+let tokenAngle = 0;
+let autoRunning = false;
+let autoTimer = null;
+let speed = 1.0;
+let scenario = 'search';
+let lastStepTime = 0;
+let animFrame = null;
+
+// Layout helpers
+function cx() { return canvas.width / 2; }
+function cy() { return canvas.height / 2; }
+function radius() { return Math.min(cx(), cy()) * 0.62; }
+
+const nodeAngles = [-Math.PI/2, 0, Math.PI/2, Math.PI]; // top, right, bottom, left
+
+function nodePos(i) {
+  const r = radius();
+  return {
+    x: cx() + r * Math.cos(nodeAngles[i]),
+    y: cy() + r * Math.sin(nodeAngles[i])
+  };
+}
+
+function tokenPos(angle) {
+  const r = radius();
+  return {
+    x: cx() + r * Math.cos(angle),
+    y: cy() + r * Math.sin(angle)
+  };
+}
+
+function draw() {
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  // Background
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0, 0, W, H);
+
+  const r = radius();
+
+  // Draw circular track
+  ctx.beginPath();
+  ctx.arc(cx(), cy(), r, 0, Math.PI * 2);
+  ctx.strokeStyle = '#30363d';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([6, 4]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Direction arrows on track
+  for (let a = 0; a < Math.PI * 2; a += Math.PI / 6) {
+    const ax = cx() + r * Math.cos(a);
+    const ay = cy() + r * Math.sin(a);
+    const tang = a + Math.PI / 2;
+    ctx.save();
+    ctx.translate(ax, ay);
+    ctx.rotate(tang);
+    ctx.fillStyle = '#30363d';
+    ctx.font = '10px sans-serif';
+    ctx.fillText('›', -3, 4);
+    ctx.restore();
+  }
+
+  // Phase nodes
+  PHASES.forEach((phase, i) => {
+    const pos = nodePos(i);
+    const col = PHASE_COLORS[phase];
+    const isActive = i === currentPhase;
+    const nodeR = isActive ? 42 : 34;
+
+    // Glow for active
+    if (isActive) {
+      const grd = ctx.createRadialGradient(pos.x, pos.y, 0, pos.x, pos.y, nodeR + 16);
+      grd.addColorStop(0, col + '55');
+      grd.addColorStop(1, col + '00');
+      ctx.fillStyle = grd;
+      ctx.beginPath();
+      ctx.arc(pos.x, pos.y, nodeR + 16, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Node circle
+    ctx.beginPath();
+    ctx.arc(pos.x, pos.y, nodeR, 0, Math.PI * 2);
+    ctx.fillStyle = isActive ? col + '33' : '#161b22';
+    ctx.fill();
+    ctx.strokeStyle = col;
+    ctx.lineWidth = isActive ? 3 : 1.5;
+    ctx.stroke();
+
+    // Label
+    ctx.fillStyle = isActive ? col : '#8b949e';
+    ctx.font = `${isActive ? 600 : 400} ${isActive ? 11 : 10}px -apple-system,sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(phase, pos.x, pos.y);
+  });
+
+  // Center label
+  ctx.fillStyle = '#e6edf3';
+  ctx.font = '600 14px -apple-system,sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(PHASES[currentPhase], cx(), cy() - 10);
+  ctx.fillStyle = '#8b949e';
+  ctx.font = '12px -apple-system,sans-serif';
+  ctx.fillText('active phase', cx(), cy() + 10);
+
+  // Animated token
+  const tp = tokenPos(tokenAngle);
+  const activeCol = PHASE_COLORS[PHASES[currentPhase]];
+
+  // Token glow
+  const tGrd = ctx.createRadialGradient(tp.x, tp.y, 0, tp.x, tp.y, 18);
+  tGrd.addColorStop(0, activeCol + 'cc');
+  tGrd.addColorStop(1, activeCol + '00');
+  ctx.fillStyle = tGrd;
+  ctx.beginPath();
+  ctx.arc(tp.x, tp.y, 18, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Token core
+  ctx.beginPath();
+  ctx.arc(tp.x, tp.y, 7, 0, Math.PI * 2);
+  ctx.fillStyle = activeCol;
+  ctx.fill();
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+}
+
+// Snap token angle to current phase
+function targetAngle() {
+  return nodeAngles[currentPhase];
+}
+
+let tokenTarget = targetAngle();
+
+function animate(ts) {
+  // Smoothly move token
+  let diff = tokenTarget - tokenAngle;
+  // Handle wrap-around
+  while (diff > Math.PI) diff -= Math.PI * 2;
+  while (diff < -Math.PI) diff += Math.PI * 2;
+  tokenAngle += diff * 0.12;
+  draw();
+  animFrame = requestAnimationFrame(animate);
+}
+
+animFrame = requestAnimationFrame(animate);
+
+function stepPhase() {
+  currentPhase = (currentPhase + 1) % 4;
+  tokenTarget = nodeAngles[currentPhase];
+  updateInsight();
+}
+
+function updateInsight() {
+  const phase = PHASES[currentPhase];
+  const col = PHASE_COLORS[phase];
+  const data = SCENARIOS[scenario][phase];
+
+  document.getElementById('insightDot').style.background = col;
+  document.getElementById('insightTitle').textContent = phase;
+  document.getElementById('insightTitle').style.color = col;
+  document.getElementById('insightDesc').textContent = data.desc;
+  document.getElementById('insightCardLabel').textContent = data.cardLabel;
+
+  // Syntax-highlight JSON/text
+  let code = data.code;
+  if (phase === 'THINK') {
+    code = code.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    code = code.replace(/&lt;thought&gt;/g,'<span class="token-thought">&lt;thought&gt;</span>')
+               .replace(/&lt;\/thought&gt;/g,'<span class="token-thought">&lt;/thought&gt;</span>');
+    document.getElementById('insightCode').innerHTML = code;
+  } else if (phase === 'ACT' || phase === 'OBSERVE') {
+    try {
+      JSON.parse(code);
+      code = syntaxHighlight(code);
+      document.getElementById('insightCode').innerHTML = code;
+    } catch {
+      document.getElementById('insightCode').textContent = code;
+    }
+  } else {
+    document.getElementById('insightCode').textContent = code;
+  }
+}
+
+function syntaxHighlight(json) {
+  json = json.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, match => {
+    if (/^"/.test(match)) {
+      if (/:$/.test(match)) return `<span class="token-key">${match}</span>`;
+      return `<span class="token-str">${match}</span>`;
+    }
+    if (/true|false/.test(match)) return `<span class="token-bool">${match}</span>`;
+    return `<span class="token-num">${match}</span>`;
+  });
+}
+
+// Controls
+document.getElementById('btnStep').addEventListener('click', () => {
+  if (autoRunning) stopAuto();
+  stepPhase();
+});
+
+document.getElementById('btnAuto').addEventListener('click', () => {
+  if (autoRunning) { stopAuto(); } else { startAuto(); }
+});
+
+function startAuto() {
+  autoRunning = true;
+  document.getElementById('btnAuto').textContent = 'Stop';
+  document.getElementById('btnAuto').classList.add('active');
+  scheduleNext();
+}
+
+function stopAuto() {
+  autoRunning = false;
+  clearTimeout(autoTimer);
+  document.getElementById('btnAuto').textContent = 'Auto Run';
+  document.getElementById('btnAuto').classList.remove('active');
+}
+
+function scheduleNext() {
+  if (!autoRunning) return;
+  autoTimer = setTimeout(() => {
+    stepPhase();
+    scheduleNext();
+  }, 1500 / speed);
+}
+
+document.getElementById('speedSlider').addEventListener('input', e => {
+  speed = parseFloat(e.target.value);
+  document.getElementById('speedLabel').textContent = speed.toFixed(1) + '×';
+  if (autoRunning) { clearTimeout(autoTimer); scheduleNext(); }
+});
+
+document.getElementById('scenarioSelect').addEventListener('change', e => {
+  scenario = e.target.value;
+  updateInsight();
+});
+
+// Init
+updateInsight();
+</script>
+</body>
+</html>

@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Consistent Hashing: Ring Architecture</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0d1117; color: #c9d1d9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
+  nav { background: #161b22; border-bottom: 1px solid #30363d; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; }
+  .navbar-brand { font-size: 1.1rem; font-weight: 600; color: #58a6ff; }
+  nav a { color: #58a6ff; text-decoration: none; font-size: 0.9rem; }
+  nav a:hover { text-decoration: underline; }
+  .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
+  h1 { font-size: 1.6rem; color: #e6edf3; margin-bottom: 6px; }
+  .subtitle { color: #8b949e; margin-bottom: 24px; font-size: 0.95rem; }
+
+  .main-grid { display: grid; grid-template-columns: 1fr 300px; gap: 20px; }
+  .canvas-card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; overflow: hidden; }
+  canvas { display: block; }
+
+  .side-panel { display: flex; flex-direction: column; gap: 16px; }
+  .panel-card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 18px; }
+  .panel-card h3 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; color: #8b949e; margin-bottom: 14px; }
+
+  .btn { width: 100%; padding: 10px; border: 1px solid #30363d; border-radius: 6px; background: #21262d; color: #c9d1d9; cursor: pointer; font-size: 0.88rem; font-family: inherit; transition: all 0.2s; margin-bottom: 8px; }
+  .btn:hover { background: #30363d; border-color: #58a6ff; color: #58a6ff; }
+  .btn.blue { border-color: #1f6feb; color: #58a6ff; }
+  .btn.blue:hover { background: #0d1a2a; }
+  .btn.green { border-color: #3fb950; color: #7ee787; }
+  .btn.green:hover { background: #0d2a0d; }
+  .btn.red { border-color: #f85149; color: #f85149; }
+  .btn.red:hover { background: #2a0d0d; }
+  .btn.active-toggle { font-weight: 600; }
+  .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  .dist-bars { display: flex; flex-direction: column; gap: 7px; }
+  .dist-row { display: flex; align-items: center; gap: 8px; }
+  .dist-label { font-size: 0.78rem; width: 56px; }
+  .dist-bar-bg { flex: 1; background: #21262d; border-radius: 3px; height: 10px; }
+  .dist-bar-fill { height: 100%; border-radius: 3px; transition: width 0.4s; }
+  .dist-count { font-size: 0.78rem; width: 26px; text-align: right; color: #c9d1d9; font-variant-numeric: tabular-nums; }
+
+  .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid #21262d; }
+  .stat-row:last-child { border-bottom: none; }
+  .stat-label { font-size: 0.82rem; color: #8b949e; }
+  .stat-value { font-size: 0.9rem; font-weight: 600; color: #58a6ff; font-variant-numeric: tabular-nums; }
+
+  .insight { background: #0d1a2a; border: 1px solid #1f6feb; border-radius: 6px; padding: 12px; }
+  .insight p { font-size: 0.82rem; color: #8b949e; line-height: 1.5; }
+  .insight strong { color: #58a6ff; }
+
+  .vnode-toggle { display: flex; align-items: center; justify-content: space-between; }
+  .pill { display: inline-block; width: 36px; height: 18px; background: #21262d; border-radius: 9px; position: relative; cursor: pointer; border: 1px solid #30363d; transition: background 0.3s; }
+  .pill.on { background: #1f6feb; border-color: #1f6feb; }
+  .pill::after { content:''; position:absolute; width:12px; height:12px; background:#fff; border-radius:50%; top:2px; left:3px; transition:left 0.2s; }
+  .pill.on::after { left:19px; }
+</style>
+</head>
+<body>
+<nav>
+  <span class="navbar-brand">⚙️ Consistent Hashing: Ring Architecture</span>
+  <a href="index.html">← System Design Labs</a>
+</nav>
+<div class="container">
+  <h1>Consistent Hashing: Ring Architecture</h1>
+  <p class="subtitle">Keys land on the ring at their hash position and walk clockwise to find their server. Adding/removing nodes only remaps nearby keys.</p>
+
+  <div class="main-grid">
+    <div class="canvas-card">
+      <canvas id="canvas"></canvas>
+    </div>
+    <div class="side-panel">
+      <div class="panel-card">
+        <h3>Controls</h3>
+        <button class="btn green" onclick="addNode()" id="addNodeBtn">+ Add Node</button>
+        <button class="btn red" onclick="removeNode()" id="rmNodeBtn">− Remove Node</button>
+        <button class="btn blue" onclick="addKey()">⊕ Add Key</button>
+        <button class="btn" onclick="clearKeys()">↺ Clear Keys</button>
+        <div class="vnode-toggle" style="margin-top:4px;">
+          <span style="font-size:0.82rem;color:#8b949e;">Virtual Nodes (3x)</span>
+          <div class="pill" id="vnodePill" onclick="toggleVnodes()"></div>
+        </div>
+      </div>
+
+      <div class="panel-card">
+        <h3>Key Distribution</h3>
+        <div class="dist-bars" id="distBars"></div>
+      </div>
+
+      <div class="panel-card">
+        <h3>Stats</h3>
+        <div class="stat-row"><span class="stat-label">Nodes</span><span class="stat-value" id="nodeCount">4</span></div>
+        <div class="stat-row"><span class="stat-label">Keys</span><span class="stat-value" id="keyCount">0</span></div>
+        <div class="stat-row"><span class="stat-label">Remapped</span><span class="stat-value" id="remappedCount">0</span></div>
+        <div class="stat-row"><span class="stat-label">Ring Slots</span><span class="stat-value" id="ringSlots">—</span></div>
+      </div>
+
+      <div class="panel-card">
+        <h3>Insight</h3>
+        <div class="insight" id="insightBox"><p>Click <strong>Add Key</strong> to place keys on the ring. Each key walks clockwise to reach its server.</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let W, H, CX, CY, R;
+let vnodes = false;
+let frame = 0;
+let remappedCount = 0;
+
+const NODE_COLORS = ['#58a6ff','#7ee787','#d29922','#bc8cff','#f78166','#39d353'];
+const VNODE_COUNT = 3;
+
+// Nodes: { id, angle (0-1), color, label, virtual, parentId }
+let nodes = [];
+let keys = []; // { id, angle, color, animAngle, serverIdx, remapping, remapTimer }
+let nextNodeId = 0;
+let keyCounter = 0;
+let flashAnims = []; // { angle, color, timer }
+
+function hash(str) {
+  let h = 5381;
+  for (let i = 0; i < str.length; i++) h = ((h << 5) + h) ^ str.charCodeAt(i);
+  return ((h >>> 0) / 4294967295);
+}
+
+function initNodes() {
+  nodes = [];
+  const angles = [0.05, 0.28, 0.52, 0.77];
+  angles.forEach((a, i) => {
+    nodes.push({ id: nextNodeId++, angle: a, color: NODE_COLORS[i % NODE_COLORS.length], label: `N${i + 1}`, virtual: false, parentId: i });
+  });
+  rebuildVnodes();
+}
+
+function rebuildVnodes() {
+  // Remove old vnodes, keep real ones
+  const real = nodes.filter(n => !n.virtual);
+  nodes = real;
+  if (vnodes) {
+    real.forEach(n => {
+      for (let v = 0; v < VNODE_COUNT; v++) {
+        const va = hash(`${n.id}-vnode-${v}`);
+        nodes.push({ id: nextNodeId++, angle: va, color: n.color, label: `${n.label}v${v+1}`, virtual: true, parentId: n.id });
+      }
+    });
+  }
+  nodes.sort((a, b) => a.angle - b.angle);
+  reassignKeys();
+}
+
+function getEffectiveNodes() {
+  return nodes.filter(n => !vnodes || true); // all nodes (real + virtual)
+}
+
+function findServer(angle) {
+  const ns = getEffectiveNodes();
+  if (!ns.length) return null;
+  for (let i = 0; i < ns.length; i++) {
+    if (ns[i].angle >= angle) return ns[i];
+  }
+  return ns[0]; // wrap around
+}
+
+function getParentNode(n) {
+  return nodes.find(x => !x.virtual && x.id === (n.virtual ? n.parentId : n.id));
+}
+
+function reassignKeys(highlightRemapped) {
+  keys.forEach(k => {
+    const srv = findServer(k.angle);
+    const newParent = srv ? (vnodes ? getParentNode(srv) : srv) : null;
+    if (highlightRemapped && newParent && k.serverIdx !== undefined) {
+      const oldParent = nodes.find(n => !n.virtual && n.id === k.serverIdx);
+      if (oldParent && newParent.id !== oldParent.id) {
+        k.remapping = true; k.remapTimer = 60; remappedCount++;
+        document.getElementById('remappedCount').textContent = remappedCount;
+      }
+    }
+    k.serverIdx = newParent ? newParent.id : null;
+    k.serverAngle = srv ? srv.angle : 0;
+  });
+}
+
+function addNode() {
+  const real = nodes.filter(n => !n.virtual);
+  if (real.length >= 6) return;
+  const angle = Math.random();
+  const id = nextNodeId++;
+  const idx = real.length;
+  const n = { id, angle, color: NODE_COLORS[idx % NODE_COLORS.length], label: `N${idx + 1}`, virtual: false, parentId: id };
+  nodes.push(n);
+  nodes.sort((a, b) => a.angle - b.angle);
+  rebuildVnodes();
+  reassignKeys(true);
+  updateUI();
+  flashAnims.push({ angle, color: n.color, timer: 40 });
+  if (real.length + 1 >= 6) document.getElementById('addNodeBtn').disabled = true;
+  document.getElementById('rmNodeBtn').disabled = false;
+  updateInsight('add');
+}
+
+function removeNode() {
+  const real = nodes.filter(n => !n.virtual);
+  if (real.length <= 1) return;
+  const removed = real[real.length - 1];
+  nodes = nodes.filter(n => n.id !== removed.id && n.parentId !== removed.id);
+  nodes.sort((a, b) => a.angle - b.angle);
+  reassignKeys(true);
+  updateUI();
+  if (real.length - 1 <= 1) document.getElementById('rmNodeBtn').disabled = true;
+  document.getElementById('addNodeBtn').disabled = false;
+  updateInsight('remove');
+}
+
+function addKey() {
+  const label = String.fromCharCode(65 + (keyCounter % 26)) + (keyCounter >= 26 ? Math.floor(keyCounter / 26) : '');
+  keyCounter++;
+  const angle = hash(`key-${keyCounter}-${Math.random()}`);
+  const srv = findServer(angle);
+  const parent = srv ? (vnodes ? getParentNode(srv) : srv) : null;
+  keys.push({
+    id: keyCounter, label, angle,
+    color: parent ? parent.color : '#c9d1d9',
+    serverIdx: parent ? parent.id : null,
+    serverAngle: srv ? srv.angle : 0,
+    remapping: false, remapTimer: 0,
+    spawnTimer: 20,
+  });
+  updateUI();
+}
+
+function clearKeys() {
+  keys = []; keyCounter = 0; remappedCount = 0;
+  document.getElementById('remappedCount').textContent = 0;
+  updateUI();
+}
+
+function toggleVnodes() {
+  vnodes = !vnodes;
+  document.getElementById('vnodePill').classList.toggle('on', vnodes);
+  rebuildVnodes();
+  updateUI();
+  updateInsight(vnodes ? 'vnode-on' : 'vnode-off');
+}
+
+function updateInsight(action) {
+  const msgs = {
+    add: `<p>Adding a node only remaps <strong>~1/N of keys</strong> — those between the new node and its predecessor on the ring.</p>`,
+    remove: `<p>Removing a node remaps <strong>only its keys</strong> to the next clockwise node — minimal disruption.</p>`,
+    'vnode-on': `<p><strong>Virtual nodes</strong> spread each server across multiple ring positions, creating a much <strong>more uniform distribution</strong> even with few physical nodes.</p>`,
+    'vnode-off': `<p>Without virtual nodes, key distribution can be <strong>uneven</strong> depending on how servers happen to land on the ring.</p>`,
+    default: `<p>Keys walk <strong>clockwise</strong> to reach their server. Consistent hashing means adding/removing nodes remaps minimal keys.</p>`,
+  };
+  document.getElementById('insightBox').innerHTML = msgs[action] || msgs.default;
+}
+
+function updateUI() {
+  const real = nodes.filter(n => !n.virtual);
+  document.getElementById('nodeCount').textContent = real.length;
+  document.getElementById('keyCount').textContent = keys.length;
+  document.getElementById('ringSlots').textContent = nodes.length;
+  document.getElementById('addNodeBtn').disabled = real.length >= 6;
+  document.getElementById('rmNodeBtn').disabled = real.length <= 1;
+
+  // Distribution
+  const counts = {};
+  real.forEach(n => { counts[n.id] = 0; });
+  keys.forEach(k => { if (k.serverIdx != null) counts[k.serverIdx] = (counts[k.serverIdx] || 0) + 1; });
+  const maxC = Math.max(...Object.values(counts), 1);
+  document.getElementById('distBars').innerHTML = real.map(n => {
+    const c = counts[n.id] || 0;
+    return `<div class="dist-row">
+      <span class="dist-label" style="color:${n.color}">${n.label}</span>
+      <div class="dist-bar-bg"><div class="dist-bar-fill" style="width:${(c/maxC)*100}%;background:${n.color}"></div></div>
+      <span class="dist-count">${c}</span>
+    </div>`;
+  }).join('');
+}
+
+function resize() {
+  W = canvas.parentElement.clientWidth;
+  H = 480;
+  canvas.width = W; canvas.height = H;
+  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+  CX = W / 2; CY = H / 2; R = Math.min(W, H) * 0.34;
+}
+
+function angleToXY(a, r) {
+  const rad = a * Math.PI * 2 - Math.PI / 2;
+  return { x: CX + Math.cos(rad) * r, y: CY + Math.sin(rad) * r };
+}
+
+function drawScene() {
+  ctx.clearRect(0, 0, W, H);
+
+  // Ring
+  ctx.save();
+  ctx.strokeStyle = '#30363d'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(CX, CY, R, 0, Math.PI * 2); ctx.stroke();
+  // Subtle gradient ring
+  const grd = ctx.createRadialGradient(CX, CY, R - 3, CX, CY, R + 3);
+  grd.addColorStop(0, 'rgba(31,111,235,0.05)');
+  grd.addColorStop(1, 'rgba(31,111,235,0)');
+  ctx.strokeStyle = grd; ctx.lineWidth = 6;
+  ctx.beginPath(); ctx.arc(CX, CY, R, 0, Math.PI * 2); ctx.stroke();
+  ctx.restore();
+
+  // Flash anims
+  flashAnims.forEach(f => {
+    const pos = angleToXY(f.angle, R);
+    ctx.save();
+    ctx.globalAlpha = f.timer / 40;
+    ctx.fillStyle = f.color; ctx.shadowColor = f.color; ctx.shadowBlur = 20;
+    ctx.beginPath(); ctx.arc(pos.x, pos.y, 18, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+    f.timer--;
+  });
+  flashAnims = flashAnims.filter(f => f.timer > 0);
+
+  // Arcs per server (colored segments)
+  const effectiveNodes = [...nodes].sort((a, b) => a.angle - b.angle);
+  if (effectiveNodes.length > 0) {
+    effectiveNodes.forEach((n, i) => {
+      const startA = i === 0 ? effectiveNodes[effectiveNodes.length - 1].angle : effectiveNodes[i - 1].angle;
+      const endA = n.angle;
+      const startRad = startA * Math.PI * 2 - Math.PI / 2;
+      const endRad = endA * Math.PI * 2 - Math.PI / 2;
+      ctx.save();
+      ctx.strokeStyle = n.color + '40'; ctx.lineWidth = 8;
+      ctx.beginPath();
+      ctx.arc(CX, CY, R, startRad, endRad);
+      ctx.stroke();
+      ctx.restore();
+    });
+  }
+
+  // Keys on ring
+  keys.forEach(k => {
+    const pos = angleToXY(k.angle, R);
+    const isRemapping = k.remapping && k.remapTimer > 0;
+    const col = isRemapping ? '#f85149' : k.color;
+    ctx.save();
+    ctx.fillStyle = col;
+    ctx.shadowColor = col;
+    ctx.shadowBlur = isRemapping ? 14 : 5;
+    ctx.globalAlpha = k.spawnTimer > 0 ? 1 - k.spawnTimer / 20 : 1;
+    ctx.beginPath(); ctx.arc(pos.x, pos.y, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+
+    // Draw arrow toward server
+    const srv = findServer(k.angle);
+    if (srv) {
+      const spos = angleToXY(srv.angle, R - 22);
+      ctx.save();
+      ctx.setLineDash([3, 4]);
+      ctx.strokeStyle = k.color + '50'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(pos.x, pos.y); ctx.lineTo(spos.x, spos.y); ctx.stroke();
+      ctx.restore();
+    }
+
+    if (k.spawnTimer > 0) k.spawnTimer--;
+    if (isRemapping) k.remapTimer--;
+    if (k.remapTimer <= 0) k.remapping = false;
+  });
+
+  // Nodes on ring
+  nodes.forEach(n => {
+    const pos = angleToXY(n.angle, R);
+    const isVirtual = n.virtual;
+    const size = isVirtual ? 7 : 14;
+    ctx.save();
+    ctx.shadowColor = n.color; ctx.shadowBlur = isVirtual ? 6 : 12;
+    ctx.fillStyle = n.color;
+    ctx.strokeStyle = '#0d1117'; ctx.lineWidth = isVirtual ? 1 : 2;
+    ctx.beginPath(); ctx.arc(pos.x, pos.y, size, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+    ctx.restore();
+
+    if (!isVirtual) {
+      ctx.fillStyle = '#0d1117'; ctx.font = 'bold 9px -apple-system,sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(n.label, pos.x, pos.y + 3);
+
+      // Label outside ring
+      const labelPos = angleToXY(n.angle, R + 28);
+      ctx.fillStyle = n.color; ctx.font = 'bold 11px -apple-system,sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(n.label, labelPos.x, labelPos.y + 4);
+    }
+  });
+
+  // Center label
+  ctx.fillStyle = '#30363d'; ctx.font = '12px -apple-system,sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('Hash Ring', CX, CY - 8);
+  ctx.font = '10px -apple-system,sans-serif'; ctx.fillStyle = '#21262d';
+  ctx.fillText(`0 ——————— 1.0`, CX, CY + 8);
+}
+
+let animId;
+function animate() {
+  frame++;
+  drawScene();
+  if (frame % 120 === 0) updateUI();
+  animId = requestAnimationFrame(animate);
+}
+
+window.addEventListener('resize', () => { resize(); updateUI(); });
+resize();
+initNodes();
+updateUI();
+animate();
+</script>
+</body>
+</html>

@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Database Sharding: Horizontal Partitioning</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0d1117; color: #c9d1d9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
+  nav { background: #161b22; border-bottom: 1px solid #30363d; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; }
+  .navbar-brand { font-size: 1.1rem; font-weight: 600; color: #58a6ff; }
+  nav a { color: #58a6ff; text-decoration: none; font-size: 0.9rem; }
+  nav a:hover { text-decoration: underline; }
+  .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
+  h1 { font-size: 1.6rem; color: #e6edf3; margin-bottom: 6px; }
+  .subtitle { color: #8b949e; margin-bottom: 24px; font-size: 0.95rem; }
+
+  .strategy-tabs { display: flex; gap: 0; margin-bottom: 20px; border: 1px solid #30363d; border-radius: 8px; overflow: hidden; width: fit-content; }
+  .strategy-tab { padding: 10px 26px; background: #161b22; border: none; color: #8b949e; cursor: pointer; font-size: 0.9rem; font-family: inherit; transition: all 0.2s; border-right: 1px solid #30363d; }
+  .strategy-tab:last-child { border-right: none; }
+  .strategy-tab.active { background: #1f6feb; color: #fff; font-weight: 600; }
+  .strategy-tab:hover:not(.active) { background: #21262d; color: #c9d1d9; }
+
+  .main-grid { display: grid; grid-template-columns: 1fr 300px; gap: 20px; }
+  .canvas-card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; overflow: hidden; }
+  canvas { display: block; }
+
+  .side-panel { display: flex; flex-direction: column; gap: 16px; }
+  .panel-card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 18px; }
+  .panel-card h3 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; color: #8b949e; margin-bottom: 14px; }
+
+  .btn { width: 100%; padding: 10px; border: 1px solid #30363d; border-radius: 6px; background: #21262d; color: #c9d1d9; cursor: pointer; font-size: 0.88rem; font-family: inherit; transition: all 0.2s; margin-bottom: 8px; }
+  .btn:hover { background: #30363d; border-color: #58a6ff; color: #58a6ff; }
+  .btn.blue { border-color: #1f6feb; color: #58a6ff; }
+  .btn.blue:hover { background: #0d1a2a; }
+  .btn.orange { border-color: #d29922; color: #ffa657; }
+  .btn.orange:hover { background: #2a1a00; }
+  .btn.orange.active-toggle { background: #2a1a00; font-weight: 600; }
+
+  .fill-bars { display: flex; flex-direction: column; gap: 7px; }
+  .fill-row { display: flex; align-items: center; gap: 8px; }
+  .fill-label { font-size: 0.78rem; width: 46px; }
+  .fill-bar-bg { flex: 1; background: #21262d; border-radius: 3px; height: 10px; overflow: hidden; }
+  .fill-bar-fill { height: 100%; border-radius: 3px; transition: width 0.3s, background 0.3s; }
+  .fill-count { font-size: 0.78rem; width: 28px; text-align: right; color: #c9d1d9; font-variant-numeric: tabular-nums; }
+
+  .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid #21262d; }
+  .stat-row:last-child { border-bottom: none; }
+  .stat-label { font-size: 0.82rem; color: #8b949e; }
+  .stat-value { font-size: 0.9rem; font-weight: 600; color: #58a6ff; font-variant-numeric: tabular-nums; }
+
+  .insight { background: #0d1a2a; border: 1px solid #1f6feb; border-radius: 6px; padding: 12px; }
+  .insight p { font-size: 0.82rem; color: #8b949e; line-height: 1.5; }
+  .insight strong { color: #58a6ff; }
+
+  .warning-banner { background: #2a1500; border: 1px solid #d29922; border-radius: 6px; padding: 10px 12px; font-size: 0.8rem; color: #ffa657; display: none; }
+  .warning-banner.visible { display: block; }
+</style>
+</head>
+<body>
+<nav>
+  <span class="navbar-brand">⚙️ Database Sharding: Horizontal Partitioning</span>
+  <a href="index.html">← System Design Labs</a>
+</nav>
+<div class="container">
+  <h1>Database Sharding: Horizontal Partitioning</h1>
+  <p class="subtitle">Data is split across multiple shards. See how Range, Hash, and Directory strategies route records to the right shard.</p>
+
+  <div class="strategy-tabs">
+    <button class="strategy-tab active" onclick="setStrategy('range')">Range</button>
+    <button class="strategy-tab" onclick="setStrategy('hash')">Hash</button>
+    <button class="strategy-tab" onclick="setStrategy('directory')">Directory</button>
+  </div>
+
+  <div class="main-grid">
+    <div class="canvas-card">
+      <canvas id="canvas"></canvas>
+    </div>
+    <div class="side-panel">
+      <div class="panel-card">
+        <h3>Controls</h3>
+        <button class="btn blue" onclick="insertRecord()">+ Insert Record</button>
+        <button class="btn" onclick="burstInsert()">⚡ Burst 10 Records</button>
+        <button class="btn orange" id="hotspotBtn" onclick="toggleHotspot()">🔥 Hot Spot Sim (Off)</button>
+        <button class="btn" onclick="clearShards()">↺ Clear All</button>
+        <div class="warning-banner" id="joinWarning">
+          ⚠️ Cross-shard JOIN detected! Joining data across shards requires expensive scatter-gather queries.
+        </div>
+      </div>
+
+      <div class="panel-card">
+        <h3>Shard Fill</h3>
+        <div class="fill-bars" id="fillBars"></div>
+      </div>
+
+      <div class="panel-card">
+        <h3>Stats</h3>
+        <div class="stat-row"><span class="stat-label">Total Records</span><span class="stat-value" id="totalRecs">0</span></div>
+        <div class="stat-row"><span class="stat-label">Strategy</span><span class="stat-value" id="stratVal">Range</span></div>
+        <div class="stat-row"><span class="stat-label">Hot Spot</span><span class="stat-value" id="hotVal" style="color:#f85149">Off</span></div>
+        <div class="stat-row"><span class="stat-label">Balance</span><span class="stat-value" id="balanceVal">—</span></div>
+      </div>
+
+      <div class="panel-card">
+        <h3>Insight</h3>
+        <div class="insight" id="insightBox"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let W, H;
+let strategy = 'range';
+let hotspot = false;
+let totalRecs = 0;
+let recordIdCounter = 1;
+let frame = 0;
+
+const NUM_SHARDS = 4;
+const SHARD_CAPACITY = 24;
+const SHARD_COLORS = ['#58a6ff', '#7ee787', '#d29922', '#bc8cff'];
+const SHARD_LABELS = ['S0', 'S1', 'S2', 'S3'];
+const RANGE_BOUNDS = [[0,249],[250,499],[500,749],[750,999]];
+
+// Directory lookup table (static for this demo)
+const DIRECTORY = {};
+
+let shards = Array.from({ length: NUM_SHARDS }, (_, i) => ({
+  id: i, records: [], flashTimer: 0, overloadTimer: 0,
+}));
+
+let packets = []; // routing animations
+
+function getShardForRecord(id) {
+  if (strategy === 'range') {
+    for (let i = 0; i < NUM_SHARDS; i++) {
+      if (id >= RANGE_BOUNDS[i][0] && id <= RANGE_BOUNDS[i][1]) return i;
+    }
+    return 0;
+  } else if (strategy === 'hash') {
+    return id % NUM_SHARDS;
+  } else {
+    // Directory
+    if (DIRECTORY[id] !== undefined) return DIRECTORY[id];
+    const s = Math.floor(Math.random() * NUM_SHARDS);
+    DIRECTORY[id] = s;
+    return s;
+  }
+}
+
+function insertRecord(forceHot) {
+  let id;
+  if (hotspot && !forceHot) {
+    // 80% go to shard 0's range
+    if (Math.random() < 0.8) {
+      id = Math.floor(Math.random() * 250); // range [0,249]
+      if (strategy === 'hash') id = Math.floor(Math.random() * 250) * 4; // hash to shard 0
+    } else {
+      id = Math.floor(Math.random() * 1000);
+    }
+  } else {
+    id = Math.floor(Math.random() * 1000);
+  }
+
+  // Make id unique-ish for display
+  const displayId = id;
+  const shardIdx = getShardForRecord(id);
+
+  totalRecs++;
+  document.getElementById('totalRecs').textContent = totalRecs;
+
+  // Animate routing packet
+  const shard = shards[shardIdx];
+  packets.push({
+    id: displayId, shardIdx,
+    x: 0, y: 0, // set in layout
+    progress: 0, speed: 0.03 + Math.random() * 0.015,
+    color: SHARD_COLORS[shardIdx],
+    phase: 'routing',
+    label: `#${displayId}`,
+  });
+
+  // After animation, add to shard
+  setTimeout(() => {
+    if (shard.records.length < SHARD_CAPACITY) {
+      shard.records.push({ id: displayId, color: SHARD_COLORS[shardIdx] });
+    }
+    shard.flashTimer = 20;
+    if (hotspot && shardIdx === 0) shard.overloadTimer = 40;
+    updateFillBars();
+  }, 600);
+
+  // Cross-shard join warning (random)
+  if (Math.random() < 0.08 && totalRecs > 5) {
+    document.getElementById('joinWarning').classList.add('visible');
+    setTimeout(() => document.getElementById('joinWarning').classList.remove('visible'), 3000);
+  }
+}
+
+function burstInsert() {
+  for (let i = 0; i < 10; i++) setTimeout(insertRecord, i * 80);
+}
+
+function toggleHotspot() {
+  hotspot = !hotspot;
+  const btn = document.getElementById('hotspotBtn');
+  btn.textContent = `🔥 Hot Spot Sim (${hotspot ? 'On' : 'Off'})`;
+  btn.classList.toggle('active-toggle', hotspot);
+  document.getElementById('hotVal').textContent = hotspot ? 'ON' : 'Off';
+  document.getElementById('hotVal').style.color = hotspot ? '#f85149' : '#58a6ff';
+  updateInsight();
+}
+
+function clearShards() {
+  shards.forEach(s => { s.records = []; s.flashTimer = 0; s.overloadTimer = 0; });
+  packets = [];
+  totalRecs = 0;
+  document.getElementById('totalRecs').textContent = 0;
+  updateFillBars();
+}
+
+function setStrategy(s) {
+  strategy = s;
+  document.querySelectorAll('.strategy-tab').forEach((t, i) => {
+    t.classList.toggle('active', ['range','hash','directory'][i] === s);
+  });
+  document.getElementById('stratVal').textContent = s.charAt(0).toUpperCase() + s.slice(1);
+  clearShards();
+  updateInsight();
+}
+
+function updateInsight() {
+  const descs = {
+    range: `<p><strong>Range sharding</strong> routes by ID range: IDs 0–249 → S0, 250–499 → S1, etc. Simple, but prone to hot spots if data isn't uniformly distributed.</p>`,
+    hash: `<p><strong>Hash sharding</strong> computes <code>hash(id) % 4</code> to distribute records. Excellent uniform distribution, but range queries span all shards.</p>`,
+    directory: `<p><strong>Directory sharding</strong> uses a lookup table to map each record to a shard. Maximum flexibility — each record can be assigned independently.</p>`,
+  };
+  const hotMsg = hotspot ? `<br><strong style="color:#f85149">Hot Spot active:</strong> 80% of writes concentrate on S0, causing overload.` : '';
+  document.getElementById('insightBox').innerHTML = `<p>${descs[strategy].replace('<p>','').replace('</p>','')}${hotMsg}</p>`;
+}
+
+function updateFillBars() {
+  const max = Math.max(...shards.map(s => s.records.length), 1);
+  document.getElementById('fillBars').innerHTML = shards.map((s, i) => {
+    const pct = s.records.length / SHARD_CAPACITY;
+    const overloaded = hotspot && i === 0 && s.records.length > SHARD_CAPACITY * 0.7;
+    const color = overloaded ? '#f85149' : pct > 0.8 ? '#d29922' : SHARD_COLORS[i];
+    return `<div class="fill-row">
+      <span class="fill-label" style="color:${color}">${SHARD_LABELS[i]}</span>
+      <div class="fill-bar-bg"><div class="fill-bar-fill" style="width:${pct*100}%;background:${color}"></div></div>
+      <span class="fill-count">${s.records.length}</span>
+    </div>`;
+  }).join('');
+
+  // Balance metric (std dev)
+  const counts = shards.map(s => s.records.length);
+  const avg = counts.reduce((a, b) => a + b, 0) / NUM_SHARDS;
+  const variance = counts.reduce((a, b) => a + Math.pow(b - avg, 2), 0) / NUM_SHARDS;
+  const std = Math.sqrt(variance);
+  const balanceEl = document.getElementById('balanceVal');
+  balanceEl.textContent = avg > 0 ? (std < 2 ? 'Excellent' : std < 5 ? 'Good' : 'Skewed') : '—';
+  balanceEl.style.color = avg > 0 ? (std < 2 ? '#7ee787' : std < 5 ? '#d29922' : '#f85149') : '#58a6ff';
+}
+
+function resize() {
+  W = canvas.parentElement.clientWidth;
+  H = 480;
+  canvas.width = W; canvas.height = H;
+  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+}
+
+function getLayout() {
+  const dataX = W * 0.16, dataY = H / 2;
+  const routerX = W * 0.42, routerY = H / 2;
+  const shardX = W * 0.72;
+  const gap = (H - 100) / (NUM_SHARDS - 1);
+  const shardPositions = shards.map((s, i) => ({ x: shardX, y: 60 + i * gap }));
+  return { dataX, dataY, routerX, routerY, shardPositions };
+}
+
+function drawScene() {
+  ctx.clearRect(0, 0, W, H);
+  const { dataX, dataY, routerX, routerY, shardPositions } = getLayout();
+
+  // Data pool box
+  const overloaded = hotspot && shards[0].records.length > SHARD_CAPACITY * 0.7;
+  drawBox(ctx, dataX, dataY, 84, 60, '#0d1a2a', '#1f6feb', 'DATA', '#58a6ff', 'POOL');
+
+  // Router / strategy node
+  ctx.save();
+  ctx.shadowColor = '#d29922'; ctx.shadowBlur = 10;
+  drawBox(ctx, routerX, routerY, 82, 50, '#1a1500', '#d29922',
+    strategy === 'range' ? 'RANGE' : strategy === 'hash' ? 'HASH' : 'DIR',
+    '#ffa657', 'ROUTER');
+  ctx.restore();
+
+  // Lines from data to router
+  ctx.save();
+  ctx.setLineDash([5, 6]); ctx.strokeStyle = '#21262d'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(dataX + 42, dataY); ctx.lineTo(routerX - 41, routerY); ctx.stroke();
+  ctx.restore();
+
+  // Range labels if range strategy
+  if (strategy === 'range') {
+    shardPositions.forEach((sp, i) => {
+      ctx.fillStyle = '#30363d'; ctx.font = '8px -apple-system,sans-serif'; ctx.textAlign = 'center';
+      const midX = (routerX + sp.x - 54) / 2;
+      ctx.fillText(`${RANGE_BOUNDS[i][0]}–${RANGE_BOUNDS[i][1]}`, midX + 20, sp.y - 4);
+    });
+  } else if (strategy === 'hash') {
+    shardPositions.forEach((sp, i) => {
+      ctx.fillStyle = '#30363d'; ctx.font = '8px -apple-system,sans-serif'; ctx.textAlign = 'center';
+      const midX = (routerX + sp.x - 54) / 2;
+      ctx.fillText(`id%4=${i}`, midX + 20, sp.y - 4);
+    });
+  }
+
+  // Lines from router to shards
+  shardPositions.forEach((sp, i) => {
+    ctx.save();
+    ctx.setLineDash([4, 5]); ctx.strokeStyle = SHARD_COLORS[i] + '44'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(routerX + 41, routerY); ctx.lineTo(sp.x - 54, sp.y); ctx.stroke();
+    ctx.restore();
+  });
+
+  // Shard boxes
+  shards.forEach((s, i) => {
+    const sp = shardPositions[i];
+    const pct = s.records.length / SHARD_CAPACITY;
+    const isHot = hotspot && i === 0 && s.overloadTimer > 0;
+    const borderColor = isHot ? '#f85149' : SHARD_COLORS[i];
+    const flash = s.flashTimer / 20;
+    ctx.save();
+    ctx.shadowColor = borderColor; ctx.shadowBlur = 6 + flash * 12;
+    drawBox(ctx, sp.x, sp.y, 100, 58, isHot ? '#1a0a0a' : '#0d1117', borderColor,
+      SHARD_LABELS[i], borderColor);
+    ctx.restore();
+
+    // Record dots inside shard
+    const dotRows = 4, dotCols = 6;
+    const dw = 7, startX = sp.x - 28, startY = sp.y - 14;
+    s.records.slice(0, dotRows * dotCols).forEach((rec, ri) => {
+      const col = ri % dotCols, row = Math.floor(ri / dotCols);
+      ctx.fillStyle = rec.color + 'cc';
+      ctx.beginPath(); ctx.arc(startX + col * dw, startY + row * dw, 2.5, 0, Math.PI * 2); ctx.fill();
+    });
+
+    // Record count
+    ctx.fillStyle = '#8b949e'; ctx.font = '9px -apple-system,sans-serif'; ctx.textAlign = 'right';
+    ctx.fillText(`${s.records.length}`, sp.x + 44, sp.y + 24);
+
+    // Fill bar at bottom of shard
+    const bw = 88, bh = 4, bx = sp.x - 44, by = sp.y + 26;
+    ctx.fillStyle = '#21262d'; ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, 2); ctx.fill();
+    const fillColor = pct > 0.85 ? '#f85149' : SHARD_COLORS[i];
+    ctx.fillStyle = fillColor;
+    ctx.beginPath(); ctx.roundRect(bx, by, bw * pct, bh, 2); ctx.fill();
+
+    if (isHot) {
+      ctx.fillStyle = '#f85149'; ctx.font = 'bold 10px -apple-system,sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('🔥 OVERLOAD', sp.x, sp.y - 36);
+      s.overloadTimer--;
+    }
+    s.flashTimer = Math.max(0, s.flashTimer - 1);
+  });
+
+  // Routing packets
+  packets.forEach(p => {
+    if (p.phase !== 'routing') return;
+    const sp = shardPositions[p.shardIdx];
+    // Path: data → router → shard
+    p.progress = Math.min(p.progress + p.speed, 1);
+    let px, py;
+    if (p.progress < 0.4) {
+      const t = p.progress / 0.4;
+      px = dataX + 42 + (routerX - 41 - dataX - 42) * t;
+      py = dataY;
+    } else {
+      const t = (p.progress - 0.4) / 0.6;
+      px = routerX + 41 + (sp.x - 54 - routerX - 41) * t;
+      py = routerY + (sp.y - routerY) * t;
+    }
+    p.x = px; p.y = py;
+
+    ctx.save();
+    ctx.fillStyle = p.color; ctx.shadowColor = p.color; ctx.shadowBlur = 10;
+    ctx.beginPath(); ctx.arc(px, py, 5, 0, Math.PI * 2); ctx.fill();
+    // Label
+    ctx.fillStyle = '#e6edf3'; ctx.font = 'bold 8px -apple-system,sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(p.label, px, py - 9);
+    ctx.restore();
+
+    if (p.progress >= 1) p.phase = 'done';
+  });
+  packets = packets.filter(p => p.phase !== 'done');
+}
+
+function drawBox(ctx, cx, cy, w, h, bg, border, line1, c1, line2) {
+  ctx.fillStyle = bg; ctx.strokeStyle = border; ctx.lineWidth = 1.8;
+  ctx.beginPath(); ctx.roundRect(cx - w/2, cy - h/2, w, h, 6); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = c1; ctx.font = 'bold 11px -apple-system,sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText(line1, cx, cy - (line2 ? 4 : 4));
+  if (line2) { ctx.fillStyle = '#8b949e'; ctx.font = '9px -apple-system,sans-serif'; ctx.fillText(line2, cx, cy + 9); }
+}
+
+let animId;
+function animate() {
+  frame++;
+  drawScene();
+  if (frame % 30 === 0) updateFillBars();
+  animId = requestAnimationFrame(animate);
+}
+
+window.addEventListener('resize', () => { resize(); });
+resize();
+updateInsight();
+updateFillBars();
+animate();
+</script>
+</body>
+</html>

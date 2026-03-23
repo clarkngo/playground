@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Coding Agents Playground</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:#0d1117;color:#c9d1d9;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;min-height:100vh;overflow-x:hidden}
+a{text-decoration:none}
+
+/* ── Nav ── */
+.navbar{background:#161b22;border-bottom:1px solid #30363d;padding:.75rem 1.5rem;display:flex;align-items:center;gap:.5rem;position:relative;z-index:100}
+.navbar-brand{font-size:1rem;font-weight:700;color:#e6edf3}
+.navbar a.back{color:#8b949e;font-size:.85rem;margin-left:auto;transition:color .2s}
+.navbar a.back:hover{color:#58a6ff}
+
+/* ── Hero ── */
+.hero{position:relative;overflow:hidden;padding:4.5rem 1.5rem 3.5rem;text-align:center;min-height:320px;display:flex;align-items:center;justify-content:center}
+#heroCanvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.hero-content{position:relative;z-index:1}
+.hero-eyebrow{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:#bc8cff;margin-bottom:.85rem;display:flex;align-items:center;justify-content:center;gap:.5rem}
+.hero-eyebrow::before,.hero-eyebrow::after{content:'';width:32px;height:1px}
+.hero-eyebrow::before{background:linear-gradient(90deg,transparent,#bc8cff60)}
+.hero-eyebrow::after{background:linear-gradient(90deg,#bc8cff60,transparent)}
+.hero-title{font-size:2.4rem;font-weight:800;color:#e6edf3;line-height:1.18;margin-bottom:.85rem;letter-spacing:-.02em}
+.hero-title span{background:linear-gradient(135deg,#bc8cff,#58a6ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-sub{color:#8b949e;font-size:.98rem;max-width:520px;margin:0 auto 1.5rem;line-height:1.65}
+.hero-badges{display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap}
+.h-badge{padding:.22rem .7rem;border-radius:12px;font-size:.72rem;font-weight:600;border:1px solid;letter-spacing:.02em}
+.hb-i{background:#1a1040;color:#a78bfa;border-color:#3d2a80}
+.hb-g{background:#0d2a20;color:#34d399;border-color:#1a5040}
+.hb-c{background:#0d1f2a;color:#38bdf8;border-color:#1a3d5a}
+.hb-p{background:#2a0d1f;color:#f472b6;border-color:#5a1a35}
+
+/* ── Container ── */
+.container{max-width:1020px;margin:0 auto;padding:2.25rem 1.5rem 3rem}
+
+/* ── Section groups ── */
+.section-group{margin-bottom:2.75rem}
+.section-group-label{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#8b949e;margin-bottom:.9rem;padding-bottom:.4rem;border-bottom:1px solid #21262d;display:flex;align-items:center;gap:.5rem}
+.section-group-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,#21262d,transparent)}
+
+/* ── Grid ── */
+.labs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:.9rem}
+
+/* ── Card ── */
+.lab-card{display:flex;align-items:stretch;background:#161b22;border:1px solid #30363d;border-radius:10px;overflow:hidden;color:#c9d1d9;transition:border-color .25s,transform .2s,box-shadow .25s;position:relative;opacity:0}
+.lab-card:hover{transform:translateY(-3px)}
+.card-i:hover{border-color:#8b5cf6;box-shadow:0 8px 28px rgba(139,92,246,.16)}
+.card-g:hover{border-color:#10b981;box-shadow:0 8px 28px rgba(16,185,129,.14)}
+.card-c:hover{border-color:#06b6d4;box-shadow:0 8px 28px rgba(6,182,212,.14)}
+.card-o:hover{border-color:#f97316;box-shadow:0 8px 28px rgba(249,115,22,.14)}
+.card-p:hover{border-color:#ec4899;box-shadow:0 8px 28px rgba(236,72,153,.14)}
+.card-r:hover{border-color:#ef4444;box-shadow:0 8px 28px rgba(239,68,68,.12)}
+.card-a:hover{border-color:#f59e0b;box-shadow:0 8px 28px rgba(245,158,11,.14)}
+.card-v:hover{border-color:#a78bfa;box-shadow:0 8px 28px rgba(167,139,250,.14)}
+
+/* ── Viz panel ── */
+.lab-viz{width:84px;min-height:84px;flex-shrink:0;background:#0d1117;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;border-right:1px solid #21262d}
+
+/* ── Card body ── */
+.lab-body{flex:1;padding:.9rem 1rem;min-width:0;display:flex;flex-direction:column;justify-content:center}
+.lab-num{font-size:.65rem;font-weight:700;color:#484f58;margin-bottom:.2rem;letter-spacing:.04em}
+.lab-title{font-size:.9rem;font-weight:600;line-height:1.32;margin-bottom:.28rem;color:#e6edf3}
+.lab-desc{font-size:.74rem;color:#8b949e;line-height:1.45;flex:1}
+.lab-tag{display:inline-block;font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:.1rem .42rem;border-radius:8px;margin-top:.38rem}
+.tag-i{background:#1a1040;color:#a78bfa}
+.tag-g{background:#0d2a20;color:#34d399}
+.tag-c{background:#0d1f2a;color:#38bdf8}
+.tag-o{background:#1f1408;color:#fb923c}
+.tag-p{background:#2a0d1f;color:#f472b6}
+.tag-b{background:#0d2a14;color:#3fb950}
+.tag-r{background:#2a0d0d;color:#f87171}
+
+/* ═══════════════════════════════════════
+   CARD VIZ ANIMATIONS
+═══════════════════════════════════════ */
+
+/* Lab 01 — Agent Loop: 4 nodes orbiting */
+.viz-loop{position:relative;width:62px;height:62px}
+.loop-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:12px;height:12px;background:#6366f1;border-radius:50%;box-shadow:0 0 8px #6366f1}
+.loop-orbit{position:absolute;inset:4px;border:1.5px solid #30363d;border-radius:50%}
+.loop-dot{position:absolute;width:9px;height:9px;border-radius:50%;transform-origin:center}
+@keyframes orbit1{from{transform:rotate(0deg) translateX(25px)}to{transform:rotate(360deg) translateX(25px)}}
+@keyframes orbit2{from{transform:rotate(90deg) translateX(25px)}to{transform:rotate(450deg) translateX(25px)}}
+@keyframes orbit3{from{transform:rotate(180deg) translateX(25px)}to{transform:rotate(540deg) translateX(25px)}}
+@keyframes orbit4{from{transform:rotate(270deg) translateX(25px)}to{transform:rotate(630deg) translateX(25px)}}
+.ld1{top:50%;left:50%;margin:-4.5px;background:#6366f1;animation:orbit1 3s linear infinite}
+.ld2{top:50%;left:50%;margin:-4.5px;background:#f59e0b;animation:orbit2 3s linear infinite}
+.ld3{top:50%;left:50%;margin:-4.5px;background:#10b981;animation:orbit3 3s linear infinite}
+.ld4{top:50%;left:50%;margin:-4.5px;background:#ef4444;animation:orbit4 3s linear infinite}
+
+/* Lab 02 — Tool Use: JSON brackets pulsing */
+.viz-tool{font-family:monospace;font-size:10px;color:#f59e0b;text-align:center;padding:0 4px}
+@keyframes toolPulse{0%,100%{opacity:.3;transform:scale(.9)}50%{opacity:1;transform:scale(1)}}
+.viz-tool .tb{display:block;line-height:1.6;animation:toolPulse 1.8s ease infinite}
+.viz-tool .tb:nth-child(2){animation-delay:.3s;color:#58a6ff}
+.viz-tool .tb:nth-child(3){animation-delay:.6s;color:#7ee787}
+.viz-tool .tb:nth-child(4){animation-delay:.9s}
+
+/* Lab 03 — Context: token tape */
+.viz-ctx{display:flex;flex-direction:column;gap:3px;align-items:center;width:72px;padding:0 4px}
+.ctx-bar{height:8px;border-radius:2px;width:100%}
+@keyframes ctxFill{0%{width:20%}60%{width:100%}80%{width:20%;background:#f87171}100%{width:20%}}
+.ctx-bar:nth-child(1){background:#6366f150;border:1px solid #6366f140;animation:ctxFill 3s 0s ease infinite}
+.ctx-bar:nth-child(2){background:#10b98150;border:1px solid #10b98140;animation:ctxFill 3s .4s ease infinite}
+.ctx-bar:nth-child(3){background:#f59e0b50;border:1px solid #f59e0b40;animation:ctxFill 3s .8s ease infinite}
+.ctx-bar:nth-child(4){background:#6366f130;border:1px solid #30363d;animation:ctxFill 3s 1.2s ease infinite}
+
+/* Lab 04 — CoT/ReAct: pills appearing */
+.viz-cot{display:flex;flex-direction:column;gap:3px;align-items:center;width:76px;padding:0 3px}
+.cot-pill{padding:2px 6px;border-radius:10px;font-size:7px;font-weight:700;letter-spacing:.04em;border:1px solid;white-space:nowrap}
+@keyframes pillIn{0%,60%{opacity:0;transform:translateX(-4px)}80%,100%{opacity:1;transform:none}}
+.cot-t{background:#8b5cf620;border-color:#8b5cf6;color:#a78bfa;animation:pillIn 2.4s 0s ease infinite}
+.cot-a{background:#f59e0b20;border-color:#f59e0b;color:#fbbf24;animation:pillIn 2.4s .8s ease infinite}
+.cot-o{background:#10b98120;border-color:#10b981;color:#34d399;animation:pillIn 2.4s 1.6s ease infinite}
+
+/* Lab 05 — Planning: tree growing */
+.viz-plan{display:flex;flex-direction:column;align-items:center;gap:2px;padding-top:4px}
+.plan-root{width:22px;height:14px;background:#ef444430;border:1px solid #ef4444;border-radius:3px;font-size:7px;display:flex;align-items:center;justify-content:center;color:#f87171;font-weight:700}
+.plan-line{width:1px;height:6px;background:#30363d}
+.plan-row{display:flex;gap:4px}
+.plan-child{width:16px;height:11px;border-radius:2px;border:1px solid}
+@keyframes treeGrow{0%,30%{opacity:0;transform:scaleY(0)}50%,100%{opacity:1;transform:scaleY(1)}}
+.pc1{background:#6366f120;border-color:#6366f1;animation:treeGrow 2.5s 0.1s ease infinite;transform-origin:top}
+.pc2{background:#10b98120;border-color:#10b981;animation:treeGrow 2.5s 0.4s ease infinite;transform-origin:top}
+.pc3{background:#f59e0b20;border-color:#f59e0b;animation:treeGrow 2.5s 0.7s ease infinite;transform-origin:top}
+
+/* Lab 06 — Multi-Agent: nodes pulsing */
+.viz-multi{position:relative;width:68px;height:60px}
+.ma-node{position:absolute;width:18px;height:14px;border-radius:3px;border:1px solid;font-size:6px;display:flex;align-items:center;justify-content:center;font-weight:700}
+@keyframes maPulse{0%,100%{opacity:.35}50%{opacity:1}}
+@keyframes maMsg{0%{transform:translate(0,0);opacity:1}100%{transform:translate(var(--dx),var(--dy));opacity:0}}
+.ma-orch{top:0;left:50%;transform:translateX(-50%);background:#06b6d420;border-color:#06b6d4;color:#38bdf8}
+.ma-a{bottom:4px;left:4px;background:#a78bfa20;border-color:#a78bfa;color:#a78bfa;animation:maPulse 2s .3s ease infinite}
+.ma-b{bottom:4px;left:50%;transform:translateX(-50%);background:#34d39920;border-color:#34d399;color:#34d399;animation:maPulse 2s .9s ease infinite}
+.ma-c{bottom:4px;right:4px;background:#fb923c20;border-color:#fb923c;color:#fb923c;animation:maPulse 2s 1.5s ease infinite}
+.ma-msg{position:absolute;width:5px;height:5px;background:#06b6d4;border-radius:50%;top:14px;left:50%;--dx:-18px;--dy:28px;animation:maMsg 1.5s 0s ease infinite}
+.ma-msg2{position:absolute;width:5px;height:5px;background:#06b6d4;border-radius:50%;top:14px;left:50%;--dx:0px;--dy:28px;animation:maMsg 1.5s .5s ease infinite}
+
+/* Lab 07 — Code→Execute: typing + gear */
+.viz-exec{display:flex;flex-direction:column;gap:4px;align-items:center;padding:0 4px;width:80px}
+.exec-code{width:70px;height:16px;background:#1c2333;border:1px solid #30363d;border-radius:3px;position:relative;overflow:hidden}
+@keyframes codeLine{0%{width:0}60%{width:85%}100%{width:0}}
+.exec-code::after{content:'';position:absolute;top:4px;left:4px;height:4px;background:#7ee787;border-radius:1px;animation:codeLine 2s ease infinite}
+.exec-gear{font-size:14px;line-height:1}
+@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.exec-gear{animation:spin 2s linear infinite;display:block;color:#f97316}
+.exec-out{width:70px;height:10px;background:#1c2333;border:1px solid #30363d;border-radius:2px;position:relative;overflow:hidden}
+@keyframes stdout{0%{width:0;opacity:0}50%{width:80%;opacity:1}100%{width:80%;opacity:.3}}
+.exec-out::after{content:'';position:absolute;top:3px;left:4px;height:2px;background:#58a6ff;border-radius:1px;animation:stdout 2s .5s ease infinite}
+
+/* Lab 08 — Evals: trace spans */
+.viz-eval{display:flex;flex-direction:column;gap:3px;padding:0 4px;width:76px}
+.eval-span{height:7px;border-radius:2px;position:relative;overflow:hidden}
+@keyframes spanIn{0%{width:0}100%{width:var(--w)}}
+.es1{background:#7ee78760;border:1px solid #7ee787;width:0;--w:90%;animation:spanIn .8s .1s ease forwards,spanIn .8s 2.1s ease forwards}
+.es2{background:#58a6ff60;border:1px solid #58a6ff;width:0;--w:60%;animation:spanIn .8s .4s ease forwards,spanIn .8s 2.4s ease forwards}
+.es3{background:#f87171;border:1px solid #ef4444;width:0;--w:35%;animation:spanIn .8s .7s ease forwards,spanIn .8s 2.7s ease forwards}
+.es4{background:#7ee78760;border:1px solid #7ee787;width:0;--w:75%;animation:spanIn .8s 1s ease forwards,spanIn .8s 3s ease forwards}
+
+/* ── Card entrance ── */
+@keyframes cardIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+
+/* ── Footer ── */
+footer{text-align:center;padding:2rem 1rem;color:#484f58;font-size:.8rem;border-top:1px solid #21262d;margin-top:.5rem}
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <span class="navbar-brand">🤖 Coding Agents Playground</span>
+  <a href="../index.html" class="back">← Playground</a>
+</nav>
+
+<!-- Hero: live agent brain canvas -->
+<div class="hero">
+  <canvas id="heroCanvas"></canvas>
+  <div class="hero-content">
+    <div class="hero-eyebrow">Interactive Labs</div>
+    <h1 class="hero-title">How Coding<br><span>Agents Work</span></h1>
+    <p class="hero-sub">8 interactive labs taking you from the agent loop to multi-agent orchestration, evals, and everything in between.</p>
+    <div class="hero-badges">
+      <span class="h-badge hb-i">Foundations</span>
+      <span class="h-badge hb-g">Memory & State</span>
+      <span class="h-badge hb-c">Architecture</span>
+      <span class="h-badge hb-p">Observability</span>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- ── FOUNDATIONS ── -->
+  <div class="section-group">
+    <div class="section-group-label">Foundations</div>
+    <div class="labs-grid">
+
+      <a href="lab-01-agent-loop.html" class="lab-card card-i">
+        <div class="lab-viz">
+          <div class="viz-loop">
+            <div class="loop-orbit"></div>
+            <div class="loop-center"></div>
+            <div class="loop-dot ld1"></div>
+            <div class="loop-dot ld2"></div>
+            <div class="loop-dot ld3"></div>
+            <div class="loop-dot ld4"></div>
+          </div>
+        </div>
+        <div class="lab-body">
+          <div class="lab-num">Lab 01</div>
+          <div class="lab-title">The Agent Loop</div>
+          <div class="lab-desc">Perceive → Think → Act → Observe: the heartbeat of every agent. Step through a live task and see each phase in motion.</div>
+          <span class="lab-tag tag-i">Foundations</span>
+        </div>
+      </a>
+
+      <a href="lab-02-tool-use.html" class="lab-card card-a">
+        <div class="lab-viz">
+          <div class="viz-tool">
+            <span class="tb">{</span>
+            <span class="tb">&nbsp;"fn"</span>
+            <span class="tb">&nbsp;"args"</span>
+            <span class="tb">}</span>
+          </div>
+        </div>
+        <div class="lab-body">
+          <div class="lab-num">Lab 02</div>
+          <div class="lab-title">Tool Use & Function Calling</div>
+          <div class="lab-desc">How LLMs reach beyond text. Define a tool schema, watch the model emit structured JSON, and see it dispatched and returned.</div>
+          <span class="lab-tag tag-o">Foundations</span>
+        </div>
+      </a>
+
+      <a href="lab-04-chain-of-thought.html" class="lab-card card-v">
+        <div class="lab-viz">
+          <div class="viz-cot">
+            <div class="cot-pill cot-t">Thought</div>
+            <div class="cot-pill cot-a">Action</div>
+            <div class="cot-pill cot-o">Observe</div>
+          </div>
+        </div>
+        <div class="lab-body">
+          <div class="lab-num">Lab 04</div>
+          <div class="lab-title">Chain of Thought & ReAct</div>
+          <div class="lab-desc">Structured reasoning makes agents legible and steerable. Compare plain completion vs. ReAct traces side by side.</div>
+          <span class="lab-tag tag-i">Foundations</span>
+        </div>
+      </a>
+
+    </div>
+  </div>
+
+  <!-- ── MEMORY & STATE ── -->
+  <div class="section-group">
+    <div class="section-group-label">Memory & State</div>
+    <div class="labs-grid">
+
+      <a href="lab-03-context-memory.html" class="lab-card card-g">
+        <div class="lab-viz">
+          <div class="viz-ctx">
+            <div class="ctx-bar"></div>
+            <div class="ctx-bar"></div>
+            <div class="ctx-bar"></div>
+            <div class="ctx-bar"></div>
+          </div>
+        </div>
+        <div class="lab-body">
+          <div class="lab-num">Lab 03</div>
+          <div class="lab-title">Context & Memory</div>
+          <div class="lab-desc">The context window is finite. Watch tokens fill it, see truncation happen, and explore summarization vs. RAG as rescue strategies.</div>
+          <span class="lab-tag tag-g">Memory & State</span>
+        </div>
+      </a>
+
+      <a href="lab-05-planning.html" class="lab-card card-r">
+        <div class="lab-viz">
+          <div class="viz-plan">
+            <div class="plan-root">GOAL</div>
+            <div class="plan-line"></div>
+            <div class="plan-row">
+              <div class="plan-child pc1"></div>
+              <div class="plan-child pc2"></div>
+              <div class="plan-child pc3"></div>
+            </div>
+          </div>
+        </div>
+        <div class="lab-body">
+          <div class="lab-num">Lab 05</div>
+          <div class="lab-title">Planning & Task Decomposition</div>
+          <div class="lab-desc">Breaking an ambitious goal into an executable dependency graph. Visualize flat lists, trees, and DAGs with critical path highlighting.</div>
+          <span class="lab-tag tag-r">Memory & State</span>
+        </div>
+      </a>
+
+    </div>
+  </div>
+
+  <!-- ── ARCHITECTURE ── -->
+  <div class="section-group">
+    <div class="section-group-label">Architecture</div>
+    <div class="labs-grid">
+
+      <a href="lab-06-multi-agent.html" class="lab-card card-c">
+        <div class="lab-viz">
+          <div class="viz-multi">
+            <div class="ma-node ma-orch">ORCH</div>
+            <div class="ma-node ma-a">A</div>
+            <div class="ma-node ma-b">B</div>
+            <div class="ma-node ma-c">C</div>
+            <div class="ma-msg"></div>
+            <div class="ma-msg2"></div>
+          </div>
+        </div>
+        <div class="lab-body">
+          <div class="lab-num">Lab 06</div>
+          <div class="lab-title">Multi-Agent Systems</div>
+          <div class="lab-desc">Orchestrators, subagents, handoffs, and coordination cost. Assign roles, route tasks, and watch token spend per node.</div>
+          <span class="lab-tag tag-c">Architecture</span>
+        </div>
+      </a>
+
+      <a href="lab-07-code-execute.html" class="lab-card card-o">
+        <div class="lab-viz">
+          <div class="viz-exec">
+            <div class="exec-code"></div>
+            <span class="exec-gear">⚙</span>
+            <div class="exec-out"></div>
+          </div>
+        </div>
+        <div class="lab-body">
+          <div class="lab-num">Lab 07</div>
+          <div class="lab-title">The Code → Execute → Observe Loop</div>
+          <div class="lab-desc">Write code, run it in a sandbox, feed stdout back as observation. The core cycle powering every coding agent.</div>
+          <span class="lab-tag tag-o">Architecture</span>
+        </div>
+      </a>
+
+    </div>
+  </div>
+
+  <!-- ── OBSERVABILITY ── -->
+  <div class="section-group">
+    <div class="section-group-label">Observability</div>
+    <div class="labs-grid">
+
+      <a href="lab-08-evals-tracing.html" class="lab-card card-p">
+        <div class="lab-viz">
+          <div class="viz-eval">
+            <div class="eval-span es1"></div>
+            <div class="eval-span es2"></div>
+            <div class="eval-span es3"></div>
+            <div class="eval-span es4"></div>
+          </div>
+        </div>
+        <div class="lab-body">
+          <div class="lab-num">Lab 08</div>
+          <div class="lab-title">Evals & Tracing</div>
+          <div class="lab-desc">You cannot improve what you cannot measure. Build a scoring rubric, explore a waterfall trace, and run a batch eval.</div>
+          <span class="lab-tag tag-p">Observability</span>
+        </div>
+      </a>
+
+    </div>
+  </div>
+
+  <!-- ── THE BIG QUESTION ── -->
+  <div class="section-group">
+    <div class="section-group-label">The Big Question</div>
+    <div class="labs-grid">
+
+      <a href="lab-09-developer-role.html" class="lab-card card-b">
+        <div class="lab-viz" style="display:flex;align-items:center;justify-content:center;gap:18px;padding:16px;">
+          <span style="font-size:28px;filter:drop-shadow(0 0 8px #58a6ff)">👤</span>
+          <span style="font-size:22px;color:#8b949e">+</span>
+          <span style="font-size:28px;filter:drop-shadow(0 0 8px #bc8cff)">🤖</span>
+          <span style="font-size:22px;color:#8b949e">=</span>
+          <span style="font-size:28px;filter:drop-shadow(0 0 8px #3fb950)">🚀</span>
+        </div>
+        <div class="lab-body">
+          <div class="lab-num">Lab 09</div>
+          <div class="lab-title">Do I Still Need to Code?</div>
+          <div class="lab-desc">The developer's role in the age of AI agents — which skills still matter, which changed, and why understanding code is more important than ever.</div>
+          <span class="lab-tag tag-b">The Big Question</span>
+        </div>
+      </a>
+
+    </div>
+  </div>
+
+  <footer>Runs fully in-browser · No server required · No data collected</footer>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+//  HERO CANVAS — agent brain with tools orbiting
+// ═══════════════════════════════════════════════
+(function() {
+  const canvas = document.getElementById('heroCanvas');
+  const ctx = canvas.getContext('2d');
+  const DPR = window.devicePixelRatio || 1;
+  let W, H, raf, t0 = 0;
+
+  // Node definitions: LLM center + tool satellites + user/output
+  const NODES = [
+    { id:'user',   label:'User',    icon:'👤', color:'#e6edf3', role:'io'   },
+    { id:'llm',    label:'LLM',     icon:'🧠', color:'#bc8cff', role:'brain'},
+    { id:'code',   label:'Editor',  icon:'📝', color:'#7ee787', role:'tool' },
+    { id:'shell',  label:'Shell',   icon:'>_', color:'#f97316', role:'tool' },
+    { id:'search', label:'Search',  icon:'🔍', color:'#38bdf8', role:'tool' },
+    { id:'memory', label:'Memory',  icon:'💾', color:'#f472b6', role:'tool' },
+    { id:'out',    label:'Output',  icon:'✅', color:'#34d399', role:'io'   },
+  ];
+
+  // Which nodes connect to which
+  const EDGES = [
+    ['user','llm'],['llm','code'],['llm','shell'],['llm','search'],
+    ['llm','memory'],['llm','out'],['code','shell'],
+  ];
+
+  // Thought bubbles that drift past the LLM
+  const THOUGHTS = [
+    'Thought: I need to read the file first…',
+    'Action: shell("cat main.py")',
+    'Observation: SyntaxError on line 14',
+    'Thought: Fix the indentation issue',
+    'Action: editor.replace(line=14, …)',
+    'Observation: Tests passing ✓',
+    'Thought: Task complete, summarize',
+  ];
+
+  let thoughts = [], thoughtTimer = 0;
+  let packets = [];
+
+  // Positions computed on resize
+  let nodePos = {};
+
+  function resize() {
+    const hero = canvas.parentElement;
+    W = hero.clientWidth; H = hero.clientHeight;
+    canvas.width  = W * DPR; canvas.height = H * DPR;
+    canvas.style.width  = W + 'px';
+    canvas.style.height = H + 'px';
+    ctx.scale(DPR, DPR);
+    buildLayout();
+  }
+
+  function buildLayout() {
+    const cx = W * .5, cy = H * .5;
+    const toolR = Math.min(W, H) * .28;
+
+    nodePos = {
+      user:   { x: W * .1,  y: cy },
+      llm:    { x: cx,      y: cy },
+      code:   { x: cx + Math.cos(-1.1)  * toolR, y: cy + Math.sin(-1.1)  * toolR },
+      shell:  { x: cx + Math.cos(-.3)   * toolR, y: cy + Math.sin(-.3)   * toolR },
+      search: { x: cx + Math.cos(.5)    * toolR, y: cy + Math.sin(.5)    * toolR },
+      memory: { x: cx + Math.cos(1.3)   * toolR, y: cy + Math.sin(1.3)   * toolR },
+      out:    { x: W * .9,  y: cy },
+    };
+
+    packets = [];
+    for (let i = 0; i < 5; i++) spawnPacket();
+  }
+
+  function spawnPacket() {
+    const e = EDGES[Math.floor(Math.random() * EDGES.length)];
+    const rev = Math.random() < .35;
+    const a = rev ? e[1] : e[0], b = rev ? e[0] : e[1];
+    const src = NODES.find(n => n.id === a);
+    packets.push({ a, b, t: Math.random(), speed: .004 + Math.random() * .006, color: src.color });
+  }
+
+  function drawNode(n, pulse) {
+    const p = nodePos[n.id];
+    if (!p) return;
+    const r = n.role === 'brain' ? 22 : n.role === 'io' ? 14 : 16;
+    const glow = r * (n.role === 'brain' ? 3 : 2.2);
+
+    // Glow
+    const gr = ctx.createRadialGradient(p.x, p.y, r * .3, p.x, p.y, glow);
+    gr.addColorStop(0, n.color + (n.role === 'brain' ? '30' : '18'));
+    gr.addColorStop(1, 'transparent');
+    ctx.beginPath(); ctx.arc(p.x, p.y, glow, 0, Math.PI * 2);
+    ctx.fillStyle = gr; ctx.fill();
+
+    // Circle
+    ctx.beginPath(); ctx.arc(p.x, p.y, r * pulse, 0, Math.PI * 2);
+    ctx.fillStyle = '#161b22'; ctx.fill();
+    ctx.strokeStyle = n.color + 'cc';
+    ctx.lineWidth = n.role === 'brain' ? 2 : 1.5;
+    ctx.stroke();
+
+    // Label
+    ctx.fillStyle = n.color;
+    ctx.font = n.role === 'brain' ? 'bold 9px sans-serif' : '8.5px sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(n.label, p.x, p.y);
+  }
+
+  function draw(ts) {
+    const dt = ts - t0; t0 = ts;
+    ctx.clearRect(0, 0, W, H);
+    const t = ts * .001;
+
+    // Edges
+    EDGES.forEach(([a, b]) => {
+      const pa = nodePos[a], pb = nodePos[b];
+      if (!pa || !pb) return;
+      const na = NODES.find(n => n.id === a);
+      const grad = ctx.createLinearGradient(pa.x, pa.y, pb.x, pb.y);
+      grad.addColorStop(0, na.color + '28');
+      grad.addColorStop(1, '#bc8cff28');
+      ctx.beginPath(); ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y);
+      ctx.strokeStyle = grad; ctx.lineWidth = 1; ctx.stroke();
+    });
+
+    // Packets
+    packets.forEach(pk => {
+      pk.t += pk.speed;
+      if (pk.t >= 1) {
+        // Hop to adjacent node
+        const adj = EDGES.filter(e => e[0] === pk.b || e[1] === pk.b);
+        if (adj.length) {
+          const ne = adj[Math.floor(Math.random() * adj.length)];
+          pk.a = ne[0] === pk.b ? ne[0] : ne[1];
+          pk.b = ne[0] === pk.b ? ne[1] : ne[0];
+          pk.t = 0;
+          pk.color = NODES.find(n => n.id === pk.a).color;
+        } else { pk.t = 0; }
+      }
+      const pa = nodePos[pk.a], pb = nodePos[pk.b];
+      if (!pa || !pb) return;
+      const x = pa.x + (pb.x - pa.x) * pk.t;
+      const y = pa.y + (pb.y - pa.y) * pk.t;
+      ctx.beginPath(); ctx.arc(x, y, 3.5, 0, Math.PI * 2);
+      ctx.fillStyle = pk.color + 'dd'; ctx.fill();
+      // Trail glow
+      const tg = ctx.createRadialGradient(x, y, 0, x, y, 7);
+      tg.addColorStop(0, pk.color + '30'); tg.addColorStop(1, 'transparent');
+      ctx.beginPath(); ctx.arc(x, y, 7, 0, Math.PI * 2);
+      ctx.fillStyle = tg; ctx.fill();
+    });
+
+    if (Math.random() < .006 && packets.length < 10) spawnPacket();
+
+    // Thought bubbles near LLM
+    thoughtTimer += dt;
+    if (thoughtTimer > 2200 && thoughts.length < 3) {
+      thoughtTimer = 0;
+      const llm = nodePos['llm'];
+      if (llm) thoughts.push({ text: THOUGHTS[Math.floor(Math.random() * THOUGHTS.length)], x: llm.x - 80, y: llm.y - 30, vy: -.3, life: 1, maxLife: 220 });
+    }
+    thoughts = thoughts.filter(th => th.life > 0);
+    thoughts.forEach(th => {
+      th.y += th.vy; th.life -= dt * .006;
+      const alpha = Math.min(1, th.life) * Math.min(1, (1 - th.life) * 4 + .2);
+      ctx.fillStyle = `rgba(188,140,255,${alpha * .8})`;
+      ctx.font = '8px monospace';
+      ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText(th.text, th.x, th.y);
+    });
+
+    // Nodes
+    NODES.forEach(n => {
+      const phase = NODES.indexOf(n) / NODES.length * Math.PI * 2;
+      const pulse = n.role === 'brain' ? 1 + Math.sin(t * 1.8 + phase) * .06 : 1 + Math.sin(t * 1.2 + phase) * .04;
+      drawNode(n, pulse);
+    });
+
+    raf = requestAnimationFrame(draw);
+  }
+
+  window.addEventListener('resize', () => { cancelAnimationFrame(raf); resize(); raf = requestAnimationFrame(draw); });
+  resize();
+  raf = requestAnimationFrame(draw);
+})();
+
+// Staggered card entrance
+document.querySelectorAll('.lab-card').forEach((card, i) => {
+  card.style.animation = `cardIn .45s ease ${i * 70}ms forwards`;
+});
+</script>
+</body>
+</html>
