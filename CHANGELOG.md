@@ -7,7 +7,46 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-03-25
+
+### Cryptography Labs
+- `[ux]` Lab 08 — Demo 1 IPsec: 2-button bar replaced with 2×2 combo grid (Transport+ESP, Transport+AH, Tunnel+ESP, Tunnel+AH); cards mark themselves visited with green on click
+- `[bug]` Lab 08 — All objectives reset on refresh; `buildPacket()` was calling `saveState()` before `loadState()` ran, overwriting saved state
+- `[bug]` Lab 02 — Objectives overlay no longer resets on refresh; `checkReflectionLock()` was missing after `loadState()` in `DOMContentLoaded`
+- `[bug]` Lab 08 — VPN scenarios objective now requires all 4 scenarios (DPI, Quantum, IoT, Federal); was completing on first selection
+- `[bug]` Lab 09 — "Explored all 4 KDFs" objective now triggers correctly; PBKDF2 default tab was never registered in `kdfTabsSeen` on load
+- `[ux]` Labs 01–04 — Objectives overlay moved to bottom-right matching Lab 05; chevron above panel, opens downward
+- `[feature]` Lab 02 — "Click both cipher types (Stream & Block)" added as first objective; badge updated to 0/5
+- `[feature]` Lab 03 — All 4 AES cipher modes now required as objective (was 2); label updated to list ECB, CBC, CTR, GCM
+- `[ux]` Labs 02–04 — Objectives overlay reordered to match top-to-bottom HTML content sequence in each lab (quiz moved to last in all three)
+- `[feature]` Lab 01 — CIA Triad pillars added as objective #1; all 3 (C, I, A) must be clicked; badge now shows 0/6
+- `[feature]` Lab 01 — CIA Triad Threat Simulator added as lab objective; reflection unlocks only after simulator is run
+- `[ux]` Lab 01 — Objectives overlay reordered to match top-to-bottom content sequence (simulator → key exchange → screenshot → password task → quiz)
+- `[bug]` Labs 01–02 — "Enter your full name" input now styled correctly (was missing `.lab-input` CSS, rendering as unstyled browser default)
+- `[bug]` Lab 01 — Tour auto-popup fixed: bumped localStorage key to `v2` to clear stale flag from prior sessions
+- `[ux]` All labs — "Why and Purpose" renamed to "Why This Matters" across all 10 files (41 occurrences)
+- `[ux]` Lab 01 — Collapsible "How to open Terminal" panels added to macOS/Windows/Linux tabs in key pair section
+- `[ux]` Labs 01–02 — Quiz and reflection formatting aligned with Lab 03: QUIZ_OPTIONS with per-option feedback, blue required-reflection box, optional observations separator, guided questions added to Lab 01
+- `[ux]` All labs — Renamed "Why and Purpose" label to "Why This Matters" across all 10 files
+- `[ux]` Labs 03–06 — Added "Why and Purpose" info boxes to all demo sections (16 boxes total across 4 files)
+- `[ux]` Lab 09 — KDF/Mistakes/Lifecycle thresholds raised to require 100% completion; language badges on 8 mistake cards; hardware preset notes updated
+- `[ux]` Lab 10 — PQC requires all 4 algorithms; ZK demo blue→green; checklist replaced with 20-question True/False quiz with instant feedback
+- `[ux]` Lab 08 IPsec/TLS — Added "Why and Purpose" boxes to all 4 demos, Demo 1 now requires all 4 mode/protocol combos, vpnDone objective added to tracker
+- `[ux]` Labs 01–02 — Formatting aligned with Lab 03 reference: tour modal system, forward nav removed, stray comments cleaned, meta tags added; Lab 01 auto-popup tour on first visit with help-reminder toast
+- `[ux]` Lab 07 PKI — Added "Why and Purpose" boxes to all 4 demos, fixed cert field objective label, Demo 4 now requires all 4 attack cards to complete objective
+
+### Primer
+- `[feature]` primer/edtech/ — Higher Education & EdTech industry primer with 7-tab navigation
+- `[feature]` Created `primer/ai-infrastructure/index.html` — AI Infrastructure & Research Ops industry primer with 7-tab SPA (~35-term searchable glossary, 8 player categories, 6 metric categories, 7-layer tech stack, 3 workflows, 6 trend cards)
+- `[feature]` Created `primer/fintech/index.html` — Financial Services & FinTech industry primer with 7-tab SPA (Overview, Terminology, Players, Metrics, Tech Stack, Workflows, Trends)
+- `[feature]` Created `primer/ecommerce/index.html` — E-Commerce & Digital Marketplaces industry primer with 7-tab SPA, searchable glossary (~30 terms), 27 player cards, conversion funnel visualization, 3 workflow flows, and 6 trend cards
+
 ## 2026-03-24
+
+### Primer
+- `[feature]` Created `primer/` section — industry-by-industry foundational knowledge base with landing page, search, and card grid
+- `[feature]` Added Primer nav entry and section card to root `index.html`
+- `[feature]` Scheduled weekly Monday 9am task to prompt for next industry to build
 
 ### Cryptography Labs
 - `[feature]` All 10 labs — mini quiz system upgraded with per-option feedback, exploration mode after correct answer, and persistent correct button highlight

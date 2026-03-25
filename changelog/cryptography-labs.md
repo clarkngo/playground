@@ -5,6 +5,189 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-03-25
+
+### [ux] Lab 08 — Demo 1 IPsec: replaced 2-button bar with 2×2 combo grid
+- Removed separate Transport/Tunnel and ESP/AH buttons
+- Added 4 clickable combination cards in a 2×2 grid: Transport+ESP, Transport+AH, Tunnel+ESP, Tunnel+AH
+- Each card shows description, turns green border when visited (✅), blue border when currently selected
+- Replaced `showMode()`/`showProto()` with single `showCombo(mode, proto)` function that tracks combo keys (`'transport-esp'` etc.) in `ipsecSeen`
+- `ipsecDone` triggers when all 4 combo keys are in the Set
+- State persists/restores: visited cards restore green, last-selected card restores blue with diagram redrawn
+
+### [ux] Lab 08 — Demo 1 IPsec now starts with no mode pre-selected
+- Removed `action-btn-blue` from Tunnel Mode button; all 4 buttons start unselected
+- Changed `_currentMode` and `_currentProto` initial values from `'tunnel'`/`'esp'` to `null`
+- Added null guard in `buildPacket()`: returns early if either argument is null
+- Added placeholder text in `#pkt-diagram`: "← Select a mode and protocol above to see the packet structure."
+- Removed `buildPacket('tunnel','esp')` call from `DOMContentLoaded`
+- `saveState`/`loadState` now persist `currentMode`/`currentProto`; on restore, redraws the diagram and highlights the correct buttons if a selection was previously saved
+
+### [bug] Lab 08 — All objectives reset to 0 on every page refresh
+- **Symptom:** Every refresh wiped all progress even though state was being saved
+- **Root cause:** `DOMContentLoaded` called `buildPacket('tunnel','esp')` BEFORE `loadState()`. `buildPacket()` calls `saveState()` internally — so it saved a blank initial state to localStorage, then `loadState()` read that blank state back
+- **Fix:** Reordered to `loadState()` → `buildPacket()` → `updateObj()` so state is restored before anything writes to localStorage
+
+### [bug] Lab 02 — Objectives overlay reset to 0 on every page refresh
+- **Symptom:** All objectives showed unchecked after refresh even though progress was saved in localStorage
+- **Root cause:** `DOMContentLoaded` called `loadState()` but never called `checkReflectionLock()` afterward — state was restored in memory but the overlay was never re-rendered from it
+- **Fix:** Added `checkReflectionLock()` after `loadState()` in the `DOMContentLoaded` handler
+
+### [bug] Lab 08 — "Compared VPN protocols" objective triggered on first scenario instead of all 4
+- **Symptom:** Selecting any single VPN scenario immediately completed the objective
+- **Root cause:** `showVPNScenario()` set `vpnDone=true` unconditionally; `selectVPN()` also set it directly
+- **Fix:** Added `vpnScenariosSeen` Set; `showVPNScenario()` now calls `.add(v)` and sets `vpnDone = vpnScenariosSeen.size >= 4`. Removed `vpnDone=true` from `selectVPN()`. All 4 scenarios (DPI firewall, Quantum, IoT, Federal) must be selected to complete the objective. Label updated to "Explored all 4 VPN scenarios". State persisted/restored via `saveState`/`loadState`.
+
+### [bug] Lab 09 — "Explored all 4 KDFs" objective never triggered
+- **Symptom:** Clicking all 4 KDF tabs (PBKDF2, bcrypt, Argon2id, HKDF) did not complete the objective
+- **Root cause:** PBKDF2 is the default active tab rendered in HTML — `showKDFTab()` is never called for it on load, so `kdfTabsSeen` started empty. Clicking the other 3 tabs only reached `size=3`, never `>=4`
+- **Fix:** After `loadState()` in `DOMContentLoaded`, seed `kdfTabsSeen.add('pbkdf2')` when the Set is empty (fresh session). Saved sessions restore their full Set via `loadState()` and are unaffected
+
+### [ux] Labs 01–04 — Objectives overlay moved from bottom-right to top-right
+- Changed `position:fixed;bottom:1.25rem;right:1.25rem` → `top:1rem;right:1rem` on `#obj-overlay` in all 4 labs
+- Removed `position:absolute;bottom:calc(100% + .4rem)` from `#obj-panel`; replaced with `margin-top:.3rem` so panel opens downward (matching Lab 05 reference)
+- Badge style simplified to match Lab 05 (`border-radius:8px`, removed backdrop-filter/box-shadow from badge)
+- Chevron initial value changed from `▼` → `▲`; `toggleObj()` logic flipped to `▲` when open, `▼` when closed
+
+### [feature] Lab 03 — All 4 AES cipher modes now required (was 2)
+- Updated objective label to "Explore all 4 AES cipher modes (ECB, CBC, CTR, GCM)"
+- Changed threshold in `checkReflectionLock()` from `modesExplored.size >= 2` to `>= 4`
+
+### [feature] Lab 02 — "Click both cipher types" added as first objective
+- Added `cipherTypesSeen` Set; `selectCipherType()` now calls `.add(type)`, `saveState()`, `checkReflectionLock()`
+- New objective: "Click both cipher types (Stream & Block)" — requires `cipherTypesSeen.size >= 2`
+- Placed first in overlay (cipher cards are top of page); badge updated from `0/4` to `0/5`
+- State persisted as array and restored via `new Set()`
+
+### [feature] Lab 01 — CIA Triad pillars added as lab objective (all 3 must be clicked)
+- Replaced `ciaInteracted` boolean with `ciaPillarsSeen` Set tracking individual pillar clicks
+- `selectCIA()` now calls `ciaPillarsSeen.add(pillar)` instead of setting a flag
+- New objective: "Explore all 3 CIA Triad pillars (C, I & A)" — requires `ciaPillarsSeen.size >= 3`
+- Objective placed first in overlay (pillars appear first in the page, above the simulator)
+- Badge updated from `0/5` to `0/6`
+- Submission report updated: shows `✅ All 3 explored` or `⚠️ N/3 explored`
+- State serialized as array (`[...ciaPillarsSeen]`) and restored via `new Set(state.ciaPillarsSeen || [])`
+
+### [ux] Labs 02–04 — Objectives overlay reordered to match lab content sequence
+- **Lab 02** (`02-stream-block-ciphers.html`): Quiz moved to last; new order: Stream Cipher → Block Cipher → Explore parameters → Quiz
+- **Lab 03** (`03-symmetric-encryption-mac.html`): Quiz moved to last; new order: AES cipher modes → HMAC tamper attack → AES-GCM bit-flip test → Quiz
+- **Lab 04** (`04-asymmetric-encryption.html`): Quiz moved to last; new order: Diffie-Hellman walkthrough → Tamper signed message → TLS handshake animation → Quiz
+- Labs 05–10 already had correct HTML-matching order; no changes made
+
+### [ux] Lab 01 — Objectives overlay reordered to match lab content sequence
+- Previous order had quiz first; reordered to match top-to-bottom position in the page:
+  1. Run the CIA Triad Threat Simulator
+  2. Click "Demonstrate Key Exchange"
+  3. Upload your key pair terminal screenshot
+  4. Complete the Password Task (Weak, Medium & Strong)
+  5. Answer the mini quiz correctly
+
+### [feature] Lab 01 — CIA Triad Threat Simulator added as lab objective
+- Added `simulatorUsed` boolean state variable (saved/restored via `localStorage`)
+- `simulateThreat()` now sets `simulatorUsed = true` and calls `saveState()` + `checkReflectionLock()` when the simulation completes (after CIA indicators update)
+- New objective entry: "Run the CIA Triad Threat Simulator" added to `checks` array in `checkReflectionLock()`
+- Objectives badge updated from `0/4` to `0/5`
+- Reflection area remains locked until all 5 objectives are complete
+
+### [bug] Labs 01–02 — "Enter your full name" input unstyled
+- **Symptom:** Name input rendered without dark background, border, or text color — looked like a plain browser-default text box
+- **Root cause:** Both labs used `class="lab-input"` on the input but had no `.lab-input` CSS rule defined (only `.reflection-input` was present)
+- **Fix:** Added `.lab-input` and `.lab-input:focus` rules matching Lab 03 exactly (`background:#21262d`, `border:1px solid #30363d`, `padding:.45rem .6rem`, `color:#e6edf3`, `width:100%`, `font-size:.88rem`; focus `border-color:#58a6ff`)
+
+### [bug] Lab 01 — Tour auto-popup not showing on first visit
+- **Symptom:** Guided tour overlay never appeared on first page load despite code being present
+- **Root cause:** `localStorage` key `cryptography-tour-seen-v1` was already set from prior development/testing sessions
+- **Fix:** Bumped key to `cryptography-tour-seen-v2` in both `initTourSystem()` and `closeTour()` — clears stale flag, tour shows again for all users on next visit
+
+### [ux] All labs — Renamed "Why and Purpose" → "Why This Matters"
+- Applied to all 10 lab files (41 total occurrences) via global search-replace
+
+### [ux] Lab 01 — Terminal open instructions added to key pair generator section
+- Added collapsible `<details>/<summary>` block at the top of each OS tab (macOS, Windows, Linux) in the "Generate Your Own Key Pair" section
+- macOS: Spotlight shortcut (⌘ Space), Finder path, Dock, iTerm2 note
+- Windows: Win+X menu, Win+R run dialog, Start menu search, Git Bash option; admin warning for OpenSSH step
+- Linux: Ctrl+Alt+T shortcut, desktop right-click, app menu search, Alt+F2 run dialog
+- Added CSS for `▶`/`▼` arrow rotation on `details[open]` and marker reset across browsers
+
+### [ux] Labs 01–02 — Quiz and reflection formatting aligned with Lab 03 reference
+- Both labs: Replaced hardcoded quiz buttons (`check('A',this)`) with `QUIZ_OPTIONS` array + dynamic rendering + `checkQ()` function matching Lab 03
+- Both labs: Each wrong answer now has distinct feedback text explaining why it's incorrect
+- Both labs: Required reflection textarea wrapped in blue border box (`background:#0d1a2e;border:2px solid #1f6feb`) with `📝 Your Learning Reflection ★ Required` label
+- Both labs: Lab Observations section reformatted with `(Optional)` tag, description text, and `border-top` separator
+- Both labs: Student name input uses `class="lab-input"` consistent with Lab 03
+- Both labs: `loadState()` quiz restoration updated to use `_correctBtn` + `QUIZ_OPTIONS` feedback instead of hardcoded strings
+- Lab 01: Reflection title changed from `💭 Reflection & Learning Submission` to `💭 Learning Reflection Submission`
+- Lab 01: Added guided questions `<ul>` block (5 questions + key question) before reflection-lock, matching Lab 03 structure
+- Lab 01: `reflection-lock` inner content changed to `<p>` tag matching Lab 03 padding/weight
+
+### [ux] All labs — Renamed "Why and Purpose" label to "Why This Matters"
+- Replaced all instances of `🎯 Why and Purpose` with `🎯 Why This Matters` across all 10 lab files
+
+### [ux] Labs 01–02 — Formatting consistency with Lab 03, tour system, navigation cleanup
+- Added 6-step guided tour modal (CSS + HTML + JS) to both labs, matching Lab 03 structure
+- Lab 01: `initTourSystem()` auto-shows tour on first visit via `cryptography-tour-seen-v1` localStorage key; `closeTour(completed)` shows `#help-reminder` toast when closed early to remind users of ❓ Help button
+- Lab 02: `initTourSystem()` is empty (no auto-popup); tour accessible via ❓ Help button only
+- Both labs: Removed forward navigation link (no `Lab 02 →` or `Lab 03 →`) — students get per-week links
+- Lab 01 footer: changed to `Module 1` only (no links)
+- Lab 02 footer: changed to `← Lab 01` + `Module 2` only (no forward link)
+- Lab 02: Removed all stray `<!-- Change X: ... -->` comments from navbar, reflection-lock div, obj overlay, and JS
+- Both labs: Added `<meta name="author">` and `<meta name="copyright">` tags
+- Added `<div id="help-reminder">` toast element to Lab 01
+
+### [ux] Labs 03–06 — Added "Why and Purpose" boxes to all demo sections
+- Added blue-left-border Why/Purpose info box after each `<h4>` in all 4 demos of `03-symmetric-encryption-mac.html` (AES Mode, HMAC, AES-GCM, Padding Oracle)
+- Added Why/Purpose boxes after each `<h4>` in all 6 demos of `04-asymmetric-encryption.html` (DH, RSA, Signatures, Hybrid, TLS, Entropy)
+- Added Why/Purpose boxes after each `<h4>` in all 4 demos of `05-hash-algorithms.html` (Avalanche, Comparison, bcrypt, Birthday)
+- Added Why/Purpose boxes after each `<h4>` in all 4 demos of `06-cryptography-standards.html` (NIST Levels, Algorithm Dashboard, FIPS, Agility)
+
+### [ux] Lab 09 — Why/Purpose boxes, KDF/Mistakes/Lifecycle thresholds raised, hardware notes updated, language badges
+- Added Why/Purpose boxes to all 4 demos (already present from prior pass; confirmed correct)
+- Updated `KDF_HW_PRESETS` notes to match spec (e.g. `Single-core, ~1,200 PBKDF2 attempts/sec`)
+- Updated initial `kdf-hw-note` text to match laptop preset note
+- Changed `lifecyclesSeen.size>=3` to `>=5` (requires all 5 stages)
+- Updated `updateObj()` labels: `'Fixed all 8 crypto implementation mistakes'` and `'Explored all 5 key lifecycle stages'`
+- Added `lang` property to all 8 MISTAKES objects (JavaScript/Python/Java)
+- Added language badge `<span>` to `buildMistakesGrid()` card headers using `m.lang`
+
+### [ux] Lab 10 — Why/Purpose boxes, PQC requires 4 algorithms, ZK blue→green, checklist replaced with True/False quiz
+- Added Why/Purpose box to Demo 4 (`✅ Demo 4 — Protocol Design Security Checklist`)
+- Changed `pqcSeen.size>=3` to `>=4` (requires all 4 NIST PQC algorithms)
+- Updated `updateObj()` label from `'Explored ≥3 NIST PQC algorithms'` to `'Explored all 4 NIST PQC algorithms'`
+- Replaced all `🟦` with `🟩` in ZK demo (HTML and JS); updated prover state text from "blue" to "green"
+- Replaced entire `CHECKLIST_SECTIONS` + `buildChecklist` + `updateChecklistScore` with `TF_QUESTIONS` array (20 true/false questions across 5 sections), `_tfAnswered` Set, `buildChecklist()`, `answerTF()`, and updated `updateChecklistScore()`
+- Added `tfAnswered:Array.from(_tfAnswered)` to `saveState()`
+- Added `_tfAnswered=new Set(s.tfAnswered||[])` to `loadState()`
+
+### [ux] Lab 08 — Why/Purpose boxes for all 4 demos, Demo 1 requires all 4 combinations, vpnDone added to objectives
+- Added "Why and Purpose" blue-left-border info boxes after each `<h4>` in all 4 demo boxes in `08-ipsec-tls.html`
+- Demo 1: Updated description to add "Click all 4 buttons (Transport, Tunnel, ESP, AH) to complete this objective"
+- Demo 1: Added `ipsecSeen` Set to track which mode/protocol buttons have been clicked; `ipsecDone` only set to `true` after all 4 values (transport, tunnel, esp, ah) are seen
+- Demo 1: Updated `showMode()` and `showProto()` to call `ipsecSeen.add(m/p)` before `buildPacket()`
+- Demo 1: Changed `buildPacket()` to set `if(ipsecSeen.size>=4)ipsecDone=true` instead of unconditionally
+- Demo 1: Updated `updateObj()` label from `'Compared IPsec Tunnel vs Transport mode'` to `'Explored all 4 IPsec mode/protocol combinations'`
+- Added `{done:vpnDone,label:'Compared VPN protocols'}` to `updateObj()` checks (was missing)
+- Updated objective badge initial text from `0/5` to `0/6` to reflect the added vpnDone objective
+- Updated `saveState()` to persist `ipsecSeen:Array.from(ipsecSeen)`
+- Updated `loadState()` to restore `ipsecSeen=new Set(s.ipsecSeen||[])`
+
+### [feature] Labs 01–02 — Help + Exit Lab buttons, Why/Purpose boxes, and footer nav links
+- Added ❓ Help (`showTourModal(1)`) and ✕ Exit Lab (`closeTab()`) buttons to navbar in `01-cia-triad-authentication.html` and `02-stream-block-ciphers.html`
+- Added `closeTab()` function to both files (tries `window.close()`, falls back to `history.back()`)
+- Added "Why and Purpose" blue-left-border info boxes after each demo box `<h4>` in both files (3 boxes in Lab 01, 4 boxes in Lab 02)
+- Added Lab 02 → footer nav link to `01-cia-triad-authentication.html`
+- Added ← Lab 01 and Lab 03 → footer nav links to `02-stream-block-ciphers.html`
+
+### [ux] Lab 07 — Why/Purpose boxes, objective label fixes, Demo 4 attack-card tracking
+- Added "Why and Purpose" info box after each `<h4>` in all 4 demo boxes in `07-public-key-infrastructure.html`
+- Demo 1: Updated description to add "Click all 11 fields to complete this objective" hint text
+- Demo 1: Updated `updateObj()` label from `'Explored ≥5 certificate fields'` to `'Clicked all 11 certificate fields'`
+- Demo 4: Added description paragraph "Click all 4 attack cards to complete this objective"
+- Demo 4: Replaced `toggleAttack` function — now uses `attackCardsSeen` Set to track all 4 cards; sets `ctDone=true` only after all 4 are seen
+- Demo 4: Updated `reportCT()` to only set `ctDone=true` if `attackCardsSeen.size>=4`
+- Demo 4: Updated `updateObj()` CT label to `'Explored all 4 CT attack scenarios + reported'`
+- Updated `saveState()` to persist `attackCardsSeen` array
+- Updated `loadState()` to restore `attackCardsSeen` as a Set
+
 ## 2026-03-24
 
 ### [feature] Mini quiz system upgrade — per-option feedback for all 10 labs

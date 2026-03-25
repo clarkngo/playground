@@ -158,6 +158,7 @@
   <!-- Demo 1: Timing Attack -->
   <div class="demo-box">
     <h4>⏱️ Demo 1 — Timing Side-Channel Attack</h4>
+    <div style="background:#161b22;border-left:3px solid #58a6ff;border-radius:0 6px 6px 0;padding:.6rem .85rem;margin:.25rem 0 .85rem;font-size:.82rem;color:#8b949e;line-height:1.65"><strong style="color:#58a6ff">🎯 Why This Matters</strong> — Timing side-channels show how algorithms can leak information through execution time even when the algorithm itself is mathematically sound. This class of attack found real vulnerabilities in RSA, AES, and MAC verification in production systems.</div>
     <p style="color:#8b949e;margin-bottom:.75rem">An early-exit comparison leaks information about how many characters match. See the timing difference.</p>
     <div class="code-compare">
       <div>
@@ -202,6 +203,17 @@
   <!-- Demo 2: KDF Comparison -->
   <div class="demo-box">
     <h4>🔑 Demo 2 — Key Derivation Functions Comparison</h4>
+    <div style="background:#161b22;border-left:3px solid #58a6ff;border-radius:0 6px 6px 0;padding:.6rem .85rem;margin:.25rem 0 .85rem;font-size:.82rem;color:#8b949e;line-height:1.65"><strong style="color:#58a6ff">🎯 Why This Matters</strong> — Password databases get stolen regularly. The difference between SHA-256 (cracks in seconds on a GPU) and Argon2id (takes years) is entirely the KDF. This demo shows exactly why algorithm choice determines whether a breach becomes catastrophic.</div>
+    <div style="margin-bottom:.75rem">
+      <div style="font-size:.78rem;color:#8b949e;margin-bottom:.4rem;font-weight:600">⚡ Attacker Hardware:</div>
+      <div style="display:flex;gap:.4rem;flex-wrap:wrap">
+        <button id="kdf-hw-laptop" class="kdf-hw-btn" onclick="selectKdfHw('laptop')" style="background:none;border:1px solid #58a6ff;border-radius:6px;padding:.25rem .6rem;color:#58a6ff;cursor:pointer;font-size:.75rem">💻 Laptop CPU</button>
+        <button id="kdf-hw-desktop" class="kdf-hw-btn" onclick="selectKdfHw('desktop')" style="background:none;border:1px solid #30363d;border-radius:6px;padding:.25rem .6rem;color:#8b949e;cursor:pointer;font-size:.75rem">🖥️ Desktop CPU</button>
+        <button id="kdf-hw-gpu" class="kdf-hw-btn" onclick="selectKdfHw('gpu')" style="background:none;border:1px solid #30363d;border-radius:6px;padding:.25rem .6rem;color:#8b949e;cursor:pointer;font-size:.75rem">🎮 Gaming GPU</button>
+        <button id="kdf-hw-cluster" class="kdf-hw-btn" onclick="selectKdfHw('cluster')" style="background:none;border:1px solid #30363d;border-radius:6px;padding:.25rem .6rem;color:#8b949e;cursor:pointer;font-size:.75rem">☁️ GPU Cluster</button>
+      </div>
+      <div id="kdf-hw-note" style="font-size:.75rem;color:#8b949e;margin-top:.25rem">Laptop CPU (Intel i7) — Single-core, ~1,200 PBKDF2 attempts/sec</div>
+    </div>
     <div class="kdf-tabs">
       <div class="kdf-tab active" onclick="showKDFTab('pbkdf2',this)">PBKDF2</div>
       <div class="kdf-tab" onclick="showKDFTab('bcrypt',this)">bcrypt</div>
@@ -256,6 +268,7 @@
   <!-- Demo 3: Mistakes Gallery -->
   <div class="demo-box">
     <h4>🚨 Demo 3 — Crypto Implementation Mistakes Gallery</h4>
+    <div style="background:#161b22;border-left:3px solid #58a6ff;border-radius:0 6px 6px 0;padding:.6rem .85rem;margin:.25rem 0 .85rem;font-size:.82rem;color:#8b949e;line-height:1.65"><strong style="color:#58a6ff">🎯 Why This Matters</strong> — The most sophisticated algorithm is worthless if implemented incorrectly. These eight mistakes appear in real production code across multiple languages — recognizing anti-patterns is as important as knowing the theory.</div>
     <p style="color:#8b949e;margin-bottom:.75rem">Click "Show Fix" on each card to see the corrected code. <span id="mistakes-progress" style="color:#e3b341">0/8 fixed</span></p>
     <div class="mistakes-grid" id="mistakes-grid"></div>
   </div>
@@ -263,7 +276,8 @@
   <!-- Demo 4: Key Lifecycle -->
   <div class="demo-box">
     <h4>🔄 Demo 4 — Key Management Lifecycle</h4>
-    <p style="color:#8b949e;margin-bottom:.75rem">Click each stage to see NIST SP 800-57 requirements and compromise scenarios.</p>
+    <div style="background:#161b22;border-left:3px solid #58a6ff;border-radius:0 6px 6px 0;padding:.6rem .85rem;margin:.25rem 0 .85rem;font-size:.82rem;color:#8b949e;line-height:1.65"><strong style="color:#58a6ff">🎯 Why This Matters</strong> — A key is only as secure as its lifecycle management. Many breaches involve perfectly strong keys that were improperly stored, rotated, or destroyed. NIST SP 800-57 defines requirements for each stage of a key's life.</div>
+    <p style="color:#8b949e;margin-bottom:.75rem">Click each stage to see NIST SP 800-57 requirements and compromise scenarios — click all 5 stages to complete this objective.</p>
     <div class="lifecycle-stages">
       <div class="lc-stage" onclick="showLifecycle('gen',this)">① Generation</div>
       <div class="lc-stage" onclick="showLifecycle('dist',this)">② Distribution</div>
@@ -384,6 +398,30 @@ document.addEventListener('DOMContentLoaded',function(){
 let timingDone=false, kdfDone=false, mistakesDone=false, lifecycleDone=false, quizPassed=false, quizAttempts=0;
 let mistakesFixed=0, lifecyclesSeen=new Set(), kdfTabsSeen=new Set();
 const openedAt=new Date().toISOString();
+let selectedKdfHw='laptop';
+const KDF_HW_PRESETS={
+  laptop:{name:'Laptop CPU (Intel i7)',pbkdf2_100k:1200,bcrypt_12:12,argon2id:1,note:'Single-core, ~1,200 PBKDF2 attempts/sec'},
+  desktop:{name:'Desktop CPU (Ryzen 9)',pbkdf2_100k:8000,bcrypt_12:80,argon2id:8,note:'16-core workstation, ~8,000 PBKDF2 attempts/sec'},
+  gpu:{name:'Gaming GPU (RTX 4090)',pbkdf2_100k:800000,bcrypt_12:4200,argon2id:18,note:'16,384 CUDA cores — PBKDF2 parallelizes, Argon2 does not'},
+  cluster:{name:'GPU Cluster (10× A100)',pbkdf2_100k:8000000,bcrypt_12:40000,argon2id:120,note:'Cloud cracking rig, ~$50K/hr rental'},
+};
+function selectKdfHw(key){
+  selectedKdfHw=key;
+  document.querySelectorAll('.kdf-hw-btn').forEach(b=>{b.style.borderColor='#30363d';b.style.color='#8b949e';});
+  const btn=document.getElementById('kdf-hw-'+key);
+  if(btn){btn.style.borderColor='#58a6ff';btn.style.color='#58a6ff';}
+  document.getElementById('kdf-hw-note').textContent=KDF_HW_PRESETS[key].name+' — '+KDF_HW_PRESETS[key].note;
+  updatePBKDF2();updateBcrypt();
+}
+function kdfCrackTime(attemptsPerSec,keyspace){
+  const secs=keyspace/attemptsPerSec/2;
+  if(secs<60)return secs.toFixed(1)+' seconds';
+  if(secs<3600)return (secs/60).toFixed(1)+' minutes';
+  if(secs<86400)return (secs/3600).toFixed(1)+' hours';
+  if(secs<31536000)return (secs/86400).toFixed(0)+' days';
+  if(secs<3153600000)return (secs/31536000).toFixed(0)+' years';
+  return (secs/3153600000).toFixed(0)+' billion years';
+}
 
 // ── Timing Attack ──
 const SECRET='secret123';
@@ -426,7 +464,7 @@ function showKDFTab(id,tab){
   tab.classList.add('active');
   document.getElementById('kdf-'+id).classList.add('active');
   kdfTabsSeen.add(id);
-  if(kdfTabsSeen.size>=3)kdfDone=true;
+  if(kdfTabsSeen.size>=4)kdfDone=true;
   updatePBKDF2();updateBcrypt();
   saveState();updateObj();
 }
@@ -436,52 +474,63 @@ function updatePBKDF2(){
   const gpuPerSec=1e9/iter; // 1B SHA256/sec GPU
   const el=document.getElementById('pbkdf2-stats');
   const fips=iter>=600000?'<span style="color:#3fb950">✅ FIPS SP 800-132 compliant (≥600,000)</span>':'<span style="color:#f85149">❌ Below FIPS recommendation (need ≥600,000)</span>';
+  const hw=KDF_HW_PRESETS[selectedKdfHw];
+  const hwAttemptsPerSec=hw.pbkdf2_100k*(100000/iter);
+  const ks=Math.pow(62,8);
+  const ct=kdfCrackTime(hwAttemptsPerSec,ks);
   el.innerHTML=`Iterations: ${iter.toLocaleString()}   Salt: 16 bytes (random)   Hash: HMAC-SHA-256\n`+
     `Attacker GPU speed: ~${Math.round(gpuPerSec).toLocaleString()} password attempts/sec\n`+
-    `Time to crack 8-char password: ~${(Math.pow(62,8)/gpuPerSec/3.15e7).toFixed(0)} years at full entropy\n${fips}`;
+    `Time to crack 8-char password: ~${(Math.pow(62,8)/gpuPerSec/3.15e7).toFixed(0)} years at full entropy\n`+
+    `<span style="color:#e3b341">⚡ Crack time (8-char pw, ${hw.name}): ${ct}</span>\n`+
+    fips;
 }
 function updateBcrypt(){
   const cost=parseInt(document.getElementById('bcrypt-cost').value);
   document.getElementById('bcrypt-cost-label').textContent=cost+` (2^${cost} = ${Math.pow(2,cost).toLocaleString()} rounds)`;
   const perSec=Math.round(1e6/Math.pow(2,cost));
   const el=document.getElementById('bcrypt-stats');
+  const hw=KDF_HW_PRESETS[selectedKdfHw];
+  const hwBcryptPerSec=hw.bcrypt_12*(Math.pow(2,12)/Math.pow(2,cost));
+  const ks=Math.pow(62,8);
+  const ct=kdfCrackTime(hwBcryptPerSec,ks);
   el.innerHTML=`Cost factor: ${cost}   Rounds: ${Math.pow(2,cost).toLocaleString()}   Auto-salted: yes\n`+
     `GPU speed: ~${perSec.toLocaleString()} bcrypt/sec\n`+
     `Time to crack 8-char password: ~${(Math.pow(62,8)/perSec/3.15e7).toFixed(0)} years at full entropy\n`+
+    `<span style="color:#e3b341">⚡ Crack time (8-char pw, ${hw.name}): ${ct}</span>\n`+
     `<span style="color:#e3b341">⚠️ NOT FIPS 140-3 approved (Blowfish not NIST-approved)</span>`;
 }
 
 // ── Mistakes Gallery ──
 const MISTAKES=[
-  {title:'Hardcoded Encryption Key',
+  {title:'Hardcoded Encryption Key',lang:'JavaScript',
    bad:'// ❌ Key in source code\nconst KEY = "mysecretkey12345";\nconst cipher = encrypt(KEY, data);',
    fix:'// ✅ Key from environment / KMS\nconst KEY = process.env.ENCRYPTION_KEY\n         || await kms.getKey(keyId);\nconst cipher = encrypt(KEY, data);',
    why:'Keys in source code end up in version control, logs, and error messages. Use environment variables, AWS KMS, HashiCorp Vault, or Azure Key Vault.'},
-  {title:'ECB Mode Selected',
+  {title:'ECB Mode Selected',lang:'Python',
    bad:'// ❌ ECB reveals patterns\nfrom Crypto.Cipher import AES\ncipher = AES.new(key, AES.MODE_ECB)\nct = cipher.encrypt(padded_data)',
    fix:'// ✅ GCM: authenticated encryption\nfrom Crypto.Cipher import AES\ncipher = AES.new(key, AES.MODE_GCM,\n         nonce=os.urandom(12))\nct, tag = cipher.encrypt_and_digest(data)',
    why:'ECB encrypts identical 16-byte blocks identically — produces patterns in structured data. The "Tux Problem" (ECB-encrypted image retains visual structure) demonstrates this.'},
-  {title:'IV Reused Across Messages',
+  {title:'IV Reused Across Messages',lang:'JavaScript',
    bad:'// ❌ Same IV every time\nconst FIXED_IV = Buffer.from("000000000000","hex");\nencrypt(key, FIXED_IV, plaintext1);\nencrypt(key, FIXED_IV, plaintext2);',
    fix:'// ✅ Random IV per message\nconst iv = crypto.randomBytes(12); // GCM\nconst {ct, tag} = encrypt(key, iv, pt);\nstore(iv + ct + tag); // IV is not secret',
    why:'IV reuse in CTR/GCM mode allows XOR of ciphertexts to recover XOR of plaintexts. In GCM, nonce reuse fully breaks authentication — attacker can forge valid ciphertexts.'},
-  {title:'Auth Tag Not Verified',
+  {title:'Auth Tag Not Verified',lang:'JavaScript',
    bad:'// ❌ Decrypt without checking tag\nfunction decrypt(key, iv, ct) {\n  const pt = aes_gcm_decrypt(key, iv, ct);\n  return pt; // using unverified plaintext!\n}',
    fix:'// ✅ Verify before using plaintext\nfunction decrypt(key, iv, ct, tag) {\n  const {pt, valid} = aes_gcm_decrypt(\n    key, iv, ct, tag);\n  if (!valid) throw new Error("InvalidTag");\n  return pt; // verified safe\n}',
    why:'Decrypting without verifying the GCM authentication tag allows padding oracle attacks and message forgery. Always verify BEFORE using the plaintext. "Authenticate-then-decrypt."'},
-  {title:'RSA-512 Key Too Short',
+  {title:'RSA-512 Key Too Short',lang:'Java',
    bad:'// ❌ 512-bit RSA factored in 2 hours\nKeyPairGenerator kpg = \n  KeyPairGenerator.getInstance("RSA");\nkpg.initialize(512);\nKeyPair kp = kpg.generateKeyPair();',
    fix:'// ✅ RSA-3072 or ECDSA P-256 (stronger+faster)\nKeyPairGenerator kpg = \n  KeyPairGenerator.getInstance("EC");\nkpg.initialize(new ECGenParameterSpec(\n  "secp256r1")); // P-256\nKeyPair kp = kpg.generateKeyPair();',
    why:'RSA-512 was factored in 1999. RSA-1024 in 2010. RSA-2048 is the current minimum. ECDSA P-256 provides equivalent security with much smaller keys and faster operations.'},
-  {title:'MD5 Used for HMAC',
+  {title:'MD5 Used for HMAC',lang:'Python',
    bad:'# ❌ HMAC-MD5 — broken\nimport hmac, hashlib\nmac = hmac.new(\n  key,\n  message,\n  hashlib.md5  # MD5 is broken!\n)',
    fix:'# ✅ HMAC-SHA-256 — FIPS approved\nimport hmac, hashlib\nmac = hmac.new(\n  key,\n  message,\n  hashlib.sha256  # SHA-256 required\n)',
    why:'While HMAC-MD5 is not immediately broken in the way raw MD5 is, FIPS 140-3 prohibits MD5 for any security function. SHA-256 is the minimum approved hash for HMAC in federal systems.'},
-  {title:'Non-Constant-Time Comparison',
+  {title:'Non-Constant-Time Comparison',lang:'JavaScript',
    bad:'// ❌ Timing leak\nif (computed_hmac === received_hmac) {\n  // Vulnerable! String equality\n  // short-circuits on first mismatch\n  return true;\n}',
    fix:'// ✅ Constant-time comparison\nconst safe = crypto.timingSafeEqual(\n  Buffer.from(computed_hmac, "hex"),\n  Buffer.from(received_hmac, "hex")\n);\nif (safe) return true;',
    why:'Non-constant-time comparison of MACs or tokens enables timing attacks. An attacker can determine how many bytes match by measuring response time, eventually recovering the valid MAC.'},
-  {title:'Seeding RNG with Time',
+  {title:'Seeding RNG with Time',lang:'Python',
    bad:'# ❌ Predictable seed\nimport random, time\nrandom.seed(int(time.time()))\nkey = bytes([random.randint(0,255)\n  for _ in range(32)])\n# An attacker who knows approximate time\n# can reproduce this key!',
    fix:'# ✅ OS entropy source\nimport os, secrets\nkey = os.urandom(32)   # cryptographic RNG\n# or equivalently:\nkey = secrets.token_bytes(32)',
    why:'Seeding with system time provides only ~32 bits of entropy (timestamp in seconds). Debian\'s OpenSSL bug (2008) had a similar issue — only 32,767 possible keys. Always use os.urandom() or secrets.'},
@@ -498,7 +547,7 @@ function buildMistakesGrid(){
     card.id='mc-'+i;
     const showing=_mistakesFixed.has(i);
     card.innerHTML=`
-      <div class="mistake-header">❌ ${m.title}</div>
+      <div class="mistake-header">❌ ${m.title}<span style="font-size:.7rem;background:#21262d;border:1px solid #30363d;border-radius:4px;padding:.1rem .4rem;color:#8b949e;margin-left:.5rem">${m.lang||''}</span></div>
       <div class="mistake-body" id="mb-${i}"><pre style="margin:0;white-space:pre-wrap">${showing?m.fix:m.bad}</pre></div>
       <div class="mistake-toggle">
         <button onclick="toggleMistake(${i})" style="background:${showing?'#1c2a1c':'#2a1c1c'};border:1px solid ${showing?'#238636':'#da3633'};border-radius:4px;padding:.25rem .6rem;color:${showing?'#3fb950':'#f85149'};cursor:pointer;font-size:.75rem">${showing?'Show Bug':'Show Fix'}</button>
@@ -508,7 +557,7 @@ function buildMistakesGrid(){
     if(showing)card.classList.add('fixed');
   });
   document.getElementById('mistakes-progress').textContent=`${_mistakesFixed.size}/8 fixed`;
-  if(_mistakesFixed.size>=5)mistakesDone=true;
+  if(_mistakesFixed.size>=8)mistakesDone=true;
 }
 function toggleMistake(i){
   const showing=_mistakesFixed.has(i);
@@ -568,7 +617,7 @@ function showLifecycle(id,el){
   det.innerHTML=`<strong style="color:#58a6ff">${d.title}</strong><br><br>${d.body}`;
   det.className='lc-detail show';
   lifecyclesSeen.add(id);
-  if(lifecyclesSeen.size>=3)lifecycleDone=true;
+  if(lifecyclesSeen.size>=5)lifecycleDone=true;
   saveState();updateObj();
 }
 
@@ -603,9 +652,9 @@ function checkReflectionLock(){
 function updateObj(){
   const checks=[
     {done:timingDone,label:'Identified timing side-channel vulnerability'},
-    {done:kdfDone,label:'Compared ≥3 KDFs (PBKDF2/bcrypt/Argon2/HKDF)'},
-    {done:mistakesDone,label:'Fixed ≥5 crypto implementation mistakes'},
-    {done:lifecycleDone,label:'Explored ≥3 key lifecycle stages'},
+    {done:kdfDone,label:'Explored all 4 KDFs (PBKDF2, bcrypt, Argon2id, HKDF)'},
+    {done:mistakesDone,label:'Fixed all 8 crypto implementation mistakes'},
+    {done:lifecycleDone,label:'Explored all 5 key lifecycle stages'},
     {done:quizPassed,label:'Passed the implementation security quiz'},
   ];
   const done=checks.filter(c=>c.done).length,allDone=done===checks.length;
@@ -687,7 +736,10 @@ function exportPDF(){
 document.addEventListener('DOMContentLoaded',()=>{
   buildMistakesGrid();
   updatePBKDF2();updateBcrypt();
-  loadState();updateObj();
+  loadState();
+  // PBKDF2 is the default active tab — register it so clicking the other 3 completes the objective
+  if(kdfTabsSeen.size===0) kdfTabsSeen.add('pbkdf2');
+  updateObj();
 });
 </script>
 <footer style="text-align:center;padding:1rem;border-top:1px solid #ccc;margin-top:2rem;color:#666;font-size:0.8rem;">

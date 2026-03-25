@@ -165,7 +165,8 @@
   <!-- Demo 1: X.509 Certificate Anatomy -->
   <div class="demo-box">
     <h4>📜 Demo 1 — X.509 Certificate Anatomy Explorer</h4>
-    <p style="color:#8b949e;margin-bottom:.75rem">Click each field to learn what it means and why it matters for trust validation.</p>
+    <div style="background:#161b22;border-left:3px solid #58a6ff;border-radius:0 6px 6px 0;padding:.6rem .85rem;margin:.25rem 0 .85rem;font-size:.82rem;color:#8b949e;line-height:1.65"><strong style="color:#58a6ff">🎯 Why This Matters</strong> — Every HTTPS connection depends on these certificate fields being correct. Misreading or ignoring any field is how certificate-based attacks succeed — the Subject, SAN, and validity period are particularly critical to understand.</div>
+    <p style="color:#8b949e;margin-bottom:.75rem">Click each field to learn what it means and why it matters for trust validation.<span style="font-size:.78rem;color:#e3b341"> — Click all 11 fields to complete this objective.</span></p>
     <div style="display:flex;gap:.75rem;align-items:center;margin-bottom:.75rem;flex-wrap:wrap">
       <span id="cert-status-badge" class="badge badge-green">✅ Certificate VALID</span>
       <span style="font-size:.78rem;color:#8b949e">Valid To: 2025-01-15 · Expires in <span id="days-left">—</span> days</span>
@@ -189,6 +190,7 @@
   <!-- Demo 2: Certificate Chain -->
   <div class="demo-box">
     <h4>🔗 Demo 2 — Certificate Chain Verifier</h4>
+    <div style="background:#161b22;border-left:3px solid #58a6ff;border-radius:0 6px 6px 0;padding:.6rem .85rem;margin:.25rem 0 .85rem;font-size:.82rem;color:#8b949e;line-height:1.65"><strong style="color:#58a6ff">🎯 Why This Matters</strong> — Trust in TLS flows through a chain of signatures. Understanding chain validation shows why intermediate CA compromise is catastrophic, and why certificate pinning is a complex trade-off, not a simple solution.</div>
     <p style="color:#8b949e;margin-bottom:.75rem">Verify the chain of trust from the leaf certificate up to the root CA.</p>
     <div class="chain-wrap">
       <div class="chain-node" id="cn-root" style="background:#21262d">
@@ -223,6 +225,7 @@
   <!-- Demo 3: OCSP vs CRL -->
   <div class="demo-box">
     <h4>🔍 Demo 3 — Certificate Revocation: OCSP vs CRL</h4>
+    <div style="background:#161b22;border-left:3px solid #58a6ff;border-radius:0 6px 6px 0;padding:.6rem .85rem;margin:.25rem 0 .85rem;font-size:.82rem;color:#8b949e;line-height:1.65"><strong style="color:#58a6ff">🎯 Why This Matters</strong> — Revocation exists because private keys get stolen. The choice between OCSP (real-time, privacy risk) and CRL (cached, potentially stale) is a security vs performance trade-off you will encounter in every PKI deployment.</div>
     <p style="color:#8b949e;margin-bottom:.75rem"><strong>Check both methods</strong> to understand how certificate revocation works in the real world.</p>
 
     <!-- Detailed comparison info -->
@@ -268,6 +271,8 @@
   <!-- Demo 4: Certificate Transparency -->
   <div class="demo-box">
     <h4>🌐 Demo 4 — Certificate Transparency &amp; Attack Scenarios</h4>
+    <div style="background:#161b22;border-left:3px solid #58a6ff;border-radius:0 6px 6px 0;padding:.6rem .85rem;margin:.25rem 0 .85rem;font-size:.82rem;color:#8b949e;line-height:1.65"><strong style="color:#58a6ff">🎯 Why This Matters</strong> — CT logs transformed certificate security from "trust the CA" to "verify every issued certificate publicly." This infrastructure makes rogue CA attacks visible within seconds, turning a previously undetectable threat into a manageable one.</div>
+    <p style="color:#8b949e;margin-bottom:.75rem">Click all 4 attack cards to complete this objective.</p>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
       <div>
         <div style="font-size:.85rem;font-weight:600;color:#e6edf3;margin-bottom:.5rem">📋 CT Log for example.com</div>
@@ -405,7 +410,7 @@ const CERT_FIELDS={
 };
 
 let certFieldDone=false, chainDone=false, revDone=false, ctDone=false, quizPassed=false, quizAttempts=0;
-let certFieldsSeen=new Set(), attacksSeen=0, revocationMethodsChecked=new Set();
+let certFieldsSeen=new Set(), attacksSeen=0, attackCardsSeen=new Set(), revocationMethodsChecked=new Set();
 let _certRevoked=false, _chainBroken=false;
 const openedAt=new Date().toISOString();
 
@@ -513,16 +518,24 @@ function checkOCSP(){
 }
 
 function reportCT(){
-  document.getElementById('ct-report').style.display='block';
-  ctDone=true;saveState();updateObj();
+  const el=document.getElementById('ct-report');
+  if(el)el.style.display='block';
+  // Only complete if all 4 attacks have been explored too
+  if(attackCardsSeen.size>=4)ctDone=true;
+  saveState();updateObj();
 }
 
 function toggleAttack(card){
   const wasOpen=card.classList.contains('open');
   document.querySelectorAll('.attack-card').forEach(c=>c.classList.remove('open'));
-  if(!wasOpen)card.classList.add('open');
+  if(!wasOpen){
+    card.classList.add('open');
+    // identify by index
+    const cards=Array.from(document.querySelectorAll('.attack-card'));
+    attackCardsSeen.add(cards.indexOf(card));
+  }
   attacksSeen=document.querySelectorAll('.attack-card.open').length+(wasOpen?0:1);
-  if(attacksSeen>=1)ctDone=true;
+  if(attackCardsSeen.size>=4)ctDone=true;
   saveState();updateObj();
 }
 
@@ -577,10 +590,10 @@ function checkReflectionLock(){
 
 function updateObj(){
   const checks=[
-    {done:certFieldDone,label:'Explored ≥5 certificate fields'},
+    {done:certFieldDone,label:'Clicked all 11 certificate fields'},
     {done:chainDone,label:'Verified (and broke) certificate chain'},
     {done:revDone,label:'Compared CRL vs OCSP revocation'},
-    {done:ctDone,label:'Investigated CT log & attack scenarios'},
+    {done:ctDone,label:'Explored all 4 CT attack scenarios + reported'},
     {done:quizPassed,label:'Passed the PKI quiz'},
   ];
   const done=checks.filter(c=>c.done).length,allDone=done===checks.length;
@@ -596,7 +609,7 @@ function toggleObj(){_objOpen=!_objOpen;document.getElementById('obj-panel').sty
 
 function saveState(){
   const s={quizPassed,quizAttempts,certFieldDone,chainDone,revDone,ctDone,
-    certFieldsSeen:Array.from(certFieldsSeen),attacksSeen,revocationMethodsChecked:Array.from(revocationMethodsChecked),
+    certFieldsSeen:Array.from(certFieldsSeen),attacksSeen,attackCardsSeen:Array.from(attackCardsSeen),revocationMethodsChecked:Array.from(revocationMethodsChecked),
     studentName:(document.getElementById('student-name')||{}).value||'',
     reflection:(document.getElementById('learning-reflection')||{}).value||'',
     labFeedback:(document.getElementById('lab-feedback')||{}).value||''};
@@ -608,7 +621,7 @@ function loadState(){
   quizPassed=s.quizPassed||false;quizAttempts=s.quizAttempts||0;
   certFieldDone=s.certFieldDone||false;chainDone=s.chainDone||false;
   revDone=s.revDone||false;ctDone=s.ctDone||false;
-  certFieldsSeen=new Set(s.certFieldsSeen||[]);attacksSeen=s.attacksSeen||0;revocationMethodsChecked=new Set(s.revocationMethodsChecked||[]);
+  certFieldsSeen=new Set(s.certFieldsSeen||[]);attacksSeen=s.attacksSeen||0;attackCardsSeen=new Set(s.attackCardsSeen||[]);revocationMethodsChecked=new Set(s.revocationMethodsChecked||[]);
   if(s.studentName){const el=document.getElementById('student-name');if(el)el.value=s.studentName;}
   if(s.reflection){const el=document.getElementById('learning-reflection');if(el)el.value=s.reflection;}
   if(s.labFeedback){const el=document.getElementById('lab-feedback');if(el)el.value=s.labFeedback;}

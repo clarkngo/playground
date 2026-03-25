@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Industry Primer</title>
+  <style>
+    :root {
+      --bg: #0b1220;
+      --surface: #0f1a2e;
+      --card: #111c30;
+      --border: rgba(255,255,255,0.06);
+      --muted: #7a8899;
+      --text: #dde5f0;
+      --accent: #38bdf8;
+      --accent2: #818cf8;
+      --green: #34d399;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, system-ui, -apple-system, sans-serif;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .layout { display: flex; min-height: 100vh; }
+
+    /* Sidebar */
+    .sidebar {
+      width: 220px;
+      flex-shrink: 0;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 24px 0;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+    }
+    .sidebar-logo { padding: 0 20px 20px; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+    .sidebar-logo h1 { font-size: 15px; font-weight: 800; color: var(--accent); }
+    .sidebar-logo p  { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .nav-section { padding: 0 12px; margin-bottom: 6px; }
+    .nav-section-label {
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.08em; color: var(--muted); padding: 6px 8px 4px;
+    }
+    .nav-link {
+      display: flex; align-items: center; gap: 8px;
+      padding: 7px 10px; border-radius: 8px;
+      color: var(--muted); text-decoration: none;
+      font-size: 13px; font-weight: 500;
+      transition: background 0.15s, color 0.15s; cursor: pointer;
+    }
+    .nav-link:hover, .nav-link.active { background: rgba(56,189,248,0.08); color: var(--accent); }
+    .nav-link .icon { font-size: 15px; width: 20px; text-align: center; flex-shrink: 0; }
+    .nav-badge {
+      margin-left: auto; background: rgba(255,255,255,0.06);
+      color: var(--muted); font-size: 10px; font-weight: 700;
+      padding: 1px 6px; border-radius: 999px;
+    }
+    .nav-link.new-badge .nav-badge { background: rgba(52,211,153,0.15); color: var(--green); }
+
+    /* Main */
+    .main { flex: 1; padding: 32px; overflow-y: auto; max-width: 1000px; }
+    .page-header { margin-bottom: 32px; }
+    .breadcrumb { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+    .breadcrumb a { color: var(--accent); text-decoration: none; }
+    .breadcrumb a:hover { text-decoration: underline; }
+    .page-title { font-size: 26px; font-weight: 900; color: var(--text); margin-bottom: 6px; }
+    .page-subtitle { font-size: 14px; color: var(--muted); }
+
+    /* Search */
+    .search-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 28px; }
+    .search-input {
+      background: var(--card); border: 1px solid var(--border);
+      color: var(--text); padding: 9px 14px; border-radius: 10px;
+      font-size: 13px; width: 320px; outline: none; transition: border-color 0.2s;
+    }
+    .search-input:focus { border-color: rgba(56,189,248,0.4); }
+    .search-hint { font-size: 12px; color: var(--muted); }
+    kbd { background: rgba(255,255,255,0.06); border-radius: 4px; padding: 1px 5px; font-size: 11px; }
+
+    /* Section */
+    .section { margin-bottom: 40px; }
+    .section-header {
+      display: flex; align-items: baseline; gap: 10px;
+      margin-bottom: 14px; padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .section-title { font-size: 16px; font-weight: 800; color: var(--text); }
+    .section-desc { font-size: 12px; color: var(--muted); }
+    .section-count {
+      margin-left: auto; font-size: 11px; font-weight: 700;
+      color: var(--muted); background: rgba(255,255,255,0.04);
+      padding: 2px 8px; border-radius: 999px;
+    }
+
+    /* Cards */
+    .grid-3 { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+    .grid-2 { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 12px; }
+
+    .industry-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 14px; padding: 20px;
+      text-decoration: none; display: block;
+      transition: border-color 0.2s, transform 0.15s;
+      position: relative;
+    }
+    .industry-card:hover { border-color: rgba(56,189,248,0.3); transform: translateY(-2px); }
+    .industry-card.coming-soon { opacity: 0.5; cursor: default; pointer-events: none; }
+    .industry-card-top { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+    .industry-icon { font-size: 28px; }
+    .industry-name { font-size: 15px; font-weight: 700; color: var(--text); }
+    .industry-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .industry-desc { font-size: 12px; color: var(--muted); line-height: 1.6; margin-bottom: 12px; }
+    .tag-row { display: flex; flex-wrap: wrap; gap: 5px; }
+    .tag {
+      background: rgba(255,255,255,0.04); color: var(--muted);
+      font-size: 11px; padding: 2px 8px; border-radius: 999px;
+    }
+    .tag.accent { background: rgba(56,189,248,0.1); color: var(--accent); }
+    .tag.purple { background: rgba(129,140,248,0.1); color: var(--accent2); }
+    .tag.green  { background: rgba(52,211,153,0.1); color: var(--green); }
+
+    .status-badge {
+      position: absolute; top: 12px; right: 12px;
+      font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px;
+      text-transform: uppercase; letter-spacing: 0.06em;
+    }
+    .status-badge.live { background: rgba(52,211,153,0.15); color: var(--green); }
+    .status-badge.wip  { background: rgba(251,191,36,0.15); color: #fbbf24; }
+    .status-badge.soon { background: rgba(255,255,255,0.04); color: var(--muted); }
+
+    /* Progress bar */
+    .progress-wrap { margin-top: 10px; }
+    .progress-label { font-size: 11px; color: var(--muted); margin-bottom: 4px; display: flex; justify-content: space-between; }
+    .progress-bar { height: 4px; background: rgba(255,255,255,0.06); border-radius: 99px; overflow: hidden; }
+    .progress-fill { height: 100%; background: var(--accent); border-radius: 99px; transition: width 0.4s; }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center; padding: 60px 20px; color: var(--muted);
+    }
+    .empty-state .big { font-size: 48px; margin-bottom: 12px; }
+    .empty-state p { font-size: 14px; max-width: 360px; margin: 0 auto; }
+
+    /* No-results */
+    .no-results { color: var(--muted); padding: 40px; text-align: center; display: none; }
+
+    /* Footer */
+    .footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--border); color: var(--muted); font-size: 12px; }
+
+    @media (max-width: 700px) {
+      .sidebar { display: none; }
+      .main { padding: 16px; }
+      .search-input { width: 100%; }
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <h1>Industry Primer</h1>
+      <p>Foundation knowledge by sector</p>
+    </div>
+    <nav>
+      <div class="nav-section">
+        <div class="nav-section-label">Navigation</div>
+        <a class="nav-link" href="../index.html">
+          <span class="icon">🏠</span> Playground Home
+        </a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-label">Industries</div>
+        <a class="nav-link active" data-filter="all" onclick="filterCards('all',this)">
+          <span class="icon">🌐</span> All Industries
+        </a>
+        <a class="nav-link" data-filter="fintech" onclick="filterCards('fintech',this)" href="fintech/index.html">
+          <span class="icon">💰</span> Financial Services & FinTech
+        </a>
+        <a class="nav-link" data-filter="ecommerce" onclick="filterCards('ecommerce',this)" href="ecommerce/index.html">
+          <span class="icon">🛒</span> E-Commerce & Marketplaces
+        </a>
+        <a class="nav-link" data-filter="edtech" onclick="filterCards('edtech',this)" href="edtech/index.html">
+          <span class="icon">🎓</span> Higher Education & EdTech
+        </a>
+        <a class="nav-link" data-filter="ai-infrastructure" onclick="filterCards('ai-infrastructure',this)" href="ai-infrastructure/index.html">
+          <span class="icon">🤖</span> AI Infrastructure & Research Ops
+        </a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-label">About</div>
+        <a class="nav-link" href="#about" onclick="showAbout()">
+          <span class="icon">ℹ️</span> About This Section
+        </a>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+    <div class="page-header">
+      <div class="breadcrumb"><a href="../index.html">Playground</a> / Industry Primer</div>
+      <div class="page-title">📚 Industry Primer</div>
+      <div class="page-subtitle">Foundational knowledge, terminology, and concepts — one industry at a time.</div>
+    </div>
+
+    <!-- Search -->
+    <div class="search-bar">
+      <input id="q" class="search-input" placeholder="Search industries…" aria-label="Search" autocomplete="off" />
+      <span class="search-hint">Press <kbd>/</kbd> to focus</span>
+    </div>
+
+    <div id="no-results" class="no-results">No matches found.</div>
+
+    <!-- ── Industries Grid ── -->
+    <div class="section" id="industries-section">
+      <div class="section-header">
+        <span class="section-title">🌐 Industries</span>
+        <span class="section-desc">Click an industry to explore its primer</span>
+        <span class="section-count" id="industry-count">0 industries</span>
+      </div>
+
+      <div class="grid-3" id="industry-grid">
+        <!-- Cards are added here as industries are built out -->
+
+        <!-- ── Financial Services & FinTech ── -->
+        <a href="fintech/index.html" class="industry-card" data-industry="fintech" data-search="financial services fintech banking capital markets investment trading risk quantitative analysis xbrl bloomberg reuters sp global aum sharpe ratio var kcyc aml defi cbdc payments regtech">
+          <span class="status-badge live">Live</span>
+          <div class="industry-card-top">
+            <span class="industry-icon">💰</span>
+            <div>
+              <div class="industry-name">Financial Services & FinTech</div>
+              <div class="industry-meta">fintech/ · 7 sections</div>
+            </div>
+          </div>
+          <div class="industry-desc">Capital markets, banking technology, quantitative analysis, and AI-driven finance. From XBRL and FIX protocol to Agentic Finance and DeFi.</div>
+          <div class="tag-row">
+            <span class="tag accent">capital markets</span>
+            <span class="tag">fintech</span>
+            <span class="tag">quant</span>
+            <span class="tag purple">regtech</span>
+          </div>
+          <div class="progress-wrap">
+            <div class="progress-label"><span>Coverage</span><span>7 / 7 sections</span></div>
+            <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+          </div>
+        </a>
+
+        <!-- ── E-Commerce & Marketplaces ── -->
+        <a href="ecommerce/index.html" class="industry-card" data-industry="ecommerce" data-search="ecommerce digital marketplace gmv take rate aov cac ltv sku fulfillment 3pl last mile search ranking recommendation fraud detection shopify amazon ebay stripe">
+          <span class="status-badge live">Live</span>
+          <div class="industry-card-top">
+            <span class="industry-icon">🛒</span>
+            <div>
+              <div class="industry-name">E-Commerce & Digital Marketplaces</div>
+              <div class="industry-meta">ecommerce/ · 7 sections</div>
+            </div>
+          </div>
+          <div class="industry-desc">Distributed systems powering buy/sell at scale. GMV, search ranking, fraud detection, fulfillment, and AI personalization from an engineering perspective.</div>
+          <div class="tag-row">
+            <span class="tag accent">marketplace</span>
+            <span class="tag">distributed systems</span>
+            <span class="tag">ml engineering</span>
+          </div>
+          <div class="progress-wrap">
+            <div class="progress-label"><span>Coverage</span><span>7 / 7 sections</span></div>
+            <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+          </div>
+        </a>
+
+        <!-- ── Higher Education & EdTech ── -->
+        <a href="edtech/index.html" class="industry-card" data-industry="edtech" data-search="higher education edtech lms canvas blackboard mooc scorm xapi learning outcomes bloom taxonomy cohort ai literacy curriculum design instructor adaptive learning credentialing micro-credential">
+          <span class="status-badge live">Live</span>
+          <div class="industry-card-top">
+            <span class="industry-icon">🎓</span>
+            <div>
+              <div class="industry-name">Higher Education & EdTech</div>
+              <div class="industry-meta">edtech/ · 7 sections</div>
+            </div>
+          </div>
+          <div class="industry-desc">Where pedagogy meets platform engineering. LMS architecture, AI tutoring, curriculum design, credential stacking, and the HyFlex learning model.</div>
+          <div class="tag-row">
+            <span class="tag accent">academia</span>
+            <span class="tag">curriculum design</span>
+            <span class="tag purple">ai literacy</span>
+          </div>
+          <div class="progress-wrap">
+            <div class="progress-label"><span>Coverage</span><span>7 / 7 sections</span></div>
+            <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+          </div>
+        </a>
+
+        <!-- ── AI Infrastructure & Research Ops ── -->
+        <a href="ai-infrastructure/index.html" class="industry-card" data-industry="ai-infrastructure" data-search="ai infrastructure mlops llmops rag retrieval augmented generation vector database embeddings multi-agent orchestration langchain langraph pinecone weaviate vllm inference fine-tuning evals hallucination guardrails">
+          <span class="status-badge live">Live</span>
+          <div class="industry-card-top">
+            <span class="industry-icon">🤖</span>
+            <div>
+              <div class="industry-name">AI Infrastructure & Research Ops</div>
+              <div class="industry-meta">ai-infrastructure/ · 7 sections</div>
+            </div>
+          </div>
+          <div class="industry-desc">The engineering stack behind production AI — RAG pipelines, multi-agent orchestration, MLOps lifecycle, inference optimization, and LLM evaluation frameworks.</div>
+          <div class="tag-row">
+            <span class="tag accent">rag</span>
+            <span class="tag">multi-agent</span>
+            <span class="tag">mlops</span>
+            <span class="tag purple">llmops</span>
+          </div>
+          <div class="progress-wrap">
+            <div class="progress-label"><span>Coverage</span><span>7 / 7 sections</span></div>
+            <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+          </div>
+        </a>
+
+        <!-- Placeholder for future industries -->
+        <div class="empty-state" id="empty-state" style="grid-column:1/-1;display:none">
+          <div class="big">🏗️</div>
+          <p>Industries are being added progressively. Check back soon — or ask Claude to build one!</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── About ── -->
+    <div class="section" id="about-section" style="display:none">
+      <div class="section-header">
+        <span class="section-title">ℹ️ About Industry Primer</span>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;font-size:13px;line-height:1.8;color:var(--muted);">
+        <p style="margin-bottom:12px;">
+          <strong style="color:var(--text)">Industry Primer</strong> is a growing knowledge base that builds
+          foundational understanding of different industries — their terminology, key metrics, major players,
+          common workflows, and how technology intersects with each sector.
+        </p>
+        <p style="margin-bottom:12px;">
+          Each industry primer is structured into subsections covering:
+        </p>
+        <ul style="padding-left:20px;margin-bottom:12px;">
+          <li><strong style="color:var(--text)">Overview</strong> — what the industry does and why it matters</li>
+          <li><strong style="color:var(--text)">Key Terminology</strong> — essential vocabulary and jargon</li>
+          <li><strong style="color:var(--text)">Major Players</strong> — companies, roles, and stakeholders</li>
+          <li><strong style="color:var(--text)">Core Metrics</strong> — how success is measured</li>
+          <li><strong style="color:var(--text)">Technology Stack</strong> — tools, platforms, and systems used</li>
+          <li><strong style="color:var(--text)">Common Workflows</strong> — day-to-day processes and pipelines</li>
+          <li><strong style="color:var(--text)">Trends & Challenges</strong> — where the industry is heading</li>
+        </ul>
+        <p>New industries are added progressively via scheduled prompts.</p>
+      </div>
+    </div>
+
+    <div class="footer">Press <kbd>/</kbd> to search · Industries added progressively</div>
+  </main>
+</div>
+
+<script>
+  // Search
+  const input = document.getElementById('q');
+  const noResults = document.getElementById('no-results');
+
+  document.addEventListener('keydown', e => {
+    if (e.key === '/' && document.activeElement !== input) {
+      e.preventDefault();
+      input.focus();
+    }
+  });
+
+  input.addEventListener('input', () => {
+    const q = input.value.trim().toLowerCase();
+    const cards = document.querySelectorAll('.industry-card');
+    let visible = 0;
+    cards.forEach(card => {
+      const text = card.dataset.search || card.textContent;
+      const match = !q || text.toLowerCase().includes(q);
+      card.style.display = match ? '' : 'none';
+      if (match) visible++;
+    });
+    noResults.style.display = (q && visible === 0) ? 'block' : 'none';
+    const empty = document.getElementById('empty-state');
+    if (empty) empty.style.display = visible === 0 && !q ? 'grid' : 'none';
+  });
+
+  // Nav filter
+  function filterCards(filter, linkEl) {
+    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+    if (linkEl) linkEl.classList.add('active');
+    const cards = document.querySelectorAll('.industry-card');
+    cards.forEach(card => {
+      if (filter === 'all') {
+        card.style.display = '';
+      } else {
+        card.style.display = card.dataset.industry === filter ? '' : 'none';
+      }
+    });
+  }
+
+  // About toggle
+  function showAbout() {
+    const sec = document.getElementById('about-section');
+    const isHidden = sec.style.display === 'none';
+    sec.style.display = isHidden ? 'block' : 'none';
+  }
+
+  // Update count
+  function updateCount() {
+    const cards = document.querySelectorAll('.industry-card:not(.coming-soon)');
+    const countEl = document.getElementById('industry-count');
+    const n = cards.length;
+    countEl.textContent = n === 0 ? '0 industries' : (n === 1 ? '1 industry' : n + ' industries');
+    const empty = document.getElementById('empty-state');
+    if (empty) empty.style.display = n === 0 ? 'block' : 'none';
+  }
+
+  updateCount();
+</script>
+</body>
+</html>

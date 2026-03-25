@@ -166,14 +166,31 @@
   <!-- Demo 1: IPsec Tunnel vs Transport -->
   <div class="demo-box">
     <h4>🌐 Demo 1 — IPsec: Tunnel vs Transport Mode</h4>
-    <p style="color:#8b949e;margin-bottom:.75rem">Compare how each mode structures the packet and what gets encrypted.</p>
-    <div style="display:flex;gap:.5rem;margin-bottom:.75rem;flex-wrap:wrap">
-      <button class="action-btn" id="mode-transport" onclick="showMode('transport')">Transport Mode</button>
-      <button class="action-btn-blue" id="mode-tunnel" onclick="showMode('tunnel')">Tunnel Mode</button>
-      <button class="action-btn" id="proto-esp" onclick="showProto('esp')" style="margin-left:.5rem">ESP</button>
-      <button class="action-btn" id="proto-ah" onclick="showProto('ah')">AH</button>
+    <div style="background:#161b22;border-left:3px solid #58a6ff;border-radius:0 6px 6px 0;padding:.6rem .85rem;margin:.25rem 0 .85rem;font-size:.82rem;color:#8b949e;line-height:1.65"><strong style="color:#58a6ff">🎯 Why This Matters</strong> — Tunnel vs Transport mode determines how much of the packet is protected and who the VPN endpoint is. Wrong mode selection in VPN deployments can expose internal IP addressing or create routing failures in production networks.</div>
+    <p style="color:#8b949e;margin-bottom:.75rem">Click each combination to explore how the packet is structured and what gets encrypted. All 4 must be visited to complete the objective.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.75rem">
+      <div id="combo-transport-esp" onclick="showCombo('transport','esp')" style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.6rem .8rem;cursor:pointer;transition:border-color .2s">
+        <div style="font-weight:600;color:#e6edf3;font-size:.85rem">Transport + ESP</div>
+        <div style="color:#8b949e;font-size:.76rem;margin-top:.2rem">Encrypts payload only · most efficient</div>
+        <div id="combo-transport-esp-check" style="font-size:.72rem;color:#8b949e;margin-top:.3rem">⬜ Not visited</div>
+      </div>
+      <div id="combo-transport-ah" onclick="showCombo('transport','ah')" style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.6rem .8rem;cursor:pointer;transition:border-color .2s">
+        <div style="font-weight:600;color:#e6edf3;font-size:.85rem">Transport + AH</div>
+        <div style="color:#8b949e;font-size:.76rem;margin-top:.2rem">Auth only, no encryption · NAT breaks it</div>
+        <div id="combo-transport-ah-check" style="font-size:.72rem;color:#8b949e;margin-top:.3rem">⬜ Not visited</div>
+      </div>
+      <div id="combo-tunnel-esp" onclick="showCombo('tunnel','esp')" style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.6rem .8rem;cursor:pointer;transition:border-color .2s">
+        <div style="font-weight:600;color:#e6edf3;font-size:.85rem">Tunnel + ESP</div>
+        <div style="color:#8b949e;font-size:.76rem;margin-top:.2rem">Full packet encrypted · site-to-site VPN</div>
+        <div id="combo-tunnel-esp-check" style="font-size:.72rem;color:#8b949e;margin-top:.3rem">⬜ Not visited</div>
+      </div>
+      <div id="combo-tunnel-ah" onclick="showCombo('tunnel','ah')" style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.6rem .8rem;cursor:pointer;transition:border-color .2s">
+        <div style="font-weight:600;color:#e6edf3;font-size:.85rem">Tunnel + AH</div>
+        <div style="color:#8b949e;font-size:.76rem;margin-top:.2rem">Auth only, full tunnel · rarely used</div>
+        <div id="combo-tunnel-ah-check" style="font-size:.72rem;color:#8b949e;margin-top:.3rem">⬜ Not visited</div>
+      </div>
     </div>
-    <div id="pkt-diagram"></div>
+    <div id="pkt-diagram" style="color:#8b949e;font-size:.85rem;padding:.5rem 0">← Click a combination above to see the packet structure.</div>
     <div id="mode-explain" style="font-size:.82rem;color:#8b949e;margin-top:.5rem;line-height:1.7"></div>
     <div style="background:#1c2940;border:1px solid #1f6feb;border-radius:6px;padding:.65rem .85rem;margin-top:.75rem;font-size:.82rem;color:#58a6ff">
       💡 <strong>ESP vs AH:</strong> ESP (Encapsulating Security Payload) provides encryption + optional authentication. AH (Authentication Header) provides authentication only — no encryption. In practice, ESP with authentication is almost always used. AH cannot traverse NAT (it authenticates the IP header, which NAT changes).
@@ -183,6 +200,7 @@
   <!-- Demo 2: IKEv2 -->
   <div class="demo-box">
     <h4>🤝 Demo 2 — IKEv2 Key Exchange Phases</h4>
+    <div style="background:#161b22;border-left:3px solid #58a6ff;border-radius:0 6px 6px 0;padding:.6rem .85rem;margin:.25rem 0 .85rem;font-size:.82rem;color:#8b949e;line-height:1.65"><strong style="color:#58a6ff">🎯 Why This Matters</strong> — Understanding IKEv2 phases shows why VPN authentication is secure even over untrusted networks. The two-phase design separates IKE security establishment from the protected data channel, ensuring mutual authentication before any data flows.</div>
     <p style="color:#8b949e;margin-bottom:.75rem">IKEv2 establishes the IPsec Security Association in two phases. Step through the exchange.</p>
     <div class="ike-actors">
       <div class="ike-actor" id="ike-init">
@@ -212,6 +230,7 @@
   <!-- Demo 3: TLS 1.2 vs 1.3 + PFS -->
   <div class="demo-box">
     <h4>🔒 Demo 3 — TLS 1.2 vs 1.3 &amp; Perfect Forward Secrecy</h4>
+    <div style="background:#161b22;border-left:3px solid #58a6ff;border-radius:0 6px 6px 0;padding:.6rem .85rem;margin:.25rem 0 .85rem;font-size:.82rem;color:#8b949e;line-height:1.65"><strong style="color:#58a6ff">🎯 Why This Matters</strong> — TLS 1.3 eliminated entire vulnerability classes (CRIME, BEAST, POODLE attack surfaces) by removing weak cipher suites and making forward secrecy mandatory. This comparison shows exactly what changed and why every server should run TLS 1.3 minimum.</div>
     <p style="color:#8b949e;margin-bottom:.75rem">Focus on the key differences — not the basic handshake, but WHY 1.3 is better.</p>
     <div style="display:flex;gap:.5rem;margin-bottom:.75rem">
       <button class="action-btn" id="tls-btn" onclick="runTLSCompare()">▶ Run Both Handshakes</button>
@@ -258,6 +277,7 @@
   <!-- Demo 4: VPN Comparison -->
   <div class="demo-box">
     <h4>🛡️ Demo 4 — VPN Protocol Comparison</h4>
+    <div style="background:#161b22;border-left:3px solid #58a6ff;border-radius:0 6px 6px 0;padding:.6rem .85rem;margin:.25rem 0 .85rem;font-size:.82rem;color:#8b949e;line-height:1.65"><strong style="color:#58a6ff">🎯 Why This Matters</strong> — Different VPN protocols have very different security properties, deployment complexity, and compliance implications. Choosing the wrong protocol for your threat model is a common enterprise mistake that this demo helps you avoid.</div>
     <p style="color:#8b949e;margin-bottom:.75rem">Click a row to highlight it, then use the scenario selector to see which protocol wins.</p>
     <table class="vpn-table">
       <thead>
@@ -349,7 +369,7 @@
 </div>
 
 <div id="obj-overlay">
-  <div id="obj-badge" onclick="toggleObj()"><span id="obj-count">📋 0/5 objectives</span><span id="obj-chev">▲</span></div>
+  <div id="obj-badge" onclick="toggleObj()"><span id="obj-count">📋 0/6 objectives</span><span id="obj-chev">▲</span></div>
   <div id="obj-panel"><div id="obj-list"></div></div>
 </div>
 
@@ -391,12 +411,14 @@ document.addEventListener('DOMContentLoaded',function(){
   });
 });
 let ipsecDone=false, ikeDone=false, tlsDone=false, pfsDone=false, vpnDone=false, quizPassed=false, quizAttempts=0;
-let _currentMode='tunnel', _currentProto='esp', _ikePhase=0, _ikeRunning=false;
+let ipsecSeen=new Set(), vpnScenariosSeen=new Set();
+let _currentMode=null, _currentProto=null, _ikePhase=0, _ikeRunning=false;
 let _tlsRan=false;
 const openedAt=new Date().toISOString();
 
 // ── IPsec packet diagram ──
 function buildPacket(mode, proto){
+  if(!mode||!proto)return;
   const wrap=document.getElementById('pkt-diagram');
   const explain=document.getElementById('mode-explain');
   if(mode==='transport'){
@@ -452,20 +474,27 @@ function buildPacket(mode, proto){
       explain.innerHTML='<strong style="color:#e3b341">Tunnel mode + AH:</strong> New IP header added for routing, but original packet is unencrypted. Only authentication/integrity is provided. This configuration is almost never used in practice.';
     }
   }
-  ipsecDone=true;saveState();updateObj();
+  saveState();updateObj();
 }
 
-function showMode(m){
-  _currentMode=m;
-  document.getElementById('mode-transport').className=m==='transport'?'action-btn-blue':'action-btn';
-  document.getElementById('mode-tunnel').className=m==='tunnel'?'action-btn-blue':'action-btn';
-  buildPacket(m,_currentProto);
-}
-function showProto(p){
-  _currentProto=p;
-  document.getElementById('proto-esp').className=p==='esp'?'action-btn-blue':'action-btn';
-  document.getElementById('proto-ah').className=p==='ah'?'action-btn-blue':'action-btn';
-  buildPacket(_currentMode,p);
+function showCombo(mode,proto){
+  _currentMode=mode;_currentProto=proto;
+  const key=mode+'-'+proto;
+  ipsecSeen.add(key);
+  if(ipsecSeen.size>=4)ipsecDone=true;
+  // Update card styles
+  ['transport-esp','transport-ah','tunnel-esp','tunnel-ah'].forEach(k=>{
+    const card=document.getElementById('combo-'+k);
+    const chk=document.getElementById('combo-'+k+'-check');
+    const visited=ipsecSeen.has(k);
+    const active=k===key;
+    card.style.borderColor=active?'#58a6ff':visited?'#238636':'#30363d';
+    card.style.background=active?'#0d1a2e':visited?'#0d1a12':'#161b22';
+    chk.textContent=visited?'✅ Visited':'⬜ Not visited';
+    chk.style.color=visited?'#3fb950':'#8b949e';
+  });
+  buildPacket(mode,proto);
+  saveState();updateObj();
 }
 
 // ── IKEv2 ──
@@ -602,13 +631,15 @@ const VPN_SCENARIOS={
   federal:'<strong style="color:#58a6ff">Winner: IPsec/IKEv2</strong><br>FIPS 140-3 requires NIST-approved algorithms (AES, SHA-2). IPsec IKEv2 fully supports AES-256-GCM + SHA-384 (FIPS-approved). WireGuard uses ChaCha20 which is NOT FIPS-approved — disqualified for US federal use. OpenVPN/IPsec with FIPS-validated libraries are acceptable.',
 };
 let _vpnSel=false;
-function selectVPN(row,id){document.querySelectorAll('.vpn-table tbody tr').forEach(r=>r.className='');row.className='vpn-row-sel';_vpnSel=true;vpnDone=true;saveState();updateObj();}
+function selectVPN(row,id){document.querySelectorAll('.vpn-table tbody tr').forEach(r=>r.className='');row.className='vpn-row-sel';_vpnSel=true;saveState();updateObj();}
 function showVPNScenario(){
   const v=document.getElementById('vpn-scenario').value;
   const r=document.getElementById('vpn-scenario-result');
   if(!v){r.style.display='none';return;}
   r.style.display='block';r.innerHTML=VPN_SCENARIOS[v]||'';
-  vpnDone=true;saveState();updateObj();
+  vpnScenariosSeen.add(v);
+  vpnDone=vpnScenariosSeen.size>=4;
+  saveState();updateObj();
 }
 
 // ── Quiz ──
@@ -641,10 +672,11 @@ function checkReflectionLock(){
 
 function updateObj(){
   const checks=[
-    {done:ipsecDone,label:'Compared IPsec Tunnel vs Transport mode'},
+    {done:ipsecDone,label:'Explored all 4 IPsec mode/protocol combinations'},
     {done:ikeDone,label:'Walked through IKEv2 key exchange phases'},
     {done:tlsDone,label:'Ran TLS 1.2 vs 1.3 comparison'},
     {done:pfsDone,label:'Triggered Perfect Forward Secrecy scenario'},
+    {done:vpnDone,label:'Explored all 4 VPN scenarios'},
     {done:quizPassed,label:'Passed the IPsec/TLS quiz'},
   ];
   const done=checks.filter(c=>c.done).length,allDone=done===checks.length;
@@ -659,6 +691,8 @@ function toggleObj(){_objOpen=!_objOpen;document.getElementById('obj-panel').sty
 
 function saveState(){
   const s={quizPassed,quizAttempts,ipsecDone,ikeDone,tlsDone,pfsDone,vpnDone,
+    currentMode:_currentMode,currentProto:_currentProto,
+    ipsecSeen:Array.from(ipsecSeen),vpnScenariosSeen:Array.from(vpnScenariosSeen),
     studentName:(document.getElementById('student-name')||{}).value||'',
     reflection:(document.getElementById('learning-reflection')||{}).value||'',
     labFeedback: (document.getElementById('lab-feedback')?.value||''),};
@@ -670,6 +704,24 @@ function loadState(){
   quizPassed=s.quizPassed||false;quizAttempts=s.quizAttempts||0;
   ipsecDone=s.ipsecDone||false;ikeDone=s.ikeDone||false;
   tlsDone=s.tlsDone||false;pfsDone=s.pfsDone||false;vpnDone=s.vpnDone||false;
+  _currentMode=s.currentMode||null;_currentProto=s.currentProto||null;
+  ipsecSeen=new Set(s.ipsecSeen||[]);
+  vpnScenariosSeen=new Set(s.vpnScenariosSeen||[]);
+  vpnDone=vpnScenariosSeen.size>=4;
+  ipsecDone=ipsecSeen.size>=4;
+  // Restore combo grid visuals
+  ['transport-esp','transport-ah','tunnel-esp','tunnel-ah'].forEach(k=>{
+    const card=document.getElementById('combo-'+k);
+    const chk=document.getElementById('combo-'+k+'-check');
+    if(!card||!chk)return;
+    const visited=ipsecSeen.has(k);
+    const active=_currentMode&&_currentProto&&k===_currentMode+'-'+_currentProto;
+    card.style.borderColor=active?'#58a6ff':visited?'#238636':'#30363d';
+    card.style.background=active?'#0d1a2e':visited?'#0d1a12':'#161b22';
+    chk.textContent=visited?'✅ Visited':'⬜ Not visited';
+    chk.style.color=visited?'#3fb950':'#8b949e';
+  });
+  if(_currentMode&&_currentProto)buildPacket(_currentMode,_currentProto);
   if(s.studentName){const el=document.getElementById('student-name');if(el)el.value=s.studentName;}
   if(s.reflection){const el=document.getElementById('learning-reflection');if(el)el.value=s.reflection;}
   if(s.labFeedback&&document.getElementById('lab-feedback')){document.getElementById('lab-feedback').value=s.labFeedback;}
@@ -718,8 +770,8 @@ function exportPDF(){
   },500);
 }
 document.addEventListener('DOMContentLoaded',()=>{
-  buildPacket('tunnel','esp');
-  loadState();updateObj();
+  loadState();
+  updateObj();
 });
 </script>
 <footer style="text-align:center;padding:1rem;border-top:1px solid #ccc;margin-top:2rem;color:#666;font-size:0.8rem;">
