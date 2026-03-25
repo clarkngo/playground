@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Discord: Scaling to Trillions of Messages</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0d1117;color:#e6edf3;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;line-height:1.7}
+a{color:#58a6ff;text-decoration:none}a:hover{text-decoration:underline}
+nav{background:#161b22;border-bottom:1px solid #30363d;padding:16px 24px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100}
+.brand{font-size:1.2rem;font-weight:700}.back{color:#8b949e;font-size:.9rem}
+.container{max-width:900px;margin:0 auto;padding:24px 20px}
+.hero{background:linear-gradient(135deg,#1a1e24 0%,#1b1b38 100%);border:1px solid #30363d;border-radius:12px;padding:48px 36px;margin-bottom:36px;text-align:center}
+.hero h1{font-size:2.2rem;margin-bottom:8px}.hero .tagline{color:#f0883e;font-size:1.1rem;margin-bottom:6px}.hero .meta{color:#8b949e;font-size:.9rem}
+.timeline-wrapper{overflow-x:auto;margin-bottom:36px;padding:12px 0}
+.timeline{display:flex;align-items:flex-start;min-width:700px;position:relative;padding:20px 10px}
+.timeline::before{content:'';position:absolute;top:30px;left:10px;right:10px;height:3px;background:#30363d;border-radius:2px}
+.timeline-item{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;z-index:1}
+.timeline-dot{width:16px;height:16px;background:#f0883e;border-radius:50%;margin-bottom:12px;border:3px solid #0d1117;box-shadow:0 0 0 2px #f0883e}
+.timeline-date{font-size:.75rem;color:#f0883e;font-weight:600;margin-bottom:4px}
+.timeline-label{font-size:.8rem;color:#8b949e;text-align:center;max-width:120px}
+section.story{margin-bottom:32px}
+section.story h2{font-size:1.5rem;color:#e6edf3;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #30363d}
+section.story p{color:#c9d1d9;margin-bottom:14px;font-size:.97rem}
+.canvas-section{margin-bottom:36px}
+.canvas-section h2{font-size:1.5rem;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #30363d}
+.toggle-bar{display:flex;gap:8px;margin-bottom:12px}
+.toggle-btn{display:inline-block;padding:8px 20px;background:#f0883e;color:#0d1117;border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:.9rem;transition:background .2s}
+.toggle-btn:hover{background:#d4772e}
+.toggle-btn.inactive{background:#30363d;color:#8b949e}
+canvas{display:block;width:100%;border:1px solid #30363d;border-radius:8px;background:#0d1117}
+.decision-section{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:28px;margin-bottom:36px}
+.decision-section h2{font-size:1.4rem;margin-bottom:8px}.decision-section .prompt{color:#8b949e;margin-bottom:18px;font-size:.95rem}
+.choices{display:flex;flex-direction:column;gap:10px}
+.choice-btn{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:14px 18px;color:#e6edf3;cursor:pointer;text-align:left;font-size:.93rem;transition:border-color .2s}
+.choice-btn:hover{border-color:#58a6ff}.choice-btn.correct{border-color:#3fb950;background:#0d1b0e}.choice-btn.wrong{border-color:#f85149;background:#1b0d0d}
+.reveal{margin-top:16px;padding:16px;background:#0d1117;border:1px solid #3fb950;border-radius:8px;display:none;font-size:.93rem;color:#c9d1d9}
+.metrics-panel{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:36px}
+.metric{background:#161b22;border:1px solid #30363d;border-radius:10px;padding:20px;text-align:center}
+.metric .value{font-size:1.7rem;font-weight:700;color:#f0883e}.metric .label{font-size:.8rem;color:#8b949e;margin-top:4px}
+.lessons{margin-bottom:36px}
+.lessons h2{font-size:1.5rem;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #30363d}
+.lesson-card{background:#161b22;border-left:3px solid #f0883e;border-radius:0 8px 8px 0;padding:16px 20px;margin-bottom:12px;font-size:.93rem;color:#c9d1d9}
+.takeaways{margin-bottom:48px}
+.takeaways h2{font-size:1.5rem;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #30363d}
+.takeaway{display:flex;align-items:baseline;gap:10px;margin-bottom:10px;font-size:.95rem;color:#c9d1d9}
+.takeaway::before{content:'→';color:#f0883e;font-weight:700;flex-shrink:0}
+</style>
+    <meta name="author" content="Clark Ngo">
+    <meta name="copyright" content="Clark Ngo">
+  </head>
+<body>
+<nav><span class="brand">📖 Case Studies</span><a href="index.html" class="back">← All Case Studies</a></nav>
+<div class="container">
+
+<div class="hero">
+<h1>Discord: Scaling to Trillions of Messages</h1>
+<div class="tagline">From MongoDB to Cassandra to ScyllaDB — a database migration trilogy</div>
+<div class="meta">2015 — 2022 | Database Evolution &amp; Storage at Scale</div>
+</div>
+
+<div class="timeline-wrapper">
+<div class="timeline">
+<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-date">2015</div><div class="timeline-label">MongoDB era</div></div>
+<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-date">2016</div><div class="timeline-label">Cassandra migration</div></div>
+<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-date">2018</div><div class="timeline-label">Hot partition issues</div></div>
+<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-date">2020</div><div class="timeline-label">GC pause cascades</div></div>
+<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-date">2022</div><div class="timeline-label">ScyllaDB migration</div></div>
+<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-date">2022</div><div class="timeline-label">Results achieved</div></div>
+</div>
+</div>
+
+<section class="story">
+<h2>The MongoDB Beginning</h2>
+<p>When Discord launched in 2015, MongoDB was the natural choice for message storage. It was flexible, developer-friendly, and perfectly adequate for a startup finding its product-market fit. Messages were stored as documents with channel IDs, timestamps, and content. For the first year, this worked well enough.</p>
+<p>But Discord grew faster than anyone anticipated. Gamers adopted it voraciously, and by late 2015, the message volume was climbing toward 100 million stored messages. MongoDB began running out of memory as the working set exceeded available RAM. The single-writer architecture could not keep up with the write throughput, and read latency was becoming unpredictable as the dataset grew. Discord needed a database designed for horizontal scaling.</p>
+</section>
+
+<section class="story">
+<h2>The Cassandra Era</h2>
+<p>In 2016, Discord migrated their message storage to Apache Cassandra. The choice made sense on paper: Cassandra offered linear horizontal scaling, tunable consistency, and excellent write throughput. Messages were partitioned by channel ID and bucketed by time, ensuring that messages for the same channel were co-located on the same nodes for efficient retrieval.</p>
+<p>For two years, Cassandra performed admirably. Discord scaled from millions to billions of messages without fundamental issues. The distributed architecture handled node failures gracefully, and the write performance was excellent. Cassandra seemed like the right long-term solution.</p>
+</section>
+
+<section class="story">
+<h2>The Hot Partition Crisis</h2>
+<p>By 2018, certain Discord servers had grown enormous — communities with hundreds of thousands of members generating tens of thousands of messages per day in a single channel. These channels became hot partitions: single Cassandra partitions receiving disproportionate read and write traffic. Hot partitions caused localized latency spikes that affected other channels sharing the same nodes.</p>
+<p>The team worked to mitigate this through partition splitting strategies and more granular time bucketing, but the underlying issue persisted. Some channels were simply orders of magnitude more active than others, and Cassandra did not natively load-balance within a partition key.</p>
+</section>
+
+<section class="story">
+<h2>The GC Pause Cascade</h2>
+<p>The real breaking point came in 2020. Cassandra runs on the JVM, and as the data volume grew into the hundreds of billions of messages, garbage collection pauses became a critical problem. During compaction — the process where Cassandra merges and cleans up SSTables on disk — the JVM would allocate large amounts of temporary memory, triggering long GC pauses that could last hundreds of milliseconds or even seconds.</p>
+<p>When a node paused for GC, it stopped responding to requests. Other nodes in the cluster would mark it as potentially down. Requests would be rerouted, increasing load on healthy nodes and pushing them closer to their own GC thresholds. This created a cascade effect: one node pausing could trigger a chain reaction of GC pauses across the cluster, causing P99 latencies to spike from 40 milliseconds to hundreds of milliseconds or more.</p>
+<p>The team spent months tuning JVM garbage collection parameters, experimenting with different GC algorithms, and adjusting Cassandra compaction strategies. Each tuning effort brought temporary relief, but the fundamental problem was structural: the JVM garbage collector was not designed for the allocation patterns that a distributed database with trillions of messages generates during compaction.</p>
+</section>
+
+<section class="story">
+<h2>The ScyllaDB Migration</h2>
+<p>In 2022, Discord made the decision to migrate from Cassandra to ScyllaDB. ScyllaDB is a drop-in replacement for Cassandra written in C++ instead of Java. It uses the same CQL query language, the same data model, and the same SSTable format, but it eliminates the JVM entirely. No JVM means no garbage collector. No garbage collector means no GC pauses.</p>
+<p>ScyllaDB also uses a shard-per-core architecture where each CPU core owns a specific subset of data and handles all operations for that data independently. This eliminates cross-core coordination overhead and provides predictable, low-latency performance regardless of cluster load or compaction activity.</p>
+<p>The results were dramatic. P99 latency dropped from 40 milliseconds to 4 milliseconds — a 10x improvement. The cascading GC pause problem vanished entirely. The cluster required fewer nodes to handle the same workload because ScyllaDB used hardware more efficiently without JVM overhead. Discord could now store and serve trillions of messages with consistent, predictable latency.</p>
+</section>
+
+<div class="canvas-section">
+<h2>Architecture Diagram</h2>
+<div class="toggle-bar">
+<button class="toggle-btn" id="btnMongo" onclick="showPhase(0)">MongoDB</button>
+<button class="toggle-btn inactive" id="btnCassandra" onclick="showPhase(1)">Cassandra</button>
+<button class="toggle-btn inactive" id="btnScylla" onclick="showPhase(2)">ScyllaDB</button>
+</div>
+<canvas id="archCanvas" width="900" height="280"></canvas>
+</div>
+
+<div class="decision-section">
+<h2>What Would You Do?</h2>
+<p class="prompt">Your Cassandra cluster is experiencing cascading GC pauses during compaction on hot partitions. P99 latency is spiking to hundreds of milliseconds. How do you fix it?</p>
+<div class="choices">
+<div class="choice-btn" onclick="choose(this,false)">A) Tune JVM GC parameters — switch to ZGC or Shenandoah, increase heap size, adjust GC thresholds.</div>
+<div class="choice-btn" onclick="choose(this,false)">B) Reshard the data — split hot partitions into smaller chunks and redistribute across more nodes.</div>
+<div class="choice-btn" onclick="choose(this,true)">C) Migrate to ScyllaDB — a C++ Cassandra-compatible database with no JVM or garbage collector.</div>
+</div>
+<div class="reveal" id="reveal">Discord chose <strong>C — migrating to ScyllaDB</strong>. They had already spent months tuning JVM GC parameters (option A) with diminishing returns — the problem was structural, not configurational. Resharding (option B) helped with hot partition issues but did nothing about GC pauses during compaction, which affected all nodes regardless of data distribution. ScyllaDB eliminated the root cause entirely by removing the JVM. The Cassandra-compatible API meant Discord could migrate without rewriting their application layer, and the results were immediate: P99 dropped from 40ms to 4ms with zero GC pauses.</div>
+</div>
+
+<h2 style="font-size:1.5rem;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #30363d">Key Metrics</h2>
+<div class="metrics-panel">
+<div class="metric"><div class="value">4T+</div><div class="label">Messages Stored</div></div>
+<div class="metric"><div class="value">4B/day</div><div class="label">Messages Ingested</div></div>
+<div class="metric"><div class="value">40→4ms</div><div class="label">P99 Latency Improvement</div></div>
+<div class="metric"><div class="value">0</div><div class="label">GC Pauses (ScyllaDB)</div></div>
+</div>
+
+<div class="lessons">
+<h2>Lessons Extracted</h2>
+<div class="lesson-card"><strong>Database selection is not permanent.</strong> Discord changed databases twice as their scale and requirements evolved. The best database at 100 million messages is not the best at 4 trillion.</div>
+<div class="lesson-card"><strong>JVM GC is a real bottleneck at scale.</strong> Garbage collection pauses that are imperceptible at small scale can become system-threatening at large scale, especially during compaction of large datasets.</div>
+<div class="lesson-card"><strong>Hot partitions require partition-aware data modeling.</strong> Uneven access patterns will always exist. The data model and the database must be designed to handle them gracefully rather than assuming uniform distribution.</div>
+<div class="lesson-card"><strong>Sometimes the best fix is a platform change.</strong> When you have exhausted tuning options and the problem is structural, changing the underlying platform can provide step-function improvements that no amount of optimization can match.</div>
+</div>
+
+<div class="takeaways">
+<h2>Key Takeaways</h2>
+<div class="takeaway">Database selection is not permanent — revisit as scale and requirements evolve.</div>
+<div class="takeaway">JVM garbage collection becomes a real bottleneck at extreme scale, especially during compaction.</div>
+<div class="takeaway">Hot partitions require partition-aware data modeling, not just more nodes.</div>
+<div class="takeaway">Sometimes the best fix is a platform change rather than endless tuning of the current one.</div>
+</div>
+
+</div>
+
+<script>
+const canvas=document.getElementById('archCanvas'),ctx=canvas.getContext('2d');
+let currentPhase=0;
+let animProgress=0,targetPhase=0,animating=false;
+function drawBox(x,y,w,h,label,color,alpha){ctx.globalAlpha=alpha;ctx.fillStyle=color;ctx.strokeStyle='#30363d';ctx.lineWidth=1;ctx.beginPath();ctx.roundRect(x,y,w,h,6);ctx.fill();ctx.stroke();ctx.fillStyle='#e6edf3';ctx.font='bold 11px sans-serif';ctx.textAlign='center';ctx.fillText(label,x+w/2,y+h/2+4);ctx.globalAlpha=1}
+function drawArrow(x1,y1,x2,y2,color,alpha){ctx.globalAlpha=alpha;ctx.strokeStyle=color;ctx.fillStyle=color;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();const a=Math.atan2(y2-y1,x2-x1);ctx.beginPath();ctx.moveTo(x2,y2);ctx.lineTo(x2-8*Math.cos(a-0.4),y2-8*Math.sin(a-0.4));ctx.lineTo(x2-8*Math.cos(a+0.4),y2-8*Math.sin(a+0.4));ctx.fill();ctx.globalAlpha=1}
+function drawPhase(phase){
+ctx.clearRect(0,0,900,280);
+if(phase<0.5){
+// MongoDB
+const alpha=1-phase*2;
+if(alpha>0.01){
+drawBox(350,40,200,50,'MongoDB (Single)','#6e3630',alpha);
+drawBox(350,120,200,40,'Messages Collection','#30363d',alpha);
+drawArrow(450,90,450,120,'#8b949e',alpha);
+ctx.globalAlpha=alpha;ctx.fillStyle='#f85149';ctx.font='bold 11px sans-serif';ctx.textAlign='center';
+ctx.fillText('OOM at 100M messages',450,200);
+ctx.fillStyle='#8b949e';ctx.font='10px sans-serif';
+ctx.fillText('Single writer, working set exceeds RAM',450,220);ctx.globalAlpha=1;
+}
+}
+if(phase>=0.3&&phase<0.8){
+// Cassandra
+const alpha=phase<0.5?((phase-0.3)/0.2):(1-(phase-0.5)/0.3);
+if(alpha>0.01){
+const nodes=[{x:150,y:60},{x:350,y:60},{x:550,y:60},{x:700,y:60}];
+nodes.forEach((n,i)=>{drawBox(n.x,n.y,130,45,`Cassandra Node ${i+1}`,'#58a6ff44',alpha)});
+// GC indicator
+ctx.globalAlpha=alpha;ctx.fillStyle='#f85149';ctx.font='bold 10px sans-serif';ctx.textAlign='center';
+ctx.fillText('⚠ JVM GC Pauses',450,135);
+drawBox(300,150,300,35,'JVM Garbage Collector','#f8514933',alpha);
+ctx.globalAlpha=alpha;ctx.fillStyle='#f0883e';ctx.font='11px sans-serif';
+ctx.fillText('Hot partitions + GC cascades at billions of messages',450,220);ctx.globalAlpha=1;
+}
+}
+if(phase>0.5){
+// ScyllaDB
+const alpha=(phase-0.5)*2;
+if(alpha>0.01){
+const nodes=[{x:100,y:60},{x:300,y:60},{x:500,y:60},{x:700,y:60}];
+nodes.forEach((n,i)=>{drawBox(n.x,n.y,130,45,`ScyllaDB Node ${i+1}`,'#3fb95044',alpha)});
+ctx.globalAlpha=alpha;ctx.fillStyle='#3fb950';ctx.font='bold 10px sans-serif';ctx.textAlign='center';
+ctx.fillText('C++ — No JVM, No GC',450,135);
+drawBox(300,150,300,35,'Shard-per-Core Architecture','#3fb95033',alpha);
+ctx.globalAlpha=alpha;ctx.fillStyle='#3fb950';ctx.font='bold 11px sans-serif';
+ctx.fillText('P99: 4ms — Zero GC pauses',450,220);
+ctx.fillStyle='#8b949e';ctx.font='10px sans-serif';
+ctx.fillText('Cassandra-compatible API, 10x latency improvement',450,240);ctx.globalAlpha=1;
+}
+}
+}
+function animate(){
+if(!animating)return;
+const target=targetPhase;
+const diff=target-animProgress;
+if(Math.abs(diff)<0.01){animProgress=target;animating=false;drawPhase(animProgress);return}
+animProgress+=diff*0.08;
+drawPhase(animProgress);requestAnimationFrame(animate);
+}
+function showPhase(p){
+targetPhase=p/2;
+document.getElementById('btnMongo').className=`toggle-btn${p===0?'':' inactive'}`;
+document.getElementById('btnCassandra').className=`toggle-btn${p===1?'':' inactive'}`;
+document.getElementById('btnScylla').className=`toggle-btn${p===2?'':' inactive'}`;
+animating=true;animate();
+}
+drawPhase(0);
+
+function choose(el,correct){
+document.querySelectorAll('.choice-btn').forEach(b=>{b.style.pointerEvents='none'});
+el.classList.add(correct?'correct':'wrong');
+if(correct){document.querySelectorAll('.choice-btn').forEach(b=>{if(b!==el)b.style.opacity='0.4'})}
+else{document.querySelectorAll('.choice-btn').forEach(b=>{if(b!==el&&b.textContent.includes('ScyllaDB'))b.classList.add('correct')})}
+document.getElementById('reveal').style.display='block';
+}
+</script>
+<footer style="text-align:center;padding:1rem;border-top:1px solid #ccc;margin-top:2rem;color:#666;font-size:0.8rem;">
+    © <span id="copyright-year"></span> Clark Ngo
+  </footer>
+  <script>document.getElementById('copyright-year').textContent = new Date().getFullYear();</script>
+</body>
+</html>

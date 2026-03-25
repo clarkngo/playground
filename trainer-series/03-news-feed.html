@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Design a News Feed System — System Design Trainer</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0d1117;color:#e6edf3;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;line-height:1.7}
+a{color:#58a6ff;text-decoration:none}a:hover{text-decoration:underline}
+nav{background:#161b22;border-bottom:1px solid #30363d;padding:16px 24px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100}
+.brand{font-size:1.2rem;font-weight:700}.back{color:#8b949e;font-size:.9rem}
+.container{max-width:960px;margin:0 auto;padding:24px 20px 60px}
+.hero{background:linear-gradient(135deg,#1a1e24 0%,#0d2d0d 100%);border:1px solid #30363d;border-radius:12px;padding:48px 36px;margin-bottom:36px;text-align:center}
+.hero h1{font-size:2.2rem;margin-bottom:8px}.hero .tagline{color:#3fb950;font-size:1.1rem;margin-bottom:6px}.hero .meta{color:#8b949e;font-size:.9rem}
+section.step{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:28px;margin-bottom:24px}
+section.step h2{font-size:1.4rem;margin-bottom:6px;display:flex;align-items:center;gap:10px}
+section.step h2 .num{background:#3fb950;color:#0d1117;font-size:.75rem;font-weight:700;padding:2px 10px;border-radius:12px}
+.desc{color:#8b949e;font-size:.9rem;margin-bottom:18px}
+.reveal-btn{display:inline-block;padding:8px 20px;background:#1f6feb;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:.9rem;transition:background .2s}
+.reveal-btn:hover{background:#1a5fd1}
+.reveal-content{display:none;margin-top:16px;padding:16px;background:#0d1117;border:1px solid #3fb950;border-radius:8px;font-size:.93rem;color:#c9d1d9}
+.reveal-content.show{display:block}
+.req-list{list-style:none;margin-bottom:12px}
+.req-list li{padding:6px 0;font-size:.93rem}
+.req-list label{cursor:pointer;display:flex;align-items:center;gap:8px}
+.radio-group{margin-bottom:8px}
+.radio-group label{display:inline-flex;align-items:center;gap:6px;margin-right:16px;font-size:.9rem;cursor:pointer}
+.correct-mark{color:#3fb950;font-weight:700}
+.wrong-mark{color:#f85149;font-weight:700}
+.calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.calc-field label{display:block;font-size:.8rem;color:#8b949e;margin-bottom:4px}
+.calc-field input{width:100%;background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:8px 12px;color:#e6edf3;font-size:.9rem}
+.calc-results{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:12px}
+.calc-result{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:12px;text-align:center}
+.calc-result .val{font-size:1.3rem;font-weight:700;color:#3fb950}.calc-result .lbl{font-size:.75rem;color:#8b949e}
+pre{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:16px;overflow-x:auto;font-size:.85rem;line-height:1.6;color:#e6edf3;margin-bottom:12px}
+.method{color:#f0883e;font-weight:700}.endpoint{color:#3fb950}.param{color:#58a6ff}
+.table-wrap{overflow-x:auto;margin-bottom:12px}
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+th{background:#21262d;color:#8b949e;text-align:left;padding:8px 12px;border:1px solid #30363d}
+td{padding:8px 12px;border:1px solid #30363d;color:#c9d1d9}
+.toggle-row{display:flex;gap:8px;margin-bottom:16px}
+.toggle-opt{padding:6px 16px;border-radius:6px;border:1px solid #30363d;background:#0d1117;color:#8b949e;cursor:pointer;font-size:.85rem;font-weight:600;transition:all .2s}
+.toggle-opt.active{background:#1f6feb;color:#fff;border-color:#1f6feb}
+canvas{display:block;width:100%;border:1px solid #30363d;border-radius:8px;background:#0d1117;margin-bottom:12px}
+.deep-dive{border:1px solid #30363d;border-radius:8px;margin-bottom:10px;overflow:hidden}
+.dd-header{padding:14px 18px;background:#161b22;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-weight:600;font-size:.93rem}
+.dd-header:hover{background:#1c2129}
+.dd-arrow{transition:transform .2s;color:#8b949e}
+.dd-body{display:none;padding:16px 18px;background:#0d1117;font-size:.9rem;color:#c9d1d9;line-height:1.7}
+.dd-body.open{display:block}
+.dd-arrow.open{transform:rotate(180deg)}
+.tradeoff-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:12px}
+.tradeoff-card{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:16px}
+.tradeoff-card h4{font-size:.95rem;margin-bottom:8px;color:#e6edf3}
+.tradeoff-card .pros{color:#3fb950;font-size:.85rem;margin-bottom:4px}
+.tradeoff-card .cons{color:#f85149;font-size:.85rem}
+.tip-card{background:#0d1117;border-left:3px solid #f0883e;border-radius:0 8px 8px 0;padding:14px 18px;margin-bottom:10px;font-size:.9rem;color:#c9d1d9}
+.tip-card strong{color:#f0883e}
+@media(max-width:640px){.calc-grid,.tradeoff-grid{grid-template-columns:1fr}.hero h1{font-size:1.6rem}}
+</style>
+    <meta name="author" content="Clark Ngo">
+    <meta name="copyright" content="Clark Ngo">
+  </head>
+<body>
+<nav><span class="brand">&#127919; Trainer Series</span><a href="index.html" class="back">&larr; All Trainers</a></nav>
+<div class="container">
+
+<div class="hero">
+<h1>Design a News Feed System</h1>
+<div class="tagline">Facebook / Twitter feed from scratch</div>
+<div class="meta">Fan-out &bull; Feed Ranking &bull; Real-time Updates &bull; Cache Invalidation</div>
+</div>
+
+<!-- STEP 1: Requirements -->
+<section class="step" id="s1">
+<h2><span class="num">1</span> Requirements</h2>
+<p class="desc">Select the functional requirements you think are essential, and choose the most important non-functional properties.</p>
+
+<h3 style="font-size:.95rem;margin-bottom:10px;color:#8b949e">Functional Requirements</h3>
+<ul class="req-list" id="funcReqs">
+<li><label><input type="checkbox" value="create"> Post creation (text, images, video)</label></li>
+<li><label><input type="checkbox" value="feed_gen"> Feed generation from followed users</label></li>
+<li><label><input type="checkbox" value="ranking"> Feed ranking (relevance, recency)</label></li>
+<li><label><input type="checkbox" value="realtime"> Real-time feed updates</label></li>
+<li><label><input type="checkbox" value="media"> Media support (images, video, links)</label></li>
+<li><label><input type="checkbox" value="likes"> Likes and comments</label></li>
+<li><label><input type="checkbox" value="search"> Full-text search of posts</label></li>
+</ul>
+
+<h3 style="font-size:.95rem;margin-bottom:10px;color:#8b949e">Key Non-Functional Requirement</h3>
+<div class="radio-group" id="nfReqs">
+<label><input type="radio" name="nf" value="latency"> Low latency feed loading (&lt;200ms)</label>
+<label><input type="radio" name="nf" value="availability"> High availability (99.99%)</label>
+<label><input type="radio" name="nf" value="consistency"> Strong consistency</label>
+<label><input type="radio" name="nf" value="scalable"> Horizontal scalability</label>
+</div>
+
+<button class="reveal-btn" onclick="revealReqs()">Reveal Answer</button>
+<div class="reveal-content" id="reqReveal">
+<p><span class="correct-mark">Core functional:</span> Post creation, feed generation, and feed ranking are the three essential features. Real-time updates and media support are important secondary features. Likes/comments and search are good to mention but not the focus.</p>
+<p><span class="correct-mark">Non-functional:</span> Low latency and high availability are both critical. Users expect their feed to load near-instantly. Strong consistency is NOT required for a news feed — eventual consistency is acceptable (a post appearing a few seconds late in a friend`s feed is fine).</p>
+</div>
+</section>
+
+<!-- STEP 2: Capacity Estimation -->
+<section class="step" id="s2">
+<h2><span class="num">2</span> Capacity Estimation</h2>
+<p class="desc">Estimate the system load. Fill in values and watch the calculations update.</p>
+
+<div class="calc-grid">
+<div class="calc-field"><label>Total Users</label><input type="number" id="totalUsers" value="500000000" oninput="calcCapacity()"></div>
+<div class="calc-field"><label>DAU (% of total)</label><input type="number" id="dauPct" value="40" oninput="calcCapacity()"></div>
+<div class="calc-field"><label>Feed reads per user/day</label><input type="number" id="readsPerDay" value="5" oninput="calcCapacity()"></div>
+<div class="calc-field"><label>Posts per feed</label><input type="number" id="postsPerFeed" value="50" oninput="calcCapacity()"></div>
+<div class="calc-field"><label>Avg friends per user</label><input type="number" id="avgFriends" value="300" oninput="calcCapacity()"></div>
+<div class="calc-field"><label>Posts per user/day</label><input type="number" id="postsPerDay" value="2" oninput="calcCapacity()"></div>
+</div>
+
+<div class="calc-results" id="calcResults">
+<div class="calc-result"><div class="val" id="crDAU">—</div><div class="lbl">DAU</div></div>
+<div class="calc-result"><div class="val" id="crFeedReads">—</div><div class="lbl">Feed reads/sec</div></div>
+<div class="calc-result"><div class="val" id="crPosts">—</div><div class="lbl">Posts/sec</div></div>
+<div class="calc-result"><div class="val" id="crFanout">—</div><div class="lbl">Fan-out writes/sec</div></div>
+</div>
+
+<button class="reveal-btn" onclick="revealCap()">Reveal Answer</button>
+<div class="reveal-content" id="capReveal">
+<p><strong>Reference numbers:</strong> 500M total users, 200M DAU. 1B feed reads/day = ~11,600 reads/sec. 400M posts/day = ~4,600 posts/sec. With average 300 friends, each post triggers ~300 fan-out writes = ~1.4M fan-out writes/sec. This massive fan-out write volume is the core challenge of a news feed system.</p>
+</div>
+</section>
+
+<!-- STEP 3: API Design -->
+<section class="step" id="s3">
+<h2><span class="num">3</span> API Design</h2>
+<p class="desc">Design the REST API endpoints for the news feed system.</p>
+
+<pre><span class="method">POST</span> <span class="endpoint">/api/posts</span>
+  Body: { <span class="param">"content"</span>: "Hello world!", <span class="param">"media_ids"</span>: ["img_123"], <span class="param">"visibility"</span>: "friends" }
+  Response: { "post_id": "p_abc123", "created_at": "2026-03-23T10:00:00Z" }
+
+<span class="method">GET</span> <span class="endpoint">/api/feed</span>?<span class="param">page_token</span>=xyz&amp;<span class="param">limit</span>=20
+  Response: { "posts": [...], "next_page_token": "abc", "has_more": true }
+
+<span class="method">GET</span> <span class="endpoint">/api/feed/refresh</span>
+  Response: { "new_count": 5, "top_post_preview": "..." }
+
+<span class="method">POST</span> <span class="endpoint">/api/posts/{postId}/like</span>
+  Response: { "likes_count": 142 }
+
+<span class="method">DELETE</span> <span class="endpoint">/api/posts/{postId}</span>
+  Response: <span class="param">204 No Content</span></pre>
+
+<button class="reveal-btn" onclick="revealApi()">Reveal Answer</button>
+<div class="reveal-content" id="apiReveal">
+<p><strong>Key details:</strong></p>
+<ul style="padding-left:20px;margin-top:8px">
+<li>GET /feed uses cursor-based pagination (page_token) instead of offset — more efficient for feeds that change frequently</li>
+<li>GET /feed/refresh is a lightweight check for new content without fetching the full feed (powers the "5 new posts" banner)</li>
+<li>POST /posts is asynchronous — returns immediately, fan-out happens in the background</li>
+<li>Visibility field controls who sees the post (public, friends, private)</li>
+<li>Consider long-polling or WebSockets for real-time feed updates</li>
+</ul>
+</div>
+</section>
+
+<!-- STEP 4: Data Model -->
+<section class="step" id="s4">
+<h2><span class="num">4</span> Data Model</h2>
+<p class="desc">Design the database schema for the feed system.</p>
+
+<div class="toggle-row">
+<div class="toggle-opt active" onclick="toggleDB('tables')">Core Tables</div>
+<div class="toggle-opt" onclick="toggleDB('cache')">Feed Cache (Redis)</div>
+</div>
+
+<div id="dbTables">
+<div class="table-wrap"><table>
+<tr><th colspan="3">users</th></tr>
+<tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+<tr><td>user_id</td><td>BIGINT</td><td>Primary key</td></tr>
+<tr><td>username</td><td>VARCHAR(50)</td><td>Unique index</td></tr>
+<tr><td>is_celebrity</td><td>BOOLEAN</td><td>Fan-out strategy flag</td></tr>
+<tr><td>follower_count</td><td>INT</td><td>Cached count</td></tr>
+</table></div>
+
+<div class="table-wrap"><table>
+<tr><th colspan="3">posts</th></tr>
+<tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+<tr><td>post_id</td><td>BIGINT</td><td>Primary key (Snowflake ID)</td></tr>
+<tr><td>user_id</td><td>BIGINT</td><td>FK to users</td></tr>
+<tr><td>content</td><td>TEXT</td><td>Post body</td></tr>
+<tr><td>media_urls</td><td>JSON</td><td>Array of media references</td></tr>
+<tr><td>created_at</td><td>TIMESTAMP</td><td>Indexed, partitioned</td></tr>
+<tr><td>visibility</td><td>ENUM</td><td>public/friends/private</td></tr>
+</table></div>
+
+<div class="table-wrap"><table>
+<tr><th colspan="3">friendships</th></tr>
+<tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+<tr><td>user_id</td><td>BIGINT</td><td>Composite PK part 1</td></tr>
+<tr><td>friend_id</td><td>BIGINT</td><td>Composite PK part 2</td></tr>
+<tr><td>created_at</td><td>TIMESTAMP</td><td>When followed</td></tr>
+</table></div>
+
+<div class="table-wrap"><table>
+<tr><th colspan="3">feed_cache</th></tr>
+<tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+<tr><td>user_id</td><td>BIGINT</td><td>Partition key</td></tr>
+<tr><td>post_id</td><td>BIGINT</td><td>Sort key (by timestamp)</td></tr>
+<tr><td>author_id</td><td>BIGINT</td><td>Who wrote the post</td></tr>
+<tr><td>score</td><td>FLOAT</td><td>Ranking score</td></tr>
+</table></div>
+</div>
+
+<div id="dbCache" style="display:none">
+<pre style="color:#c9d1d9">
+// Redis sorted set per user — feed cache
+// Key: feed:{user_id}
+// Score: ranking_score (combines recency + relevance)
+// Value: post_id
+
+ZADD feed:user_123 1679500000 post_abc
+ZADD feed:user_123 1679500100 post_def
+
+// Fetch top 20 posts for feed
+ZREVRANGE feed:user_123 0 19
+
+// Trim to keep only latest 500 posts
+ZREMRANGEBYRANK feed:user_123 0 -501
+</pre>
+<p style="color:#8b949e;font-size:.85rem;margin-top:8px">Redis sorted sets are ideal for feed caches: O(log N) inserts, O(log N + M) range queries. Each user gets a sorted set of post IDs ranked by score.</p>
+</div>
+
+<button class="reveal-btn" onclick="revealData()">Reveal Answer</button>
+<div class="reveal-content" id="dataReveal">
+<p><strong>The feed_cache table is the heart of the system.</strong> It pre-computes each user`s feed so reads are fast. Posts table stores the actual content. Friendships table drives fan-out decisions. The is_celebrity flag on users determines whether to use fan-out-on-write (normal users) or fan-out-on-read (celebrities with millions of followers).</p>
+</div>
+</section>
+
+<!-- STEP 5: Architecture -->
+<section class="step" id="s5">
+<h2><span class="num">5</span> Architecture</h2>
+<p class="desc">Watch the animated request flow. Toggle between the write path (publishing a post) and the read path (loading a feed).</p>
+
+<div class="toggle-row">
+<div class="toggle-opt" id="pathWrite" onclick="setPath('write')">Write Path</div>
+<div class="toggle-opt active" id="pathRead" onclick="setPath('read')">Read Path</div>
+</div>
+<canvas id="archCanvas" width="920" height="340"></canvas>
+
+<button class="reveal-btn" onclick="revealArch()">Reveal Answer</button>
+<div class="reveal-content" id="archReveal">
+<p><strong>Write path:</strong> User creates post &#8594; Post Service writes to Posts DB &#8594; Fan-out Service reads friend list &#8594; For each friend, push post_id into their feed cache (Redis sorted set). For celebrities (10K+ followers), skip fan-out — their posts are merged at read time.</p>
+<p style="margin-top:8px"><strong>Read path:</strong> User requests feed &#8594; Feed Service reads from feed cache (Redis) &#8594; Merge celebrity posts on-the-fly &#8594; Feed Ranker scores and orders posts &#8594; Hydrate post details from Posts DB/cache &#8594; Return ranked feed.</p>
+</div>
+</section>
+
+<!-- STEP 6: Deep Dives -->
+<section class="step" id="s6">
+<h2><span class="num">6</span> Deep Dives</h2>
+<p class="desc">Click each topic to explore implementation details.</p>
+
+<div class="deep-dive">
+<div class="dd-header" onclick="toggleDD(this)">Fan-out on Write vs Fan-out on Read <span class="dd-arrow">&#9660;</span></div>
+<div class="dd-body">
+<p><strong>Fan-out on Write (Push model):</strong> When a user publishes a post, immediately push the post_id into every follower`s feed cache. Pros: feed reads are extremely fast (pre-computed). Cons: write amplification is massive — a user with 1,000 friends causes 1,000 writes. For celebrities with millions of followers, this is prohibitively expensive.</p>
+<p style="margin-top:10px"><strong>Fan-out on Read (Pull model):</strong> When a user reads their feed, fetch the latest posts from all friends at read time. Pros: no write amplification. Cons: feed reads are slow — must query N friend timelines and merge/rank them.</p>
+<p style="margin-top:10px;color:#3fb950"><strong>Hybrid approach (recommended):</strong> Use fan-out on write for normal users (fast reads). For celebrities (&gt;10K followers), skip fan-out. At read time, merge the pre-computed feed with fresh celebrity posts. This limits write amplification while keeping reads fast.</p>
+</div>
+</div>
+
+<div class="deep-dive">
+<div class="dd-header" onclick="toggleDD(this)">The Celebrity Problem <span class="dd-arrow">&#9660;</span></div>
+<div class="dd-body">
+<p><strong>The problem:</strong> A celebrity with 10M followers publishes a post. Fan-out on write means 10M cache writes instantly. This creates a latency spike and can overwhelm the fan-out workers.</p>
+<p style="margin-top:10px"><strong>Solution:</strong> Flag users as celebrities when follower_count exceeds a threshold (e.g., 10K). Celebrity posts are NOT fanned out. Instead, at read time, the feed service fetches celebrity posts separately and merges them with the pre-computed feed cache. This adds slight read latency but prevents catastrophic write storms.</p>
+<p style="margin-top:10px"><strong>Implementation:</strong> Maintain a per-user list of followed celebrities. At feed read time, query each celebrity`s recent posts (from a per-celebrity sorted set in Redis) and merge with the user`s feed cache using a k-way merge.</p>
+</div>
+</div>
+
+<div class="deep-dive">
+<div class="dd-header" onclick="toggleDD(this)">Feed Ranking with ML <span class="dd-arrow">&#9660;</span></div>
+<div class="dd-body">
+<p><strong>Ranking signals:</strong> Recency (when was it posted), affinity (how often you interact with the author), engagement (likes/comments ratio), content type (photos typically get higher engagement), post quality score.</p>
+<p style="margin-top:10px"><strong>Simple scoring formula:</strong> <code>score = recency_weight * time_decay + affinity_weight * interaction_score + engagement_weight * engagement_rate</code></p>
+<p style="margin-top:10px"><strong>ML pipeline:</strong> Train a model on click-through rate and engagement signals. Features include user-author interaction history, post content embeddings, time of day, and device type. Serve predictions via a lightweight model (logistic regression or small neural net) that can score 50 posts in &lt;10ms.</p>
+<p style="margin-top:10px"><strong>Two-stage ranking:</strong> First, retrieve top 500 candidate posts from cache. Second, run the ML ranker to score and select the top 50. This keeps latency low while allowing sophisticated ranking.</p>
+</div>
+</div>
+
+<div class="deep-dive">
+<div class="dd-header" onclick="toggleDD(this)">Cache Invalidation Strategy <span class="dd-arrow">&#9660;</span></div>
+<div class="dd-body">
+<p><strong>Post deletion:</strong> When a user deletes a post, fan-out a delete event to remove the post_id from all followers` feed caches. Use the same fan-out infrastructure as post creation.</p>
+<p style="margin-top:10px"><strong>Feed cache TTL:</strong> Set Redis sorted sets to expire after 7 days of inactivity. Active users get fresh feeds; inactive users` caches are rebuilt on next login. This saves memory for dormant accounts.</p>
+<p style="margin-top:10px"><strong>Consistency tradeoff:</strong> Accept eventual consistency. If a deleted post appears in someone`s feed for a few seconds before cache invalidation propagates, that is acceptable. The alternative (strong consistency) requires distributed transactions and kills performance.</p>
+</div>
+</div>
+</section>
+
+<!-- STEP 7: Trade-offs -->
+<section class="step" id="s7">
+<h2><span class="num">7</span> Trade-offs</h2>
+<p class="desc">Every design decision involves trade-offs. Compare the key choices.</p>
+
+<h3 style="font-size:.95rem;color:#8b949e;margin-bottom:10px">Push vs Pull Model</h3>
+<div class="tradeoff-grid">
+<div class="tradeoff-card">
+<h4>Push (Fan-out on Write)</h4>
+<div class="pros">+ Feed reads are O(1) from pre-computed cache</div>
+<div class="pros">+ Low read latency, great user experience</div>
+<div class="cons">- Massive write amplification for popular users</div>
+<div class="cons">- Wasted work for inactive users who never read</div>
+</div>
+<div class="tradeoff-card">
+<h4>Pull (Fan-out on Read)</h4>
+<div class="pros">+ No write amplification at all</div>
+<div class="pros">+ Always returns freshest data</div>
+<div class="cons">- Slow feed reads (must query N timelines)</div>
+<div class="cons">- High read latency, especially with many friends</div>
+</div>
+</div>
+
+<h3 style="font-size:.95rem;color:#8b949e;margin-bottom:10px">Consistency vs Availability of Feed</h3>
+<div class="tradeoff-grid">
+<div class="tradeoff-card">
+<h4>Strong Consistency</h4>
+<div class="pros">+ Post appears in all feeds instantly</div>
+<div class="pros">+ Deletes reflected immediately everywhere</div>
+<div class="cons">- Requires distributed transactions</div>
+<div class="cons">- Much higher latency, lower throughput</div>
+</div>
+<div class="tradeoff-card">
+<h4>Eventual Consistency</h4>
+<div class="pros">+ High throughput, low latency</div>
+<div class="pros">+ Simpler architecture, easier to scale</div>
+<div class="cons">- Posts may appear with slight delay</div>
+<div class="cons">- Deleted posts may briefly remain visible</div>
+</div>
+</div>
+
+<h3 style="font-size:.95rem;color:#8b949e;margin-bottom:10px">Ranking: Freshness vs Relevance</h3>
+<div class="tradeoff-grid">
+<div class="tradeoff-card">
+<h4>Chronological (Freshness)</h4>
+<div class="pros">+ Simple to implement</div>
+<div class="pros">+ Users see all posts, nothing hidden</div>
+<div class="cons">- Low-quality content surfaces equally</div>
+<div class="cons">- Users miss important posts if feed is busy</div>
+</div>
+<div class="tradeoff-card">
+<h4>ML-Ranked (Relevance)</h4>
+<div class="pros">+ Higher engagement, surfaces best content</div>
+<div class="pros">+ Personalized per user</div>
+<div class="cons">- Opaque algorithm, user distrust</div>
+<div class="cons">- Filter bubble effect, less diversity</div>
+</div>
+</div>
+</section>
+
+<!-- STEP 8: Interview Tips -->
+<section class="step" id="s8">
+<h2><span class="num">8</span> Interview Tips</h2>
+<p class="desc">Advice for presenting this design in an actual interview.</p>
+
+<div class="tip-card"><strong>Start with fan-out on write.</strong> It is the simpler model and handles the common case well. Then proactively mention the celebrity problem and propose the hybrid approach. This shows you understand real-world scale challenges.</div>
+<div class="tip-card"><strong>Quantify the fan-out problem.</strong> Saying "a user with 300 friends causes 300 fan-out writes, and at 4,600 posts/sec that is 1.4M fan-out writes/sec" makes the problem concrete and justifies your hybrid design.</div>
+<div class="tip-card"><strong>Mention the hybrid approach for celebrities.</strong> This is the key insight interviewers look for. Normal users use push, celebrities use pull, merged at read time. Facebook and Twitter both use variations of this approach.</div>
+<div class="tip-card"><strong>Discuss feed ranking as a separate layer.</strong> Feed generation (what posts to include) and feed ranking (what order to show them) are separate concerns. Mention that ranking can start simple (chronological) and evolve to ML-based. This shows iterative thinking.</div>
+</section>
+
+</div>
+
+<script>
+function revealReqs(){document.getElementById(`reqReveal`).classList.add(`show`)}
+function revealCap(){document.getElementById(`capReveal`).classList.add(`show`)}
+function revealApi(){document.getElementById(`apiReveal`).classList.add(`show`)}
+function revealData(){document.getElementById(`dataReveal`).classList.add(`show`)}
+function revealArch(){document.getElementById(`archReveal`).classList.add(`show`)}
+
+function calcCapacity(){
+  var totalUsers=+document.getElementById(`totalUsers`).value||0;
+  var dauPct=+document.getElementById(`dauPct`).value||0;
+  var readsPerDay=+document.getElementById(`readsPerDay`).value||0;
+  var postsPerFeed=+document.getElementById(`postsPerFeed`).value||0;
+  var avgFriends=+document.getElementById(`avgFriends`).value||0;
+  var postsPerDay=+document.getElementById(`postsPerDay`).value||0;
+  var dau=Math.round(totalUsers*dauPct/100);
+  var feedReadsPerSec=Math.round(dau*readsPerDay/86400);
+  var postsPerSec=Math.round(dau*postsPerDay/86400);
+  var fanoutPerSec=Math.round(postsPerSec*avgFriends);
+  document.getElementById(`crDAU`).textContent=formatNum(dau);
+  document.getElementById(`crFeedReads`).textContent=formatNum(feedReadsPerSec);
+  document.getElementById(`crPosts`).textContent=formatNum(postsPerSec);
+  document.getElementById(`crFanout`).textContent=formatNum(fanoutPerSec);
+}
+function formatNum(n){
+  if(n>=1e9)return (n/1e9).toFixed(1)+`B`;
+  if(n>=1e6)return (n/1e6).toFixed(1)+`M`;
+  if(n>=1e3)return (n/1e3).toFixed(1)+`K`;
+  return n.toLocaleString();
+}
+calcCapacity();
+
+function toggleDB(mode){
+  document.querySelectorAll(`#s4 .toggle-opt`).forEach(function(o){o.classList.remove(`active`)});
+  if(mode===`tables`){
+    document.getElementById(`dbTables`).style.display=`block`;
+    document.getElementById(`dbCache`).style.display=`none`;
+    document.querySelectorAll(`#s4 .toggle-opt`)[0].classList.add(`active`);
+  }else{
+    document.getElementById(`dbTables`).style.display=`none`;
+    document.getElementById(`dbCache`).style.display=`block`;
+    document.querySelectorAll(`#s4 .toggle-opt`)[1].classList.add(`active`);
+  }
+}
+
+function toggleDD(header){
+  var body=header.nextElementSibling;
+  var arrow=header.querySelector(`.dd-arrow`);
+  body.classList.toggle(`open`);
+  arrow.classList.toggle(`open`);
+}
+
+// Architecture canvas
+var canvas=document.getElementById(`archCanvas`),ctx=canvas.getContext(`2d`);
+var currentPath=`read`,animT=0,animRAF;
+var DPR=window.devicePixelRatio||1;
+
+function resizeCanvas(){
+  var w=canvas.parentElement.clientWidth;
+  canvas.style.width=w+`px`;canvas.style.height=`340px`;
+  canvas.width=w*DPR;canvas.height=340*DPR;
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+}
+resizeCanvas();
+window.addEventListener(`resize`,resizeCanvas);
+
+function setPath(p){
+  currentPath=p;
+  document.getElementById(`pathRead`).classList.toggle(`active`,p===`read`);
+  document.getElementById(`pathWrite`).classList.toggle(`active`,p===`write`);
+  animT=0;
+}
+
+function drawBox(x,y,w,h,label,color){
+  ctx.fillStyle=color+`22`;ctx.strokeStyle=color;ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.roundRect(x-w/2,y-h/2,w,h,6);ctx.fill();ctx.stroke();
+  ctx.fillStyle=`#e6edf3`;ctx.font=`bold 11px -apple-system,sans-serif`;ctx.textAlign=`center`;ctx.textBaseline=`middle`;
+  ctx.fillText(label,x,y);
+}
+
+function drawPacket(x1,y1,x2,y2,t,color){
+  var px=x1+(x2-x1)*t,py=y1+(y2-y1)*t;
+  ctx.fillStyle=color;ctx.beginPath();ctx.arc(px,py,5,0,Math.PI*2);ctx.fill();
+}
+
+function drawArch(){
+  var W=canvas.width/DPR,H=340;
+  ctx.clearRect(0,0,W,H);
+
+  if(currentPath===`write`){
+    var user={x:60,y:170};
+    var postSvc={x:190,y:170};
+    var postsDB={x:190,y:280};
+    var fanout={x:340,y:170};
+    var friendsDB={x:340,y:280};
+    var cache1={x:500,y:100};
+    var cache2={x:500,y:170};
+    var cache3={x:500,y:240};
+
+    drawBox(user.x,user.y,80,36,`User`,`#e6edf3`);
+    drawBox(postSvc.x,postSvc.y,100,36,`Post Service`,`#58a6ff`);
+    drawBox(postsDB.x,postsDB.y,90,36,`Posts DB`,`#bc8cff`);
+    drawBox(fanout.x,fanout.y,110,36,`Fan-out Svc`,`#3fb950`);
+    drawBox(friendsDB.x,friendsDB.y,100,36,`Friends DB`,`#bc8cff`);
+    drawBox(cache1.x,cache1.y,110,32,`Feed Cache A`,`#f0883e`);
+    drawBox(cache2.x,cache2.y,110,32,`Feed Cache B`,`#f0883e`);
+    drawBox(cache3.x,cache3.y,110,32,`Feed Cache C`,`#f0883e`);
+
+    ctx.strokeStyle=`#30363d`;ctx.lineWidth=1;ctx.setLineDash([4,3]);
+    ctx.beginPath();ctx.moveTo(100,170);ctx.lineTo(140,170);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(240,170);ctx.lineTo(285,170);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(190,188);ctx.lineTo(190,262);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(340,188);ctx.lineTo(340,262);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(395,160);ctx.lineTo(445,100);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(395,170);ctx.lineTo(445,170);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(395,180);ctx.lineTo(445,240);ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.font=`bold 10px sans-serif`;ctx.fillStyle=`#8b949e`;ctx.textAlign=`center`;
+    ctx.fillText(`WRITE PATH: Post Creation + Fan-out`,W/2,25);
+
+    var seg=animT*6;
+    if(seg<1) drawPacket(100,170,240,170,seg,`#1f6feb`);
+    else if(seg<2) drawPacket(190,188,190,262,seg-1,`#bc8cff`);
+    else if(seg<3) drawPacket(240,170,285,170,seg-2,`#3fb950`);
+    else if(seg<4){
+      drawPacket(395,160,445,100,seg-3,`#f0883e`);
+      drawPacket(395,170,445,170,seg-3,`#f0883e`);
+      drawPacket(395,180,445,240,seg-3,`#f0883e`);
+    }else{
+      ctx.fillStyle=`#3fb950`;ctx.font=`bold 11px sans-serif`;
+      ctx.fillText(`Fan-out to all followers`,470,60);
+    }
+  }else{
+    var user2={x:60,y:170};
+    var feedSvc={x:190,y:170};
+    var feedCache={x:340,y:110};
+    var celebQuery={x:340,y:230};
+    var ranker={x:500,y:170};
+    var hydrate={x:640,y:170};
+
+    drawBox(user2.x,user2.y,80,36,`User`,`#e6edf3`);
+    drawBox(feedSvc.x,feedSvc.y,100,36,`Feed Service`,`#58a6ff`);
+    drawBox(feedCache.x,feedCache.y,100,36,`Feed Cache`,`#f0883e`);
+    drawBox(celebQuery.x,celebQuery.y,110,36,`Celebrity Posts`,`#bc8cff`);
+    drawBox(ranker.x,ranker.y,100,36,`ML Ranker`,`#3fb950`);
+    drawBox(hydrate.x,hydrate.y,100,36,`Hydrate`,`#58a6ff`);
+
+    ctx.strokeStyle=`#30363d`;ctx.lineWidth=1;ctx.setLineDash([4,3]);
+    ctx.beginPath();ctx.moveTo(100,170);ctx.lineTo(140,170);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(240,160);ctx.lineTo(290,110);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(240,180);ctx.lineTo(285,230);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(390,125);ctx.lineTo(450,165);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(395,220);ctx.lineTo(450,175);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(550,170);ctx.lineTo(590,170);ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.font=`bold 10px sans-serif`;ctx.fillStyle=`#8b949e`;ctx.textAlign=`center`;
+    ctx.fillText(`READ PATH: Feed Generation + Ranking`,W/2,25);
+
+    var seg2=animT*6;
+    if(seg2<1) drawPacket(100,170,240,170,seg2,`#58a6ff`);
+    else if(seg2<2){
+      drawPacket(240,160,290,110,seg2-1,`#f0883e`);
+      drawPacket(240,180,285,230,seg2-1,`#bc8cff`);
+    }else if(seg2<3){
+      drawPacket(390,125,450,165,seg2-2,`#f0883e`);
+      drawPacket(395,220,450,175,seg2-2,`#bc8cff`);
+    }else if(seg2<4){
+      drawPacket(450,170,550,170,seg2-3,`#3fb950`);
+      ctx.fillStyle=`#3fb950`;ctx.font=`10px sans-serif`;
+      ctx.fillText(`Merge + Rank`,500,145);
+    }else if(seg2<5){
+      drawPacket(550,170,590,170,seg2-4,`#58a6ff`);
+    }else{
+      ctx.fillStyle=`#3fb950`;ctx.font=`bold 11px sans-serif`;
+      ctx.fillText(`Ranked Feed Returned`,W/2,310);
+    }
+  }
+
+  animT+=0.003;
+  if(animT>1)animT=0;
+  animRAF=requestAnimationFrame(drawArch);
+}
+drawArch();
+</script>
+<footer style="text-align:center;padding:1rem;border-top:1px solid #ccc;margin-top:2rem;color:#666;font-size:0.8rem;">
+    © <span id="copyright-year"></span> Clark Ngo
+  </footer>
+  <script>document.getElementById('copyright-year').textContent = new Date().getFullYear();</script>
+</body>
+</html>

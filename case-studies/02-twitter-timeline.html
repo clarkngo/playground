@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Twitter: The Timeline Architecture Problem</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0d1117;color:#e6edf3;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;line-height:1.7}
+a{color:#58a6ff;text-decoration:none}a:hover{text-decoration:underline}
+nav{background:#161b22;border-bottom:1px solid #30363d;padding:16px 24px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100}
+.brand{font-size:1.2rem;font-weight:700}.back{color:#8b949e;font-size:.9rem}
+.container{max-width:900px;margin:0 auto;padding:24px 20px}
+.hero{background:linear-gradient(135deg,#1a1e24 0%,#1b2838 100%);border:1px solid #30363d;border-radius:12px;padding:48px 36px;margin-bottom:36px;text-align:center}
+.hero h1{font-size:2.2rem;margin-bottom:8px}.hero .tagline{color:#f0883e;font-size:1.1rem;margin-bottom:6px}.hero .meta{color:#8b949e;font-size:.9rem}
+.timeline-wrapper{overflow-x:auto;margin-bottom:36px;padding:12px 0}
+.timeline{display:flex;align-items:flex-start;min-width:700px;position:relative;padding:20px 10px}
+.timeline::before{content:'';position:absolute;top:30px;left:10px;right:10px;height:3px;background:#30363d;border-radius:2px}
+.timeline-item{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;z-index:1}
+.timeline-dot{width:16px;height:16px;background:#f0883e;border-radius:50%;margin-bottom:12px;border:3px solid #0d1117;box-shadow:0 0 0 2px #f0883e}
+.timeline-date{font-size:.75rem;color:#f0883e;font-weight:600;margin-bottom:4px}
+.timeline-label{font-size:.8rem;color:#8b949e;text-align:center;max-width:120px}
+section.story{margin-bottom:32px}
+section.story h2{font-size:1.5rem;color:#e6edf3;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #30363d}
+section.story p{color:#c9d1d9;margin-bottom:14px;font-size:.97rem}
+.canvas-section{margin-bottom:36px}
+.canvas-section h2{font-size:1.5rem;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #30363d}
+.toggle-btn{display:inline-block;padding:8px 20px;background:#f0883e;color:#0d1117;border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:.9rem;margin-bottom:12px;transition:background .2s}
+.toggle-btn:hover{background:#d4772e}
+canvas{display:block;width:100%;border:1px solid #30363d;border-radius:8px;background:#0d1117}
+.decision-section{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:28px;margin-bottom:36px}
+.decision-section h2{font-size:1.4rem;margin-bottom:8px}.decision-section .prompt{color:#8b949e;margin-bottom:18px;font-size:.95rem}
+.choices{display:flex;flex-direction:column;gap:10px}
+.choice-btn{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:14px 18px;color:#e6edf3;cursor:pointer;text-align:left;font-size:.93rem;transition:border-color .2s}
+.choice-btn:hover{border-color:#58a6ff}.choice-btn.correct{border-color:#3fb950;background:#0d1b0e}.choice-btn.wrong{border-color:#f85149;background:#1b0d0d}
+.reveal{margin-top:16px;padding:16px;background:#0d1117;border:1px solid #3fb950;border-radius:8px;display:none;font-size:.93rem;color:#c9d1d9}
+.metrics-panel{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:36px}
+.metric{background:#161b22;border:1px solid #30363d;border-radius:10px;padding:20px;text-align:center}
+.metric .value{font-size:1.7rem;font-weight:700;color:#f0883e}.metric .label{font-size:.8rem;color:#8b949e;margin-top:4px}
+.lessons{margin-bottom:36px}
+.lessons h2{font-size:1.5rem;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #30363d}
+.lesson-card{background:#161b22;border-left:3px solid #f0883e;border-radius:0 8px 8px 0;padding:16px 20px;margin-bottom:12px;font-size:.93rem;color:#c9d1d9}
+.takeaways{margin-bottom:48px}
+.takeaways h2{font-size:1.5rem;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #30363d}
+.takeaway{display:flex;align-items:baseline;gap:10px;margin-bottom:10px;font-size:.95rem;color:#c9d1d9}
+.takeaway::before{content:'→';color:#f0883e;font-weight:700;flex-shrink:0}
+</style>
+    <meta name="author" content="Clark Ngo">
+    <meta name="copyright" content="Clark Ngo">
+  </head>
+<body>
+<nav><span class="brand">📖 Case Studies</span><a href="index.html" class="back">← All Case Studies</a></nav>
+<div class="container">
+
+<div class="hero">
+<h1>Twitter: The Timeline Architecture Problem</h1>
+<div class="tagline">How fan-out-on-write met its nemesis: celebrity accounts</div>
+<div class="meta">2006 — Present | Distributed Systems &amp; Caching</div>
+</div>
+
+<div class="timeline-wrapper">
+<div class="timeline">
+<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-date">2006</div><div class="timeline-label">Simple pull model</div></div>
+<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-date">2010</div><div class="timeline-label">Redis cache layer</div></div>
+<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-date">2012</div><div class="timeline-label">Fan-out-on-write</div></div>
+<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-date">2013</div><div class="timeline-label">Celebrity problem discovered</div></div>
+<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-date">2014</div><div class="timeline-label">Hybrid approach</div></div>
+<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-date">Now</div><div class="timeline-label">Current architecture</div></div>
+</div>
+</div>
+
+<section class="story">
+<h2>The Naive Beginning: Pull on Read</h2>
+<p>When Twitter launched in 2006, the timeline was simple. When a user opened their home feed, the system would query the database for every account that user followed, fetch recent tweets from each, merge them by timestamp, and return the result. This is the fan-out-on-read approach: do all the work at read time.</p>
+<p>For a small social network, this was perfectly adequate. But Twitter grew explosively. By 2010, users were requesting hundreds of millions of timeline views per day. Each view triggered dozens of database queries — one per followed account. The database was buckling under the read load, and timeline latency was climbing into seconds rather than milliseconds.</p>
+</section>
+
+<section class="story">
+<h2>The Redis Revolution: Fan-Out-on-Write</h2>
+<p>Twitter engineers realized they could invert the problem. Instead of assembling timelines at read time, they could pre-compute them at write time. When a user posted a tweet, the system would immediately push that tweet into the Redis-cached timeline of every follower. When a user opened their feed, the pre-computed timeline was already sitting in Redis, ready to serve in under 5 milliseconds.</p>
+<p>This was fan-out-on-write, and it was transformative. Read latency dropped dramatically. The user experience became snappy and responsive. Twitter invested heavily in a massive Redis cluster — thousands of nodes holding hundreds of millions of pre-computed timelines in memory. For the average user with a few hundred followers, this was elegant and efficient.</p>
+</section>
+
+<section class="story">
+<h2>The Celebrity Problem</h2>
+<p>Then came the thundering herd. When a celebrity with 50 million followers posted a tweet, the fan-out system needed to write that single tweet into 50 million separate Redis timelines. This created enormous write amplification — a single tweet generating tens of millions of write operations. The fan-out for a single celebrity tweet could take minutes to propagate, during which some followers would see the tweet and others would not.</p>
+<p>Worse, when multiple celebrities tweeted in rapid succession, the write queues would back up catastrophically. The fan-out workers would fall behind, timelines would go stale, and the entire system would degrade. The very optimization that made normal timelines fast was causing systemic instability when applied to accounts with massive follower counts.</p>
+</section>
+
+<section class="story">
+<h2>The Hybrid Solution</h2>
+<p>Twitter settled on a hybrid architecture that combined the best of both approaches. For normal users — those with fewer than roughly 500,000 followers — fan-out-on-write continued as before. Their tweets were pre-computed into follower timelines at write time, keeping read latency low for the vast majority of timeline requests.</p>
+<p>For celebrity accounts exceeding the follower threshold, the system switched to fan-out-on-read. Celebrity tweets were not pushed into individual timelines. Instead, when a user opened their feed, the system would fetch their pre-computed timeline from Redis and then merge in recent tweets from any celebrity accounts they followed, queried at read time. This added a small amount of read latency but eliminated the catastrophic write amplification.</p>
+<p>The threshold was not arbitrary. Twitter engineers analyzed the cost curves: below 500,000 followers, the write cost of fan-out was cheaper than the read cost of merging. Above that threshold, the economics flipped. The hybrid approach optimized for the common case while providing an escape hatch for the extreme case.</p>
+</section>
+
+<section class="story">
+<h2>Engineering at the Edge</h2>
+<p>The hybrid timeline architecture required sophisticated engineering beyond the basic push/pull split. The merge operation at read time had to be fast enough that users could not perceive the difference between a fully pre-computed timeline and one that included celebrity merges. Twitter built custom merge algorithms that could combine sorted streams from Redis and the celebrity tweet cache in constant time relative to the number of celebrities a user followed.</p>
+<p>The system also needed to dynamically reclassify accounts as they crossed the follower threshold. An account going viral could jump from thousands to millions of followers in hours. The fan-out system had to detect these transitions and seamlessly switch the account from write-path to read-path distribution without losing any tweets or creating duplicates in follower timelines.</p>
+</section>
+
+<div class="canvas-section">
+<h2>Architecture Diagram</h2>
+<button class="toggle-btn" id="archToggle" onclick="toggleArch()">Show After</button>
+<canvas id="archCanvas" width="900" height="280"></canvas>
+</div>
+
+<div class="decision-section">
+<h2>What Would You Do?</h2>
+<p class="prompt">A celebrity with 30 million followers just posted a tweet. Your system uses fan-out-on-write. How do you deliver this tweet to all followers?</p>
+<div class="choices">
+<div class="choice-btn" onclick="choose(this,false)">A) Fan-out to all 30 million follower timelines — push the tweet into every Redis timeline as usual.</div>
+<div class="choice-btn" onclick="choose(this,true)">B) Fan-out-on-read for this user — skip the write fan-out and merge this celebrity's tweets at query time when followers load their timelines.</div>
+<div class="choice-btn" onclick="choose(this,false)">C) Delay delivery and batch the writes — queue the fan-out and process it gradually over several minutes to reduce write pressure.</div>
+</div>
+<div class="reveal" id="reveal">Twitter chose <strong>B — fan-out-on-read for celebrity accounts</strong>. Writing a single tweet into 30 million Redis timelines creates massive write amplification that can destabilize the entire cluster. Instead, celebrity tweets are stored separately and merged into follower timelines at read time. The slight increase in read latency is far preferable to the catastrophic write storms that fan-out-on-write causes for accounts with tens of millions of followers. Batching (option C) only delays the problem without solving it.</div>
+</div>
+
+<h2 style="font-size:1.5rem;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #30363d">Key Metrics</h2>
+<div class="metrics-panel">
+<div class="metric"><div class="value">500M</div><div class="label">Tweets / Day</div></div>
+<div class="metric"><div class="value">300K/s</div><div class="label">Timeline Reads / Sec</div></div>
+<div class="metric"><div class="value">5ms</div><div class="label">P95 Latency (After)</div></div>
+<div class="metric"><div class="value">500K</div><div class="label">Follower Threshold</div></div>
+</div>
+
+<div class="lessons">
+<h2>Lessons Extracted</h2>
+<div class="lesson-card"><strong>Hybrid approaches beat pure strategies.</strong> Neither fan-out-on-write nor fan-out-on-read was optimal for all cases. The best solution combined both, applying each where it was most cost-effective.</div>
+<div class="lesson-card"><strong>Hot-key problems require special handling.</strong> Celebrity accounts are hot keys in disguise. Any system that treats all keys uniformly will eventually be brought down by extreme outliers.</div>
+<div class="lesson-card"><strong>Pre-computation trades write cost for read speed.</strong> Fan-out-on-write is a classic example of shifting work from the read path to the write path. This trade-off only makes sense when write amplification remains bounded.</div>
+<div class="lesson-card"><strong>Real-world systems need escape hatches for edge cases.</strong> The 500K follower threshold is an escape hatch — a pragmatic acknowledgment that no single strategy handles the full distribution of user behavior.</div>
+</div>
+
+<div class="takeaways">
+<h2>Key Takeaways</h2>
+<div class="takeaway">Hybrid approaches beat pure strategies when workload distributions have extreme outliers.</div>
+<div class="takeaway">Hot-key problems require special handling — treating all entities uniformly breaks at scale.</div>
+<div class="takeaway">Pre-computation trades write cost for read speed, but only works when write amplification is bounded.</div>
+<div class="takeaway">Real-world systems need escape hatches for edge cases that violate baseline assumptions.</div>
+</div>
+
+</div>
+
+<script>
+const canvas=document.getElementById('archCanvas'),ctx=canvas.getContext('2d');
+let showAfter=false,animProgress=0,animating=false;
+function lerp(a,b,t){return a+(b-a)*t}
+function drawBox(x,y,w,h,label,color,alpha){ctx.globalAlpha=alpha;ctx.fillStyle=color;ctx.strokeStyle='#30363d';ctx.lineWidth=1;ctx.beginPath();ctx.roundRect(x,y,w,h,6);ctx.fill();ctx.stroke();ctx.fillStyle='#e6edf3';ctx.font='bold 11px sans-serif';ctx.textAlign='center';ctx.fillText(label,x+w/2,y+h/2+4);ctx.globalAlpha=1}
+function drawArrow(x1,y1,x2,y2,color,alpha){ctx.globalAlpha=alpha;ctx.strokeStyle=color;ctx.fillStyle=color;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();const a=Math.atan2(y2-y1,x2-x1);ctx.beginPath();ctx.moveTo(x2,y2);ctx.lineTo(x2-8*Math.cos(a-0.4),y2-8*Math.sin(a-0.4));ctx.lineTo(x2-8*Math.cos(a+0.4),y2-8*Math.sin(a+0.4));ctx.fill();ctx.globalAlpha=1}
+function draw(){
+ctx.clearRect(0,0,900,280);
+const t=animProgress;
+const bef=1-t,aft=t;
+// Before: Simple pull model
+if(bef>0.01){
+drawBox(380,20,140,40,'User Request','#58a6ff44',bef);
+drawArrow(450,60,450,90,'#8b949e',bef);
+drawBox(350,90,200,50,'DB Query Per Follower','#6e3630',bef);
+drawArrow(450,140,250,180,'#f85149',bef);
+drawArrow(450,140,450,180,'#f85149',bef);
+drawArrow(450,140,650,180,'#f85149',bef);
+drawBox(190,180,120,35,'Follower DB','#f8514933',bef);
+drawBox(390,180,120,35,'Follower DB','#f8514933',bef);
+drawBox(590,180,120,35,'Follower DB','#f8514933',bef);
+ctx.globalAlpha=bef;ctx.fillStyle='#f85149';ctx.font='bold 11px sans-serif';ctx.textAlign='center';
+ctx.fillText('SLOW — query per follower at read time',450,250);ctx.globalAlpha=1;
+}
+// After: Redis pre-computed + celebrity merge
+if(aft>0.01){
+drawBox(380,15,140,35,'User Request','#58a6ff44',aft);
+drawArrow(450,50,450,75,'#3fb950',aft);
+drawBox(330,75,240,40,'Redis Timeline (pre-computed)','#3fb95044',aft);
+drawArrow(450,115,450,140,'#3fb950',aft);
+drawBox(350,140,200,35,'Fast Read: 5ms','#3fb95033',aft);
+ctx.globalAlpha=aft;ctx.fillStyle='#f0883e';ctx.font='bold 10px sans-serif';ctx.textAlign='center';
+ctx.fillText('+ Celebrity Merge at Read Time',450,200);ctx.globalAlpha=1;
+drawBox(200,210,160,35,'Celebrity Tweet Cache','#f0883e33',aft);
+drawBox(540,210,160,35,'Normal Fan-out Writes','#58a6ff33',aft);
+drawArrow(280,210,400,175,'#f0883e',aft*0.6);
+drawArrow(620,210,500,175,'#58a6ff',aft*0.6);
+ctx.globalAlpha=aft;ctx.fillStyle='#3fb950';ctx.font='bold 11px sans-serif';
+ctx.fillText('FAST — hybrid push/pull architecture',450,265);ctx.globalAlpha=1;
+}
+}
+function animate(){
+if(!animating)return;
+const target=showAfter?1:0;
+const diff=target-animProgress;
+if(Math.abs(diff)<0.01){animProgress=target;animating=false;draw();return}
+animProgress+=diff*0.08;
+draw();requestAnimationFrame(animate);
+}
+function toggleArch(){
+showAfter=!showAfter;
+document.getElementById('archToggle').textContent=showAfter?'Show Before':'Show After';
+animating=true;animate();
+}
+draw();
+
+function choose(el,correct){
+document.querySelectorAll('.choice-btn').forEach(b=>{b.style.pointerEvents='none'});
+el.classList.add(correct?'correct':'wrong');
+if(correct){document.querySelectorAll('.choice-btn').forEach(b=>{if(b!==el)b.style.opacity='0.4'})}
+else{document.querySelectorAll('.choice-btn').forEach(b=>{if(b!==el&&b.textContent.includes('Fan-out-on-read'))b.classList.add('correct')})}
+document.getElementById('reveal').style.display='block';
+}
+</script>
+<footer style="text-align:center;padding:1rem;border-top:1px solid #ccc;margin-top:2rem;color:#666;font-size:0.8rem;">
+    © <span id="copyright-year"></span> Clark Ngo
+  </footer>
+  <script>document.getElementById('copyright-year').textContent = new Date().getFullYear();</script>
+</body>
+</html>

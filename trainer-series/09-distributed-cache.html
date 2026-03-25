@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Design a Distributed Cache — System Design Trainer</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0d1117;color:#e6edf3;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;line-height:1.7}
+a{color:#58a6ff;text-decoration:none}a:hover{text-decoration:underline}
+nav{background:#161b22;border-bottom:1px solid #30363d;padding:16px 24px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100}
+.brand{font-size:1.2rem;font-weight:700}.back{color:#8b949e;font-size:.9rem}
+.container{max-width:960px;margin:0 auto;padding:24px 20px}
+.hero{background:linear-gradient(135deg,#1a1e24 0%,#2a1a06 100%);border:1px solid #30363d;border-radius:12px;padding:48px 36px;margin-bottom:36px;text-align:center}
+.hero h1{font-size:2.2rem;margin-bottom:8px}.hero .tagline{color:#f0883e;font-size:1.1rem;margin-bottom:6px}.hero .meta{color:#8b949e;font-size:.9rem}
+section.step{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:28px;margin-bottom:24px}
+section.step h2{font-size:1.4rem;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #30363d;display:flex;align-items:center;gap:10px}
+.step-num{background:#f0883e;color:#0d1117;font-size:.75rem;font-weight:700;padding:2px 10px;border-radius:12px}
+label{display:block;margin-bottom:8px;font-size:.93rem;color:#c9d1d9;cursor:pointer}
+label input{margin-right:8px}
+.radio-group{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.reveal-btn{display:inline-block;padding:8px 20px;background:#f0883e;color:#0d1117;border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:.9rem;margin-top:12px;transition:background .2s}
+.reveal-btn:hover{background:#d4772e}
+.reveal{margin-top:16px;padding:16px;background:#0d1117;border:1px solid #3fb950;border-radius:8px;display:none;font-size:.93rem;color:#c9d1d9}
+.reveal.show{display:block}
+.correct-mark{color:#3fb950;font-weight:700;margin-left:4px}
+.input-group{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.input-group label{font-size:.85rem;color:#8b949e;margin-bottom:2px}
+.input-group input{width:100%;padding:8px 12px;background:#0d1117;border:1px solid #30363d;border-radius:6px;color:#e6edf3;font-size:.9rem}
+.calc-result{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:16px;margin-top:12px}
+.calc-row{display:flex;justify-content:space-between;padding:4px 0;font-size:.9rem}
+.calc-row .label{color:#8b949e}.calc-row .value{color:#f0883e;font-weight:600}
+pre{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:16px;overflow-x:auto;font-size:.85rem;color:#e6edf3;margin-bottom:12px;line-height:1.6}
+.code-comment{color:#8b949e}
+.toggle-row{display:flex;gap:8px;margin-bottom:16px}
+.toggle-opt{padding:6px 16px;border-radius:6px;border:1px solid #30363d;background:#0d1117;color:#8b949e;cursor:pointer;font-size:.85rem;font-weight:600;transition:all .2s}
+.toggle-opt.active{background:#1f6feb;color:#e6edf3;border-color:#1f6feb}
+.table-wrap{overflow-x:auto;margin-bottom:12px}
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+th{background:#21262d;color:#8b949e;padding:8px 12px;text-align:left;font-weight:600;border-bottom:1px solid #30363d}
+td{padding:8px 12px;border-bottom:1px solid #21262d;color:#c9d1d9}
+canvas{display:block;width:100%;border:1px solid #30363d;border-radius:8px;background:#0d1117;margin-bottom:12px}
+.collapsible{border:1px solid #30363d;border-radius:8px;margin-bottom:10px;overflow:hidden}
+.collapsible-header{padding:14px 18px;background:#21262d;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-weight:600;font-size:.93rem}
+.collapsible-header:hover{background:#282e36}
+.collapsible-body{padding:16px 18px;display:none;font-size:.9rem;color:#c9d1d9;line-height:1.7}
+.collapsible.open .collapsible-body{display:block}
+.collapsible-arrow{transition:transform .2s;color:#8b949e}.collapsible.open .collapsible-arrow{transform:rotate(90deg)}
+.tradeoff-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.tradeoff-card{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:18px}
+.tradeoff-card h4{color:#f0883e;margin-bottom:8px;font-size:.95rem}
+.tradeoff-card p{font-size:.85rem;color:#8b949e;line-height:1.6}
+.tip-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tip-card{background:#0d1117;border-left:3px solid #3fb950;border-radius:0 8px 8px 0;padding:14px 18px;font-size:.9rem;color:#c9d1d9}
+@media(max-width:640px){.input-group,.tradeoff-grid,.tip-cards{grid-template-columns:1fr}}
+</style>
+    <meta name="author" content="Clark Ngo">
+    <meta name="copyright" content="Clark Ngo">
+  </head>
+<body>
+<nav><span class="brand">🎯 Trainer Series</span><a href="index.html" class="back">← All Trainers</a></nav>
+<div class="container">
+
+<div class="hero">
+<h1>Design a Distributed Cache</h1>
+<div class="tagline">Memcached / Redis Cluster — sub-millisecond reads at scale</div>
+<div class="meta">LRU/LFU Eviction · Cache-Aside · Hot Key Mitigation · Thundering Herd</div>
+</div>
+
+<!-- STEP 1: Requirements -->
+<section class="step" id="step1">
+<h2><span class="step-num">Step 1</span> Requirements</h2>
+<p style="color:#8b949e;margin-bottom:16px">Select the functional requirements you think are essential:</p>
+<label><input type="checkbox" data-correct="true" data-group="func"> get/set/delete operations with TTL</label>
+<label><input type="checkbox" data-correct="true" data-group="func"> Distributed across multiple nodes</label>
+<label><input type="checkbox" data-correct="true" data-group="func"> Cache eviction (LRU/LFU)</label>
+<label><input type="checkbox" data-correct="true" data-group="func"> Replication for high availability</label>
+<label><input type="checkbox" data-correct="true" data-group="func"> Handle hot keys gracefully</label>
+<label><input type="checkbox" data-correct="true" data-group="func"> Prevent thundering herd on cache miss</label>
+<label><input type="checkbox" data-correct="false" data-group="func"> Full SQL query support on cached data</label>
+<label><input type="checkbox" data-correct="false" data-group="func"> Built-in data transformation pipeline</label>
+
+<p style="color:#8b949e;margin:16px 0 8px">Select the most important non-functional requirement:</p>
+<div class="radio-group">
+<label><input type="radio" name="nfr" value="latency" data-correct="true"> Sub-millisecond reads, horizontal scaling, graceful degradation</label>
+<label><input type="radio" name="nfr" value="consistency"> Strong consistency with ACID transactions</label>
+<label><input type="radio" name="nfr" value="storage"> Unlimited storage capacity</label>
+</div>
+
+<button class="reveal-btn" onclick="revealStep('step1')">Reveal Answer</button>
+<div class="reveal" id="step1-reveal">
+<strong>Functional:</strong> CRUD with TTL, distributed across nodes, eviction policies, replication, hot key handling, and thundering herd prevention. SQL queries and data pipelines belong to other systems.<br><br>
+<strong>Non-functional:</strong> Sub-millisecond reads are the primary reason a cache exists. Horizontal scaling lets you add nodes as traffic grows. Graceful degradation means the system still works (slower) when cache nodes go down.
+</div>
+</section>
+
+<!-- STEP 2: Capacity Estimation -->
+<section class="step" id="step2">
+<h2><span class="step-num">Step 2</span> Capacity Estimation</h2>
+<div class="input-group">
+<div><label>Total Cached Keys (M)</label><input type="number" id="cap-keys" value="10" oninput="calcCapacity()"></div>
+<div><label>Avg Value Size (KB)</label><input type="number" id="cap-valsize" value="10" oninput="calcCapacity()"></div>
+<div><label>Read QPS (K)</label><input type="number" id="cap-rqps" value="500" oninput="calcCapacity()"></div>
+<div><label>Write QPS (K)</label><input type="number" id="cap-wqps" value="50" oninput="calcCapacity()"></div>
+<div><label>Minimum Nodes for HA</label><input type="number" id="cap-nodes" value="3" oninput="calcCapacity()"></div>
+</div>
+<div class="calc-result" id="cap-result"></div>
+<button class="reveal-btn" onclick="revealStep('step2')">Reveal Answer</button>
+<div class="reveal" id="step2-reveal">
+<strong>Reference numbers:</strong><br>
+10M keys x 10KB = <strong>100GB</strong> total cache<br>
+3 nodes minimum → ~33GB per node (fits in memory on modern servers)<br>
+500K reads/sec, 50K writes/sec<br>
+Read bandwidth: 500K x 10KB = <strong>~5 GB/s</strong> (spread across nodes)<br>
+A single Redis node handles ~100K ops/sec → need ~5 nodes for reads alone
+</div>
+</section>
+
+<!-- STEP 3: API Design -->
+<section class="step" id="step3">
+<h2><span class="step-num">Step 3</span> API Design</h2>
+<pre><span class="code-comment">// Core Operations</span>
+GET    /cache/{key}
+       → 200 { "key": "user:123:profile", "value": "...", "ttl": 1800 }
+       → 404 { "error": "cache_miss" }
+
+PUT    /cache/{key}
+       Body: { "value": "...", "ttl": 3600 }
+       → 200 { "stored": true }
+
+DELETE /cache/{key}
+       → 200 { "deleted": true }</pre>
+<button class="reveal-btn" onclick="revealStep('step3')">Reveal Answer</button>
+<div class="reveal" id="step3-reveal">
+<strong>In practice, caches use a client library, not HTTP APIs.</strong> The client library handles:
+<pre style="margin-top:8px"><span class="code-comment">// Client library (pseudocode)</span>
+class CacheClient {
+  constructor(nodeList) {
+    this.ring = new ConsistentHashRing(nodeList);
+  }
+  get(key) {
+    const node = this.ring.getNode(key);
+    return node.sendCommand('GET', key);
+  }
+  set(key, value, ttl) {
+    const node = this.ring.getNode(key);
+    return node.sendCommand('SET', key, value, ttl);
+  }
+}</pre>
+The client library computes the consistent hash locally, connecting directly to the correct cache node. No proxy needed — this eliminates an extra network hop.
+</div>
+</section>
+
+<!-- STEP 4: Data Model -->
+<section class="step" id="step4">
+<h2><span class="step-num">Step 4</span> Data Model</h2>
+<div class="toggle-row">
+<div class="toggle-opt active" onclick="toggleDM('lru')">LRU Implementation</div>
+<div class="toggle-opt" onclick="toggleDM('lfu')">LFU Implementation</div>
+</div>
+<div id="dm-lru">
+<div class="table-wrap"><table>
+<tr><th>Component</th><th>Data Structure</th><th>Purpose</th></tr>
+<tr><td>Hash Map</td><td>key → DLL Node pointer</td><td>O(1) key lookup</td></tr>
+<tr><td>Doubly-Linked List</td><td>DLL of (key, value, ttl)</td><td>Recency order: head = most recent</td></tr>
+<tr><td>On GET</td><td>Move node to head</td><td>Mark as recently used</td></tr>
+<tr><td>On SET (full)</td><td>Evict tail node</td><td>Remove least recently used</td></tr>
+</table></div>
+<p style="color:#8b949e;font-size:.85rem">Both GET and SET are O(1). The hash map provides instant lookup; the DLL maintains order without shifting elements.</p>
+</div>
+<div id="dm-lfu" style="display:none">
+<div class="table-wrap"><table>
+<tr><th>Component</th><th>Data Structure</th><th>Purpose</th></tr>
+<tr><td>Hash Map</td><td>key → (value, freq, DLL Node)</td><td>O(1) key lookup</td></tr>
+<tr><td>Frequency Map</td><td>freq → DLL of keys</td><td>Group keys by access frequency</td></tr>
+<tr><td>Min Frequency</td><td>integer</td><td>Track lowest frequency for eviction</td></tr>
+<tr><td>On GET</td><td>Move key from freq→freq+1 list</td><td>Increment access count</td></tr>
+<tr><td>On SET (full)</td><td>Evict from min-freq list</td><td>Remove least frequently used</td></tr>
+</table></div>
+<p style="color:#8b949e;font-size:.85rem">LFU also achieves O(1) operations using the frequency map trick. Ties broken by recency within each frequency bucket.</p>
+</div>
+<button class="reveal-btn" onclick="revealStep('step4')">Reveal Answer</button>
+<div class="reveal" id="step4-reveal">
+<strong>LRU is the default choice</strong> for most caching scenarios. Simple, effective, and handles most access patterns well. LFU is better when access frequency varies widely (e.g., some keys are accessed 1000x more than others and should never be evicted).<br><br>
+<strong>Key distribution:</strong> Consistent hashing ring maps keys to cache nodes. Each node independently manages its own eviction. No coordination needed between nodes for eviction decisions.
+</div>
+</section>
+
+<!-- STEP 5: Architecture -->
+<section class="step" id="step5">
+<h2><span class="step-num">Step 5</span> Architecture</h2>
+<canvas id="archCanvas" width="900" height="300"></canvas>
+<button class="reveal-btn" onclick="revealStep('step5')">Reveal Answer</button>
+<div class="reveal" id="step5-reveal">
+<strong>Cache-Aside (Lazy Loading):</strong> App checks cache → miss → query DB → populate cache → return. Most common pattern. Cache only stores data that has been requested.<br><br>
+<strong>Write-Through:</strong> App writes to DB → immediately update cache. Ensures cache is always consistent. Higher write latency but eliminates stale reads.<br><br>
+<strong>Write-Behind (Write-Back):</strong> App writes to cache → async flush to DB in batches. Fastest writes, but risk data loss if cache node crashes before flush.<br><br>
+<strong>The cache-aside pattern is the safest starting point</strong> for most interviews. Mention write-through as an improvement if the interviewer asks about consistency.
+</div>
+</section>
+
+<!-- STEP 6: Deep Dives -->
+<section class="step" id="step6">
+<h2><span class="step-num">Step 6</span> Deep Dives</h2>
+
+<div class="collapsible" onclick="toggleCollapse(this)">
+<div class="collapsible-header">LRU vs LFU Eviction: Both O(1) <span class="collapsible-arrow">▶</span></div>
+<div class="collapsible-body">
+<p><strong>LRU (Least Recently Used):</strong> Favors recency. A key accessed once very recently beats a key accessed 1000 times yesterday. Works well for temporal access patterns (news, feeds, sessions).</p>
+<p style="margin-top:8px"><strong>LFU (Least Frequently Used):</strong> Favors frequency. A popular key stays cached even if not accessed in the last few minutes. Works well for skewed distributions (product catalog where 1% of products get 80% of traffic).</p>
+<p style="margin-top:8px"><strong>Hybrid approaches:</strong></p>
+<ul style="margin:8px 0 0 20px;color:#8b949e">
+<li>Window-TinyLFU (used by Caffeine): admission filter + LRU window + SLRU main</li>
+<li>Redis uses approximated LRU (samples 5 random keys, evicts least recent among them) for efficiency</li>
+<li>Some systems use TTL-based eviction alongside LRU/LFU as a safety net</li>
+</ul>
+</div>
+</div>
+
+<div class="collapsible" onclick="toggleCollapse(this)">
+<div class="collapsible-header">Hot Key Mitigation: The #1 Follow-Up Question <span class="collapsible-arrow">▶</span></div>
+<div class="collapsible-body">
+<p><strong>Problem:</strong> A viral post or flash sale causes millions of requests to hit the same cache key on the same node. That single node becomes a bottleneck.</p>
+<p style="margin-top:8px"><strong>Solutions:</strong></p>
+<ul style="margin:8px 0 0 20px;color:#8b949e">
+<li><strong>Local cache in app servers:</strong> Each app server caches hot keys in-process (with short TTL ~1-5s). Eliminates network hop entirely. Most effective solution.</li>
+<li><strong>Random suffix sharding:</strong> Store key under "product:123:shard0" through "product:123:shard9". Client randomly picks a shard. Spreads load across 10 nodes.</li>
+<li><strong>Read replicas:</strong> Replicate hot keys to multiple cache nodes. Client library routes reads to a random replica.</li>
+</ul>
+<p style="margin-top:8px"><strong>Detection:</strong> Monitor request counts per key. Auto-detect hot keys when rate exceeds a threshold. Promote to local cache automatically.</p>
+</div>
+</div>
+
+<div class="collapsible" onclick="toggleCollapse(this)">
+<div class="collapsible-header">Thundering Herd Prevention <span class="collapsible-arrow">▶</span></div>
+<div class="collapsible-body">
+<p><strong>Problem:</strong> A popular cache key expires. 10,000 concurrent requests all see a cache miss simultaneously. All 10,000 hit the database at once. Database crashes.</p>
+<p style="margin-top:8px"><strong>Solutions:</strong></p>
+<ul style="margin:8px 0 0 20px;color:#8b949e">
+<li><strong>Request coalescing (singleflight):</strong> Only the first request fetches from DB. All other concurrent requests wait for the first result and share it. Implemented with mutexes/locks per key.</li>
+<li><strong>Staggered TTLs:</strong> Add random jitter to TTL (e.g., TTL = 3600 + random(0, 300)). Prevents mass simultaneous expiration.</li>
+<li><strong>Cache warming:</strong> Proactively refresh keys before they expire. A background job refreshes keys with TTL < 10% remaining.</li>
+<li><strong>Never-expire + async refresh:</strong> Serve stale data while refreshing in the background. Trade freshness for availability.</li>
+</ul>
+</div>
+</div>
+</section>
+
+<!-- STEP 7: Trade-offs -->
+<section class="step" id="step7">
+<h2><span class="step-num">Step 7</span> Trade-offs</h2>
+<div class="tradeoff-grid">
+<div class="tradeoff-card">
+<h4>Cache-Aside</h4>
+<p>App manages cache explicitly. Cache only stores requested data. Risk of stale reads after DB update. Most common and simplest pattern.</p>
+</div>
+<div class="tradeoff-card">
+<h4>Write-Through</h4>
+<p>Cache always consistent with DB. Higher write latency (write both). No stale reads. Caches data that may never be read.</p>
+</div>
+<div class="tradeoff-card">
+<h4>LRU Eviction</h4>
+<p>Favors recency. Simple implementation. Works for most access patterns. Can evict frequently-used keys after a brief idle period.</p>
+</div>
+<div class="tradeoff-card">
+<h4>LFU Eviction</h4>
+<p>Favors frequency. Better for skewed distributions. More complex bookkeeping. New keys struggle to build frequency and may be evicted prematurely.</p>
+</div>
+<div class="tradeoff-card">
+<h4>Replication</h4>
+<p>Multiple copies of each key. Survives node failures. Higher memory cost. Read scalability. Must handle cache invalidation across replicas.</p>
+</div>
+<div class="tradeoff-card">
+<h4>Sharding Only</h4>
+<p>Each key on exactly one node. Maximum memory efficiency. Single point of failure per key. Simpler consistency. Cold start on node replacement.</p>
+</div>
+</div>
+</section>
+
+<!-- STEP 8: Interview Tips -->
+<section class="step" id="step8">
+<h2><span class="step-num">Step 8</span> Interview Tips</h2>
+<div class="tip-cards">
+<div class="tip-card"><strong>Draw cache-aside pattern first.</strong> App → check cache → miss → query DB → populate cache → return. This is the bread-and-butter pattern. Get it on the whiteboard early to anchor the discussion.</div>
+<div class="tip-card"><strong>Explain consistent hashing for node selection.</strong> Show how the client library maps keys to nodes. Mention virtual nodes for even distribution. This shows you understand the distributed aspect.</div>
+<div class="tip-card"><strong>Hot key problem is THE follow-up question.</strong> Interviewers will ask what happens when one key gets 100x more traffic. Have local caching, random sharding, and read replicas ready as answers.</div>
+<div class="tip-card"><strong>Mention thundering herd prevention.</strong> This shows depth beyond basic caching. Request coalescing (singleflight) and staggered TTLs are the key techniques. Most candidates miss this.</div>
+</div>
+</section>
+
+</div>
+
+<script>
+function revealStep(id) {
+  const el = document.getElementById(id + '-reveal');
+  el.classList.toggle('show');
+  if (id === 'step1') markCorrectAnswers(document.getElementById(id));
+}
+function markCorrectAnswers(section) {
+  section.querySelectorAll('input[type=checkbox]').forEach(cb => {
+    const lbl = cb.parentElement;
+    if (cb.dataset.correct === 'true' && !lbl.querySelector('.correct-mark')) {
+      const m = document.createElement('span');
+      m.className = 'correct-mark';
+      m.textContent = ' ✓';
+      lbl.appendChild(m);
+    }
+  });
+  section.querySelectorAll('input[type=radio]').forEach(r => {
+    const lbl = r.parentElement;
+    if (r.dataset.correct === 'true' && !lbl.querySelector('.correct-mark')) {
+      const m = document.createElement('span');
+      m.className = 'correct-mark';
+      m.textContent = ' ✓';
+      lbl.appendChild(m);
+    }
+  });
+}
+
+function calcCapacity() {
+  const keys = parseFloat(document.getElementById('cap-keys').value) || 0;
+  const valKB = parseFloat(document.getElementById('cap-valsize').value) || 0;
+  const rqps = parseFloat(document.getElementById('cap-rqps').value) || 0;
+  const wqps = parseFloat(document.getElementById('cap-wqps').value) || 0;
+  const nodes = parseFloat(document.getElementById('cap-nodes').value) || 1;
+  const totalGB = (keys * 1e6 * valKB) / (1024 * 1024);
+  const perNodeGB = totalGB / nodes;
+  const readBW = (rqps * 1000 * valKB) / (1024 * 1024);
+  const writeBW = (wqps * 1000 * valKB) / (1024 * 1024);
+  document.getElementById('cap-result').innerHTML =
+    `<div class="calc-row"><span class="label">Total Cache Size</span><span class="value">${totalGB.toFixed(0)} GB</span></div>` +
+    `<div class="calc-row"><span class="label">Per Node (${nodes} nodes)</span><span class="value">${perNodeGB.toFixed(1)} GB</span></div>` +
+    `<div class="calc-row"><span class="label">Read QPS</span><span class="value">${(rqps*1000).toLocaleString()}/sec</span></div>` +
+    `<div class="calc-row"><span class="label">Write QPS</span><span class="value">${(wqps*1000).toLocaleString()}/sec</span></div>` +
+    `<div class="calc-row"><span class="label">Read Bandwidth</span><span class="value">${readBW.toFixed(1)} GB/s</span></div>` +
+    `<div class="calc-row"><span class="label">Write Bandwidth</span><span class="value">${writeBW.toFixed(2)} GB/s</span></div>`;
+}
+calcCapacity();
+
+function toggleDM(type) {
+  document.querySelectorAll('#step4 .toggle-opt').forEach(o => o.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('dm-lru').style.display = type === 'lru' ? 'block' : 'none';
+  document.getElementById('dm-lfu').style.display = type === 'lfu' ? 'block' : 'none';
+}
+
+function toggleCollapse(el) {
+  if (el.classList.contains('collapsible')) el.classList.toggle('open');
+}
+
+// Architecture canvas
+(function() {
+  const c = document.getElementById('archCanvas');
+  const ctx = c.getContext('2d');
+  const DPR = window.devicePixelRatio || 1;
+  let W, H, frame = 0;
+  function resize() {
+    W = c.parentElement.clientWidth - 56;
+    H = 300;
+    c.width = W * DPR; c.height = H * DPR;
+    c.style.width = W + 'px'; c.style.height = H + 'px';
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  }
+  function drawBox(x, y, w, h, label, color) {
+    ctx.fillStyle = color + '22';
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.roundRect(x, y, w, h, 6); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#e6edf3';
+    ctx.font = 'bold 10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const lines = label.split('\n');
+    lines.forEach((line, i) => {
+      ctx.fillText(line, x + w / 2, y + h / 2 + (i - (lines.length-1)/2) * 13);
+    });
+  }
+  function drawArrow(x1, y1, x2, y2, color, dashed) {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+    if (dashed) ctx.setLineDash([4, 3]);
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+    ctx.setLineDash([]);
+    const a = Math.atan2(y2 - y1, x2 - x1);
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(x2, y2);
+    ctx.lineTo(x2 - 7 * Math.cos(a - 0.4), y2 - 7 * Math.sin(a - 0.4));
+    ctx.lineTo(x2 - 7 * Math.cos(a + 0.4), y2 - 7 * Math.sin(a + 0.4));
+    ctx.fill();
+  }
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    frame++;
+    // Cache-aside pattern
+    ctx.fillStyle = '#8b949e';
+    ctx.font = 'bold 10px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('CACHE-ASIDE PATTERN', 20, 18);
+    // App servers
+    drawBox(20, 40, 80, 35, 'App Server', '#58a6ff');
+    drawBox(20, 90, 80, 35, 'App Server', '#58a6ff');
+    // Client library
+    drawBox(140, 55, 85, 40, 'Client Lib\n(Hash Ring)', '#8b949e');
+    drawArrow(100, 57, 140, 70, '#58a6ff');
+    drawArrow(100, 107, 140, 80, '#58a6ff');
+    // Cache nodes
+    const cacheX = 270;
+    drawBox(cacheX, 30, 80, 30, 'Cache Node 1', '#3fb950');
+    drawBox(cacheX, 70, 80, 30, 'Cache Node 2', '#3fb950');
+    drawBox(cacheX, 110, 80, 30, 'Cache Node 3', '#3fb950');
+    drawArrow(225, 75, cacheX, 45, '#3fb950');
+    drawArrow(225, 75, cacheX, 85, '#3fb950');
+    drawArrow(225, 75, cacheX, 125, '#3fb950');
+    // DB
+    drawBox(420, 60, 70, 40, 'Database', '#bc8cff');
+    // Cache miss flow
+    const phase = (frame % 180) / 180;
+    if (phase < 0.2) {
+      // Request to cache
+      const t = phase / 0.2;
+      ctx.fillStyle = '#3fb950';
+      ctx.beginPath(); ctx.arc(225 + t * 45, 75 - t * 30, 3, 0, Math.PI * 2); ctx.fill();
+    } else if (phase < 0.35) {
+      // Cache miss - go to DB
+      const t = (phase - 0.2) / 0.15;
+      ctx.fillStyle = '#f85149';
+      ctx.font = '9px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('MISS', cacheX + 40, 25);
+      drawArrow(cacheX + 80, 45, 420, 75, '#f85149', true);
+      const dx = cacheX + 80 + t * (420 - cacheX - 80);
+      ctx.fillStyle = '#f85149';
+      ctx.beginPath(); ctx.arc(dx, 45 + t * 30, 3, 0, Math.PI * 2); ctx.fill();
+    } else if (phase < 0.55) {
+      // DB response, populate cache
+      ctx.fillStyle = '#f85149';
+      ctx.font = '9px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('MISS', cacheX + 40, 25);
+      drawArrow(420, 75, cacheX + 80, 45, '#bc8cff', true);
+      ctx.fillStyle = '#3fb950';
+      ctx.font = '9px sans-serif';
+      ctx.fillText('SET', cacheX + 40, 155);
+    } else if (phase < 0.7) {
+      // Cache hit on next request
+      const t = (phase - 0.55) / 0.15;
+      ctx.fillStyle = '#3fb950';
+      ctx.beginPath(); ctx.arc(225 + t * 45, 75 - t * 30, 3, 0, Math.PI * 2); ctx.fill();
+    } else if (phase < 0.85) {
+      ctx.fillStyle = '#3fb950';
+      ctx.font = 'bold 9px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('HIT!', cacheX + 40, 25);
+    }
+    // Eviction illustration
+    ctx.fillStyle = '#8b949e';
+    ctx.font = 'bold 10px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('LRU EVICTION', 20, 175);
+    // DLL visualization
+    const dllY = 200;
+    const items = ['K5', 'K2', 'K8', 'K1', 'K3'];
+    items.forEach((k, i) => {
+      const x = 40 + i * 70;
+      const isEvicting = i === items.length - 1 && phase > 0.7;
+      ctx.fillStyle = isEvicting ? '#f8514922' : '#21262d';
+      ctx.strokeStyle = isEvicting ? '#f85149' : '#30363d';
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.roundRect(x, dllY, 50, 28, 4); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = isEvicting ? '#f85149' : '#e6edf3';
+      ctx.font = 'bold 10px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(k, x + 25, dllY + 16);
+      if (i < items.length - 1) {
+        ctx.strokeStyle = '#30363d';
+        ctx.beginPath(); ctx.moveTo(x + 50, dllY + 14); ctx.lineTo(x + 70, dllY + 14); ctx.stroke();
+        ctx.fillStyle = '#30363d';
+        ctx.beginPath(); ctx.moveTo(x + 67, dllY + 10); ctx.lineTo(x + 70, dllY + 14); ctx.lineTo(x + 67, dllY + 18); ctx.fill();
+      }
+    });
+    ctx.fillStyle = '#3fb950';
+    ctx.font = '9px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Most Recent', 65, dllY + 42);
+    ctx.fillStyle = '#f85149';
+    ctx.fillText('Evict', 40 + (items.length - 1) * 70 + 25, dllY + 42);
+    requestAnimationFrame(draw);
+  }
+  resize();
+  window.addEventListener('resize', resize);
+  draw();
+})();
+</script>
+<footer style="text-align:center;padding:1rem;border-top:1px solid #ccc;margin-top:2rem;color:#666;font-size:0.8rem;">
+    © <span id="copyright-year"></span> Clark Ngo
+  </footer>
+  <script>document.getElementById('copyright-year').textContent = new Date().getFullYear();</script>
+</body>
+</html>

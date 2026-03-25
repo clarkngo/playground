@@ -43,6 +43,8 @@
     .badge-blue{background:#1c2940;color:#58a6ff;border:1px solid #1f6feb}
     .badge-purple{background:#1a0d2e;color:#c084fc;border:1px solid #6e40c9}
     .reflection-box{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:1.5rem;margin:1.5rem 0}
+    .sub-area-locked{opacity:.45;pointer-events:none;user-select:none}
+    .sub-area-unlocked{opacity:1;pointer-events:auto}
     .reflection-input{background:#21262d;border:1px solid #30363d;border-radius:6px;padding:.75rem;color:#e6edf3;width:100%;min-height:120px;font-family:inherit;resize:vertical}
     .reflection-input:focus{outline:none;border-color:#58a6ff}
     .text-input{background:#21262d;border:1px solid #30363d;border-radius:6px;padding:.5rem .75rem;color:#e6edf3;font-family:inherit;font-size:.9rem}
@@ -111,8 +113,36 @@
     #obj-overlay{position:fixed;bottom:1rem;right:1rem;z-index:1000;font-size:.8rem}
     #obj-badge{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.4rem .7rem;cursor:pointer;color:#8b949e;user-select:none;display:flex;align-items:center;gap:.4rem}
     #obj-panel{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.6rem .8rem;margin-top:.3rem;min-width:220px;display:block}
+    /* Export success banner */
+    #export-success-banner{display:none;position:fixed;bottom:0;left:0;right:0;background:linear-gradient(135deg,#1c2a1c,#0d1117);border-top:2px solid #3fb950;padding:1.5rem;text-align:center;z-index:9999;box-shadow:0 -4px 12px rgba(0,0,0,.5)}
+    #export-success-banner.show{display:block;animation:slideUp .4s ease-out}
+    @keyframes slideUp{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}
+    #export-success-banner h3{color:#3fb950;margin:0 0 .75rem;font-size:1.1rem}
+    #export-success-banner p{color:#8b949e;margin:0 0 1rem;font-size:.95rem}
+    #export-success-banner button{background:#3fb950;color:#000;border:none;border-radius:6px;padding:.6rem 1.5rem;cursor:pointer;font-weight:600;font-size:.95rem;transition:background .15s}
+    #export-success-banner button:hover{background:#2ea043}
+    /* Interactive Tour System */
+    #tour-modal{position:fixed;top:0;left:0;right:0;bottom:0;z-index:10000;display:none}
+    #tour-modal.show{display:flex;align-items:center;justify-content:center}
+    .tour-backdrop{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);backdrop-filter:blur(4px);z-index:10000}
+    .tour-container{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#0d1117;border:2px solid #1f6feb;border-radius:12px;padding:2rem;max-width:700px;width:90%;max-height:85vh;overflow-y:auto;z-index:10001;box-shadow:0 20px 60px rgba(0,0,0,.8)}
+    .tour-close{position:absolute;top:1rem;right:1rem;background:none;border:none;color:#8b949e;font-size:1.5rem;cursor:pointer;padding:0;width:32px;height:32px;display:flex;align-items:center;justify-content:center}
+    .tour-close:hover{color:#58a6ff}
+    .tour-step{display:none}
+    .tour-step.show{display:block}
+    .tour-step h2{color:#e6edf3;margin:0 0 1rem;font-size:1.3rem}
+    .tour-step p{color:#8b949e;margin:.5rem 0;line-height:1.65;font-size:.95rem}
+    .tour-highlight{background:#1c2a1c;border:2px solid #3fb950;border-radius:8px;padding:1rem;margin:1rem 0;color:#3fb950;font-weight:600;font-size:.9rem;text-align:center}
+    .tour-nav{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-top:2rem;padding-top:1.5rem;border-top:1px solid #30363d}
+    .tour-btn{background:#1f6feb;color:#fff;border:none;border-radius:6px;padding:.5rem 1rem;cursor:pointer;font-size:.9rem;font-weight:600;transition:background .15s}
+    .tour-btn:hover{background:#1c64e8}
+    .tour-btn-skip{background:transparent;color:#8b949e;border:1px solid #30363d;font-weight:400}
+    .tour-btn-skip:hover{border-color:#58a6ff;color:#58a6ff}
+    #tour-counter{color:#8b949e;font-size:.9rem;font-weight:600}
   </style>
-</head>
+    <meta name="author" content="Clark Ngo">
+    <meta name="copyright" content="Clark Ngo">
+  </head>
 <body>
 
 <nav class="navbar">
@@ -120,6 +150,8 @@
   <div class="nav-actions">
     <span style="font-size:.8rem;color:#8b949e">Module 10 Lab · Capstone</span>
     <button onclick="resetLab()" style="background:none;border:1px solid #30363d;border-radius:6px;padding:.25rem .6rem;color:#8b949e;cursor:pointer;font-size:.75rem">↺ Reset</button>
+    <button onclick="showTourModal(1)" title="How Labs Work" style="background:none;border:1px solid #30363d;border-radius:6px;padding:.25rem .6rem;color:#8b949e;cursor:pointer;font-size:.75rem;transition:border-color .15s" onmouseover="this.style.borderColor='#58a6ff';this.style.color='#58a6ff'" onmouseout="this.style.borderColor='#30363d';this.style.color='#8b949e'">❓ Help</button>
+    <button onclick="closeTab()" style="background:#2a1c1c;color:#f85149;border:1px solid #da3633;border-radius:6px;padding:.35rem .8rem;cursor:pointer;font-size:.82rem;font-weight:600;transition:border-color .15s" onmouseover="this.style.background='#3a1a1a'" onmouseout="this.style.background='#2a1c1c'">✕ Exit Lab</button>
   </div>
 </nav>
 
@@ -279,10 +311,7 @@
     <div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:1.25rem">
       <p style="font-weight:600;color:#e6edf3;font-size:1.05rem;margin:0 0 1rem">Which NIST-standardized post-quantum algorithm is specifically a Key Encapsulation Mechanism (KEM) — replacing RSA/ECDH for key exchange?</p>
       <div class="options-grid">
-        <button class="opt-btn" onclick="checkQ(this,'A')"><span class="opt-id">A</span>SLH-DSA (SPHINCS+)</button>
-        <button class="opt-btn" onclick="checkQ(this,'B')"><span class="opt-id">B</span>ML-DSA (CRYSTALS-Dilithium)</button>
-        <button class="opt-btn" onclick="checkQ(this,'C')"><span class="opt-id">C</span>FN-DSA (FALCON)</button>
-        <button class="opt-btn" onclick="checkQ(this,'D')"><span class="opt-id">D</span>ML-KEM (CRYSTALS-Kyber)</button>
+        <div id="quiz-options-grid" style="display:contents"></div>
       </div>
       <div id="q-feedback" class="feedback-box"></div>
       <div class="why-box" id="why-box">
@@ -300,42 +329,46 @@
 
   <!-- Reflection -->
   <div class="reflection-box">
-    <div style="color:#e6edf3;font-weight:600;margin-bottom:.75rem">📝 Final Reflection — Course Capstone</div>
-    <label style="font-size:.85rem;color:#8b949e;display:block;margin-bottom:.3rem">Student Name</label>
-    <input id="student-name" class="text-input" style="width:100%;margin-bottom:.75rem" placeholder="Your full name" oninput="saveState()">
-    <label style="font-size:.85rem;color:#8b949e;display:block;margin-bottom:.3rem">Capstone Reflection <span style="font-weight:400">(describe your organization's post-quantum migration strategy: what to change first, what can wait, and why)</span></label>
-    <textarea id="learning-reflection" class="reflection-input" placeholder="Write your capstone reflection here..." oninput="saveState()"></textarea>
-    <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.5rem;align-items:center">
-      <button class="submit-btn" id="submit-reflection" onclick="saveReflection()">💾 Save Reflection</button>
-      <button class="export-pdf-btn" id="export-pdf-btn" onclick="exportPDF()">📄 Export PDF</button>
-      <span id="submission-feedback" style="font-size:.82rem;color:#3fb950;display:none"></span>
+    <div class="reflection-title" style="font-weight:600;color:#e6edf3;margin-bottom:.75rem">💭 Capstone Reflection Submission</div>
+    <p style="color:#8b949e;margin-bottom:.75rem">You've reached the final module. Reflect on your complete cryptography journey:</p>
+    <div style="margin-bottom:1rem">
+      <strong style="color:#e6edf3">Guided Questions:</strong>
+      <ul style="color:#8b949e;font-size:.9rem;margin:.5rem 0 0 1.5rem;line-height:1.9">
+        <li>Describe the difference between ML-KEM, ML-DSA, and SLH-DSA. When would you use each in a real system?</li>
+        <li>What is the "harvest now, decrypt later" threat, and which systems are most at risk today?</li>
+        <li>Why is the hybrid classical+post-quantum approach recommended rather than switching fully to PQC immediately?</li>
+        <li>Looking back across all 10 modules, what single concept do you think is most foundational to modern cryptography?</li>
+        <li><strong style="color:#e6edf3">Key question:</strong> Your organization must migrate from RSA-2048 to post-quantum cryptography. Describe your strategy: what to change first, what can wait, and why.</li>
+      </ul>
+    </div>
+    <div id="reflection-lock" style="background:#2a1c1c;border:1px solid #f85149;border-radius:6px;padding:.75rem 1rem;margin-bottom:1rem">
+      <p style="color:#f85149;font-weight:600;margin:0;font-size:.9rem">🔒 Complete all objectives (tracker bottom-right ↘) to unlock submission</p>
+    </div>
+    <div id="submission-area" class="sub-area-locked">
+      <div style="background:#0d1a2e;border:2px solid #1f6feb;border-radius:8px;padding:1rem;margin-bottom:1rem">
+        <label style="color:#58a6ff;font-size:.95rem;font-weight:700;display:block;margin-bottom:.4rem">📝 Your Capstone Reflection <span style="color:#f85149;font-size:.8rem;font-weight:600">★ Required</span></label>
+        <textarea class="reflection-input" id="learning-reflection" placeholder="Describe your post-quantum migration strategy. What role do ML-KEM, ML-DSA, and SLH-DSA play? Why does hybrid mode matter during the transition?&#10;&#10;Please write at least 4–5 sentences about your key insights..." oninput="saveState()"></textarea>
+      </div>
+      <div style="border-top:1px solid #30363d;margin-top:.5rem;padding-top:1rem">
+        <label style="color:#8b949e;font-size:.88rem;font-weight:600;display:block;margin-bottom:.25rem">🔍 Lab Observations <span style="font-size:.78rem;font-weight:400">(Optional)</span></label>
+        <p style="color:#6e7681;font-size:.8rem;margin:.1rem 0 .35rem">Was there anything within the lab you expected to change, but didn't?</p>
+        <textarea class="reflection-input" id="lab-feedback" placeholder="Share any observations, surprises, or things that felt missing..." style="min-height:80px" oninput="saveState()"></textarea>
+      </div>
+      <div style="margin-top:.75rem">
+        <label style="color:#e6edf3;font-size:.9rem;font-weight:600">Your name:</label>
+        <input type="text" id="student-name" class="text-input" placeholder="Enter your full name..." style="max-width:320px;margin:.3rem 0 0" oninput="saveState()">
+      </div>
+      <div style="margin-top:.75rem">
+        <button class="submit-btn" id="submit-reflection" onclick="saveReflection()">💾 Save Reflection</button>
+        <button id="export-pdf-btn" class="export-pdf-btn" onclick="exportPDF()" style="display:none">📄 Export PDF</button>
+      </div>
+      <div id="submission-feedback" style="margin-top:.5rem;color:#3fb950;display:none">✅ Saved! Edit and re-save anytime — Export PDF always uses your latest version.</div>
     </div>
   </div>
 
   <div class="lab-footer">
-    <a class="btn-nav" href="../week9-lab/09-secure-implementation.html">← Week 9</a>
-    <span style="color:#8b949e;font-size:.85rem">Module 10 · Capstone</span>
-    <span style="color:#8b949e;font-size:.85rem">Final Lab</span>
-  </div>
-
-  <!-- Capstone banner -->
-  <div id="capstone-banner">
-    <div style="font-size:2.5rem;margin-bottom:.5rem">🎓</div>
-    <div style="font-size:1.25rem;font-weight:700;color:#a5b4fc;margin-bottom:.5rem">Course Complete!</div>
-    <div style="color:#c9d1d9;line-height:1.7;max-width:550px;margin:0 auto">
-      Congratulations! You've completed all 10 modules of <strong>CS 615 — Cryptography for Cyber Professionals</strong>.
-      You now have a comprehensive understanding of modern cryptography from CIA foundations to quantum-resistant systems.
-    </div>
-    <div style="margin-top:.75rem;display:flex;justify-content:center;gap:.5rem;flex-wrap:wrap">
-      <span class="badge badge-blue">CIA Triad</span>
-      <span class="badge badge-blue">AES/GCM</span>
-      <span class="badge badge-blue">SHA-256</span>
-      <span class="badge badge-blue">PKI/X.509</span>
-      <span class="badge badge-blue">TLS 1.3</span>
-      <span class="badge badge-blue">IPsec/IKEv2</span>
-      <span class="badge badge-blue">Timing Attacks</span>
-      <span class="badge badge-purple">Post-Quantum</span>
-    </div>
+    <a href="09-secure-implementation.html" class="btn-nav">← Lab 09</a>
+    <span class="text-muted">Module 10</span>
   </div>
 </div>
 
@@ -354,6 +387,45 @@
 </div>
 
 <script>
+function closeTab(){
+  if(confirm('Are you done with this lab? Click OK to close the tab, or Cancel to continue.')){
+    window.close();
+    setTimeout(function(){window.location.href='../index.html';},300);
+  }
+}
+const QUIZ_OPTIONS10=[
+  {text:'ML-KEM (CRYSTALS-Kyber)',correct:true,feedback:`<strong>ML-KEM (FIPS 203)</strong> is the only Key Encapsulation Mechanism in NIST's finalized PQC standards. It is based on the Module Learning With Errors (MLWE) problem — a lattice problem believed to be hard for quantum computers. ML-KEM replaces RSA and ECDH for key exchange in post-quantum TLS.`},
+  {text:'SLH-DSA (SPHINCS+)',correct:false,feedback:`<strong>SLH-DSA (FIPS 205)</strong> is a stateless hash-based <em>digital signature algorithm</em> — not a KEM. The clue is in the name: DSA = Digital Signature Algorithm. SPHINCS+ uses a Merkle tree of one-time signatures for post-quantum signing. Use ML-KEM for key exchange; use SLH-DSA for signatures.`},
+  {text:'ML-DSA (CRYSTALS-Dilithium)',correct:false,feedback:`<strong>ML-DSA (FIPS 204)</strong> is a lattice-based <em>digital signature algorithm</em> based on Module Learning With Errors — the same mathematical family as ML-KEM, but designed for signing, not key exchange. The DSA suffix makes its purpose clear. ML-DSA is the primary PQC signature algorithm; ML-KEM is the KEM.`},
+  {text:'FN-DSA (FALCON)',correct:false,feedback:`<strong>FN-DSA (FIPS 206)</strong> is a lattice-based <em>digital signature algorithm</em> using NTRU lattices — known for producing very compact signatures (useful for bandwidth-constrained environments). Like ML-DSA and SLH-DSA, its DSA designation indicates it is a signing algorithm, not a key encapsulation mechanism.`},
+];
+const _shuffled10=(function(){const a=[...QUIZ_OPTIONS10];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;})();
+const _LABELS10=['A','B','C','D'];
+let _correctBtn=null;
+document.addEventListener('DOMContentLoaded',function(){
+  const grid=document.getElementById('quiz-options-grid');
+  if(!grid)return;
+  _shuffled10.forEach(function(opt,i){
+    const btn=document.createElement('button');
+    btn.className='opt-btn';
+    if(opt.correct)_correctBtn=btn;
+    btn.onclick=function(){checkQ(btn,opt.correct,opt.feedback);};
+    btn.innerHTML='<span class="opt-id">'+_LABELS10[i]+'</span>'+opt.text;
+    grid.appendChild(btn);
+  });
+});
+function checkReflectionLock(){
+  const allDone=quizPassed&&quantumDone&&pqcDone&&zkDone&&checklistDone;
+  const lock=document.getElementById('reflection-lock');
+  const area=document.getElementById('submission-area');
+  if(allDone){
+    if(lock)lock.style.display='none';
+    if(area){area.classList.remove('sub-area-locked');area.classList.add('sub-area-unlocked');}
+  }else{
+    if(lock)lock.style.display='block';
+    if(area){area.classList.remove('sub-area-unlocked');area.classList.add('sub-area-locked');}
+  }
+}
 let quantumDone=false, pqcDone=false, zkDone=false, checklistDone=false, quizPassed=false, quizAttempts=0;
 let pqcSeen=new Set(), zkRounds=0;
 let _checkedItems=new Set();
@@ -485,21 +557,17 @@ function updateChecklistScore(){
 }
 
 // ── Quiz ──
-let _qAnswered=false;
-function checkQ(btn,choice){
-  quizAttempts++;
-  document.querySelectorAll('.opt-btn').forEach(b=>b.classList.remove('incorrect','correct'));
-  const correct=choice==='D';
-  btn.classList.add(correct?'correct':'incorrect');
-  const fb=document.getElementById('q-feedback');
-  fb.className='feedback-box show '+(correct?'feedback-correct':'feedback-incorrect');
-  if(correct){
-    fb.innerHTML='✅ <strong>Correct!</strong> ML-KEM (FIPS 203) is the only Key Encapsulation Mechanism in NIST\'s PQC standards. ML-DSA, SLH-DSA, and FN-DSA are all digital signature algorithms.';
-    quizPassed=true;document.getElementById('why-box').classList.add('show');
-  }else{
-    fb.innerHTML='❌ Not quite. Look at the algorithm type: KEM vs Signature. Only one of these four algorithms is a Key Encapsulation Mechanism.';
-  }
-  saveState();updateObj();
+function checkQ(btn,isCorrect,feedbackText){
+  if(!quizPassed)quizAttempts++;
+  document.querySelectorAll('.opt-btn').forEach(function(b){b.classList.remove('incorrect','correct');});
+  if(quizPassed&&_correctBtn)_correctBtn.classList.add('correct');
+  btn.classList.add(isCorrect?'correct':'incorrect');
+  if(isCorrect){quizPassed=true;}
+  const fb=document.getElementById('q-feedback')||document.getElementById('feedback');
+  fb.className='feedback-box show '+(isCorrect?'feedback-correct':'feedback-incorrect');
+  fb.innerHTML=(isCorrect?'✅ ':'❌ ')+feedbackText;
+  const wb=document.getElementById('why-box');if(isCorrect&&wb)wb.classList.add('show');
+  saveState();checkReflectionLock();if(typeof updateObj==='function')updateObj();
 }
 
 function updateObj(){
@@ -524,7 +592,8 @@ function saveState(){
   const s={quizPassed,quizAttempts,quantumDone,pqcDone,zkDone,checklistDone,zkRounds,
     pqcSeen:Array.from(pqcSeen),checkedItems:Array.from(_checkedItems),
     studentName:(document.getElementById('student-name')||{}).value||'',
-    reflection:(document.getElementById('learning-reflection')||{}).value||''};
+    reflection:(document.getElementById('learning-reflection')||{}).value||'',
+    labFeedback:(document.getElementById('lab-feedback')||{}).value||''};
   localStorage.setItem('lab10-state',JSON.stringify(s));
 }
 function loadState(){
@@ -537,17 +606,19 @@ function loadState(){
   _checkedItems=new Set(s.checkedItems||[]);
   if(s.studentName){const el=document.getElementById('student-name');if(el)el.value=s.studentName;}
   if(s.reflection){const el=document.getElementById('learning-reflection');if(el)el.value=s.reflection;}
-  if(quizPassed){_qAnswered=true;const btns=document.querySelectorAll('.opt-btn');if(btns.length>3)btns[3].classList.add('correct');const fb=document.getElementById('q-feedback');fb.className='feedback-box show feedback-correct';fb.innerHTML='✅ <strong>Correct!</strong> ML-KEM is the only KEM in NIST PQC.';document.getElementById('why-box').classList.add('show');}
-  buildChecklist();updateObj();
+  if(s.labFeedback){const el=document.getElementById('lab-feedback');if(el)el.value=s.labFeedback;}
+  if(quizPassed){const fb=document.getElementById('q-feedback');if(fb){fb.className='feedback-box show feedback-correct';}const wb=document.getElementById('why-box');if(wb)wb.classList.add('show');}
+  buildChecklist();updateObj();checkReflectionLock();
 }
 function resetLab(){if(!confirm('Reset all progress?'))return;localStorage.removeItem('lab10-state');location.reload();}
 function saveReflection(){
   const reflection=(document.getElementById('learning-reflection').value||'').trim();
   if(!reflection){alert('Please write a reflection before saving.');return;}
+  const labFeedback=(document.getElementById('lab-feedback')||{}).value||'';
   const data={studentName:(document.getElementById('student-name').value||'').trim(),openedAt,
     submittedAt:new Date().toISOString(),timeOnPageMs:Date.now()-new Date(openedAt).getTime(),
     quizPassed,quizAttempts,quantumDone,pqcDone,zkDone,checklistDone,
-    checklistScore:_checkedItems.size,reflection,labCompleted:'Module 10 Lab (Capstone)'};
+    checklistScore:_checkedItems.size,reflection,labFeedback,labCompleted:'Module 10 Lab (Capstone)'};
   localStorage.setItem('week10-lab-submission',JSON.stringify(data));saveState();
   document.getElementById('submission-feedback').style.display='inline';
   document.getElementById('submission-feedback').textContent='✅ Saved!';
@@ -572,12 +643,187 @@ function exportPDF(){
   document.getElementById('print-summary').style.display='block';
   const orig=document.title;const slug=(data.studentName||'').replace(/[^\w\s-]/g,'').trim();
   if(slug)document.title=slug+' — '+orig;
-  window.print();setTimeout(()=>{document.title=orig;document.getElementById('print-summary').style.display='none';},500);
+  window.print();setTimeout(()=>{document.title=orig;document.getElementById('print-summary').style.display='none';const banner=document.getElementById('export-success-banner');banner.classList.add('show');setTimeout(()=>banner.classList.remove('show'),8000);},500);
 }
 document.addEventListener('DOMContentLoaded',()=>{
   updateRSA();updateAES();
   buildChecklist();loadState();updateObj();
 });
 </script>
+<footer style="text-align:center;padding:1rem;border-top:1px solid #ccc;margin-top:2rem;color:#666;font-size:0.8rem;">
+    © <span id="copyright-year"></span> Clark Ngo
+  </footer>
+  <script>document.getElementById('copyright-year').textContent = new Date().getFullYear();
+
+// ═══════════════════════════════════════════════════
+// TOUR SYSTEM
+// ═══════════════════════════════════════════════════
+let tourCurrentStep = 1;
+const tourTotalSteps = 6;
+
+function initTourSystem() {
+  // Check if this is Lab 01 and first visit
+  const tourSeenKey = 'cryptography-tour-seen-v1';
+  const isLab01 = window.location.pathname.includes('01-cia-triad');
+  const tourSeen = localStorage.getItem(tourSeenKey);
+  
+  // Auto-show tour on Lab 01 first visit
+  if (isLab01 && !tourSeen) {
+    setTimeout(() => showTourModal(1), 800);
+  }
+}
+
+function showTourModal(stepNum) {
+  tourCurrentStep = stepNum;
+  const modal = document.getElementById('tour-modal');
+  modal.classList.add('show');
+  
+  // Show only current step
+  for (let i = 1; i <= tourTotalSteps; i++) {
+    const step = document.getElementById(`tour-step-${i}`);
+    if (step) step.classList.remove('show');
+  }
+  const currentStep = document.getElementById(`tour-step-${stepNum}`);
+  if (currentStep) currentStep.classList.add('show');
+  
+  // Update counter
+  document.getElementById('tour-counter').textContent = `Step ${stepNum} of ${tourTotalSteps}`;
+  
+  // Update button states
+  const prevBtn = document.getElementById('tour-prev-btn');
+  if (stepNum === 1) {
+    prevBtn.style.opacity = '.5';
+    prevBtn.style.pointerEvents = 'none';
+  } else {
+    prevBtn.style.opacity = '1';
+    prevBtn.style.pointerEvents = 'auto';
+  }
+  
+  const nextBtn = document.getElementById('tour-next-btn');
+  if (stepNum === tourTotalSteps) {
+    nextBtn.textContent = 'Close Tour →';
+    nextBtn.onclick = () => closeTour();
+  } else {
+    nextBtn.textContent = 'Next →';
+    nextBtn.onclick = () => nextTourStep();
+  }
+}
+
+function nextTourStep() {
+  if (tourCurrentStep < tourTotalSteps) {
+    showTourModal(tourCurrentStep + 1);
+  } else {
+    closeTour();
+  }
+}
+
+function prevTourStep() {
+  if (tourCurrentStep > 1) {
+    showTourModal(tourCurrentStep - 1);
+  }
+}
+
+function closeTour() {
+  const modal = document.getElementById('tour-modal');
+  modal.classList.remove('show');
+  localStorage.setItem('cryptography-tour-seen-v1', 'true');
+}
+
+function skipTour() {
+  closeTour();
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', initTourSystem);
+
+</script>
+<div id="export-success-banner">
+  <h3>✅ PDF exported successfully!</h3>
+  <p>Your lab work has been saved as a PDF. You can now exit the lab or continue exploring.</p>
+  <button onclick="closeTab()">✕ Exit Lab</button>
+</div>
+<div id="tour-modal">
+  <div class="tour-backdrop"></div>
+  <div class="tour-container">
+    <button class="tour-close" onclick="closeTour()">✕</button>
+    
+    <div id="tour-step-1" class="tour-step show">
+      <h2>🔐 Welcome to Cryptography Labs!</h2>
+      <p>Let's take a quick tour of how these labs work. By the end, you'll understand:</p>
+      <ul style="margin:1rem 0;padding-left:1.5rem;color:#8b949e">
+        <li>The objective system that unlocks submission</li>
+        <li>How to use interactive playgrounds</li>
+        <li>How to complete and submit your work</li>
+      </ul>
+      <p style="margin-top:1.5rem">Ready? Let's go!</p>
+    </div>
+    
+    <div id="tour-step-2" class="tour-step">
+      <h2>📋 Track Your Progress with Objectives</h2>
+      <p>Every lab has <strong>multiple objectives</strong> you need to complete. Different labs have different objectives based on what you'll learn:</p>
+      <ul style="margin:1rem 0;padding-left:1.5rem;color:#8b949e">
+        <li>Answer the mini quiz correctly</li>
+        <li>Complete interactive activities</li>
+        <li>Try different scenarios</li>
+        <li>Gather insights and explore concepts</li>
+      </ul>
+      <div class="tour-highlight">Look for the 📋 badge in the bottom-right corner →</div>
+      <p style="margin-top:1rem">Your <strong>submission area is locked</strong> until all objectives are done. This ensures you learn before submitting!</p>
+    </div>
+    
+    <div id="tour-step-3" class="tour-step">
+      <h2>🎮 Learn by Doing — Interactive Playgrounds</h2>
+      <p>Each lab has interactive sections where you can:</p>
+      <ul style="margin:1rem 0;padding-left:1.5rem;color:#8b949e">
+        <li><strong>Choose options</strong> — Select from encryption types, parameters, etc.</li>
+        <li><strong>Adjust sliders</strong> — Change key length, block size, sensitivity</li>
+        <li><strong>See results instantly</strong> — Outputs update as you experiment</li>
+        <li><strong>Learn patterns</strong> — Understand trade-offs between choices</li>
+      </ul>
+      <p style="margin-top:1rem">Don't worry about "wrong" answers — this is exploration! Try different combinations.</p>
+    </div>
+    
+    <div id="tour-step-4" class="tour-step">
+      <h2>❓ Test Your Understanding with the Quiz</h2>
+      <p>Each lab has a multiple-choice question to test what you've learned.</p>
+      <div class="tour-highlight">💡 Answers are randomized every time you reload — no guessing!</div>
+      <ul style="margin:1rem 0;padding-left:1.5rem;color:#8b949e">
+        <li>Read each option carefully</li>
+        <li>Think about what you observed in the playground</li>
+        <li>Instant feedback tells you if you're right</li>
+      </ul>
+      <p style="margin-top:1rem">Getting it wrong is fine! You can try again.</p>
+    </div>
+    
+    <div id="tour-step-5" class="tour-step">
+      <h2>📝 Share Your Learning in the Reflection</h2>
+      <p>Once all objectives are complete, the submission area unlocks.</p>
+      <p><strong>📌 Required: Learning Reflection</strong></p>
+      <p style="color:#8b949e;margin:.5rem 0">Share what you learned in your own words. How would you explain this to a friend? Why does it matter?</p>
+      <p><strong>🔍 Optional: Lab Observations</strong></p>
+      <p style="color:#8b949e;margin:.5rem 0">Any interesting findings? Edge cases you discovered? Patterns you noticed?</p>
+      <p style="margin-top:1rem;color:#f85149"><strong>Tip:</strong> Write thoughtfully — this reflection proves you understand the concept, not just completed activities.</p>
+    </div>
+    
+    <div id="tour-step-6" class="tour-step">
+      <h2>📄 Export Your Work & Exit</h2>
+      <p>When you're ready to finish:</p>
+      <ul style="margin:1rem 0;padding-left:1.5rem;color:#8b949e">
+        <li><strong>Click "Export PDF"</strong> — Saves a summary of your work (quiz result, interactions, reflection)</li>
+        <li><strong>See the success banner</strong> — Green notification appears at the bottom with an "Exit Lab" button</li>
+        <li><strong>Click to exit</strong> — Closes the lab and returns to the lab home page</li>
+      </ul>
+      <div class="tour-highlight">You can always return to previous labs — all your work is saved in the browser</div>
+      <p style="margin-top:1rem">One more thing: <strong>you can only navigate backward</strong> through labs. This ensures you don't skip ahead! 🔒</p>
+    </div>
+    
+    <div class="tour-nav">
+      <button id="tour-prev-btn" class="tour-btn" onclick="prevTourStep()" style="opacity:.5;cursor:not-allowed">← Previous</button>
+      <span id="tour-counter">Step 1 of 6</span>
+      <button id="tour-next-btn" class="tour-btn" onclick="nextTourStep()">Next →</button>
+      <button class="tour-btn tour-btn-skip" onclick="skipTour()" style="float:right">Skip</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>

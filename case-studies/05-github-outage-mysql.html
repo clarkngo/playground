@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GitHub: The 24-Hour Outage</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0d1117;color:#e6edf3;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;line-height:1.7}
+a{color:#58a6ff;text-decoration:none}a:hover{text-decoration:underline}
+nav{background:#161b22;border-bottom:1px solid #30363d;padding:16px 24px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100}
+.brand{font-size:1.2rem;font-weight:700}.back{color:#8b949e;font-size:.9rem}
+.container{max-width:900px;margin:0 auto;padding:24px 20px}
+.hero{background:linear-gradient(135deg,#1a1e24 0%,#2d1b2d 100%);border:1px solid #30363d;border-radius:12px;padding:48px 36px;margin-bottom:36px;text-align:center}
+.hero h1{font-size:2.2rem;margin-bottom:8px}.hero .tagline{color:#f0883e;font-size:1.1rem;margin-bottom:6px}.hero .meta{color:#8b949e;font-size:.9rem}
+.timeline-wrapper{overflow-x:auto;margin-bottom:36px;padding:12px 0}
+.timeline{display:flex;align-items:flex-start;min-width:700px;position:relative;padding:20px 10px}
+.timeline::before{content:'';position:absolute;top:30px;left:10px;right:10px;height:3px;background:#30363d;border-radius:2px}
+.timeline-item{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;z-index:1}
+.timeline-dot{width:16px;height:16px;background:#f0883e;border-radius:50%;margin-bottom:12px;border:3px solid #0d1117;box-shadow:0 0 0 2px #f0883e}
+.timeline-date{font-size:.75rem;color:#f0883e;font-weight:600;margin-bottom:4px}
+.timeline-label{font-size:.8rem;color:#8b949e;text-align:center;max-width:120px}
+section.story{margin-bottom:32px}
+section.story h2{font-size:1.5rem;color:#e6edf3;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #30363d}
+section.story p{color:#c9d1d9;margin-bottom:14px;font-size:.97rem}
+.canvas-section{margin-bottom:36px}
+.canvas-section h2{font-size:1.5rem;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #30363d}
+.toggle-bar{display:flex;gap:8px;margin-bottom:12px}
+.toggle-btn{display:inline-block;padding:8px 20px;background:#f0883e;color:#0d1117;border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:.9rem;transition:background .2s}
+.toggle-btn:hover{background:#d4772e}
+.toggle-btn.inactive{background:#30363d;color:#8b949e}
+canvas{display:block;width:100%;border:1px solid #30363d;border-radius:8px;background:#0d1117}
+.decision-section{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:28px;margin-bottom:36px}
+.decision-section h2{font-size:1.4rem;margin-bottom:8px}.decision-section .prompt{color:#8b949e;margin-bottom:18px;font-size:.95rem}
+.choices{display:flex;flex-direction:column;gap:10px}
+.choice-btn{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:14px 18px;color:#e6edf3;cursor:pointer;text-align:left;font-size:.93rem;transition:border-color .2s}
+.choice-btn:hover{border-color:#58a6ff}.choice-btn.correct{border-color:#3fb950;background:#0d1b0e}.choice-btn.wrong{border-color:#f85149;background:#1b0d0d}
+.reveal{margin-top:16px;padding:16px;background:#0d1117;border:1px solid #3fb950;border-radius:8px;display:none;font-size:.93rem;color:#c9d1d9}
+.metrics-panel{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:36px}
+.metric{background:#161b22;border:1px solid #30363d;border-radius:10px;padding:20px;text-align:center}
+.metric .value{font-size:1.7rem;font-weight:700;color:#f0883e}.metric .label{font-size:.8rem;color:#8b949e;margin-top:4px}
+.lessons{margin-bottom:36px}
+.lessons h2{font-size:1.5rem;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #30363d}
+.lesson-card{background:#161b22;border-left:3px solid #f0883e;border-radius:0 8px 8px 0;padding:16px 20px;margin-bottom:12px;font-size:.93rem;color:#c9d1d9}
+.takeaways{margin-bottom:48px}
+.takeaways h2{font-size:1.5rem;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #30363d}
+.takeaway{display:flex;align-items:baseline;gap:10px;margin-bottom:10px;font-size:.95rem;color:#c9d1d9}
+.takeaway::before{content:'→';color:#f0883e;font-weight:700;flex-shrink:0}
+</style>
+    <meta name="author" content="Clark Ngo">
+    <meta name="copyright" content="Clark Ngo">
+  </head>
+<body>
+<nav><span class="brand">📖 Case Studies</span><a href="index.html" class="back">← All Case Studies</a></nav>
+<div class="container">
+
+<div class="hero">
+<h1>GitHub: The 24-Hour Outage</h1>
+<div class="tagline">How 43 seconds of network partition created 24 hours of chaos</div>
+<div class="meta">October 21, 2018 | Database Failover &amp; Split-Brain</div>
+</div>
+
+<div class="timeline-wrapper">
+<div class="timeline">
+<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-date">22:52 UTC</div><div class="timeline-label">Maintenance begins</div></div>
+<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-date">22:54</div><div class="timeline-label">Network partition (43s)</div></div>
+<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-date">22:54</div><div class="timeline-label">Orchestrator promotes replicas</div></div>
+<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-date">23:02</div><div class="timeline-label">Split-brain detected</div></div>
+<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-date">23:19</div><div class="timeline-label">Decision: data integrity first</div></div>
+<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-date">Next 24h</div><div class="timeline-label">Recovery &amp; reconciliation</div></div>
+</div>
+</div>
+
+<section class="story">
+<h2>The 43 Seconds That Broke GitHub</h2>
+<p>At 22:52 UTC on October 21, 2018, a routine maintenance operation was underway to replace a failing 100G optical networking device in one of GitHub's data centers. The maintenance was planned, reviewed, and expected to be transparent to the application. At 22:54, the network change triggered a brief connectivity loss between the US East Coast data center hub and a primary MySQL database cluster. The partition lasted just 43 seconds.</p>
+<p>Forty-three seconds is barely noticeable in human time. But in distributed systems time, it was an eternity. During those 43 seconds, GitHub's topology management system — Orchestrator — detected that the primary MySQL server was unreachable from multiple vantage points. Orchestrator was designed to handle exactly this scenario: when a primary becomes unavailable, promote a replica to take its place and minimize downtime. It did exactly what it was configured to do.</p>
+</section>
+
+<section class="story">
+<h2>The Automated Response</h2>
+<p>Orchestrator operated under a design principle that made perfect sense in isolation: if the primary is unreachable, promote a replica to primary so that writes can continue. This is standard failover behavior, and for most scenarios — a crashed server, a hardware failure, a kernel panic — it is the correct response. The problem was that a network partition is not the same as a server failure.</p>
+<p>When Orchestrator promoted replicas in the East Coast facility, the original primaries in a separate facility were still running, still accepting writes, and still perfectly healthy. They just could not communicate with the monitoring system that had declared them dead. The result was split-brain: two independent MySQL servers both believing they were the primary, both accepting writes from different application servers, and both accumulating data that the other did not have.</p>
+</section>
+
+<section class="story">
+<h2>The Discovery</h2>
+<p>At 23:02 UTC — just eight minutes after the partition began — GitHub engineers detected the split-brain condition. Internal monitoring showed two primaries accepting writes for the same database clusters, with replication broken between them. The writes were diverging: commits, pull requests, issues, and other data were being written to one primary or the other depending on which application server handled the request.</p>
+<p>The scope of the problem became clear quickly. This was not a single database — it affected multiple MySQL clusters that stored core GitHub data. Every second that both primaries continued accepting writes increased the complexity of eventual reconciliation. The team needed to make a decision fast.</p>
+</section>
+
+<section class="story">
+<h2>The Critical Decision: Data Integrity First</h2>
+<p>At 23:19 UTC, GitHub engineering leadership made the decision that would define the next 24 hours: data integrity trumps availability. For a platform that hosts the source code and collaboration history of millions of developers and organizations worldwide, losing or corrupting data was unacceptable. Even the possibility of a single lost commit or a corrupted pull request was worse than extended downtime.</p>
+<p>The team deliberately degraded service — restricting GitHub to read-only mode and blocking new writes — while they assessed the divergence between the two primaries. They needed to understand exactly which writes had gone to which primary, identify all conflicts, and develop a reconciliation plan that would preserve every piece of data from both sides of the split.</p>
+</section>
+
+<section class="story">
+<h2>The Long Recovery</h2>
+<p>The recovery process took the rest of the night and most of the following day. Engineers worked through the night building tooling to compare the write streams from both primaries, identify rows that existed on one side but not the other, and merge the divergent data without introducing inconsistencies. Some of this tooling had to be written from scratch under pressure, because the specific failure mode — two MySQL primaries with partially overlapping but divergent write sets — was not something their existing recovery tools were designed to handle.</p>
+<p>By the afternoon of October 22, GitHub had reconciled the divergent data and restored full read-write service. Approximately 5% of writes during the incident window were affected. No data was lost — every commit, every issue, every pull request from both sides of the split was preserved. The team had succeeded in their primary objective: complete data integrity, even at the cost of extended downtime.</p>
+</section>
+
+<section class="story">
+<h2>The Post-Mortem</h2>
+<p>GitHub published one of the most detailed and transparent post-mortem reports in the industry. They did not blame individuals. They did not minimize the impact. They described the full sequence of events, the decisions they made and why, and the specific changes they would implement to prevent recurrence. Among the changes: modifying Orchestrator to require cross-datacenter confirmation before promoting during network events, implementing improved split-brain detection, and adding manual confirmation gates for failover during maintenance windows.</p>
+<p>The post-mortem became a widely studied reference in the infrastructure community. It demonstrated that even the most sophisticated organizations — running well-tested automation, with experienced on-call engineers — can be caught by the gap between what automated systems are designed for (server failure) and what actually happens (network partition with all servers healthy).</p>
+</section>
+
+<div class="canvas-section">
+<h2>Architecture Diagram</h2>
+<div class="toggle-bar">
+<button class="toggle-btn" id="btnBefore" onclick="showPhase(0)">Before</button>
+<button class="toggle-btn inactive" id="btnDuring" onclick="showPhase(1)">During</button>
+<button class="toggle-btn inactive" id="btnAfter" onclick="showPhase(2)">After</button>
+</div>
+<canvas id="archCanvas" width="900" height="280"></canvas>
+</div>
+
+<div class="decision-section">
+<h2>What Would You Do?</h2>
+<p class="prompt">Split-brain MySQL detected: two primaries have been accepting divergent writes for several minutes. Millions of developers depend on this platform. What do you do?</p>
+<div class="choices">
+<div class="choice-btn" onclick="choose(this,false)">A) Pick the primary with more writes, discard the other — accept some data loss to restore service quickly.</div>
+<div class="choice-btn" onclick="choose(this,true)">B) Stop all writes, assess the divergence, and reconcile manually — prioritize data integrity over availability.</div>
+<div class="choice-btn" onclick="choose(this,false)">C) Let both primaries continue and merge the data later — keep the service running and sort it out afterwards.</div>
+</div>
+<div class="reveal" id="reveal">GitHub chose <strong>B — stop writes and reconcile manually</strong>. For a source code hosting platform, data integrity is paramount. Discarding writes (option A) means potentially losing commits, issues, or pull requests — unacceptable for a platform developers trust with their code. Letting both continue (option C) would only increase the divergence and make reconciliation exponentially harder, while risking data corruption from conflicting writes. By stopping writes immediately and carefully reconciling, GitHub preserved every piece of data from both sides of the split, even though it took 24 hours of degraded service to accomplish.</div>
+</div>
+
+<h2 style="font-size:1.5rem;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #30363d">Key Metrics</h2>
+<div class="metrics-panel">
+<div class="metric"><div class="value">43s</div><div class="label">Network Partition Duration</div></div>
+<div class="metric"><div class="value">24h</div><div class="label">Degraded Service</div></div>
+<div class="metric"><div class="value">~5%</div><div class="label">Writes Affected</div></div>
+<div class="metric"><div class="value">Millions</div><div class="label">Developers Impacted</div></div>
+</div>
+
+<div class="lessons">
+<h2>Lessons Extracted</h2>
+<div class="lesson-card"><strong>Automated failover can cause split-brain.</strong> Orchestrator did exactly what it was designed to do — promote a replica when the primary was unreachable. But it could not distinguish between a dead server and a network partition, and the correct response to each is fundamentally different.</div>
+<div class="lesson-card"><strong>Data integrity must trump availability for source code.</strong> For a platform that developers trust with their most valuable digital assets, losing even a single commit is worse than hours of downtime. This trade-off must be explicit in your architecture.</div>
+<div class="lesson-card"><strong>Network partitions happen to everyone.</strong> GitHub runs sophisticated infrastructure with experienced engineers. A 43-second partition during routine maintenance was enough to trigger a 24-hour incident. No organization is immune.</div>
+<div class="lesson-card"><strong>Post-mortems must be blameless and public.</strong> GitHub's transparent post-mortem built trust with their community and provided invaluable learning material for the entire industry. Blame-free analysis of failures produces better systemic improvements than finger-pointing.</div>
+</div>
+
+<div class="takeaways">
+<h2>Key Takeaways</h2>
+<div class="takeaway">Automated failover systems must distinguish between server failure and network partition.</div>
+<div class="takeaway">Data integrity must be the non-negotiable priority for platforms that store irreplaceable user data.</div>
+<div class="takeaway">Network partitions happen to everyone — even during routine, well-planned maintenance.</div>
+<div class="takeaway">Blameless, public post-mortems build trust and drive better systemic improvements than any other response.</div>
+</div>
+
+</div>
+
+<script>
+const canvas=document.getElementById('archCanvas'),ctx=canvas.getContext('2d');
+let animProgress=0,targetPhase=0,animating=false;
+function drawBox(x,y,w,h,label,color,alpha){ctx.globalAlpha=alpha;ctx.fillStyle=color;ctx.strokeStyle='#30363d';ctx.lineWidth=1;ctx.beginPath();ctx.roundRect(x,y,w,h,6);ctx.fill();ctx.stroke();ctx.fillStyle='#e6edf3';ctx.font='bold 11px sans-serif';ctx.textAlign='center';ctx.fillText(label,x+w/2,y+h/2+4);ctx.globalAlpha=1}
+function drawArrow(x1,y1,x2,y2,color,alpha){ctx.globalAlpha=alpha;ctx.strokeStyle=color;ctx.fillStyle=color;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();const a=Math.atan2(y2-y1,x2-x1);ctx.beginPath();ctx.moveTo(x2,y2);ctx.lineTo(x2-8*Math.cos(a-0.4),y2-8*Math.sin(a-0.4));ctx.lineTo(x2-8*Math.cos(a+0.4),y2-8*Math.sin(a+0.4));ctx.fill();ctx.globalAlpha=1}
+function drawLine(x1,y1,x2,y2,color,alpha){ctx.globalAlpha=alpha;ctx.strokeStyle=color;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();ctx.globalAlpha=1}
+function drawDashedLine(x1,y1,x2,y2,color,alpha){ctx.globalAlpha=alpha;ctx.strokeStyle=color;ctx.lineWidth=2;ctx.setLineDash([6,4]);ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1}
+function drawPhase(phase){
+ctx.clearRect(0,0,900,280);
+if(phase<0.5){
+// Before: Healthy primary-replica
+const alpha=1-phase*2;
+if(alpha>0.01){
+drawBox(350,40,200,50,'MySQL Primary','#3fb95044',alpha);
+drawArrow(450,90,250,130,'#8b949e',alpha);
+drawArrow(450,90,450,130,'#8b949e',alpha);
+drawArrow(450,90,650,130,'#8b949e',alpha);
+drawBox(170,130,160,40,'Replica 1','#58a6ff33',alpha);
+drawBox(370,130,160,40,'Replica 2','#58a6ff33',alpha);
+drawBox(570,130,160,40,'Replica 3','#58a6ff33',alpha);
+ctx.globalAlpha=alpha;ctx.fillStyle='#3fb950';ctx.font='bold 11px sans-serif';ctx.textAlign='center';
+ctx.fillText('Healthy: Single primary, replicas in sync',450,210);
+ctx.fillStyle='#8b949e';ctx.font='10px sans-serif';
+ctx.fillText('Orchestrator monitors primary health',450,230);ctx.globalAlpha=1;
+}
+}
+if(phase>=0.3&&phase<0.8){
+// During: Split-brain
+const alpha=phase<0.5?((phase-0.3)/0.2):(1-(phase-0.5)/0.3);
+if(alpha>0.01){
+// Left side
+drawBox(80,50,160,45,'Primary A','#f8514944',alpha);
+drawBox(80,120,160,35,'App Servers (A)','#30363d',alpha);
+drawArrow(160,95,160,120,'#f85149',alpha);
+ctx.globalAlpha=alpha;ctx.fillStyle='#f85149';ctx.font='9px sans-serif';ctx.textAlign='center';
+ctx.fillText('Writes going here',160,175);ctx.globalAlpha=1;
+// Right side
+drawBox(560,50,160,45,'Primary B','#f8514944',alpha);
+drawBox(560,120,160,35,'App Servers (B)','#30363d',alpha);
+drawArrow(640,95,640,120,'#f85149',alpha);
+ctx.globalAlpha=alpha;ctx.fillStyle='#f85149';ctx.font='9px sans-serif';ctx.textAlign='center';
+ctx.fillText('Writes going here',640,175);ctx.globalAlpha=1;
+// Partition line
+drawDashedLine(400,20,400,200,'#f85149',alpha);
+ctx.globalAlpha=alpha;ctx.fillStyle='#f85149';ctx.font='bold 12px sans-serif';ctx.textAlign='center';
+ctx.fillText('NETWORK PARTITION',400,220);
+ctx.font='bold 11px sans-serif';
+ctx.fillText('SPLIT-BRAIN: Two primaries accepting divergent writes',400,245);ctx.globalAlpha=1;
+}
+}
+if(phase>0.5){
+// After: Reconciled with safeguards
+const alpha=(phase-0.5)*2;
+if(alpha>0.01){
+drawBox(350,35,200,45,'Reconciled Primary','#3fb95044',alpha);
+drawArrow(450,80,250,115,'#8b949e',alpha);
+drawArrow(450,80,450,115,'#8b949e',alpha);
+drawArrow(450,80,650,115,'#8b949e',alpha);
+drawBox(170,115,160,35,'Replica 1','#58a6ff33',alpha);
+drawBox(370,115,160,35,'Replica 2','#58a6ff33',alpha);
+drawBox(570,115,160,35,'Replica 3','#58a6ff33',alpha);
+drawBox(300,175,300,35,'Orchestrator (with safeguards)','#f0883e33',alpha);
+ctx.globalAlpha=alpha;ctx.fillStyle='#3fb950';ctx.font='bold 11px sans-serif';ctx.textAlign='center';
+ctx.fillText('Cross-DC confirmation required before failover',450,235);
+ctx.fillStyle='#8b949e';ctx.font='10px sans-serif';
+ctx.fillText('Manual gates during maintenance windows',450,255);ctx.globalAlpha=1;
+}
+}
+}
+function animate(){
+if(!animating)return;
+const target=targetPhase;
+const diff=target-animProgress;
+if(Math.abs(diff)<0.01){animProgress=target;animating=false;drawPhase(animProgress);return}
+animProgress+=diff*0.08;
+drawPhase(animProgress);requestAnimationFrame(animate);
+}
+function showPhase(p){
+targetPhase=p/2;
+document.getElementById('btnBefore').className=`toggle-btn${p===0?'':' inactive'}`;
+document.getElementById('btnDuring').className=`toggle-btn${p===1?'':' inactive'}`;
+document.getElementById('btnAfter').className=`toggle-btn${p===2?'':' inactive'}`;
+animating=true;animate();
+}
+drawPhase(0);
+
+function choose(el,correct){
+document.querySelectorAll('.choice-btn').forEach(b=>{b.style.pointerEvents='none'});
+el.classList.add(correct?'correct':'wrong');
+if(correct){document.querySelectorAll('.choice-btn').forEach(b=>{if(b!==el)b.style.opacity='0.4'})}
+else{document.querySelectorAll('.choice-btn').forEach(b=>{if(b!==el&&b.textContent.includes('Stop all writes'))b.classList.add('correct')})}
+document.getElementById('reveal').style.display='block';
+}
+</script>
+<footer style="text-align:center;padding:1rem;border-top:1px solid #ccc;margin-top:2rem;color:#666;font-size:0.8rem;">
+    © <span id="copyright-year"></span> Clark Ngo
+  </footer>
+  <script>document.getElementById('copyright-year').textContent = new Date().getFullYear();</script>
+</body>
+</html>

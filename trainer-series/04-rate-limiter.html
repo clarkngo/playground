@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Design a Rate Limiter — System Design Trainer</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0d1117;color:#e6edf3;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;line-height:1.7}
+a{color:#58a6ff;text-decoration:none}a:hover{text-decoration:underline}
+nav{background:#161b22;border-bottom:1px solid #30363d;padding:16px 24px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100}
+.brand{font-size:1.2rem;font-weight:700}.back{color:#8b949e;font-size:.9rem}
+.container{max-width:960px;margin:0 auto;padding:24px 20px 60px}
+.hero{background:linear-gradient(135deg,#1a1e24 0%,#0d2d0d 100%);border:1px solid #30363d;border-radius:12px;padding:48px 36px;margin-bottom:36px;text-align:center}
+.hero h1{font-size:2.2rem;margin-bottom:8px}.hero .tagline{color:#3fb950;font-size:1.1rem;margin-bottom:6px}.hero .meta{color:#8b949e;font-size:.9rem}
+section.step{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:28px;margin-bottom:24px}
+section.step h2{font-size:1.4rem;margin-bottom:6px;display:flex;align-items:center;gap:10px}
+section.step h2 .num{background:#3fb950;color:#0d1117;font-size:.75rem;font-weight:700;padding:2px 10px;border-radius:12px}
+.desc{color:#8b949e;font-size:.9rem;margin-bottom:18px}
+.reveal-btn{display:inline-block;padding:8px 20px;background:#1f6feb;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:.9rem;transition:background .2s}
+.reveal-btn:hover{background:#1a5fd1}
+.reveal-content{display:none;margin-top:16px;padding:16px;background:#0d1117;border:1px solid #3fb950;border-radius:8px;font-size:.93rem;color:#c9d1d9}
+.reveal-content.show{display:block}
+.req-list{list-style:none;margin-bottom:12px}
+.req-list li{padding:6px 0;font-size:.93rem}
+.req-list label{cursor:pointer;display:flex;align-items:center;gap:8px}
+.radio-group{margin-bottom:8px}
+.radio-group label{display:inline-flex;align-items:center;gap:6px;margin-right:16px;font-size:.9rem;cursor:pointer}
+.correct-mark{color:#3fb950;font-weight:700}
+.wrong-mark{color:#f85149;font-weight:700}
+.calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.calc-field label{display:block;font-size:.8rem;color:#8b949e;margin-bottom:4px}
+.calc-field input{width:100%;background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:8px 12px;color:#e6edf3;font-size:.9rem}
+.calc-results{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:12px}
+.calc-result{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:12px;text-align:center}
+.calc-result .val{font-size:1.3rem;font-weight:700;color:#3fb950}.calc-result .lbl{font-size:.75rem;color:#8b949e}
+pre{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:16px;overflow-x:auto;font-size:.85rem;line-height:1.6;color:#e6edf3;margin-bottom:12px}
+.method{color:#f0883e;font-weight:700}.endpoint{color:#3fb950}.param{color:#58a6ff}
+.table-wrap{overflow-x:auto;margin-bottom:12px}
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+th{background:#21262d;color:#8b949e;text-align:left;padding:8px 12px;border:1px solid #30363d}
+td{padding:8px 12px;border:1px solid #30363d;color:#c9d1d9}
+.toggle-row{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.toggle-opt{padding:6px 16px;border-radius:6px;border:1px solid #30363d;background:#0d1117;color:#8b949e;cursor:pointer;font-size:.85rem;font-weight:600;transition:all .2s}
+.toggle-opt.active{background:#1f6feb;color:#fff;border-color:#1f6feb}
+canvas{display:block;width:100%;border:1px solid #30363d;border-radius:8px;background:#0d1117;margin-bottom:12px}
+.deep-dive{border:1px solid #30363d;border-radius:8px;margin-bottom:10px;overflow:hidden}
+.dd-header{padding:14px 18px;background:#161b22;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-weight:600;font-size:.93rem}
+.dd-header:hover{background:#1c2129}
+.dd-arrow{transition:transform .2s;color:#8b949e}
+.dd-body{display:none;padding:16px 18px;background:#0d1117;font-size:.9rem;color:#c9d1d9;line-height:1.7}
+.dd-body.open{display:block}
+.dd-arrow.open{transform:rotate(180deg)}
+.tradeoff-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:12px}
+.tradeoff-card{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:16px}
+.tradeoff-card h4{font-size:.95rem;margin-bottom:8px;color:#e6edf3}
+.tradeoff-card .pros{color:#3fb950;font-size:.85rem;margin-bottom:4px}
+.tradeoff-card .cons{color:#f85149;font-size:.85rem}
+.tip-card{background:#0d1117;border-left:3px solid #f0883e;border-radius:0 8px 8px 0;padding:14px 18px;margin-bottom:10px;font-size:.9rem;color:#c9d1d9}
+.tip-card strong{color:#f0883e}
+.algo-viz{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:16px;margin:12px 0}
+.algo-viz canvas{border:none;margin:0}
+.algo-controls{display:flex;gap:8px;margin-top:10px;align-items:center}
+.algo-controls button{padding:6px 14px;background:#1f6feb;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.85rem;font-weight:600}
+.algo-controls button:hover{background:#1a5fd1}
+.algo-controls span{color:#8b949e;font-size:.85rem}
+@media(max-width:640px){.calc-grid,.tradeoff-grid{grid-template-columns:1fr}.hero h1{font-size:1.6rem}}
+</style>
+    <meta name="author" content="Clark Ngo">
+    <meta name="copyright" content="Clark Ngo">
+  </head>
+<body>
+<nav><span class="brand">&#127919; Trainer Series</span><a href="index.html" class="back">&larr; All Trainers</a></nav>
+<div class="container">
+
+<div class="hero">
+<h1>Design a Rate Limiter</h1>
+<div class="tagline">API gateway throttling from scratch</div>
+<div class="meta">Token Bucket &bull; Sliding Window &bull; Distributed Counters &bull; Redis</div>
+</div>
+
+<!-- STEP 1: Requirements -->
+<section class="step" id="s1">
+<h2><span class="num">1</span> Requirements</h2>
+<p class="desc">Select the functional requirements you think are essential, and choose the most important non-functional properties.</p>
+
+<h3 style="font-size:.95rem;margin-bottom:10px;color:#8b949e">Functional Requirements</h3>
+<ul class="req-list" id="funcReqs">
+<li><label><input type="checkbox" value="limit_user"> Limit requests per user/API key</label></li>
+<li><label><input type="checkbox" value="limit_ip"> Limit requests per IP address</label></li>
+<li><label><input type="checkbox" value="configurable"> Configurable rate limit rules per endpoint</label></li>
+<li><label><input type="checkbox" value="distributed"> Work across distributed servers</label></li>
+<li><label><input type="checkbox" value="accurate"> Accurate counting (no over-counting)</label></li>
+<li><label><input type="checkbox" value="headers"> Return rate limit headers in responses</label></li>
+<li><label><input type="checkbox" value="dashboard"> Admin dashboard for rule management</label></li>
+</ul>
+
+<h3 style="font-size:.95rem;margin-bottom:10px;color:#8b949e">Key Non-Functional Requirement</h3>
+<div class="radio-group" id="nfReqs">
+<label><input type="radio" name="nf" value="lowlatency"> Ultra-low latency (&lt;1ms overhead)</label>
+<label><input type="radio" name="nf" value="accuracy"> Perfect accuracy (never allow over-limit)</label>
+<label><input type="radio" name="nf" value="availability"> High availability</label>
+<label><input type="radio" name="nf" value="consistency"> Strong consistency across nodes</label>
+</div>
+
+<button class="reveal-btn" onclick="revealReqs()">Reveal Answer</button>
+<div class="reveal-content" id="reqReveal">
+<p><span class="correct-mark">Core functional:</span> Limiting per user/IP, configurable rules, and distributed operation are essential. Accurate counting and rate limit headers are important secondary features. Dashboard is nice-to-have.</p>
+<p><span class="correct-mark">Non-functional:</span> Ultra-low latency is the top priority — the rate limiter sits in the request hot path, so every millisecond matters. High availability is also critical (if the rate limiter goes down, either all requests pass or all get blocked). Perfect accuracy can be relaxed slightly for better performance.</p>
+</div>
+</section>
+
+<!-- STEP 2: Capacity Estimation -->
+<section class="step" id="s2">
+<h2><span class="num">2</span> Capacity Estimation</h2>
+<p class="desc">Estimate the system load. Fill in values and watch the calculations update.</p>
+
+<div class="calc-grid">
+<div class="calc-field"><label>Total users</label><input type="number" id="totalUsers" value="10000000" oninput="calcCapacity()"></div>
+<div class="calc-field"><label>Requests per user/day</label><input type="number" id="reqPerDay" value="100" oninput="calcCapacity()"></div>
+<div class="calc-field"><label>Bytes per counter (Redis)</label><input type="number" id="bytesPerCounter" value="100" oninput="calcCapacity()"></div>
+<div class="calc-field"><label>Rate limit rules per user</label><input type="number" id="rulesPerUser" value="5" oninput="calcCapacity()"></div>
+</div>
+
+<div class="calc-results" id="calcResults">
+<div class="calc-result"><div class="val" id="crRPS">—</div><div class="lbl">Requests/sec</div></div>
+<div class="calc-result"><div class="val" id="crChecks">—</div><div class="lbl">Rate checks/sec</div></div>
+<div class="calc-result"><div class="val" id="crMemory">—</div><div class="lbl">Redis Memory</div></div>
+<div class="calc-result"><div class="val" id="crOverhead">—</div><div class="lbl">Target overhead</div></div>
+</div>
+
+<button class="reveal-btn" onclick="revealCap()">Reveal Answer</button>
+<div class="reveal-content" id="capReveal">
+<p><strong>Reference numbers:</strong> 10M users * 100 requests/day = 1B requests/day = ~11,600 RPS. Each request triggers a rate limit check. With 5 rules per user and 100 bytes per counter, total Redis memory = 10M * 5 * 100 = ~5 GB — easily fits in a single Redis instance. The critical metric is overhead per request: must stay under 1ms to avoid impacting API latency.</p>
+</div>
+</section>
+
+<!-- STEP 3: API Design -->
+<section class="step" id="s3">
+<h2><span class="num">3</span> API Design</h2>
+<p class="desc">The rate limiter acts as middleware, not a standalone API. Here is how it integrates.</p>
+
+<pre>// Rate limiter is middleware — intercepts every request
+// If allowed:
+<span class="method">HTTP/1.1</span> <span class="endpoint">200 OK</span>
+<span class="param">X-RateLimit-Limit</span>: 100
+<span class="param">X-RateLimit-Remaining</span>: 87
+<span class="param">X-RateLimit-Reset</span>: 1679500060
+
+// If rate limited:
+<span class="method">HTTP/1.1</span> <span class="endpoint">429 Too Many Requests</span>
+<span class="param">X-RateLimit-Limit</span>: 100
+<span class="param">X-RateLimit-Remaining</span>: 0
+<span class="param">X-RateLimit-Reset</span>: 1679500060
+<span class="param">Retry-After</span>: 30
+Body: { "error": "Rate limit exceeded. Try again in 30 seconds." }
+
+// Admin API for configuring rules:
+<span class="method">POST</span> <span class="endpoint">/api/rate-limits/rules</span>
+  Body: {
+    <span class="param">"endpoint"</span>: "/api/posts",
+    <span class="param">"limit"</span>: 100,
+    <span class="param">"window_seconds"</span>: 3600,
+    <span class="param">"key_type"</span>: "user_id"
+  }
+
+<span class="method">GET</span> <span class="endpoint">/api/rate-limits/rules</span>
+<span class="method">DELETE</span> <span class="endpoint">/api/rate-limits/rules/{ruleId}</span></pre>
+
+<button class="reveal-btn" onclick="revealApi()">Reveal Answer</button>
+<div class="reveal-content" id="apiReveal">
+<p><strong>Key details:</strong></p>
+<ul style="padding-left:20px;margin-top:8px">
+<li>The rate limiter is middleware, not a separate service endpoint — it intercepts requests before they reach the application</li>
+<li>X-RateLimit headers are essential for client-side backoff: Limit (max requests), Remaining (left in window), Reset (when counter resets)</li>
+<li>429 status code is the standard HTTP response for rate limiting</li>
+<li>Retry-After header tells clients exactly when to try again</li>
+<li>Admin API allows dynamic rule configuration without redeployment</li>
+<li>key_type determines what to rate limit by: user_id, IP, API key, or endpoint</li>
+</ul>
+</div>
+</section>
+
+<!-- STEP 4: Data Model -->
+<section class="step" id="s4">
+<h2><span class="num">4</span> Data Model</h2>
+<p class="desc">Rate limiter data lives primarily in Redis for speed. Rules are persisted in a database.</p>
+
+<div class="toggle-row">
+<div class="toggle-opt active" onclick="toggleDB('rules')">Rules (Persistent)</div>
+<div class="toggle-opt" onclick="toggleDB('counters')">Counters (Redis)</div>
+</div>
+
+<div id="dbRules">
+<div class="table-wrap"><table>
+<tr><th colspan="3">rate_limit_rules</th></tr>
+<tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+<tr><td>rule_id</td><td>UUID</td><td>Primary key</td></tr>
+<tr><td>endpoint</td><td>VARCHAR(200)</td><td>API path pattern (supports wildcards)</td></tr>
+<tr><td>limit_count</td><td>INT</td><td>Max requests in window</td></tr>
+<tr><td>window_seconds</td><td>INT</td><td>Time window duration</td></tr>
+<tr><td>key_type</td><td>ENUM</td><td>user_id / ip / api_key</td></tr>
+<tr><td>is_active</td><td>BOOLEAN</td><td>Enable/disable rule</td></tr>
+<tr><td>created_at</td><td>TIMESTAMP</td><td>For auditing</td></tr>
+</table></div>
+</div>
+
+<div id="dbCounters" style="display:none">
+<pre style="color:#c9d1d9">
+// Token Bucket in Redis (per user per rule)
+// Key: rl:{rule_id}:{user_id}
+// Hash fields:
+//   tokens  — current available tokens (float)
+//   last_refill — timestamp of last refill
+
+HSET rl:rule_1:user_123 tokens 87 last_refill 1679500000
+
+// Fixed Window Counter
+// Key: rl:{rule_id}:{user_id}:{window_start}
+// Value: request count
+SET rl:rule_1:user_123:1679500000 13
+EXPIRE rl:rule_1:user_123:1679500000 3600
+
+// Sliding Window Log
+// Key: rl:{rule_id}:{user_id}
+// Sorted set, score = timestamp, value = request_id
+ZADD rl:rule_1:user_123 1679500042 req_abc
+ZREMRANGEBYSCORE rl:rule_1:user_123 0 1679496442
+ZCARD rl:rule_1:user_123
+</pre>
+<p style="color:#8b949e;font-size:.85rem;margin-top:8px">Redis provides sub-millisecond operations. INCR + EXPIRE is atomic with Lua scripts. Sorted sets enable precise sliding window tracking.</p>
+</div>
+
+<button class="reveal-btn" onclick="revealData()">Reveal Answer</button>
+<div class="reveal-content" id="dataReveal">
+<p><strong>Two-tier storage:</strong> Rules live in a SQL database (PostgreSQL) for persistence and are cached in memory on each API server at startup. Counters live in Redis for sub-millisecond reads and writes. The token bucket approach stores just 2 fields per user-rule pair, making it extremely memory-efficient. Sliding window log is more accurate but uses more memory (stores every request timestamp).</p>
+</div>
+</section>
+
+<!-- STEP 5: Architecture -->
+<section class="step" id="s5">
+<h2><span class="num">5</span> Architecture</h2>
+<p class="desc">Watch the animated request flow through the rate limiter middleware.</p>
+
+<div class="toggle-row">
+<div class="toggle-opt active" id="pathAllow" onclick="setPath('allow')">Allowed Request</div>
+<div class="toggle-opt" id="pathDeny" onclick="setPath('deny')">Denied Request (429)</div>
+</div>
+<canvas id="archCanvas" width="920" height="300"></canvas>
+
+<button class="reveal-btn" onclick="revealArch()">Reveal Answer</button>
+<div class="reveal-content" id="archReveal">
+<p><strong>Request flow:</strong> Client &#8594; Load Balancer &#8594; Rate Limiter Middleware &#8594; Redis (check + increment counter) &#8594; If allowed: forward to API Server &#8594; Response with X-RateLimit headers. If denied: return 429 immediately (never reaches API server).</p>
+<p style="margin-top:8px"><strong>Key insight:</strong> The rate limiter must be in the hot path BEFORE the API server. Redis INCR + EXPIRE in a Lua script ensures atomic check-and-increment. Rules are cached in-memory on each server and refreshed periodically from the database.</p>
+</div>
+</section>
+
+<!-- STEP 6: Deep Dives -->
+<section class="step" id="s6">
+<h2><span class="num">6</span> Deep Dives</h2>
+<p class="desc">Click each topic to explore implementation details. The token bucket includes an animated visualization.</p>
+
+<div class="deep-dive">
+<div class="dd-header" onclick="toggleDD(this)">Token Bucket Algorithm (Animated) <span class="dd-arrow">&#9660;</span></div>
+<div class="dd-body">
+<p><strong>How it works:</strong> Each user has a bucket that holds tokens. The bucket starts full (e.g., 10 tokens). Each request consumes 1 token. Tokens are refilled at a steady rate (e.g., 1 token/second). If the bucket is empty, the request is rejected.</p>
+<div class="algo-viz">
+<canvas id="tokenCanvas" width="600" height="180"></canvas>
+<div class="algo-controls">
+<button onclick="sendTokenRequest()">Send Request</button>
+<button onclick="resetTokenBucket()">Reset Bucket</button>
+<span id="tokenStatus">Tokens: 10 / 10</span>
+</div>
+</div>
+<p style="margin-top:10px"><strong>Pros:</strong> Simple, memory-efficient (2 values per user), allows bursts up to bucket size. <strong>Cons:</strong> Choosing the right refill rate requires tuning.</p>
+<pre style="margin-top:10px">// Token Bucket — Redis Lua Script
+local key = KEYS[1]
+local capacity = tonumber(ARGV[1])
+local refill_rate = tonumber(ARGV[2])
+local now = tonumber(ARGV[3])
+
+local data = redis.call('HMGET', key, 'tokens', 'last_refill')
+local tokens = tonumber(data[1]) or capacity
+local last = tonumber(data[2]) or now
+
+-- Refill tokens based on elapsed time
+local elapsed = now - last
+tokens = math.min(capacity, tokens + elapsed * refill_rate)
+
+if tokens >= 1 then
+  tokens = tokens - 1
+  redis.call('HMSET', key, 'tokens', tokens, 'last_refill', now)
+  redis.call('EXPIRE', key, 3600)
+  return 1  -- allowed
+else
+  redis.call('HMSET', key, 'tokens', tokens, 'last_refill', now)
+  return 0  -- denied
+end</pre>
+</div>
+</div>
+
+<div class="deep-dive">
+<div class="dd-header" onclick="toggleDD(this)">Sliding Window Log <span class="dd-arrow">&#9660;</span></div>
+<div class="dd-body">
+<p><strong>How it works:</strong> Store the timestamp of every request in a sorted set. To check the limit, remove all entries older than the window, then count remaining entries. If count &lt; limit, allow the request and add its timestamp.</p>
+<p style="margin-top:10px"><strong>Pros:</strong> Most accurate algorithm — no boundary issues. <strong>Cons:</strong> High memory usage (stores every request timestamp). For a user making 1000 requests/hour, that is 1000 entries in the sorted set.</p>
+<p style="margin-top:10px"><strong>Best for:</strong> Systems that need precise rate limiting and can afford the memory cost. API billing, fraud detection.</p>
+</div>
+</div>
+
+<div class="deep-dive">
+<div class="dd-header" onclick="toggleDD(this)">Sliding Window Counter <span class="dd-arrow">&#9660;</span></div>
+<div class="dd-body">
+<p><strong>How it works:</strong> A hybrid approach. Maintain counters for the current and previous fixed windows. Estimate the count in the sliding window as: <code>count = prev_window_count * overlap_pct + curr_window_count</code></p>
+<p style="margin-top:10px"><strong>Example:</strong> Window = 1 hour. Current time is 15 minutes into the hour. Previous hour had 80 requests, current hour has 20. Estimated count = 80 * 0.75 + 20 = 80. This approximates the true sliding window without storing individual timestamps.</p>
+<p style="margin-top:10px"><strong>Pros:</strong> Memory-efficient (just 2 counters), smooth rate limiting without boundary spikes. <strong>Cons:</strong> Approximation can allow slight over-limit in edge cases.</p>
+</div>
+</div>
+
+<div class="deep-dive">
+<div class="dd-header" onclick="toggleDD(this)">Fixed Window Counter <span class="dd-arrow">&#9660;</span></div>
+<div class="dd-body">
+<p><strong>How it works:</strong> Divide time into fixed windows (e.g., 1-minute intervals). Each window has a counter. Increment on each request; reject when counter hits the limit. Counter resets at window boundary.</p>
+<p style="margin-top:10px"><strong>Pros:</strong> Simplest algorithm, minimal memory (one counter per window). <strong>Cons:</strong> Burst at window boundaries — a user can make 2x the limit across two adjacent windows (100 at end of window 1, 100 at start of window 2 = 200 in 1 second).</p>
+<p style="margin-top:10px"><strong>Implementation:</strong> <code>INCR rl:{user}:{window_start}</code> with TTL set to window duration. The window_start is the current timestamp truncated to the window size.</p>
+</div>
+</div>
+
+<div class="deep-dive">
+<div class="dd-header" onclick="toggleDD(this)">Leaky Bucket Algorithm <span class="dd-arrow">&#9660;</span></div>
+<div class="dd-body">
+<p><strong>How it works:</strong> Requests enter a FIFO queue (the bucket). The queue is processed at a fixed rate (the leak rate). If the queue is full, new requests are rejected. This ensures a perfectly smooth output rate regardless of input burstiness.</p>
+<p style="margin-top:10px"><strong>Pros:</strong> Perfectly smooth output rate, great for APIs that need consistent throughput. <strong>Cons:</strong> Bursts are queued, not served immediately. Old requests may wait in the queue while new requests are rejected. Tuning queue size is tricky.</p>
+<p style="margin-top:10px"><strong>Difference from token bucket:</strong> Token bucket allows bursts (spend saved tokens), leaky bucket enforces a constant rate. Token bucket controls the rate of requests allowed, leaky bucket controls the rate of requests processed.</p>
+</div>
+</div>
+</section>
+
+<!-- STEP 7: Trade-offs -->
+<section class="step" id="s7">
+<h2><span class="num">7</span> Trade-offs</h2>
+<p class="desc">Every design decision involves trade-offs. Compare the key choices.</p>
+
+<h3 style="font-size:.95rem;color:#8b949e;margin-bottom:10px">Memory vs Accuracy</h3>
+<div class="tradeoff-grid">
+<div class="tradeoff-card">
+<h4>Fixed Window Counter</h4>
+<div class="pros">+ Minimal memory (1 counter per window)</div>
+<div class="pros">+ O(1) check and increment</div>
+<div class="cons">- Boundary burst problem (2x spike)</div>
+<div class="cons">- Inaccurate at window edges</div>
+</div>
+<div class="tradeoff-card">
+<h4>Sliding Window Log</h4>
+<div class="pros">+ Perfect accuracy, no boundary issues</div>
+<div class="pros">+ Exact count at any point in time</div>
+<div class="cons">- Stores every timestamp (high memory)</div>
+<div class="cons">- O(N) cleanup of old entries</div>
+</div>
+</div>
+
+<h3 style="font-size:.95rem;color:#8b949e;margin-bottom:10px">Local vs Distributed Rate Limiting</h3>
+<div class="tradeoff-grid">
+<div class="tradeoff-card">
+<h4>Local (Per-Server)</h4>
+<div class="pros">+ Zero network overhead</div>
+<div class="pros">+ Works even if Redis is down</div>
+<div class="cons">- Inconsistent across servers</div>
+<div class="cons">- Total rate = limit * num_servers</div>
+</div>
+<div class="tradeoff-card">
+<h4>Distributed (Redis)</h4>
+<div class="pros">+ Accurate global rate limiting</div>
+<div class="pros">+ Consistent view across all servers</div>
+<div class="cons">- Network latency per request (~0.5ms)</div>
+<div class="cons">- Redis is a single point of failure</div>
+</div>
+</div>
+
+<h3 style="font-size:.95rem;color:#8b949e;margin-bottom:10px">Hard vs Soft Rate Limits</h3>
+<div class="tradeoff-grid">
+<div class="tradeoff-card">
+<h4>Hard Limit</h4>
+<div class="pros">+ Strict protection against abuse</div>
+<div class="pros">+ Predictable server load</div>
+<div class="cons">- Frustrating for legitimate users at boundary</div>
+<div class="cons">- Binary allow/deny, no flexibility</div>
+</div>
+<div class="tradeoff-card">
+<h4>Soft Limit</h4>
+<div class="pros">+ Allows brief bursts above limit</div>
+<div class="pros">+ Better user experience at boundary</div>
+<div class="cons">- Can allow temporary overload</div>
+<div class="cons">- Harder to reason about capacity</div>
+</div>
+</div>
+</section>
+
+<!-- STEP 8: Interview Tips -->
+<section class="step" id="s8">
+<h2><span class="num">8</span> Interview Tips</h2>
+<p class="desc">Advice for presenting this design in an actual interview.</p>
+
+<div class="tip-card"><strong>Start with the token bucket algorithm.</strong> It is the most commonly used in practice (used by Stripe, AWS, and most API gateways). It balances simplicity, memory efficiency, and burst handling. Then mention alternatives to show breadth.</div>
+<div class="tip-card"><strong>Mention Redis INCR + EXPIRE atomicity.</strong> A common pitfall is the race condition between checking the counter and incrementing it. Using a Lua script in Redis makes the operation atomic. This shows you understand distributed systems edge cases.</div>
+<div class="tip-card"><strong>Discuss what happens when the rate limiter fails.</strong> Should you fail-open (allow all requests) or fail-closed (block all)? For most systems, fail-open is safer — it is better to briefly allow excess traffic than to block all users. This is a great talking point.</div>
+<div class="tip-card"><strong>Bring up the multi-tier approach.</strong> Local rate limiting (per server, in-memory) for the first line of defense, plus distributed rate limiting (Redis) for accurate global limits. Local catches the obvious abuse with zero latency; Redis handles the precise counting.</div>
+</section>
+
+</div>
+
+<script>
+function revealReqs(){document.getElementById(`reqReveal`).classList.add(`show`)}
+function revealCap(){document.getElementById(`capReveal`).classList.add(`show`)}
+function revealApi(){document.getElementById(`apiReveal`).classList.add(`show`)}
+function revealData(){document.getElementById(`dataReveal`).classList.add(`show`)}
+function revealArch(){document.getElementById(`archReveal`).classList.add(`show`)}
+
+function calcCapacity(){
+  var totalUsers=+document.getElementById(`totalUsers`).value||0;
+  var reqPerDay=+document.getElementById(`reqPerDay`).value||0;
+  var bytesPerCounter=+document.getElementById(`bytesPerCounter`).value||0;
+  var rulesPerUser=+document.getElementById(`rulesPerUser`).value||0;
+  var rps=Math.round(totalUsers*reqPerDay/86400);
+  var checks=rps;
+  var memory=totalUsers*rulesPerUser*bytesPerCounter;
+  document.getElementById(`crRPS`).textContent=formatNum(rps);
+  document.getElementById(`crChecks`).textContent=formatNum(checks);
+  document.getElementById(`crMemory`).textContent=formatBytes(memory);
+  document.getElementById(`crOverhead`).textContent=`< 1ms`;
+}
+function formatNum(n){
+  if(n>=1e9)return (n/1e9).toFixed(1)+`B`;
+  if(n>=1e6)return (n/1e6).toFixed(1)+`M`;
+  if(n>=1e3)return (n/1e3).toFixed(1)+`K`;
+  return n.toLocaleString();
+}
+function formatBytes(b){
+  if(b>=1e12)return (b/1e12).toFixed(1)+` TB`;
+  if(b>=1e9)return (b/1e9).toFixed(1)+` GB`;
+  if(b>=1e6)return (b/1e6).toFixed(1)+` MB`;
+  if(b>=1e3)return (b/1e3).toFixed(1)+` KB`;
+  return b+` B`;
+}
+calcCapacity();
+
+function toggleDB(mode){
+  document.querySelectorAll(`#s4 .toggle-opt`).forEach(function(o){o.classList.remove(`active`)});
+  if(mode===`rules`){
+    document.getElementById(`dbRules`).style.display=`block`;
+    document.getElementById(`dbCounters`).style.display=`none`;
+    document.querySelectorAll(`#s4 .toggle-opt`)[0].classList.add(`active`);
+  }else{
+    document.getElementById(`dbRules`).style.display=`none`;
+    document.getElementById(`dbCounters`).style.display=`block`;
+    document.querySelectorAll(`#s4 .toggle-opt`)[1].classList.add(`active`);
+  }
+}
+
+function toggleDD(header){
+  var body=header.nextElementSibling;
+  var arrow=header.querySelector(`.dd-arrow`);
+  body.classList.toggle(`open`);
+  arrow.classList.toggle(`open`);
+}
+
+// Token Bucket Visualization
+var tokenCvs=document.getElementById(`tokenCanvas`);
+var tokenCtx=tokenCvs.getContext(`2d`);
+var tokenDPR=window.devicePixelRatio||1;
+var bucketTokens=10,bucketCapacity=10,lastRefill=Date.now();
+var tokenRefillRate=1;
+var tokenParticles=[];
+
+function resizeTokenCanvas(){
+  var w=tokenCvs.parentElement.clientWidth-32;
+  tokenCvs.style.width=w+`px`;tokenCvs.style.height=`180px`;
+  tokenCvs.width=w*tokenDPR;tokenCvs.height=180*tokenDPR;
+  tokenCtx.setTransform(tokenDPR,0,0,tokenDPR,0,0);
+}
+resizeTokenCanvas();
+window.addEventListener(`resize`,resizeTokenCanvas);
+
+function sendTokenRequest(){
+  var now=Date.now();
+  var elapsed=(now-lastRefill)/1000;
+  bucketTokens=Math.min(bucketCapacity,bucketTokens+elapsed*tokenRefillRate);
+  lastRefill=now;
+  if(bucketTokens>=1){
+    bucketTokens-=1;
+    tokenParticles.push({x:280,y:90,vx:3,vy:0,color:`#3fb950`,life:60,label:`OK`});
+  }else{
+    tokenParticles.push({x:280,y:90,vx:3,vy:0,color:`#f85149`,life:60,label:`429`});
+  }
+}
+function resetTokenBucket(){
+  bucketTokens=bucketCapacity;
+  lastRefill=Date.now();
+  tokenParticles=[];
+}
+
+function drawTokenBucket(){
+  var W=tokenCvs.width/tokenDPR,H=180;
+  tokenCtx.clearRect(0,0,W,H);
+
+  var now=Date.now();
+  var elapsed=(now-lastRefill)/1000;
+  var displayTokens=Math.min(bucketCapacity,bucketTokens+elapsed*tokenRefillRate);
+
+  // Draw bucket
+  var bx=100,by=30,bw=120,bh=120;
+  tokenCtx.strokeStyle=`#30363d`;tokenCtx.lineWidth=2;
+  tokenCtx.beginPath();
+  tokenCtx.moveTo(bx,by);tokenCtx.lineTo(bx,by+bh);tokenCtx.lineTo(bx+bw,by+bh);tokenCtx.lineTo(bx+bw,by);
+  tokenCtx.stroke();
+
+  // Fill level
+  var fillH=bh*(displayTokens/bucketCapacity);
+  var fillColor=displayTokens>3?`#3fb95044`:(displayTokens>0?`#f0883e44`:`#f8514944`);
+  tokenCtx.fillStyle=fillColor;
+  tokenCtx.fillRect(bx+1,by+bh-fillH,bw-2,fillH);
+
+  // Token circles inside bucket
+  var tokCount=Math.floor(displayTokens);
+  for(var i=0;i<tokCount;i++){
+    var row=Math.floor(i/5);
+    var col=i%5;
+    var tx=bx+15+col*22;
+    var ty=by+bh-15-row*22;
+    tokenCtx.fillStyle=`#3fb950`;
+    tokenCtx.beginPath();tokenCtx.arc(tx,ty,8,0,Math.PI*2);tokenCtx.fill();
+  }
+
+  // Labels
+  tokenCtx.fillStyle=`#8b949e`;tokenCtx.font=`10px sans-serif`;tokenCtx.textAlign=`center`;
+  tokenCtx.fillText(`Token Bucket`,bx+bw/2,by-8);
+  tokenCtx.fillText(`Refill: 1/sec`,bx+bw/2,by+bh+16);
+
+  // Arrow showing refill
+  tokenCtx.strokeStyle=`#3fb950`;tokenCtx.lineWidth=1.5;
+  tokenCtx.beginPath();tokenCtx.moveTo(bx+bw/2,by-25);tokenCtx.lineTo(bx+bw/2,by-5);tokenCtx.stroke();
+  tokenCtx.fillStyle=`#3fb950`;
+  tokenCtx.beginPath();tokenCtx.moveTo(bx+bw/2,by-2);tokenCtx.lineTo(bx+bw/2-4,by-8);tokenCtx.lineTo(bx+bw/2+4,by-8);tokenCtx.fill();
+
+  // Draw request arrow
+  tokenCtx.strokeStyle=`#58a6ff`;tokenCtx.lineWidth=1.5;
+  tokenCtx.beginPath();tokenCtx.moveTo(240,90);tokenCtx.lineTo(270,90);tokenCtx.stroke();
+  tokenCtx.fillStyle=`#58a6ff`;
+  tokenCtx.beginPath();tokenCtx.moveTo(273,90);tokenCtx.lineTo(267,86);tokenCtx.lineTo(267,94);tokenCtx.fill();
+
+  tokenCtx.fillStyle=`#8b949e`;tokenCtx.font=`10px sans-serif`;
+  tokenCtx.fillText(`Request`,255,80);
+
+  // Particles
+  for(var j=tokenParticles.length-1;j>=0;j--){
+    var p=tokenParticles[j];
+    p.x+=p.vx;p.life--;
+    tokenCtx.fillStyle=p.color;tokenCtx.font=`bold 12px sans-serif`;tokenCtx.textAlign=`center`;
+    tokenCtx.fillText(p.label,p.x,p.y);
+    if(p.life<=0)tokenParticles.splice(j,1);
+  }
+
+  document.getElementById(`tokenStatus`).textContent=`Tokens: `+displayTokens.toFixed(1)+` / `+bucketCapacity;
+
+  requestAnimationFrame(drawTokenBucket);
+}
+drawTokenBucket();
+
+// Architecture canvas
+var canvas=document.getElementById(`archCanvas`),ctx=canvas.getContext(`2d`);
+var currentPath=`allow`,animT=0;
+var DPR=window.devicePixelRatio||1;
+
+function resizeCanvas(){
+  var w=canvas.parentElement.clientWidth;
+  canvas.style.width=w+`px`;canvas.style.height=`300px`;
+  canvas.width=w*DPR;canvas.height=300*DPR;
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+}
+resizeCanvas();
+window.addEventListener(`resize`,resizeCanvas);
+
+function setPath(p){
+  currentPath=p;
+  document.getElementById(`pathAllow`).classList.toggle(`active`,p===`allow`);
+  document.getElementById(`pathDeny`).classList.toggle(`active`,p===`deny`);
+  animT=0;
+}
+
+function drawBox(x,y,w,h,label,color){
+  ctx.fillStyle=color+`22`;ctx.strokeStyle=color;ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.roundRect(x-w/2,y-h/2,w,h,6);ctx.fill();ctx.stroke();
+  ctx.fillStyle=`#e6edf3`;ctx.font=`bold 11px -apple-system,sans-serif`;ctx.textAlign=`center`;ctx.textBaseline=`middle`;
+  ctx.fillText(label,x,y);
+}
+
+function drawPacket(x1,y1,x2,y2,t,color){
+  var px=x1+(x2-x1)*t,py=y1+(y2-y1)*t;
+  ctx.fillStyle=color;ctx.beginPath();ctx.arc(px,py,5,0,Math.PI*2);ctx.fill();
+}
+
+function drawArch(){
+  var W=canvas.width/DPR,H=300;
+  ctx.clearRect(0,0,W,H);
+
+  var client={x:60,y:150};
+  var lb={x:175,y:150};
+  var rl={x:310,y:150};
+  var redis={x:310,y:60};
+  var api={x:460,y:150};
+  var db={x:600,y:150};
+
+  drawBox(client.x,client.y,80,36,`Client`,`#e6edf3`);
+  drawBox(lb.x,lb.y,90,36,`Load Balancer`,`#58a6ff`);
+  drawBox(rl.x,rl.y,110,36,`Rate Limiter`,`#3fb950`);
+  drawBox(redis.x,redis.y,90,36,`Redis`,`#f0883e`);
+  drawBox(api.x,api.y,90,36,`API Server`,`#58a6ff`);
+  drawBox(db.x,db.y,90,36,`Database`,`#bc8cff`);
+
+  ctx.strokeStyle=`#30363d`;ctx.lineWidth=1;ctx.setLineDash([4,3]);
+  ctx.beginPath();ctx.moveTo(100,150);ctx.lineTo(130,150);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(220,150);ctx.lineTo(255,150);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(310,132);ctx.lineTo(310,78);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(365,150);ctx.lineTo(415,150);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(505,150);ctx.lineTo(555,150);ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.font=`bold 10px sans-serif`;ctx.fillStyle=`#8b949e`;ctx.textAlign=`center`;
+
+  if(currentPath===`allow`){
+    ctx.fillText(`ALLOWED REQUEST FLOW`,W/2,25);
+    var seg=animT*6;
+    if(seg<1) drawPacket(100,150,220,150,seg,`#58a6ff`);
+    else if(seg<2) drawPacket(220,150,310,150,seg-1,`#58a6ff`);
+    else if(seg<2.5){
+      drawPacket(310,132,310,78,(seg-2)*2,`#f0883e`);
+      ctx.fillStyle=`#f0883e`;ctx.font=`10px sans-serif`;
+      ctx.fillText(`Check counter`,370,80);
+    }else if(seg<3.5){
+      drawPacket(310,78,310,132,(seg-2.5)*2,`#3fb950`);
+      ctx.fillStyle=`#3fb950`;ctx.font=`10px sans-serif`;
+      ctx.fillText(`ALLOWED`,370,100);
+    }else if(seg<4.5){
+      drawPacket(365,150,505,150,(seg-3.5),`#3fb950`);
+    }else if(seg<5.5){
+      drawPacket(505,150,555,150,(seg-4.5),`#bc8cff`);
+    }else{
+      ctx.fillStyle=`#3fb950`;ctx.font=`bold 11px sans-serif`;
+      ctx.fillText(`200 OK + X-RateLimit headers`,W/2,260);
+    }
+  }else{
+    ctx.fillText(`DENIED REQUEST FLOW (429)`,W/2,25);
+    var seg2=animT*5;
+    if(seg2<1) drawPacket(100,150,220,150,seg2,`#58a6ff`);
+    else if(seg2<2) drawPacket(220,150,310,150,seg2-1,`#58a6ff`);
+    else if(seg2<2.5){
+      drawPacket(310,132,310,78,(seg2-2)*2,`#f0883e`);
+      ctx.fillStyle=`#f0883e`;ctx.font=`10px sans-serif`;
+      ctx.fillText(`Check counter`,370,80);
+    }else if(seg2<3.5){
+      drawPacket(310,78,310,132,(seg2-2.5)*2,`#f85149`);
+      ctx.fillStyle=`#f85149`;ctx.font=`bold 10px sans-serif`;
+      ctx.fillText(`LIMIT EXCEEDED`,375,100);
+    }else{
+      ctx.fillStyle=`#f85149`;ctx.font=`bold 12px sans-serif`;
+      ctx.fillText(`429 Too Many Requests`,W/2,260);
+      ctx.font=`10px sans-serif`;ctx.fillStyle=`#8b949e`;
+      ctx.fillText(`Never reaches API server — blocked at middleware`,W/2,280);
+    }
+  }
+
+  animT+=0.003;
+  if(animT>1)animT=0;
+  requestAnimationFrame(drawArch);
+}
+drawArch();
+</script>
+<footer style="text-align:center;padding:1rem;border-top:1px solid #ccc;margin-top:2rem;color:#666;font-size:0.8rem;">
+    © <span id="copyright-year"></span> Clark Ngo
+  </footer>
+  <script>document.getElementById('copyright-year').textContent = new Date().getFullYear();</script>
+</body>
+</html>

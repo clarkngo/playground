@@ -43,3 +43,64 @@ After writing any `.html` file:
 - [ ] JS syntax check passes (`node --check`)
 - [ ] Page loads without console errors (`preview_console_logs`)
 - [ ] Key interactive elements are visible (`preview_screenshot`)
+- [ ] Changelog updated (see below)
+
+---
+
+## Changelog Update — Required After Every Change
+
+After **any** file is created or edited in this project, update the changelog before declaring the task done.
+
+### Which files to update
+
+| What changed | Update this file |
+|---|---|
+| `coding-agents/` | `changelog/coding-agents.md` |
+| `case-studies/` | `changelog/case-studies.md` |
+| `trainer-series/` | `changelog/trainer-series.md` |
+| `cryptography-labs/` | `changelog/cryptography-labs.md` |
+| `encryption-labs/` | `changelog/encryption-labs.md` |
+| `crypto-vuln-labs/` | `changelog/crypto-vuln-labs.md` |
+| `security/` | `changelog/security.md` |
+| `system-design-learn/` | `changelog/system-design-learn.md` |
+| `system-design-labs/` | `changelog/system-design-labs.md` |
+| `system-design-metrics/` | `changelog/system-design-metrics.md` |
+| `system-design-activities/` | `changelog/system-design-activities.md` |
+| `system-design-games/` | `changelog/system-design-games.md` |
+| `digital-twin/` | `changelog/digital-twin.md` |
+| `wild-rift/` | `changelog/wild-rift.md` |
+| `history-timelines/` | `changelog/history-timelines.md` |
+| `simulators/` | `changelog/simulators.md` |
+| `prototypes/` | `changelog/prototypes.md` |
+| `database-labs/` | `changelog/database-labs.md` |
+| `cityu-tools/` | `changelog/cityu-tools.md` |
+| `index.html`, `CLAUDE.md`, shared infra | `changelog/root-playground.md` |
+
+Always **also** add a one-line summary entry to `CHANGELOG.md` (root) under today's date.
+
+### Tag reference
+
+| Tag | Use when |
+|---|---|
+| `[feature]` | New file, section, or capability added |
+| `[bug]` | Something was broken and is now fixed |
+| `[ux]` | Layout, flow, or usability improvement |
+| `[refactor]` | Code restructured without changing behavior |
+
+### Entry format
+
+```markdown
+## YYYY-MM-DD
+
+### [tag] Short title
+- Bullet with specific detail
+- Another bullet if needed
+```
+
+### Rules
+
+1. Use today's date from `currentDate` context (or run `date +%Y-%m-%d`)
+2. Add new entries at the **top** of the file (newest first)
+3. Be specific — name the files, functions, or UI elements affected
+4. If fixing a bug, include: **Symptom**, **Root cause**, **Fix**
+5. If multiple sections were changed in one task, update each collection file

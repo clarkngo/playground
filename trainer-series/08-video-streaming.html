@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Design a Video Streaming Platform — System Design Trainer</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0d1117;color:#e6edf3;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;line-height:1.7}
+a{color:#58a6ff;text-decoration:none}a:hover{text-decoration:underline}
+nav{background:#161b22;border-bottom:1px solid #30363d;padding:16px 24px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100}
+.brand{font-size:1.2rem;font-weight:700}.back{color:#8b949e;font-size:.9rem}
+.container{max-width:960px;margin:0 auto;padding:24px 20px}
+.hero{background:linear-gradient(135deg,#1a1e24 0%,#1a0d2a 100%);border:1px solid #30363d;border-radius:12px;padding:48px 36px;margin-bottom:36px;text-align:center}
+.hero h1{font-size:2.2rem;margin-bottom:8px}.hero .tagline{color:#bc8cff;font-size:1.1rem;margin-bottom:6px}.hero .meta{color:#8b949e;font-size:.9rem}
+section.step{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:28px;margin-bottom:24px}
+section.step h2{font-size:1.4rem;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #30363d;display:flex;align-items:center;gap:10px}
+.step-num{background:#bc8cff;color:#0d1117;font-size:.75rem;font-weight:700;padding:2px 10px;border-radius:12px}
+label{display:block;margin-bottom:8px;font-size:.93rem;color:#c9d1d9;cursor:pointer}
+label input{margin-right:8px}
+.radio-group{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.reveal-btn{display:inline-block;padding:8px 20px;background:#bc8cff;color:#0d1117;border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:.9rem;margin-top:12px;transition:background .2s}
+.reveal-btn:hover{background:#a371e0}
+.reveal{margin-top:16px;padding:16px;background:#0d1117;border:1px solid #3fb950;border-radius:8px;display:none;font-size:.93rem;color:#c9d1d9}
+.reveal.show{display:block}
+.correct-mark{color:#3fb950;font-weight:700;margin-left:4px}
+.input-group{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.input-group label{font-size:.85rem;color:#8b949e;margin-bottom:2px}
+.input-group input{width:100%;padding:8px 12px;background:#0d1117;border:1px solid #30363d;border-radius:6px;color:#e6edf3;font-size:.9rem}
+.calc-result{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:16px;margin-top:12px}
+.calc-row{display:flex;justify-content:space-between;padding:4px 0;font-size:.9rem}
+.calc-row .label{color:#8b949e}.calc-row .value{color:#bc8cff;font-weight:600}
+pre{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:16px;overflow-x:auto;font-size:.85rem;color:#e6edf3;margin-bottom:12px;line-height:1.6}
+.code-comment{color:#8b949e}
+.toggle-row{display:flex;gap:8px;margin-bottom:16px}
+.toggle-opt{padding:6px 16px;border-radius:6px;border:1px solid #30363d;background:#0d1117;color:#8b949e;cursor:pointer;font-size:.85rem;font-weight:600;transition:all .2s}
+.toggle-opt.active{background:#1f6feb;color:#e6edf3;border-color:#1f6feb}
+.table-wrap{overflow-x:auto;margin-bottom:12px}
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+th{background:#21262d;color:#8b949e;padding:8px 12px;text-align:left;font-weight:600;border-bottom:1px solid #30363d}
+td{padding:8px 12px;border-bottom:1px solid #21262d;color:#c9d1d9}
+canvas{display:block;width:100%;border:1px solid #30363d;border-radius:8px;background:#0d1117;margin-bottom:12px}
+.collapsible{border:1px solid #30363d;border-radius:8px;margin-bottom:10px;overflow:hidden}
+.collapsible-header{padding:14px 18px;background:#21262d;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-weight:600;font-size:.93rem}
+.collapsible-header:hover{background:#282e36}
+.collapsible-body{padding:16px 18px;display:none;font-size:.9rem;color:#c9d1d9;line-height:1.7}
+.collapsible.open .collapsible-body{display:block}
+.collapsible-arrow{transition:transform .2s;color:#8b949e}.collapsible.open .collapsible-arrow{transform:rotate(90deg)}
+.tradeoff-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.tradeoff-card{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:18px}
+.tradeoff-card h4{color:#bc8cff;margin-bottom:8px;font-size:.95rem}
+.tradeoff-card p{font-size:.85rem;color:#8b949e;line-height:1.6}
+.tip-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tip-card{background:#0d1117;border-left:3px solid #3fb950;border-radius:0 8px 8px 0;padding:14px 18px;font-size:.9rem;color:#c9d1d9}
+@media(max-width:640px){.input-group,.tradeoff-grid,.tip-cards{grid-template-columns:1fr}}
+</style>
+    <meta name="author" content="Clark Ngo">
+    <meta name="copyright" content="Clark Ngo">
+  </head>
+<body>
+<nav><span class="brand">🎯 Trainer Series</span><a href="index.html" class="back">← All Trainers</a></nav>
+<div class="container">
+
+<div class="hero">
+<h1>Design a Video Streaming Platform</h1>
+<div class="tagline">YouTube / Netflix — upload, transcode, and stream at global scale</div>
+<div class="meta">Transcoding Pipeline · Adaptive Bitrate · CDN Distribution · View Counting</div>
+</div>
+
+<!-- STEP 1: Requirements -->
+<section class="step" id="step1">
+<h2><span class="step-num">Step 1</span> Requirements</h2>
+<p style="color:#8b949e;margin-bottom:16px">Select the functional requirements you think are essential:</p>
+<label><input type="checkbox" data-correct="true" data-group="func"> Upload videos</label>
+<label><input type="checkbox" data-correct="true" data-group="func"> Transcode to multiple resolutions</label>
+<label><input type="checkbox" data-correct="true" data-group="func"> Stream with adaptive bitrate</label>
+<label><input type="checkbox" data-correct="true" data-group="func"> CDN distribution for global delivery</label>
+<label><input type="checkbox" data-correct="true" data-group="func"> View count tracking at scale</label>
+<label><input type="checkbox" data-correct="true" data-group="func"> Basic recommendations feed</label>
+<label><input type="checkbox" data-correct="false" data-group="func"> Live video editing in browser</label>
+<label><input type="checkbox" data-correct="false" data-group="func"> Real-time collaborative commenting</label>
+
+<p style="color:#8b949e;margin:16px 0 8px">Select the most important non-functional requirement:</p>
+<div class="radio-group">
+<label><input type="radio" name="nfr" value="stream" data-correct="true"> &lt;2s start time, no buffering on stable connections, global availability</label>
+<label><input type="radio" name="nfr" value="quality"> Always stream at maximum 4K quality</label>
+<label><input type="radio" name="nfr" value="exact"> Exact real-time view counts</label>
+</div>
+
+<button class="reveal-btn" onclick="revealStep('step1')">Reveal Answer</button>
+<div class="reveal" id="step1-reveal">
+<strong>Functional:</strong> Upload, transcode, adaptive bitrate streaming, CDN delivery, view counting, and basic recommendations. Live editing and real-time collab are out of scope.<br><br>
+<strong>Non-functional:</strong> Fast start time and smooth playback are the top priorities. Always streaming 4K wastes bandwidth on mobile. Exact real-time view counts are unnecessarily expensive — approximate counts are sufficient.
+</div>
+</section>
+
+<!-- STEP 2: Capacity Estimation -->
+<section class="step" id="step2">
+<h2><span class="step-num">Step 2</span> Capacity Estimation</h2>
+<div class="input-group">
+<div><label>DAU (millions)</label><input type="number" id="cap-dau" value="100" oninput="calcCapacity()"></div>
+<div><label>Videos Watched/User/Day</label><input type="number" id="cap-vpd" value="5" oninput="calcCapacity()"></div>
+<div><label>Uploads/Day (K)</label><input type="number" id="cap-uploads" value="500" oninput="calcCapacity()"></div>
+<div><label>Avg Raw Video (MB)</label><input type="number" id="cap-rawmb" value="200" oninput="calcCapacity()"></div>
+<div><label>Transcoded Versions</label><input type="number" id="cap-versions" value="5" oninput="calcCapacity()"></div>
+<div><label>Avg Transcoded Size (MB)</label><input type="number" id="cap-transmb" value="100" oninput="calcCapacity()"></div>
+</div>
+<div class="calc-result" id="cap-result"></div>
+<button class="reveal-btn" onclick="revealStep('step2')">Reveal Answer</button>
+<div class="reveal" id="step2-reveal">
+<strong>Reference numbers:</strong><br>
+100M DAU x 5 videos = <strong>500M views/day</strong> ≈ 5,800 views/sec<br>
+500K uploads x 200MB raw = <strong>100TB/day</strong> raw upload<br>
+500K x 5 versions x 100MB = <strong>250TB/day</strong> transcoded<br>
+CDN bandwidth for streaming: assuming 5 min avg video at 2Mbps = ~75MB per view<br>
+500M views x 75MB = <strong>~37PB/day</strong> CDN egress (massive!)
+</div>
+</section>
+
+<!-- STEP 3: API Design -->
+<section class="step" id="step3">
+<h2><span class="step-num">Step 3</span> API Design</h2>
+<pre><span class="code-comment">// Upload flow (two-step)</span>
+POST /api/videos/upload
+     Body: { "title": "...", "description": "..." }
+     → 200 { "videoId": "v123", "uploadUrl": "https://s3.../presigned" }
+
+<span class="code-comment">// Streaming</span>
+GET  /api/videos/{id}/manifest.m3u8
+     → HLS manifest with multiple quality levels
+
+<span class="code-comment">// Feed</span>
+GET  /api/feed?userId=X&page=1
+     → 200 { "videos": [...] }
+
+<span class="code-comment">// View tracking</span>
+POST /api/videos/{id}/view
+     Body: { "watchTimeSec": 120, "quality": "720p" }</pre>
+<button class="reveal-btn" onclick="revealStep('step3')">Reveal Answer</button>
+<div class="reveal" id="step3-reveal">
+<strong>Key design decisions:</strong><br><br>
+<strong>Pre-signed URL upload:</strong> Client uploads directly to S3 via pre-signed URL, bypassing your servers. This avoids bottlenecking your upload service with huge video files.<br><br>
+<strong>HLS manifest:</strong> The .m3u8 manifest lists available quality levels (240p, 480p, 720p, 1080p, 4K) and segment URLs. The client player picks the appropriate quality based on bandwidth.<br><br>
+<strong>View tracking:</strong> Fire-and-forget POST. The view service writes to Kafka, not directly to the database. Counts are aggregated asynchronously.
+</div>
+</section>
+
+<!-- STEP 4: Data Model -->
+<section class="step" id="step4">
+<h2><span class="step-num">Step 4</span> Data Model</h2>
+<div class="toggle-row">
+<div class="toggle-opt active" onclick="toggleDM('sql')">SQL (Metadata)</div>
+<div class="toggle-opt" onclick="toggleDM('nosql')">NoSQL (Segments)</div>
+</div>
+<div id="dm-sql">
+<div class="table-wrap"><table>
+<tr><th>Table</th><th>Columns</th><th>Notes</th></tr>
+<tr><td>videos</td><td>id, user_id, title, description, status, duration, created_at</td><td>Status: uploading → transcoding → ready → failed</td></tr>
+<tr><td>users</td><td>id, username, email, created_at</td><td>Standard user table</td></tr>
+<tr><td>subscriptions</td><td>subscriber_id, channel_id, created_at</td><td>For feed generation</td></tr>
+</table></div>
+</div>
+<div id="dm-nosql" style="display:none">
+<div class="table-wrap"><table>
+<tr><th>Collection</th><th>Schema</th><th>Notes</th></tr>
+<tr><td>video_segments</td><td>video_id, resolution, segment_num, cdn_url, size_bytes</td><td>One entry per segment per resolution</td></tr>
+<tr><td>view_counts</td><td>video_id, count, last_updated</td><td>Aggregated from Kafka — eventually consistent</td></tr>
+<tr><td>view_events</td><td>video_id, user_id, watch_time, quality, timestamp</td><td>Raw events in Kafka → data warehouse</td></tr>
+</table></div>
+</div>
+<button class="reveal-btn" onclick="revealStep('step4')">Reveal Answer</button>
+<div class="reveal" id="step4-reveal">
+<strong>Hybrid approach:</strong> SQL for structured metadata (videos, users, subscriptions) where you need ACID transactions. NoSQL / object storage for video segments (immutable, append-only). Kafka + batch aggregation for view counts.<br><br>
+<strong>Video segments</strong> are stored in object storage (S3) and served via CDN. The database only stores the CDN URL reference, not the actual video data.
+</div>
+</section>
+
+<!-- STEP 5: Architecture -->
+<section class="step" id="step5">
+<h2><span class="step-num">Step 5</span> Architecture</h2>
+<canvas id="archCanvas" width="900" height="320"></canvas>
+<button class="reveal-btn" onclick="revealStep('step5')">Reveal Answer</button>
+<div class="reveal" id="step5-reveal">
+<strong>Upload path:</strong> Client → pre-signed URL → S3 → S3 event triggers transcoding queue → Transcoding Workers (FFmpeg, parallel jobs per resolution) → transcoded segments to S3 → CDN origin pull.<br><br>
+<strong>Streaming path:</strong> Client requests manifest → CDN edge serves manifest + segments. Adaptive bitrate: client monitors bandwidth, switches quality levels mid-stream by requesting different segment URLs.<br><br>
+<strong>View counting:</strong> Client → View Service → Kafka → Count Aggregator (batch, every few seconds) → DB update. Approximate counting is fine — nobody notices if the count is off by a few hundred.
+</div>
+</section>
+
+<!-- STEP 6: Deep Dives -->
+<section class="step" id="step6">
+<h2><span class="step-num">Step 6</span> Deep Dives</h2>
+
+<div class="collapsible" onclick="toggleCollapse(this)">
+<div class="collapsible-header">Transcoding Pipeline: DAG of FFmpeg Jobs <span class="collapsible-arrow">▶</span></div>
+<div class="collapsible-body">
+<p>When a video is uploaded, a <strong>DAG (directed acyclic graph)</strong> of transcoding jobs is created:</p>
+<ul style="margin:8px 0 8px 20px;color:#8b949e">
+<li>Split raw video into segments (e.g., 4-second chunks)</li>
+<li>For each segment, transcode to 5 resolutions in parallel: 240p, 480p, 720p, 1080p, 4K</li>
+<li>Generate thumbnails at key frames</li>
+<li>Create HLS manifest linking all segments and resolutions</li>
+</ul>
+<p style="margin-top:8px"><strong>FFmpeg workers</strong> run on GPU instances for hardware-accelerated encoding. Each worker pulls jobs from an SQS/Kafka queue. A single video may spawn 50+ parallel jobs.</p>
+<p style="margin-top:8px"><strong>Fault tolerance:</strong> If a worker dies mid-transcode, the segment job returns to the queue and is picked up by another worker. The DAG orchestrator tracks completion of all segments before marking the video as "ready".</p>
+</div>
+</div>
+
+<div class="collapsible" onclick="toggleCollapse(this)">
+<div class="collapsible-header">Adaptive Bitrate Streaming (HLS/DASH) <span class="collapsible-arrow">▶</span></div>
+<div class="collapsible-body">
+<p><strong>HLS (HTTP Live Streaming):</strong> The manifest (.m3u8) lists available quality levels:</p>
+<pre style="margin:8px 0">#EXT-X-STREAM-INF:BANDWIDTH=800000,RESOLUTION=640x360
+360p/stream.m3u8
+#EXT-X-STREAM-INF:BANDWIDTH=2400000,RESOLUTION=1280x720
+720p/stream.m3u8
+#EXT-X-STREAM-INF:BANDWIDTH=5000000,RESOLUTION=1920x1080
+1080p/stream.m3u8</pre>
+<p>The <strong>client player</strong> (e.g., hls.js) monitors download speed of each segment. If bandwidth drops, it switches to a lower quality for the next segment. If bandwidth improves, it upgrades. This happens seamlessly mid-playback.</p>
+<p style="margin-top:8px"><strong>Segment size matters:</strong> 2-4 second segments balance quality adaptation speed (shorter = faster switching) with encoding efficiency (longer = better compression).</p>
+</div>
+</div>
+
+<div class="collapsible" onclick="toggleCollapse(this)">
+<div class="collapsible-header">View Counting at Scale <span class="collapsible-arrow">▶</span></div>
+<div class="collapsible-body">
+<p><strong>The problem:</strong> 500M views/day. Direct DB writes = 5,800 writes/sec to a single row. Hot key problem.</p>
+<p style="margin-top:8px"><strong>Solution: Kafka buffering + batch aggregation</strong></p>
+<ul style="margin:8px 0 8px 20px;color:#8b949e">
+<li>View events → Kafka topic (partitioned by video_id)</li>
+<li>Aggregation consumer: batch count events every 5-10 seconds</li>
+<li>Single DB UPDATE per video per batch: <code>SET count = count + 47</code></li>
+<li>For viral videos: further shard the counter across multiple rows, sum on read</li>
+</ul>
+<p style="margin-top:8px"><strong>Deduplication:</strong> Use a bloom filter or Redis set with TTL to deduplicate views from the same user within a time window. Approximate dedup is acceptable.</p>
+</div>
+</div>
+</section>
+
+<!-- STEP 7: Trade-offs -->
+<section class="step" id="step7">
+<h2><span class="step-num">Step 7</span> Trade-offs</h2>
+<div class="tradeoff-grid">
+<div class="tradeoff-card">
+<h4>Pre-Transcode All Resolutions</h4>
+<p>Higher upfront cost and storage. Instant playback at any quality. Standard approach for popular platforms. 5x storage per video.</p>
+</div>
+<div class="tradeoff-card">
+<h4>On-Demand Transcoding</h4>
+<p>Transcode only when requested. Saves storage for rarely-watched videos. First viewer experiences delay. Good for long-tail content.</p>
+</div>
+<div class="tradeoff-card">
+<h4>HLS (Apple)</h4>
+<p>Industry standard. Broad device support. Uses .m3u8 manifests and .ts segments. Supported natively on iOS/Safari. Slightly higher latency.</p>
+</div>
+<div class="tradeoff-card">
+<h4>DASH (Open Standard)</h4>
+<p>ISO standard, royalty-free. Uses .mpd manifests and .mp4 segments. Better DRM support. Not supported natively on Apple devices without MSE.</p>
+</div>
+<div class="tradeoff-card">
+<h4>Exact View Counts</h4>
+<p>Requires distributed transactions or strong consistency. Much higher cost. Necessary for monetization-critical counting (ad views). Slower.</p>
+</div>
+<div class="tradeoff-card">
+<h4>Approximate View Counts</h4>
+<p>Kafka buffering + batch aggregation. Counts may lag by seconds. Perfectly fine for display purposes. Handles viral videos gracefully.</p>
+</div>
+</div>
+</section>
+
+<!-- STEP 8: Interview Tips -->
+<section class="step" id="step8">
+<h2><span class="step-num">Step 8</span> Interview Tips</h2>
+<div class="tip-cards">
+<div class="tip-card"><strong>Separate upload and streaming paths clearly.</strong> These have completely different characteristics: upload is write-heavy and asynchronous, streaming is read-heavy and latency-sensitive. Draw them as distinct flows.</div>
+<div class="tip-card"><strong>Mention the transcoding pipeline early.</strong> Transcoding is the unique complexity of video systems. Explain the DAG of FFmpeg jobs, parallel processing, and how you handle failures.</div>
+<div class="tip-card"><strong>CDN is crucial — discuss PoP strategy.</strong> Video streaming without CDN is a non-starter. Mention Points of Presence, cache hit ratios, origin pull vs push, and how popular videos get cached at edge.</div>
+<div class="tip-card"><strong>View counting is a classic follow-up.</strong> Interviewers love asking how you count views at scale. Have the Kafka → batch aggregation → DB pattern ready. Mention deduplication and approximate counting.</div>
+</div>
+</section>
+
+</div>
+
+<script>
+function revealStep(id) {
+  const el = document.getElementById(id + '-reveal');
+  el.classList.toggle('show');
+  if (id === 'step1') markCorrectAnswers(document.getElementById(id));
+}
+function markCorrectAnswers(section) {
+  section.querySelectorAll('input[type=checkbox]').forEach(cb => {
+    const lbl = cb.parentElement;
+    if (cb.dataset.correct === 'true' && !lbl.querySelector('.correct-mark')) {
+      const m = document.createElement('span');
+      m.className = 'correct-mark';
+      m.textContent = ' ✓';
+      lbl.appendChild(m);
+    }
+  });
+  section.querySelectorAll('input[type=radio]').forEach(r => {
+    const lbl = r.parentElement;
+    if (r.dataset.correct === 'true' && !lbl.querySelector('.correct-mark')) {
+      const m = document.createElement('span');
+      m.className = 'correct-mark';
+      m.textContent = ' ✓';
+      lbl.appendChild(m);
+    }
+  });
+}
+
+function calcCapacity() {
+  const dau = parseFloat(document.getElementById('cap-dau').value) || 0;
+  const vpd = parseFloat(document.getElementById('cap-vpd').value) || 0;
+  const uploads = parseFloat(document.getElementById('cap-uploads').value) || 0;
+  const rawmb = parseFloat(document.getElementById('cap-rawmb').value) || 0;
+  const versions = parseFloat(document.getElementById('cap-versions').value) || 0;
+  const transmb = parseFloat(document.getElementById('cap-transmb').value) || 0;
+  const views = dau * 1e6 * vpd;
+  const viewsPerSec = Math.round(views / 86400);
+  const rawTB = (uploads * 1000 * rawmb) / (1024 * 1024);
+  const transTB = (uploads * 1000 * versions * transmb) / (1024 * 1024);
+  document.getElementById('cap-result').innerHTML =
+    `<div class="calc-row"><span class="label">Views/Day</span><span class="value">${(views/1e6).toFixed(0)}M</span></div>` +
+    `<div class="calc-row"><span class="label">Views/Second</span><span class="value">${viewsPerSec.toLocaleString()}</span></div>` +
+    `<div class="calc-row"><span class="label">Raw Upload Storage/Day</span><span class="value">${rawTB.toFixed(0)} TB</span></div>` +
+    `<div class="calc-row"><span class="label">Transcoded Storage/Day</span><span class="value">${transTB.toFixed(0)} TB</span></div>` +
+    `<div class="calc-row"><span class="label">Uploads/Second</span><span class="value">${Math.round(uploads*1000/86400)}</span></div>`;
+}
+calcCapacity();
+
+function toggleDM(type) {
+  document.querySelectorAll('#step4 .toggle-opt').forEach(o => o.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('dm-sql').style.display = type === 'sql' ? 'block' : 'none';
+  document.getElementById('dm-nosql').style.display = type === 'nosql' ? 'block' : 'none';
+}
+
+function toggleCollapse(el) {
+  if (el.classList.contains('collapsible')) el.classList.toggle('open');
+}
+
+// Architecture canvas
+(function() {
+  const c = document.getElementById('archCanvas');
+  const ctx = c.getContext('2d');
+  const DPR = window.devicePixelRatio || 1;
+  let W, H, frame = 0;
+  function resize() {
+    W = c.parentElement.clientWidth - 56;
+    H = 320;
+    c.width = W * DPR; c.height = H * DPR;
+    c.style.width = W + 'px'; c.style.height = H + 'px';
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  }
+  function drawBox(x, y, w, h, label, color) {
+    ctx.fillStyle = color + '22';
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.roundRect(x, y, w, h, 6); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#e6edf3';
+    ctx.font = 'bold 10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const lines = label.split('\n');
+    lines.forEach((line, i) => {
+      ctx.fillText(line, x + w / 2, y + h / 2 + (i - (lines.length-1)/2) * 13);
+    });
+  }
+  function drawArrow(x1, y1, x2, y2, color) {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+    const a = Math.atan2(y2 - y1, x2 - x1);
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(x2, y2);
+    ctx.lineTo(x2 - 7 * Math.cos(a - 0.4), y2 - 7 * Math.sin(a - 0.4));
+    ctx.lineTo(x2 - 7 * Math.cos(a + 0.4), y2 - 7 * Math.sin(a + 0.4));
+    ctx.fill();
+  }
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    frame++;
+    // Upload path
+    ctx.fillStyle = '#8b949e';
+    ctx.font = 'bold 10px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('UPLOAD PATH', 20, 18);
+    drawBox(20, 28, 65, 32, 'Client', '#58a6ff');
+    drawBox(110, 28, 75, 32, 'Upload\nService', '#8b949e');
+    drawBox(210, 28, 55, 32, 'S3', '#f0883e');
+    drawBox(290, 28, 75, 32, 'Transcode\nQueue', '#bc8cff');
+    drawBox(390, 28, 80, 32, 'FFmpeg\nWorkers', '#3fb950');
+    drawBox(495, 28, 60, 32, 'CDN', '#f85149');
+    drawArrow(85, 44, 110, 44, '#58a6ff');
+    drawArrow(185, 44, 210, 44, '#8b949e');
+    drawArrow(265, 44, 290, 44, '#f0883e');
+    drawArrow(365, 44, 390, 44, '#bc8cff');
+    drawArrow(470, 44, 495, 44, '#3fb950');
+    // Upload animated dot
+    const upPhase = (frame % 150) / 150;
+    if (upPhase < 0.8) {
+      const t = upPhase / 0.8;
+      const dx = 85 + t * 410;
+      ctx.fillStyle = '#bc8cff';
+      ctx.beginPath(); ctx.arc(dx, 44, 3, 0, Math.PI * 2); ctx.fill();
+    }
+    // Streaming path
+    ctx.fillStyle = '#8b949e';
+    ctx.font = 'bold 10px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('STREAMING PATH', 20, 95);
+    drawBox(20, 105, 65, 32, 'Client', '#58a6ff');
+    drawBox(130, 105, 70, 32, 'CDN Edge', '#f85149');
+    drawBox(240, 105, 80, 32, 'HLS/DASH\nManifest', '#3fb950');
+    drawBox(360, 105, 80, 32, 'Segment\nDelivery', '#f0883e');
+    drawArrow(85, 121, 130, 121, '#58a6ff');
+    drawArrow(200, 121, 240, 121, '#f85149');
+    drawArrow(320, 121, 360, 121, '#3fb950');
+    // Stream animated dot
+    const stPhase = (frame % 80) / 80;
+    const sdx = 130 + stPhase * 310;
+    ctx.fillStyle = '#3fb950';
+    ctx.beginPath(); ctx.arc(sdx, 121, 3, 0, Math.PI * 2); ctx.fill();
+    // Adaptive bitrate indicator
+    const qualities = ['240p', '480p', '720p', '1080p'];
+    const qi = Math.floor((frame / 60) % 4);
+    ctx.fillStyle = '#8b949e';
+    ctx.font = '9px sans-serif';
+    ctx.textAlign = 'left';
+    qualities.forEach((q, i) => {
+      ctx.fillStyle = i === qi ? '#3fb950' : '#30363d';
+      ctx.fillText(q, 470, 107 + i * 12);
+    });
+    ctx.fillStyle = '#8b949e';
+    ctx.font = '8px sans-serif';
+    ctx.fillText('← adaptive', 510, 107 + qi * 12);
+    // View counting path
+    ctx.fillStyle = '#8b949e';
+    ctx.font = 'bold 10px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('VIEW COUNTING', 20, 170);
+    drawBox(20, 180, 65, 32, 'Client', '#58a6ff');
+    drawBox(120, 180, 75, 32, 'View\nService', '#8b949e');
+    drawBox(230, 180, 60, 32, 'Kafka', '#f0883e');
+    drawBox(325, 180, 80, 32, 'Count\nAggregator', '#bc8cff');
+    drawBox(440, 180, 50, 32, 'DB', '#58a6ff');
+    drawArrow(85, 196, 120, 196, '#58a6ff');
+    drawArrow(195, 196, 230, 196, '#8b949e');
+    drawArrow(290, 196, 325, 196, '#f0883e');
+    drawArrow(405, 196, 440, 196, '#bc8cff');
+    ctx.fillStyle = '#8b949e';
+    ctx.font = 'bold 9px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('batch every 5s', 370, 225);
+    requestAnimationFrame(draw);
+  }
+  resize();
+  window.addEventListener('resize', resize);
+  draw();
+})();
+</script>
+<footer style="text-align:center;padding:1rem;border-top:1px solid #ccc;margin-top:2rem;color:#666;font-size:0.8rem;">
+    © <span id="copyright-year"></span> Clark Ngo
+  </footer>
+  <script>document.getElementById('copyright-year').textContent = new Date().getFullYear();</script>
+</body>
+</html>
