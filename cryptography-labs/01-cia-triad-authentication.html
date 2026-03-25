@@ -25,6 +25,9 @@
     .question-box{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:1.25rem;margin-bottom:.75rem}
     .question-text{font-weight:600;color:#e6edf3;font-size:1.05rem;margin:0 0 1rem}
     .why-box{background:#1c2a1c;border:1px solid #238636;border-radius:8px;padding:1.25rem;margin-top:1rem;display:none}
+    details>summary{list-style:none}details>summary::-webkit-details-marker{display:none}
+    details[open] .term-arrow{display:inline-block;transform:rotate(90deg)}
+    .term-arrow{display:inline-block;transition:transform .15s;font-size:.7rem}
     .why-box.show{display:block}
     .why-box h6{color:#3fb950;font-weight:700;margin:0 0 .5rem}
     .why-box p{margin:.5rem 0 0;line-height:1.65}
@@ -92,6 +95,8 @@
     .reflection-title{color:#e6edf3;font-weight:600;margin-bottom:.75rem}
     .reflection-input{background:#21262d;border:1px solid #30363d;border-radius:6px;padding:.75rem;color:#e6edf3;width:100%;min-height:120px;font-family:inherit;resize:vertical}
     .reflection-input:focus{outline:none;border-color:#58a6ff}
+    .lab-input{background:#21262d;border:1px solid #30363d;border-radius:6px;padding:.45rem .6rem;color:#e6edf3;width:100%;font-size:.88rem}
+    .lab-input:focus{outline:none;border-color:#58a6ff}
     .submit-btn{background:#1f6feb;color:#fff;border:none;border-radius:6px;padding:.5rem 1rem;cursor:pointer;font-size:.9rem;margin-top:.5rem}
     .submit-btn:hover{background:#1c64e8}
     .export-pdf-btn{background:#3fb950;color:#fff;border:none;border-radius:6px;padding:.5rem 1rem;cursor:pointer;font-size:.9rem;margin-top:.5rem;margin-left:.5rem}
@@ -180,7 +185,28 @@
     .kx-ch-lbl{font-size:.6rem;color:#555;text-align:center;margin-top:.15rem}
     .kx-result{margin-top:.65rem;background:#1c2a1c;border:1px solid #238636;border-radius:6px;padding:.6rem .85rem;font-size:.84rem;color:#3fb950;display:none;animation:kx-pop .3s ease both}
     .kx-result.show{display:block}
+    /* Interactive Tour System */
+    #tour-modal{position:fixed;top:0;left:0;right:0;bottom:0;z-index:10000;display:none}
+    #tour-modal.show{display:flex;align-items:center;justify-content:center}
+    .tour-backdrop{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);backdrop-filter:blur(4px);z-index:10000}
+    .tour-container{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#0d1117;border:2px solid #1f6feb;border-radius:12px;padding:2rem;max-width:700px;width:90%;max-height:85vh;overflow-y:auto;z-index:10001;box-shadow:0 20px 60px rgba(0,0,0,.8)}
+    .tour-close{position:absolute;top:1rem;right:1rem;background:none;border:none;color:#8b949e;font-size:1.5rem;cursor:pointer;padding:0;width:32px;height:32px;display:flex;align-items:center;justify-content:center}
+    .tour-close:hover{color:#58a6ff}
+    .tour-step{display:none}
+    .tour-step.show{display:block}
+    .tour-step h2{color:#e6edf3;margin:0 0 1rem;font-size:1.3rem}
+    .tour-step p{color:#8b949e;margin:.5rem 0;line-height:1.65;font-size:.95rem}
+    .tour-highlight{background:#1c2a1c;border:2px solid #3fb950;border-radius:8px;padding:1rem;margin:1rem 0;color:#3fb950;font-weight:600;font-size:.9rem;text-align:center}
+    .tour-nav{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-top:2rem;padding-top:1.5rem;border-top:1px solid #30363d}
+    .tour-btn{background:#1f6feb;color:#fff;border:none;border-radius:6px;padding:.5rem 1rem;cursor:pointer;font-size:.9rem;font-weight:600;transition:background .15s}
+    .tour-btn:hover{background:#1c64e8}
+    .tour-btn-skip{background:transparent;color:#8b949e;border:1px solid #30363d;font-weight:400}
+    .tour-btn-skip:hover{border-color:#58a6ff;color:#58a6ff}
+    #tour-counter{color:#8b949e;font-size:.9rem;font-weight:600}
+    #help-reminder{position:fixed;bottom:5rem;left:50%;transform:translateX(-50%);background:#1c2a1c;border:1px solid #3fb950;border-radius:8px;padding:.65rem 1.25rem;color:#3fb950;font-size:.85rem;z-index:9998;display:none;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,.5)}
   </style>
+  <meta name="author" content="Clark Ngo">
+  <meta name="copyright" content="Clark Ngo">
 </head>
 <body>
 
@@ -189,6 +215,8 @@
   <div class="nav-actions">
     <span class="nav-pill">Module 1 Lab</span>
     <button onclick="resetLab()" style="background:none;border:1px solid #30363d;border-radius:6px;padding:.25rem .6rem;color:#8b949e;cursor:pointer;font-size:.75rem" title="Reset lab progress">↺ Reset</button>
+    <button onclick="showTourModal(1)" title="How Labs Work" style="background:none;border:1px solid #30363d;border-radius:6px;padding:.25rem .6rem;color:#8b949e;cursor:pointer;font-size:.75rem;transition:border-color .15s" onmouseover="this.style.borderColor='#58a6ff';this.style.color='#58a6ff'" onmouseout="this.style.borderColor='#30363d';this.style.color='#8b949e'">❓ Help</button>
+    <button onclick="closeTab()" style="background:#2a1c1c;color:#f85149;border:1px solid #da3633;border-radius:6px;padding:.35rem .8rem;cursor:pointer;font-size:.82rem;font-weight:600;transition:border-color .15s" onmouseover="this.style.background='#3a1a1a'" onmouseout="this.style.background='#2a1c1c'">✕ Exit Lab</button>
   </div>
 </nav>
 
@@ -206,6 +234,7 @@
   <!-- CIA Triad Interactive Demo -->
   <div class="demo-box">
     <h4 style="margin-top:0;color:#e6edf3">🛡️ The CIA Triad</h4>
+    <div style="background:#161b22;border-left:3px solid #58a6ff;border-radius:0 6px 6px 0;padding:.6rem .85rem;margin:.25rem 0 .85rem;font-size:.82rem;color:#8b949e;line-height:1.65"><strong style="color:#58a6ff">🎯 Why This Matters</strong> — CIA is the universal security taxonomy. Every risk, control, and compliance requirement maps to at least one of these three pillars. This demo builds the mental model you will use for every other topic in this course.</div>
     <p style="margin-bottom:1rem;color:#8b949e">Click on each pillar to explore how it protects information:</p>
 
     <div class="cia-demo">
@@ -301,6 +330,7 @@
   <!-- Public Key vs Symmetric Key -->
   <div class="demo-box">
     <h4 style="margin-top:0;color:#e6edf3">🔑 Symmetric vs Asymmetric (Public Key) Cryptography</h4>
+    <div style="background:#161b22;border-left:3px solid #58a6ff;border-radius:0 6px 6px 0;padding:.6rem .85rem;margin:.25rem 0 .85rem;font-size:.82rem;color:#8b949e;line-height:1.65"><strong style="color:#58a6ff">🎯 Why This Matters</strong> — Real systems use both cryptographic paradigms for different problems. Understanding when to use symmetric (speed, bulk data) vs asymmetric (key distribution, authentication) is foundational to designing secure protocols like TLS.</div>
 
     <div style="background:#1c2940;border:1px solid #58a6ff;border-radius:6px;padding:1rem;margin-bottom:1.25rem">
       <p style="margin:0 0 .4rem;color:#58a6ff;font-weight:600">📌 Scenario</p>
@@ -376,6 +406,17 @@
 
       <div id="os-commands" style="background:#0d1117;border:1px solid #30363d;border-radius:0 6px 6px 6px;padding:1rem;font-family:monospace;font-size:.82rem;color:#e6edf3">
         <div id="os-mac">
+          <details style="margin-bottom:.85rem;font-family:inherit">
+            <summary style="cursor:pointer;color:#58a6ff;font-size:.8rem;font-weight:600;list-style:none;display:flex;align-items:center;gap:.4rem;user-select:none">
+              <span class="term-arrow">▶</span> How to open Terminal on macOS
+            </summary>
+            <div style="background:#161b22;border:1px solid #30363d;border-radius:6px;padding:.65rem .85rem;margin-top:.45rem;font-family:sans-serif;font-size:.8rem;color:#8b949e;line-height:1.85">
+              <div><span style="color:#e3b341;font-weight:600">Option 1 — Spotlight (fastest):</span> Press <kbd style="background:#21262d;border:1px solid #444;border-radius:3px;padding:.1rem .35rem;color:#e6edf3;font-size:.78rem">⌘ Space</kbd>, type <code style="color:#3fb950">Terminal</code>, press <kbd style="background:#21262d;border:1px solid #444;border-radius:3px;padding:.1rem .35rem;color:#e6edf3;font-size:.78rem">Enter</kbd></div>
+              <div style="margin-top:.35rem"><span style="color:#e3b341;font-weight:600">Option 2 — Finder:</span> Applications → Utilities → <strong style="color:#c9d1d9">Terminal</strong></div>
+              <div style="margin-top:.35rem"><span style="color:#e3b341;font-weight:600">Option 3 — Dock:</span> If Terminal is in your Dock, click its icon directly</div>
+              <div style="margin-top:.35rem"><span style="color:#e3b341;font-weight:600">iTerm2 users:</span> Any of the above works — iTerm2 is a drop-in replacement for Terminal</div>
+            </div>
+          </details>
           <span style="color:#8b949e"># 1. Generate a 4096-bit RSA key pair (press Enter to accept defaults)</span><br>
           <span style="color:#3fb950">ssh-keygen</span> -t rsa -b 4096 -C <span style="color:#e3b341">"your.email@example.com"</span><br><br>
           <span style="color:#8b949e"># 2. View your PUBLIC key — safe to share with anyone</span><br>
@@ -384,6 +425,18 @@
           <span style="color:#3fb950">cat</span> ~/.ssh/id_rsa
         </div>
         <div id="os-win" style="display:none">
+          <details style="margin-bottom:.85rem;font-family:inherit">
+            <summary style="cursor:pointer;color:#58a6ff;font-size:.8rem;font-weight:600;list-style:none;display:flex;align-items:center;gap:.4rem;user-select:none">
+              <span class="term-arrow">▶</span> How to open Terminal on Windows
+            </summary>
+            <div style="background:#161b22;border:1px solid #30363d;border-radius:6px;padding:.65rem .85rem;margin-top:.45rem;font-family:sans-serif;font-size:.8rem;color:#8b949e;line-height:1.85">
+              <div><span style="color:#e3b341;font-weight:600">Option 1 — PowerShell (Admin):</span> Press <kbd style="background:#21262d;border:1px solid #444;border-radius:3px;padding:.1rem .35rem;color:#e6edf3;font-size:.78rem">Win + X</kbd>, choose <strong style="color:#c9d1d9">Windows PowerShell (Admin)</strong> or <strong style="color:#c9d1d9">Terminal (Admin)</strong></div>
+              <div style="margin-top:.35rem"><span style="color:#e3b341;font-weight:600">Option 2 — Run dialog:</span> Press <kbd style="background:#21262d;border:1px solid #444;border-radius:3px;padding:.1rem .35rem;color:#e6edf3;font-size:.78rem">Win + R</kbd>, type <code style="color:#3fb950">powershell</code>, press <kbd style="background:#21262d;border:1px solid #444;border-radius:3px;padding:.1rem .35rem;color:#e6edf3;font-size:.78rem">Ctrl + Shift + Enter</kbd> to run as Administrator</div>
+              <div style="margin-top:.35rem"><span style="color:#e3b341;font-weight:600">Option 3 — Start menu:</span> Search <code style="color:#3fb950">PowerShell</code>, right-click → <strong style="color:#c9d1d9">Run as Administrator</strong></div>
+              <div style="margin-top:.35rem"><span style="color:#e3b341;font-weight:600">Git Bash users:</span> Open Start menu, search <code style="color:#3fb950">Git Bash</code> — no admin rights needed for key generation</div>
+              <div style="margin-top:.5rem;color:#f85149;font-size:.77rem">⚠️ The OpenSSH install step (step 1 below) requires Administrator. Key generation does not.</div>
+            </div>
+          </details>
           <span style="color:#8b949e"># Open PowerShell as Administrator, then run:</span><br><br>
           <span style="color:#8b949e"># 1. Enable OpenSSH (if not already installed)</span><br>
           <span style="color:#3fb950">Add-WindowsCapability</span> -Online -Name OpenSSH.Client~~~~0.0.1.0<br><br>
@@ -394,6 +447,17 @@
           <span style="color:#8b949e"># Alternatively: use Git Bash if Git for Windows is installed</span>
         </div>
         <div id="os-linux" style="display:none">
+          <details style="margin-bottom:.85rem;font-family:inherit">
+            <summary style="cursor:pointer;color:#58a6ff;font-size:.8rem;font-weight:600;list-style:none;display:flex;align-items:center;gap:.4rem;user-select:none">
+              <span class="term-arrow">▶</span> How to open Terminal on Linux
+            </summary>
+            <div style="background:#161b22;border:1px solid #30363d;border-radius:6px;padding:.65rem .85rem;margin-top:.45rem;font-family:sans-serif;font-size:.8rem;color:#8b949e;line-height:1.85">
+              <div><span style="color:#e3b341;font-weight:600">Option 1 — Keyboard shortcut:</span> Press <kbd style="background:#21262d;border:1px solid #444;border-radius:3px;padding:.1rem .35rem;color:#e6edf3;font-size:.78rem">Ctrl + Alt + T</kbd> (works on Ubuntu, Mint, Pop!_OS, and most GNOME/KDE distros)</div>
+              <div style="margin-top:.35rem"><span style="color:#e3b341;font-weight:600">Option 2 — Desktop right-click:</span> Right-click an empty area of the desktop → <strong style="color:#c9d1d9">Open Terminal</strong> (if your DE supports it)</div>
+              <div style="margin-top:.35rem"><span style="color:#e3b341;font-weight:600">Option 3 — App menu:</span> Open your application launcher, search for <code style="color:#3fb950">Terminal</code>, <code style="color:#3fb950">Konsole</code>, or <code style="color:#3fb950">GNOME Terminal</code></div>
+              <div style="margin-top:.35rem"><span style="color:#e3b341;font-weight:600">Option 4 — Run dialog:</span> Press <kbd style="background:#21262d;border:1px solid #444;border-radius:3px;padding:.1rem .35rem;color:#e6edf3;font-size:.78rem">Alt + F2</kbd> (KDE), type <code style="color:#3fb950">konsole</code> or <code style="color:#3fb950">xterm</code></div>
+            </div>
+          </details>
           <span style="color:#8b949e"># 1. Generate a 4096-bit RSA key pair</span><br>
           <span style="color:#3fb950">ssh-keygen</span> -t rsa -b 4096 -C <span style="color:#e3b341">"your.email@example.com"</span><br><br>
           <span style="color:#8b949e"># 2. View your PUBLIC key — safe to share with anyone</span><br>
@@ -432,6 +496,7 @@
   <!-- Why Passwords? -->
   <div class="demo-box">
     <h4 style="margin-top:0;color:#e6edf3">🔐 Why Do We Have Passwords?</h4>
+    <div style="background:#161b22;border-left:3px solid #58a6ff;border-radius:0 6px 6px 0;padding:.6rem .85rem;margin:.25rem 0 .85rem;font-size:.82rem;color:#8b949e;line-height:1.65"><strong style="color:#58a6ff">🎯 Why This Matters</strong> — Despite being the weakest common authentication mechanism, passwords protect billions of accounts. Understanding why passwords fail motivates better alternatives: MFA, hardware keys, and proper password hashing with algorithms like bcrypt and Argon2.</div>
 
     <div style="background:#1c2940;border:1px solid #58a6ff;border-radius:6px;padding:1rem;margin:1rem 0">
       <p style="margin:0;color:#e6edf3"><strong>Authentication:</strong> Passwords verify "you are who you say you are"</p>
@@ -490,42 +555,50 @@
   <!-- Question -->
   <div class="question-box">
     <p class="question-text">❓ Which CIA principle is MOST violated when an attacker intercepts and reads your encrypted email without authorization?</p>
-    <div class="options-grid">
-      <button class="opt-btn" onclick="check('A',this)"><span class="opt-id">A</span> Confidentiality</button>
-      <button class="opt-btn" onclick="check('B',this)"><span class="opt-id">B</span> Integrity</button>
-      <button class="opt-btn" onclick="check('C',this)"><span class="opt-id">C</span> Availability</button>
-      <button class="opt-btn" onclick="check('D',this)"><span class="opt-id">D</span> All three equally</button>
-    </div>
+    <div class="options-grid" id="quiz-options-grid"></div>
   </div>
 
   <div id="feedback" class="feedback-box"></div>
 
   <!-- Student Reflection -->
   <div class="reflection-box">
-    <div class="reflection-title">💭 Reflection & Learning Submission</div>
+    <div class="reflection-title">💭 Learning Reflection Submission</div>
     <p style="color:#8b949e;margin-bottom:.75rem">After interacting with the CIA triad, public key concepts, and password strength tools, reflect on your learning:</p>
 
-    <!-- Lock indicator -->
-    <div id="reflection-lock" style="background:#2a1c1c;border:1px solid #f85149;border-radius:6px;padding:.5rem .85rem;margin-bottom:1rem;font-size:.83rem;color:#f85149">
-      🔒 Complete all objectives (see tracker bottom-right ↘) to unlock submission
+    <div style="margin-bottom:1rem">
+      <strong style="color:#e6edf3">Guided Questions:</strong>
+      <ul style="color:#8b949e;font-size:.9rem;margin:.5rem 0 0 1.5rem;line-height:1.9">
+        <li>What does each pillar of the CIA triad protect against — and can you give a real-world example for each?</li>
+        <li>How does public key cryptography solve the key distribution problem that symmetric encryption cannot?</li>
+        <li>Why is password length generally more important than complexity when it comes to brute-force resistance?</li>
+        <li>What is the difference between <em>authentication</em> and <em>authorization</em>? Why does it matter?</li>
+        <li><strong style="color:#e6edf3">Key question:</strong> An attacker intercepts your encrypted email and reads its contents without modifying it. Which CIA principle is violated — and why are the other two <em>not</em> violated in this specific scenario?</li>
+      </ul>
+    </div>
+
+    <div id="reflection-lock" style="background:#2a1c1c;border:1px solid #f85149;border-radius:6px;padding:.75rem 1rem;margin-bottom:1rem">
+      <p style="color:#f85149;font-weight:600;margin:0;font-size:.9rem">🔒 Complete all objectives (tracker bottom-right ↘) to unlock submission</p>
     </div>
 
     <!-- Submission area — greyed out until unlocked -->
     <div id="submission-area" class="sub-area-locked">
-      <textarea class="reflection-input" id="learning-reflection" placeholder="What did you learn when you interacted with the different components? How do the CIA triad principles apply to real-world scenarios you've experienced? What surprised you about password security?
+      <!-- REQUIRED: Learning Reflection -->
+      <div style="background:#0d1a2e;border:2px solid #1f6feb;border-radius:8px;padding:1rem;margin-bottom:1rem">
+        <label style="color:#58a6ff;font-size:.95rem;font-weight:700;display:block;margin-bottom:.4rem">📝 Your Learning Reflection <span style="color:#f85149;font-size:.8rem;font-weight:600">★ Required</span></label>
+        <textarea class="reflection-input" id="learning-reflection" placeholder="What did you learn when you interacted with the different components? How do the CIA triad principles apply to real-world scenarios you've experienced? What surprised you about password security?
 
-Please write at least 3-4 sentences describing your key insights..."></textarea>
-
-      <div style="margin-top:.75rem">
-        <label style="color:#e6edf3;font-size:.9rem;font-weight:600">🔍 Lab Observations</label>
-        <p style="color:#8b949e;font-size:.82rem;margin:.2rem 0 .3rem">Was there anything within the lab you expected to change, but didn't?</p>
+Please write at least 4-5 sentences about your key insights..."></textarea>
+      </div>
+      <!-- OPTIONAL: Lab Observations -->
+      <div style="border-top:1px solid #30363d;margin-top:.5rem;padding-top:1rem">
+        <label style="color:#8b949e;font-size:.88rem;font-weight:600;display:block;margin-bottom:.25rem">🔍 Lab Observations <span style="font-size:.78rem;font-weight:400">(Optional)</span></label>
+        <p style="color:#6e7681;font-size:.8rem;margin:.1rem 0 .35rem">Was there anything within the lab you expected to change, but didn't?</p>
         <textarea class="reflection-input" id="lab-feedback" placeholder="Share any observations, surprises, or things that felt missing..." style="min-height:80px"></textarea>
       </div>
 
       <div style="margin-top:.75rem">
         <label style="color:#e6edf3;font-size:.9rem;font-weight:600">Your name:</label>
-        <input type="text" id="student-name" placeholder="Enter your full name..."
-          style="background:#21262d;border:1px solid #30363d;border-radius:6px;padding:.5rem;color:#e6edf3;width:100%;max-width:320px;display:block;margin:.3rem 0">
+        <input type="text" id="student-name" class="lab-input" placeholder="Enter your full name..." style="max-width:320px;margin:.3rem 0 0">
       </div>
 
       <div style="margin-top:.75rem">
@@ -548,7 +621,7 @@ Please write at least 3-4 sentences describing your key insights..."></textarea>
   </div>
 
   <div class="lab-footer">
-    <span class="text-muted">Module 1 Lab - Security Fundamentals</span>
+    <span class="text-muted">Module 1</span>
   </div>
 </div>
 
@@ -575,11 +648,11 @@ Please write at least 3-4 sentences describing your key insights..."></textarea>
 </div>
 
 <!-- Floating objective overlay -->
-<div id="obj-overlay" style="position:fixed;bottom:1.25rem;right:1.25rem;z-index:999;font-size:.8rem;user-select:none">
-  <div id="obj-badge" onclick="toggleObj()" style="background:rgba(22,27,34,.95);border:1px solid #30363d;border-radius:20px;padding:.35rem .8rem;cursor:pointer;display:flex;align-items:center;gap:.5rem;color:#8b949e;backdrop-filter:blur(4px);transition:border-color .2s;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.4)">
-    <span id="obj-count">📋 0/4 objectives</span><span id="obj-chev" style="font-size:.65rem">▼</span>
+<div id="obj-overlay" style="position:fixed;bottom:1rem;right:1rem;z-index:999;font-size:.8rem;user-select:none">
+  <div id="obj-badge" onclick="toggleObj()" style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.4rem .7rem;cursor:pointer;display:flex;align-items:center;gap:.4rem;color:#8b949e">
+    <span id="obj-count">📋 0/6 objectives</span><span id="obj-chev">▲</span>
   </div>
-  <div id="obj-panel" style="display:block;position:absolute;bottom:calc(100% + .4rem);right:0;background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.65rem .9rem;min-width:210px;line-height:2.2;box-shadow:0 4px 12px rgba(0,0,0,.5)">
+  <div id="obj-panel" style="display:block;background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.6rem .8rem;margin-top:.3rem;min-width:220px;line-height:2.2;box-shadow:0 4px 12px rgba(0,0,0,.5)">
     <div style="font-size:.72rem;color:#58a6ff;font-weight:600;margin-bottom:.25rem;border-bottom:1px solid #30363d;padding-bottom:.2rem">Lab Objectives</div>
     <div id="obj-list"></div>
   </div>
@@ -680,12 +753,13 @@ let selectedCIAPillar = null;
 let answered = false;
 let quizPassed = false;
 let quizAttempts = 0;
-let ciaInteracted = false;
+let ciaPillarsSeen = new Set();
 let keyDemoViewed = false;
 let passwordLevelsAchieved = {weak: false, medium: false, strong: false};
 let passwordEntries = {weak: '', medium: '', strong: ''};
 let screenshotUploaded = false;
 let screenshotDataUrl = '';
+let simulatorUsed = false;
 const openedAt = new Date().toISOString();
 
 // ── localStorage persistence ──
@@ -693,13 +767,14 @@ function saveState() {
   const state = {
     quizPassed,
     quizAttempts,
-    ciaInteracted,
+    ciaPillarsSeen: [...ciaPillarsSeen],
     selectedCIAPillar,
     keyDemoViewed,
     passwordLevelsAchieved,
     passwordEntries,
     screenshotUploaded,
     screenshotDataUrl,
+    simulatorUsed,
     studentName: (document.getElementById('student-name') || {}).value || '',
     reflection: (document.getElementById('learning-reflection') || {}).value || '',
     labFeedback: (document.getElementById('lab-feedback') || {}).value || ''
@@ -715,13 +790,14 @@ function loadState() {
 
   quizPassed = state.quizPassed || false;
   quizAttempts = state.quizAttempts || 0;
-  ciaInteracted = state.ciaInteracted || false;
+  ciaPillarsSeen = new Set(state.ciaPillarsSeen || []);
   selectedCIAPillar = state.selectedCIAPillar || null;
   keyDemoViewed = state.keyDemoViewed || false;
   passwordLevelsAchieved = state.passwordLevelsAchieved || {weak: false, medium: false, strong: false};
   passwordEntries = state.passwordEntries || {weak: '', medium: '', strong: ''};
   screenshotUploaded = state.screenshotUploaded || false;
   screenshotDataUrl = state.screenshotDataUrl || '';
+  simulatorUsed = state.simulatorUsed || false;
 
   // Restore text inputs
   if (state.studentName) {
@@ -759,10 +835,15 @@ function loadState() {
 
   // Restore quiz visual state
   if (quizPassed) {
-    answered = true;
-    const btns = document.querySelectorAll('.opt-btn');
-    if (btns.length > 0) btns[0].classList.add('correct');
-    showFeedback(true, "Correct! <strong>Confidentiality</strong> is violated when unauthorized parties gain access to private information. Even if the email is encrypted, reading it without permission breaks confidentiality. The data itself wasn't changed (integrity) and the system remained accessible (availability).");
+    if (_correctBtn) _correctBtn.classList.add('correct');
+    const fb = document.getElementById('q-feedback') || document.getElementById('feedback');
+    const correctOpt = QUIZ_OPTIONS.find(function(o){return o.correct;});
+    if (fb && correctOpt) {
+      fb.className = 'feedback-box show feedback-correct';
+      fb.innerHTML = '✅ ' + correctOpt.feedback;
+    }
+    const wb = document.getElementById('why-matters');
+    if (wb) wb.classList.add('show');
   }
 
   // Restore key exchange demo
@@ -782,7 +863,7 @@ let _objOpen = true;
 function toggleObj() {
   _objOpen = !_objOpen;
   document.getElementById('obj-panel').style.display = _objOpen ? 'block' : 'none';
-  document.getElementById('obj-chev').textContent = _objOpen ? '▼' : '▲';
+  document.getElementById('obj-chev').textContent = _objOpen ? '▲' : '▼';
 }
 function updateObjOverlay(checks) {
   const done = checks.filter(c => c.done).length;
@@ -820,7 +901,7 @@ function selectCIA(pillar, element) {
   element.classList.add('selected');
 
   selectedCIAPillar = pillar;
-  ciaInteracted = true;
+  ciaPillarsSeen.add(pillar);
 
   const detailsDiv = document.getElementById('cia-details');
   detailsDiv.innerHTML = ciaData[pillar].content;
@@ -1013,6 +1094,9 @@ function simulateThreat() {
     });
     btn.disabled = false;
     btn.textContent = '▶ Simulate';
+    simulatorUsed = true;
+    saveState();
+    checkReflectionLock();
   }, s.ciaD);
   _simTimers.push(ciaT);
 }
@@ -1266,10 +1350,12 @@ function checkPasswordLevel(level, val) {
 function checkReflectionLock() {
   const allPwLevels = passwordLevelsAchieved.weak && passwordLevelsAchieved.medium && passwordLevelsAchieved.strong;
   const checks = [
-    { label: 'Answer the mini quiz correctly',                          done: quizPassed },
+    { label: 'Explore all 3 CIA Triad pillars (C, I &amp; A)',         done: ciaPillarsSeen.size >= 3 },
+    { label: 'Run the CIA Triad Threat Simulator',                      done: simulatorUsed },
     { label: 'Click "Demonstrate Key Exchange"',                        done: keyDemoViewed },
-    { label: 'Complete the Password Task (Weak, Medium &amp; Strong)',  done: allPwLevels },
     { label: 'Upload your key pair terminal screenshot',                done: screenshotUploaded },
+    { label: 'Complete the Password Task (Weak, Medium &amp; Strong)',  done: allPwLevels },
+    { label: 'Answer the mini quiz correctly',                          done: quizPassed },
   ];
   const allDone = checks.every(c => c.done);
   const lockDiv = document.getElementById('reflection-lock');
@@ -1310,7 +1396,7 @@ function submitReflection() {
     timeOnPageMs: new Date(submittedAt) - new Date(openedAt),
     quizPassed,
     quizAttempts,
-    ciaInteracted,
+    ciaPillarsExplored: [...ciaPillarsSeen],
     ciaPillarSelected: selectedCIAPillar,
     keyDemoViewed,
     allPwLevels,
@@ -1352,7 +1438,7 @@ function exportPDF() {
     <table>
       <tr><td>Quiz:</td><td>${data.quizPassed ? '✅ Passed' : '❌ Not passed'} (${data.quizAttempts || 0} attempt${data.quizAttempts !== 1 ? 's' : ''})</td></tr>
       <tr><td>Key Exchange Demo:</td><td>${data.keyDemoViewed ? '✅ Viewed' : '❌ Not viewed'}</td></tr>
-      <tr><td>CIA Pillars:</td><td>${data.ciaInteracted ? `✅ Explored (last: ${data.ciaPillarSelected || '—'})` : '❌ Not explored'}</td></tr>
+      <tr><td>CIA Pillars:</td><td>${(data.ciaPillarsExplored||[]).length >= 3 ? `✅ All 3 explored` : `⚠️ ${(data.ciaPillarsExplored||[]).length}/3 explored`}</td></tr>
       <tr><td>Password Task:</td><td>${data.allPwLevels ? '✅ All 3 levels completed' : '❌ Incomplete'}</td></tr>
       <tr><td>Weak password:</td><td>${(data.passwordEntries && data.passwordEntries.weak) || '—'}</td></tr>
       <tr><td>Medium password:</td><td>${(data.passwordEntries && data.passwordEntries.medium) || '—'}</td></tr>
@@ -1424,27 +1510,190 @@ function detectOS() {
 
 const OS_LABELS = { mac: 'macOS', win: 'Windows', linux: 'Linux' };
 
-const HINTS = {
-  B: "Integrity focuses on data accuracy and tampering prevention, not unauthorized reading.",
-  C: "Availability is about system uptime and access, not data privacy breaches.",
-  D: "While related, the primary violation here is unauthorized access to private information."
-};
+// ── Quiz Randomization ──
+const QUIZ_OPTIONS = [
+  {text:'Confidentiality', correct:true, feedback:'<strong>Confidentiality</strong> is violated when unauthorized parties gain access to private information. Even though the email was encrypted, the attacker read its contents without permission — that is a confidentiality breach. The data was not modified (no integrity violation) and the system stayed accessible (no availability violation).'},
+  {text:'Integrity', correct:false, feedback:'<strong>Integrity</strong> is violated when data is <em>altered</em> without authorization — for example, an attacker changing the recipient or amount in a message. In this scenario the email was only read, not modified, so integrity remains intact.'},
+  {text:'Availability', correct:false, feedback:'<strong>Availability</strong> is violated when authorized users cannot access a system or data — for example, a DDoS attack taking down a server. Here the system was fully accessible; the attacker simply read data they should not have.'},
+  {text:'All three equally', correct:false, feedback:'Only <strong>one</strong> CIA pillar is directly violated here. Intercepting and reading a message without modifying it or disrupting access is a confidentiality breach specifically. Availability and integrity both remain intact in this scenario.'},
+];
+const _shuffled = (function(){
+  const a=[...QUIZ_OPTIONS];
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  return a;
+})();
+const _LABELS=['A','B','C','D'];
+let _correctBtn=null;
 
-function check(choice, btn) {
-  quizAttempts++;
-  const correct = choice === 'A';
-  markBtn(btn, correct);
+document.addEventListener('DOMContentLoaded',function(){
+  const grid=document.getElementById('quiz-options-grid');
+  if(!grid)return;
+  _shuffled.forEach(function(opt,i){
+    const btn=document.createElement('button');
+    btn.className='opt-btn';
+    if(opt.correct)_correctBtn=btn;
+    btn.onclick=function(){checkQ(btn,opt.correct,opt.feedback);};
+    btn.innerHTML='<span class="opt-id">'+_LABELS[i]+'</span>'+opt.text;
+    grid.appendChild(btn);
+  });
+});
 
-  if (correct) {
-    answered = true;
-    quizPassed = true;
-    showFeedback(true, "Correct! <strong>Confidentiality</strong> is violated when unauthorized parties gain access to private information. Even if the email is encrypted, reading it without permission breaks confidentiality. The data itself wasn't changed (integrity) and the system remained accessible (availability).");
-  } else {
-    showFeedback(false, HINTS[choice]);
-  }
-  saveState();
-  checkReflectionLock();
+function checkQ(btn,isCorrect,feedbackText){
+  if(!quizPassed)quizAttempts++;
+  document.querySelectorAll('.opt-btn').forEach(function(b){b.classList.remove('incorrect','correct');});
+  if(quizPassed&&_correctBtn)_correctBtn.classList.add('correct');
+  btn.classList.add(isCorrect?'correct':'incorrect');
+  if(isCorrect){quizPassed=true;}
+  const fb=document.getElementById('q-feedback')||document.getElementById('feedback');
+  fb.className='feedback-box show '+(isCorrect?'feedback-correct':'feedback-incorrect');
+  fb.innerHTML=(isCorrect?'✅ ':'❌ ')+feedbackText;
+  const wb=document.getElementById('why-box');if(isCorrect&&wb)wb.classList.add('show');
+  saveState();checkReflectionLock();if(typeof updateObj==='function')updateObj();
 }
+function closeTab(){try{window.close();}catch(e){}history.back();}
+
+// ═══════════════════════════════════════════════════
+// TOUR SYSTEM
+// ═══════════════════════════════════════════════════
+let tourCurrentStep = 1;
+const tourTotalSteps = 6;
+
+function initTourSystem() {
+  const tourSeenKey = 'cryptography-tour-seen-v2';
+  const tourSeen = localStorage.getItem(tourSeenKey);
+  if (!tourSeen) {
+    setTimeout(() => showTourModal(1), 800);
+  }
+}
+
+function showTourModal(stepNum) {
+  tourCurrentStep = stepNum;
+  const modal = document.getElementById('tour-modal');
+  modal.classList.add('show');
+  for (let i = 1; i <= tourTotalSteps; i++) {
+    const step = document.getElementById(`tour-step-${i}`);
+    if (step) step.classList.remove('show');
+  }
+  const currentStep = document.getElementById(`tour-step-${stepNum}`);
+  if (currentStep) currentStep.classList.add('show');
+  document.getElementById('tour-counter').textContent = `Step ${stepNum} of ${tourTotalSteps}`;
+  const prevBtn = document.getElementById('tour-prev-btn');
+  if (stepNum === 1) { prevBtn.style.opacity = '.5'; prevBtn.style.pointerEvents = 'none'; }
+  else { prevBtn.style.opacity = '1'; prevBtn.style.pointerEvents = 'auto'; }
+  const nextBtn = document.getElementById('tour-next-btn');
+  if (stepNum === tourTotalSteps) { nextBtn.textContent = 'Close Tour →'; nextBtn.onclick = () => closeTour(true); }
+  else { nextBtn.textContent = 'Next →'; nextBtn.onclick = () => nextTourStep(); }
+}
+
+function nextTourStep() {
+  if (tourCurrentStep < tourTotalSteps) showTourModal(tourCurrentStep + 1);
+  else closeTour(true);
+}
+
+function prevTourStep() {
+  if (tourCurrentStep > 1) showTourModal(tourCurrentStep - 1);
+}
+
+function closeTour(completed) {
+  document.getElementById('tour-modal').classList.remove('show');
+  localStorage.setItem('cryptography-tour-seen-v2', 'true');
+  if (!completed) {
+    const rem = document.getElementById('help-reminder');
+    rem.style.display = 'block';
+    setTimeout(() => { rem.style.display = 'none'; }, 4000);
+  }
+}
+
+function skipTour() { closeTour(false); }
+
+document.addEventListener('DOMContentLoaded', initTourSystem);
 </script>
+
+<div id="help-reminder">💡 You can reopen this tour anytime via the <strong>❓ Help</strong> button in the top bar.</div>
+
+<div id="tour-modal">
+  <div class="tour-backdrop"></div>
+  <div class="tour-container">
+    <button class="tour-close" onclick="closeTour(false)">✕</button>
+
+    <div id="tour-step-1" class="tour-step show">
+      <h2>🔐 Welcome to Cryptography Labs!</h2>
+      <p>Let's take a quick tour of how these labs work. By the end, you'll understand:</p>
+      <ul style="margin:1rem 0;padding-left:1.5rem;color:#8b949e">
+        <li>The objective system that unlocks submission</li>
+        <li>How to use interactive playgrounds</li>
+        <li>How to complete and submit your work</li>
+      </ul>
+      <p style="margin-top:1.5rem">Ready? Let's go!</p>
+    </div>
+
+    <div id="tour-step-2" class="tour-step">
+      <h2>📋 Track Your Progress with Objectives</h2>
+      <p>Every lab has <strong>multiple objectives</strong> you need to complete. Different labs have different objectives based on what you'll learn:</p>
+      <ul style="margin:1rem 0;padding-left:1.5rem;color:#8b949e">
+        <li>Answer the mini quiz correctly</li>
+        <li>Complete interactive activities</li>
+        <li>Try different scenarios</li>
+        <li>Gather insights and explore concepts</li>
+      </ul>
+      <div class="tour-highlight">Look for the 📋 badge in the bottom-right corner →</div>
+      <p style="margin-top:1rem">Your <strong>submission area is locked</strong> until all objectives are done. This ensures you learn before submitting!</p>
+    </div>
+
+    <div id="tour-step-3" class="tour-step">
+      <h2>🎮 Learn by Doing — Interactive Playgrounds</h2>
+      <p>Each lab has interactive sections where you can:</p>
+      <ul style="margin:1rem 0;padding-left:1.5rem;color:#8b949e">
+        <li><strong>Choose options</strong> — Select from encryption types, parameters, etc.</li>
+        <li><strong>Adjust sliders</strong> — Change key length, block size, sensitivity</li>
+        <li><strong>See results instantly</strong> — Outputs update as you experiment</li>
+        <li><strong>Learn patterns</strong> — Understand trade-offs between choices</li>
+      </ul>
+      <p style="margin-top:1rem">Don't worry about "wrong" answers — this is exploration! Try different combinations.</p>
+    </div>
+
+    <div id="tour-step-4" class="tour-step">
+      <h2>❓ Test Your Understanding with the Quiz</h2>
+      <p>Each lab has a multiple-choice question to test what you've learned.</p>
+      <div class="tour-highlight">💡 Answers are randomized every time you reload — no guessing!</div>
+      <ul style="margin:1rem 0;padding-left:1.5rem;color:#8b949e">
+        <li>Read each option carefully</li>
+        <li>Think about what you observed in the playground</li>
+        <li>Click wrong answers after solving to see why they're incorrect</li>
+      </ul>
+      <p style="margin-top:1rem">Getting it wrong is fine! You can try again, and explore all options.</p>
+    </div>
+
+    <div id="tour-step-5" class="tour-step">
+      <h2>📝 Share Your Learning in the Reflection</h2>
+      <p>Once all objectives are complete, the submission area unlocks.</p>
+      <p><strong>📌 Required: Learning Reflection</strong></p>
+      <p style="color:#8b949e;margin:.5rem 0">Share what you learned in your own words. How would you explain this to a friend? Why does it matter?</p>
+      <p><strong>🔍 Optional: Lab Observations</strong></p>
+      <p style="color:#8b949e;margin:.5rem 0">Any interesting findings? Edge cases you discovered? Patterns you noticed?</p>
+      <p style="margin-top:1rem;color:#f85149"><strong>Tip:</strong> Write thoughtfully — this reflection proves you understand the concept, not just completed activities.</p>
+    </div>
+
+    <div id="tour-step-6" class="tour-step">
+      <h2>📄 Export Your Work &amp; Exit</h2>
+      <p>When you're ready to finish:</p>
+      <ul style="margin:1rem 0;padding-left:1.5rem;color:#8b949e">
+        <li><strong>Click "Export PDF"</strong> — Saves a summary of your work (quiz result, interactions, reflection)</li>
+        <li><strong>See the success banner</strong> — Green notification appears at the bottom</li>
+        <li><strong>Click "✕ Exit Lab"</strong> in the top bar to close when done</li>
+      </ul>
+      <div class="tour-highlight">You can always return to previous labs — all your work is saved in the browser</div>
+      <p style="margin-top:1rem">One more thing: <strong>you can only navigate backward</strong> through labs. This ensures you don't skip ahead! 🔒</p>
+      <p style="margin-top:.75rem;color:#58a6ff">You can reopen this tour at any time via the <strong>❓ Help</strong> button in the top bar.</p>
+    </div>
+
+    <div class="tour-nav">
+      <button id="tour-prev-btn" class="tour-btn" onclick="prevTourStep()" style="opacity:.5;pointer-events:none">← Previous</button>
+      <span id="tour-counter">Step 1 of 6</span>
+      <button id="tour-next-btn" class="tour-btn" onclick="nextTourStep()">Next →</button>
+      <button class="tour-btn tour-btn-skip" onclick="skipTour()" style="float:right">Skip</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>

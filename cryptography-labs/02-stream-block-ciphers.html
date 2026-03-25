@@ -119,6 +119,8 @@
     .reflection-title{color:#e6edf3;font-weight:600;margin-bottom:.75rem}
     .reflection-input{background:#21262d;border:1px solid #30363d;border-radius:6px;padding:.75rem;color:#e6edf3;width:100%;min-height:100px;font-family:inherit;resize:vertical}
     .reflection-input:focus{outline:none;border-color:#58a6ff}
+    .lab-input{background:#21262d;border:1px solid #30363d;border-radius:6px;padding:.45rem .6rem;color:#e6edf3;width:100%;font-size:.88rem}
+    .lab-input:focus{outline:none;border-color:#58a6ff}
     .submit-btn{background:#1f6feb;color:#fff;border:none;border-radius:6px;padding:.5rem 1rem;cursor:pointer;font-size:.9rem;margin-top:.5rem}
     .submit-btn:hover{background:#1c64e8}
     .export-pdf-btn{background:#3fb950;color:#fff;border:none;border-radius:6px;padding:.5rem 1rem;cursor:pointer;font-size:.9rem;margin-top:.5rem;margin-left:.5rem}
@@ -135,7 +137,27 @@
       body>*:not(#print-summary){display:none!important}
       #print-summary{display:block!important}
     }
+    /* Interactive Tour System */
+    #tour-modal{position:fixed;top:0;left:0;right:0;bottom:0;z-index:10000;display:none}
+    #tour-modal.show{display:flex;align-items:center;justify-content:center}
+    .tour-backdrop{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);backdrop-filter:blur(4px);z-index:10000}
+    .tour-container{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#0d1117;border:2px solid #1f6feb;border-radius:12px;padding:2rem;max-width:700px;width:90%;max-height:85vh;overflow-y:auto;z-index:10001;box-shadow:0 20px 60px rgba(0,0,0,.8)}
+    .tour-close{position:absolute;top:1rem;right:1rem;background:none;border:none;color:#8b949e;font-size:1.5rem;cursor:pointer;padding:0;width:32px;height:32px;display:flex;align-items:center;justify-content:center}
+    .tour-close:hover{color:#58a6ff}
+    .tour-step{display:none}
+    .tour-step.show{display:block}
+    .tour-step h2{color:#e6edf3;margin:0 0 1rem;font-size:1.3rem}
+    .tour-step p{color:#8b949e;margin:.5rem 0;line-height:1.65;font-size:.95rem}
+    .tour-highlight{background:#1c2a1c;border:2px solid #3fb950;border-radius:8px;padding:1rem;margin:1rem 0;color:#3fb950;font-weight:600;font-size:.9rem;text-align:center}
+    .tour-nav{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-top:2rem;padding-top:1.5rem;border-top:1px solid #30363d}
+    .tour-btn{background:#1f6feb;color:#fff;border:none;border-radius:6px;padding:.5rem 1rem;cursor:pointer;font-size:.9rem;font-weight:600;transition:background .15s}
+    .tour-btn:hover{background:#1c64e8}
+    .tour-btn-skip{background:transparent;color:#8b949e;border:1px solid #30363d;font-weight:400}
+    .tour-btn-skip:hover{border-color:#58a6ff;color:#58a6ff}
+    #tour-counter{color:#8b949e;font-size:.9rem;font-weight:600}
   </style>
+  <meta name="author" content="Clark Ngo">
+  <meta name="copyright" content="Clark Ngo">
 </head>
 <body>
 
@@ -143,9 +165,9 @@
   <a class="navbar-brand" href="../">🔐 Cryptography Labs</a>
   <div class="nav-actions">
     <span class="nav-pill">Module 2 Lab</span>
-    <!-- Change 10: Reset button -->
     <button onclick="resetLab()" style="background:none;border:1px solid #30363d;border-radius:6px;padding:.25rem .6rem;color:#8b949e;cursor:pointer;font-size:.75rem" title="Reset lab progress">↺ Reset</button>
-    <!-- Change 2: Updated nav link -->
+    <button onclick="showTourModal(1)" title="How Labs Work" style="background:none;border:1px solid #30363d;border-radius:6px;padding:.25rem .6rem;color:#8b949e;cursor:pointer;font-size:.75rem;transition:border-color .15s" onmouseover="this.style.borderColor='#58a6ff';this.style.color='#58a6ff'" onmouseout="this.style.borderColor='#30363d';this.style.color='#8b949e'">❓ Help</button>
+    <button onclick="closeTab()" style="background:#2a1c1c;color:#f85149;border:1px solid #da3633;border-radius:6px;padding:.35rem .8rem;cursor:pointer;font-size:.82rem;font-weight:600;transition:border-color .15s" onmouseover="this.style.background='#3a1a1a'" onmouseout="this.style.background='#2a1c1c'">✕ Exit Lab</button>
   </div>
 </nav>
 
@@ -163,6 +185,7 @@
   <!-- Cipher Type Comparison -->
   <div class="demo-box">
     <h4 style="margin-top:0;color:#e6edf3">🔄 Stream vs Block Cipher Architecture</h4>
+    <div style="background:#161b22;border-left:3px solid #58a6ff;border-radius:0 6px 6px 0;padding:.6rem .85rem;margin:.25rem 0 .85rem;font-size:.82rem;color:#8b949e;line-height:1.65"><strong style="color:#58a6ff">🎯 Why This Matters</strong> — The architectural difference between stream and block ciphers determines their performance, latency, and appropriate use cases. This demo shows concretely how each processes data so you can choose the right cipher type for your application.</div>
     <p style="margin-bottom:1rem;color:#8b949e">Click on each cipher type to explore how they process data:</p>
 
     <div class="cipher-comparison">
@@ -205,6 +228,7 @@
   <!-- Interactive Cipher Playground -->
   <div class="demo-box">
     <h4 style="margin-top:0;color:#e6edf3">🎮 Interactive Cipher Playground</h4>
+    <div style="background:#161b22;border-left:3px solid #58a6ff;border-radius:0 6px 6px 0;padding:.6rem .85rem;margin:.25rem 0 .85rem;font-size:.82rem;color:#8b949e;line-height:1.65"><strong style="color:#58a6ff">🎯 Why This Matters</strong> — Seeing plaintext transform to ciphertext — character by character vs block by block — makes the abstract concept of encryption concrete. This hands-on comparison reveals why cipher choice matters for your application's latency and throughput requirements.</div>
 
     <div style="background:#1c2940;border:1px solid #58a6ff;border-radius:6px;padding:1rem;margin-bottom:1rem">
       <p style="margin:0 0 .5rem;color:#58a6ff;font-weight:600">📋 Instructions</p>
@@ -265,6 +289,7 @@
   <!-- Parameter Exploration -->
   <div class="demo-box">
     <h4 style="margin-top:0;color:#e6edf3">⚙️ Parameter Exploration</h4>
+    <div style="background:#161b22;border-left:3px solid #58a6ff;border-radius:0 6px 6px 0;padding:.6rem .85rem;margin:.25rem 0 .85rem;font-size:.82rem;color:#8b949e;line-height:1.65"><strong style="color:#58a6ff">🎯 Why This Matters</strong> — Cipher parameters (key size, mode of operation) dramatically change security properties. This demo shows how small configuration choices create massive security differences — the wrong parameter selection can turn strong encryption into something easily broken.</div>
 
     <div class="parameter-controls">
       <div class="parameter-title">🔧 Adjust cipher parameters and observe the effects:</div>
@@ -294,6 +319,7 @@
   <!-- Security Analysis -->
   <div class="demo-box">
     <h4 style="margin-top:0;color:#e6edf3">🛡️ Security Considerations</h4>
+    <div style="background:#161b22;border-left:3px solid #58a6ff;border-radius:0 6px 6px 0;padding:.6rem .85rem;margin:.25rem 0 .85rem;font-size:.82rem;color:#8b949e;line-height:1.65"><strong style="color:#58a6ff">🎯 Why This Matters</strong> — Knowing what can fail is as important as knowing what works. These security considerations will reappear throughout the course as context for why authenticated encryption modes replaced simple encryption in modern protocols.</div>
 
     <div class="comparison-table">
       <div class="table-header">Stream vs Block Cipher Security Comparison</div>
@@ -343,12 +369,7 @@
   <!-- Question -->
   <div class="question-box">
     <p class="question-text">❓ Which cipher type would be BEST for encrypting a live video stream where low latency is critical?</p>
-    <div class="options-grid">
-      <button class="opt-btn" onclick="check('A',this)"><span class="opt-id">A</span> Stream Cipher</button>
-      <button class="opt-btn" onclick="check('B',this)"><span class="opt-id">B</span> Block Cipher</button>
-      <button class="opt-btn" onclick="check('C',this)"><span class="opt-id">C</span> Both work equally well</button>
-      <button class="opt-btn" onclick="check('D',this)"><span class="opt-id">D</span> Neither is suitable</button>
-    </div>
+    <div class="options-grid" id="quiz-options-grid"></div>
   </div>
 
   <div id="feedback" class="feedback-box"></div>
@@ -369,26 +390,29 @@
       </ul>
     </div>
 
-    <!-- Change 8: Simplified lock indicator -->
     <div id="reflection-lock" style="background:#2a1c1c;border:1px solid #f85149;border-radius:6px;padding:.75rem 1rem;margin-bottom:1rem">
       <p style="color:#f85149;font-weight:600;margin:0;font-size:.9rem">🔒 Complete all objectives (tracker bottom-right ↘) to unlock submission</p>
     </div>
 
     <!-- Submission area — greyed out until unlocked -->
     <div id="submission-area" class="sub-area-locked">
-      <textarea class="reflection-input" id="learning-reflection" placeholder="Describe what you learned by changing the parameters and interacting with different cipher types. What surprised you? How do the different architectures suit different use cases?
+      <!-- REQUIRED: Learning Reflection -->
+      <div style="background:#0d1a2e;border:2px solid #1f6feb;border-radius:8px;padding:1rem;margin-bottom:1rem">
+        <label style="color:#58a6ff;font-size:.95rem;font-weight:700;display:block;margin-bottom:.4rem">📝 Your Learning Reflection <span style="color:#f85149;font-size:.8rem;font-weight:600">★ Required</span></label>
+        <textarea class="reflection-input" id="learning-reflection" placeholder="Describe what you learned by changing the parameters and interacting with different cipher types. What surprised you? How do the different architectures suit different use cases?
 
 Please write at least 4-5 sentences about your key insights..."></textarea>
-
-      <div style="margin-top:.75rem">
-        <label style="color:#e6edf3;font-size:.9rem;font-weight:600">🔍 Lab Observations</label>
-        <p style="color:#8b949e;font-size:.82rem;margin:.2rem 0 .3rem">Was there anything within the lab you expected to change, but didn't?</p>
+      </div>
+      <!-- OPTIONAL: Lab Observations -->
+      <div style="border-top:1px solid #30363d;margin-top:.5rem;padding-top:1rem">
+        <label style="color:#8b949e;font-size:.88rem;font-weight:600;display:block;margin-bottom:.25rem">🔍 Lab Observations <span style="font-size:.78rem;font-weight:400">(Optional)</span></label>
+        <p style="color:#6e7681;font-size:.8rem;margin:.1rem 0 .35rem">Was there anything within the lab you expected to change, but didn't?</p>
         <textarea class="reflection-input" id="lab-feedback" placeholder="Share any observations, surprises, or things that felt missing..." style="min-height:80px"></textarea>
       </div>
 
       <div style="margin-top:.75rem">
         <label style="color:#e6edf3;font-size:.9rem;font-weight:600">Your name:</label>
-        <input type="text" id="student-name" class="message-input" placeholder="Enter your full name..." style="margin:.3rem 0 0;max-width:320px">
+        <input type="text" id="student-name" class="lab-input" placeholder="Enter your full name..." style="max-width:320px;margin:.3rem 0 0">
       </div>
 
       <div style="margin-top:.75rem">
@@ -411,7 +435,8 @@ Please write at least 4-5 sentences about your key insights..."></textarea>
   </div>
 
   <div class="lab-footer">
-    <span class="text-muted">Module 2 Lab - Cipher Architectures</span>
+    <a href="01-cia-triad-authentication.html" class="btn-nav">← Lab 01</a>
+    <span class="text-muted">Module 2</span>
   </div>
 </div>
 
@@ -441,12 +466,12 @@ Please write at least 4-5 sentences about your key insights..."></textarea>
   <div id="ps-feedback" style="white-space:pre-wrap"></div>
 </div>
 
-<!-- Change 7: Floating objective overlay -->
-<div id="obj-overlay" style="position:fixed;bottom:1.25rem;right:1.25rem;z-index:999;font-size:.8rem;user-select:none">
-  <div id="obj-badge" onclick="toggleObj()" style="background:rgba(22,27,34,.95);border:1px solid #30363d;border-radius:20px;padding:.35rem .8rem;cursor:pointer;display:flex;align-items:center;gap:.5rem;color:#8b949e;backdrop-filter:blur(4px);transition:border-color .2s;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.4)">
-    <span id="obj-count">📋 0/4 objectives</span><span id="obj-chev" style="font-size:.65rem">▼</span>
+<!-- Floating Objective Overlay -->
+<div id="obj-overlay" style="position:fixed;bottom:1rem;right:1rem;z-index:999;font-size:.8rem;user-select:none">
+  <div id="obj-badge" onclick="toggleObj()" style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.4rem .7rem;cursor:pointer;display:flex;align-items:center;gap:.4rem;color:#8b949e">
+    <span id="obj-count">📋 0/5 objectives</span><span id="obj-chev">▲</span>
   </div>
-  <div id="obj-panel" style="display:block;position:absolute;bottom:calc(100% + .4rem);right:0;background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.65rem .9rem;min-width:210px;line-height:2.2;box-shadow:0 4px 12px rgba(0,0,0,.5)">
+  <div id="obj-panel" style="display:block;background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.6rem .8rem;margin-top:.3rem;min-width:220px;line-height:2.2;box-shadow:0 4px 12px rgba(0,0,0,.5)">
     <div style="font-size:.72rem;color:#58a6ff;font-weight:600;margin-bottom:.25rem;border-bottom:1px solid #30363d;padding-bottom:.2rem">Lab Objectives</div>
     <div id="obj-list"></div>
   </div>
@@ -472,6 +497,7 @@ function markBtn(btn, correct) {
 
 /* === PAGE JS === */
 let selectedCipherType = null;
+let cipherTypesSeen = new Set();
 let answered = false;
 let quizPassed = false;
 let quizAttempts = 0;
@@ -480,12 +506,11 @@ let _pageReady = false;
 const openedAt = new Date().toISOString();
 const cipherCaptures = { stream: null, block: null };
 
-/* Change 7: Objective overlay functions */
 let _objOpen = true;
 function toggleObj() {
   _objOpen = !_objOpen;
   document.getElementById('obj-panel').style.display = _objOpen ? 'block' : 'none';
-  document.getElementById('obj-chev').textContent = _objOpen ? '▼' : '▲';
+  document.getElementById('obj-chev').textContent = _objOpen ? '▲' : '▼';
 }
 function updateObjOverlay(checks) {
   const done = checks.filter(c => c.done).length;
@@ -505,6 +530,7 @@ function saveState() {
   const state = {
     quizPassed,
     quizAttempts,
+    cipherTypesSeen: [...cipherTypesSeen],
     streamCapture: cipherCaptures.stream,
     blockCapture: cipherCaptures.block,
     studentName: (document.getElementById('student-name') || {}).value || '',
@@ -527,6 +553,7 @@ function loadState() {
     const state = JSON.parse(raw);
     if (state.quizPassed) quizPassed = true;
     if (state.quizAttempts) quizAttempts = state.quizAttempts;
+    if (state.cipherTypesSeen) cipherTypesSeen = new Set(state.cipherTypesSeen);
     if (state.streamCapture) {
       cipherCaptures.stream = state.streamCapture;
       const trackEl = document.getElementById('track-stream');
@@ -563,8 +590,15 @@ function loadState() {
       if (pp && state.paramSnapshot.password) pp.value = state.paramSnapshot.password;
     }
     if (quizPassed) {
-      answered = true;
-      showFeedback(true, "Correct! <strong>Stream ciphers</strong> are ideal for live video because they encrypt data bit-by-bit as it flows, without requiring complete blocks. This eliminates buffering delays and provides the low latency critical for real-time streaming applications.");
+      if (_correctBtn) _correctBtn.classList.add('correct');
+      const fb = document.getElementById('q-feedback') || document.getElementById('feedback');
+      const correctOpt = QUIZ_OPTIONS.find(function(o){return o.correct;});
+      if (fb && correctOpt) {
+        fb.className = 'feedback-box show feedback-correct';
+        fb.innerHTML = '✅ ' + correctOpt.feedback;
+      }
+      const wb = document.getElementById('why-matters');
+      if (wb) wb.classList.add('show');
     }
     checkReflectionLock();
   } catch(e) { /* ignore corrupt state */ }
@@ -620,7 +654,10 @@ function selectCipherType(type, element) {
   element.classList.add('selected');
 
   selectedCipherType = type;
+  cipherTypesSeen.add(type);
   document.getElementById('cipher-details').innerHTML = cipherDetails[type].content;
+  saveState();
+  checkReflectionLock();
 }
 
 function onMessageInput() {
@@ -902,19 +939,19 @@ function updateParameter(type) {
   document.getElementById('parameter-effects').innerHTML = effects || 'Current parameters provide balanced security and performance.';
 }
 
-/* Change 8: checkReflectionLock calls updateObjOverlay */
 function checkReflectionLock() {
   const checks = [
-    { label: 'Answer the mini quiz correctly',  done: quizPassed },
-    { label: 'Encrypt with the Stream Cipher',  done: !!cipherCaptures.stream },
-    { label: 'Encrypt with the Block Cipher',   done: !!cipherCaptures.block },
-    { label: 'Explore cipher parameters',        done: paramExplored },
+    { label: 'Click both cipher types (Stream &amp; Block)',  done: cipherTypesSeen.size >= 2 },
+    { label: 'Encrypt with the Stream Cipher',                done: !!cipherCaptures.stream },
+    { label: 'Encrypt with the Block Cipher',                 done: !!cipherCaptures.block },
+    { label: 'Explore cipher parameters',                     done: paramExplored },
+    { label: 'Answer the mini quiz correctly',                done: quizPassed },
   ];
   const allDone = checks.every(c => c.done);
   const lockDiv = document.getElementById('reflection-lock');
   const subArea = document.getElementById('submission-area');
 
-  updateObjOverlay(checks); /* Change 7/8 */
+  updateObjOverlay(checks);
 
   if (allDone) {
     lockDiv.style.display = 'none';
@@ -1037,28 +1074,45 @@ function exportPDF() {
   }, 500);
 }
 
-const HINTS = {
-  B: "Block ciphers require buffering complete blocks before encryption, adding latency.",
-  C: "Stream and block ciphers have different performance characteristics and use cases.",
-  D: "Encryption is definitely needed for video streams - the question is which type."
-};
+// ── Quiz Randomization ──
+const QUIZ_OPTIONS = [
+  {text:'Stream Cipher', correct:true, feedback:'<strong>Stream ciphers</strong> are ideal for live video because they encrypt data bit-by-bit (or byte-by-byte) as it flows, without waiting for a complete block. This eliminates buffering delays and provides the low latency that real-time streaming applications require. Examples: ChaCha20 (used in QUIC/TLS 1.3), RC4 (deprecated).'},
+  {text:'Block Cipher', correct:false, feedback:'<strong>Block ciphers</strong> must accumulate a full block of data (e.g., 128 bits for AES) before encrypting it. For live video this introduces buffering latency — unacceptable for real-time streams. Block ciphers excel at file encryption and disk encryption where data arrives in chunks.'},
+  {text:'Both work equally well', correct:false, feedback:'Stream and block ciphers have meaningfully different performance characteristics. For <em>latency-sensitive</em> continuous data (live video, VoIP), stream ciphers are preferred because they avoid the buffering overhead block ciphers require. The two types are not interchangeable in this context.'},
+  {text:'Neither is suitable', correct:false, feedback:'Encryption is absolutely necessary for live video — unencrypted streams can be intercepted and viewed. The correct question is <em>which</em> type of encryption suits the use case. Stream ciphers are specifically designed for continuous, low-latency data like video.'},
+];
+const _shuffled = (function(){
+  const a=[...QUIZ_OPTIONS];
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  return a;
+})();
+const _LABELS=['A','B','C','D'];
+let _correctBtn=null;
 
-/* Change 3: Removed if (answered) return; guard — students can always click */
-function check(choice, btn) {
-  quizAttempts++;
-  const correct = choice === 'A';
-  markBtn(btn, correct);
+document.addEventListener('DOMContentLoaded',function(){
+  const grid=document.getElementById('quiz-options-grid');
+  if(!grid)return;
+  _shuffled.forEach(function(opt,i){
+    const btn=document.createElement('button');
+    btn.className='opt-btn';
+    if(opt.correct)_correctBtn=btn;
+    btn.onclick=function(){checkQ(btn,opt.correct,opt.feedback);};
+    btn.innerHTML='<span class="opt-id">'+_LABELS[i]+'</span>'+opt.text;
+    grid.appendChild(btn);
+  });
+});
 
-  if (correct) {
-    answered = true;
-    quizPassed = true;
-    showFeedback(true, "Correct! <strong>Stream ciphers</strong> are ideal for live video because they encrypt data bit-by-bit as it flows, without requiring complete blocks. This eliminates buffering delays and provides the low latency critical for real-time streaming applications.");
-    saveState(); /* Change 9 */
-    checkReflectionLock();
-  } else {
-    showFeedback(false, HINTS[choice]);
-    checkReflectionLock();
-  }
+function checkQ(btn,isCorrect,feedbackText){
+  if(!quizPassed)quizAttempts++;
+  document.querySelectorAll('.opt-btn').forEach(function(b){b.classList.remove('incorrect','correct');});
+  if(quizPassed&&_correctBtn)_correctBtn.classList.add('correct');
+  btn.classList.add(isCorrect?'correct':'incorrect');
+  if(isCorrect){quizPassed=true;}
+  const fb=document.getElementById('q-feedback')||document.getElementById('feedback');
+  fb.className='feedback-box show '+(isCorrect?'feedback-correct':'feedback-incorrect');
+  fb.innerHTML=(isCorrect?'✅ ':'❌ ')+feedbackText;
+  const wb=document.getElementById('why-box');if(isCorrect&&wb)wb.classList.add('show');
+  saveState();checkReflectionLock();if(typeof updateObj==='function')updateObj();
 }
 
 // Initialize
@@ -1067,7 +1121,138 @@ document.addEventListener('DOMContentLoaded', function() {
   onMessageInput();
   loadState(); /* Change 9: restore persisted state */
   _pageReady = true; /* must be after loadState so init calls don't mark paramExplored */
+  checkReflectionLock();
 });
+function closeTab(){try{window.close();}catch(e){}history.back();}
+
+// ═══════════════════════════════════════════════════
+// TOUR SYSTEM
+// ═══════════════════════════════════════════════════
+let tourCurrentStep = 1;
+const tourTotalSteps = 6;
+
+function initTourSystem() {}  // No auto-popup on Lab 02
+
+function showTourModal(stepNum) {
+  tourCurrentStep = stepNum;
+  const modal = document.getElementById('tour-modal');
+  modal.classList.add('show');
+  for (let i = 1; i <= tourTotalSteps; i++) {
+    const step = document.getElementById(`tour-step-${i}`);
+    if (step) step.classList.remove('show');
+  }
+  const currentStep = document.getElementById(`tour-step-${stepNum}`);
+  if (currentStep) currentStep.classList.add('show');
+  document.getElementById('tour-counter').textContent = `Step ${stepNum} of ${tourTotalSteps}`;
+  const prevBtn = document.getElementById('tour-prev-btn');
+  if (stepNum === 1) { prevBtn.style.opacity = '.5'; prevBtn.style.pointerEvents = 'none'; }
+  else { prevBtn.style.opacity = '1'; prevBtn.style.pointerEvents = 'auto'; }
+  const nextBtn = document.getElementById('tour-next-btn');
+  if (stepNum === tourTotalSteps) { nextBtn.textContent = 'Close Tour →'; nextBtn.onclick = () => closeTour(); }
+  else { nextBtn.textContent = 'Next →'; nextBtn.onclick = () => nextTourStep(); }
+}
+
+function nextTourStep() {
+  if (tourCurrentStep < tourTotalSteps) showTourModal(tourCurrentStep + 1);
+  else closeTour();
+}
+
+function prevTourStep() {
+  if (tourCurrentStep > 1) showTourModal(tourCurrentStep - 1);
+}
+
+function closeTour() {
+  document.getElementById('tour-modal').classList.remove('show');
+  localStorage.setItem('cryptography-tour-seen-v1', 'true');
+}
+
+function skipTour() { closeTour(); }
+
+document.addEventListener('DOMContentLoaded', initTourSystem);
 </script>
+
+<div id="tour-modal">
+  <div class="tour-backdrop"></div>
+  <div class="tour-container">
+    <button class="tour-close" onclick="closeTour()">✕</button>
+
+    <div id="tour-step-1" class="tour-step show">
+      <h2>🔐 Welcome to Cryptography Labs!</h2>
+      <p>Let's take a quick tour of how these labs work. By the end, you'll understand:</p>
+      <ul style="margin:1rem 0;padding-left:1.5rem;color:#8b949e">
+        <li>The objective system that unlocks submission</li>
+        <li>How to use interactive playgrounds</li>
+        <li>How to complete and submit your work</li>
+      </ul>
+      <p style="margin-top:1.5rem">Ready? Let's go!</p>
+    </div>
+
+    <div id="tour-step-2" class="tour-step">
+      <h2>📋 Track Your Progress with Objectives</h2>
+      <p>Every lab has <strong>multiple objectives</strong> you need to complete. Different labs have different objectives based on what you'll learn:</p>
+      <ul style="margin:1rem 0;padding-left:1.5rem;color:#8b949e">
+        <li>Answer the mini quiz correctly</li>
+        <li>Complete interactive activities</li>
+        <li>Try different scenarios</li>
+        <li>Gather insights and explore concepts</li>
+      </ul>
+      <div class="tour-highlight">Look for the 📋 badge in the bottom-right corner →</div>
+      <p style="margin-top:1rem">Your <strong>submission area is locked</strong> until all objectives are done. This ensures you learn before submitting!</p>
+    </div>
+
+    <div id="tour-step-3" class="tour-step">
+      <h2>🎮 Learn by Doing — Interactive Playgrounds</h2>
+      <p>Each lab has interactive sections where you can:</p>
+      <ul style="margin:1rem 0;padding-left:1.5rem;color:#8b949e">
+        <li><strong>Choose options</strong> — Select from encryption types, parameters, etc.</li>
+        <li><strong>Adjust sliders</strong> — Change key length, block size, sensitivity</li>
+        <li><strong>See results instantly</strong> — Outputs update as you experiment</li>
+        <li><strong>Learn patterns</strong> — Understand trade-offs between choices</li>
+      </ul>
+      <p style="margin-top:1rem">Don't worry about "wrong" answers — this is exploration! Try different combinations.</p>
+    </div>
+
+    <div id="tour-step-4" class="tour-step">
+      <h2>❓ Test Your Understanding with the Quiz</h2>
+      <p>Each lab has a multiple-choice question to test what you've learned.</p>
+      <div class="tour-highlight">💡 Answers are randomized every time you reload — no guessing!</div>
+      <ul style="margin:1rem 0;padding-left:1.5rem;color:#8b949e">
+        <li>Read each option carefully</li>
+        <li>Think about what you observed in the playground</li>
+        <li>Click wrong answers after solving to see why they're incorrect</li>
+      </ul>
+      <p style="margin-top:1rem">Getting it wrong is fine! You can try again, and explore all options.</p>
+    </div>
+
+    <div id="tour-step-5" class="tour-step">
+      <h2>📝 Share Your Learning in the Reflection</h2>
+      <p>Once all objectives are complete, the submission area unlocks.</p>
+      <p><strong>📌 Required: Learning Reflection</strong></p>
+      <p style="color:#8b949e;margin:.5rem 0">Share what you learned in your own words. How would you explain this to a friend? Why does it matter?</p>
+      <p><strong>🔍 Optional: Lab Observations</strong></p>
+      <p style="color:#8b949e;margin:.5rem 0">Any interesting findings? Edge cases you discovered? Patterns you noticed?</p>
+      <p style="margin-top:1rem;color:#f85149"><strong>Tip:</strong> Write thoughtfully — this reflection proves you understand the concept, not just completed activities.</p>
+    </div>
+
+    <div id="tour-step-6" class="tour-step">
+      <h2>📄 Export Your Work &amp; Exit</h2>
+      <p>When you're ready to finish:</p>
+      <ul style="margin:1rem 0;padding-left:1.5rem;color:#8b949e">
+        <li><strong>Click "Export PDF"</strong> — Saves a summary of your work (quiz result, interactions, reflection)</li>
+        <li><strong>See the success banner</strong> — Green notification appears at the bottom</li>
+        <li><strong>Click "✕ Exit Lab"</strong> in the top bar to close when done</li>
+      </ul>
+      <div class="tour-highlight">You can always return to previous labs — all your work is saved in the browser</div>
+      <p style="margin-top:1rem">One more thing: <strong>you can only navigate backward</strong> through labs. This ensures you don't skip ahead! 🔒</p>
+    </div>
+
+    <div class="tour-nav">
+      <button id="tour-prev-btn" class="tour-btn" onclick="prevTourStep()" style="opacity:.5;pointer-events:none">← Previous</button>
+      <span id="tour-counter">Step 1 of 6</span>
+      <button id="tour-next-btn" class="tour-btn" onclick="nextTourStep()">Next →</button>
+      <button class="tour-btn tour-btn-skip" onclick="skipTour()" style="float:right">Skip</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
