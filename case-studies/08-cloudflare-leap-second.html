@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cloudflare: The Leap Second Bug</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0d1117;color:#e6edf3;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;line-height:1.7}
+a{color:#58a6ff;text-decoration:none}a:hover{text-decoration:underline}
+nav{background:#161b22;border-bottom:1px solid #30363d;padding:16px 24px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100}
+.brand{font-size:1.2rem;font-weight:700}.back{color:#8b949e;font-size:.9rem}
+.container{max-width:900px;margin:0 auto;padding:24px 20px}
+.hero{background:linear-gradient(135deg,#1a1e24 0%,#1b2a2d 100%);border:1px solid #30363d;border-radius:12px;padding:48px 36px;margin-bottom:36px;text-align:center}
+.hero h1{font-size:2.2rem;margin-bottom:8px}.hero .tagline{color:#f0883e;font-size:1.1rem;margin-bottom:6px}.hero .meta{color:#8b949e;font-size:.9rem}
+.timeline-wrapper{overflow-x:auto;margin-bottom:36px;padding:12px 0}
+.timeline{display:flex;align-items:flex-start;min-width:700px;position:relative;padding:20px 10px}
+.timeline::before{content:'';position:absolute;top:30px;left:10px;right:10px;height:3px;background:#30363d;border-radius:2px}
+.timeline-item{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;z-index:1}
+.timeline-dot{width:16px;height:16px;background:#f0883e;border-radius:50%;margin-bottom:12px;border:3px solid #0d1117;box-shadow:0 0 0 2px #f0883e}
+.timeline-date{font-size:.75rem;color:#f0883e;font-weight:600;margin-bottom:4px}
+.timeline-label{font-size:.8rem;color:#8b949e;text-align:center;max-width:120px}
+section.story{margin-bottom:32px}
+section.story h2{font-size:1.5rem;color:#e6edf3;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #30363d}
+section.story p{color:#c9d1d9;margin-bottom:14px;font-size:.97rem}
+.canvas-section{margin-bottom:36px}
+.canvas-section h2{font-size:1.5rem;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #30363d}
+.toggle-btn{display:inline-block;padding:8px 20px;background:#f0883e;color:#0d1117;border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:.9rem;margin-bottom:12px;transition:background .2s;margin-right:8px}
+.toggle-btn:hover{background:#d4772e}.toggle-btn.active{background:#58a6ff}
+canvas{display:block;width:100%;border:1px solid #30363d;border-radius:8px;background:#0d1117}
+.decision-section{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:28px;margin-bottom:36px}
+.decision-section h2{font-size:1.4rem;margin-bottom:8px}.decision-section .prompt{color:#8b949e;margin-bottom:18px;font-size:.95rem}
+.choices{display:flex;flex-direction:column;gap:10px}
+.choice-btn{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:14px 18px;color:#e6edf3;cursor:pointer;text-align:left;font-size:.93rem;transition:border-color .2s}
+.choice-btn:hover{border-color:#58a6ff}.choice-btn.correct{border-color:#3fb950;background:#0d1b0e}.choice-btn.wrong{border-color:#f85149;background:#1b0d0d}
+.reveal{margin-top:16px;padding:16px;background:#0d1117;border:1px solid #3fb950;border-radius:8px;display:none;font-size:.93rem;color:#c9d1d9}
+.metrics-panel{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:36px}
+.metric{background:#161b22;border:1px solid #30363d;border-radius:10px;padding:20px;text-align:center}
+.metric .value{font-size:1.7rem;font-weight:700;color:#f0883e}.metric .label{font-size:.8rem;color:#8b949e;margin-top:4px}
+.lessons{margin-bottom:36px}
+.lessons h2{font-size:1.5rem;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #30363d}
+.lesson-card{background:#161b22;border-left:3px solid #f0883e;border-radius:0 8px 8px 0;padding:16px 20px;margin-bottom:12px;font-size:.93rem;color:#c9d1d9}
+.takeaways{margin-bottom:48px}
+.takeaways h2{font-size:1.5rem;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #30363d}
+.takeaway{display:flex;align-items:baseline;gap:10px;margin-bottom:10px;font-size:.95rem;color:#c9d1d9}
+.takeaway::before{content:'→';color:#f0883e;font-weight:700;flex-shrink:0}
+.code-block{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:16px;margin:14px 0;overflow-x:auto;font-family:'SF Mono',monospace;font-size:.85rem;color:#e6edf3;line-height:1.5}
+.code-block .comment{color:#8b949e}.code-block .keyword{color:#ff7b72}.code-block .string{color:#a5d6ff}.code-block .fn{color:#d2a8ff}.code-block .bug{color:#f85149;font-weight:bold}
+</style>
+    <meta name="author" content="Clark Ngo">
+    <meta name="copyright" content="Clark Ngo">
+  </head>
+<body>
+<nav><span class="brand">📖 Case Studies</span><a href="index.html" class="back">← All Case Studies</a></nav>
+<div class="container">
+
+<div class="hero">
+<h1>Cloudflare: The Leap Second Bug</h1>
+<div class="tagline">How one extra second broke DNS for millions of websites</div>
+<div class="meta">January 1, 2017 | Time Synchronization &amp; Distributed Systems</div>
+</div>
+
+<div class="timeline-wrapper">
+<div class="timeline">
+<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-date">Jun 2015</div><div class="timeline-label">Previous leap second (no issues)</div></div>
+<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-date">Jul 2016</div><div class="timeline-label">Leap second announced for Dec 31</div></div>
+<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-date">Dec 31 23:59:60</div><div class="timeline-label">Leap second inserted</div></div>
+<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-date">Jan 1 00:00 UTC</div><div class="timeline-label">RRDNS crashes begin</div></div>
+<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-date">+90 minutes</div><div class="timeline-label">Incident resolved</div></div>
+<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-date">Jan 1 post-mortem</div><div class="timeline-label">Root cause: negative time delta</div></div>
+</div>
+</div>
+
+<section class="story">
+<h2>What Is a Leap Second?</h2>
+<p>Earth does not rotate at a perfectly constant speed. Tidal forces, earthquakes, and changes in the planet's core cause tiny variations in the length of a day. Over time, these small discrepancies accumulate, and astronomical time (based on Earth's rotation) drifts away from atomic time (measured by cesium clocks). To reconcile the two, the International Earth Rotation and Reference Systems Service occasionally inserts an extra second — a "leap second" — at the end of June 30 or December 31.</p>
+<p>On December 31, 2016, at 23:59:59 UTC, clocks counted an extra beat: 23:59:60. Then midnight struck. For most people, this was invisible. For Cloudflare's DNS infrastructure, it was catastrophic.</p>
+</section>
+
+<section class="story">
+<h2>Inside RRDNS</h2>
+<p>Cloudflare runs a custom DNS server called RRDNS (round-robin DNS) that handles billions of DNS queries every day. RRDNS uses weighted round-robin to distribute queries across healthy upstream servers. To make routing decisions, it calculates how long each upstream takes to respond. The latency measurement was simple: record a timestamp when the query goes out, record another when the response comes back, subtract to get the duration.</p>
+<p>The code used Go's <code>time.Now()</code> function for both timestamps. Under normal conditions, subtracting two sequential <code>time.Now()</code> values always produces a positive duration. The code asserted this with a check: if the duration was negative, something had gone terribly wrong, and the program should panic.</p>
+</section>
+
+<section class="story">
+<h2>The Bug</h2>
+<p>When the leap second was applied, some NTP-synchronized clocks jumped backward by one second. If an RRDNS instance had recorded the outgoing timestamp at 23:59:60.5 and received the response at 00:00:00.1 (after the clock adjusted), the subtraction produced a negative duration: the response appeared to have arrived before the request was sent.</p>
+<div class="code-block">
+<span class="comment">// Simplified version of the bug</span><br>
+<span class="keyword">start</span> := <span class="fn">time.Now</span>()   <span class="comment">// 23:59:60.500</span><br>
+<span class="comment">// ... DNS query happens ...</span><br>
+<span class="keyword">end</span> := <span class="fn">time.Now</span>()     <span class="comment">// 00:00:00.100 (clock jumped back!)</span><br>
+<span class="keyword">elapsed</span> := end.<span class="fn">Sub</span>(start) <span class="comment">// <span class="bug">= -0.4 seconds (NEGATIVE!)</span></span><br>
+<br>
+<span class="keyword">if</span> elapsed < 0 {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">panic</span>(<span class="string">"impossible negative duration"</span>) <span class="comment">// <span class="bug">CRASH</span></span><br>
+}
+</div>
+<p>The panic brought down RRDNS processes across Cloudflare's network. As processes restarted, many hit the same condition again because the clock adjustment window lasted for a period around the leap second. The result: a rolling wave of crashes that degraded DNS resolution for a significant portion of Cloudflare's customers.</p>
+</section>
+
+<section class="story">
+<h2>The Fix: Monotonic Clocks</h2>
+<p>The fix was conceptually simple but revealed a deep lesson about time in computers. Operating systems maintain two kinds of clocks. The "wall clock" (what <code>time.Now()</code> returns) tells you what time it is — but it can jump forward or backward when NTP adjusts it or when leap seconds are applied. The "monotonic clock" only ever counts forward, regardless of NTP adjustments, and is designed specifically for measuring elapsed time.</p>
+<p>Cloudflare replaced <code>time.Now()</code> with a monotonic clock source for all duration measurements. They also removed the panic-on-negative-duration assertion and replaced it with a graceful fallback that treated impossible durations as zero. The Go programming language itself was later updated (Go 1.9) to make <code>time.Now()</code> transparently use monotonic clocks for duration calculations, preventing this entire class of bug.</p>
+</section>
+
+<section class="story">
+<h2>Broader Impact</h2>
+<p>Cloudflare was not the only company affected by the 2016 leap second. Several other services experienced degraded performance. But Cloudflare's incident was especially instructive because the bug was so subtle: the code was correct in all normal circumstances. Only the interaction of a rare astronomical event with a specific clock behavior could trigger it.</p>
+<p>The incident contributed to a broader industry conversation about eliminating leap seconds entirely. In November 2022, the General Conference on Weights and Measures voted to abolish leap seconds by 2035, citing the growing risks they pose to digital infrastructure.</p>
+</section>
+
+<div class="canvas-section">
+<h2>Architecture: The Clock Problem</h2>
+<button class="toggle-btn active" id="btnNormal" onclick="setView('normal')">Normal Operation</button>
+<button class="toggle-btn" id="btnBug" onclick="setView('bug')">Leap Second Bug</button>
+<button class="toggle-btn" id="btnFix" onclick="setView('fix')">After Fix</button>
+<canvas id="archCanvas" width="900" height="320"></canvas>
+</div>
+
+<div class="decision-section">
+<h2>What Would You Do?</h2>
+<p class="prompt">Your distributed system uses wall clock timestamps to measure request latency. A colleague points out that NTP can cause clocks to jump. You need a fix before the next leap second. What approach do you take?</p>
+<div class="choices">
+<div class="choice-btn" onclick="choose(this,false)">A) Add a check that clamps negative durations to zero — if the clock jumps back, just report 0ms latency.</div>
+<div class="choice-btn" onclick="choose(this,true)">B) Switch all duration measurements to monotonic clocks, which only count forward and are immune to NTP adjustments and leap seconds.</div>
+<div class="choice-btn" onclick="choose(this,false)">C) Disable NTP on your servers so clocks never jump. Use your own internal time synchronization.</div>
+</div>
+<div class="reveal" id="reveal">The correct answer is <strong>B — use monotonic clocks for duration measurement</strong>. Wall clocks answer "what time is it?" while monotonic clocks answer "how much time has passed?" These are fundamentally different questions, and using the wrong clock type is a classic distributed systems bug. Option A (clamping) is a band-aid that hides real issues. Option C (disabling NTP) would cause your clocks to drift, creating far worse problems. Most modern languages now default to monotonic clocks for duration calculations — Go added this in 1.9 specifically because of this class of bug.</div>
+</div>
+
+<h2 style="font-size:1.5rem;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #30363d">Key Metrics</h2>
+<div class="metrics-panel">
+<div class="metric"><div class="value">~90 min</div><div class="label">Outage Duration</div></div>
+<div class="metric"><div class="value">Millions</div><div class="label">Websites Affected</div></div>
+<div class="metric"><div class="value">1</div><div class="label">Extra Second</div></div>
+<div class="metric"><div class="value">1 line</div><div class="label">Root Cause</div></div>
+<div class="metric"><div class="value">Go 1.9</div><div class="label">Language Fix Inspired</div></div>
+</div>
+
+<div class="lessons">
+<h2>Lessons Extracted</h2>
+<div class="lesson-card"><strong>Wall clocks are not monotonic.</strong> Never subtract two wall clock readings to measure elapsed time. Wall clocks can jump forward, backward, or repeat values. Use monotonic clocks for duration measurement.</div>
+<div class="lesson-card"><strong>Assertions that panic are dangerous in production.</strong> An assertion that triggers a crash is appropriate in development but catastrophic in production. Graceful degradation — logging the anomaly and using a safe default — is almost always better than crashing.</div>
+<div class="lesson-card"><strong>Rare events compound in distributed systems.</strong> A leap second happens roughly once every 18 months. But when it does, it hits every server simultaneously. Events that are rare for one machine become certain for a fleet.</div>
+<div class="lesson-card"><strong>Test your time assumptions.</strong> Mock clock jumps, NTP steps, and leap seconds in your test suite. If your code does arithmetic with timestamps, it needs to handle non-monotonic behavior.</div>
+<div class="lesson-card"><strong>Post-mortems drive industry-wide improvement.</strong> Cloudflare's transparent post-mortem helped the Go team add monotonic clock support and contributed to the global decision to phase out leap seconds.</div>
+</div>
+
+<div class="takeaways">
+<h2>Key Takeaways</h2>
+<div class="takeaway">Use monotonic clocks for measuring durations; use wall clocks only for knowing the current time.</div>
+<div class="takeaway">A single line of code (a subtraction) can take down millions of websites if it makes wrong assumptions about time.</div>
+<div class="takeaway">Crash-on-assertion is a development tool, not a production strategy. Prefer graceful degradation.</div>
+<div class="takeaway">Transparent post-mortems benefit the entire industry and can drive language-level fixes.</div>
+</div>
+
+</div>
+
+<script>
+const canvas = document.getElementById('archCanvas');
+const ctx = canvas.getContext('2d');
+let currentView = 'normal';
+let animProgress = 0;
+let targetProgress = 0;
+let animFrame = null;
+let clockAngle = 0;
+
+function setView(v) {
+  currentView = v;
+  document.getElementById('btnNormal').className = 'toggle-btn' + (v === 'normal' ? ' active' : '');
+  document.getElementById('btnBug').className = 'toggle-btn' + (v === 'bug' ? ' active' : '');
+  document.getElementById('btnFix').className = 'toggle-btn' + (v === 'fix' ? ' active' : '');
+}
+
+function drawBox(x, y, w, h, label, color, alpha) {
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = color;
+  ctx.strokeStyle = '#30363d';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.roundRect(x, y, w, h, 6);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = '#e6edf3';
+  ctx.font = 'bold 11px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const lines = label.split('\n');
+  lines.forEach(function(line, i) {
+    ctx.fillText(line, x + w / 2, y + h / 2 + (i - (lines.length - 1) / 2) * 14);
+  });
+  ctx.globalAlpha = 1;
+}
+
+function drawArrow(x1, y1, x2, y2, color, alpha) {
+  ctx.globalAlpha = alpha;
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.stroke();
+  const a = Math.atan2(y2 - y1, x2 - x1);
+  ctx.beginPath();
+  ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - 8 * Math.cos(a - 0.4), y2 - 8 * Math.sin(a - 0.4));
+  ctx.lineTo(x2 - 8 * Math.cos(a + 0.4), y2 - 8 * Math.sin(a + 0.4));
+  ctx.fill();
+  ctx.globalAlpha = 1;
+}
+
+function drawClock(cx, cy, r, timeStr, jumping, mono) {
+  ctx.strokeStyle = jumping ? '#f85149' : (mono ? '#3fb950' : '#58a6ff');
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.stroke();
+  // Clock face
+  ctx.fillStyle = '#161b22';
+  ctx.beginPath();
+  ctx.arc(cx, cy, r - 2, 0, Math.PI * 2);
+  ctx.fill();
+  // Hand
+  const handAngle = clockAngle + (jumping ? Math.sin(clockAngle * 3) * 0.5 : 0);
+  const hx = cx + (r - 8) * Math.cos(handAngle - Math.PI / 2);
+  const hy = cy + (r - 8) * Math.sin(handAngle - Math.PI / 2);
+  ctx.strokeStyle = jumping ? '#f85149' : '#e6edf3';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(hx, hy);
+  ctx.stroke();
+  // Label
+  ctx.fillStyle = jumping ? '#f85149' : '#e6edf3';
+  ctx.font = 'bold 10px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText(timeStr, cx, cy + r + 14);
+  if (mono) {
+    ctx.fillStyle = '#3fb950';
+    ctx.fillText('MONOTONIC', cx, cy + r + 26);
+  }
+}
+
+function draw() {
+  clockAngle += 0.02;
+  ctx.clearRect(0, 0, 900, 320);
+
+  if (currentView === 'normal') {
+    // NTP servers
+    drawBox(50, 20, 120, 40, 'NTP Server', '#1b3a4b', 1);
+    drawArrow(170, 40, 250, 70, '#58a6ff', 0.6);
+    // RRDNS
+    drawBox(250, 50, 140, 50, 'RRDNS Server', '#1b3a4b', 1);
+    drawClock(480, 75, 25, '23:59:58', false, false);
+    // Flow
+    ctx.fillStyle = '#8b949e';
+    ctx.font = '11px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('1. Query arrives', 250, 130);
+    ctx.fillText('2. Record start = time.Now()', 250, 148);
+    ctx.fillText('3. Forward to upstream', 250, 166);
+    ctx.fillText('4. Response returns', 250, 184);
+    ctx.fillText('5. Record end = time.Now()', 250, 202);
+    ctx.fillText('6. elapsed = end - start', 250, 220);
+    ctx.fillStyle = '#3fb950';
+    ctx.fillText('7. elapsed > 0 ✓ (always positive)', 250, 238);
+    // Upstream
+    drawBox(550, 50, 140, 50, 'Upstream DNS', '#0d2818', 1);
+    drawArrow(390, 75, 550, 75, '#3fb950', 0.6);
+    drawArrow(550, 85, 390, 85, '#3fb950', 0.6);
+    // Status
+    drawBox(600, 250, 200, 40, 'Status: HEALTHY', '#0d2818', 1);
+
+  } else if (currentView === 'bug') {
+    // NTP server sending leap second
+    drawBox(50, 20, 120, 40, 'NTP Server', '#3d1b1b', 1);
+    ctx.fillStyle = '#f85149';
+    ctx.font = 'bold 10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('LEAP SECOND!', 110, 78);
+    drawArrow(170, 40, 250, 70, '#f85149', 0.8);
+    // RRDNS
+    drawBox(250, 50, 140, 50, 'RRDNS Server', '#3d1b1b', 1);
+    drawClock(480, 75, 25, '23:59:60', true, false);
+    // Flow with bug
+    ctx.fillStyle = '#8b949e';
+    ctx.font = '11px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('1. Query arrives at 23:59:60.5', 250, 130);
+    ctx.fillText('2. start = 23:59:60.500', 250, 148);
+    ctx.fillText('3. Forward to upstream', 250, 166);
+    ctx.fillText('4. Clock jumps back!', 250, 184);
+    ctx.fillStyle = '#f85149';
+    ctx.fillText('5. end = 00:00:00.100', 250, 202);
+    ctx.font = 'bold 11px sans-serif';
+    ctx.fillText('6. elapsed = -0.4s (NEGATIVE!)', 250, 220);
+    ctx.fillText('7. PANIC → CRASH', 250, 240);
+    // Upstream
+    drawBox(550, 50, 140, 50, 'Upstream DNS', '#1b3a4b', 1);
+    drawArrow(390, 75, 550, 75, '#f0883e', 0.6);
+    // Crash visualization
+    const flash = Math.sin(clockAngle * 4) > 0 ? 1 : 0.3;
+    drawBox(550, 250, 250, 40, 'RRDNS CRASH — DNS DOWN', '#5c1b1b', flash);
+
+  } else {
+    // Fix view
+    drawBox(50, 20, 120, 40, 'NTP Server', '#1b3a4b', 1);
+    drawArrow(170, 40, 250, 70, '#58a6ff', 0.6);
+    drawBox(250, 50, 140, 50, 'RRDNS Server', '#0d2818', 1);
+    // Two clocks
+    drawClock(460, 55, 22, 'Wall Clock', false, false);
+    drawClock(460, 120, 22, 'Duration', false, true);
+    // Flow
+    ctx.fillStyle = '#8b949e';
+    ctx.font = '11px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('1. Query arrives', 250, 170);
+    ctx.fillText('2. start = monotonic.Now()', 250, 188);
+    ctx.fillText('3. Forward to upstream', 250, 206);
+    ctx.fillText('4. NTP adjusts wall clock (ignored)', 250, 224);
+    ctx.fillStyle = '#3fb950';
+    ctx.fillText('5. end = monotonic.Now()', 250, 242);
+    ctx.font = 'bold 11px sans-serif';
+    ctx.fillText('6. elapsed = always positive ✓', 250, 260);
+    // Upstream
+    drawBox(550, 50, 140, 50, 'Upstream DNS', '#0d2818', 1);
+    drawArrow(390, 75, 550, 75, '#3fb950', 0.6);
+    drawArrow(550, 85, 390, 85, '#3fb950', 0.6);
+    // Status
+    drawBox(600, 250, 200, 40, 'Status: HEALTHY', '#0d2818', 1);
+    // Go 1.9 note
+    ctx.fillStyle = '#58a6ff';
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Go 1.9+ uses monotonic clocks by default', 450, 300);
+  }
+
+  animFrame = requestAnimationFrame(draw);
+}
+
+draw();
+
+function choose(el, correct) {
+  document.querySelectorAll('.choice-btn').forEach(function(b) { b.style.pointerEvents = 'none'; });
+  el.classList.add(correct ? 'correct' : 'wrong');
+  if (correct) {
+    document.querySelectorAll('.choice-btn').forEach(function(b) { if (b !== el) b.style.opacity = '0.4'; });
+  } else {
+    document.querySelectorAll('.choice-btn').forEach(function(b) {
+      if (b !== el && b.textContent.includes('monotonic')) b.classList.add('correct');
+    });
+  }
+  document.getElementById('reveal').style.display = 'block';
+}
+</script>
+<footer style="text-align:center;padding:1rem;border-top:1px solid #ccc;margin-top:2rem;color:#666;font-size:0.8rem;">
+    © <span id="copyright-year"></span> Clark Ngo
+  </footer>
+  <script>document.getElementById('copyright-year').textContent = new Date().getFullYear();</script>
+</body>
+</html>

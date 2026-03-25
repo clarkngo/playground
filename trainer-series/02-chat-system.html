@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Design a Chat System — System Design Trainer</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0d1117;color:#e6edf3;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;line-height:1.7}
+a{color:#58a6ff;text-decoration:none}a:hover{text-decoration:underline}
+nav{background:#161b22;border-bottom:1px solid #30363d;padding:16px 24px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100}
+.brand{font-size:1.2rem;font-weight:700}.back{color:#8b949e;font-size:.9rem}
+.container{max-width:960px;margin:0 auto;padding:24px 20px 60px}
+.hero{background:linear-gradient(135deg,#1a1e24 0%,#0d1f3a 100%);border:1px solid #30363d;border-radius:12px;padding:48px 36px;margin-bottom:36px;text-align:center}
+.hero h1{font-size:2.2rem;margin-bottom:8px}.hero .tagline{color:#58a6ff;font-size:1.1rem;margin-bottom:6px}.hero .meta{color:#8b949e;font-size:.9rem}
+section.step{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:28px;margin-bottom:24px}
+section.step h2{font-size:1.4rem;margin-bottom:6px;display:flex;align-items:center;gap:10px}
+section.step h2 .num{background:#58a6ff;color:#0d1117;font-size:.75rem;font-weight:700;padding:2px 10px;border-radius:12px}
+.desc{color:#8b949e;font-size:.9rem;margin-bottom:18px}
+.reveal-btn{display:inline-block;padding:8px 20px;background:#1f6feb;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:.9rem;transition:background .2s}
+.reveal-btn:hover{background:#1a5fd1}
+.reveal-content{display:none;margin-top:16px;padding:16px;background:#0d1117;border:1px solid #3fb950;border-radius:8px;font-size:.93rem;color:#c9d1d9}
+.reveal-content.show{display:block}
+.req-list{list-style:none;margin-bottom:12px}
+.req-list li{padding:6px 0;font-size:.93rem}
+.req-list label{cursor:pointer;display:flex;align-items:center;gap:8px}
+.radio-group{margin-bottom:8px}
+.radio-group label{display:inline-flex;align-items:center;gap:6px;margin-right:16px;font-size:.9rem;cursor:pointer}
+.correct-mark{color:#3fb950;font-weight:700}
+.calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.calc-field label{display:block;font-size:.8rem;color:#8b949e;margin-bottom:4px}
+.calc-field input{width:100%;background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:8px 12px;color:#e6edf3;font-size:.9rem}
+.calc-results{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:12px}
+.calc-result{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:12px;text-align:center}
+.calc-result .val{font-size:1.3rem;font-weight:700;color:#58a6ff}.calc-result .lbl{font-size:.75rem;color:#8b949e}
+pre{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:16px;overflow-x:auto;font-size:.85rem;line-height:1.6;color:#e6edf3;margin-bottom:12px}
+.method{color:#f0883e;font-weight:700}.endpoint{color:#3fb950}.param{color:#58a6ff}
+.table-wrap{overflow-x:auto;margin-bottom:12px}
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+th{background:#21262d;color:#8b949e;text-align:left;padding:8px 12px;border:1px solid #30363d}
+td{padding:8px 12px;border:1px solid #30363d;color:#c9d1d9}
+.toggle-row{display:flex;gap:8px;margin-bottom:16px}
+.toggle-opt{padding:6px 16px;border-radius:6px;border:1px solid #30363d;background:#0d1117;color:#8b949e;cursor:pointer;font-size:.85rem;font-weight:600;transition:all .2s}
+.toggle-opt.active{background:#1f6feb;color:#fff;border-color:#1f6feb}
+canvas{display:block;width:100%;border:1px solid #30363d;border-radius:8px;background:#0d1117;margin-bottom:12px}
+.deep-dive{border:1px solid #30363d;border-radius:8px;margin-bottom:10px;overflow:hidden}
+.dd-header{padding:14px 18px;background:#161b22;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-weight:600;font-size:.93rem}
+.dd-header:hover{background:#1c2129}
+.dd-arrow{transition:transform .2s;color:#8b949e}
+.dd-body{display:none;padding:16px 18px;background:#0d1117;font-size:.9rem;color:#c9d1d9;line-height:1.7}
+.dd-body.open{display:block}
+.dd-arrow.open{transform:rotate(180deg)}
+.tradeoff-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:12px}
+.tradeoff-card{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:16px}
+.tradeoff-card h4{font-size:.95rem;margin-bottom:8px;color:#e6edf3}
+.tradeoff-card .pros{color:#3fb950;font-size:.85rem;margin-bottom:4px}
+.tradeoff-card .cons{color:#f85149;font-size:.85rem}
+.tip-card{background:#0d1117;border-left:3px solid #f0883e;border-radius:0 8px 8px 0;padding:14px 18px;margin-bottom:10px;font-size:.9rem;color:#c9d1d9}
+.tip-card strong{color:#f0883e}
+@media(max-width:640px){.calc-grid,.tradeoff-grid{grid-template-columns:1fr}.hero h1{font-size:1.6rem}}
+</style>
+    <meta name="author" content="Clark Ngo">
+    <meta name="copyright" content="Clark Ngo">
+  </head>
+<body>
+<nav><span class="brand">&#127919; Trainer Series</span><a href="index.html" class="back">&larr; All Trainers</a></nav>
+<div class="container">
+
+<div class="hero">
+<h1>Design a Chat System</h1>
+<div class="tagline">WhatsApp / Slack at scale</div>
+<div class="meta">WebSocket &bull; Presence &bull; Message Ordering &bull; Group Fanout</div>
+</div>
+
+<!-- STEP 1 -->
+<section class="step" id="s1">
+<h2><span class="num">1</span> Requirements</h2>
+<p class="desc">Identify core functional and non-functional requirements for a real-time chat system.</p>
+
+<h3 style="font-size:.95rem;margin-bottom:10px;color:#8b949e">Functional Requirements</h3>
+<ul class="req-list" id="funcReqs">
+<li><label><input type="checkbox" value="1to1"> 1:1 messaging</label></li>
+<li><label><input type="checkbox" value="group"> Group chats (up to 500 members)</label></li>
+<li><label><input type="checkbox" value="presence"> Online/offline presence</label></li>
+<li><label><input type="checkbox" value="history"> Message history and search</label></li>
+<li><label><input type="checkbox" value="receipts"> Read receipts</label></li>
+<li><label><input type="checkbox" value="push"> Push notifications for offline users</label></li>
+<li><label><input type="checkbox" value="media"> Media sharing (images, files)</label></li>
+<li><label><input type="checkbox" value="e2e"> End-to-end encryption</label></li>
+</ul>
+
+<h3 style="font-size:.95rem;margin-bottom:10px;color:#8b949e">Most Critical Non-Functional</h3>
+<div class="radio-group" id="nfReqs">
+<label><input type="radio" name="nf" value="realtime"> &lt;200ms delivery</label>
+<label><input type="radio" name="nf" value="ordering"> Message ordering</label>
+<label><input type="radio" name="nf" value="consistency"> Strong consistency</label>
+<label><input type="radio" name="nf" value="durability"> Zero message loss</label>
+</div>
+
+<button class="reveal-btn" onclick="reveal('reqReveal')">Reveal Answer</button>
+<div class="reveal-content" id="reqReveal">
+<p><span class="correct-mark">Core:</span> 1:1 messaging, group chats, presence, message history, and push notifications are essential. Read receipts and media are important but secondary.</p>
+<p><span class="correct-mark">Non-functional:</span> Real-time delivery (&lt;200ms) and message ordering are both critical. Eventual consistency is acceptable for presence (a few seconds delay is fine). Zero message loss is important but at-least-once delivery with dedup is the practical approach.</p>
+</div>
+</section>
+
+<!-- STEP 2 -->
+<section class="step" id="s2">
+<h2><span class="num">2</span> Capacity Estimation</h2>
+<p class="desc">Estimate the scale of a chat system serving 50M daily active users.</p>
+
+<div class="calc-grid">
+<div class="calc-field"><label>Daily Active Users</label><input type="number" id="dau" value="50000000" oninput="calcCap()"></div>
+<div class="calc-field"><label>Messages per user/day</label><input type="number" id="mpd" value="40" oninput="calcCap()"></div>
+<div class="calc-field"><label>Bytes per message</label><input type="number" id="bpm" value="200" oninput="calcCap()"></div>
+<div class="calc-field"><label>Concurrent connections (%)</label><input type="number" id="conc" value="20" oninput="calcCap()"></div>
+</div>
+
+<div class="calc-results" id="calcRes">
+<div class="calc-result"><div class="val" id="crMps">—</div><div class="lbl">Messages/sec</div></div>
+<div class="calc-result"><div class="val" id="crStorage">—</div><div class="lbl">Storage/day</div></div>
+<div class="calc-result"><div class="val" id="crYear">—</div><div class="lbl">Storage/year</div></div>
+<div class="calc-result"><div class="val" id="crConns">—</div><div class="lbl">Concurrent WS</div></div>
+</div>
+
+<button class="reveal-btn" onclick="reveal('capReveal')">Reveal Answer</button>
+<div class="reveal-content" id="capReveal">
+<p><strong>Reference:</strong> 50M DAU * 40 msgs/day = 2B messages/day = ~23K msgs/sec. 200 bytes each = ~400 GB/day, ~146 TB/year. At 20% concurrency = 10M simultaneous WebSocket connections. Each WS server handles ~50K connections, so you need ~200 WS gateway servers.</p>
+</div>
+</section>
+
+<!-- STEP 3 -->
+<section class="step" id="s3">
+<h2><span class="num">3</span> API Design</h2>
+<p class="desc">Chat uses both WebSocket (real-time) and REST (history, setup) APIs.</p>
+
+<pre><span class="method">WebSocket</span> <span class="endpoint">ws://chat.example.com/ws</span>
+  → <span class="param">send_message</span>    { chat_id, content, type }
+  ← <span class="param">receive_message</span> { msg_id, chat_id, sender_id, content, timestamp }
+  → <span class="param">typing</span>          { chat_id, is_typing }
+  → <span class="param">presence</span>        { status: "online"|"away"|"offline" }
+  ← <span class="param">ack</span>             { msg_id, status: "sent"|"delivered"|"read" }
+
+<span class="method">GET</span> <span class="endpoint">/chats/{chatId}/messages</span><span class="param">?before=timestamp&amp;limit=50</span>
+  → Paginated message history (cursor-based)
+
+<span class="method">POST</span> <span class="endpoint">/chats</span>
+  Body: { type: "group", name: "Team Chat", member_ids: [...] }
+
+<span class="method">GET</span> <span class="endpoint">/chats</span>
+  → List of user conversations with last message preview</pre>
+
+<button class="reveal-btn" onclick="reveal('apiReveal')">Reveal Answer</button>
+<div class="reveal-content" id="apiReveal">
+<p><strong>Key design decisions:</strong></p>
+<ul style="padding-left:20px;margin-top:8px">
+<li>WebSocket for real-time send/receive; REST for history and chat management</li>
+<li>Cursor-based pagination (timestamp) is better than offset for chat history</li>
+<li>Message acknowledgment (sent → delivered → read) flows back over WS</li>
+<li>Typing indicators are ephemeral — no persistence needed</li>
+<li>Presence updates via heartbeat, not per-message</li>
+</ul>
+</div>
+</section>
+
+<!-- STEP 4 -->
+<section class="step" id="s4">
+<h2><span class="num">4</span> Data Model</h2>
+<p class="desc">Messages need fast writes and range queries by time. Toggle to compare storage approaches.</p>
+
+<div class="toggle-row">
+<div class="toggle-opt active" onclick="toggleDB(this,'sql')">SQL (PostgreSQL)</div>
+<div class="toggle-opt" onclick="toggleDB(this,'nosql')">NoSQL (Cassandra)</div>
+</div>
+
+<div id="dbSql">
+<div class="table-wrap"><table>
+<tr><th colspan="3">users</th></tr>
+<tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+<tr><td>id</td><td>BIGINT</td><td>Primary key</td></tr>
+<tr><td>name</td><td>VARCHAR</td><td></td></tr>
+<tr><td>last_seen</td><td>TIMESTAMP</td><td>Presence</td></tr>
+</table></div>
+<div class="table-wrap"><table>
+<tr><th colspan="3">chats</th></tr>
+<tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+<tr><td>id</td><td>BIGINT</td><td>Primary key</td></tr>
+<tr><td>type</td><td>ENUM</td><td>direct / group</td></tr>
+<tr><td>name</td><td>VARCHAR</td><td>Group name</td></tr>
+</table></div>
+<div class="table-wrap"><table>
+<tr><th colspan="3">messages</th></tr>
+<tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+<tr><td>id</td><td>BIGINT</td><td>Snowflake ID</td></tr>
+<tr><td>chat_id</td><td>BIGINT</td><td>FK, partition key</td></tr>
+<tr><td>sender_id</td><td>BIGINT</td><td>FK</td></tr>
+<tr><td>content</td><td>TEXT</td><td></td></tr>
+<tr><td>created_at</td><td>TIMESTAMP</td><td>Clustered index</td></tr>
+</table></div>
+</div>
+
+<div id="dbNosql" style="display:none">
+<div class="table-wrap"><table>
+<tr><th colspan="3">messages (Cassandra)</th></tr>
+<tr><th>Column</th><th>Type</th><th>Key</th></tr>
+<tr><td>chat_id</td><td>UUID</td><td>Partition Key</td></tr>
+<tr><td>created_at</td><td>TIMEUUID</td><td>Clustering (DESC)</td></tr>
+<tr><td>sender_id</td><td>UUID</td><td>—</td></tr>
+<tr><td>content</td><td>TEXT</td><td>—</td></tr>
+</table></div>
+<p style="color:#8b949e;font-size:.85rem">Cassandra excels here: partition by chat_id, cluster by timestamp for efficient range queries. Write-optimized LSM tree handles high message throughput.</p>
+</div>
+
+<button class="reveal-btn" onclick="reveal('dataReveal')">Reveal Answer</button>
+<div class="reveal-content" id="dataReveal">
+<p><strong>Cassandra is the standard choice</strong> for message storage at scale. Partition by chat_id + cluster by created_at gives O(1) partition lookup and efficient time-range scans. For smaller scale, PostgreSQL with partitioning works fine. Keep user/chat metadata in PostgreSQL or MySQL — it has relational queries and low volume.</p>
+</div>
+</section>
+
+<!-- STEP 5 -->
+<section class="step" id="s5">
+<h2><span class="num">5</span> Architecture</h2>
+<p class="desc">Animated message flow from sender to recipient through the system.</p>
+
+<canvas id="archCanvas" width="920" height="300"></canvas>
+
+<button class="reveal-btn" onclick="reveal('archReveal')">Reveal Answer</button>
+<div class="reveal-content" id="archReveal">
+<p><strong>Flow:</strong> Sender connects via WebSocket to a WS Gateway (Go/Rust for performance). Gateway forwards to Message Service, which writes to Cassandra and publishes to Kafka. Delivery Service consumes from Kafka, looks up which WS Gateway the recipient is on, and pushes the message. If recipient is offline, push via APNs/FCM.</p>
+<p style="margin-top:8px"><strong>Presence:</strong> Clients send heartbeats every 5s. WS Gateway updates Redis. If no heartbeat for 30s, mark offline. Presence is separate from messaging — use a dedicated presence service.</p>
+</div>
+</section>
+
+<!-- STEP 6 -->
+<section class="step" id="s6">
+<h2><span class="num">6</span> Deep Dives</h2>
+<p class="desc">Explore the trickiest implementation details of a chat system.</p>
+
+<div class="deep-dive">
+<div class="dd-header" onclick="toggleDD(this)">WebSocket Management & Reconnection <span class="dd-arrow">&#9660;</span></div>
+<div class="dd-body">
+<p><strong>Connection management:</strong> Each WS Gateway server holds ~50K persistent connections. Use a connection registry (Redis hash) mapping user_id → gateway_server_id so the delivery service knows where to route.</p>
+<p style="margin-top:10px"><strong>Reconnection:</strong> Clients reconnect with the last received message timestamp. The server replays any missed messages from Cassandra. Exponential backoff prevents thundering herd on server restart.</p>
+<p style="margin-top:10px"><strong>Health checks:</strong> Server sends ping frames every 30s. If no pong within 10s, close the connection and clean up the registry entry. Client-side: reconnect on network change events.</p>
+</div>
+</div>
+
+<div class="deep-dive">
+<div class="dd-header" onclick="toggleDD(this)">Message Ordering Guarantees <span class="dd-arrow">&#9660;</span></div>
+<div class="dd-body">
+<p><strong>Per-chat sequence IDs:</strong> Each chat maintains a monotonically increasing sequence counter. Messages within a chat are ordered by this sequence. Use Redis INCR for atomic sequence generation.</p>
+<p style="margin-top:10px"><strong>Snowflake IDs:</strong> Alternative approach — 64-bit IDs encoding timestamp + machine ID + sequence. Globally sortable by time, no central counter needed. Used by Discord and Twitter.</p>
+<p style="margin-top:10px"><strong>Trade-off:</strong> Per-chat sequences give strict ordering within a conversation but require a central counter per chat. Snowflake IDs are approximately ordered (millisecond precision) and fully distributed.</p>
+</div>
+</div>
+
+<div class="deep-dive">
+<div class="dd-header" onclick="toggleDD(this)">Group Message Fanout <span class="dd-arrow">&#9660;</span></div>
+<div class="dd-body">
+<p><strong>Small groups (&lt;100 members):</strong> Inline fanout — the message service directly pushes to each member. Fast, simple, acceptable overhead.</p>
+<p style="margin-top:10px"><strong>Large groups (100-500 members):</strong> Queued fanout — write the message once, enqueue a fanout job. Workers fetch the member list and deliver in batches. Prevents a single large group from blocking other messages.</p>
+<p style="margin-top:10px"><strong>Optimization:</strong> Store one copy of the message. Each recipient gets a pointer (chat_id + msg_id) in their inbox. This saves storage vs duplicating the message per recipient.</p>
+</div>
+</div>
+</section>
+
+<!-- STEP 7 -->
+<section class="step" id="s7">
+<h2><span class="num">7</span> Trade-offs</h2>
+<p class="desc">Compare the key architectural decisions for a chat system.</p>
+
+<h3 style="font-size:.95rem;color:#8b949e;margin-bottom:10px">WebSocket vs Long Polling vs SSE</h3>
+<div class="tradeoff-grid">
+<div class="tradeoff-card">
+<h4>WebSocket</h4>
+<div class="pros">+ Full duplex, lowest latency</div>
+<div class="pros">+ Efficient for high-frequency messages</div>
+<div class="cons">- Stateful connections, harder to load balance</div>
+<div class="cons">- Requires connection management infrastructure</div>
+</div>
+<div class="tradeoff-card">
+<h4>Long Polling / SSE</h4>
+<div class="pros">+ Simpler infrastructure, stateless</div>
+<div class="pros">+ Works through all proxies/firewalls</div>
+<div class="cons">- Higher latency (long poll: half-duplex)</div>
+<div class="cons">- SSE is server→client only</div>
+</div>
+</div>
+
+<h3 style="font-size:.95rem;color:#8b949e;margin-bottom:10px">Cassandra vs PostgreSQL for Messages</h3>
+<div class="tradeoff-grid">
+<div class="tradeoff-card">
+<h4>Cassandra</h4>
+<div class="pros">+ Linear write scalability</div>
+<div class="pros">+ Built for time-series data patterns</div>
+<div class="cons">- No transactions across partitions</div>
+<div class="cons">- Limited query flexibility</div>
+</div>
+<div class="tradeoff-card">
+<h4>PostgreSQL</h4>
+<div class="pros">+ ACID, flexible queries, joins</div>
+<div class="pros">+ Easier to operate at moderate scale</div>
+<div class="cons">- Write throughput ceiling</div>
+<div class="cons">- Sharding is complex</div>
+</div>
+</div>
+</section>
+
+<!-- STEP 8 -->
+<section class="step" id="s8">
+<h2><span class="num">8</span> Interview Tips</h2>
+<p class="desc">How to present a chat system design effectively in an interview.</p>
+
+<div class="tip-card"><strong>Mention connection management first.</strong> The interviewer wants to know you understand that 10M persistent WebSocket connections is the core infrastructure challenge — not the messaging logic itself.</div>
+<div class="tip-card"><strong>Discuss 1:1 vs group separately.</strong> They have different fanout patterns, different ordering concerns, and different scale characteristics. Treating them as distinct subsystems shows architectural maturity.</div>
+<div class="tip-card"><strong>Presence is its own subsystem.</strong> Many candidates bolt presence onto messaging. In practice, presence (heartbeats, status propagation) should be a separate service with its own data store (Redis) and its own scalability concerns.</div>
+<div class="tip-card"><strong>Mention end-to-end encryption.</strong> Even if you do not design it fully, acknowledging that E2E encryption means the server cannot read message content (only route it) shows security awareness and differentiates you from other candidates.</div>
+</section>
+
+</div>
+
+<script>
+function reveal(id){document.getElementById(id).classList.add('show')}
+function toggleDD(h){h.nextElementSibling.classList.toggle('open');h.querySelector('.dd-arrow').classList.toggle('open')}
+function toggleDB(el,mode){
+  document.querySelectorAll('#s4 .toggle-opt').forEach(o=>o.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('dbSql').style.display=mode==='sql'?'block':'none';
+  document.getElementById('dbNosql').style.display=mode==='nosql'?'block':'none';
+}
+
+function calcCap(){
+  const dau=+document.getElementById('dau').value||0;
+  const mpd=+document.getElementById('mpd').value||0;
+  const bpm=+document.getElementById('bpm').value||0;
+  const conc=+document.getElementById('conc').value||0;
+  const mps=Math.round(dau*mpd/86400);
+  const storDay=dau*mpd*bpm;
+  document.getElementById('crMps').textContent=mps.toLocaleString();
+  document.getElementById('crStorage').textContent=fmtB(storDay);
+  document.getElementById('crYear').textContent=fmtB(storDay*365);
+  document.getElementById('crConns').textContent=(Math.round(dau*conc/100)/1e6).toFixed(0)+'M';
+}
+function fmtB(b){if(b>=1e12)return(b/1e12).toFixed(1)+' TB';if(b>=1e9)return(b/1e9).toFixed(1)+' GB';if(b>=1e6)return(b/1e6).toFixed(1)+' MB';return b+' B'}
+calcCap();
+
+// Architecture canvas
+const canvas=document.getElementById('archCanvas'),ctx=canvas.getContext('2d');
+const DPR=window.devicePixelRatio||1;
+let animT=0;
+
+function resizeCanvas(){
+  const w=canvas.parentElement.clientWidth;
+  canvas.style.width=w+'px';canvas.style.height='300px';
+  canvas.width=w*DPR;canvas.height=300*DPR;
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+}
+resizeCanvas();
+window.addEventListener('resize',resizeCanvas);
+
+function drawBox(x,y,w,h,label,color){
+  ctx.fillStyle=color+'22';ctx.strokeStyle=color;ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.roundRect(x-w/2,y-h/2,w,h,6);ctx.fill();ctx.stroke();
+  ctx.fillStyle='#e6edf3';ctx.font='bold 10px -apple-system,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(label,x,y);
+}
+function drawPacket(x1,y1,x2,y2,t,color){
+  const px=x1+(x2-x1)*t,py=y1+(y2-y1)*t;
+  ctx.fillStyle=color;ctx.beginPath();ctx.arc(px,py,4,0,Math.PI*2);ctx.fill();
+}
+
+function drawArch(){
+  const W=canvas.width/DPR;
+  ctx.clearRect(0,0,W,300);
+
+  const sender={x:50,y:150},gw1={x:160,y:150},msgSvc={x:290,y:150},kafka={x:420,y:150},delSvc={x:540,y:150},gw2={x:660,y:150},recip={x:770,y:150};
+  const cass={x:290,y:250},push={x:540,y:250};
+
+  drawBox(sender.x,sender.y,70,36,'Sender','#58a6ff');
+  drawBox(gw1.x,gw1.y,80,36,'WS Gateway','#3fb950');
+  drawBox(msgSvc.x,msgSvc.y,80,36,'Message Svc','#f0883e');
+  drawBox(kafka.x,kafka.y,70,36,'Kafka','#bc8cff');
+  drawBox(delSvc.x,delSvc.y,80,36,'Delivery Svc','#f0883e');
+  drawBox(gw2.x,gw2.y,80,36,'WS Gateway','#3fb950');
+  drawBox(recip.x,recip.y,70,36,'Recipient','#58a6ff');
+  drawBox(cass.x,cass.y,80,30,'Cassandra','#bc8cff');
+  drawBox(push.x,push.y,80,30,'APNs/FCM','#f85149');
+
+  // Static lines
+  ctx.strokeStyle='#30363d';ctx.lineWidth=1;ctx.setLineDash([4,3]);
+  [[sender,gw1],[gw1,msgSvc],[msgSvc,kafka],[kafka,delSvc],[delSvc,gw2],[gw2,recip],[msgSvc,cass],[delSvc,push]].forEach(([a,b])=>{
+    ctx.beginPath();ctx.moveTo(a.x+(a===cass||a===push?0:35),a.y);ctx.lineTo(b.x-(b===cass||b===push?0:35),b.y);ctx.stroke();
+  });
+  ctx.setLineDash([]);
+
+  // Animated packet
+  const seg=animT*7;
+  const pairs=[[sender.x+35,sender.y,gw1.x-40,gw1.y],[gw1.x+40,gw1.y,msgSvc.x-40,msgSvc.y],[msgSvc.x+40,msgSvc.y,kafka.x-35,kafka.y],[kafka.x+35,kafka.y,delSvc.x-40,delSvc.y],[delSvc.x+40,delSvc.y,gw2.x-40,gw2.y],[gw2.x+40,gw2.y,recip.x-35,recip.y]];
+  const si=Math.floor(seg);
+  if(si<pairs.length){
+    const p=pairs[si];
+    drawPacket(p[0],p[1],p[2],p[3],seg-si,'#58a6ff');
+  }
+
+  // Label
+  ctx.font='bold 10px sans-serif';ctx.fillStyle='#8b949e';ctx.textAlign='center';
+  ctx.fillText('MESSAGE FLOW: Sender → WS Gateway → Message Service → Kafka → Delivery → Recipient',W/2,25);
+
+  animT+=0.003;if(animT>1)animT=0;
+  requestAnimationFrame(drawArch);
+}
+drawArch();
+</script>
+<footer style="text-align:center;padding:1rem;border-top:1px solid #ccc;margin-top:2rem;color:#666;font-size:0.8rem;">
+    © <span id="copyright-year"></span> Clark Ngo
+  </footer>
+  <script>document.getElementById('copyright-year').textContent = new Date().getFullYear();</script>
+</body>
+</html>

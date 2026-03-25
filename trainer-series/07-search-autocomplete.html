@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Design Search Autocomplete — System Design Trainer</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0d1117;color:#e6edf3;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;line-height:1.7}
+a{color:#58a6ff;text-decoration:none}a:hover{text-decoration:underline}
+nav{background:#161b22;border-bottom:1px solid #30363d;padding:16px 24px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100}
+.brand{font-size:1.2rem;font-weight:700}.back{color:#8b949e;font-size:.9rem}
+.container{max-width:960px;margin:0 auto;padding:24px 20px}
+.hero{background:linear-gradient(135deg,#1a1e24 0%,#2a1a06 100%);border:1px solid #30363d;border-radius:12px;padding:48px 36px;margin-bottom:36px;text-align:center}
+.hero h1{font-size:2.2rem;margin-bottom:8px}.hero .tagline{color:#f0883e;font-size:1.1rem;margin-bottom:6px}.hero .meta{color:#8b949e;font-size:.9rem}
+section.step{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:28px;margin-bottom:24px}
+section.step h2{font-size:1.4rem;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #30363d;display:flex;align-items:center;gap:10px}
+.step-num{background:#f0883e;color:#0d1117;font-size:.75rem;font-weight:700;padding:2px 10px;border-radius:12px}
+label{display:block;margin-bottom:8px;font-size:.93rem;color:#c9d1d9;cursor:pointer}
+label input{margin-right:8px}
+.radio-group{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.reveal-btn{display:inline-block;padding:8px 20px;background:#f0883e;color:#0d1117;border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:.9rem;margin-top:12px;transition:background .2s}
+.reveal-btn:hover{background:#d4772e}
+.reveal{margin-top:16px;padding:16px;background:#0d1117;border:1px solid #3fb950;border-radius:8px;display:none;font-size:.93rem;color:#c9d1d9}
+.reveal.show{display:block}
+.correct-mark{color:#3fb950;font-weight:700;margin-left:4px}
+.input-group{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.input-group label{font-size:.85rem;color:#8b949e;margin-bottom:2px}
+.input-group input{width:100%;padding:8px 12px;background:#0d1117;border:1px solid #30363d;border-radius:6px;color:#e6edf3;font-size:.9rem}
+.calc-result{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:16px;margin-top:12px}
+.calc-row{display:flex;justify-content:space-between;padding:4px 0;font-size:.9rem}
+.calc-row .label{color:#8b949e}.calc-row .value{color:#f0883e;font-weight:600}
+pre{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:16px;overflow-x:auto;font-size:.85rem;color:#e6edf3;margin-bottom:12px;line-height:1.6}
+.code-comment{color:#8b949e}
+.toggle-row{display:flex;gap:8px;margin-bottom:16px}
+.toggle-opt{padding:6px 16px;border-radius:6px;border:1px solid #30363d;background:#0d1117;color:#8b949e;cursor:pointer;font-size:.85rem;font-weight:600;transition:all .2s}
+.toggle-opt.active{background:#1f6feb;color:#e6edf3;border-color:#1f6feb}
+.table-wrap{overflow-x:auto;margin-bottom:12px}
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+th{background:#21262d;color:#8b949e;padding:8px 12px;text-align:left;font-weight:600;border-bottom:1px solid #30363d}
+td{padding:8px 12px;border-bottom:1px solid #21262d;color:#c9d1d9}
+canvas{display:block;width:100%;border:1px solid #30363d;border-radius:8px;background:#0d1117;margin-bottom:12px}
+.collapsible{border:1px solid #30363d;border-radius:8px;margin-bottom:10px;overflow:hidden}
+.collapsible-header{padding:14px 18px;background:#21262d;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-weight:600;font-size:.93rem}
+.collapsible-header:hover{background:#282e36}
+.collapsible-body{padding:16px 18px;display:none;font-size:.9rem;color:#c9d1d9;line-height:1.7}
+.collapsible.open .collapsible-body{display:block}
+.collapsible-arrow{transition:transform .2s;color:#8b949e}.collapsible.open .collapsible-arrow{transform:rotate(90deg)}
+.tradeoff-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.tradeoff-card{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:18px}
+.tradeoff-card h4{color:#f0883e;margin-bottom:8px;font-size:.95rem}
+.tradeoff-card p{font-size:.85rem;color:#8b949e;line-height:1.6}
+.tip-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tip-card{background:#0d1117;border-left:3px solid #3fb950;border-radius:0 8px 8px 0;padding:14px 18px;font-size:.9rem;color:#c9d1d9}
+@media(max-width:640px){.input-group,.tradeoff-grid,.tip-cards{grid-template-columns:1fr}}
+</style>
+    <meta name="author" content="Clark Ngo">
+    <meta name="copyright" content="Clark Ngo">
+  </head>
+<body>
+<nav><span class="brand">🎯 Trainer Series</span><a href="index.html" class="back">← All Trainers</a></nav>
+<div class="container">
+
+<div class="hero">
+<h1>Design Search Autocomplete</h1>
+<div class="tagline">Google Suggestions — instant prefix matching at scale</div>
+<div class="meta">Trie Data Structure · Frequency Ranking · Distributed Sharding · Query Filtering</div>
+</div>
+
+<!-- STEP 1: Requirements -->
+<section class="step" id="step1">
+<h2><span class="step-num">Step 1</span> Requirements</h2>
+<p style="color:#8b949e;margin-bottom:16px">Select the functional requirements you think are essential:</p>
+<label><input type="checkbox" data-correct="true" data-group="func"> Return top 5 suggestions as user types</label>
+<label><input type="checkbox" data-correct="true" data-group="func"> Rank suggestions by frequency/popularity</label>
+<label><input type="checkbox" data-correct="true" data-group="func"> Update rankings based on new searches</label>
+<label><input type="checkbox" data-correct="true" data-group="func"> Filter inappropriate content</label>
+<label><input type="checkbox" data-correct="true" data-group="func"> &lt;100ms response time per keystroke</label>
+<label><input type="checkbox" data-correct="false" data-group="func"> Return full search results (not just suggestions)</label>
+<label><input type="checkbox" data-correct="false" data-group="func"> Support image search preview</label>
+
+<p style="color:#8b949e;margin:16px 0 8px">Select the most important non-functional requirement:</p>
+<div class="radio-group">
+<label><input type="radio" name="nfr" value="latency" data-correct="true"> Low latency (&lt;100ms), handle typos, prefix matching</label>
+<label><input type="radio" name="nfr" value="accuracy"> Perfect spelling accuracy with no fuzzy matching</label>
+<label><input type="radio" name="nfr" value="realtime"> Real-time ranking updates on every single query</label>
+</div>
+
+<button class="reveal-btn" onclick="revealStep('step1')">Reveal Answer</button>
+<div class="reveal" id="step1-reveal">
+<strong>Functional:</strong> Top-5 suggestions, frequency ranking, periodic ranking updates, content filtering, fast response. Full search results and image previews are separate systems.<br><br>
+<strong>Non-functional:</strong> Low latency is critical — users expect instant feedback. Prefix matching is the core operation. Typo tolerance is a nice-to-have. Rankings can be updated in batches (not real-time).
+</div>
+</section>
+
+<!-- STEP 2: Capacity Estimation -->
+<section class="step" id="step2">
+<h2><span class="step-num">Step 2</span> Capacity Estimation</h2>
+<div class="input-group">
+<div><label>DAU (millions)</label><input type="number" id="cap-dau" value="10" oninput="calcCapacity()"></div>
+<div><label>Searches per User/Day</label><input type="number" id="cap-spd" value="10" oninput="calcCapacity()"></div>
+<div><label>Avg Characters Typed</label><input type="number" id="cap-chars" value="4" oninput="calcCapacity()"></div>
+<div><label>Unique Search Terms (M)</label><input type="number" id="cap-terms" value="1" oninput="calcCapacity()"></div>
+</div>
+<div class="calc-result" id="cap-result"></div>
+<button class="reveal-btn" onclick="revealStep('step2')">Reveal Answer</button>
+<div class="reveal" id="step2-reveal">
+<strong>Reference numbers:</strong><br>
+10M DAU x 10 searches/day = <strong>100M searches/day</strong><br>
+4 chars typed per search = <strong>400M autocomplete queries/day</strong><br>
+400M / 86400 ≈ <strong>4,600 QPS</strong><br>
+1M unique terms, avg 15 chars + metadata = <strong>~500MB</strong> trie storage<br>
+Trie fits entirely in memory on each serving node.
+</div>
+</section>
+
+<!-- STEP 3: API Design -->
+<section class="step" id="step3">
+<h2><span class="step-num">Step 3</span> API Design</h2>
+<pre><span class="code-comment">// Autocomplete Query</span>
+GET /api/autocomplete?prefix=hel&limit=5
+    → 200 {
+        "suggestions": [
+          { "term": "hello world", "score": 98200 },
+          { "term": "help center", "score": 45100 },
+          { "term": "hello kitty", "score": 32000 },
+          { "term": "helmet laws",  "score": 18500 },
+          { "term": "helsinki",     "score": 12300 }
+        ]
+      }</pre>
+<button class="reveal-btn" onclick="revealStep('step3')">Reveal Answer</button>
+<div class="reveal" id="step3-reveal">
+<strong>Internal APIs:</strong>
+<pre style="margin-top:8px"><span class="code-comment">// Log a search for ranking pipeline</span>
+POST /api/search-log
+     Body: { "term": "hello world", "timestamp": "..." }
+
+<span class="code-comment">// Trie rebuild trigger (admin)</span>
+POST /internal/trie/rebuild
+     Body: { "source": "s3://search-logs/weekly/", "shard": 0 }
+
+<span class="code-comment">// Health + version check</span>
+GET  /internal/trie/status
+     → { "version": "2024-03-15-v2", "terms": 1042000, "shards": 26 }</pre>
+<strong>Key design choice:</strong> The autocomplete API is read-only and extremely latency-sensitive. Search logging is fire-and-forget (async). Trie rebuilds happen offline.
+</div>
+</section>
+
+<!-- STEP 4: Data Model -->
+<section class="step" id="step4">
+<h2><span class="step-num">Step 4</span> Data Model</h2>
+<div class="toggle-row">
+<div class="toggle-opt active" onclick="toggleDM('trie')">Trie (Primary)</div>
+<div class="toggle-opt" onclick="toggleDM('log')">Search Logs</div>
+</div>
+<div id="dm-trie">
+<div class="table-wrap"><table>
+<tr><th>Component</th><th>Type</th><th>Description</th></tr>
+<tr><td>TrieNode.children</td><td>Map&lt;char, TrieNode&gt;</td><td>26 lowercase letters + special chars</td></tr>
+<tr><td>TrieNode.topK</td><td>[{term, score}]</td><td>Cached top-5 results for this prefix</td></tr>
+<tr><td>TrieNode.isEnd</td><td>boolean</td><td>Marks end of a valid search term</td></tr>
+<tr><td>Trie version</td><td>string</td><td>Timestamp of last rebuild</td></tr>
+</table></div>
+<p style="color:#8b949e;font-size:.85rem">Each node caches the top-K results so lookups are O(prefix length), not O(tree traversal).</p>
+</div>
+<div id="dm-log" style="display:none">
+<div class="table-wrap"><table>
+<tr><th>Field</th><th>Type</th><th>Description</th></tr>
+<tr><td>term</td><td>string</td><td>The search query entered</td></tr>
+<tr><td>timestamp</td><td>datetime</td><td>When the search occurred</td></tr>
+<tr><td>user_id</td><td>string</td><td>Anonymous user identifier</td></tr>
+<tr><td>region</td><td>string</td><td>Geographic region for localization</td></tr>
+</table></div>
+<p style="color:#8b949e;font-size:.85rem">Logs are written to Kafka, aggregated weekly via MapReduce to compute term frequencies.</p>
+</div>
+<button class="reveal-btn" onclick="revealStep('step4')">Reveal Answer</button>
+<div class="reveal" id="step4-reveal">
+<strong>The trie with cached top-K per node</strong> is the key insight. Without caching, you would need to traverse the entire subtree for every prefix to find the most popular completions — far too slow for real-time use.<br><br>
+<strong>Offline pipeline:</strong> Search logs → Kafka → MapReduce aggregation (weekly) → build new trie with updated frequencies → deploy atomically to all serving nodes. This separation of online serving from offline ranking is critical.
+</div>
+</section>
+
+<!-- STEP 5: Architecture -->
+<section class="step" id="step5">
+<h2><span class="step-num">Step 5</span> Architecture</h2>
+<canvas id="archCanvas" width="900" height="300"></canvas>
+<button class="reveal-btn" onclick="revealStep('step5')">Reveal Answer</button>
+<div class="reveal" id="step5-reveal">
+<strong>Online path (serving):</strong> User types → API Gateway → Autocomplete Service (in-memory trie) → return cached top-K for the prefix. Each keystroke triggers a new request. Debounce on client (50-100ms).<br><br>
+<strong>Offline path (ranking):</strong> Search logs → Kafka → Aggregation Service (MapReduce weekly) → Trie Builder → deploy new trie to serving nodes via blue/green swap.<br><br>
+<strong>Sharding:</strong> Shard trie by first 2 characters across nodes. "aa"-"az" on shard 0, "ba"-"bz" on shard 1, etc. Uneven distribution handled by splitting hot shards.
+</div>
+</section>
+
+<!-- STEP 6: Deep Dives -->
+<section class="step" id="step6">
+<h2><span class="step-num">Step 6</span> Deep Dives</h2>
+
+<div class="collapsible" onclick="toggleCollapse(this)">
+<div class="collapsible-header">Trie Data Structure: Prefix Tree with Top-K <span class="collapsible-arrow">▶</span></div>
+<div class="collapsible-body">
+<p>A trie (prefix tree) stores strings character by character. Each path from root to a node represents a prefix.</p>
+<canvas id="trieCanvas" width="400" height="220" style="margin:12px 0;max-width:400px"></canvas>
+<p><strong>Top-K caching:</strong> At each node, store the K most popular completions reachable from that node. When a user types "hel", we traverse to the "h"→"e"→"l" node and immediately return its cached top-5. No subtree traversal needed.</p>
+<p style="margin-top:8px"><strong>Space optimization:</strong> Compress paths with single children (patricia trie). "h-e-l-l-o" becomes a single "hello" edge. Reduces memory by ~50%.</p>
+</div>
+</div>
+
+<div class="collapsible" onclick="toggleCollapse(this)">
+<div class="collapsible-header">Ranking Pipeline: Logs → Aggregate → Rebuild <span class="collapsible-arrow">▶</span></div>
+<div class="collapsible-body">
+<p><strong>Collection:</strong> Every completed search is logged to Kafka (fire-and-forget). ~100M events/day.</p>
+<p style="margin-top:8px"><strong>Aggregation:</strong> Weekly MapReduce job reads all logs. Map: emit (term, 1). Reduce: sum counts. Apply time decay — recent searches weighted higher. Filter inappropriate terms against a blocklist.</p>
+<p style="margin-top:8px"><strong>Trie Build:</strong> Sort terms by frequency. Build trie, computing top-K at each node bottom-up. Serialize to a compact binary format. Upload to S3.</p>
+<p style="margin-top:8px"><strong>Deployment:</strong> Blue/green deployment. New trie loaded into memory on standby nodes. Traffic switched atomically. Old version kept for instant rollback.</p>
+</div>
+</div>
+
+<div class="collapsible" onclick="toggleCollapse(this)">
+<div class="collapsible-header">Distributed Trie: Sharding by Prefix <span class="collapsible-arrow">▶</span></div>
+<div class="collapsible-body">
+<p><strong>Sharding strategy:</strong> Partition by first 2 characters of the prefix. 26×26 = 676 possible shards. Each shard holds a subtrie for its prefix range.</p>
+<p style="margin-top:8px"><strong>Hot shard handling:</strong> Some prefixes are much more popular ("th", "wh", "ho"). Split hot shards further by 3rd character. Use a routing table that maps prefix ranges to shard IDs.</p>
+<p style="margin-top:8px"><strong>Replication:</strong> Each shard replicated to 2-3 nodes. Reads can go to any replica. Since tries are read-only (rebuilt offline), there are no consistency issues between replicas.</p>
+<p style="margin-top:8px"><strong>Scaling:</strong> Each node holds ~500MB / 26 shards ≈ 20MB per shard. Even modest servers can hold many shards. Scale by adding nodes and redistributing shards.</p>
+</div>
+</div>
+</section>
+
+<!-- STEP 7: Trade-offs -->
+<section class="step" id="step7">
+<h2><span class="step-num">Step 7</span> Trade-offs</h2>
+<div class="tradeoff-grid">
+<div class="tradeoff-card">
+<h4>Trie (Custom)</h4>
+<p>Purpose-built for prefix matching. O(prefix_len) lookup. Top-K cached per node. Memory-efficient with compression. Requires custom build pipeline.</p>
+</div>
+<div class="tradeoff-card">
+<h4>ElasticSearch Prefix</h4>
+<p>Off-the-shelf solution. Supports fuzzy matching, typo correction. Higher latency (~10-50ms vs ~1ms). Easier to operate but less optimized for this exact use case.</p>
+</div>
+<div class="tradeoff-card">
+<h4>Real-Time Ranking</h4>
+<p>Rankings reflect searches from minutes ago. Complex: stream processing, incremental trie updates. Risk of gaming/spam affecting suggestions instantly.</p>
+</div>
+<div class="tradeoff-card">
+<h4>Batch Ranking</h4>
+<p>Weekly rebuild. Simple, predictable, debuggable. Rankings lag by up to a week. Easier to filter inappropriate content before deployment. Industry standard approach.</p>
+</div>
+<div class="tradeoff-card">
+<h4>In-Memory Trie</h4>
+<p>Sub-millisecond lookups. Limited by RAM. Must fit entire trie in memory. Perfect for autocomplete where dataset is bounded (~500MB).</p>
+</div>
+<div class="tradeoff-card">
+<h4>Redis-Backed</h4>
+<p>Larger capacity via Redis Cluster. Adds network hop (~1-2ms). Sorted sets with ZRANGEBYLEX for prefix matching. Simpler deployment, slightly higher latency.</p>
+</div>
+</div>
+</section>
+
+<!-- STEP 8: Interview Tips -->
+<section class="step" id="step8">
+<h2><span class="step-num">Step 8</span> Interview Tips</h2>
+<div class="tip-cards">
+<div class="tip-card"><strong>Draw the trie structure.</strong> Visually show how "hello", "help", and "helmet" share the "hel" prefix. Label a node with its cached top-K list. This immediately demonstrates you understand the core data structure.</div>
+<div class="tip-card"><strong>Explain top-K caching per node.</strong> This is the key optimization. Without it, every query requires traversing the entire subtree — too slow. With it, lookups are O(prefix length).</div>
+<div class="tip-card"><strong>Separate online serving from offline ranking.</strong> The serving path is read-only and must be fast. The ranking pipeline is write-heavy and can be batch. These have fundamentally different requirements.</div>
+<div class="tip-card"><strong>Mention content filtering.</strong> Autocomplete suggestions are visible to everyone. You must filter inappropriate, offensive, or dangerous content. This is a filtering step in the offline trie build pipeline.</div>
+</div>
+</section>
+
+</div>
+
+<script>
+function revealStep(id) {
+  const el = document.getElementById(id + '-reveal');
+  el.classList.toggle('show');
+  if (id === 'step1') markCorrectAnswers(document.getElementById(id));
+}
+function markCorrectAnswers(section) {
+  section.querySelectorAll('input[type=checkbox]').forEach(cb => {
+    const lbl = cb.parentElement;
+    if (cb.dataset.correct === 'true' && !lbl.querySelector('.correct-mark')) {
+      const m = document.createElement('span');
+      m.className = 'correct-mark';
+      m.textContent = ' ✓';
+      lbl.appendChild(m);
+    }
+  });
+  section.querySelectorAll('input[type=radio]').forEach(r => {
+    const lbl = r.parentElement;
+    if (r.dataset.correct === 'true' && !lbl.querySelector('.correct-mark')) {
+      const m = document.createElement('span');
+      m.className = 'correct-mark';
+      m.textContent = ' ✓';
+      lbl.appendChild(m);
+    }
+  });
+}
+
+function calcCapacity() {
+  const dau = parseFloat(document.getElementById('cap-dau').value) || 0;
+  const spd = parseFloat(document.getElementById('cap-spd').value) || 0;
+  const chars = parseFloat(document.getElementById('cap-chars').value) || 0;
+  const terms = parseFloat(document.getElementById('cap-terms').value) || 0;
+  const searches = dau * 1e6 * spd;
+  const acQueries = searches * chars;
+  const qps = Math.round(acQueries / 86400);
+  const trieMB = terms * 500;
+  document.getElementById('cap-result').innerHTML =
+    `<div class="calc-row"><span class="label">Total Searches/Day</span><span class="value">${(searches/1e6).toFixed(0)}M</span></div>` +
+    `<div class="calc-row"><span class="label">Autocomplete Queries/Day</span><span class="value">${(acQueries/1e6).toFixed(0)}M</span></div>` +
+    `<div class="calc-row"><span class="label">Autocomplete QPS</span><span class="value">${qps.toLocaleString()}</span></div>` +
+    `<div class="calc-row"><span class="label">Unique Terms</span><span class="value">${terms}M</span></div>` +
+    `<div class="calc-row"><span class="label">Estimated Trie Size</span><span class="value">~${trieMB}MB</span></div>`;
+}
+calcCapacity();
+
+function toggleDM(type) {
+  document.querySelectorAll('#step4 .toggle-opt').forEach(o => o.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('dm-trie').style.display = type === 'trie' ? 'block' : 'none';
+  document.getElementById('dm-log').style.display = type === 'log' ? 'block' : 'none';
+}
+
+function toggleCollapse(el) {
+  if (el.classList.contains('collapsible')) el.classList.toggle('open');
+}
+
+// Architecture canvas
+(function() {
+  const c = document.getElementById('archCanvas');
+  const ctx = c.getContext('2d');
+  const DPR = window.devicePixelRatio || 1;
+  let W, H, frame = 0;
+  function resize() {
+    W = c.parentElement.clientWidth - 56;
+    H = 300;
+    c.width = W * DPR; c.height = H * DPR;
+    c.style.width = W + 'px'; c.style.height = H + 'px';
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  }
+  function drawBox(x, y, w, h, label, color) {
+    ctx.fillStyle = color + '22';
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.roundRect(x, y, w, h, 6); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#e6edf3';
+    ctx.font = 'bold 10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(label, x + w / 2, y + h / 2);
+  }
+  function drawArrow(x1, y1, x2, y2, color) {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+    const a = Math.atan2(y2 - y1, x2 - x1);
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(x2, y2);
+    ctx.lineTo(x2 - 7 * Math.cos(a - 0.4), y2 - 7 * Math.sin(a - 0.4));
+    ctx.lineTo(x2 - 7 * Math.cos(a + 0.4), y2 - 7 * Math.sin(a + 0.4));
+    ctx.fill();
+  }
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    frame++;
+    // Online path (top)
+    ctx.fillStyle = '#8b949e';
+    ctx.font = 'bold 10px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('ONLINE (Serving)', 20, 20);
+    drawBox(20, 35, 70, 35, 'User', '#58a6ff');
+    drawBox(120, 35, 90, 35, 'API Gateway', '#8b949e');
+    drawBox(240, 35, 110, 35, 'Autocomplete', '#3fb950');
+    drawBox(380, 35, 90, 35, 'In-Memory', '#f0883e');
+    ctx.fillStyle = '#8b949e';
+    ctx.font = '9px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Trie', 425, 82);
+    drawArrow(90, 52, 120, 52, '#58a6ff');
+    drawArrow(210, 52, 240, 52, '#8b949e');
+    drawArrow(350, 52, 380, 52, '#3fb950');
+    // Animated query dot
+    const dotPhase = (frame % 90) / 90;
+    if (dotPhase < 0.5) {
+      const t = dotPhase / 0.5;
+      const dx = 90 + t * 290;
+      ctx.fillStyle = '#3fb950';
+      ctx.beginPath(); ctx.arc(dx, 52, 3, 0, Math.PI * 2); ctx.fill();
+    } else {
+      const t = (dotPhase - 0.5) / 0.5;
+      const dx = 380 - t * 290;
+      ctx.fillStyle = '#f0883e';
+      ctx.beginPath(); ctx.arc(dx, 52, 3, 0, Math.PI * 2); ctx.fill();
+    }
+    // Offline path (bottom)
+    ctx.fillStyle = '#8b949e';
+    ctx.font = 'bold 10px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('OFFLINE (Ranking Pipeline)', 20, 130);
+    drawBox(20, 145, 80, 35, 'Search Logs', '#bc8cff');
+    drawBox(130, 145, 60, 35, 'Kafka', '#f0883e');
+    drawBox(220, 145, 90, 35, 'Aggregation', '#58a6ff');
+    drawBox(340, 145, 80, 35, 'Trie Builder', '#3fb950');
+    drawBox(380, 195, 90, 35, 'Deploy to', '#3fb950');
+    ctx.fillStyle = '#8b949e';
+    ctx.font = '9px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Serving Nodes', 425, 242);
+    drawArrow(100, 162, 130, 162, '#bc8cff');
+    drawArrow(190, 162, 220, 162, '#f0883e');
+    drawArrow(310, 162, 340, 162, '#58a6ff');
+    drawArrow(420, 180, 425, 195, '#3fb950');
+    // Connect deploy to serving
+    ctx.setLineDash([3, 3]);
+    ctx.strokeStyle = '#3fb95060';
+    ctx.beginPath(); ctx.moveTo(425, 82); ctx.lineTo(425, 145); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#3fb950';
+    ctx.font = '8px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('blue/green swap', 480, 120);
+    // Sharding note
+    ctx.fillStyle = '#8b949e';
+    ctx.font = 'bold 9px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Sharded by first 2 chars: aa-az → shard 0, ba-bz → shard 1, ...', W / 2, H - 10);
+    requestAnimationFrame(draw);
+  }
+  resize();
+  window.addEventListener('resize', resize);
+  draw();
+})();
+
+// Trie mini canvas
+(function() {
+  const c = document.getElementById('trieCanvas');
+  if (!c) return;
+  const ctx = c.getContext('2d');
+  const DPR = window.devicePixelRatio || 1;
+  c.width = 400 * DPR; c.height = 220 * DPR;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  let frame = 0;
+  const nodes = [
+    {x:200,y:20,label:'root',children:[1,2]},
+    {x:120,y:70,label:'h',children:[3]},
+    {x:280,y:70,label:'w',children:[]},
+    {x:120,y:120,label:'e',children:[4,5]},
+    {x:60,y:170,label:'l',children:[6,7]},
+    {x:180,y:170,label:'r',children:[]},
+    {x:30,y:210,label:'l→hello',children:[]},
+    {x:90,y:210,label:'p→help',children:[]},
+  ];
+  function draw() {
+    ctx.clearRect(0, 0, 400, 220);
+    frame++;
+    // Draw edges
+    nodes.forEach(n => {
+      n.children.forEach(ci => {
+        const child = nodes[ci];
+        ctx.strokeStyle = '#30363d';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(n.x, n.y + 10); ctx.lineTo(child.x, child.y - 10); ctx.stroke();
+      });
+    });
+    // Draw nodes
+    const highlight = Math.floor((frame / 40) % 5);
+    const highlightPath = [0, 1, 3, 4, 6]; // root → h → e → l → hello
+    nodes.forEach((n, i) => {
+      const isHighlighted = highlightPath.indexOf(i) !== -1 && highlightPath.indexOf(i) <= highlight;
+      ctx.fillStyle = isHighlighted ? '#3fb950' : '#30363d';
+      ctx.beginPath(); ctx.arc(n.x, n.y, 10, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#e6edf3';
+      ctx.font = 'bold 9px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(n.label, n.x, n.y + 3);
+    });
+    // Top-K annotation
+    ctx.fillStyle = '#f0883e';
+    ctx.font = '8px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('topK: [hello:98K, help:45K]', 140, 125);
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+</script>
+<footer style="text-align:center;padding:1rem;border-top:1px solid #ccc;margin-top:2rem;color:#666;font-size:0.8rem;">
+    © <span id="copyright-year"></span> Clark Ngo
+  </footer>
+  <script>document.getElementById('copyright-year').textContent = new Date().getFullYear();</script>
+</body>
+</html>

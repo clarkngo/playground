@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Google Spanner: Global Consistency with TrueTime</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0d1117;color:#e6edf3;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;line-height:1.7}
+a{color:#58a6ff;text-decoration:none}a:hover{text-decoration:underline}
+nav{background:#161b22;border-bottom:1px solid #30363d;padding:16px 24px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100}
+.brand{font-size:1.2rem;font-weight:700}.back{color:#8b949e;font-size:.9rem}
+.container{max-width:900px;margin:0 auto;padding:24px 20px}
+.hero{background:linear-gradient(135deg,#1a1e24 0%,#1b2d1b 100%);border:1px solid #30363d;border-radius:12px;padding:48px 36px;margin-bottom:36px;text-align:center}
+.hero h1{font-size:2.2rem;margin-bottom:8px}.hero .tagline{color:#f0883e;font-size:1.1rem;margin-bottom:6px}.hero .meta{color:#8b949e;font-size:.9rem}
+.timeline-wrapper{overflow-x:auto;margin-bottom:36px;padding:12px 0}
+.timeline{display:flex;align-items:flex-start;min-width:700px;position:relative;padding:20px 10px}
+.timeline::before{content:'';position:absolute;top:30px;left:10px;right:10px;height:3px;background:#30363d;border-radius:2px}
+.timeline-item{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;z-index:1}
+.timeline-dot{width:16px;height:16px;background:#f0883e;border-radius:50%;margin-bottom:12px;border:3px solid #0d1117;box-shadow:0 0 0 2px #f0883e}
+.timeline-date{font-size:.75rem;color:#f0883e;font-weight:600;margin-bottom:4px}
+.timeline-label{font-size:.8rem;color:#8b949e;text-align:center;max-width:120px}
+section.story{margin-bottom:32px}
+section.story h2{font-size:1.5rem;color:#e6edf3;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #30363d}
+section.story p{color:#c9d1d9;margin-bottom:14px;font-size:.97rem}
+.canvas-section{margin-bottom:36px}
+.canvas-section h2{font-size:1.5rem;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #30363d}
+.toggle-btn{display:inline-block;padding:8px 20px;background:#f0883e;color:#0d1117;border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:.9rem;margin-bottom:12px;transition:background .2s;margin-right:8px}
+.toggle-btn:hover{background:#d4772e}.toggle-btn.active{background:#58a6ff}
+canvas{display:block;width:100%;border:1px solid #30363d;border-radius:8px;background:#0d1117}
+.decision-section{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:28px;margin-bottom:36px}
+.decision-section h2{font-size:1.4rem;margin-bottom:8px}.decision-section .prompt{color:#8b949e;margin-bottom:18px;font-size:.95rem}
+.choices{display:flex;flex-direction:column;gap:10px}
+.choice-btn{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:14px 18px;color:#e6edf3;cursor:pointer;text-align:left;font-size:.93rem;transition:border-color .2s}
+.choice-btn:hover{border-color:#58a6ff}.choice-btn.correct{border-color:#3fb950;background:#0d1b0e}.choice-btn.wrong{border-color:#f85149;background:#1b0d0d}
+.reveal{margin-top:16px;padding:16px;background:#0d1117;border:1px solid #3fb950;border-radius:8px;display:none;font-size:.93rem;color:#c9d1d9}
+.metrics-panel{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:36px}
+.metric{background:#161b22;border:1px solid #30363d;border-radius:10px;padding:20px;text-align:center}
+.metric .value{font-size:1.7rem;font-weight:700;color:#f0883e}.metric .label{font-size:.8rem;color:#8b949e;margin-top:4px}
+.lessons{margin-bottom:36px}
+.lessons h2{font-size:1.5rem;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #30363d}
+.lesson-card{background:#161b22;border-left:3px solid #f0883e;border-radius:0 8px 8px 0;padding:16px 20px;margin-bottom:12px;font-size:.93rem;color:#c9d1d9}
+.takeaways{margin-bottom:48px}
+.takeaways h2{font-size:1.5rem;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #30363d}
+.takeaway{display:flex;align-items:baseline;gap:10px;margin-bottom:10px;font-size:.95rem;color:#c9d1d9}
+.takeaway::before{content:'→';color:#f0883e;font-weight:700;flex-shrink:0}
+</style>
+    <meta name="author" content="Clark Ngo">
+    <meta name="copyright" content="Clark Ngo">
+  </head>
+<body>
+<nav><span class="brand">📖 Case Studies</span><a href="index.html" class="back">← All Case Studies</a></nav>
+<div class="container">
+
+<div class="hero">
+<h1>Google Spanner: Global Consistency with TrueTime</h1>
+<div class="tagline">How atomic clocks made the CAP theorem negotiable</div>
+<div class="meta">2007 — Present | Distributed Databases &amp; Time</div>
+</div>
+
+<div class="timeline-wrapper">
+<div class="timeline">
+<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-date">2007</div><div class="timeline-label">Development begins at Google</div></div>
+<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-date">2009</div><div class="timeline-label">Internal production use</div></div>
+<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-date">2012</div><div class="timeline-label">Spanner paper published at OSDI</div></div>
+<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-date">2013</div><div class="timeline-label">F1 (AdWords) migrated to Spanner</div></div>
+<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-date">Feb 2017</div><div class="timeline-label">Cloud Spanner GA</div></div>
+<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-date">Present</div><div class="timeline-label">Powers Google Ads, Gmail, Play</div></div>
+</div>
+</div>
+
+<section class="story">
+<h2>The Problem: Global Data, Strong Consistency</h2>
+<p>By the mid-2000s, Google had a problem that no existing database could solve. Services like Google Ads, Gmail, and Google Play needed to operate across data centers on multiple continents. Users in Tokyo, London, and New York all needed to read and write the same data. The data had to be consistent — if a user in Tokyo updated their ad campaign, a user in New York querying the same data needed to see the update, not a stale version.</p>
+<p>The CAP theorem, as commonly understood, said this was impossible. In a distributed system, you could have Consistency and Partition tolerance, or Availability and Partition tolerance, but not all three. Most distributed databases of the era chose availability over consistency (like Dynamo and Cassandra), accepting that reads might return stale data. But for financial transactions, ad billing, and user account management, eventual consistency was not acceptable. Google needed strong consistency across the globe.</p>
+</section>
+
+<section class="story">
+<h2>The Insight: What If Clocks Were Precise?</h2>
+<p>The fundamental challenge with distributed consistency is ordering. If two transactions happen at "the same time" on different continents, which one came first? With ordinary clocks (synchronized via NTP), the uncertainty is typically 100-250 milliseconds — far too large to establish a reliable ordering. Two transactions 50 milliseconds apart might be ordered incorrectly because the clocks themselves are uncertain by more than that.</p>
+<p>Google engineers asked a radical question: what if we could make the clock uncertainty small enough to be useful? Not zero — true simultaneity across continents is physically impossible — but small enough that we could simply wait out the uncertainty. If the clock uncertainty was only 7 milliseconds, a transaction could wait 7 milliseconds before committing, guaranteeing that no other transaction anywhere in the world could have a conflicting timestamp.</p>
+</section>
+
+<section class="story">
+<h2>TrueTime: Atomic Clocks Meet GPS</h2>
+<p>To achieve this, Google built TrueTime — a time API unlike any other. Every Google data center was equipped with a mix of atomic clocks (cesium and rubidium oscillators) and GPS receivers. The atomic clocks provided stable local timekeeping that drifted slowly. The GPS receivers provided absolute time from satellites but could be momentarily disrupted. By combining both sources, TrueTime achieved a clock uncertainty of typically 1-7 milliseconds.</p>
+<p>Crucially, TrueTime did not pretend to know the exact time. Instead, it returned an interval: "the current time is somewhere between [earliest, latest]." This honest representation of uncertainty was the key insight. Rather than hiding clock error (as NTP does), TrueTime exposed it, allowing Spanner to make mathematically sound decisions based on it.</p>
+</section>
+
+<section class="story">
+<h2>Commit-Wait: Turning Time Into Consistency</h2>
+<p>Spanner uses a protocol called commit-wait. When a transaction is ready to commit, Spanner assigns it a timestamp and then waits until it is certain that the assigned timestamp is in the past for every server in the world. Because TrueTime bounds the uncertainty to a few milliseconds, the wait is correspondingly short — typically under 10 milliseconds.</p>
+<p>This waiting period is the cost of global consistency. Every write transaction pays a few milliseconds of latency to guarantee that its timestamp is globally meaningful. Reads, however, can be served from any replica without coordination, because the timestamp ordering is guaranteed to be correct. For read-heavy workloads (which most workloads are), this is an excellent trade-off: writes pay a small latency tax, and reads are fast and consistent.</p>
+</section>
+
+<section class="story">
+<h2>Paxos and Replication</h2>
+<p>Spanner divides data into splits (similar to shards) and replicates each split across multiple data centers using the Paxos consensus protocol. Each split has a Paxos group with a leader that coordinates writes. The leader can be in any data center, and Spanner automatically moves leaders closer to where writes are happening to minimize latency.</p>
+<p>This combination of Paxos for replication and TrueTime for ordering gives Spanner a property called "external consistency" — the strongest consistency guarantee possible for a distributed database. External consistency means that if transaction T1 commits before transaction T2 starts (in real time, anywhere in the world), then T1 is guaranteed to have an earlier timestamp than T2. This is stronger than linearizability and means that Spanner behaves as if it were a single machine, despite spanning the globe.</p>
+</section>
+
+<section class="story">
+<h2>Impact and Legacy</h2>
+<p>Spanner challenged the industry's understanding of the CAP theorem. While CAP is mathematically correct, Spanner showed that the practical constraints are more nuanced than the theorem implies. By investing in hardware (atomic clocks) to reduce clock uncertainty, Google effectively minimized the window during which partitions could cause consistency violations, making the theoretical impossibility practically irrelevant for their workloads.</p>
+<p>Cloud Spanner, launched in 2017, made this technology available to anyone willing to pay for it. It inspired a generation of "NewSQL" databases (CockroachDB, YugabyteDB, TiDB) that attempt to provide similar guarantees without requiring atomic clocks, using alternative techniques like hybrid logical clocks.</p>
+</section>
+
+<div class="canvas-section">
+<h2>Architecture: TrueTime and Commit-Wait</h2>
+<button class="toggle-btn active" id="btnTruetime" onclick="setView('truetime')">TrueTime</button>
+<button class="toggle-btn" id="btnCommit" onclick="setView('commit')">Commit-Wait Protocol</button>
+<button class="toggle-btn" id="btnGlobal" onclick="setView('global')">Global Replication</button>
+<canvas id="archCanvas" width="900" height="340"></canvas>
+</div>
+
+<div class="decision-section">
+<h2>What Would You Do?</h2>
+<p class="prompt">You need a globally distributed database. Users demand strong consistency — no stale reads, no conflicting writes. The CAP theorem says you cannot have consistency, availability, and partition tolerance simultaneously. How does Spanner work around this?</p>
+<div class="choices">
+<div class="choice-btn" onclick="choose(this,false)">A) Spanner sacrifices availability. During network partitions, it becomes unavailable rather than serving inconsistent data.</div>
+<div class="choice-btn" onclick="choose(this,true)">B) Spanner uses atomic clocks to make clock uncertainty so small (under 7ms) that it can wait out the uncertainty window, providing strong consistency with minimal latency cost.</div>
+<div class="choice-btn" onclick="choose(this,false)">C) Spanner uses eventual consistency internally but presents a strongly consistent interface to clients by buffering and reordering reads.</div>
+</div>
+<div class="reveal" id="reveal"><strong>B is correct.</strong> Spanner's key insight is that the CAP theorem's practical impact depends on clock precision. By investing in atomic clocks and GPS receivers (TrueTime), Google reduced clock uncertainty to under 7ms. The commit-wait protocol then waits for this uncertainty window to pass before confirming a commit, guaranteeing global timestamp ordering. Option A is partially true — Spanner does choose consistency over availability during true network partitions — but the real innovation is that TrueTime makes the availability cost negligible in practice. Option C is incorrect; Spanner provides true strong consistency, not a facade over eventual consistency.</div>
+</div>
+
+<h2 style="font-size:1.5rem;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #30363d">Key Metrics</h2>
+<div class="metrics-panel">
+<div class="metric"><div class="value">&lt;7ms</div><div class="label">TrueTime Uncertainty</div></div>
+<div class="metric"><div class="value">5</div><div class="label">9s of Availability</div></div>
+<div class="metric"><div class="value">Billions</div><div class="label">Daily Transactions</div></div>
+<div class="metric"><div class="value">Global</div><div class="label">Replication Span</div></div>
+<div class="metric"><div class="value">2012</div><div class="label">OSDI Paper</div></div>
+</div>
+
+<div class="lessons">
+<h2>Lessons Extracted</h2>
+<div class="lesson-card"><strong>Hardware can solve software problems.</strong> Rather than accepting NTP's limitations and designing around them in software, Google invested in atomic clocks and GPS to make the underlying time infrastructure precise enough to enable new algorithms. Sometimes the right solution is at a different layer of the stack.</div>
+<div class="lesson-card"><strong>Expose uncertainty, never hide it.</strong> TrueTime returns an interval, not a point. This honest representation of uncertainty enables mathematically sound reasoning. APIs that hide uncertainty force callers to make assumptions that may be wrong.</div>
+<div class="lesson-card"><strong>CAP has nuance.</strong> The CAP theorem is mathematically correct but its practical implications depend on specific parameters. By reducing clock uncertainty, Spanner makes the consistency-availability trade-off nearly imperceptible for most workloads.</div>
+<div class="lesson-card"><strong>Read-heavy workloads benefit most.</strong> Spanner's commit-wait adds latency to writes, but reads are fast and strongly consistent. Since most workloads are overwhelmingly read-heavy, this is an excellent trade-off.</div>
+<div class="lesson-card"><strong>Published research drives the industry.</strong> The Spanner paper inspired CockroachDB, YugabyteDB, TiDB, and other NewSQL databases that aim to democratize globally consistent storage.</div>
+</div>
+
+<div class="takeaways">
+<h2>Key Takeaways</h2>
+<div class="takeaway">Global strong consistency is achievable if you invest in precise time infrastructure.</div>
+<div class="takeaway">TrueTime's key insight: represent time as an interval with bounded uncertainty, not an exact value.</div>
+<div class="takeaway">Commit-wait trades a few milliseconds of write latency for globally meaningful timestamps.</div>
+<div class="takeaway">The CAP theorem is true but its practical impact depends on engineering parameters like clock precision.</div>
+</div>
+
+</div>
+
+<script>
+const canvas = document.getElementById('archCanvas');
+const ctx = canvas.getContext('2d');
+let currentView = 'truetime';
+let tick = 0;
+
+function setView(v) {
+  currentView = v;
+  document.getElementById('btnTruetime').className = 'toggle-btn' + (v === 'truetime' ? ' active' : '');
+  document.getElementById('btnCommit').className = 'toggle-btn' + (v === 'commit' ? ' active' : '');
+  document.getElementById('btnGlobal').className = 'toggle-btn' + (v === 'global' ? ' active' : '');
+}
+
+function drawBox(x, y, w, h, label, color) {
+  ctx.fillStyle = color;
+  ctx.strokeStyle = '#30363d';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.roundRect(x, y, w, h, 6);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = '#e6edf3';
+  ctx.font = 'bold 11px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  var lines = label.split('\n');
+  lines.forEach(function(line, i) {
+    ctx.fillText(line, x + w / 2, y + h / 2 + (i - (lines.length - 1) / 2) * 14);
+  });
+}
+
+function drawArrow(x1, y1, x2, y2, color) {
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.stroke();
+  var a = Math.atan2(y2 - y1, x2 - x1);
+  ctx.beginPath();
+  ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - 8 * Math.cos(a - 0.4), y2 - 8 * Math.sin(a - 0.4));
+  ctx.lineTo(x2 - 8 * Math.cos(a + 0.4), y2 - 8 * Math.sin(a + 0.4));
+  ctx.fill();
+}
+
+function draw() {
+  tick += 0.03;
+  ctx.clearRect(0, 0, 900, 340);
+
+  if (currentView === 'truetime') {
+    ctx.fillStyle = '#8b949e';
+    ctx.font = '12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('TrueTime: Atomic Clocks + GPS = Bounded Uncertainty', 450, 20);
+
+    // Atomic clock
+    drawBox(60, 60, 140, 50, 'Atomic Clock\n(Cesium)', '#2d1b3d');
+    ctx.fillStyle = '#bc8cff';
+    ctx.font = '9px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Stable, drifts slowly', 130, 125);
+
+    // GPS receiver
+    drawBox(60, 160, 140, 50, 'GPS Receiver', '#1b3a4b');
+    ctx.fillStyle = '#58a6ff';
+    ctx.font = '9px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Absolute time, can glitch', 130, 225);
+
+    // TrueTime master
+    drawArrow(200, 85, 320, 130, '#bc8cff');
+    drawArrow(200, 185, 320, 150, '#58a6ff');
+    drawBox(320, 110, 160, 60, 'TrueTime Master', '#3d2b1b');
+
+    // API output - animated interval
+    var uncertainty = 3.5 + 3.5 * Math.sin(tick);
+    drawArrow(480, 140, 580, 140, '#f0883e');
+
+    ctx.fillStyle = '#161b22';
+    ctx.fillRect(580, 90, 280, 100);
+    ctx.strokeStyle = '#f0883e';
+    ctx.strokeRect(580, 90, 280, 100);
+
+    ctx.fillStyle = '#f0883e';
+    ctx.font = 'bold 12px monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText('TT.now() returns:', 595, 115);
+
+    ctx.fillStyle = '#e6edf3';
+    ctx.font = '11px monospace';
+    ctx.fillText('[earliest, latest]', 595, 138);
+
+    var uncStr = uncertainty.toFixed(1);
+    ctx.fillStyle = '#3fb950';
+    ctx.fillText('uncertainty: ' + uncStr + 'ms', 595, 160);
+
+    // Visual bar
+    var barX = 610;
+    var barW = 220;
+    var mid = barX + barW / 2;
+    var spread = (uncertainty / 7) * (barW / 2);
+    ctx.fillStyle = '#f0883e';
+    ctx.globalAlpha = 0.3;
+    ctx.fillRect(mid - spread, 170, spread * 2, 10);
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = '#f0883e';
+    ctx.beginPath();
+    ctx.arc(mid, 175, 3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#8b949e';
+    ctx.font = '9px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('earliest', mid - spread, 192);
+    ctx.fillText('latest', mid + spread, 192);
+    ctx.fillText('true time is in here', mid, 192);
+
+    // Bottom note
+    ctx.fillStyle = '#3fb950';
+    ctx.font = 'bold 11px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Key: uncertainty is bounded and known, typically 1-7ms', 450, 310);
+
+  } else if (currentView === 'commit') {
+    ctx.fillStyle = '#8b949e';
+    ctx.font = '12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Commit-Wait Protocol', 450, 20);
+
+    // Timeline
+    var steps = [
+      {x: 80, label: '1. Transaction\nexecutes', color: '#58a6ff'},
+      {x: 260, label: '2. Paxos\nconsensus', color: '#bc8cff'},
+      {x: 440, label: '3. Assign\ntimestamp s', color: '#f0883e'},
+      {x: 620, label: '4. WAIT until\nTT.after(s) = true', color: '#f85149'},
+      {x: 780, label: '5. Commit\nconfirmed', color: '#3fb950'}
+    ];
+
+    // Arrow line
+    ctx.strokeStyle = '#30363d';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(80, 100);
+    ctx.lineTo(830, 100);
+    ctx.stroke();
+
+    steps.forEach(function(s) {
+      ctx.fillStyle = s.color;
+      ctx.beginPath();
+      ctx.arc(s.x, 100, 10, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#e6edf3';
+      ctx.font = 'bold 10px sans-serif';
+      ctx.textAlign = 'center';
+      var lines = s.label.split('\n');
+      lines.forEach(function(line, i) {
+        ctx.fillText(line, s.x, 130 + i * 14);
+      });
+    });
+
+    // Animated wait period
+    var waitPhase = (tick * 0.5) % 1;
+    var waitStart = 440;
+    var waitEnd = 620;
+    var waitPos = waitStart + (waitEnd - waitStart) * Math.min(waitPhase, 1);
+    ctx.fillStyle = '#f85149';
+    ctx.globalAlpha = 0.3;
+    ctx.fillRect(waitStart, 85, waitEnd - waitStart, 30);
+    ctx.globalAlpha = 1;
+
+    // Moving dot
+    ctx.fillStyle = '#f0883e';
+    ctx.beginPath();
+    ctx.arc(waitPos, 100, 5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Wait explanation
+    drawBox(200, 200, 500, 80, '', '#161b22');
+    ctx.fillStyle = '#e6edf3';
+    ctx.font = '11px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('The WAIT step is the key innovation. After assigning timestamp s,', 450, 220);
+    ctx.fillText('Spanner waits until TrueTime guarantees that s is in the past everywhere.', 450, 238);
+    ctx.fillStyle = '#f0883e';
+    ctx.font = 'bold 11px sans-serif';
+    ctx.fillText('Wait duration = TrueTime uncertainty (typically 1-7ms)', 450, 260);
+
+    ctx.fillStyle = '#3fb950';
+    ctx.font = 'bold 11px sans-serif';
+    ctx.fillText('This guarantees globally meaningful timestamp ordering', 450, 310);
+
+  } else {
+    ctx.fillStyle = '#8b949e';
+    ctx.font = '12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Global Replication with Paxos Groups', 450, 20);
+
+    // Three regions
+    var regions = [
+      {name: 'US-East', x: 80, y: 60, color: '#1b3a4b'},
+      {name: 'EU-West', x: 350, y: 60, color: '#2d1b3d'},
+      {name: 'Asia-Pacific', x: 620, y: 60, color: '#1b2d1b'}
+    ];
+
+    regions.forEach(function(r) {
+      // Region box
+      ctx.fillStyle = r.color;
+      ctx.strokeStyle = '#30363d';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(r.x, r.y, 200, 200, 8);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#e6edf3';
+      ctx.font = 'bold 12px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(r.name, r.x + 100, r.y + 22);
+
+      // TrueTime master in each region
+      drawBox(r.x + 20, r.y + 35, 70, 28, 'TrueTime', '#3d2b1b');
+
+      // Spanner nodes
+      drawBox(r.x + 20, r.y + 80, 70, 28, 'Spanner 1', '#1b2a3d');
+      drawBox(r.x + 110, r.y + 80, 70, 28, 'Spanner 2', '#1b2a3d');
+      drawBox(r.x + 65, r.y + 125, 70, 28, 'Spanner 3', '#1b2a3d');
+
+      // Atomic clock icon
+      ctx.fillStyle = '#f0883e';
+      ctx.font = '16px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('⏱', r.x + 145, r.y + 52);
+
+      // Paxos label
+      ctx.fillStyle = '#bc8cff';
+      ctx.font = '9px sans-serif';
+      ctx.fillText('Paxos Group', r.x + 100, r.y + 170);
+    });
+
+    // Cross-region replication arrows (animated)
+    var arrowAlpha = 0.4 + 0.3 * Math.sin(tick * 2);
+    ctx.globalAlpha = arrowAlpha;
+    drawArrow(280, 160, 350, 160, '#f0883e');
+    drawArrow(550, 160, 620, 160, '#f0883e');
+    drawArrow(280, 180, 620, 180, '#f0883e');
+    ctx.globalAlpha = 1;
+
+    ctx.fillStyle = '#f0883e';
+    ctx.font = '9px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Paxos replication', 450, 200);
+
+    ctx.fillStyle = '#3fb950';
+    ctx.font = 'bold 11px sans-serif';
+    ctx.fillText('Every region has TrueTime masters + Spanner nodes + Paxos replication', 450, 310);
+  }
+
+  requestAnimationFrame(draw);
+}
+
+draw();
+
+function choose(el, correct) {
+  document.querySelectorAll('.choice-btn').forEach(function(b) { b.style.pointerEvents = 'none'; });
+  el.classList.add(correct ? 'correct' : 'wrong');
+  if (correct) {
+    document.querySelectorAll('.choice-btn').forEach(function(b) { if (b !== el) b.style.opacity = '0.4'; });
+  } else {
+    document.querySelectorAll('.choice-btn').forEach(function(b) {
+      if (b !== el && b.textContent.includes('atomic clocks')) b.classList.add('correct');
+    });
+  }
+  document.getElementById('reveal').style.display = 'block';
+}
+</script>
+<footer style="text-align:center;padding:1rem;border-top:1px solid #ccc;margin-top:2rem;color:#666;font-size:0.8rem;">
+    © <span id="copyright-year"></span> Clark Ngo
+  </footer>
+  <script>document.getElementById('copyright-year').textContent = new Date().getFullYear();</script>
+</body>
+</html>

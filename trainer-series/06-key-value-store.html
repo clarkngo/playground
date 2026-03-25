@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Design a Key-Value Store — System Design Trainer</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0d1117;color:#e6edf3;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;line-height:1.7}
+a{color:#58a6ff;text-decoration:none}a:hover{text-decoration:underline}
+nav{background:#161b22;border-bottom:1px solid #30363d;padding:16px 24px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100}
+.brand{font-size:1.2rem;font-weight:700}.back{color:#8b949e;font-size:.9rem}
+.container{max-width:960px;margin:0 auto;padding:24px 20px}
+.hero{background:linear-gradient(135deg,#1a1e24 0%,#2a1a06 100%);border:1px solid #30363d;border-radius:12px;padding:48px 36px;margin-bottom:36px;text-align:center}
+.hero h1{font-size:2.2rem;margin-bottom:8px}.hero .tagline{color:#f0883e;font-size:1.1rem;margin-bottom:6px}.hero .meta{color:#8b949e;font-size:.9rem}
+section.step{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:28px;margin-bottom:24px}
+section.step h2{font-size:1.4rem;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #30363d;display:flex;align-items:center;gap:10px}
+.step-num{background:#f0883e;color:#0d1117;font-size:.75rem;font-weight:700;padding:2px 10px;border-radius:12px}
+label{display:block;margin-bottom:8px;font-size:.93rem;color:#c9d1d9;cursor:pointer}
+label input{margin-right:8px}
+.radio-group{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.radio-group span{font-weight:600;color:#8b949e;font-size:.85rem;margin-bottom:2px}
+.reveal-btn{display:inline-block;padding:8px 20px;background:#f0883e;color:#0d1117;border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:.9rem;margin-top:12px;transition:background .2s}
+.reveal-btn:hover{background:#d4772e}
+.reveal{margin-top:16px;padding:16px;background:#0d1117;border:1px solid #3fb950;border-radius:8px;display:none;font-size:.93rem;color:#c9d1d9}
+.reveal.show{display:block}
+.correct-mark{color:#3fb950;font-weight:700;margin-left:4px}
+.input-group{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.input-group label{font-size:.85rem;color:#8b949e;margin-bottom:2px}
+.input-group input{width:100%;padding:8px 12px;background:#0d1117;border:1px solid #30363d;border-radius:6px;color:#e6edf3;font-size:.9rem}
+.calc-result{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:16px;margin-top:12px}
+.calc-row{display:flex;justify-content:space-between;padding:4px 0;font-size:.9rem}
+.calc-row .label{color:#8b949e}.calc-row .value{color:#f0883e;font-weight:600}
+pre{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:16px;overflow-x:auto;font-size:.85rem;color:#e6edf3;margin-bottom:12px;line-height:1.6}
+.code-comment{color:#8b949e}
+.toggle-row{display:flex;gap:8px;margin-bottom:16px}
+.toggle-opt{padding:6px 16px;border-radius:6px;border:1px solid #30363d;background:#0d1117;color:#8b949e;cursor:pointer;font-size:.85rem;font-weight:600;transition:all .2s}
+.toggle-opt.active{background:#1f6feb;color:#e6edf3;border-color:#1f6feb}
+.table-wrap{overflow-x:auto;margin-bottom:12px}
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+th{background:#21262d;color:#8b949e;padding:8px 12px;text-align:left;font-weight:600;border-bottom:1px solid #30363d}
+td{padding:8px 12px;border-bottom:1px solid #21262d;color:#c9d1d9}
+canvas{display:block;width:100%;border:1px solid #30363d;border-radius:8px;background:#0d1117;margin-bottom:12px}
+.collapsible{border:1px solid #30363d;border-radius:8px;margin-bottom:10px;overflow:hidden}
+.collapsible-header{padding:14px 18px;background:#21262d;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-weight:600;font-size:.93rem}
+.collapsible-header:hover{background:#282e36}
+.collapsible-body{padding:16px 18px;display:none;font-size:.9rem;color:#c9d1d9;line-height:1.7}
+.collapsible.open .collapsible-body{display:block}
+.collapsible-arrow{transition:transform .2s;color:#8b949e}.collapsible.open .collapsible-arrow{transform:rotate(90deg)}
+.tradeoff-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.tradeoff-card{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:18px}
+.tradeoff-card h4{color:#f0883e;margin-bottom:8px;font-size:.95rem}
+.tradeoff-card p{font-size:.85rem;color:#8b949e;line-height:1.6}
+.tip-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tip-card{background:#0d1117;border-left:3px solid #3fb950;border-radius:0 8px 8px 0;padding:14px 18px;font-size:.9rem;color:#c9d1d9}
+@media(max-width:640px){.input-group,.tradeoff-grid,.tip-cards{grid-template-columns:1fr}}
+</style>
+    <meta name="author" content="Clark Ngo">
+    <meta name="copyright" content="Clark Ngo">
+  </head>
+<body>
+<nav><span class="brand">🎯 Trainer Series</span><a href="index.html" class="back">← All Trainers</a></nav>
+<div class="container">
+
+<div class="hero">
+<h1>Design a Key-Value Store</h1>
+<div class="tagline">DynamoDB / Cassandra / Redis — distributed storage at scale</div>
+<div class="meta">Consistent Hashing · Replication · Conflict Resolution · Gossip Protocol</div>
+</div>
+
+<!-- STEP 1: Requirements -->
+<section class="step" id="step1">
+<h2><span class="step-num">Step 1</span> Requirements</h2>
+<p style="color:#8b949e;margin-bottom:16px">Select the functional requirements you think are essential:</p>
+<label><input type="checkbox" data-correct="true" data-group="func"> put(key, value) — store a key-value pair</label>
+<label><input type="checkbox" data-correct="true" data-group="func"> get(key) — retrieve value by key</label>
+<label><input type="checkbox" data-correct="true" data-group="func"> delete(key) — remove a key-value pair</label>
+<label><input type="checkbox" data-correct="true" data-group="func"> Distributed across multiple nodes</label>
+<label><input type="checkbox" data-correct="true" data-group="func"> Replication for fault tolerance</label>
+<label><input type="checkbox" data-correct="true" data-group="func"> Tunable consistency (strong / eventual)</label>
+<label><input type="checkbox" data-correct="false" data-group="func"> Full SQL query support</label>
+<label><input type="checkbox" data-correct="false" data-group="func"> Built-in machine learning predictions</label>
+
+<p style="color:#8b949e;margin:16px 0 8px">Select the most important non-functional requirement:</p>
+<div class="radio-group">
+<label><input type="radio" name="nfr" value="latency" data-correct="true"> &lt;10ms P99 for reads with high availability</label>
+<label><input type="radio" name="nfr" value="consistency"> Strong consistency with single-node performance</label>
+<label><input type="radio" name="nfr" value="features"> Rich query language with joins</label>
+</div>
+
+<button class="reveal-btn" onclick="revealStep('step1')">Reveal Answer</button>
+<div class="reveal" id="step1-reveal">
+<strong>Functional:</strong> put/get/delete operations, distributed across nodes, replication for fault tolerance, tunable consistency. SQL and ML are not core to a key-value store.<br><br>
+<strong>Non-functional:</strong> &lt;10ms P99 for reads, high availability (prefer AP in CAP), horizontal scaling. The store should prioritize low latency and availability over complex query capabilities.
+</div>
+</section>
+
+<!-- STEP 2: Capacity Estimation -->
+<section class="step" id="step2">
+<h2><span class="step-num">Step 2</span> Capacity Estimation</h2>
+<div class="input-group">
+<div><label>Total Keys</label><input type="number" id="cap-keys" value="1000000000" oninput="calcCapacity()"></div>
+<div><label>Avg Value Size (KB)</label><input type="number" id="cap-valsize" value="1" oninput="calcCapacity()"></div>
+<div><label>Read QPS</label><input type="number" id="cap-rqps" value="100000" oninput="calcCapacity()"></div>
+<div><label>Write QPS</label><input type="number" id="cap-wqps" value="10000" oninput="calcCapacity()"></div>
+<div><label>Replication Factor</label><input type="number" id="cap-rf" value="3" oninput="calcCapacity()"></div>
+</div>
+<div class="calc-result" id="cap-result"></div>
+<button class="reveal-btn" onclick="revealStep('step2')">Reveal Answer</button>
+<div class="reveal" id="step2-reveal">
+<strong>Reference numbers:</strong><br>
+1B keys × 1KB = <strong>1TB</strong> raw storage<br>
+3x replication = <strong>3TB</strong> total storage<br>
+100K reads/sec, 10K writes/sec<br>
+Read bandwidth: 100K × 1KB = <strong>~100 MB/s</strong><br>
+Write bandwidth: 10K × 1KB = <strong>~10 MB/s</strong><br>
+With 10 nodes: ~100GB storage per node, 10K reads/sec per node
+</div>
+</section>
+
+<!-- STEP 3: API Design -->
+<section class="step" id="step3">
+<h2><span class="step-num">Step 3</span> API Design</h2>
+<pre><span class="code-comment">// Core Operations</span>
+PUT  /api/kv/{key}
+     Body: { "value": "...", "ttl": 3600 }
+     → 200 { "key": "user:123", "version": 5 }
+
+GET  /api/kv/{key}
+     → 200 { "key": "user:123", "value": "...", "version": 5 }
+     → 404 { "error": "key_not_found" }
+
+DELETE /api/kv/{key}
+     → 200 { "deleted": true }</pre>
+<button class="reveal-btn" onclick="revealStep('step3')">Reveal Answer</button>
+<div class="reveal" id="step3-reveal">
+<strong>Internal APIs (node-to-node):</strong>
+<pre style="margin-top:8px"><span class="code-comment">// Gossip Protocol</span>
+POST /internal/gossip
+     Body: { "node_id": "n3", "membership": [...], "heartbeat": 42 }
+
+<span class="code-comment">// Anti-entropy Repair</span>
+POST /internal/anti-entropy
+     Body: { "partition": 17, "merkle_root": "abc123" }
+
+<span class="code-comment">// Replica Sync</span>
+POST /internal/replicate
+     Body: { "key": "...", "value": "...", "vector_clock": {...} }</pre>
+Each client request includes a <strong>consistency level</strong> parameter (ONE, QUORUM, ALL) that determines how many replicas must acknowledge before responding.
+</div>
+</section>
+
+<!-- STEP 4: Data Model -->
+<section class="step" id="step4">
+<h2><span class="step-num">Step 4</span> Data Model</h2>
+<div class="toggle-row">
+<div class="toggle-opt active" onclick="toggleDataModel('lsm')">LSM-Tree (NoSQL)</div>
+<div class="toggle-opt" onclick="toggleDataModel('btree')">B-Tree (Traditional)</div>
+</div>
+<div id="dm-lsm">
+<div class="table-wrap"><table>
+<tr><th>Component</th><th>Description</th><th>Detail</th></tr>
+<tr><td>MemTable</td><td>In-memory sorted map</td><td>Red-black tree, ~64MB before flush</td></tr>
+<tr><td>WAL</td><td>Write-ahead log</td><td>Append-only, for crash recovery</td></tr>
+<tr><td>SSTables</td><td>Sorted String Tables on disk</td><td>Immutable, leveled compaction</td></tr>
+<tr><td>Bloom Filter</td><td>Probabilistic key lookup</td><td>Avoids unnecessary disk reads</td></tr>
+<tr><td>Partition Map</td><td>Consistent hash ring</td><td>Key → primary node + 2 replicas</td></tr>
+</table></div>
+</div>
+<div id="dm-btree" style="display:none">
+<div class="table-wrap"><table>
+<tr><th>Component</th><th>Description</th><th>Detail</th></tr>
+<tr><td>B+ Tree Index</td><td>Balanced tree on disk</td><td>O(log n) reads, in-place updates</td></tr>
+<tr><td>Buffer Pool</td><td>In-memory page cache</td><td>Caches frequently accessed pages</td></tr>
+<tr><td>WAL</td><td>Write-ahead log</td><td>ARIES recovery protocol</td></tr>
+<tr><td>Page Files</td><td>Fixed-size disk pages</td><td>8KB or 16KB pages</td></tr>
+</table></div>
+</div>
+<button class="reveal-btn" onclick="revealStep('step4')">Reveal Answer</button>
+<div class="reveal" id="step4-reveal">
+<strong>LSM-Tree is preferred</strong> for write-heavy key-value stores (like Cassandra, RocksDB). Writes go to MemTable + WAL (fast sequential I/O), then flush to immutable SSTables. Reads check MemTable → Bloom filters → SSTables. B-Trees are better for read-heavy workloads but have write amplification from in-place updates.<br><br>
+<strong>Partitioning:</strong> Consistent hashing ring maps each key to a primary node. The next N-1 nodes on the ring hold replicas. Virtual nodes (vnodes) ensure even distribution.
+</div>
+</section>
+
+<!-- STEP 5: Architecture -->
+<section class="step" id="step5">
+<h2><span class="step-num">Step 5</span> Architecture</h2>
+<canvas id="archCanvas" width="900" height="320"></canvas>
+<button class="reveal-btn" onclick="revealStep('step5')">Reveal Answer</button>
+<div class="reveal" id="step5-reveal">
+<strong>Write path:</strong> Client → any Coordinator Node → consistent hash finds responsible nodes → write to primary + W-1 replicas (quorum W=2 of N=3) → ACK to client.<br><br>
+<strong>Read path:</strong> Client → Coordinator → read from R=2 replicas → return latest version (by vector clock or timestamp) → read repair if divergent.<br><br>
+<strong>Quorum math:</strong> R + W > N ensures strong consistency. R=2, W=2, N=3 means reads and writes overlap on at least one node.<br><br>
+<strong>Membership:</strong> Gossip protocol propagates cluster state. Merkle trees detect and repair inconsistencies between replicas.
+</div>
+</section>
+
+<!-- STEP 6: Deep Dives -->
+<section class="step" id="step6">
+<h2><span class="step-num">Step 6</span> Deep Dives</h2>
+
+<div class="collapsible" onclick="toggleCollapse(this)">
+<div class="collapsible-header">Consistent Hashing with Virtual Nodes <span class="collapsible-arrow">▶</span></div>
+<div class="collapsible-body">
+<p>A basic hash ring maps each node to one position. Problem: when a node joins or leaves, only its neighbors are affected, but load can be highly uneven.</p>
+<p style="margin-top:8px"><strong>Virtual nodes (vnodes):</strong> Each physical node gets 100-200 positions on the ring. Benefits:</p>
+<ul style="margin:8px 0 8px 20px;color:#8b949e">
+<li>Even load distribution across heterogeneous hardware</li>
+<li>When a node fails, its load spreads across many nodes (not just one neighbor)</li>
+<li>Faster rebalancing when adding/removing nodes</li>
+</ul>
+<p style="margin-top:8px">Hash function: typically MD5 or murmur3 of the key, mapped to a 2^128 or 2^64 ring space.</p>
+<canvas id="ringCanvas" width="400" height="200" style="margin-top:12px;max-width:400px"></canvas>
+</div>
+</div>
+
+<div class="collapsible" onclick="toggleCollapse(this)">
+<div class="collapsible-header">Conflict Resolution: Vector Clocks vs LWW <span class="collapsible-arrow">▶</span></div>
+<div class="collapsible-body">
+<p><strong>Vector Clocks:</strong> Each node maintains a vector of logical clocks [N1:3, N2:5, N3:1]. Can detect concurrent writes (neither dominates). Downside: vectors grow with number of nodes, requires client-side resolution for true conflicts.</p>
+<p style="margin-top:8px"><strong>Last-Write-Wins (LWW):</strong> Each write has a timestamp. Latest timestamp wins. Simple but can lose data — two concurrent writes, one is silently dropped. Requires synchronized clocks (NTP).</p>
+<p style="margin-top:12px"><strong>In practice:</strong> DynamoDB uses vector clocks and returns conflicting versions to the client. Cassandra uses LWW for simplicity. The choice depends on whether data loss is acceptable.</p>
+</div>
+</div>
+
+<div class="collapsible" onclick="toggleCollapse(this)">
+<div class="collapsible-header">Failure Detection: Gossip + Phi Accrual <span class="collapsible-arrow">▶</span></div>
+<div class="collapsible-body">
+<p><strong>Gossip protocol:</strong> Every second, each node picks a random peer and exchanges membership state. Information spreads exponentially — reaches all N nodes in O(log N) rounds.</p>
+<p style="margin-top:8px"><strong>Phi Accrual Failure Detector:</strong> Instead of a binary alive/dead threshold, phi accrual outputs a suspicion level (phi value). Higher phi = more likely dead. Adapts to network conditions — a node with variable latency gets a higher threshold before being marked down.</p>
+<p style="margin-top:8px"><strong>When a node is detected as down:</strong></p>
+<ul style="margin:8px 0 0 20px;color:#8b949e">
+<li>Hinted handoff: writes intended for the down node are stored temporarily on another node</li>
+<li>When the node recovers, hints are replayed to bring it up to date</li>
+<li>Anti-entropy with Merkle trees runs periodically to fix any remaining inconsistencies</li>
+</ul>
+</div>
+</div>
+</section>
+
+<!-- STEP 7: Trade-offs -->
+<section class="step" id="step7">
+<h2><span class="step-num">Step 7</span> Trade-offs</h2>
+<div class="tradeoff-grid">
+<div class="tradeoff-card">
+<h4>Strong Consistency</h4>
+<p>R + W > N guarantees overlap. Higher latency (wait for quorum), lower availability during partitions. Use when correctness matters (financial data).</p>
+</div>
+<div class="tradeoff-card">
+<h4>Eventual Consistency</h4>
+<p>R=1, W=1 for max speed. Risk stale reads. Background anti-entropy repairs. Use when availability matters more (social media likes).</p>
+</div>
+<div class="tradeoff-card">
+<h4>In-Memory Storage</h4>
+<p>Sub-millisecond reads. Limited by RAM cost. Data loss risk on crash (mitigate with snapshots + WAL). Great for cache use cases.</p>
+</div>
+<div class="tradeoff-card">
+<h4>Disk-Based (LSM-Tree)</h4>
+<p>Much larger capacity per dollar. Single-digit millisecond reads. Write-optimized with sequential I/O. Standard for persistent KV stores.</p>
+</div>
+<div class="tradeoff-card">
+<h4>Vector Clocks</h4>
+<p>Detects true conflicts. Preserves all concurrent writes. Client must resolve conflicts. Vector size grows with cluster. More correct.</p>
+</div>
+<div class="tradeoff-card">
+<h4>Last-Write-Wins</h4>
+<p>Simple timestamp comparison. No client-side resolution needed. Silently drops concurrent writes. Requires clock synchronization. Simpler to operate.</p>
+</div>
+</div>
+</section>
+
+<!-- STEP 8: Interview Tips -->
+<section class="step" id="step8">
+<h2><span class="step-num">Step 8</span> Interview Tips</h2>
+<div class="tip-cards">
+<div class="tip-card"><strong>Draw the hash ring immediately.</strong> Consistent hashing is THE core concept. Draw a circle, place nodes, show how keys map to nodes and how virtual nodes improve balance.</div>
+<div class="tip-card"><strong>Explain R/W/N quorum math.</strong> Show that R+W>N gives strong consistency. Give concrete examples: N=3, W=2, R=2 means every read sees at least one up-to-date replica.</div>
+<div class="tip-card"><strong>Mention the gossip protocol.</strong> Decentralized membership management is what makes the system truly distributed. No single point of failure for cluster coordination.</div>
+<div class="tip-card"><strong>Discuss node failure handling.</strong> Cover hinted handoff for temporary failures, Merkle trees for anti-entropy repair, and how the system rebalances when nodes permanently leave.</div>
+</div>
+</section>
+
+</div>
+
+<script>
+function revealStep(id) {
+  const el = document.getElementById(id + '-reveal');
+  el.classList.toggle('show');
+  if (id === 'step1') markCorrectAnswers(document.getElementById(id));
+}
+function markCorrectAnswers(section) {
+  section.querySelectorAll('input[type=checkbox]').forEach(cb => {
+    const lbl = cb.parentElement;
+    if (cb.dataset.correct === 'true') {
+      lbl.innerHTML = lbl.innerHTML.replace(/<span class="correct-mark">.*?<\/span>/g, '');
+      if (!lbl.querySelector('.correct-mark')) {
+        const m = document.createElement('span');
+        m.className = 'correct-mark';
+        m.textContent = ' ✓';
+        lbl.appendChild(m);
+      }
+    }
+  });
+  section.querySelectorAll('input[type=radio]').forEach(r => {
+    const lbl = r.parentElement;
+    if (r.dataset.correct === 'true' && !lbl.querySelector('.correct-mark')) {
+      const m = document.createElement('span');
+      m.className = 'correct-mark';
+      m.textContent = ' ✓';
+      lbl.appendChild(m);
+    }
+  });
+}
+
+function calcCapacity() {
+  const keys = parseFloat(document.getElementById('cap-keys').value) || 0;
+  const valKB = parseFloat(document.getElementById('cap-valsize').value) || 0;
+  const rqps = parseFloat(document.getElementById('cap-rqps').value) || 0;
+  const wqps = parseFloat(document.getElementById('cap-wqps').value) || 0;
+  const rf = parseFloat(document.getElementById('cap-rf').value) || 1;
+  const rawTB = (keys * valKB) / (1024 * 1024 * 1024);
+  const totalTB = rawTB * rf;
+  const readBW = (rqps * valKB) / 1024;
+  const writeBW = (wqps * valKB) / 1024;
+  document.getElementById('cap-result').innerHTML =
+    `<div class="calc-row"><span class="label">Raw Storage</span><span class="value">${rawTB.toFixed(2)} TB</span></div>` +
+    `<div class="calc-row"><span class="label">Total Storage (${rf}x replication)</span><span class="value">${totalTB.toFixed(2)} TB</span></div>` +
+    `<div class="calc-row"><span class="label">Read QPS</span><span class="value">${rqps.toLocaleString()}/sec</span></div>` +
+    `<div class="calc-row"><span class="label">Write QPS</span><span class="value">${wqps.toLocaleString()}/sec</span></div>` +
+    `<div class="calc-row"><span class="label">Read Bandwidth</span><span class="value">${readBW.toFixed(1)} MB/s</span></div>` +
+    `<div class="calc-row"><span class="label">Write Bandwidth</span><span class="value">${writeBW.toFixed(1)} MB/s</span></div>`;
+}
+calcCapacity();
+
+function toggleDataModel(type) {
+  document.querySelectorAll('.toggle-opt').forEach(o => o.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('dm-lsm').style.display = type === 'lsm' ? 'block' : 'none';
+  document.getElementById('dm-btree').style.display = type === 'btree' ? 'block' : 'none';
+}
+
+function toggleCollapse(el) {
+  if (el.classList.contains('collapsible')) el.classList.toggle('open');
+}
+
+// Architecture canvas
+(function() {
+  const c = document.getElementById('archCanvas');
+  const ctx = c.getContext('2d');
+  const DPR = window.devicePixelRatio || 1;
+  let W, H, frame = 0;
+  function resize() {
+    W = c.parentElement.clientWidth - 56;
+    H = 320;
+    c.width = W * DPR; c.height = H * DPR;
+    c.style.width = W + 'px'; c.style.height = H + 'px';
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  }
+  function drawBox(x, y, w, h, label, color) {
+    ctx.fillStyle = color + '22';
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.roundRect(x, y, w, h, 6); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#e6edf3';
+    ctx.font = 'bold 11px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(label, x + w / 2, y + h / 2);
+  }
+  function drawArrow(x1, y1, x2, y2, color) {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+    const a = Math.atan2(y2 - y1, x2 - x1);
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(x2, y2);
+    ctx.lineTo(x2 - 8 * Math.cos(a - 0.4), y2 - 8 * Math.sin(a - 0.4));
+    ctx.lineTo(x2 - 8 * Math.cos(a + 0.4), y2 - 8 * Math.sin(a + 0.4));
+    ctx.fill();
+  }
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    frame++;
+    const cx = W / 2, cy = H / 2;
+    // Client
+    drawBox(20, cy - 20, 80, 40, 'Client', '#58a6ff');
+    // Coordinator
+    drawBox(150, cy - 20, 100, 40, 'Coordinator', '#f0883e');
+    drawArrow(100, cy, 150, cy, '#58a6ff');
+    // Hash Ring
+    const ringX = 340, ringY = cy, ringR = 50;
+    ctx.strokeStyle = '#30363d';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(ringX, ringY, ringR, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = '#f0883e';
+    ctx.font = 'bold 9px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Hash Ring', ringX, ringY - ringR - 10);
+    // Nodes on ring
+    const nodeAngles = [-Math.PI/2, Math.PI/6, 5*Math.PI/6];
+    const nodeLabels = ['N1', 'N2', 'N3'];
+    const nodeColors = ['#3fb950', '#58a6ff', '#bc8cff'];
+    nodeAngles.forEach((a, i) => {
+      const nx = ringX + ringR * Math.cos(a);
+      const ny = ringY + ringR * Math.sin(a);
+      ctx.fillStyle = nodeColors[i];
+      ctx.beginPath(); ctx.arc(nx, ny, 8, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#0d1117';
+      ctx.font = 'bold 8px sans-serif';
+      ctx.fillText(nodeLabels[i], nx, ny + 3);
+    });
+    drawArrow(250, cy, ringX - ringR - 10, cy, '#f0883e');
+    // Animated request dot
+    const dotPhase = (frame % 120) / 120;
+    if (dotPhase < 0.3) {
+      const t = dotPhase / 0.3;
+      const dx = 100 + t * 50;
+      ctx.fillStyle = '#3fb950';
+      ctx.beginPath(); ctx.arc(dx, cy, 4, 0, Math.PI * 2); ctx.fill();
+    } else if (dotPhase < 0.6) {
+      const t = (dotPhase - 0.3) / 0.3;
+      const dx = 250 + t * (ringX - ringR - 260);
+      ctx.fillStyle = '#3fb950';
+      ctx.beginPath(); ctx.arc(dx, cy, 4, 0, Math.PI * 2); ctx.fill();
+    }
+    // Storage nodes
+    const storeX = 500;
+    const labels = ['Node 1 (Primary)', 'Node 2 (Replica)', 'Node 3 (Replica)'];
+    const sColors = ['#3fb950', '#58a6ff', '#bc8cff'];
+    labels.forEach((l, i) => {
+      const sy = 40 + i * 100;
+      drawBox(storeX, sy, 130, 40, l, sColors[i]);
+      // WAL + SSTable
+      ctx.fillStyle = '#8b949e';
+      ctx.font = '9px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('WAL + SSTables', storeX + 65, sy + 55);
+      drawArrow(ringX + ringR + 10, cy, storeX, sy + 20, sColors[i] + '80');
+    });
+    // Gossip arrows between nodes
+    ctx.setLineDash([3, 3]);
+    ctx.strokeStyle = '#f0883e50';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(storeX + 130, 60); ctx.lineTo(storeX + 130, 140); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(storeX + 130, 140); ctx.lineTo(storeX + 130, 240); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#f0883e';
+    ctx.font = '8px sans-serif';
+    ctx.fillText('gossip', storeX + 150, 100);
+    ctx.fillText('gossip', storeX + 150, 200);
+    // Quorum label
+    ctx.fillStyle = '#8b949e';
+    ctx.font = 'bold 10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Quorum: W=2, R=2, N=3', cx, H - 15);
+    requestAnimationFrame(draw);
+  }
+  resize();
+  window.addEventListener('resize', resize);
+  draw();
+})();
+
+// Hash ring mini canvas
+(function() {
+  const c = document.getElementById('ringCanvas');
+  if (!c) return;
+  const ctx = c.getContext('2d');
+  const DPR = window.devicePixelRatio || 1;
+  c.width = 400 * DPR; c.height = 200 * DPR;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  const cx = 200, cy = 100, r = 75;
+  let frame = 0;
+  function draw() {
+    ctx.clearRect(0, 0, 400, 200);
+    frame++;
+    ctx.strokeStyle = '#30363d';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+    // Virtual nodes
+    const vnodes = [
+      {angle: 0, color: '#3fb950', node: 'A'},
+      {angle: 0.8, color: '#3fb950', node: 'A'},
+      {angle: 1.6, color: '#58a6ff', node: 'B'},
+      {angle: 2.4, color: '#58a6ff', node: 'B'},
+      {angle: 3.2, color: '#f0883e', node: 'C'},
+      {angle: 4.0, color: '#f0883e', node: 'C'},
+      {angle: 4.8, color: '#bc8cff', node: 'D'},
+      {angle: 5.6, color: '#bc8cff', node: 'D'},
+    ];
+    vnodes.forEach(v => {
+      const x = cx + r * Math.cos(v.angle);
+      const y = cy + r * Math.sin(v.angle);
+      ctx.fillStyle = v.color;
+      ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#0d1117';
+      ctx.font = 'bold 7px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(v.node, x, y + 2.5);
+    });
+    // Animated key lookup
+    const keyAngle = (frame * 0.02) % (Math.PI * 2);
+    const kx = cx + (r + 20) * Math.cos(keyAngle);
+    const ky = cy + (r + 20) * Math.sin(keyAngle);
+    ctx.fillStyle = '#e6edf3';
+    ctx.beginPath(); ctx.arc(kx, ky, 3, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#8b949e';
+    ctx.font = '8px sans-serif';
+    ctx.fillText('key', kx + 8, ky + 3);
+    // Legend
+    ctx.textAlign = 'left';
+    ctx.font = '10px sans-serif';
+    const legend = [{c:'#3fb950',l:'Node A (2 vnodes)'},{c:'#58a6ff',l:'Node B (2 vnodes)'},{c:'#f0883e',l:'Node C (2 vnodes)'},{c:'#bc8cff',l:'Node D (2 vnodes)'}];
+    legend.forEach((l, i) => {
+      ctx.fillStyle = l.c;
+      ctx.beginPath(); ctx.arc(320, 40 + i * 20, 5, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#8b949e';
+      ctx.fillText(l.l, 330, 44 + i * 20);
+    });
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#8b949e';
+    ctx.font = 'bold 9px sans-serif';
+    ctx.fillText('Virtual Nodes on Hash Ring', cx, 195);
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+</script>
+<footer style="text-align:center;padding:1rem;border-top:1px solid #ccc;margin-top:2rem;color:#666;font-size:0.8rem;">
+    © <span id="copyright-year"></span> Clark Ngo
+  </footer>
+  <script>document.getElementById('copyright-year').textContent = new Date().getFullYear();</script>
+</body>
+</html>

@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Design a Ride-Sharing Service — System Design Trainer</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0d1117;color:#e6edf3;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;line-height:1.7}
+a{color:#58a6ff;text-decoration:none}a:hover{text-decoration:underline}
+nav{background:#161b22;border-bottom:1px solid #30363d;padding:16px 24px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100}
+.brand{font-size:1.2rem;font-weight:700}.back{color:#8b949e;font-size:.9rem}
+.container{max-width:960px;margin:0 auto;padding:24px 20px}
+.hero{background:linear-gradient(135deg,#1a1e24 0%,#0d1f3a 100%);border:1px solid #30363d;border-radius:12px;padding:48px 36px;margin-bottom:36px;text-align:center}
+.hero h1{font-size:2.2rem;margin-bottom:8px}.hero .tagline{color:#58a6ff;font-size:1.1rem;margin-bottom:6px}.hero .meta{color:#8b949e;font-size:.9rem}
+section.step{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:28px;margin-bottom:24px}
+section.step h2{font-size:1.4rem;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #30363d;display:flex;align-items:center;gap:10px}
+.step-num{background:#58a6ff;color:#0d1117;font-size:.75rem;font-weight:700;padding:2px 10px;border-radius:12px}
+label{display:block;margin-bottom:8px;font-size:.93rem;color:#c9d1d9;cursor:pointer}
+label input{margin-right:8px}
+.radio-group{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.reveal-btn{display:inline-block;padding:8px 20px;background:#58a6ff;color:#0d1117;border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:.9rem;margin-top:12px;transition:background .2s}
+.reveal-btn:hover{background:#4090e0}
+.reveal{margin-top:16px;padding:16px;background:#0d1117;border:1px solid #3fb950;border-radius:8px;display:none;font-size:.93rem;color:#c9d1d9}
+.reveal.show{display:block}
+.correct-mark{color:#3fb950;font-weight:700;margin-left:4px}
+.input-group{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.input-group label{font-size:.85rem;color:#8b949e;margin-bottom:2px}
+.input-group input{width:100%;padding:8px 12px;background:#0d1117;border:1px solid #30363d;border-radius:6px;color:#e6edf3;font-size:.9rem}
+.calc-result{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:16px;margin-top:12px}
+.calc-row{display:flex;justify-content:space-between;padding:4px 0;font-size:.9rem}
+.calc-row .label{color:#8b949e}.calc-row .value{color:#58a6ff;font-weight:600}
+pre{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:16px;overflow-x:auto;font-size:.85rem;color:#e6edf3;margin-bottom:12px;line-height:1.6}
+.code-comment{color:#8b949e}
+.toggle-row{display:flex;gap:8px;margin-bottom:16px}
+.toggle-opt{padding:6px 16px;border-radius:6px;border:1px solid #30363d;background:#0d1117;color:#8b949e;cursor:pointer;font-size:.85rem;font-weight:600;transition:all .2s}
+.toggle-opt.active{background:#1f6feb;color:#e6edf3;border-color:#1f6feb}
+.table-wrap{overflow-x:auto;margin-bottom:12px}
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+th{background:#21262d;color:#8b949e;padding:8px 12px;text-align:left;font-weight:600;border-bottom:1px solid #30363d}
+td{padding:8px 12px;border-bottom:1px solid #21262d;color:#c9d1d9}
+canvas{display:block;width:100%;border:1px solid #30363d;border-radius:8px;background:#0d1117;margin-bottom:12px}
+.collapsible{border:1px solid #30363d;border-radius:8px;margin-bottom:10px;overflow:hidden}
+.collapsible-header{padding:14px 18px;background:#21262d;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-weight:600;font-size:.93rem}
+.collapsible-header:hover{background:#282e36}
+.collapsible-body{padding:16px 18px;display:none;font-size:.9rem;color:#c9d1d9;line-height:1.7}
+.collapsible.open .collapsible-body{display:block}
+.collapsible-arrow{transition:transform .2s;color:#8b949e}.collapsible.open .collapsible-arrow{transform:rotate(90deg)}
+.tradeoff-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.tradeoff-card{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:18px}
+.tradeoff-card h4{color:#58a6ff;margin-bottom:8px;font-size:.95rem}
+.tradeoff-card p{font-size:.85rem;color:#8b949e;line-height:1.6}
+.tip-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tip-card{background:#0d1117;border-left:3px solid #3fb950;border-radius:0 8px 8px 0;padding:14px 18px;font-size:.9rem;color:#c9d1d9}
+.state-machine{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0}
+.sm-state{padding:6px 14px;border-radius:6px;font-size:.82rem;font-weight:600;border:1px solid}
+.sm-arrow{color:#8b949e;font-size:.85rem}
+@media(max-width:640px){.input-group,.tradeoff-grid,.tip-cards{grid-template-columns:1fr}}
+</style>
+    <meta name="author" content="Clark Ngo">
+    <meta name="copyright" content="Clark Ngo">
+  </head>
+<body>
+<nav><span class="brand">🎯 Trainer Series</span><a href="index.html" class="back">← All Trainers</a></nav>
+<div class="container">
+
+<div class="hero">
+<h1>Design a Ride-Sharing Service</h1>
+<div class="tagline">Uber / Lyft — real-time matching, geospatial indexing, trip management</div>
+<div class="meta">Geospatial Index · Driver Matching · Location Tracking · Trip State Machine</div>
+</div>
+
+<!-- STEP 1: Requirements -->
+<section class="step" id="step1">
+<h2><span class="step-num">Step 1</span> Requirements</h2>
+<p style="color:#8b949e;margin-bottom:16px">Select the functional requirements you think are essential:</p>
+<label><input type="checkbox" data-correct="true" data-group="func"> Rider requests a ride with pickup/destination</label>
+<label><input type="checkbox" data-correct="true" data-group="func"> Match with nearby available driver</label>
+<label><input type="checkbox" data-correct="true" data-group="func"> Real-time location tracking</label>
+<label><input type="checkbox" data-correct="true" data-group="func"> ETA calculation</label>
+<label><input type="checkbox" data-correct="true" data-group="func"> Trip management (state machine)</label>
+<label><input type="checkbox" data-correct="true" data-group="func"> Surge pricing based on demand</label>
+<label><input type="checkbox" data-correct="false" data-group="func"> Built-in navigation with turn-by-turn directions</label>
+<label><input type="checkbox" data-correct="false" data-group="func"> In-app video calling between rider and driver</label>
+
+<p style="color:#8b949e;margin:16px 0 8px">Select the most important non-functional requirement:</p>
+<div class="radio-group">
+<label><input type="radio" name="nfr" value="realtime" data-correct="true"> &lt;30s match time, real-time location (every 3-5s), high availability</label>
+<label><input type="radio" name="nfr" value="exact"> Exact real-time fare calculation during trip</label>
+<label><input type="radio" name="nfr" value="offline"> Full offline support for areas without connectivity</label>
+</div>
+
+<button class="reveal-btn" onclick="revealStep('step1')">Reveal Answer</button>
+<div class="reveal" id="step1-reveal">
+<strong>Functional:</strong> Ride request, driver matching, location tracking, ETA, trip state machine, surge pricing. Payment integration should be mentioned but not designed in detail. Navigation and video calling are handled by third-party services.<br><br>
+<strong>Non-functional:</strong> Fast matching (&lt;30s), real-time updates (location every 3-5s), and high availability are critical. Fare calculation can be slightly delayed. Full offline support is extremely complex and rarely expected in an interview.
+</div>
+</section>
+
+<!-- STEP 2: Capacity Estimation -->
+<section class="step" id="step2">
+<h2><span class="step-num">Step 2</span> Capacity Estimation</h2>
+<div class="input-group">
+<div><label>DAU (millions, riders+drivers)</label><input type="number" id="cap-dau" value="20" oninput="calcCapacity()"></div>
+<div><label>Rides/Day (millions)</label><input type="number" id="cap-rides" value="10" oninput="calcCapacity()"></div>
+<div><label>Concurrent Drivers (M)</label><input type="number" id="cap-drivers" value="2" oninput="calcCapacity()"></div>
+<div><label>Location Update Interval (sec)</label><input type="number" id="cap-interval" value="4" oninput="calcCapacity()"></div>
+</div>
+<div class="calc-result" id="cap-result"></div>
+<button class="reveal-btn" onclick="revealStep('step2')">Reveal Answer</button>
+<div class="reveal" id="step2-reveal">
+<strong>Reference numbers:</strong><br>
+2M concurrent drivers sending location every 4s = <strong>500K location updates/sec</strong><br>
+10M rides/day / 86400 ≈ <strong>115 ride requests/sec</strong><br>
+Each location update: ~1KB (driver_id, lat, lng, timestamp, status)<br>
+Location bandwidth: 500K x 1KB = <strong>~500 MB/s</strong> ingest<br>
+Location data (1 day retention): 500K x 1KB x 86400 = <strong>~43TB/day</strong>
+</div>
+</section>
+
+<!-- STEP 3: API Design -->
+<section class="step" id="step3">
+<h2><span class="step-num">Step 3</span> API Design</h2>
+<pre><span class="code-comment">// Rider requests a ride</span>
+POST /api/rides/request
+     Body: { "pickupLat": 37.77, "pickupLng": -122.42,
+             "destLat": 37.78, "destLng": -122.41 }
+     → 200 { "rideId": "r123", "status": "REQUESTED", "estimatedFare": 12.50 }
+
+<span class="code-comment">// Driver accepts ride</span>
+POST /api/rides/{id}/accept
+     → 200 { "rideId": "r123", "status": "MATCHED", "eta": 180 }
+
+<span class="code-comment">// Driver updates location (high frequency)</span>
+PUT  /api/drivers/location
+     Body: { "lat": 37.775, "lng": -122.418 }
+     → 200 { "ack": true }
+
+<span class="code-comment">// Get ride status and ETA</span>
+GET  /api/rides/{id}/status
+     → 200 { "status": "DRIVER_EN_ROUTE", "driverLat": 37.775,
+             "driverLng": -122.418, "eta": 120 }</pre>
+<button class="reveal-btn" onclick="revealStep('step3')">Reveal Answer</button>
+<div class="reveal" id="step3-reveal">
+<strong>Key design decisions:</strong><br><br>
+<strong>Location updates:</strong> Use WebSocket or UDP for high-frequency updates (every 3-5s). HTTP would create too much overhead. The PUT endpoint shown above is simplified — in practice, this goes over a persistent connection.<br><br>
+<strong>Ride status:</strong> Riders poll this endpoint (or receive WebSocket push) to track driver location and trip state changes.<br><br>
+<strong>Surge pricing:</strong> <code>GET /api/pricing/surge?lat=X&lng=Y</code> returns the current surge multiplier for a zone. Computed from supply/demand ratio in each geospatial cell.
+</div>
+</section>
+
+<!-- STEP 4: Data Model -->
+<section class="step" id="step4">
+<h2><span class="step-num">Step 4</span> Data Model</h2>
+<div class="toggle-row">
+<div class="toggle-opt active" onclick="toggleDM('sql')">SQL (Core Data)</div>
+<div class="toggle-opt" onclick="toggleDM('geo')">Geospatial Index</div>
+</div>
+<div id="dm-sql">
+<div class="table-wrap"><table>
+<tr><th>Table</th><th>Columns</th><th>Notes</th></tr>
+<tr><td>users</td><td>id, name, type (rider|driver), phone, rating</td><td>Both riders and drivers</td></tr>
+<tr><td>rides</td><td>id, rider_id, driver_id, status, pickup_lat/lng, dest_lat/lng, fare, created_at</td><td>Status: state machine</td></tr>
+<tr><td>driver_locations</td><td>driver_id, lat, lng, updated_at, status (available|busy)</td><td>Latest location only (overwritten)</td></tr>
+</table></div>
+<p style="color:#8b949e;font-size:.85rem;margin-top:8px"><strong>Trip state machine:</strong></p>
+<div class="state-machine">
+<span class="sm-state" style="background:#0d1f3a;color:#58a6ff;border-color:#1c3d6e">REQUESTED</span>
+<span class="sm-arrow">→</span>
+<span class="sm-state" style="background:#0d2d0d;color:#3fb950;border-color:#2d5c2d">MATCHED</span>
+<span class="sm-arrow">→</span>
+<span class="sm-state" style="background:#2a1a06;color:#f0883e;border-color:#5a3310">EN_ROUTE</span>
+<span class="sm-arrow">→</span>
+<span class="sm-state" style="background:#1a0d2a;color:#bc8cff;border-color:#3d1c6e">ARRIVED</span>
+<span class="sm-arrow">→</span>
+<span class="sm-state" style="background:#0d2d0d;color:#3fb950;border-color:#2d5c2d">IN_PROGRESS</span>
+<span class="sm-arrow">→</span>
+<span class="sm-state" style="background:#21262d;color:#e6edf3;border-color:#30363d">COMPLETED</span>
+</div>
+</div>
+<div id="dm-geo" style="display:none">
+<div class="table-wrap"><table>
+<tr><th>Approach</th><th>Structure</th><th>Use Case</th></tr>
+<tr><td>Geohash (Redis)</td><td>GEOADD drivers lng lat driver_id</td><td>Redis GEOSEARCH for nearby drivers in O(log N + M)</td></tr>
+<tr><td>QuadTree</td><td>In-memory tree, each node = geographic cell</td><td>Dynamic subdivision — dense areas get smaller cells</td></tr>
+<tr><td>S2 Cells (Google)</td><td>Hierarchical spherical cells</td><td>Uniform coverage, used by Google Maps</td></tr>
+</table></div>
+<p style="color:#8b949e;font-size:.85rem">The geospatial index stores only <strong>available</strong> drivers. When a driver starts a trip, they are removed from the index. When they complete a trip, they are re-added.</p>
+</div>
+<button class="reveal-btn" onclick="revealStep('step4')">Reveal Answer</button>
+<div class="reveal" id="step4-reveal">
+<strong>Geohash in Redis</strong> is the simplest approach and handles most interview scenarios. GEOADD to insert, GEOSEARCH to find nearby drivers within a radius. O(log N) per operation.<br><br>
+<strong>QuadTree</strong> is preferred for production systems with uneven density (downtown NYC vs rural Montana). Dense areas are subdivided into smaller cells for finer-grained search.<br><br>
+<strong>Key insight:</strong> The geospatial index must be updated 500K times/sec (every driver location update). This is why in-memory solutions (Redis or custom QuadTree) are necessary — disk-based indexes are too slow.
+</div>
+</section>
+
+<!-- STEP 5: Architecture -->
+<section class="step" id="step5">
+<h2><span class="step-num">Step 5</span> Architecture</h2>
+<canvas id="archCanvas" width="900" height="320"></canvas>
+<button class="reveal-btn" onclick="revealStep('step5')">Reveal Answer</button>
+<div class="reveal" id="step5-reveal">
+<strong>Location flow:</strong> Driver app → Location Service (WebSocket) → updates geospatial index (Redis GEOADD) every 3-5 seconds.<br><br>
+<strong>Matching flow:</strong> Rider requests ride → Ride Service → Matching Service queries geospatial index for K nearest available drivers → sends ride offer to closest driver → if driver declines or times out (10s), try next driver → when accepted, create trip record.<br><br>
+<strong>Trip tracking:</strong> Both rider and driver apps receive real-time updates via WebSocket. Driver location streams to rider through the Location Service. Trip state transitions are published via event bus.
+</div>
+</section>
+
+<!-- STEP 6: Deep Dives -->
+<section class="step" id="step6">
+<h2><span class="step-num">Step 6</span> Deep Dives</h2>
+
+<div class="collapsible" onclick="toggleCollapse(this)">
+<div class="collapsible-header">Geospatial Indexing: Geohash vs QuadTree <span class="collapsible-arrow">▶</span></div>
+<div class="collapsible-body">
+<p><strong>Geohash:</strong> Encodes latitude/longitude into a string (e.g., "9q8yyk"). Strings with shared prefixes are geographically close. Redis uses geohash internally for GEOADD/GEOSEARCH.</p>
+<canvas id="geoCanvas" width="400" height="200" style="margin:12px 0;max-width:400px"></canvas>
+<p><strong>Pros:</strong> Simple, Redis handles it natively. <strong>Cons:</strong> Fixed precision levels, edge-case issues at geohash boundaries (two nearby points can have different prefixes).</p>
+<p style="margin-top:12px"><strong>QuadTree:</strong> Recursively divides 2D space into 4 quadrants. Dense areas (cities) are subdivided further. Sparse areas (rural) stay as large cells.</p>
+<p style="margin-top:8px"><strong>Pros:</strong> Adapts to density, no boundary issues. <strong>Cons:</strong> Must be built custom, harder to distribute across servers.</p>
+<p style="margin-top:8px"><strong>For interviews:</strong> Start with Geohash + Redis. Mention QuadTree as an optimization if the interviewer asks about uneven density.</p>
+</div>
+</div>
+
+<div class="collapsible" onclick="toggleCollapse(this)">
+<div class="collapsible-header">Matching Algorithm: Find and Dispatch <span class="collapsible-arrow">▶</span></div>
+<div class="collapsible-body">
+<p><strong>Step 1:</strong> Query geospatial index: GEOSEARCH within 5km radius, return K nearest available drivers (K=5-10).</p>
+<p style="margin-top:8px"><strong>Step 2:</strong> Rank candidates by distance, rating, acceptance rate, and ETA (considering road network, not just straight-line distance).</p>
+<p style="margin-top:8px"><strong>Step 3:</strong> Send ride offer to top candidate. Driver has 10-15 seconds to accept.</p>
+<p style="margin-top:8px"><strong>Step 4:</strong> If declined or timed out, send to next candidate. After all K candidates exhausted, expand radius and retry.</p>
+<p style="margin-top:8px"><strong>Optimization — broadcast model:</strong> Instead of sequential offers, send to top 3 simultaneously. First to accept wins. Faster matching but some drivers see offers disappear.</p>
+<p style="margin-top:8px"><strong>Edge cases:</strong> No drivers found → notify rider, retry with expanding radius, suggest rider move to busier area. Driver cancels after match → re-enter matching with priority.</p>
+</div>
+</div>
+
+<div class="collapsible" onclick="toggleCollapse(this)">
+<div class="collapsible-header">Trip State Machine: States and Transitions <span class="collapsible-arrow">▶</span></div>
+<div class="collapsible-body">
+<p>Every ride follows a strict state machine. Transitions are validated server-side to prevent invalid states.</p>
+<div class="table-wrap" style="margin-top:8px"><table>
+<tr><th>State</th><th>Trigger</th><th>Next State</th><th>Actions</th></tr>
+<tr><td>REQUESTED</td><td>Driver accepts</td><td>MATCHED</td><td>Notify rider, start ETA tracking</td></tr>
+<tr><td>MATCHED</td><td>Driver arrives at pickup</td><td>ARRIVED</td><td>Notify rider, start wait timer</td></tr>
+<tr><td>ARRIVED</td><td>Rider gets in, driver starts trip</td><td>IN_PROGRESS</td><td>Start fare meter, begin route tracking</td></tr>
+<tr><td>IN_PROGRESS</td><td>Driver ends trip</td><td>COMPLETED</td><td>Calculate fare, process payment, request ratings</td></tr>
+<tr><td>Any</td><td>Rider cancels</td><td>CANCELLED</td><td>Apply cancellation fee if after match</td></tr>
+<tr><td>MATCHED/ARRIVED</td><td>Driver cancels</td><td>REQUESTED</td><td>Re-enter matching pool with priority</td></tr>
+</table></div>
+<p style="margin-top:8px"><strong>Failure handling:</strong> If driver stops sending location updates for >60s during a trip, assume a problem. Alert support. If rider app disconnects, the trip continues based on driver actions.</p>
+</div>
+</div>
+</section>
+
+<!-- STEP 7: Trade-offs -->
+<section class="step" id="step7">
+<h2><span class="step-num">Step 7</span> Trade-offs</h2>
+<div class="tradeoff-grid">
+<div class="tradeoff-card">
+<h4>Geohash (Redis)</h4>
+<p>Simple, battle-tested, Redis-native. Fixed precision levels. Boundary edge cases. Great for most use cases. Easy to shard by geohash prefix.</p>
+</div>
+<div class="tradeoff-card">
+<h4>QuadTree (Custom)</h4>
+<p>Adapts to density. No boundary issues. Must build custom. Harder to distribute. Better for uneven geography. Used by Uber internally.</p>
+</div>
+<div class="tradeoff-card">
+<h4>Dispatch to Nearest</h4>
+<p>Sequential offer to closest driver. Fair to drivers. Slower matching (10s timeout per attempt). Predictable experience.</p>
+</div>
+<div class="tradeoff-card">
+<h4>Broadcast to K Drivers</h4>
+<p>Send to top K simultaneously. Fastest matching. First-accept wins. Some drivers see vanishing offers. Better for rider experience.</p>
+</div>
+<div class="tradeoff-card">
+<h4>Pre-Computed ETA</h4>
+<p>Cache ETA for common routes. Fast lookup. Stale during traffic changes. Good for initial estimates. Update periodically in background.</p>
+</div>
+<div class="tradeoff-card">
+<h4>Real-Time ETA</h4>
+<p>Calculate using live traffic data. Accurate but slower. Requires integration with maps API. Essential during active trips. More expensive.</p>
+</div>
+</div>
+</section>
+
+<!-- STEP 8: Interview Tips -->
+<section class="step" id="step8">
+<h2><span class="step-num">Step 8</span> Interview Tips</h2>
+<div class="tip-cards">
+<div class="tip-card"><strong>Draw the matching flow first.</strong> Rider request → Matching Service → geospatial query → driver notification → accept/decline. This is the core of the system and should be your first diagram.</div>
+<div class="tip-card"><strong>Geospatial indexing is THE key topic.</strong> Know Geohash and QuadTree well. Be ready to explain how you find nearby drivers efficiently. Draw the geohash grid or quadtree subdivision.</div>
+<div class="tip-card"><strong>Mention the trip state machine explicitly.</strong> REQUESTED → MATCHED → EN_ROUTE → ARRIVED → IN_PROGRESS → COMPLETED. Show you think about edge cases: cancellations, timeouts, no drivers found.</div>
+<div class="tip-card"><strong>Discuss surge pricing at a high level.</strong> Supply/demand ratio per geographic zone. When demand exceeds supply, multiply fare by surge factor. Mention that it incentivizes more drivers to come online.</div>
+</div>
+</section>
+
+</div>
+
+<script>
+function revealStep(id) {
+  const el = document.getElementById(id + '-reveal');
+  el.classList.toggle('show');
+  if (id === 'step1') markCorrectAnswers(document.getElementById(id));
+}
+function markCorrectAnswers(section) {
+  section.querySelectorAll('input[type=checkbox]').forEach(cb => {
+    const lbl = cb.parentElement;
+    if (cb.dataset.correct === 'true' && !lbl.querySelector('.correct-mark')) {
+      const m = document.createElement('span');
+      m.className = 'correct-mark';
+      m.textContent = ' ✓';
+      lbl.appendChild(m);
+    }
+  });
+  section.querySelectorAll('input[type=radio]').forEach(r => {
+    const lbl = r.parentElement;
+    if (r.dataset.correct === 'true' && !lbl.querySelector('.correct-mark')) {
+      const m = document.createElement('span');
+      m.className = 'correct-mark';
+      m.textContent = ' ✓';
+      lbl.appendChild(m);
+    }
+  });
+}
+
+function calcCapacity() {
+  const dau = parseFloat(document.getElementById('cap-dau').value) || 0;
+  const rides = parseFloat(document.getElementById('cap-rides').value) || 0;
+  const drivers = parseFloat(document.getElementById('cap-drivers').value) || 0;
+  const interval = parseFloat(document.getElementById('cap-interval').value) || 1;
+  const locUpdates = (drivers * 1e6) / interval;
+  const rideQPS = Math.round((rides * 1e6) / 86400);
+  const locBW = (locUpdates * 1) / 1024;
+  document.getElementById('cap-result').innerHTML =
+    `<div class="calc-row"><span class="label">Location Updates/sec</span><span class="value">${(locUpdates/1000).toFixed(0)}K</span></div>` +
+    `<div class="calc-row"><span class="label">Ride Requests/sec</span><span class="value">${rideQPS.toLocaleString()}</span></div>` +
+    `<div class="calc-row"><span class="label">Location Ingest Bandwidth</span><span class="value">${locBW.toFixed(0)} MB/s</span></div>` +
+    `<div class="calc-row"><span class="label">Concurrent Drivers</span><span class="value">${drivers}M</span></div>` +
+    `<div class="calc-row"><span class="label">Daily Location Data</span><span class="value">${((locUpdates * 86400) / (1024*1024*1024*1024)).toFixed(1)} TB</span></div>`;
+}
+calcCapacity();
+
+function toggleDM(type) {
+  document.querySelectorAll('#step4 .toggle-opt').forEach(o => o.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('dm-sql').style.display = type === 'sql' ? 'block' : 'none';
+  document.getElementById('dm-geo').style.display = type === 'geo' ? 'block' : 'none';
+}
+
+function toggleCollapse(el) {
+  if (el.classList.contains('collapsible')) el.classList.toggle('open');
+}
+
+// Architecture canvas
+(function() {
+  const c = document.getElementById('archCanvas');
+  const ctx = c.getContext('2d');
+  const DPR = window.devicePixelRatio || 1;
+  let W, H, frame = 0;
+  function resize() {
+    W = c.parentElement.clientWidth - 56;
+    H = 320;
+    c.width = W * DPR; c.height = H * DPR;
+    c.style.width = W + 'px'; c.style.height = H + 'px';
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  }
+  function drawBox(x, y, w, h, label, color) {
+    ctx.fillStyle = color + '22';
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.roundRect(x, y, w, h, 6); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#e6edf3';
+    ctx.font = 'bold 10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const lines = label.split('\n');
+    lines.forEach((line, i) => {
+      ctx.fillText(line, x + w / 2, y + h / 2 + (i - (lines.length-1)/2) * 13);
+    });
+  }
+  function drawArrow(x1, y1, x2, y2, color, dashed) {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+    if (dashed) ctx.setLineDash([4, 3]);
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+    ctx.setLineDash([]);
+    const a = Math.atan2(y2 - y1, x2 - x1);
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(x2, y2);
+    ctx.lineTo(x2 - 7 * Math.cos(a - 0.4), y2 - 7 * Math.sin(a - 0.4));
+    ctx.lineTo(x2 - 7 * Math.cos(a + 0.4), y2 - 7 * Math.sin(a + 0.4));
+    ctx.fill();
+  }
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    frame++;
+    // Rider flow
+    ctx.fillStyle = '#8b949e';
+    ctx.font = 'bold 10px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('RIDER MATCHING FLOW', 20, 18);
+    drawBox(20, 30, 60, 32, 'Rider', '#58a6ff');
+    drawBox(110, 30, 75, 32, 'Ride\nService', '#8b949e');
+    drawBox(215, 30, 80, 32, 'Matching\nService', '#3fb950');
+    drawBox(325, 30, 80, 32, 'Geo Index\n(Redis)', '#f0883e');
+    drawBox(440, 30, 65, 32, 'Driver', '#bc8cff');
+    drawArrow(80, 46, 110, 46, '#58a6ff');
+    drawArrow(185, 46, 215, 46, '#8b949e');
+    drawArrow(295, 46, 325, 46, '#3fb950');
+    drawArrow(405, 46, 440, 46, '#f0883e');
+    // Animated matching
+    const matchPhase = (frame % 120) / 120;
+    if (matchPhase < 0.4) {
+      const t = matchPhase / 0.4;
+      const dx = 80 + t * 325;
+      ctx.fillStyle = '#3fb950';
+      ctx.beginPath(); ctx.arc(dx, 46, 3, 0, Math.PI * 2); ctx.fill();
+    } else if (matchPhase < 0.5) {
+      ctx.fillStyle = '#3fb950';
+      ctx.font = '9px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('MATCH!', 390, 26);
+    } else if (matchPhase < 0.8) {
+      const t = (matchPhase - 0.5) / 0.3;
+      const dx = 440 - t * 360;
+      ctx.fillStyle = '#bc8cff';
+      ctx.beginPath(); ctx.arc(dx, 46, 3, 0, Math.PI * 2); ctx.fill();
+    }
+    // Driver location flow
+    ctx.fillStyle = '#8b949e';
+    ctx.font = 'bold 10px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('DRIVER LOCATION FLOW (every 3-5s)', 20, 95);
+    drawBox(20, 107, 65, 32, 'Driver\nApp', '#bc8cff');
+    drawBox(120, 107, 80, 32, 'Location\nService', '#58a6ff');
+    drawBox(235, 107, 80, 32, 'Geo Index\n(Redis)', '#f0883e');
+    drawArrow(85, 123, 120, 123, '#bc8cff');
+    drawArrow(200, 123, 235, 123, '#58a6ff');
+    // Location pulse
+    const locPhase = (frame % 60) / 60;
+    if (locPhase < 0.5) {
+      const t = locPhase / 0.5;
+      const dx = 85 + t * 150;
+      ctx.fillStyle = '#bc8cff';
+      ctx.beginPath(); ctx.arc(dx, 123, 3, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.fillStyle = '#8b949e';
+    ctx.font = '8px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('WebSocket', 90, 150);
+    ctx.fillText('GEOADD', 200, 150);
+    // Trip state machine
+    ctx.fillStyle = '#8b949e';
+    ctx.font = 'bold 10px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('TRIP STATE MACHINE', 20, 175);
+    const states = [
+      {label: 'REQUESTED', color: '#58a6ff', x: 30},
+      {label: 'MATCHED', color: '#3fb950', x: 120},
+      {label: 'EN_ROUTE', color: '#f0883e', x: 200},
+      {label: 'ARRIVED', color: '#bc8cff', x: 280},
+      {label: 'IN_PROGRESS', color: '#3fb950', x: 360},
+      {label: 'COMPLETED', color: '#8b949e', x: 460},
+    ];
+    const activeState = Math.floor((frame / 60) % states.length);
+    states.forEach((s, i) => {
+      const isActive = i === activeState;
+      ctx.fillStyle = isActive ? s.color + '44' : '#21262d';
+      ctx.strokeStyle = isActive ? s.color : '#30363d';
+      ctx.lineWidth = isActive ? 2 : 1;
+      ctx.beginPath(); ctx.roundRect(s.x, 185, 75, 24, 4); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = isActive ? s.color : '#8b949e';
+      ctx.font = `${isActive ? 'bold ' : ''}8px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText(s.label, s.x + 37.5, 199);
+      if (i < states.length - 1) {
+        ctx.strokeStyle = '#30363d';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(s.x + 75, 197);
+        ctx.lineTo(states[i + 1].x, 197);
+        ctx.stroke();
+        ctx.fillStyle = '#30363d';
+        ctx.beginPath();
+        ctx.moveTo(states[i + 1].x - 3, 194);
+        ctx.lineTo(states[i + 1].x, 197);
+        ctx.lineTo(states[i + 1].x - 3, 200);
+        ctx.fill();
+      }
+    });
+    // Surge pricing note
+    ctx.fillStyle = '#8b949e';
+    ctx.font = 'bold 9px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Surge pricing: supply/demand ratio per geospatial zone → fare multiplier', W / 2, H - 10);
+    requestAnimationFrame(draw);
+  }
+  resize();
+  window.addEventListener('resize', resize);
+  draw();
+})();
+
+// Geohash grid canvas
+(function() {
+  const c = document.getElementById('geoCanvas');
+  if (!c) return;
+  const ctx = c.getContext('2d');
+  const DPR = window.devicePixelRatio || 1;
+  c.width = 400 * DPR; c.height = 200 * DPR;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  let frame = 0;
+  function draw() {
+    ctx.clearRect(0, 0, 400, 200);
+    frame++;
+    // Draw geohash grid
+    const gridX = 20, gridY = 20, cellSize = 40, cols = 4, rows = 4;
+    const geohashes = ['9q8y', '9q8z', '9q9p', '9q9r', '9q8v', '9q8w', '9q9n', '9q9q', '9q8s', '9q8t', '9q9j', '9q9m', '9q8e', '9q8f', '9q9h', '9q9k'];
+    for (let r = 0; r < rows; r++) {
+      for (let col = 0; col < cols; col++) {
+        const x = gridX + col * cellSize;
+        const y = gridY + r * cellSize;
+        ctx.strokeStyle = '#30363d';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x, y, cellSize, cellSize);
+        ctx.fillStyle = '#8b949e';
+        ctx.font = '7px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(geohashes[r * cols + col], x + cellSize / 2, y + cellSize / 2 + 2);
+      }
+    }
+    // Animated drivers as dots
+    const driverPositions = [
+      {x: 55, y: 45}, {x: 90, y: 70}, {x: 135, y: 55}, {x: 60, y: 130},
+      {x: 140, y: 120}, {x: 100, y: 150}
+    ];
+    driverPositions.forEach((d, i) => {
+      const pulse = Math.sin(frame * 0.05 + i) * 2;
+      ctx.fillStyle = '#3fb950';
+      ctx.beginPath(); ctx.arc(d.x, d.y, 3 + pulse * 0.3, 0, Math.PI * 2); ctx.fill();
+    });
+    // Rider pin
+    const riderX = 95, riderY = 90;
+    ctx.fillStyle = '#f85149';
+    ctx.beginPath(); ctx.arc(riderX, riderY, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#e6edf3';
+    ctx.font = 'bold 7px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('R', riderX, riderY + 2.5);
+    // Search radius
+    const radiusPulse = 30 + Math.sin(frame * 0.03) * 5;
+    ctx.strokeStyle = '#58a6ff40';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(riderX, riderY, radiusPulse, 0, Math.PI * 2); ctx.stroke();
+    // Legend
+    ctx.textAlign = 'left';
+    ctx.font = '10px sans-serif';
+    ctx.fillStyle = '#3fb950';
+    ctx.beginPath(); ctx.arc(230, 40, 4, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#8b949e';
+    ctx.fillText('Available driver', 240, 44);
+    ctx.fillStyle = '#f85149';
+    ctx.beginPath(); ctx.arc(230, 60, 4, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#8b949e';
+    ctx.fillText('Rider (searching)', 240, 64);
+    ctx.strokeStyle = '#58a6ff40';
+    ctx.beginPath(); ctx.arc(230, 80, 8, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = '#8b949e';
+    ctx.fillText('Search radius', 240, 84);
+    ctx.font = 'bold 9px sans-serif';
+    ctx.fillStyle = '#8b949e';
+    ctx.textAlign = 'center';
+    ctx.fillText('Geohash Grid — GEOSEARCH within radius', 200, 195);
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+</script>
+<footer style="text-align:center;padding:1rem;border-top:1px solid #ccc;margin-top:2rem;color:#666;font-size:0.8rem;">
+    © <span id="copyright-year"></span> Clark Ngo
+  </footer>
+  <script>document.getElementById('copyright-year').textContent = new Date().getFullYear();</script>
+</body>
+</html>

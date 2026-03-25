@@ -105,8 +105,36 @@
     #print-summary td{padding:.2rem .5rem;vertical-align:top}
     #print-summary td:first-child{font-weight:bold;white-space:nowrap;width:180px}
     @media print{body>*:not(#print-summary){display:none!important}#print-summary{display:block!important}}
+      /* Export success banner */
+    #export-success-banner{display:none;position:fixed;bottom:0;left:0;right:0;background:linear-gradient(135deg,#1c2a1c,#0d1117);border-top:2px solid #3fb950;padding:1.5rem;text-align:center;z-index:9999;box-shadow:0 -4px 12px rgba(0,0,0,.5)}
+    #export-success-banner.show{display:block;animation:slideUp .4s ease-out}
+    @keyframes slideUp{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}
+    #export-success-banner h3{color:#3fb950;margin:0 0 .75rem;font-size:1.1rem}
+    #export-success-banner p{color:#8b949e;margin:0 0 1rem;font-size:.95rem}
+    #export-success-banner button{background:#3fb950;color:#000;border:none;border-radius:6px;padding:.6rem 1.5rem;cursor:pointer;font-weight:600;font-size:.95rem;transition:background .15s}
+    #export-success-banner button:hover{background:#2ea043}
+    /* Interactive Tour System */
+    #tour-modal{position:fixed;top:0;left:0;right:0;bottom:0;z-index:10000;display:none}
+    #tour-modal.show{display:flex;align-items:center;justify-content:center}
+    .tour-backdrop{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);backdrop-filter:blur(4px);z-index:10000}
+    .tour-container{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#0d1117;border:2px solid #1f6feb;border-radius:12px;padding:2rem;max-width:700px;width:90%;max-height:85vh;overflow-y:auto;z-index:10001;box-shadow:0 20px 60px rgba(0,0,0,.8)}
+    .tour-close{position:absolute;top:1rem;right:1rem;background:none;border:none;color:#8b949e;font-size:1.5rem;cursor:pointer;padding:0;width:32px;height:32px;display:flex;align-items:center;justify-content:center}
+    .tour-close:hover{color:#58a6ff}
+    .tour-step{display:none}
+    .tour-step.show{display:block}
+    .tour-step h2{color:#e6edf3;margin:0 0 1rem;font-size:1.3rem}
+    .tour-step p{color:#8b949e;margin:.5rem 0;line-height:1.65;font-size:.95rem}
+    .tour-highlight{background:#1c2a1c;border:2px solid #3fb950;border-radius:8px;padding:1rem;margin:1rem 0;color:#3fb950;font-weight:600;font-size:.9rem;text-align:center}
+    .tour-nav{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-top:2rem;padding-top:1.5rem;border-top:1px solid #30363d}
+    .tour-btn{background:#1f6feb;color:#fff;border:none;border-radius:6px;padding:.5rem 1rem;cursor:pointer;font-size:.9rem;font-weight:600;transition:background .15s}
+    .tour-btn:hover{background:#1c64e8}
+    .tour-btn-skip{background:transparent;color:#8b949e;border:1px solid #30363d;font-weight:400}
+    .tour-btn-skip:hover{border-color:#58a6ff;color:#58a6ff}
+    #tour-counter{color:#8b949e;font-size:.9rem;font-weight:600}
   </style>
-</head>
+    <meta name="author" content="Clark Ngo">
+    <meta name="copyright" content="Clark Ngo">
+  </head>
 <body>
 
 <nav class="navbar">
@@ -114,6 +142,8 @@
   <div class="nav-actions">
     <span class="nav-pill">Module 3 Lab</span>
     <button onclick="resetLab()" style="background:none;border:1px solid #30363d;border-radius:6px;padding:.25rem .6rem;color:#8b949e;cursor:pointer;font-size:.75rem" title="Reset lab progress">↺ Reset</button>
+    <button onclick="showTourModal(1)" title="How Labs Work" style="background:none;border:1px solid #30363d;border-radius:6px;padding:.25rem .6rem;color:#8b949e;cursor:pointer;font-size:.75rem;transition:border-color .15s" onmouseover="this.style.borderColor='#58a6ff';this.style.color='#58a6ff'" onmouseout="this.style.borderColor='#30363d';this.style.color='#8b949e'">❓ Help</button>
+    <button onclick="closeTab()" style="background:#2a1c1c;color:#f85149;border:1px solid #da3633;border-radius:6px;padding:.35rem .8rem;cursor:pointer;font-size:.82rem;font-weight:600;transition:border-color .15s" onmouseover="this.style.background='#3a1a1a'" onmouseout="this.style.background='#2a1c1c'">✕ Exit Lab</button>
   </div>
 </nav>
 
@@ -263,12 +293,7 @@
   <!-- Quiz -->
   <div class="question-box">
     <p class="question-text">❓ You're storing encrypted medical records. An attacker — without knowing the key — manages to corrupt specific fields in the database without detection. Which AES mode was most likely being used?</p>
-    <div class="options-grid">
-      <button class="opt-btn" onclick="check('A',this)"><span class="opt-id">A</span> AES-GCM</button>
-      <button class="opt-btn" onclick="check('B',this)"><span class="opt-id">B</span> AES-CBC without a MAC</button>
-      <button class="opt-btn" onclick="check('C',this)"><span class="opt-id">C</span> AES-CTR with HMAC-SHA256</button>
-      <button class="opt-btn" onclick="check('D',this)"><span class="opt-id">D</span> AES-GCM with AAD</button>
-    </div>
+    <div class="options-grid" id="quiz-options-grid"></div>
   </div>
   <div id="feedback" class="feedback-box"></div>
 
@@ -293,13 +318,17 @@
     </div>
 
     <div id="submission-area" class="sub-area-locked">
-      <textarea class="reflection-input" id="learning-reflection" placeholder="Describe what you learned about AES cipher modes and message authentication. Why does the mode choice matter? What surprised you about ECB pattern leakage or the bit-flip attack?
+      <!-- REQUIRED: Learning Reflection -->
+      <div style="background:#0d1a2e;border:2px solid #1f6feb;border-radius:8px;padding:1rem;margin-bottom:1rem">
+        <label style="color:#58a6ff;font-size:.95rem;font-weight:700;display:block;margin-bottom:.4rem">📝 Your Learning Reflection <span style="color:#f85149;font-size:.8rem;font-weight:600">★ Required</span></label>
+        <textarea class="reflection-input" id="learning-reflection" placeholder="Describe what you learned about AES cipher modes and message authentication. Why does the mode choice matter? What surprised you about ECB pattern leakage or the bit-flip attack?
 
 Please write at least 4-5 sentences about your key insights..."></textarea>
-
-      <div style="margin-top:.75rem">
-        <label style="color:#e6edf3;font-size:.9rem;font-weight:600">🔍 Lab Observations</label>
-        <p style="color:#8b949e;font-size:.82rem;margin:.2rem 0 .3rem">Was there anything within the lab you expected to change, but didn't?</p>
+      </div>
+      <!-- OPTIONAL: Lab Observations -->
+      <div style="border-top:1px solid #30363d;margin-top:.5rem;padding-top:1rem">
+        <label style="color:#8b949e;font-size:.88rem;font-weight:600;display:block;margin-bottom:.25rem">🔍 Lab Observations <span style="font-size:.78rem;font-weight:400">(Optional)</span></label>
+        <p style="color:#6e7681;font-size:.8rem;margin:.1rem 0 .35rem">Was there anything within the lab you expected to change, but didn't?</p>
         <textarea class="reflection-input" id="lab-feedback" placeholder="Share any observations, surprises, or things that felt missing..." style="min-height:80px"></textarea>
       </div>
 
@@ -327,13 +356,10 @@ Please write at least 4-5 sentences about your key insights..."></textarea>
   </div>
 
   <div class="lab-footer">
-    <span class="text-muted">Module 3 Lab – Symmetric Encryption &amp; MACs</span>
-    <div>
-    </div>
+    <a href="02-stream-block-ciphers.html" class="btn-nav">← Lab 02</a>
+    <span class="text-muted">Module 3</span>
   </div>
-</div>
-
-<!-- PDF Print Summary -->
+</div><!-- PDF Print Summary -->
 <div id="print-summary">
   <h1>Module 3 Lab – Symmetric Encryption &amp; Message Authentication</h1>
   <p style="color:#555;font-size:.9rem;margin-top:0">Cybersecurity Lab Submission</p>
@@ -367,6 +393,41 @@ Please write at least 4-5 sentences about your key insights..."></textarea>
 </div>
 
 <script>
+function closeTab(){
+  if(confirm(`Are you done with this lab? Click OK to close the tab, or Cancel to continue.`)){
+    window.close();
+    setTimeout(function(){window.location.href='../index.html';},300);
+  }
+}
+
+// ── Quiz Randomization ──
+const QUIZ_OPTIONS = [
+  {text:'AES-CBC without a MAC', correct:true, feedback:'<strong>AES-CBC without a MAC</strong> is the classic bit-flip target. Flipping bits in ciphertext block C<sub>n-1</sub> causes predictable XOR corruption in plaintext block P<sub>n</sub> — without touching the key or triggering any error. Always pair CBC with HMAC, or use AES-GCM which provides authentication natively.'},
+  {text:'AES-GCM', correct:false, feedback:'<strong>AES-GCM</strong> is an Authenticated Encryption with Associated Data (AEAD) mode — it combines encryption <em>and</em> a built-in authentication tag (GHASH). Any modification to the ciphertext causes tag verification to fail, and the tampered data is rejected before it is ever decrypted.'},
+  {text:'AES-CTR with HMAC-SHA256', correct:false, feedback:'<strong>AES-CTR + HMAC-SHA256</strong> is a valid secure combination known as Encrypt-then-MAC. CTR mode handles encryption; HMAC provides integrity. The HMAC covers the full ciphertext, so any bit flip changes the HMAC and is detected before decryption. This is a recommended authenticated encryption pattern.'},
+  {text:'AES-GCM with AAD', correct:false, feedback:'<strong>AES-GCM with AAD</strong> is even stronger than plain GCM. The Additional Authenticated Data extends integrity protection to unencrypted metadata (e.g., packet headers, sender IDs). Tampering with either the ciphertext <em>or</em> the AAD causes authentication failure — nothing gets decrypted.'},
+];
+const _shuffled = (function(){
+  const a=[...QUIZ_OPTIONS];
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  return a;
+})();
+const _LABELS=['A','B','C','D'];
+let _correctBtn=null;
+
+document.addEventListener('DOMContentLoaded',function(){
+  const grid=document.getElementById('quiz-options-grid');
+  if(!grid)return;
+  _shuffled.forEach(function(opt,i){
+    const btn=document.createElement('button');
+    btn.className='opt-btn';
+    if(opt.correct)_correctBtn=btn;
+    btn.onclick=function(){checkQ(btn,opt.correct,opt.feedback);};
+    btn.innerHTML='<span class="opt-id">'+_LABELS[i]+'</span>'+opt.text;
+    grid.appendChild(btn);
+  });
+});
+
 // ── Shared JS (inlined) ──
 function showFeedback(correct, html) {
   const fb = document.getElementById('feedback');
@@ -444,6 +505,12 @@ function loadState() {
     }
     if (state.labFeedback && document.getElementById('lab-feedback')) {
       document.getElementById('lab-feedback').value = state.labFeedback;
+    }
+    if (quizPassed) {
+      const fb=document.getElementById('feedback');
+      if(fb){fb.className='feedback-box show feedback-correct';}
+      const why = document.getElementById('why-matters');
+      if (why) why.classList.add('show');
     }
   } catch(e) {}
 }
@@ -698,24 +765,17 @@ function checkReflectionLock() {
 }
 
 // ── Quiz ──
-const HINTS3 = {
-  A: 'AES-GCM includes a cryptographic auth tag — any modification is immediately detected.',
-  C: 'CTR mode with HMAC-SHA256 properly authenticates ciphertext; tampering would be caught.',
-  D: 'GCM with AAD (Additional Authenticated Data) provides even stronger protection.',
-};
-function check(choice, btn) {
-  quizAttempts++;
-  const correct = choice === 'B';
-  markBtn(btn, correct);
-  if (correct) {
-    quizPassed = true;
-    showFeedback(true, '<strong>AES-CBC without a MAC</strong> is vulnerable to bit-flip attacks. Flipping bits in ciphertext block C<sub>i-1</sub> causes predictable XOR corruption of plaintext block P<sub>i</sub> — without touching the key. Always pair CBC with HMAC, or switch to AES-GCM which includes authentication natively.');
-    checkReflectionLock();
-    saveState();
-  } else {
-    showFeedback(false, HINTS3[choice]);
-    checkReflectionLock();
-  }
+function checkQ(btn,isCorrect,feedbackText){
+  if(!quizPassed)quizAttempts++;
+  document.querySelectorAll('.opt-btn').forEach(function(b){b.classList.remove('incorrect','correct');});
+  if(quizPassed&&_correctBtn)_correctBtn.classList.add('correct');
+  btn.classList.add(isCorrect?'correct':'incorrect');
+  if(isCorrect){quizPassed=true;}
+  const fb=document.getElementById('q-feedback')||document.getElementById('feedback');
+  fb.className='feedback-box show '+(isCorrect?'feedback-correct':'feedback-incorrect');
+  fb.innerHTML=(isCorrect?'✅ ':'❌ ')+feedbackText;
+  const wb=document.getElementById('why-box');if(isCorrect&&wb)wb.classList.add('show');
+  saveState();checkReflectionLock();if(typeof updateObj==='function')updateObj();
 }
 
 // ── Submission ──
@@ -787,6 +847,11 @@ function exportPDF() {
   setTimeout(() => {
     document.title = _origTitle;
     document.getElementById('print-summary').style.display = 'none';
+    // Show success banner with exit button
+    const banner = document.getElementById('export-success-banner');
+    banner.classList.add('show');
+    // Auto-hide banner after 8 seconds (user can still exit anytime)
+    setTimeout(() => banner.classList.remove('show'), 8000);
   }, 500);
 }
 
@@ -806,5 +871,180 @@ document.addEventListener('DOMContentLoaded', () => {
   checkReflectionLock();
 });
 </script>
+<footer style="text-align:center;padding:1rem;border-top:1px solid #ccc;margin-top:2rem;color:#666;font-size:0.8rem;">
+    © <span id="copyright-year"></span> Clark Ngo
+  </footer>
+  <script>document.getElementById('copyright-year').textContent = new Date().getFullYear();
+
+// ═══════════════════════════════════════════════════
+// TOUR SYSTEM
+// ═══════════════════════════════════════════════════
+let tourCurrentStep = 1;
+const tourTotalSteps = 6;
+
+function initTourSystem() {
+  // Check if this is Lab 01 and first visit
+  const tourSeenKey = 'cryptography-tour-seen-v1';
+  const isLab01 = window.location.pathname.includes('01-cia-triad');
+  const tourSeen = localStorage.getItem(tourSeenKey);
+  
+  // Auto-show tour on Lab 01 first visit
+  if (isLab01 && !tourSeen) {
+    setTimeout(() => showTourModal(1), 800);
+  }
+}
+
+function showTourModal(stepNum) {
+  tourCurrentStep = stepNum;
+  const modal = document.getElementById('tour-modal');
+  modal.classList.add('show');
+  
+  // Show only current step
+  for (let i = 1; i <= tourTotalSteps; i++) {
+    const step = document.getElementById(`tour-step-${i}`);
+    if (step) step.classList.remove('show');
+  }
+  const currentStep = document.getElementById(`tour-step-${stepNum}`);
+  if (currentStep) currentStep.classList.add('show');
+  
+  // Update counter
+  document.getElementById('tour-counter').textContent = `Step ${stepNum} of ${tourTotalSteps}`;
+  
+  // Update button states
+  const prevBtn = document.getElementById('tour-prev-btn');
+  if (stepNum === 1) {
+    prevBtn.style.opacity = '.5';
+    prevBtn.style.pointerEvents = 'none';
+  } else {
+    prevBtn.style.opacity = '1';
+    prevBtn.style.pointerEvents = 'auto';
+  }
+  
+  const nextBtn = document.getElementById('tour-next-btn');
+  if (stepNum === tourTotalSteps) {
+    nextBtn.textContent = 'Close Tour →';
+    nextBtn.onclick = () => closeTour();
+  } else {
+    nextBtn.textContent = 'Next →';
+    nextBtn.onclick = () => nextTourStep();
+  }
+}
+
+function nextTourStep() {
+  if (tourCurrentStep < tourTotalSteps) {
+    showTourModal(tourCurrentStep + 1);
+  } else {
+    closeTour();
+  }
+}
+
+function prevTourStep() {
+  if (tourCurrentStep > 1) {
+    showTourModal(tourCurrentStep - 1);
+  }
+}
+
+function closeTour() {
+  const modal = document.getElementById('tour-modal');
+  modal.classList.remove('show');
+  localStorage.setItem('cryptography-tour-seen-v1', 'true');
+}
+
+function skipTour() {
+  closeTour();
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', initTourSystem);
+
+</script>
+<div id="export-success-banner">
+  <h3>✅ PDF exported successfully!</h3>
+  <p>Your lab work has been saved as a PDF. You can now exit the lab or continue exploring.</p>
+  <button onclick="closeTab()">✕ Exit Lab</button>
+</div>
+<div id="tour-modal">
+  <div class="tour-backdrop"></div>
+  <div class="tour-container">
+    <button class="tour-close" onclick="closeTour()">✕</button>
+    
+    <div id="tour-step-1" class="tour-step show">
+      <h2>🔐 Welcome to Cryptography Labs!</h2>
+      <p>Let's take a quick tour of how these labs work. By the end, you'll understand:</p>
+      <ul style="margin:1rem 0;padding-left:1.5rem;color:#8b949e">
+        <li>The objective system that unlocks submission</li>
+        <li>How to use interactive playgrounds</li>
+        <li>How to complete and submit your work</li>
+      </ul>
+      <p style="margin-top:1.5rem">Ready? Let's go!</p>
+    </div>
+    
+    <div id="tour-step-2" class="tour-step">
+      <h2>📋 Track Your Progress with Objectives</h2>
+      <p>Every lab has <strong>multiple objectives</strong> you need to complete. Different labs have different objectives based on what you'll learn:</p>
+      <ul style="margin:1rem 0;padding-left:1.5rem;color:#8b949e">
+        <li>Answer the mini quiz correctly</li>
+        <li>Complete interactive activities</li>
+        <li>Try different scenarios</li>
+        <li>Gather insights and explore concepts</li>
+      </ul>
+      <div class="tour-highlight">Look for the 📋 badge in the bottom-right corner →</div>
+      <p style="margin-top:1rem">Your <strong>submission area is locked</strong> until all objectives are done. This ensures you learn before submitting!</p>
+    </div>
+    
+    <div id="tour-step-3" class="tour-step">
+      <h2>🎮 Learn by Doing — Interactive Playgrounds</h2>
+      <p>Each lab has interactive sections where you can:</p>
+      <ul style="margin:1rem 0;padding-left:1.5rem;color:#8b949e">
+        <li><strong>Choose options</strong> — Select from encryption types, parameters, etc.</li>
+        <li><strong>Adjust sliders</strong> — Change key length, block size, sensitivity</li>
+        <li><strong>See results instantly</strong> — Outputs update as you experiment</li>
+        <li><strong>Learn patterns</strong> — Understand trade-offs between choices</li>
+      </ul>
+      <p style="margin-top:1rem">Don't worry about "wrong" answers — this is exploration! Try different combinations.</p>
+    </div>
+    
+    <div id="tour-step-4" class="tour-step">
+      <h2>❓ Test Your Understanding with the Quiz</h2>
+      <p>Each lab has a multiple-choice question to test what you've learned.</p>
+      <div class="tour-highlight">💡 Answers are randomized every time you reload — no guessing!</div>
+      <ul style="margin:1rem 0;padding-left:1.5rem;color:#8b949e">
+        <li>Read each option carefully</li>
+        <li>Think about what you observed in the playground</li>
+        <li>Instant feedback tells you if you're right</li>
+      </ul>
+      <p style="margin-top:1rem">Getting it wrong is fine! You can try again.</p>
+    </div>
+    
+    <div id="tour-step-5" class="tour-step">
+      <h2>📝 Share Your Learning in the Reflection</h2>
+      <p>Once all objectives are complete, the submission area unlocks.</p>
+      <p><strong>📌 Required: Learning Reflection</strong></p>
+      <p style="color:#8b949e;margin:.5rem 0">Share what you learned in your own words. How would you explain this to a friend? Why does it matter?</p>
+      <p><strong>🔍 Optional: Lab Observations</strong></p>
+      <p style="color:#8b949e;margin:.5rem 0">Any interesting findings? Edge cases you discovered? Patterns you noticed?</p>
+      <p style="margin-top:1rem;color:#f85149"><strong>Tip:</strong> Write thoughtfully — this reflection proves you understand the concept, not just completed activities.</p>
+    </div>
+    
+    <div id="tour-step-6" class="tour-step">
+      <h2>📄 Export Your Work & Exit</h2>
+      <p>When you're ready to finish:</p>
+      <ul style="margin:1rem 0;padding-left:1.5rem;color:#8b949e">
+        <li><strong>Click "Export PDF"</strong> — Saves a summary of your work (quiz result, interactions, reflection)</li>
+        <li><strong>See the success banner</strong> — Green notification appears at the bottom with an "Exit Lab" button</li>
+        <li><strong>Click to exit</strong> — Closes the lab and returns to the lab home page</li>
+      </ul>
+      <div class="tour-highlight">You can always return to previous labs — all your work is saved in the browser</div>
+      <p style="margin-top:1rem">One more thing: <strong>you can only navigate backward</strong> through labs. This ensures you don't skip ahead! 🔒</p>
+    </div>
+    
+    <div class="tour-nav">
+      <button id="tour-prev-btn" class="tour-btn" onclick="prevTourStep()" style="opacity:.5;cursor:not-allowed">← Previous</button>
+      <span id="tour-counter">Step 1 of 6</span>
+      <button id="tour-next-btn" class="tour-btn" onclick="nextTourStep()">Next →</button>
+      <button class="tour-btn tour-btn-skip" onclick="skipTour()" style="float:right">Skip</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>

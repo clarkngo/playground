@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Design a URL Shortener — System Design Trainer</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0d1117;color:#e6edf3;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;line-height:1.7}
+a{color:#58a6ff;text-decoration:none}a:hover{text-decoration:underline}
+nav{background:#161b22;border-bottom:1px solid #30363d;padding:16px 24px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100}
+.brand{font-size:1.2rem;font-weight:700}.back{color:#8b949e;font-size:.9rem}
+.container{max-width:960px;margin:0 auto;padding:24px 20px}
+.hero{background:linear-gradient(135deg,#0d2d0d 0%,#1a1e24 100%);border:1px solid #30363d;border-radius:12px;padding:48px 36px;margin-bottom:36px;text-align:center}
+.hero h1{font-size:2.2rem;margin-bottom:8px}.hero .tagline{color:#3fb950;font-size:1.1rem;margin-bottom:6px}.hero .meta{color:#8b949e;font-size:.9rem}
+.step{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:28px;margin-bottom:24px}
+.step h2{font-size:1.4rem;margin-bottom:6px;display:flex;align-items:center;gap:10px}
+.step-num{background:#1f6feb;color:#fff;font-size:.75rem;font-weight:700;padding:2px 10px;border-radius:12px}
+.step p.desc{color:#8b949e;font-size:.9rem;margin-bottom:16px}
+.reveal-btn{background:#1f6feb;color:#fff;border:none;border-radius:6px;padding:8px 20px;cursor:pointer;font-weight:600;font-size:.85rem;transition:background .2s;margin-top:12px}
+.reveal-btn:hover{background:#1a60d2}
+.reveal-btn.revealed{background:#30363d;cursor:default}
+.answer{display:none;margin-top:16px;padding:16px;background:#0d1117;border:1px solid #3fb950;border-radius:8px;font-size:.9rem;color:#c9d1d9}
+.answer.show{display:block}
+/* Forms */
+label.chk{display:block;padding:6px 0;color:#c9d1d9;font-size:.9rem;cursor:pointer}
+label.chk input{margin-right:8px;accent-color:#3fb950}
+.radio-group{margin-bottom:8px}
+.radio-group label{display:block;padding:4px 0;color:#c9d1d9;font-size:.9rem;cursor:pointer}
+.radio-group label input{margin-right:8px;accent-color:#1f6feb}
+.sub-label{color:#8b949e;font-size:.8rem;margin-bottom:6px;margin-top:12px}
+/* Capacity */
+.calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.calc-field label{display:block;font-size:.8rem;color:#8b949e;margin-bottom:4px}
+.calc-field input{width:100%;background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:8px 10px;color:#e6edf3;font-size:.9rem}
+.calc-result{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:14px;margin-top:8px}
+.calc-result .row{display:flex;justify-content:space-between;padding:4px 0;font-size:.88rem}
+.calc-result .row .val{color:#3fb950;font-weight:600}
+/* Code blocks */
+pre{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:16px;overflow-x:auto;font-size:.85rem;color:#e6edf3;margin-bottom:8px}
+.method{color:#3fb950;font-weight:700}.endpoint{color:#58a6ff}.param{color:#f0883e}
+/* Data model */
+.toggle-row{display:flex;gap:8px;margin-bottom:12px}
+.toggle-opt{padding:6px 16px;border-radius:6px;border:1px solid #30363d;background:#0d1117;color:#8b949e;cursor:pointer;font-size:.85rem;font-weight:600;transition:all .2s}
+.toggle-opt.active{background:#1f6feb;color:#fff;border-color:#1f6feb}
+table{width:100%;border-collapse:collapse;margin-bottom:8px}
+th,td{text-align:left;padding:8px 12px;border-bottom:1px solid #21262d;font-size:.85rem}
+th{color:#8b949e;font-weight:600;font-size:.75rem;text-transform:uppercase;letter-spacing:.05em}
+td{color:#c9d1d9}
+td.type{color:#f0883e}
+/* Canvas */
+canvas{display:block;width:100%;border:1px solid #30363d;border-radius:8px;background:#0d1117;margin-bottom:8px}
+/* Deep dives */
+.deep-dive{border:1px solid #30363d;border-radius:8px;margin-bottom:10px;overflow:hidden}
+.dd-header{padding:14px 18px;background:#161b22;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-weight:600;font-size:.92rem}
+.dd-header:hover{background:#1c2129}
+.dd-arrow{transition:transform .2s;color:#8b949e}
+.dd-body{display:none;padding:16px 18px;background:#0d1117;font-size:.88rem;color:#c9d1d9;line-height:1.7}
+.dd-body.open{display:block}
+.dd-arrow.open{transform:rotate(180deg)}
+/* Trade-offs */
+.tradeoff-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:8px}
+.tradeoff-card{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:16px}
+.tradeoff-card h4{font-size:.9rem;margin-bottom:8px}
+.tradeoff-card.pro{border-left:3px solid #3fb950}
+.tradeoff-card.con{border-left:3px solid #f0883e}
+.tradeoff-card ul{padding-left:18px;font-size:.85rem;color:#c9d1d9}
+.tradeoff-card li{margin-bottom:4px}
+/* Tips */
+.tip-card{background:#0d1117;border-left:3px solid #1f6feb;border-radius:0 8px 8px 0;padding:14px 18px;margin-bottom:10px;font-size:.9rem;color:#c9d1d9}
+.tip-card strong{color:#58a6ff}
+.correct-mark{color:#3fb950;font-weight:700;margin-left:6px;display:none}
+.incorrect-mark{color:#f85149;font-weight:700;margin-left:6px;display:none}
+@media(max-width:600px){.calc-grid,.tradeoff-grid{grid-template-columns:1fr}.hero{padding:32px 20px}.hero h1{font-size:1.6rem}}
+</style>
+    <meta name="author" content="Clark Ngo">
+    <meta name="copyright" content="Clark Ngo">
+  </head>
+<body>
+<nav><span class="brand">&#127919; Trainer Series</span><a href="index.html" class="back">&larr; All Trainers</a></nav>
+<div class="container">
+
+<div class="hero">
+<h1>Design a URL Shortener</h1>
+<div class="tagline">bit.ly from scratch</div>
+<div class="meta">Classic Interview Problem &bull; Read-Heavy System</div>
+</div>
+
+<!-- Step 1: Requirements -->
+<div class="step" id="step1">
+<h2><span class="step-num">Step 1</span> Requirements Gathering</h2>
+<p class="desc">Identify the functional and non-functional requirements for the URL shortener.</p>
+
+<div class="sub-label">Functional Requirements (check all that apply):</div>
+<label class="chk"><input type="checkbox" data-req="f" data-correct="true"> Shorten a long URL to a short URL</label>
+<label class="chk"><input type="checkbox" data-req="f" data-correct="true"> Redirect short URL to original long URL</label>
+<label class="chk"><input type="checkbox" data-req="f" data-correct="true"> Custom aliases (optional)</label>
+<label class="chk"><input type="checkbox" data-req="f" data-correct="true"> Click analytics (optional)</label>
+<label class="chk"><input type="checkbox" data-req="f" data-correct="true"> URL expiration (optional)</label>
+<label class="chk"><input type="checkbox" data-req="f" data-correct="false"> User authentication required for all URLs</label>
+<label class="chk"><input type="checkbox" data-req="f" data-correct="false"> Support file uploads</label>
+
+<div class="sub-label">What is the expected read:write ratio?</div>
+<div class="radio-group">
+<label><input type="radio" name="rw" value="1:1"> 1:1 (equal reads and writes)</label>
+<label><input type="radio" name="rw" value="10:1"> 10:1</label>
+<label><input type="radio" name="rw" value="100:1"> 100:1 (heavy read)</label>
+<label><input type="radio" name="rw" value="1000:1"> 1000:1</label>
+</div>
+
+<div class="sub-label">Target redirect latency?</div>
+<div class="radio-group">
+<label><input type="radio" name="lat" value="500ms"> &lt;500ms</label>
+<label><input type="radio" name="lat" value="50ms"> &lt;50ms</label>
+<label><input type="radio" name="lat" value="5ms"> &lt;5ms</label>
+</div>
+
+<button class="reveal-btn" onclick="revealStep(1)">Reveal Answer</button>
+<div class="answer" id="ans1">
+<strong>Core Functional:</strong> Shorten URLs, redirect to original, custom aliases (optional), analytics (optional), expiration (optional). Auth and file uploads are out of scope.<br><br>
+<strong>Non-Functional:</strong> 100:1 read:write ratio (URLs are created once, read many times). Target &lt;50ms redirect latency. High availability is critical — downtime means broken links across the internet.
+</div>
+</div>
+
+<!-- Step 2: Capacity Estimation -->
+<div class="step" id="step2">
+<h2><span class="step-num">Step 2</span> Capacity Estimation</h2>
+<p class="desc">Estimate the scale: QPS, storage, and bandwidth.</p>
+
+<div class="calc-grid">
+<div class="calc-field"><label>Daily Active Users (DAU)</label><input type="number" id="dau" value="100000000" oninput="recalc()"></div>
+<div class="calc-field"><label>Writes per user per day</label><input type="number" id="wpd" value="1" oninput="recalc()"></div>
+<div class="calc-field"><label>Read:Write ratio</label><input type="number" id="rwratio" value="100" oninput="recalc()"></div>
+<div class="calc-field"><label>Bytes per URL record</label><input type="number" id="recsize" value="500" oninput="recalc()"></div>
+</div>
+
+<div class="calc-result" id="calcResult">
+<div class="row"><span>Write QPS</span><span class="val" id="wqps">—</span></div>
+<div class="row"><span>Read QPS (redirects)</span><span class="val" id="rqps">—</span></div>
+<div class="row"><span>Storage per day</span><span class="val" id="storday">—</span></div>
+<div class="row"><span>Storage per year</span><span class="val" id="storyear">—</span></div>
+</div>
+
+<button class="reveal-btn" onclick="revealStep(2)">Reveal Answer</button>
+<div class="answer" id="ans2">
+<strong>Reference numbers:</strong><br>
+100M DAU, 1 URL created per user per day = 100M writes/day = ~1,200 writes/sec.<br>
+100:1 read:write ratio = ~120,000 reads/sec (peak: ~139K).<br>
+500 bytes per record &rarr; 50 GB/day new data, ~18 TB/year.<br>
+This is heavily read-dominated — caching is essential.
+</div>
+</div>
+
+<!-- Step 3: API Design -->
+<div class="step" id="step3">
+<h2><span class="step-num">Step 3</span> API Design</h2>
+<p class="desc">Define the REST API endpoints.</p>
+
+<pre><span class="method">POST</span> <span class="endpoint">/api/shorten</span>
+Body: { <span class="param">"long_url"</span>: "https://example.com/very/long/path",
+        <span class="param">"custom_alias"</span>: "my-link",   // optional
+        <span class="param">"expires_at"</span>: "2026-12-31"  // optional
+      }
+Response: { "short_url": "https://sho.rt/abc123" }</pre>
+
+<pre><span class="method">GET</span> <span class="endpoint">/{shortCode}</span>
+Response: <span class="param">301 Redirect</span> → Location: https://example.com/very/long/path</pre>
+
+<pre><span class="method">GET</span> <span class="endpoint">/api/stats/{shortCode}</span>
+Response: { "total_clicks": 15420, "created_at": "...", "top_countries": [...] }</pre>
+
+<pre><span class="method">DELETE</span> <span class="endpoint">/api/{shortCode}</span>
+Response: 204 No Content</pre>
+
+<button class="reveal-btn" onclick="revealStep(3)">Reveal Answer</button>
+<div class="answer" id="ans3">
+<strong>Key decisions:</strong><br>
+&bull; POST for creation (not idempotent — generates unique code each time).<br>
+&bull; 301 (permanent redirect) for better SEO but makes analytics harder (browser caches redirect). Consider 302 (temporary) if analytics are important.<br>
+&bull; Stats endpoint is separate — never block the fast redirect path.<br>
+&bull; Rate limit the POST endpoint to prevent abuse.
+</div>
+</div>
+
+<!-- Step 4: Data Model -->
+<div class="step" id="step4">
+<h2><span class="step-num">Step 4</span> Data Model</h2>
+<p class="desc">Design the database schema.</p>
+
+<div class="toggle-row">
+<div class="toggle-opt active" onclick="toggleDB('sql')">SQL (PostgreSQL)</div>
+<div class="toggle-opt" onclick="toggleDB('nosql')">NoSQL (DynamoDB)</div>
+</div>
+
+<div id="db-sql">
+<table>
+<tr><th colspan="3">urls</th></tr>
+<tr><td>id</td><td class="type">BIGINT PK</td><td>Auto-increment</td></tr>
+<tr><td>short_code</td><td class="type">VARCHAR(10) UNIQUE</td><td>Indexed for lookups</td></tr>
+<tr><td>long_url</td><td class="type">TEXT</td><td>Original URL</td></tr>
+<tr><td>user_id</td><td class="type">BIGINT</td><td>Creator (nullable)</td></tr>
+<tr><td>created_at</td><td class="type">TIMESTAMP</td><td>Creation time</td></tr>
+<tr><td>expires_at</td><td class="type">TIMESTAMP</td><td>Nullable</td></tr>
+</table>
+<table>
+<tr><th colspan="3">analytics</th></tr>
+<tr><td>id</td><td class="type">BIGINT PK</td><td>Auto-increment</td></tr>
+<tr><td>short_code</td><td class="type">VARCHAR(10)</td><td>FK to urls</td></tr>
+<tr><td>timestamp</td><td class="type">TIMESTAMP</td><td>Click time</td></tr>
+<tr><td>referrer</td><td class="type">VARCHAR(500)</td><td>HTTP Referer</td></tr>
+<tr><td>country</td><td class="type">VARCHAR(2)</td><td>Geo from IP</td></tr>
+</table>
+</div>
+
+<div id="db-nosql" style="display:none">
+<table>
+<tr><th colspan="3">URLs Table (DynamoDB)</th></tr>
+<tr><td>short_code</td><td class="type">String (PK)</td><td>Partition key</td></tr>
+<tr><td>long_url</td><td class="type">String</td><td>Original URL</td></tr>
+<tr><td>user_id</td><td class="type">String</td><td>Creator</td></tr>
+<tr><td>created_at</td><td class="type">Number</td><td>Epoch timestamp</td></tr>
+<tr><td>ttl</td><td class="type">Number</td><td>DynamoDB TTL for expiration</td></tr>
+</table>
+<p style="color:#8b949e;font-size:.85rem;margin-top:8px">NoSQL works well here: simple key-value lookup by short_code. DynamoDB TTL handles expiration natively.</p>
+</div>
+
+<button class="reveal-btn" onclick="revealStep(4)">Reveal Answer</button>
+<div class="answer" id="ans4">
+<strong>SQL pros:</strong> ACID guarantees, UNIQUE constraint on short_code prevents collisions natively, joins for analytics.<br>
+<strong>NoSQL pros:</strong> Horizontal scaling, simple key-value access pattern fits perfectly, built-in TTL for expiration.<br>
+Both work. For a URL shortener, the access pattern is simple enough that NoSQL scales more naturally, but SQL is fine up to billions of records with proper indexing.
+</div>
+</div>
+
+<!-- Step 5: Architecture -->
+<div class="step" id="step5">
+<h2><span class="step-num">Step 5</span> High-Level Architecture</h2>
+<p class="desc">Animated request flow through the system.</p>
+<canvas id="archCanvas" width="920" height="300"></canvas>
+<button class="reveal-btn" onclick="revealStep(5)">Reveal Answer</button>
+<div class="answer" id="ans5">
+<strong>Write path:</strong> Client → Load Balancer → App Server → generate base62 code → store in DB → populate cache → return short URL.<br><br>
+<strong>Read path (redirect):</strong> Client → LB → App Server → check Redis cache (99% hit rate) → if miss, query DB → 301 redirect. Cache-aside pattern.<br><br>
+<strong>Key insight:</strong> The Redis cache is the star of this system. With a 100:1 read:write ratio and most URLs accessed repeatedly, a well-tuned cache handles 99%+ of reads without touching the database.
+</div>
+</div>
+
+<!-- Step 6: Deep Dives -->
+<div class="step" id="step6">
+<h2><span class="step-num">Step 6</span> Deep Dives</h2>
+<p class="desc">Explore critical design decisions in detail.</p>
+
+<div class="deep-dive">
+<div class="dd-header" onclick="toggleDD(this)">Short Code Generation Strategies <span class="dd-arrow">&#9660;</span></div>
+<div class="dd-body">
+<strong>Option A: Base62 Counter</strong><br>
+Use an auto-incrementing counter, encode to base62 (a-z, A-Z, 0-9). A 7-char code gives 62^7 = 3.5 trillion unique URLs. Simple, no collisions. But: predictable (sequential), needs distributed counter coordination.<br><br>
+<strong>Option B: MD5 Hash (first 7 chars)</strong><br>
+Hash the long URL with MD5, take first 7 characters. Deterministic — same URL always gets same code. But: collision probability increases with scale. Need collision resolution (append counter).<br><br>
+<strong>Option C: Pre-generated Key Ranges</strong><br>
+A Key Generation Service (KGS) pre-generates random keys and stores them in a DB. App servers fetch a batch. No collisions, no coordination at write time. Slight overhead for the KGS, but best for distributed systems.<br><br>
+<strong>Recommendation:</strong> KGS for production. Base62 counter for simpler deployments.
+</div>
+</div>
+
+<div class="deep-dive">
+<div class="dd-header" onclick="toggleDD(this)">Cache Strategy <span class="dd-arrow">&#9660;</span></div>
+<div class="dd-body">
+<strong>Cache-aside pattern:</strong> On read, check Redis first. Cache miss → query DB → populate cache → return. On write, write to DB then cache.<br><br>
+<strong>Why not write-through?</strong> Most URLs are created and never accessed again. Cache-aside only caches URLs that are actually requested, saving memory.<br><br>
+<strong>TTL strategy:</strong> Set cache TTL to match URL expiration if set. For non-expiring URLs, use LRU eviction. Hot URLs stay cached naturally.<br><br>
+<strong>Cache sizing:</strong> If 20% of URLs get 80% of traffic (Pareto), caching ~20% of total URLs handles most reads. For 5 billion URLs at 500 bytes, 20% = ~500GB in Redis — achievable with a Redis cluster.
+</div>
+</div>
+
+<div class="deep-dive">
+<div class="dd-header" onclick="toggleDD(this)">Analytics Pipeline <span class="dd-arrow">&#9660;</span></div>
+<div class="dd-body">
+<strong>Critical rule:</strong> Never block the redirect to record analytics. The redirect must be fast (&lt;50ms).<br><br>
+<strong>Async pipeline:</strong> On each redirect, push a click event to Kafka (fire and forget). A consumer reads from Kafka, enriches with geo data (IP → country), and writes to an analytics store (ClickHouse or time-series DB).<br><br>
+<strong>Real-time vs batch:</strong> Kafka consumers can aggregate in micro-batches (every 5 seconds) for efficiency. Real-time dashboard reads from a pre-aggregated materialized view.
+</div>
+</div>
+</div>
+
+<!-- Step 7: Trade-offs -->
+<div class="step" id="step7">
+<h2><span class="step-num">Step 7</span> Trade-offs</h2>
+<p class="desc">Compare key architectural decisions.</p>
+
+<p style="color:#8b949e;font-size:.85rem;margin-bottom:10px">SQL vs NoSQL</p>
+<div class="tradeoff-grid">
+<div class="tradeoff-card pro"><h4>SQL (PostgreSQL)</h4><ul><li>UNIQUE constraint prevents collisions</li><li>ACID transactions</li><li>Rich analytics queries with JOINs</li><li>Mature tooling and backup</li></ul></div>
+<div class="tradeoff-card con"><h4>NoSQL (DynamoDB)</h4><ul><li>Horizontal scaling out of the box</li><li>Simple key-value access pattern fits perfectly</li><li>Built-in TTL for expiration</li><li>Lower latency at extreme scale</li></ul></div>
+</div>
+
+<p style="color:#8b949e;font-size:.85rem;margin-bottom:10px">Base62 Counter vs Hash</p>
+<div class="tradeoff-grid">
+<div class="tradeoff-card pro"><h4>Base62 Counter</h4><ul><li>Zero collision probability</li><li>Short, sequential codes</li><li>Simple implementation</li><li>Needs distributed coordination</li></ul></div>
+<div class="tradeoff-card con"><h4>MD5 Hash (truncated)</h4><ul><li>Stateless — no counter needed</li><li>Same URL always gets same code</li><li>Collision resolution adds complexity</li><li>Slightly longer codes</li></ul></div>
+</div>
+
+<p style="color:#8b949e;font-size:.85rem;margin-bottom:10px">301 vs 302 Redirect</p>
+<div class="tradeoff-grid">
+<div class="tradeoff-card pro"><h4>301 (Permanent)</h4><ul><li>Browser caches — faster subsequent visits</li><li>Better for SEO link juice</li><li>Reduces load on our servers</li><li>Loses analytics (browser skips us)</li></ul></div>
+<div class="tradeoff-card con"><h4>302 (Temporary)</h4><ul><li>Every click hits our server</li><li>Accurate analytics tracking</li><li>Can change destination later</li><li>Slightly higher latency for users</li></ul></div>
+</div>
+</div>
+
+<!-- Step 8: Interview Tips -->
+<div class="step" id="step8">
+<h2><span class="step-num">Step 8</span> Interview Tips</h2>
+<p class="desc">Key points to mention in your interview.</p>
+
+<div class="tip-card"><strong>Start with requirements clarification.</strong> Ask about scale (how many URLs per day?), read:write ratio, custom aliases, and whether analytics are needed. This shows structured thinking.</div>
+<div class="tip-card"><strong>Do capacity math early.</strong> Calculating QPS, storage, and bandwidth up front frames the entire design. It tells you whether you need caching, sharding, or can get away with a single server.</div>
+<div class="tip-card"><strong>Mention the cache hit ratio.</strong> A URL shortener with 99% cache hit rate means the DB only handles 1% of reads. This is the single most impactful optimization — make sure the interviewer knows you thought about it.</div>
+<div class="tip-card"><strong>Discuss 301 vs 302 implications.</strong> This is a subtle but important trade-off. 301 is better for users (faster) but worse for analytics (browser caches the redirect). 302 gives you full visibility. Mentioning this shows depth.</div>
+</div>
+
+</div>
+
+<script>
+function revealStep(n){
+  const ans=document.getElementById(`ans${n}`);
+  const btn=ans.previousElementSibling;
+  if(ans.classList.contains('show'))return;
+  ans.classList.add('show');
+  btn.textContent='Answer Revealed';
+  btn.classList.add('revealed');
+  if(n===1)gradeRequirements();
+}
+
+function gradeRequirements(){
+  document.querySelectorAll('[data-req="f"]').forEach(cb=>{
+    const li=cb.parentElement;
+    const correct=cb.dataset.correct==='true';
+    if(cb.checked&&correct){li.style.color='#3fb950';}
+    else if(cb.checked&&!correct){li.style.color='#f85149';}
+    else if(!cb.checked&&correct){li.style.color='#f0883e';}
+  });
+  const rw=document.querySelector('input[name="rw"]:checked');
+  if(rw){
+    rw.parentElement.style.color=rw.value==='100:1'?'#3fb950':'#f85149';
+    document.querySelectorAll('input[name="rw"]').forEach(r=>{
+      if(r.value==='100:1'&&r!==rw)r.parentElement.style.color='#f0883e';
+    });
+  }
+  const lat=document.querySelector('input[name="lat"]:checked');
+  if(lat){
+    lat.parentElement.style.color=lat.value==='50ms'?'#3fb950':'#f85149';
+  }
+}
+
+function recalc(){
+  const dau=parseFloat(document.getElementById('dau').value)||0;
+  const wpd=parseFloat(document.getElementById('wpd').value)||0;
+  const rw=parseFloat(document.getElementById('rwratio').value)||0;
+  const rec=parseFloat(document.getElementById('recsize').value)||0;
+  const writesDay=dau*wpd;
+  const wqps=Math.round(writesDay/86400);
+  const rqps=Math.round(wqps*rw*1.16);
+  const storDay=writesDay*rec;
+  const storYear=storDay*365;
+  document.getElementById('wqps').textContent=wqps.toLocaleString()+' /sec';
+  document.getElementById('rqps').textContent='~'+rqps.toLocaleString()+' /sec';
+  document.getElementById('storday').textContent=formatBytes(storDay)+'/day';
+  document.getElementById('storyear').textContent=formatBytes(storYear)+'/year';
+}
+function formatBytes(b){
+  if(b<1024)return b+' B';
+  if(b<1048576)return (b/1024).toFixed(1)+' KB';
+  if(b<1073741824)return (b/1048576).toFixed(1)+' MB';
+  if(b<1099511627776)return (b/1073741824).toFixed(1)+' GB';
+  return (b/1099511627776).toFixed(1)+' TB';
+}
+recalc();
+
+function toggleDB(type){
+  document.querySelectorAll('.toggle-opt').forEach(o=>o.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('db-sql').style.display=type==='sql'?'block':'none';
+  document.getElementById('db-nosql').style.display=type==='nosql'?'block':'none';
+}
+
+function toggleDD(el){
+  const body=el.nextElementSibling;
+  const arrow=el.querySelector('.dd-arrow');
+  body.classList.toggle('open');
+  arrow.classList.toggle('open');
+}
+
+// Architecture canvas
+(function(){
+  const c=document.getElementById('archCanvas');
+  const ctx=c.getContext('2d');
+  const DPR=window.devicePixelRatio||1;
+  let W,H;
+  function resize(){
+    W=c.clientWidth;H=300;
+    c.width=W*DPR;c.height=H*DPR;
+    c.style.height=H+'px';
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+  }
+  resize();
+  window.addEventListener('resize',resize);
+
+  const boxes=[
+    {label:'Client',x:.06,y:.5,w:70,h:32,color:'#e6edf3'},
+    {label:'Load Balancer',x:.22,y:.5,w:90,h:32,color:'#58a6ff'},
+    {label:'App Server 1',x:.40,y:.30,w:85,h:28,color:'#3fb950'},
+    {label:'App Server 2',x:.40,y:.70,w:85,h:28,color:'#3fb950'},
+    {label:'Redis Cache',x:.60,y:.30,w:80,h:28,color:'#f0883e'},
+    {label:'PostgreSQL',x:.60,y:.70,w:80,h:28,color:'#bc8cff'},
+    {label:'Kafka',x:.80,y:.30,w:65,h:28,color:'#f85149'},
+    {label:'Analytics DB',x:.80,y:.70,w:80,h:28,color:'#8b949e'}
+  ];
+  const lines=[[0,1],[1,2],[1,3],[2,4],[3,5],[2,5],[4,5],[2,6],[6,7]];
+
+  let packetT=0;
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    // Lines
+    lines.forEach(([a,b])=>{
+      const ax=boxes[a].x*W,ay=boxes[a].y*H;
+      const bx=boxes[b].x*W,by=boxes[b].y*H;
+      ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(bx,by);
+      ctx.strokeStyle='#30363d';ctx.lineWidth=1.5;ctx.setLineDash([4,3]);ctx.stroke();ctx.setLineDash([]);
+    });
+    // Boxes
+    boxes.forEach(b=>{
+      const x=b.x*W-b.w/2,y=b.y*H-b.h/2;
+      ctx.fillStyle='#161b22';ctx.strokeStyle=b.color+'80';ctx.lineWidth=1.5;
+      ctx.beginPath();ctx.roundRect(x,y,b.w,b.h,6);ctx.fill();ctx.stroke();
+      ctx.fillStyle=b.color;ctx.font='bold 10px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText(b.label,b.x*W,b.y*H);
+    });
+    // Animated packet (read path)
+    packetT+=0.008;
+    if(packetT>1)packetT=0;
+    const readPath=[0,1,2,4];
+    const segCount=readPath.length-1;
+    const seg=Math.floor(packetT*segCount);
+    const segT=(packetT*segCount)-seg;
+    if(seg<segCount){
+      const a=boxes[readPath[seg]],b=boxes[readPath[seg+1]];
+      const px=a.x*W+(b.x*W-a.x*W)*segT;
+      const py=a.y*H+(b.y*H-a.y*H)*segT;
+      ctx.beginPath();ctx.arc(px,py,5,0,Math.PI*2);ctx.fillStyle='#3fb950';ctx.fill();
+      ctx.beginPath();ctx.arc(px,py,8,0,Math.PI*2);ctx.fillStyle='#3fb95040';ctx.fill();
+    }
+    // Write path packet
+    const writeT=(packetT+0.5)%1;
+    const writePath=[0,1,3,5];
+    const wseg=Math.floor(writeT*segCount);
+    const wsegT=(writeT*segCount)-wseg;
+    if(wseg<segCount){
+      const a=boxes[writePath[wseg]],b=boxes[writePath[wseg+1]];
+      const px=a.x*W+(b.x*W-a.x*W)*wsegT;
+      const py=a.y*H+(b.y*H-a.y*H)*wsegT;
+      ctx.beginPath();ctx.arc(px,py,5,0,Math.PI*2);ctx.fillStyle='#1f6feb';ctx.fill();
+      ctx.beginPath();ctx.arc(px,py,8,0,Math.PI*2);ctx.fillStyle='#1f6feb40';ctx.fill();
+    }
+    // Legend
+    ctx.fillStyle='#3fb950';ctx.beginPath();ctx.arc(W-140,H-20,5,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#8b949e';ctx.font='10px sans-serif';ctx.textAlign='left';ctx.fillText('Read path',W-130,H-17);
+    ctx.fillStyle='#1f6feb';ctx.beginPath();ctx.arc(W-60,H-20,5,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#8b949e';ctx.fillText('Write path',W-50,H-17);
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+</script>
+<footer style="text-align:center;padding:1rem;border-top:1px solid #ccc;margin-top:2rem;color:#666;font-size:0.8rem;">
+    © <span id="copyright-year"></span> Clark Ngo
+  </footer>
+  <script>document.getElementById('copyright-year').textContent = new Date().getFullYear();</script>
+</body>
+</html>

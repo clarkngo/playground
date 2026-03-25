@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cozy Cloud Architect</title>
+    <style>
+        :root {
+            --bg: #fdf0f6; /* Soft Pink */
+            --panel: #ffffff;
+            --accent: #ff85a1; /* Strawberry */
+            --node-bg: #e0f2fe; /* Light Blue */
+            --danger: #ff6b6b;
+            --success: #a2d2ff;
+            --text: #5d576b;
+            --pixel-size: 3px;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Quicksand', 'Segoe UI', sans-serif;
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Bubble UI Sidebar */
+        #sidebar {
+            width: 280px;
+            background: var(--panel);
+            margin: 20px;
+            border-radius: 30px;
+            box-shadow: 0 10px 30px rgba(255, 133, 161, 0.2);
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            z-index: 10;
+        }
+
+        .stat-card {
+            background: var(--bg);
+            padding: 15px;
+            border-radius: 20px;
+            text-align: center;
+        }
+
+        .stat-value { font-size: 1.4rem; font-weight: 800; color: var(--accent); }
+
+        button {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 4px 0 #e66a85;
+            transition: all 0.1s;
+        }
+
+        button:active { transform: translateY(3px); box-shadow: 0 1px 0 #e66a85; }
+        button:disabled { filter: grayscale(1); opacity: 0.5; }
+
+        /* Game Canvas */
+        #game-container {
+            flex-grow: 1;
+            position: relative;
+            background-image: radial-gradient(#ffcad4 1.5px, transparent 1.5px);
+            background-size: 40px 40px;
+        }
+
+        .node {
+            position: absolute;
+            width: 90px;
+            height: 90px;
+            background: var(--panel);
+            border: 4px solid var(--node-bg);
+            border-radius: 25px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: bold;
+            box-shadow: 0 8px 0 var(--node-bg);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .node.bounce { transform: scale(1.1); }
+        .node.overloaded { border-color: var(--danger); box-shadow: 0 8px 0 var(--danger); animation: shake 0.2s infinite; }
+
+        .face { font-size: 1.2rem; margin-bottom: 5px; }
+
+        /* Smooth Data Packets */
+        .packet {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: var(--accent);
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            z-index: 1;
+        }
+
+        /* Pixel Dev Art Update */
+        #dev-area {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%) scale(var(--pixel-size));
+        }
+
+        .dev-pixel {
+            width: 16px;
+            height: 16px;
+            position: relative;
+        }
+        .body { width: 10px; height: 10px; background: #ffccaa; position: absolute; bottom: 0; left: 3px; border-radius: 2px; }
+        .hair { width: 12px; height: 5px; background: #6d4c41; position: absolute; top: -2px; left: 2px; border-radius: 3px; }
+        .mug { width: 4px; height: 4px; background: #fff; position: absolute; bottom: 0; left: -2px; border-radius: 1px; }
+        .steam { width: 2px; height: 4px; background: rgba(255,255,255,0.6); position: absolute; bottom: 5px; left: -1px; animation: floatUp 2s infinite; }
+
+        @keyframes floatUp { 0% { opacity: 0; transform: translateY(0); } 50% { opacity: 1; } 100% { opacity: 0; transform: translateY(-10px); } }
+        @keyframes shake { 0% { transform: rotate(1deg); } 50% { transform: rotate(-1deg); } 100% { transform: rotate(1deg); } }
+
+        #log {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            width: 200px;
+        }
+    </style>
+    <meta name="author" content="Clark Ngo">
+    <meta name="copyright" content="Clark Ngo">
+  </head>
+<body>
+
+    <div id="sidebar">
+        <h2 style="color: var(--accent); margin: 0; text-align: center;">☁️ Cozy Cloud</h2>
+        <div class="stat-card">
+            <div style="font-size: 0.8rem; opacity: 0.7;">Visitors</div>
+            <div id="traffic-ui" class="stat-value">0</div>
+        </div>
+        <div class="stat-card">
+            <div style="font-size: 0.8rem; opacity: 0.7;">Happiness (SLA)</div>
+            <div id="error-ui" class="stat-value">100%</div>
+        </div>
+        <div class="stat-card">
+            <div style="font-size: 0.8rem; opacity: 0.7;">Sugar Cubes ($)</div>
+            <div id="money-ui" class="stat-value">500</div>
+        </div>
+
+        <button id="add-server-btn" onclick="addServer()">✨ Summon Server (200)</button>
+        <button id="add-cache-btn" onclick="addCache()">🍬 Give Candy (Cache) (150)</button>
+    </div>
+
+    <div id="game-container">
+        <div id="log">Everything is peaceful...</div>
+
+        <div id="node-users" class="node" style="top: 20%; left: 10%;">
+            <div class="face">◕‿◕</div>
+            Internet
+        </div>
+        
+        <div id="server-stack" style="position: absolute; top: 20%; left: 40%;">
+            <div id="node-server-1" class="node server">
+                <div class="face">^_^</div>
+                Server 1
+            </div>
+        </div>
+
+        <div id="node-db" class="node" style="top: 20%; left: 75%;">
+            <div class="face">v_v</div>
+            Database
+        </div>
+
+        <div id="dev-area">
+            <div class="dev-pixel">
+                <div class="body"></div>
+                <div class="hair"></div>
+                <div class="mug"><div class="steam"></div></div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    const state = {
+        rps: 2,
+        money: 500,
+        errors: 0,
+        totalReqs: 0,
+        servers: 1,
+        serverCapacity: 30
+    };
+
+    function updateUI() {
+        document.getElementById('traffic-ui').innerText = `${Math.floor(state.rps)} rps`;
+        document.getElementById('money-ui').innerText = state.money;
+        const happiness = state.totalReqs > 0 ? (100 - (state.errors / state.totalReqs * 100)).toFixed(0) : 100;
+        document.getElementById('error-ui').innerText = `${happiness}%`;
+        document.getElementById('add-server-btn').disabled = state.money < 200;
+        document.getElementById('add-cache-btn').disabled = state.money < 150;
+    }
+
+    function spawnPacket() {
+        state.totalReqs++;
+        const packet = document.createElement('div');
+        packet.className = 'packet';
+        document.getElementById('game-container').appendChild(packet);
+
+        const start = { x: window.innerWidth * 0.15, y: window.innerHeight * 0.25 };
+        const mid = { x: window.innerWidth * 0.45, y: window.innerHeight * 0.25 };
+        const end = { x: window.innerWidth * 0.8, y: window.innerHeight * 0.25 };
+
+        let progress = 0;
+        const isError = state.rps > (state.servers * state.serverCapacity) && Math.random() > 0.5;
+
+        function animate() {
+            progress += 0.02;
+            if (progress < 0.5) {
+                packet.style.left = (start.x + (mid.x - start.x) * (progress * 2)) + 'px';
+                packet.style.top = start.y + (Math.sin(progress * 10) * 10) + 'px'; // Wavy movement
+            } else if (progress < 1.0) {
+                if (isError) {
+                    packet.style.background = 'var(--danger)';
+                    packet.style.transform = 'scale(0.5)';
+                    packet.style.opacity = 1 - progress;
+                } else {
+                    packet.style.left = (mid.x + (end.x - mid.x) * ((progress - 0.5) * 2)) + 'px';
+                }
+            } else {
+                if (isError) state.errors++;
+                packet.remove();
+                return;
+            }
+            requestAnimationFrame(animate);
+        }
+        animate();
+    }
+
+    function addServer() {
+        if (state.money >= 200) {
+            state.money -= 200;
+            state.servers++;
+            const s = document.createElement('div');
+            s.className = 'node server';
+            s.style.marginTop = (state.servers * 100) + 'px';
+            s.innerHTML = `<div class="face">^_^</div>Server ${state.servers}`;
+            document.getElementById('server-stack').appendChild(s);
+            updateUI();
+        }
+    }
+
+    setInterval(() => {
+        state.rps += 0.3;
+        spawnPacket();
+        
+        const isOverloaded = state.rps > (state.servers * state.serverCapacity);
+        document.querySelectorAll('.server').forEach(s => {
+            const face = s.querySelector('.face');
+            if (isOverloaded) {
+                s.classList.add('overloaded');
+                face.innerText = '(>_<)';
+            } else {
+                s.classList.remove('overloaded');
+                face.innerText = '( ^_^)';
+            }
+        });
+
+        if(state.rps > 50 && state.money < 1000) state.money += 5; // Income
+        updateUI();
+    }, 800);
+</script>
+<footer style="text-align:center;padding:1rem;border-top:1px solid #ccc;margin-top:2rem;color:#666;font-size:0.8rem;">
+    © <span id="copyright-year"></span> Clark Ngo
+  </footer>
+  <script>document.getElementById('copyright-year').textContent = new Date().getFullYear();</script>
+</body>
+</html>

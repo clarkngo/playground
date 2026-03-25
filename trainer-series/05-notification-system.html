@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Design a Notification System — System Design Trainer</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0d1117;color:#e6edf3;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;line-height:1.7}
+a{color:#58a6ff;text-decoration:none}a:hover{text-decoration:underline}
+nav{background:#161b22;border-bottom:1px solid #30363d;padding:16px 24px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100}
+.brand{font-size:1.2rem;font-weight:700}.back{color:#8b949e;font-size:.9rem}
+.container{max-width:960px;margin:0 auto;padding:24px 20px}
+.hero{background:linear-gradient(135deg,#0d2d0d 0%,#1a1e24 100%);border:1px solid #30363d;border-radius:12px;padding:48px 36px;margin-bottom:36px;text-align:center}
+.hero h1{font-size:2.2rem;margin-bottom:8px}.hero .tagline{color:#3fb950;font-size:1.1rem;margin-bottom:6px}.hero .meta{color:#8b949e;font-size:.9rem}
+.step{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:28px;margin-bottom:24px}
+.step h2{font-size:1.4rem;margin-bottom:6px;display:flex;align-items:center;gap:10px}
+.step-num{background:#1f6feb;color:#fff;font-size:.75rem;font-weight:700;padding:2px 10px;border-radius:12px}
+.step p.desc{color:#8b949e;font-size:.9rem;margin-bottom:16px}
+.reveal-btn{background:#1f6feb;color:#fff;border:none;border-radius:6px;padding:8px 20px;cursor:pointer;font-weight:600;font-size:.85rem;transition:background .2s;margin-top:12px}
+.reveal-btn:hover{background:#1a60d2}
+.reveal-btn.revealed{background:#30363d;cursor:default}
+.answer{display:none;margin-top:16px;padding:16px;background:#0d1117;border:1px solid #3fb950;border-radius:8px;font-size:.9rem;color:#c9d1d9}
+.answer.show{display:block}
+label.chk{display:block;padding:6px 0;color:#c9d1d9;font-size:.9rem;cursor:pointer}
+label.chk input{margin-right:8px;accent-color:#3fb950}
+.radio-group{margin-bottom:8px}
+.radio-group label{display:block;padding:4px 0;color:#c9d1d9;font-size:.9rem;cursor:pointer}
+.radio-group label input{margin-right:8px;accent-color:#1f6feb}
+.sub-label{color:#8b949e;font-size:.8rem;margin-bottom:6px;margin-top:12px}
+.calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.calc-field label{display:block;font-size:.8rem;color:#8b949e;margin-bottom:4px}
+.calc-field input{width:100%;background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:8px 10px;color:#e6edf3;font-size:.9rem}
+.calc-result{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:14px;margin-top:8px}
+.calc-result .row{display:flex;justify-content:space-between;padding:4px 0;font-size:.88rem}
+.calc-result .row .val{color:#3fb950;font-weight:600}
+pre{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:16px;overflow-x:auto;font-size:.85rem;color:#e6edf3;margin-bottom:8px}
+.method{color:#3fb950;font-weight:700}.endpoint{color:#58a6ff}.param{color:#f0883e}
+.toggle-row{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.toggle-opt{padding:6px 16px;border-radius:6px;border:1px solid #30363d;background:#0d1117;color:#8b949e;cursor:pointer;font-size:.85rem;font-weight:600;transition:all .2s}
+.toggle-opt.active{background:#1f6feb;color:#fff;border-color:#1f6feb}
+table{width:100%;border-collapse:collapse;margin-bottom:8px}
+th,td{text-align:left;padding:8px 12px;border-bottom:1px solid #21262d;font-size:.85rem}
+th{color:#8b949e;font-weight:600;font-size:.75rem;text-transform:uppercase;letter-spacing:.05em}
+td{color:#c9d1d9}td.type{color:#f0883e}
+canvas{display:block;width:100%;border:1px solid #30363d;border-radius:8px;background:#0d1117;margin-bottom:8px}
+.deep-dive{border:1px solid #30363d;border-radius:8px;margin-bottom:10px;overflow:hidden}
+.dd-header{padding:14px 18px;background:#161b22;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-weight:600;font-size:.92rem}
+.dd-header:hover{background:#1c2129}
+.dd-arrow{transition:transform .2s;color:#8b949e}
+.dd-body{display:none;padding:16px 18px;background:#0d1117;font-size:.88rem;color:#c9d1d9;line-height:1.7}
+.dd-body.open{display:block}
+.dd-arrow.open{transform:rotate(180deg)}
+.tradeoff-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:8px}
+.tradeoff-card{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:16px}
+.tradeoff-card h4{font-size:.9rem;margin-bottom:8px}
+.tradeoff-card.pro{border-left:3px solid #3fb950}
+.tradeoff-card.con{border-left:3px solid #f0883e}
+.tradeoff-card ul{padding-left:18px;font-size:.85rem;color:#c9d1d9}
+.tradeoff-card li{margin-bottom:4px}
+.tip-card{background:#0d1117;border-left:3px solid #1f6feb;border-radius:0 8px 8px 0;padding:14px 18px;margin-bottom:10px;font-size:.9rem;color:#c9d1d9}
+.tip-card strong{color:#58a6ff}
+@media(max-width:600px){.calc-grid,.tradeoff-grid{grid-template-columns:1fr}.hero{padding:32px 20px}.hero h1{font-size:1.6rem}}
+</style>
+    <meta name="author" content="Clark Ngo">
+    <meta name="copyright" content="Clark Ngo">
+  </head>
+<body>
+<nav><span class="brand">&#127919; Trainer Series</span><a href="index.html" class="back">&larr; All Trainers</a></nav>
+<div class="container">
+
+<div class="hero">
+<h1>Design a Notification System</h1>
+<div class="tagline">Push, SMS, Email &amp; In-App at Scale</div>
+<div class="meta">Real-Time System &bull; Event-Driven Architecture</div>
+</div>
+
+<!-- Step 1: Requirements -->
+<div class="step" id="step1">
+<h2><span class="step-num">Step 1</span> Requirements Gathering</h2>
+<p class="desc">Clarify the scope: what types of notifications, scale, and delivery guarantees.</p>
+
+<div class="sub-label">Functional Requirements (check all that apply):</div>
+<label class="chk"><input type="checkbox" data-req="f" data-correct="true"> Push notifications (iOS APNs, Android FCM)</label>
+<label class="chk"><input type="checkbox" data-req="f" data-correct="true"> SMS notifications</label>
+<label class="chk"><input type="checkbox" data-req="f" data-correct="true"> Email notifications</label>
+<label class="chk"><input type="checkbox" data-req="f" data-correct="true"> In-app notification inbox</label>
+<label class="chk"><input type="checkbox" data-req="f" data-correct="true"> User preference management (opt-in/opt-out per channel)</label>
+<label class="chk"><input type="checkbox" data-req="f" data-correct="true"> Template system for notification content</label>
+<label class="chk"><input type="checkbox" data-req="f" data-correct="false"> Two-way chat with support agents</label>
+<label class="chk"><input type="checkbox" data-req="f" data-correct="false"> Video call notifications</label>
+
+<div class="sub-label">Non-Functional Requirements (check all that apply):</div>
+<label class="chk"><input type="checkbox" data-req="nf" data-correct="true"> High availability (99.9%+)</label>
+<label class="chk"><input type="checkbox" data-req="nf" data-correct="true"> Low latency for high-priority notifications (&lt;30s)</label>
+<label class="chk"><input type="checkbox" data-req="nf" data-correct="true"> At-least-once delivery guarantee</label>
+<label class="chk"><input type="checkbox" data-req="nf" data-correct="true"> Rate limiting per user per channel</label>
+<label class="chk"><input type="checkbox" data-req="nf" data-correct="true"> Deduplication of duplicate events</label>
+<label class="chk"><input type="checkbox" data-req="nf" data-correct="false"> End-to-end encryption for all channels</label>
+
+<button class="reveal-btn" onclick="revealAnswer(this)">Reveal Suggested Answer</button>
+<div class="answer"><strong>Core scope:</strong> Multi-channel notification delivery (push, SMS, email, in-app) with user preferences, templating, priority queues, rate limiting, and delivery tracking. <strong>Out of scope:</strong> Two-way chat, video calls, E2E encryption (these are separate systems). <strong>Key clarifications to ask:</strong> What are the priority levels? How many notification types exist? What SLA for delivery latency?</div>
+</div>
+
+<!-- Step 2: Capacity Estimation -->
+<div class="step" id="step2">
+<h2><span class="step-num">Step 2</span> Capacity Estimation</h2>
+<p class="desc">Estimate the notification volume across all channels.</p>
+
+<div class="calc-grid">
+<div class="calc-field"><label>Total users</label><input type="number" id="capUsers" value="100000000" onchange="recalc()"></div>
+<div class="calc-field"><label>Notifications per user per day</label><input type="number" id="capNotifsPerUser" value="10" onchange="recalc()"></div>
+<div class="calc-field"><label>Push ratio (%)</label><input type="number" id="capPushRatio" value="60" onchange="recalc()"></div>
+<div class="calc-field"><label>Email ratio (%)</label><input type="number" id="capEmailRatio" value="25" onchange="recalc()"></div>
+<div class="calc-field"><label>SMS ratio (%)</label><input type="number" id="capSmsRatio" value="5" onchange="recalc()"></div>
+<div class="calc-field"><label>In-app ratio (%)</label><input type="number" id="capInappRatio" value="10" onchange="recalc()"></div>
+</div>
+<div class="calc-result" id="capResult"></div>
+
+<button class="reveal-btn" onclick="revealAnswer(this)">Reveal Analysis</button>
+<div class="answer"><strong>At 1B notifications/day:</strong> ~11,500 notifications/sec average, ~50K/sec peak. Push dominates volume (600M/day), email is second (250M/day). Storage for in-app notifications: ~100M * 10 * 0.1 * 500 bytes = ~50GB/day. The system is write-heavy with high fan-out. Message queues must handle sustained throughput of 50K+ messages/sec.</div>
+</div>
+
+<!-- Step 3: API Design -->
+<div class="step" id="step3">
+<h2><span class="step-num">Step 3</span> API Design</h2>
+<p class="desc">Design the core APIs for sending and managing notifications.</p>
+
+<pre><span class="method">POST</span> <span class="endpoint">/api/v1/notifications/send</span>
+{
+  <span class="param">"recipient_id"</span>: "user_123",
+  <span class="param">"type"</span>: "order_shipped",           <span style="color:#8b949e">// template type</span>
+  <span class="param">"channels"</span>: ["push", "email"],     <span style="color:#8b949e">// desired channels</span>
+  <span class="param">"priority"</span>: "high",                 <span style="color:#8b949e">// high | medium | low</span>
+  <span class="param">"data"</span>: {                            <span style="color:#8b949e">// template variables</span>
+    "order_id": "ORD-456",
+    "tracking_url": "https://..."
+  },
+  <span class="param">"idempotency_key"</span>: "order-456-shipped" <span style="color:#8b949e">// dedup key</span>
+}
+<span style="color:#8b949e">// Response: 202 Accepted { "notification_id": "notif_789" }</span></pre>
+
+<pre><span class="method">GET</span> <span class="endpoint">/api/v1/notifications</span>?<span class="param">user_id</span>=user_123&amp;<span class="param">status</span>=unread&amp;<span class="param">limit</span>=20
+<span style="color:#8b949e">// Returns in-app notification inbox with pagination</span></pre>
+
+<pre><span class="method">PUT</span> <span class="endpoint">/api/v1/notifications/{id}/read</span>
+<span style="color:#8b949e">// Mark notification as read</span></pre>
+
+<pre><span class="method">PUT</span> <span class="endpoint">/api/v1/users/{id}/preferences</span>
+{
+  <span class="param">"push_enabled"</span>: true,
+  <span class="param">"email_enabled"</span>: true,
+  <span class="param">"sms_enabled"</span>: false,
+  <span class="param">"quiet_hours"</span>: { "start": "22:00", "end": "08:00", "timezone": "America/New_York" },
+  <span class="param">"channel_overrides"</span>: {
+    "marketing": { "email": false, "push": false }
+  }
+}
+</pre>
+
+<button class="reveal-btn" onclick="revealAnswer(this)">Reveal Key Points</button>
+<div class="answer"><strong>Design decisions:</strong> (1) 202 Accepted — notification sending is async; the API queues the request and returns immediately. (2) Idempotency key prevents duplicate notifications from retry storms. (3) Channel preference filtering happens server-side, not client-side. (4) Priority field drives queue ordering. (5) Template system keeps notification content separate from delivery logic — this allows A/B testing, localization, and content changes without code deploys.</div>
+</div>
+
+<!-- Step 4: Data Model -->
+<div class="step" id="step4">
+<h2><span class="step-num">Step 4</span> Data Model</h2>
+<p class="desc">Design the core tables for notifications, templates, and preferences.</p>
+
+<div class="toggle-row">
+<span class="toggle-opt active" onclick="showTable('templates',this)">Templates</span>
+<span class="toggle-opt" onclick="showTable('notifications',this)">Notifications</span>
+<span class="toggle-opt" onclick="showTable('preferences',this)">Preferences</span>
+<span class="toggle-opt" onclick="showTable('delivery',this)">Delivery Log</span>
+</div>
+
+<div id="tbl-templates" class="table-pane">
+<table>
+<tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+<tr><td>template_id</td><td class="type">UUID</td><td>Primary key</td></tr>
+<tr><td>name</td><td class="type">VARCHAR</td><td>e.g. "order_shipped"</td></tr>
+<tr><td>channel</td><td class="type">ENUM</td><td>push | email | sms | in_app</td></tr>
+<tr><td>subject</td><td class="type">TEXT</td><td>For email subject line</td></tr>
+<tr><td>body_template</td><td class="type">TEXT</td><td>Mustache/Handlebars template</td></tr>
+<tr><td>locale</td><td class="type">VARCHAR</td><td>en_US, ja_JP, etc.</td></tr>
+<tr><td>created_at</td><td class="type">TIMESTAMP</td><td></td></tr>
+</table>
+</div>
+
+<div id="tbl-notifications" class="table-pane" style="display:none">
+<table>
+<tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+<tr><td>notification_id</td><td class="type">UUID</td><td>Primary key</td></tr>
+<tr><td>recipient_id</td><td class="type">UUID</td><td>FK to users, indexed</td></tr>
+<tr><td>template_id</td><td class="type">UUID</td><td>FK to templates</td></tr>
+<tr><td>priority</td><td class="type">ENUM</td><td>high | medium | low</td></tr>
+<tr><td>data</td><td class="type">JSONB</td><td>Template variables</td></tr>
+<tr><td>idempotency_key</td><td class="type">VARCHAR</td><td>Unique, for dedup</td></tr>
+<tr><td>status</td><td class="type">ENUM</td><td>pending | sent | read | failed</td></tr>
+<tr><td>created_at</td><td class="type">TIMESTAMP</td><td>Indexed for inbox queries</td></tr>
+</table>
+</div>
+
+<div id="tbl-preferences" class="table-pane" style="display:none">
+<table>
+<tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+<tr><td>user_id</td><td class="type">UUID</td><td>Primary key</td></tr>
+<tr><td>push_enabled</td><td class="type">BOOLEAN</td><td>Global push toggle</td></tr>
+<tr><td>email_enabled</td><td class="type">BOOLEAN</td><td>Global email toggle</td></tr>
+<tr><td>sms_enabled</td><td class="type">BOOLEAN</td><td>Global SMS toggle</td></tr>
+<tr><td>quiet_hours_start</td><td class="type">TIME</td><td>Do not disturb start</td></tr>
+<tr><td>quiet_hours_end</td><td class="type">TIME</td><td>Do not disturb end</td></tr>
+<tr><td>timezone</td><td class="type">VARCHAR</td><td>IANA timezone</td></tr>
+<tr><td>channel_overrides</td><td class="type">JSONB</td><td>Per-category preferences</td></tr>
+</table>
+</div>
+
+<div id="tbl-delivery" class="table-pane" style="display:none">
+<table>
+<tr><th>Column</th><th>Type</th><th>Notes</th></tr>
+<tr><td>delivery_id</td><td class="type">UUID</td><td>Primary key</td></tr>
+<tr><td>notification_id</td><td class="type">UUID</td><td>FK to notifications</td></tr>
+<tr><td>channel</td><td class="type">ENUM</td><td>push | email | sms</td></tr>
+<tr><td>status</td><td class="type">ENUM</td><td>queued | sent | delivered | bounced | failed</td></tr>
+<tr><td>provider_response</td><td class="type">TEXT</td><td>APNs/FCM/Twilio response</td></tr>
+<tr><td>attempt_count</td><td class="type">INT</td><td>Retry count</td></tr>
+<tr><td>sent_at</td><td class="type">TIMESTAMP</td><td></td></tr>
+<tr><td>delivered_at</td><td class="type">TIMESTAMP</td><td>From delivery receipt</td></tr>
+</table>
+</div>
+
+<button class="reveal-btn" onclick="revealAnswer(this)">Reveal Key Points</button>
+<div class="answer"><strong>Key decisions:</strong> (1) Separate templates from notifications — content authors can update templates without engineering. (2) Delivery log tracks each channel attempt independently. (3) Idempotency key on notifications table prevents duplicates at the database level. (4) Preferences are cached in Redis for fast lookups during the send path. (5) In-app notifications are read from the notifications table directly (filtered by recipient_id + status). (6) For scale, the notifications table can be sharded by recipient_id.</div>
+</div>
+
+<!-- Step 5: Architecture -->
+<div class="step" id="step5">
+<h2><span class="step-num">Step 5</span> High-Level Architecture</h2>
+<p class="desc">Design the notification pipeline from event source to delivery.</p>
+<canvas id="archCanvas" width="960" height="380"></canvas>
+
+<button class="reveal-btn" onclick="revealAnswer(this)">Reveal Walkthrough</button>
+<div class="answer"><strong>Flow:</strong> (1) Event sources (services, cron jobs, user actions) send notification requests to the Notification Service via API. (2) The service validates, deduplicates (idempotency key), checks user preferences, renders templates, and enqueues messages into priority queues (one per channel). (3) Channel-specific workers consume from queues: Push Worker calls APNs/FCM, Email Worker calls SendGrid/SES, SMS Worker calls Twilio. (4) Workers write delivery status to the Delivery Log. (5) Failed deliveries are retried with exponential backoff via a retry queue. (6) In-app notifications are written directly to the database and served via the inbox API.</div>
+</div>
+
+<!-- Step 6: Deep Dives -->
+<div class="step" id="step6">
+<h2><span class="step-num">Step 6</span> Deep Dives</h2>
+<p class="desc">Explore the critical components in detail.</p>
+
+<div class="deep-dive">
+<div class="dd-header" onclick="toggleDD(this)">Priority Queue Design <span class="dd-arrow">&#9660;</span></div>
+<div class="dd-body">
+<p>Use separate queues for each priority level (high, medium, low) rather than a single queue with priority sorting. High-priority workers always process first. This prevents head-of-line blocking where a flood of low-priority marketing emails delays a critical password reset.</p>
+<p><strong>Implementation:</strong> Kafka topics per priority (notif-high, notif-medium, notif-low) with dedicated consumer groups. High-priority consumers are over-provisioned to ensure near-zero queue depth. Low-priority consumers are scaled based on budget constraints.</p>
+<p><strong>Why not a single priority queue?</strong> Most message brokers (Kafka, SQS) process messages in order within a partition. A single queue means low-priority messages ahead of high-priority messages block them. Separate queues with independent consumers solve this cleanly.</p>
+</div>
+</div>
+
+<div class="deep-dive">
+<div class="dd-header" onclick="toggleDD(this)">Retry with Exponential Backoff <span class="dd-arrow">&#9660;</span></div>
+<div class="dd-body">
+<p>When a delivery attempt fails (APNs timeout, SendGrid rate limit, Twilio error), the message is placed in a retry queue with an increasing delay: 1s, 5s, 30s, 2min, 10min, 1hr. After 5-6 attempts, the notification is marked as permanently failed and logged.</p>
+<p><strong>Jitter:</strong> Add random jitter (0-50% of the delay) to prevent thundering herd. If 10,000 notifications fail simultaneously and all retry at the same time, the retry storm can be worse than the original failure.</p>
+<p><strong>Dead letter queue:</strong> After max retries, messages go to a DLQ for manual investigation. This prevents infinite retry loops and provides visibility into systemic failures.</p>
+</div>
+</div>
+
+<div class="deep-dive">
+<div class="dd-header" onclick="toggleDD(this)">Rate Limiting Per Channel <span class="dd-arrow">&#9660;</span></div>
+<div class="dd-body">
+<p>Each delivery channel has different rate limits. APNs allows bursts but throttles sustained high volume. SendGrid has per-second and daily limits. Twilio charges per SMS and has regulatory rate limits per country.</p>
+<p><strong>User-level rate limiting:</strong> Prevent notification fatigue by capping per user: max 5 push/hour, 3 email/day, 1 SMS/day. These limits are configurable per notification category (transactional notifications like password resets bypass limits).</p>
+<p><strong>Provider-level rate limiting:</strong> Use a token bucket per provider to stay within their API limits. If the bucket is empty, messages queue until tokens refill. This prevents 429 errors and temporary bans from providers.</p>
+</div>
+</div>
+
+<div class="deep-dive">
+<div class="dd-header" onclick="toggleDD(this)">Deduplication Strategy <span class="dd-arrow">&#9660;</span></div>
+<div class="dd-body">
+<p>Duplicate notifications are one of the most common complaints from users. They happen because of retry logic, event replay, or multiple services triggering the same notification.</p>
+<p><strong>Idempotency key:</strong> Every notification request includes a unique idempotency key (e.g., "order-456-shipped"). The notification service checks this key against a Redis set (with TTL) before processing. If the key exists, the request is silently dropped.</p>
+<p><strong>Sliding window dedup:</strong> For notifications without explicit idempotency keys, hash the (recipient_id + template_type + data) tuple and check against recent notifications. If an identical notification was sent within the last 5 minutes, suppress it.</p>
+</div>
+</div>
+
+<div class="deep-dive">
+<div class="dd-header" onclick="toggleDD(this)">User Preference Filtering <span class="dd-arrow">&#9660;</span></div>
+<div class="dd-body">
+<p>Before enqueuing a notification, the service checks user preferences: (1) Is this channel enabled globally? (2) Is this notification category enabled for this channel? (3) Is the user in quiet hours? (4) Has the user hit their rate limit for this channel?</p>
+<p><strong>Quiet hours:</strong> If a high-priority notification arrives during quiet hours, it can either be delivered immediately (password reset) or queued until quiet hours end (marketing). The priority level determines the behavior.</p>
+<p><strong>Caching:</strong> User preferences are cached in Redis with a 5-minute TTL. A preference change triggers a cache invalidation. This keeps the hot path fast — preference lookups are sub-millisecond from cache.</p>
+</div>
+</div>
+</div>
+
+<!-- Step 7: Trade-offs -->
+<div class="step" id="step7">
+<h2><span class="step-num">Step 7</span> Trade-offs</h2>
+<p class="desc">Discuss the key architectural trade-offs.</p>
+
+<div class="tradeoff-grid">
+<div class="tradeoff-card pro">
+<h4>At-Least-Once Delivery</h4>
+<ul>
+<li>Simpler implementation — retry on failure</li>
+<li>No notifications are silently lost</li>
+<li>Requires dedup logic on the receiving end</li>
+<li>Good default for most notifications</li>
+</ul>
+</div>
+<div class="tradeoff-card con">
+<h4>Exactly-Once Delivery</h4>
+<ul>
+<li>No duplicate notifications ever</li>
+<li>Much harder to implement (2PC or idempotency)</li>
+<li>Higher latency due to coordination overhead</li>
+<li>Overkill for most notification use cases</li>
+</ul>
+</div>
+</div>
+
+<div class="tradeoff-grid">
+<div class="tradeoff-card pro">
+<h4>Push Model (Server Pushes)</h4>
+<ul>
+<li>Low latency — notifications arrive instantly</li>
+<li>No wasted bandwidth from polling</li>
+<li>Requires persistent connections (WebSocket)</li>
+<li>Best for real-time in-app notifications</li>
+</ul>
+</div>
+<div class="tradeoff-card con">
+<h4>Pull Model (Client Polls)</h4>
+<ul>
+<li>Simpler infrastructure — no connection management</li>
+<li>Works with stateless HTTP</li>
+<li>Higher latency (depends on poll interval)</li>
+<li>Wastes bandwidth with empty polls</li>
+</ul>
+</div>
+</div>
+
+<div class="tradeoff-grid">
+<div class="tradeoff-card pro">
+<h4>Batching Notifications</h4>
+<ul>
+<li>Reduces notification fatigue</li>
+<li>Lower cost (fewer API calls to providers)</li>
+<li>Digest emails are less annoying</li>
+<li>Higher latency for individual notifications</li>
+</ul>
+</div>
+<div class="tradeoff-card con">
+<h4>Real-Time Delivery</h4>
+<ul>
+<li>Instant notification for every event</li>
+<li>Critical for transactional notifications</li>
+<li>Can overwhelm users with volume</li>
+<li>Higher infrastructure cost</li>
+</ul>
+</div>
+</div>
+
+<button class="reveal-btn" onclick="revealAnswer(this)">Reveal Discussion</button>
+<div class="answer"><strong>Recommended approach:</strong> Use at-least-once delivery with idempotency-based dedup — simpler and works for 99% of cases. Use push for in-app and pull as fallback. Batch low-priority notifications (marketing digests) but deliver transactional notifications in real-time. The key insight: different notification categories deserve different delivery strategies. A password reset is not the same as a weekly marketing digest.</div>
+</div>
+
+<!-- Step 8: Interview Tips -->
+<div class="step" id="step8">
+<h2><span class="step-num">Step 8</span> Interview Tips</h2>
+<p class="desc">What interviewers are looking for and common mistakes.</p>
+
+<div class="tip-card"><strong>Start with the event-driven architecture.</strong> The notification system is a classic event-driven system. Show that you understand the producer-consumer pattern with message queues between them. This immediately signals senior-level thinking.</div>
+
+<div class="tip-card"><strong>Mention idempotency early.</strong> Duplicate notifications are the #1 user complaint. Bringing up idempotency keys and deduplication proactively shows you understand real-world production concerns, not just theoretical design.</div>
+
+<div class="tip-card"><strong>Separate concerns by channel.</strong> Push, email, SMS, and in-app have completely different delivery characteristics, rate limits, and failure modes. Design them as separate workers consuming from shared queues, not as a monolithic sender.</div>
+
+<div class="tip-card"><strong>Discuss user preferences as a first-class concern.</strong> Many candidates forget that users can opt out of notifications. Preference checking must happen early in the pipeline (before queuing) to avoid wasting resources on notifications that will be filtered.</div>
+
+<div class="tip-card"><strong>Common mistake: ignoring quiet hours and timezones.</strong> A notification system that wakes users at 3 AM is a broken notification system. Mention quiet hours, timezone-aware scheduling, and priority-based override (password resets ignore quiet hours).</div>
+
+<div class="tip-card"><strong>Common mistake: single queue for all priorities.</strong> If you put marketing blasts and password resets in the same queue, a marketing campaign can delay critical transactional notifications. Always use separate priority queues.</div>
+</div>
+
+</div>
+
+<script>
+/* Capacity calculator */
+function recalc() {
+  var users = parseInt(document.getElementById('capUsers').value) || 0;
+  var perUser = parseInt(document.getElementById('capNotifsPerUser').value) || 0;
+  var pushR = parseInt(document.getElementById('capPushRatio').value) || 0;
+  var emailR = parseInt(document.getElementById('capEmailRatio').value) || 0;
+  var smsR = parseInt(document.getElementById('capSmsRatio').value) || 0;
+  var inappR = parseInt(document.getElementById('capInappRatio').value) || 0;
+  var total = users * perUser;
+  var perSec = Math.round(total / 86400);
+  var peak = perSec * 5;
+  var push = Math.round(total * pushR / 100);
+  var email = Math.round(total * emailR / 100);
+  var sms = Math.round(total * smsR / 100);
+  var inapp = Math.round(total * inappR / 100);
+  var storageGB = Math.round(inapp * 500 / 1e9);
+  function fmt(n) {
+    if (n >= 1e9) return (n / 1e9).toFixed(1) + 'B';
+    if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+    if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+    return n.toString();
+  }
+  document.getElementById('capResult').innerHTML =
+    '<div class="row"><span>Total notifications/day</span><span class="val">' + fmt(total) + '</span></div>' +
+    '<div class="row"><span>Average per second</span><span class="val">' + fmt(perSec) + '</span></div>' +
+    '<div class="row"><span>Peak per second (5x)</span><span class="val">' + fmt(peak) + '</span></div>' +
+    '<div class="row"><span>Push notifications/day</span><span class="val">' + fmt(push) + '</span></div>' +
+    '<div class="row"><span>Email notifications/day</span><span class="val">' + fmt(email) + '</span></div>' +
+    '<div class="row"><span>SMS notifications/day</span><span class="val">' + fmt(sms) + '</span></div>' +
+    '<div class="row"><span>In-app notifications/day</span><span class="val">' + fmt(inapp) + '</span></div>' +
+    '<div class="row"><span>In-app storage/day</span><span class="val">' + storageGB + ' GB</span></div>';
+}
+recalc();
+
+/* Reveal answers */
+function revealAnswer(btn) {
+  if (btn.classList.contains('revealed')) return;
+  btn.classList.add('revealed');
+  btn.textContent = 'Revealed';
+  var ans = btn.nextElementSibling;
+  ans.classList.add('show');
+}
+
+/* Table toggle */
+function showTable(name, el) {
+  document.querySelectorAll('.table-pane').forEach(function(p) { p.style.display = 'none'; });
+  document.querySelectorAll('.toggle-opt').forEach(function(o) { o.classList.remove('active'); });
+  document.getElementById('tbl-' + name).style.display = 'block';
+  el.classList.add('active');
+}
+
+/* Deep dive accordion */
+function toggleDD(header) {
+  var body = header.nextElementSibling;
+  var arrow = header.querySelector('.dd-arrow');
+  body.classList.toggle('open');
+  arrow.classList.toggle('open');
+}
+
+/* Architecture canvas */
+var canvas = document.getElementById('archCanvas');
+var ctx = canvas.getContext('2d');
+var tick = 0;
+
+function drawBox(x, y, w, h, label, color) {
+  ctx.fillStyle = color;
+  ctx.strokeStyle = '#30363d';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.roundRect(x, y, w, h, 6);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = '#e6edf3';
+  ctx.font = 'bold 10px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  var lines = label.split('\n');
+  lines.forEach(function(line, i) {
+    ctx.fillText(line, x + w / 2, y + h / 2 + (i - (lines.length - 1) / 2) * 13);
+  });
+}
+
+function drawArrow(x1, y1, x2, y2, color) {
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.stroke();
+  var a = Math.atan2(y2 - y1, x2 - x1);
+  ctx.beginPath();
+  ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - 7 * Math.cos(a - 0.4), y2 - 7 * Math.sin(a - 0.4));
+  ctx.lineTo(x2 - 7 * Math.cos(a + 0.4), y2 - 7 * Math.sin(a + 0.4));
+  ctx.fill();
+}
+
+function drawPulse(x, y, r, color) {
+  var alpha = 0.3 + 0.3 * Math.sin(tick * 3);
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+}
+
+function drawArch() {
+  tick += 0.02;
+  ctx.clearRect(0, 0, 960, 380);
+
+  // Title
+  ctx.fillStyle = '#8b949e';
+  ctx.font = '11px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Notification System Architecture', 480, 16);
+
+  // Event Sources
+  drawBox(20, 40, 100, 35, 'User Service', '#1b3a4b');
+  drawBox(20, 90, 100, 35, 'Order Service', '#1b3a4b');
+  drawBox(20, 140, 100, 35, 'Cron Jobs', '#1b3a4b');
+
+  // Notification Service
+  drawArrow(120, 57, 190, 100, '#58a6ff');
+  drawArrow(120, 107, 190, 110, '#58a6ff');
+  drawArrow(120, 157, 190, 120, '#58a6ff');
+  drawBox(190, 70, 130, 80, 'Notification\nService\n(Validate, Dedup,\nPrefs, Template)', '#2d1b3d');
+
+  // Preference & Template stores
+  drawBox(190, 170, 60, 28, 'Prefs\n(Redis)', '#3d2b1b');
+  drawBox(260, 170, 60, 28, 'Templates\n(DB)', '#3d2b1b');
+
+  // Priority Queues
+  drawArrow(320, 90, 380, 60, '#f0883e');
+  drawArrow(320, 110, 380, 110, '#f0883e');
+  drawArrow(320, 130, 380, 160, '#f0883e');
+
+  var queuePulse = Math.sin(tick * 2) > 0;
+  drawBox(380, 42, 110, 30, 'High Priority Q', queuePulse ? '#5c1b1b' : '#3d1b1b');
+  drawBox(380, 92, 110, 30, 'Medium Priority Q', '#3d2b1b');
+  drawBox(380, 142, 110, 30, 'Low Priority Q', '#2b3d1b');
+
+  // Workers
+  drawArrow(490, 57, 550, 50, '#3fb950');
+  drawArrow(490, 107, 550, 107, '#3fb950');
+  drawArrow(490, 157, 550, 160, '#3fb950');
+  drawArrow(490, 107, 550, 220, '#3fb950');
+
+  drawBox(550, 30, 100, 35, 'Push Worker\n(APNs/FCM)', '#0d2818');
+  drawBox(550, 85, 100, 35, 'Email Worker\n(SES)', '#0d2818');
+  drawBox(550, 140, 100, 35, 'SMS Worker\n(Twilio)', '#0d2818');
+  drawBox(550, 200, 100, 35, 'In-App Writer', '#0d2818');
+
+  // External providers
+  drawArrow(650, 47, 720, 47, '#58a6ff');
+  drawArrow(650, 102, 720, 102, '#58a6ff');
+  drawArrow(650, 157, 720, 157, '#58a6ff');
+
+  drawBox(720, 30, 90, 35, 'APNs\nFCM', '#1b3a4b');
+  drawBox(720, 85, 90, 35, 'SendGrid\nSES', '#1b3a4b');
+  drawBox(720, 140, 90, 35, 'Twilio', '#1b3a4b');
+
+  // Delivery targets
+  drawArrow(810, 47, 870, 47, '#f0883e');
+  drawArrow(810, 102, 870, 102, '#f0883e');
+  drawArrow(810, 157, 870, 157, '#f0883e');
+  drawPulse(900, 47, 10, '#3fb950');
+  drawPulse(900, 102, 10, '#f0883e');
+  drawPulse(900, 157, 10, '#58a6ff');
+  ctx.fillStyle = '#8b949e';
+  ctx.font = '9px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('Phone', 870, 60);
+  ctx.fillText('Inbox', 870, 115);
+  ctx.fillText('Phone', 870, 170);
+
+  // In-app DB
+  drawArrow(600, 235, 600, 270, '#bc8cff');
+  drawBox(550, 270, 100, 30, 'Notifications\nDB', '#1b2a3d');
+
+  // Retry Queue
+  drawBox(380, 250, 110, 30, 'Retry Queue', '#5c1b1b');
+  ctx.fillStyle = '#f85149';
+  ctx.font = '9px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Exponential backoff', 435, 295);
+  drawArrow(490, 265, 550, 130, '#f85149');
+
+  // Delivery Log
+  drawBox(720, 250, 90, 30, 'Delivery Log', '#1b2a3d');
+  drawArrow(650, 50, 720, 260, '#8b949e');
+  drawArrow(650, 105, 725, 255, '#8b949e');
+  drawArrow(650, 160, 730, 250, '#8b949e');
+
+  // Animated message tokens
+  var msgX = 320 + ((tick * 80) % 230);
+  if (msgX < 550) {
+    ctx.fillStyle = '#3fb950';
+    ctx.beginPath();
+    ctx.arc(msgX, 57, 4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  var msgX2 = 320 + ((tick * 60 + 100) % 230);
+  if (msgX2 < 550) {
+    ctx.fillStyle = '#f0883e';
+    ctx.beginPath();
+    ctx.arc(msgX2, 107, 4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Legend
+  ctx.fillStyle = '#8b949e';
+  ctx.font = '9px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('Event Sources', 20, 190);
+  ctx.fillText('Message Queues (Kafka)', 380, 190);
+  ctx.fillText('Channel Workers', 550, 250);
+
+  requestAnimationFrame(drawArch);
+}
+drawArch();
+</script>
+<footer style="text-align:center;padding:1rem;border-top:1px solid #ccc;margin-top:2rem;color:#666;font-size:0.8rem;">
+    © <span id="copyright-year"></span> Clark Ngo
+  </footer>
+  <script>document.getElementById('copyright-year').textContent = new Date().getFullYear();</script>
+</body>
+</html>

@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Amazon: Dynamo and the Always-Available Shopping Cart</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0d1117;color:#e6edf3;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;line-height:1.7}
+a{color:#58a6ff;text-decoration:none}a:hover{text-decoration:underline}
+nav{background:#161b22;border-bottom:1px solid #30363d;padding:16px 24px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100}
+.brand{font-size:1.2rem;font-weight:700}.back{color:#8b949e;font-size:.9rem}
+.container{max-width:900px;margin:0 auto;padding:24px 20px}
+.hero{background:linear-gradient(135deg,#1a1e24 0%,#1b2a1b 100%);border:1px solid #30363d;border-radius:12px;padding:48px 36px;margin-bottom:36px;text-align:center}
+.hero h1{font-size:2.2rem;margin-bottom:8px}.hero .tagline{color:#f0883e;font-size:1.1rem;margin-bottom:6px}.hero .meta{color:#8b949e;font-size:.9rem}
+.timeline-wrapper{overflow-x:auto;margin-bottom:36px;padding:12px 0}
+.timeline{display:flex;align-items:flex-start;min-width:700px;position:relative;padding:20px 10px}
+.timeline::before{content:'';position:absolute;top:30px;left:10px;right:10px;height:3px;background:#30363d;border-radius:2px}
+.timeline-item{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;z-index:1}
+.timeline-dot{width:16px;height:16px;background:#f0883e;border-radius:50%;margin-bottom:12px;border:3px solid #0d1117;box-shadow:0 0 0 2px #f0883e}
+.timeline-date{font-size:.75rem;color:#f0883e;font-weight:600;margin-bottom:4px}
+.timeline-label{font-size:.8rem;color:#8b949e;text-align:center;max-width:120px}
+section.story{margin-bottom:32px}
+section.story h2{font-size:1.5rem;color:#e6edf3;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #30363d}
+section.story p{color:#c9d1d9;margin-bottom:14px;font-size:.97rem}
+.canvas-section{margin-bottom:36px}
+.canvas-section h2{font-size:1.5rem;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #30363d}
+.toggle-btn{display:inline-block;padding:8px 20px;background:#f0883e;color:#0d1117;border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:.9rem;margin-bottom:12px;transition:background .2s}
+.toggle-btn:hover{background:#d4772e}
+canvas{display:block;width:100%;border:1px solid #30363d;border-radius:8px;background:#0d1117}
+.decision-section{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:28px;margin-bottom:36px}
+.decision-section h2{font-size:1.4rem;margin-bottom:8px}.decision-section .prompt{color:#8b949e;margin-bottom:18px;font-size:.95rem}
+.choices{display:flex;flex-direction:column;gap:10px}
+.choice-btn{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:14px 18px;color:#e6edf3;cursor:pointer;text-align:left;font-size:.93rem;transition:border-color .2s}
+.choice-btn:hover{border-color:#58a6ff}.choice-btn.correct{border-color:#3fb950;background:#0d1b0e}.choice-btn.wrong{border-color:#f85149;background:#1b0d0d}
+.reveal{margin-top:16px;padding:16px;background:#0d1117;border:1px solid #3fb950;border-radius:8px;display:none;font-size:.93rem;color:#c9d1d9}
+.metrics-panel{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:36px}
+.metric{background:#161b22;border:1px solid #30363d;border-radius:10px;padding:20px;text-align:center}
+.metric .value{font-size:1.7rem;font-weight:700;color:#f0883e}.metric .label{font-size:.8rem;color:#8b949e;margin-top:4px}
+.lessons{margin-bottom:36px}
+.lessons h2{font-size:1.5rem;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #30363d}
+.lesson-card{background:#161b22;border-left:3px solid #f0883e;border-radius:0 8px 8px 0;padding:16px 20px;margin-bottom:12px;font-size:.93rem;color:#c9d1d9}
+.takeaways{margin-bottom:48px}
+.takeaways h2{font-size:1.5rem;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #30363d}
+.takeaway{display:flex;align-items:baseline;gap:10px;margin-bottom:10px;font-size:.95rem;color:#c9d1d9}
+.takeaway::before{content:'→';color:#f0883e;font-weight:700;flex-shrink:0}
+</style>
+    <meta name="author" content="Clark Ngo">
+    <meta name="copyright" content="Clark Ngo">
+  </head>
+<body>
+<nav><span class="brand">📖 Case Studies</span><a href="index.html" class="back">← All Case Studies</a></nav>
+<div class="container">
+
+<div class="hero">
+<h1>Amazon: Dynamo and the Always-Available Shopping Cart</h1>
+<div class="tagline">How 100ms of latency costing 1% of sales drove a database revolution</div>
+<div class="meta">2004 — 2012 | Distributed Databases &amp; Eventual Consistency</div>
+</div>
+
+<div class="timeline-wrapper">
+<div class="timeline">
+<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-date">2004</div><div class="timeline-label">Latency/revenue discovery</div></div>
+<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-date">2004-2006</div><div class="timeline-label">Dynamo development</div></div>
+<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-date">2006</div><div class="timeline-label">Internal deployment</div></div>
+<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-date">2007</div><div class="timeline-label">Paper published</div></div>
+<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-date">2008</div><div class="timeline-label">Cassandra inspired by it</div></div>
+<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-date">2012</div><div class="timeline-label">DynamoDB launched</div></div>
+</div>
+</div>
+
+<section class="story">
+<h2>The Revenue Discovery</h2>
+<p>In 2004, Amazon engineers made a discovery that would reshape how the entire industry thinks about latency. Through careful A/B testing and correlation analysis, they determined that every 100 milliseconds of added latency in page load time corresponded to roughly a 1% decrease in sales. For a company processing billions of dollars in transactions annually, even small latency improvements translated directly into millions of dollars in revenue.</p>
+<p>This finding had a profound implication for their infrastructure: the shopping cart had to be fast, and more importantly, it had to always be available. A customer adding an item to their cart and receiving an error — even briefly during a server failure or network partition — meant a lost sale that might never come back. Amazon needed a data store that would accept writes under any circumstances, even if it meant temporarily sacrificing consistency.</p>
+</section>
+
+<section class="story">
+<h2>The Design Philosophy: Always Accept Writes</h2>
+<p>Traditional relational databases prioritize consistency. If a network partition occurs, they reject writes rather than risk data divergence. For Amazon, this was backwards. The shopping cart was an append-mostly data structure where the cost of losing a write (a customer unable to add an item) far exceeded the cost of a temporary inconsistency (a previously deleted item briefly reappearing). Amazon chose availability over consistency — a deliberate trade-off that the CAP theorem says you must make during network partitions.</p>
+<p>This philosophical commitment drove every technical decision in Dynamo. The system was built from the ground up to accept writes on any node at any time, to replicate data across multiple nodes for durability, and to resolve conflicts after the fact rather than preventing them upfront. It was a fundamentally different approach to building a database.</p>
+</section>
+
+<section class="story">
+<h2>The Technical Foundation</h2>
+<p>Dynamo combined several distributed systems techniques into a cohesive design. Consistent hashing distributed data across a ring of nodes, with each key mapped to a position on the ring and stored on the next N nodes clockwise. Virtual nodes (150 per physical machine) ensured even load distribution even when machines had different capacities.</p>
+<p>Vector clocks tracked the causal history of each data item. When two nodes independently modified the same key during a partition, the vector clocks diverged. Upon reconnection, the system could detect the conflict and present both versions to the application for resolution. For the shopping cart, the merge strategy was simple: take the union of both carts, since a reappearing deleted item was preferable to a lost addition.</p>
+<p>Sloppy quorums and hinted handoff ensured availability even during node failures. If the designated node for a write was unreachable, the write went to the next available node on the ring with a "hint" that it should be forwarded when the target recovered. The standard configuration used N=3 replicas with R=2 reads and W=2 writes, providing a balance of consistency and availability while tolerating single node failures without any impact.</p>
+</section>
+
+<section class="story">
+<h2>The Paper That Launched a Thousand Databases</h2>
+<p>In October 2007, Amazon published the Dynamo paper at the ACM Symposium on Operating Systems Principles. The paper was a landmark in distributed systems literature, providing a detailed blueprint for building a highly available key-value store. It described the full architecture — consistent hashing, vector clocks, sloppy quorums, hinted handoff, Merkle trees for anti-entropy — with enough detail that others could implement it.</p>
+<p>The impact was enormous. Facebook engineers used the Dynamo paper as one of two primary influences (alongside Google BigTable) when building Cassandra. Basho Technologies built Riak as a near-faithful implementation of the Dynamo design. LinkedIn built Voldemort. And Amazon itself eventually productized the ideas into DynamoDB, a fully managed cloud service that launched in 2012 and became one of the most widely used NoSQL databases in the world.</p>
+</section>
+
+<section class="story">
+<h2>The Legacy of Eventual Consistency</h2>
+<p>Dynamo popularized the concept of eventual consistency as a practical engineering trade-off rather than a theoretical curiosity. Before Dynamo, the database world was dominated by strong consistency guarantees. After Dynamo, engineers had a well-documented framework for reasoning about when and how to relax consistency in exchange for availability and performance.</p>
+<p>The SLA-driven design methodology was equally influential. Amazon started not with a technology choice but with a business requirement: the 99.9th percentile of read operations must complete in under 10 milliseconds. Every architectural decision was evaluated against this target. This approach — designing backwards from SLAs to technology choices — became a template for how large-scale services are built.</p>
+</section>
+
+<div class="canvas-section">
+<h2>Architecture Diagram</h2>
+<button class="toggle-btn" id="archToggle" onclick="toggleArch()">Show After</button>
+<canvas id="archCanvas" width="900" height="280"></canvas>
+</div>
+
+<div class="decision-section">
+<h2>What Would You Do?</h2>
+<p class="prompt">Two customers modify the same shopping cart during a network partition. Customer A adds a book. Customer B removes a DVD. The partition heals. How do you resolve the conflict?</p>
+<div class="choices">
+<div class="choice-btn" onclick="choose(this,false)">A) Last-write-wins — use timestamps to pick whichever modification happened most recently and discard the other.</div>
+<div class="choice-btn" onclick="choose(this,false)">B) Reject one write — during the partition, only allow one side to accept modifications to prevent divergence.</div>
+<div class="choice-btn" onclick="choose(this,true)">C) Keep both versions with vector clocks, merge on read — detect the conflict via vector clocks and let the application merge both modifications.</div>
+</div>
+<div class="reveal" id="reveal">Amazon chose <strong>C — vector clocks with application-level merge</strong>. Last-write-wins (option A) silently drops data, which could mean losing items from a shopping cart. Rejecting writes (option B) sacrifices availability, which is exactly what Dynamo was designed to avoid. Vector clocks detect that two independent modifications occurred, and the application can intelligently merge them. For the shopping cart, the merge takes the union of both versions — the book stays added, and if the DVD reappears briefly, that is an acceptable trade-off versus losing an addition.</div>
+</div>
+
+<h2 style="font-size:1.5rem;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #30363d">Key Metrics</h2>
+<div class="metrics-panel">
+<div class="metric"><div class="value">&lt;10ms</div><div class="label">P99 Read Latency</div></div>
+<div class="metric"><div class="value">99.9995%</div><div class="label">Availability</div></div>
+<div class="metric"><div class="value">150</div><div class="label">Virtual Nodes / Machine</div></div>
+<div class="metric"><div class="value">N=3 R=2 W=2</div><div class="label">Quorum Config</div></div>
+</div>
+
+<div class="lessons">
+<h2>Lessons Extracted</h2>
+<div class="lesson-card"><strong>Availability sometimes trumps consistency.</strong> For use cases like shopping carts where lost writes cost revenue, accepting temporary inconsistency is the rational engineering trade-off.</div>
+<div class="lesson-card"><strong>Vector clocks enable conflict detection.</strong> Rather than preventing conflicts (which requires coordination and hurts availability), detect them after the fact and resolve them intelligently at the application level.</div>
+<div class="lesson-card"><strong>Consistent hashing enables horizontal scaling.</strong> By mapping both data and nodes to positions on a ring, adding or removing nodes only affects neighboring partitions rather than requiring a full data reshuffle.</div>
+<div class="lesson-card"><strong>SLA-driven design produces better systems.</strong> Starting with a concrete performance target (P99 under 10ms) and working backwards to technology choices produces more focused and effective architectures than starting with technology and hoping it meets requirements.</div>
+</div>
+
+<div class="takeaways">
+<h2>Key Takeaways</h2>
+<div class="takeaway">Availability sometimes trumps consistency — especially when lost writes directly translate to lost revenue.</div>
+<div class="takeaway">Vector clocks enable conflict detection without sacrificing write availability during partitions.</div>
+<div class="takeaway">Consistent hashing enables horizontal scaling with minimal data movement when nodes join or leave.</div>
+<div class="takeaway">SLA-driven design produces better systems by anchoring architectural decisions to measurable business requirements.</div>
+</div>
+
+</div>
+
+<script>
+const canvas=document.getElementById('archCanvas'),ctx=canvas.getContext('2d');
+let showAfter=false,animProgress=0,animating=false;
+function lerp(a,b,t){return a+(b-a)*t}
+function drawBox(x,y,w,h,label,color,alpha){ctx.globalAlpha=alpha;ctx.fillStyle=color;ctx.strokeStyle='#30363d';ctx.lineWidth=1;ctx.beginPath();ctx.roundRect(x,y,w,h,6);ctx.fill();ctx.stroke();ctx.fillStyle='#e6edf3';ctx.font='bold 11px sans-serif';ctx.textAlign='center';ctx.fillText(label,x+w/2,y+h/2+4);ctx.globalAlpha=1}
+function drawArrow(x1,y1,x2,y2,color,alpha){ctx.globalAlpha=alpha;ctx.strokeStyle=color;ctx.fillStyle=color;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();const a=Math.atan2(y2-y1,x2-x1);ctx.beginPath();ctx.moveTo(x2,y2);ctx.lineTo(x2-8*Math.cos(a-0.4),y2-8*Math.sin(a-0.4));ctx.lineTo(x2-8*Math.cos(a+0.4),y2-8*Math.sin(a+0.4));ctx.fill();ctx.globalAlpha=1}
+function drawLine(x1,y1,x2,y2,color,alpha){ctx.globalAlpha=alpha;ctx.strokeStyle=color;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();ctx.globalAlpha=1}
+function draw(){
+ctx.clearRect(0,0,900,280);
+const t=animProgress;
+const bef=1-t,aft=t;
+// Before: Single primary DB
+if(bef>0.01){
+drawBox(350,30,200,45,'Application Server','#58a6ff44',bef);
+drawArrow(450,75,450,110,'#8b949e',bef);
+drawBox(350,110,200,50,'Primary Database','#6e3630',bef);
+drawArrow(450,160,300,195,'#8b949e',bef);
+drawArrow(450,160,600,195,'#8b949e',bef);
+drawBox(220,195,160,35,'Replica','#30363d',bef);
+drawBox(520,195,160,35,'Replica','#30363d',bef);
+ctx.globalAlpha=bef;ctx.fillStyle='#f85149';ctx.font='bold 11px sans-serif';ctx.textAlign='center';
+ctx.fillText('Writes FAIL during partitions',450,260);
+ctx.fillText('Single Point of Failure',450,15);ctx.globalAlpha=1;
+}
+// After: Dynamo ring
+if(aft>0.01){
+const cx=450,cy=145,r=90;
+ctx.globalAlpha=aft;ctx.strokeStyle='#30363d';ctx.lineWidth=2;
+ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.stroke();ctx.globalAlpha=1;
+const nodes=6;
+for(let i=0;i<nodes;i++){
+const angle=(Math.PI*2*i/nodes)-Math.PI/2;
+const nx=cx+r*Math.cos(angle);
+const ny=cy+r*Math.sin(angle);
+drawBox(nx-30,ny-15,60,30,`Node ${i+1}`,'#3fb95044',aft);
+}
+ctx.globalAlpha=aft;ctx.fillStyle='#f0883e';ctx.font='bold 10px sans-serif';ctx.textAlign='center';
+ctx.fillText('Consistent Hash Ring',cx,cy-5);
+ctx.fillText('Any Node Accepts Writes',cx,cy+10);
+ctx.fillStyle='#3fb950';ctx.font='bold 11px sans-serif';
+ctx.fillText('Writes ALWAYS succeed — replicate & resolve later',cx,265);
+ctx.fillStyle='#8b949e';ctx.font='10px sans-serif';
+ctx.fillText('Vector Clocks + Sloppy Quorum + Hinted Handoff',cx,20);
+ctx.globalAlpha=1;
+}
+}
+function animate(){
+if(!animating)return;
+const target=showAfter?1:0;
+const diff=target-animProgress;
+if(Math.abs(diff)<0.01){animProgress=target;animating=false;draw();return}
+animProgress+=diff*0.08;
+draw();requestAnimationFrame(animate);
+}
+function toggleArch(){
+showAfter=!showAfter;
+document.getElementById('archToggle').textContent=showAfter?'Show Before':'Show After';
+animating=true;animate();
+}
+draw();
+
+function choose(el,correct){
+document.querySelectorAll('.choice-btn').forEach(b=>{b.style.pointerEvents='none'});
+el.classList.add(correct?'correct':'wrong');
+if(correct){document.querySelectorAll('.choice-btn').forEach(b=>{if(b!==el)b.style.opacity='0.4'})}
+else{document.querySelectorAll('.choice-btn').forEach(b=>{if(b!==el&&b.textContent.includes('Keep both'))b.classList.add('correct')})}
+document.getElementById('reveal').style.display='block';
+}
+</script>
+<footer style="text-align:center;padding:1rem;border-top:1px solid #ccc;margin-top:2rem;color:#666;font-size:0.8rem;">
+    © <span id="copyright-year"></span> Clark Ngo
+  </footer>
+  <script>document.getElementById('copyright-year').textContent = new Date().getFullYear();</script>
+</body>
+</html>

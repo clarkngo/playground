@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Slack: Scaling Real-Time Messaging</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0d1117;color:#e6edf3;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;line-height:1.7}
+a{color:#58a6ff;text-decoration:none}a:hover{text-decoration:underline}
+nav{background:#161b22;border-bottom:1px solid #30363d;padding:16px 24px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100}
+.brand{font-size:1.2rem;font-weight:700}.back{color:#8b949e;font-size:.9rem}
+.container{max-width:900px;margin:0 auto;padding:24px 20px}
+.hero{background:linear-gradient(135deg,#1a1e24 0%,#1b2333 100%);border:1px solid #30363d;border-radius:12px;padding:48px 36px;margin-bottom:36px;text-align:center}
+.hero h1{font-size:2.2rem;margin-bottom:8px}.hero .tagline{color:#bc8cff;font-size:1.1rem;margin-bottom:6px}.hero .meta{color:#8b949e;font-size:.9rem}
+.timeline-wrapper{overflow-x:auto;margin-bottom:36px;padding:12px 0}
+.timeline{display:flex;align-items:flex-start;min-width:700px;position:relative;padding:20px 10px}
+.timeline::before{content:'';position:absolute;top:30px;left:10px;right:10px;height:3px;background:#30363d;border-radius:2px}
+.timeline-item{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;z-index:1}
+.timeline-dot{width:16px;height:16px;background:#bc8cff;border-radius:50%;margin-bottom:12px;border:3px solid #0d1117;box-shadow:0 0 0 2px #bc8cff}
+.timeline-date{font-size:.75rem;color:#bc8cff;font-weight:600;margin-bottom:4px}
+.timeline-label{font-size:.8rem;color:#8b949e;text-align:center;max-width:120px}
+section.story{margin-bottom:32px}
+section.story h2{font-size:1.5rem;color:#e6edf3;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #30363d}
+section.story p{color:#c9d1d9;margin-bottom:14px;font-size:.97rem}
+.canvas-section{margin-bottom:36px}
+.canvas-section h2{font-size:1.5rem;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #30363d}
+.toggle-btn{display:inline-block;padding:8px 20px;background:#bc8cff;color:#0d1117;border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:.9rem;margin-bottom:12px;transition:background .2s}
+.toggle-btn:hover{background:#a371e3}
+canvas{display:block;width:100%;border:1px solid #30363d;border-radius:8px;background:#0d1117}
+.decision-section{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:28px;margin-bottom:36px}
+.decision-section h2{font-size:1.4rem;margin-bottom:8px}.decision-section .prompt{color:#8b949e;margin-bottom:18px;font-size:.95rem}
+.choices{display:flex;flex-direction:column;gap:10px}
+.choice-btn{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:14px 18px;color:#e6edf3;cursor:pointer;text-align:left;font-size:.93rem;transition:border-color .2s}
+.choice-btn:hover{border-color:#58a6ff}.choice-btn.correct{border-color:#3fb950;background:#0d1b0e}.choice-btn.wrong{border-color:#f85149;background:#1b0d0d}
+.reveal{margin-top:16px;padding:16px;background:#0d1117;border:1px solid #3fb950;border-radius:8px;display:none;font-size:.93rem;color:#c9d1d9}
+.metrics-panel{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:36px}
+.metric{background:#161b22;border:1px solid #30363d;border-radius:10px;padding:20px;text-align:center}
+.metric .value{font-size:1.7rem;font-weight:700;color:#bc8cff}.metric .label{font-size:.8rem;color:#8b949e;margin-top:4px}
+.lessons{margin-bottom:36px}
+.lessons h2{font-size:1.5rem;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #30363d}
+.lesson-card{background:#161b22;border-left:3px solid #bc8cff;border-radius:0 8px 8px 0;padding:16px 20px;margin-bottom:12px;font-size:.93rem;color:#c9d1d9}
+.takeaways{margin-bottom:48px}
+.takeaways h2{font-size:1.5rem;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #30363d}
+.takeaway{display:flex;align-items:baseline;gap:10px;margin-bottom:10px;font-size:.95rem;color:#c9d1d9}
+.takeaway::before{content:'→';color:#bc8cff;font-weight:700;flex-shrink:0}
+</style>
+    <meta name="author" content="Clark Ngo">
+    <meta name="copyright" content="Clark Ngo">
+  </head>
+<body>
+<nav><span class="brand">Case Studies</span><a href="index.html" class="back">← All Case Studies</a></nav>
+<div class="container">
+
+<div class="hero">
+<h1>Slack: Scaling Real-Time Messaging</h1>
+<div class="tagline">From IRC-like chat to millions of concurrent WebSocket connections</div>
+<div class="meta">2013 — 2019 | Real-Time Systems &amp; WebSocket Infrastructure</div>
+</div>
+
+<div class="timeline-wrapper">
+<div class="timeline">
+<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-date">Aug 2013</div><div class="timeline-label">Slack launches publicly</div></div>
+<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-date">2014</div><div class="timeline-label">Rapid growth, early scaling pains</div></div>
+<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-date">2015</div><div class="timeline-label">1M daily active users, latency spikes</div></div>
+<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-date">2017</div><div class="timeline-label">Flannel edge cache deployed</div></div>
+<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-date">2019</div><div class="timeline-label">Connection gateway rewrite</div></div>
+</div>
+</div>
+
+<section class="story">
+<h2>The Promise of Instant Communication</h2>
+<p>When Stewart Butterfield and his team launched Slack in August 2013, they were building what seemed like a simple product: a chat application for teams. Under the hood, however, real-time messaging is one of the hardest problems in distributed systems. Every message typed by any user needs to appear on the screens of every other user in that channel within milliseconds. At small scale, this is trivial. At Slack scale, it becomes an engineering challenge that touches every layer of the stack.</p>
+<p>The early architecture was straightforward. A user opened Slack in their browser, which established a WebSocket connection to one of several application servers. When a user sent a message, the server wrote it to a MySQL database, then fanned it out to every other connected user in the channel by iterating through all active WebSocket connections. For a few thousand users, this worked beautifully. For a few hundred thousand, cracks began to appear.</p>
+</section>
+
+<section class="story">
+<h2>The Fan-Out Problem</h2>
+<p>The fundamental challenge of real-time messaging is fan-out: when one user posts a message in a channel with 10,000 members, that single write must be delivered to 10,000 open connections, each potentially on a different server. In the early days, Slack handled this by having each application server maintain a list of connected users and their channel memberships. When a message arrived, the server published it to a Redis pub/sub cluster, and every application server that had connected members in that channel would pick it up and push it to the relevant WebSocket connections.</p>
+<p>This worked until it did not. As the user count climbed past a million daily actives, the Redis pub/sub layer became a bottleneck. Large channels with thousands of members caused thundering herd problems: a single message would trigger thousands of near-simultaneous writes across dozens of servers. CPU usage would spike, message delivery would lag, and users would see the dreaded "reconnecting" indicator.</p>
+</section>
+
+<section class="story">
+<h2>Flannel: The Edge Cache That Changed Everything</h2>
+<p>By 2017, Slack had identified the core insight that would reshape their architecture: messaging is overwhelmingly read-heavy. For every message sent, there are dozens or hundreds of reads. Users scroll through history, load channels, search for old conversations. The write path was well-optimized, but every read was hitting the same backend services, creating contention with the real-time delivery pipeline.</p>
+<p>The solution was Flannel, an edge caching layer that sat between clients and the backend. Flannel maintained a lazy-loaded, eventually consistent copy of workspace data — channel lists, user profiles, message history — close to the connection layer. When a client needed data that had not changed recently, Flannel served it directly without touching the backend at all. This reduced backend load by roughly 50 percent for some workspaces and dramatically improved perceived latency for common operations like switching channels.</p>
+<p>Flannel also handled the tricky problem of initial connection state. When a user opened Slack, the client needed to know about every channel the user belonged to, the last read position in each, unread counts, and the current presence status of teammates. Before Flannel, this "boot" sequence required dozens of API calls and could take several seconds for users in large workspaces. Flannel collapsed it into a single, pre-computed payload.</p>
+</section>
+
+<section class="story">
+<h2>The Connection Gateway Rewrite</h2>
+<p>Even with Flannel reducing backend pressure, the WebSocket layer itself was struggling. Each application server maintained thousands of WebSocket connections and was responsible for both business logic and connection management. These two concerns had very different scaling characteristics: connection management is I/O-bound and benefits from many lightweight processes, while business logic is CPU-bound and benefits from fewer, more powerful processes.</p>
+<p>In 2019, Slack undertook a major architectural change: they separated the connection gateway from the application logic. The new gateway servers were purpose-built to handle WebSocket connections at scale. Written to be as lightweight as possible, each gateway server could handle an order of magnitude more connections than the old application servers. The gateway knew nothing about business logic — it was purely a message router that accepted connections, authenticated them, and forwarded messages between clients and the backend services.</p>
+<p>This separation had cascading benefits. Gateway servers could be scaled independently of application servers. Connection management code could be optimized without risking business logic regressions. And most importantly, a bug in message processing could no longer crash the connection layer, which meant that even during backend incidents, clients stayed connected and could see a "degraded" state rather than losing their connection entirely.</p>
+</section>
+
+<section class="story">
+<h2>Presence: The Sneaky Hard Problem</h2>
+<p>One of the most technically challenging features in any messaging system is presence — the green dot that tells you whether a teammate is online. It seems trivial: a user connects, mark them online; they disconnect, mark them offline. But at scale, presence is a distributed consensus problem. A user might have Slack open on their laptop, phone, and desktop simultaneously. They might lose network connectivity for a few seconds. Their phone might go to sleep. Each of these transitions needs to be tracked, debounced, and aggregated into a single presence state.</p>
+<p>Slack solved this with a dedicated presence service that maintained a time-windowed view of user activity. Rather than treating presence as a binary online/offline state, the service tracked the last activity timestamp for each connection and each device. A user was considered "active" if any device had reported activity within a configurable window (typically two minutes). This approach was more tolerant of brief connectivity interruptions and produced fewer spurious presence toggles, which users found distracting.</p>
+<p>The presence service also had to handle fan-out: when a user's presence changed, every workspace member who had that user visible in their sidebar needed to be notified. For users in large organizations, a single presence change could trigger notifications to tens of thousands of connections. The service batched these updates and used a priority system to ensure that changes for users you were actively chatting with were delivered instantly, while changes for peripheral contacts could be slightly delayed.</p>
+</section>
+
+<section class="story">
+<h2>Lessons from the Trenches</h2>
+<p>Slack's journey from a simple chat tool to a platform handling millions of concurrent connections offers several universal lessons. The first is that real-time systems have fundamentally different scaling characteristics than request-response systems. Traditional web scaling wisdom — add more servers behind a load balancer — breaks down when every server needs to know about the state of every connected user. The second is that separating concerns is not just good software engineering — it is an operational necessity. Mixing connection management with business logic created failure modes that were nearly impossible to debug.</p>
+<p>Perhaps most importantly, Slack discovered that optimizing for the read path is almost always more impactful than optimizing for the write path. In a messaging system, reads outnumber writes by a wide margin. By investing in Flannel and reducing unnecessary backend calls, Slack improved the experience for every user without needing to change the write pipeline at all. This insight — that caching and pre-computation can transform the performance of read-heavy systems — applies far beyond messaging.</p>
+</section>
+
+<div class="canvas-section">
+<h2>Architecture Diagram</h2>
+<button class="toggle-btn" id="archToggle" onclick="toggleArch()">Show After</button>
+<canvas id="archCanvas" width="900" height="340"></canvas>
+</div>
+
+<div class="decision-section">
+<h2>What Would You Do?</h2>
+<p class="prompt">Your messaging app has 100K concurrent users. Messages are delayed by 2-3 seconds. Redis pub/sub is at capacity and large channels cause thundering herd spikes. How do you fix it?</p>
+<div class="choices">
+<div class="choice-btn" onclick="choose(this,false)">A) Add more Redis instances and shard pub/sub by channel name to distribute the fan-out load.</div>
+<div class="choice-btn" onclick="choose(this,false)">B) Switch from WebSockets to HTTP long-polling so you can use standard load balancers and CDN caching.</div>
+<div class="choice-btn" onclick="choose(this,true)">C) Separate the connection gateway from application logic, add an edge cache for read-heavy data, and batch presence updates.</div>
+<div class="choice-btn" onclick="choose(this,false)">D) Limit channel size to 500 members and force large groups to use multiple smaller channels.</div>
+</div>
+<div class="reveal" id="reveal">Slack chose <strong>C — architectural separation with edge caching</strong>. Simply sharding Redis (option A) would have helped temporarily, but the fundamental problem was that connection management and business logic were co-located, creating coupled failure modes. Switching to long-polling (B) would have dramatically increased latency and server load. Limiting channel sizes (D) would have crippled the product for enterprise customers. By separating the connection gateway, adding Flannel as an edge cache, and batching presence updates, Slack addressed the root causes rather than symptoms. The gateway rewrite let connection servers scale independently, Flannel eliminated redundant backend reads, and batched presence reduced the thundering herd effect on large channels.</div>
+</div>
+
+<h2 style="font-size:1.5rem;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #30363d">Key Metrics</h2>
+<div class="metrics-panel">
+<div class="metric"><div class="value">10M+</div><div class="label">Daily Active Users (2019)</div></div>
+<div class="metric"><div class="value">750K+</div><div class="label">Orgs on the Platform</div></div>
+<div class="metric"><div class="value">50%</div><div class="label">Backend Load Reduced by Flannel</div></div>
+<div class="metric"><div class="value">&lt;100ms</div><div class="label">Target Message Delivery</div></div>
+<div class="metric"><div class="value">10x</div><div class="label">Connections per Gateway Server</div></div>
+</div>
+
+<div class="lessons">
+<h2>Lessons Extracted</h2>
+<div class="lesson-card"><strong>Separate connection management from business logic.</strong> WebSocket servers and application servers have different scaling needs. Mixing them creates coupled failure modes where a business logic bug can disconnect all users on that server.</div>
+<div class="lesson-card"><strong>Edge caching transforms read-heavy workloads.</strong> Flannel reduced backend load by 50% by serving frequently-accessed data from a cache layer close to the connection tier. Most real-time systems are far more read-heavy than write-heavy.</div>
+<div class="lesson-card"><strong>Presence is a distributed systems problem.</strong> Tracking online/offline status across multiple devices and intermittent connections requires careful debouncing, time windows, and priority-based fan-out.</div>
+<div class="lesson-card"><strong>Graceful degradation preserves user trust.</strong> By keeping users connected even during backend incidents, Slack avoided the anxiety-inducing "reconnecting" state. A degraded experience is far better than a disconnected one.</div>
+<div class="lesson-card"><strong>Batch and prioritize fan-out.</strong> Not all notifications are equally urgent. Delivering messages from active conversations instantly while slightly delaying peripheral updates reduces peak load without hurting perceived performance.</div>
+</div>
+
+<div class="takeaways">
+<h2>Key Takeaways</h2>
+<div class="takeaway">Real-time systems scale differently than request-response systems — every server needs awareness of shared state.</div>
+<div class="takeaway">Caching and pre-computation on the read path often delivers more impact than optimizing the write path.</div>
+<div class="takeaway">Separating infrastructure concerns (connections vs. business logic) enables independent scaling and fault isolation.</div>
+<div class="takeaway">User-facing features like presence indicators can be surprisingly expensive at scale and deserve dedicated architecture.</div>
+</div>
+
+</div>
+
+<script>
+const canvas = document.getElementById(`archCanvas`);
+const ctx = canvas.getContext(`2d`);
+let showAfter = false, animProgress = 0, animating = false;
+
+function lerp(a, b, t) { return a + (b - a) * t; }
+
+function drawBox(x, y, w, h, label, color, alpha) {
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = color;
+  ctx.strokeStyle = `#30363d`;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.roundRect(x, y, w, h, 6);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = `#e6edf3`;
+  ctx.font = `bold 11px sans-serif`;
+  ctx.textAlign = `center`;
+  const lines = label.split(`\n`);
+  lines.forEach((line, i) => {
+    ctx.fillText(line, x + w / 2, y + h / 2 + 4 + (i - (lines.length - 1) / 2) * 14);
+  });
+  ctx.globalAlpha = 1;
+}
+
+function drawArrow(x1, y1, x2, y2, color, alpha) {
+  ctx.globalAlpha = alpha;
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.stroke();
+  const a = Math.atan2(y2 - y1, x2 - x1);
+  ctx.beginPath();
+  ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - 8 * Math.cos(a - 0.4), y2 - 8 * Math.sin(a - 0.4));
+  ctx.lineTo(x2 - 8 * Math.cos(a + 0.4), y2 - 8 * Math.sin(a + 0.4));
+  ctx.fill();
+  ctx.globalAlpha = 1;
+}
+
+function drawLine(x1, y1, x2, y2, color, alpha) {
+  ctx.globalAlpha = alpha;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+}
+
+/* Animated "packets" travelling along arrows */
+let tick = 0;
+function pulse(t) { return 0.5 + 0.5 * Math.sin(t * 3); }
+
+function draw() {
+  tick += 0.02;
+  ctx.clearRect(0, 0, 900, 340);
+  const t = animProgress;
+  const bef = 1 - t, aft = t;
+
+  /* ---- BEFORE: simple direct architecture ---- */
+  if (bef > 0.01) {
+    ctx.globalAlpha = bef;
+    ctx.fillStyle = `#8b949e`;
+    ctx.font = `11px sans-serif`;
+    ctx.textAlign = `center`;
+    ctx.fillText(`Before: Direct WebSocket to App Servers`, 450, 18);
+    ctx.globalAlpha = 1;
+
+    /* Clients */
+    for (let i = 0; i < 4; i++) {
+      drawBox(30, 40 + i * 70, 90, 45, `Client ${i + 1}`, `#1b2333`, bef);
+    }
+    /* App servers */
+    for (let i = 0; i < 3; i++) {
+      drawBox(250, 60 + i * 85, 120, 50, `App Server ${i + 1}\n(WS + Logic)`, `#58a6ff33`, bef);
+    }
+    /* Redis */
+    drawBox(500, 105, 110, 50, `Redis\nPub/Sub`, `#f8514933`, bef);
+    /* MySQL */
+    drawBox(700, 105, 110, 50, `MySQL\nMessage Store`, `#30363d`, bef);
+
+    /* Arrows */
+    for (let i = 0; i < 4; i++) {
+      const targetServer = i % 3;
+      drawArrow(120, 62 + i * 70, 250, 85 + targetServer * 85, `#bc8cff`, bef * 0.6);
+    }
+    for (let i = 0; i < 3; i++) {
+      drawArrow(370, 85 + i * 85, 500, 130, `#f85149`, bef * 0.5);
+      drawArrow(370, 85 + i * 85, 700, 130, `#8b949e`, bef * 0.3);
+    }
+
+    /* Problem label */
+    ctx.globalAlpha = bef;
+    ctx.fillStyle = `#f85149`;
+    ctx.font = `bold 10px sans-serif`;
+    ctx.fillText(`Thundering herd on large channels`, 500, 175);
+    ctx.globalAlpha = 1;
+  }
+
+  /* ---- AFTER: gateway + flannel architecture ---- */
+  if (aft > 0.01) {
+    ctx.globalAlpha = aft;
+    ctx.fillStyle = `#8b949e`;
+    ctx.font = `11px sans-serif`;
+    ctx.textAlign = `center`;
+    ctx.fillText(`After: Gateway + Flannel + Separated Services`, 450, 18);
+    ctx.globalAlpha = 1;
+
+    /* Clients */
+    for (let i = 0; i < 4; i++) {
+      drawBox(15, 40 + i * 70, 80, 45, `Client ${i + 1}`, `#1b2333`, aft);
+    }
+    /* Gateway servers */
+    drawBox(150, 75, 100, 50, `Gateway\nServer 1`, `#bc8cff33`, aft);
+    drawBox(150, 185, 100, 50, `Gateway\nServer 2`, `#bc8cff33`, aft);
+
+    /* Flannel */
+    drawBox(310, 55, 100, 45, `Flannel\nEdge Cache`, `#3fb95033`, aft);
+
+    /* Channel service */
+    drawBox(310, 135, 100, 45, `Channel\nService`, `#58a6ff33`, aft);
+
+    /* Presence service */
+    drawBox(310, 215, 100, 45, `Presence\nService`, `#f0883e33`, aft);
+
+    /* Message store */
+    drawBox(490, 75, 100, 45, `Message\nQueue`, `#f8514933`, aft);
+    drawBox(490, 155, 100, 45, `Message\nStore (MySQL)`, `#30363d`, aft);
+    drawBox(490, 235, 100, 45, `Presence\nStore (Redis)`, `#30363d`, aft);
+
+    /* Client -> gateway arrows */
+    for (let i = 0; i < 4; i++) {
+      const gw = i < 2 ? 0 : 1;
+      drawArrow(95, 62 + i * 70, 150, 100 + gw * 110, `#bc8cff`, aft * 0.6);
+    }
+    /* Gateway -> services */
+    drawArrow(250, 100, 310, 77, `#3fb950`, aft * 0.5);
+    drawArrow(250, 100, 310, 157, `#58a6ff`, aft * 0.5);
+    drawArrow(250, 210, 310, 157, `#58a6ff`, aft * 0.5);
+    drawArrow(250, 210, 310, 237, `#f0883e`, aft * 0.5);
+
+    /* Services -> stores */
+    drawArrow(410, 157, 490, 97, `#f85149`, aft * 0.4);
+    drawArrow(410, 157, 490, 177, `#8b949e`, aft * 0.4);
+    drawArrow(410, 237, 490, 257, `#f0883e`, aft * 0.4);
+
+    /* Animated pulse dot */
+    const px = 200 + 50 * pulse(tick);
+    ctx.globalAlpha = aft * 0.8;
+    ctx.fillStyle = `#bc8cff`;
+    ctx.beginPath();
+    ctx.arc(px, 100, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+
+    /* Labels */
+    ctx.globalAlpha = aft;
+    ctx.fillStyle = `#bc8cff`;
+    ctx.font = `bold 9px sans-serif`;
+    ctx.fillText(`WebSocket Only`, 200, 68);
+    ctx.fillStyle = `#3fb950`;
+    ctx.fillText(`Serves cached reads`, 360, 48);
+    ctx.globalAlpha = 1;
+  }
+}
+
+function animate() {
+  if (!animating) { draw(); return; }
+  const target = showAfter ? 1 : 0;
+  const diff = target - animProgress;
+  if (Math.abs(diff) < 0.01) { animProgress = target; animating = false; draw(); return; }
+  animProgress += diff * 0.08;
+  draw();
+  requestAnimationFrame(animate);
+}
+
+function toggleArch() {
+  showAfter = !showAfter;
+  document.getElementById(`archToggle`).textContent = showAfter ? `Show Before` : `Show After`;
+  animating = true;
+  animate();
+}
+
+/* Continuous animation loop for pulse dots */
+function loop() {
+  draw();
+  requestAnimationFrame(loop);
+}
+loop();
+
+function choose(el, correct) {
+  document.querySelectorAll(`.choice-btn`).forEach(b => { b.style.pointerEvents = `none`; });
+  el.classList.add(correct ? `correct` : `wrong`);
+  if (correct) {
+    document.querySelectorAll(`.choice-btn`).forEach(b => { if (b !== el) b.style.opacity = `0.4`; });
+  } else {
+    document.querySelectorAll(`.choice-btn`).forEach(b => {
+      if (b !== el && b.textContent.includes(`Separate the connection`)) b.classList.add(`correct`);
+    });
+  }
+  document.getElementById(`reveal`).style.display = `block`;
+}
+</script>
+<footer style="text-align:center;padding:1rem;border-top:1px solid #ccc;margin-top:2rem;color:#666;font-size:0.8rem;">
+    © <span id="copyright-year"></span> Clark Ngo
+  </footer>
+  <script>document.getElementById('copyright-year').textContent = new Date().getFullYear();</script>
+</body>
+</html>

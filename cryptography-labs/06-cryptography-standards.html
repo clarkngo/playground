@@ -116,8 +116,36 @@
     #obj-overlay{position:fixed;bottom:1rem;right:1rem;z-index:1000;font-size:.8rem}
     #obj-badge{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.4rem .7rem;cursor:pointer;color:#8b949e;user-select:none;display:flex;align-items:center;gap:.4rem}
     #obj-panel{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.6rem .8rem;margin-top:.3rem;min-width:220px;display:block}
+    /* Export success banner */
+    #export-success-banner{display:none;position:fixed;bottom:0;left:0;right:0;background:linear-gradient(135deg,#1c2a1c,#0d1117);border-top:2px solid #3fb950;padding:1.5rem;text-align:center;z-index:9999;box-shadow:0 -4px 12px rgba(0,0,0,.5)}
+    #export-success-banner.show{display:block;animation:slideUp .4s ease-out}
+    @keyframes slideUp{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}
+    #export-success-banner h3{color:#3fb950;margin:0 0 .75rem;font-size:1.1rem}
+    #export-success-banner p{color:#8b949e;margin:0 0 1rem;font-size:.95rem}
+    #export-success-banner button{background:#3fb950;color:#000;border:none;border-radius:6px;padding:.6rem 1.5rem;cursor:pointer;font-weight:600;font-size:.95rem;transition:background .15s}
+    #export-success-banner button:hover{background:#2ea043}
+    /* Interactive Tour System */
+    #tour-modal{position:fixed;top:0;left:0;right:0;bottom:0;z-index:10000;display:none}
+    #tour-modal.show{display:flex;align-items:center;justify-content:center}
+    .tour-backdrop{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);backdrop-filter:blur(4px);z-index:10000}
+    .tour-container{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#0d1117;border:2px solid #1f6feb;border-radius:12px;padding:2rem;max-width:700px;width:90%;max-height:85vh;overflow-y:auto;z-index:10001;box-shadow:0 20px 60px rgba(0,0,0,.8)}
+    .tour-close{position:absolute;top:1rem;right:1rem;background:none;border:none;color:#8b949e;font-size:1.5rem;cursor:pointer;padding:0;width:32px;height:32px;display:flex;align-items:center;justify-content:center}
+    .tour-close:hover{color:#58a6ff}
+    .tour-step{display:none}
+    .tour-step.show{display:block}
+    .tour-step h2{color:#e6edf3;margin:0 0 1rem;font-size:1.3rem}
+    .tour-step p{color:#8b949e;margin:.5rem 0;line-height:1.65;font-size:.95rem}
+    .tour-highlight{background:#1c2a1c;border:2px solid #3fb950;border-radius:8px;padding:1rem;margin:1rem 0;color:#3fb950;font-weight:600;font-size:.9rem;text-align:center}
+    .tour-nav{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-top:2rem;padding-top:1.5rem;border-top:1px solid #30363d}
+    .tour-btn{background:#1f6feb;color:#fff;border:none;border-radius:6px;padding:.5rem 1rem;cursor:pointer;font-size:.9rem;font-weight:600;transition:background .15s}
+    .tour-btn:hover{background:#1c64e8}
+    .tour-btn-skip{background:transparent;color:#8b949e;border:1px solid #30363d;font-weight:400}
+    .tour-btn-skip:hover{border-color:#58a6ff;color:#58a6ff}
+    #tour-counter{color:#8b949e;font-size:.9rem;font-weight:600}
   </style>
-</head>
+    <meta name="author" content="Clark Ngo">
+    <meta name="copyright" content="Clark Ngo">
+  </head>
 <body>
 
 <nav class="navbar">
@@ -125,6 +153,8 @@
   <div class="nav-actions">
     <span class="nav-pill">Module 6 Lab</span>
     <button onclick="resetLab()" style="background:none;border:1px solid #30363d;border-radius:6px;padding:.25rem .6rem;color:#8b949e;cursor:pointer;font-size:.75rem">↺ Reset</button>
+    <button onclick="showTourModal(1)" title="How Labs Work" style="background:none;border:1px solid #30363d;border-radius:6px;padding:.25rem .6rem;color:#8b949e;cursor:pointer;font-size:.75rem;transition:border-color .15s" onmouseover="this.style.borderColor='#58a6ff';this.style.color='#58a6ff'" onmouseout="this.style.borderColor='#30363d';this.style.color='#8b949e'">❓ Help</button>
+    <button onclick="closeTab()" style="background:#2a1c1c;color:#f85149;border:1px solid #da3633;border-radius:6px;padding:.35rem .8rem;cursor:pointer;font-size:.82rem;font-weight:600;transition:border-color .15s" onmouseover="this.style.background='#3a1a1a'" onmouseout="this.style.background='#2a1c1c'">✕ Exit Lab</button>
   </div>
 </nav>
 
@@ -273,6 +303,7 @@
     </div>
     <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
       <button class="action-btn-blue" id="era-btn" onclick="upgradeEra()">Upgrade to 2015 →</button>
+      <button class="action-btn" id="era-reset-btn" onclick="resetEra()" style="display:none">↺ Reset Timeline</button>
       <div id="era-insight" style="font-size:.82rem;color:#8b949e;flex:1"></div>
     </div>
     <div style="background:#1c2940;border:1px solid #1f6feb;border-radius:6px;padding:.65rem .85rem;margin-top:.75rem;font-size:.82rem;color:#58a6ff">
@@ -284,12 +315,7 @@
   <div class="demo-box">
     <div class="question-box">
       <p class="question-text">A US federal agency must choose symmetric encryption for classified data. Which combination meets FIPS 140-3 requirements?</p>
-      <div class="options-grid">
-        <button class="opt-btn" onclick="checkQ(this,'A')"><span class="opt-id">A</span>DES-56 with MD5 authentication</button>
-        <button class="opt-btn" onclick="checkQ(this,'B')"><span class="opt-id">B</span>AES-128-GCM with SHA-256</button>
-        <button class="opt-btn" onclick="checkQ(this,'C')"><span class="opt-id">C</span>RC4 stream cipher with SHA-1</button>
-        <button class="opt-btn" onclick="checkQ(this,'D')"><span class="opt-id">D</span>3DES-CBC without authentication</button>
-      </div>
+      <div class="options-grid" id="quiz-options-grid"></div>
       <div id="q-feedback" class="feedback-box"></div>
       <div class="why-box" id="why-box">
         <h6>📚 FIPS 140-3 Algorithm Requirements</h6>
@@ -322,10 +348,15 @@
       <p style="color:#f85149;font-weight:600;margin:0;font-size:.9rem">🔒 Complete all objectives (tracker bottom-right ↘) to unlock submission</p>
     </div>
     <div id="submission-area" class="sub-area-locked">
-      <textarea class="reflection-input" id="learning-reflection" placeholder="Describe what you learned about cryptographic standards, FIPS 140-3, and the post-quantum transition. Why does algorithm choice matter at the federal level?&#10;&#10;Please write at least 4–5 sentences about your key insights..." oninput="saveState()"></textarea>
-      <div style="margin-top:.75rem">
-        <label style="color:#e6edf3;font-size:.9rem;font-weight:600">🔍 Lab Observations</label>
-        <p style="color:#8b949e;font-size:.82rem;margin:.2rem 0 .3rem">Was there anything within the lab you expected to change, but didn't?</p>
+      <!-- REQUIRED: Learning Reflection -->
+      <div style="background:#0d1a2e;border:2px solid #1f6feb;border-radius:8px;padding:1rem;margin-bottom:1rem">
+        <label style="color:#58a6ff;font-size:.95rem;font-weight:700;display:block;margin-bottom:.4rem">📝 Your Learning Reflection <span style="color:#f85149;font-size:.8rem;font-weight:600">★ Required</span></label>
+        <textarea class="reflection-input" id="learning-reflection" placeholder="Describe what you learned about cryptographic standards, FIPS 140-3, and the post-quantum transition. Why does algorithm choice matter at the federal level?&#10;&#10;Please write at least 4–5 sentences about your key insights..." oninput="saveState()"></textarea>
+      </div>
+      <!-- OPTIONAL: Lab Observations -->
+      <div style="border-top:1px solid #30363d;margin-top:.5rem;padding-top:1rem">
+        <label style="color:#8b949e;font-size:.88rem;font-weight:600;display:block;margin-bottom:.25rem">🔍 Lab Observations <span style="font-size:.78rem;font-weight:400">(Optional)</span></label>
+        <p style="color:#6e7681;font-size:.8rem;margin:.1rem 0 .35rem">Was there anything within the lab you expected to change, but didn't?</p>
         <textarea class="reflection-input" id="lab-feedback" placeholder="Share any observations, surprises, or things that felt missing..." style="min-height:80px" oninput="saveState()"></textarea>
       </div>
       <div style="margin-top:.75rem">
@@ -341,9 +372,8 @@
   </div>
 
   <div class="lab-footer">
-    <a class="btn-nav" href="../week5-lab/05-hash-algorithms.html">← Week 5</a>
-    <span class="text-muted">Module 6 · Standards</span>
-    <a class="btn-nav" href="../week7-lab/07-public-key-infrastructure.html">Week 7 →</a>
+    <a href="05-hash-algorithms.html" class="btn-nav">← Lab 05</a>
+    <span class="text-muted">Module 6</span>
   </div>
 </div>
 
@@ -368,6 +398,13 @@
 </div>
 
 <script>
+function closeTab(){
+  if(confirm('Are you done with this lab? Click OK to close the tab, or Cancel to continue.')){
+    window.close();
+    setTimeout(function(){window.location.href='../index.html';},300);
+  }
+}
+
 const LEVEL_DATA={
   1:{color:'#f85149',label:'Equivalent to AES-128 symmetric security',classical:'128-bit',quantum:'64-bit (Grover)',algos:'AES-128, SHA-256, RSA-3072, ECDH P-256',pqc:'ML-KEM-512, ML-DSA-44',note:'Minimum level for any new federal system. Quantum-vulnerable for long-term data.'},
   2:{color:'#e3b341',label:'Equivalent to SHA-256 collision resistance',classical:'128-bit (with collision resistance)',quantum:'64-bit symmetric / 106-bit collision',algos:'AES-128 + SHA-256, RSA-3072',pqc:'ML-KEM-512, SLH-DSA-SHA2-128s',note:'Adds collision resistance requirement. Suitable for 5–10 year data protection.'},
@@ -392,12 +429,13 @@ const ALGO_DATA={
 };
 
 let levelDone=false, algoDone=false, fipsDone=false, eraStep=0, eraDone=false, quizPassed=false, quizAttempts=0;
-let algosSeen=new Set();
+let algosSeen=new Set(), levelsSeen=new Set();
 const openedAt=new Date().toISOString();
 
 function showLevel(n,card){
   document.querySelectorAll('.level-card').forEach(c=>c.classList.remove('open'));
   card.classList.add('open');
+  levelsSeen.add(n);
   const d=LEVEL_DATA[n];
   const det=document.getElementById('level-detail');
   det.style.display='block';
@@ -406,7 +444,7 @@ function showLevel(n,card){
     <strong>Qualifying algorithms:</strong> ${d.algos}<br>
     <strong>NIST PQC algorithms at this level:</strong> <span style="color:#c084fc">${d.pqc}</span><br><br>
     <em style="color:#8b949e">${d.note}</em>`;
-  levelDone=true;
+  if(levelsSeen.size===5)levelDone=true;
   saveState();updateObj();
 }
 
@@ -421,7 +459,7 @@ function showAlgo(id,card){
     ${d.desc}<br><br>
     <strong style="color:#58a6ff">Migration path:</strong> ${d.migrate}`;
   document.getElementById('algo-progress').textContent=`${algosSeen.size}/12 algorithms explored`;
-  if(algosSeen.size>=6)algoDone=true;
+  if(algosSeen.size===12)algoDone=true;
   saveState();updateObj();
 }
 
@@ -462,6 +500,7 @@ function upgradeEra(){
   if(eraStep===1){
     document.getElementById('era-2015').classList.add('active');
     document.getElementById('era-btn').textContent='Upgrade to 2025 →';
+    document.getElementById('era-reset-btn').style.display='inline-block';
   }else if(eraStep===2){
     document.getElementById('era-2025').classList.add('active');
     document.getElementById('era-btn').textContent='✅ Fully Upgraded';
@@ -472,22 +511,52 @@ function upgradeEra(){
   document.getElementById('era-insight').textContent=ERA_INSIGHTS[eraStep-1]||'';
 }
 
-let _qAnswered=false;
-function checkQ(btn,choice){
-  quizAttempts++;
-  document.querySelectorAll('.opt-btn').forEach(b=>b.classList.remove('incorrect','correct'));
-  const correct=choice==='B';
-  btn.classList.add(correct?'correct':'incorrect');
-  const fb=document.getElementById('q-feedback');
-  fb.className='feedback-box show '+(correct?'feedback-correct':'feedback-incorrect');
-  if(correct){
-    fb.innerHTML='✅ <strong>Correct!</strong> AES-128-GCM with SHA-256 satisfies all FIPS 140-3 requirements: approved algorithm (AES), approved mode (GCM with built-in authentication), and approved hash (SHA-256).';
-    quizPassed=true;
-    document.getElementById('why-box').classList.add('show');
-  }else{
-    fb.innerHTML='❌ Not quite. Consider which option uses a current NIST-approved symmetric algorithm, an authenticated mode, and an approved hash function.';
-  }
-  checkReflectionLock();saveState();updateObj();
+function resetEra(){
+  eraStep=0;
+  eraDone=false;
+  document.getElementById('era-2015').classList.remove('active');
+  document.getElementById('era-2025').classList.remove('active');
+  document.getElementById('era-btn').textContent='Upgrade to 2015 →';
+  document.getElementById('era-btn').disabled=false;
+  document.getElementById('era-reset-btn').style.display='none';
+  document.getElementById('era-insight').textContent='';
+  saveState();updateObj();
+}
+
+// ── Quiz Randomization ──
+const QUIZ_OPTIONS=[
+  {text:'AES-128-GCM with SHA-256',correct:true,feedback:`<strong>All three components are FIPS 140-3 approved:</strong> AES is a FIPS-approved symmetric algorithm, GCM is an approved authenticated encryption mode (providing both confidentiality and integrity), and SHA-256 is an approved hash from the SHA-2 family. This combination is used in TLS 1.3 and meets all NIST requirements.`},
+  {text:'DES-56 with MD5 authentication',correct:false,feedback:`Both components are <strong>explicitly disallowed.</strong> DES was withdrawn from FIPS in 2005 — its 56-bit key can be brute-forced in hours with modern hardware. MD5 is cryptographically broken (collision attacks have been demonstrated since 2004) and prohibited for all security applications under NIST SP 800-107. This is a clear FIPS violation.`},
+  {text:'RC4 stream cipher with SHA-1',correct:false,feedback:`Both are prohibited. <strong>RC4</strong> has multiple critical weaknesses (biased output bytes, WEP attacks, BEAST/BEAST-like attacks) and was banned for TLS by RFC 7465. <strong>SHA-1</strong> is deprecated by NIST (SP 800-131A) — collision attacks have been demonstrated (SHAttered, 2017). Neither algorithm meets FIPS 140-3 requirements.`},
+  {text:'3DES-CBC without authentication',correct:false,feedback:`Two separate problems: <strong>3DES</strong> was deprecated by NIST in 2017 and officially disallowed for new implementations in 2023 (SP 800-131A Rev. 2) due to its 64-bit block size enabling SWEET32 attacks. <strong>CBC without authentication</strong> provides no integrity check — making it vulnerable to padding oracle attacks. Unauthenticated encryption is never compliant.`},
+];
+const _shuffled=(function(){const a=[...QUIZ_OPTIONS];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;})();
+const _LABELS=['A','B','C','D'];
+let _correctBtn=null;
+document.addEventListener('DOMContentLoaded',function(){
+  const grid=document.getElementById('quiz-options-grid');
+  if(!grid)return;
+  _shuffled.forEach(function(opt,i){
+    const btn=document.createElement('button');
+    btn.className='opt-btn';
+    if(opt.correct)_correctBtn=btn;
+    btn.onclick=function(){checkQ(btn,opt.correct,opt.feedback);};
+    btn.innerHTML='<span class="opt-id">'+_LABELS[i]+'</span>'+opt.text;
+    grid.appendChild(btn);
+  });
+});
+
+function checkQ(btn,isCorrect,feedbackText){
+  if(!quizPassed)quizAttempts++;
+  document.querySelectorAll('.opt-btn').forEach(function(b){b.classList.remove('incorrect','correct');});
+  if(quizPassed&&_correctBtn)_correctBtn.classList.add('correct');
+  btn.classList.add(isCorrect?'correct':'incorrect');
+  if(isCorrect){quizPassed=true;}
+  const fb=document.getElementById('q-feedback')||document.getElementById('feedback');
+  fb.className='feedback-box show '+(isCorrect?'feedback-correct':'feedback-incorrect');
+  fb.innerHTML=(isCorrect?'✅ ':'❌ ')+feedbackText;
+  const wb=document.getElementById('why-box');if(isCorrect&&wb)wb.classList.add('show');
+  saveState();checkReflectionLock();if(typeof updateObj==='function')updateObj();
 }
 
 function checkReflectionLock(){
@@ -507,7 +576,7 @@ function checkReflectionLock(){
 function updateObj(){
   const checks=[
     {done:levelDone,label:'Explored NIST security levels 1–5'},
-    {done:algoDone,label:'Identified ≥6 deprecated/current/PQC algorithms'},
+    {done:algoDone,label:'Explored all 12 algorithms in the dashboard'},
     {done:fipsDone,label:'Ran FIPS 140-3 compliance check'},
     {done:eraDone,label:'Completed cryptographic agility upgrade path'},
     {done:quizPassed,label:'Passed the standards quiz'},
@@ -532,6 +601,7 @@ function toggleObj(){
 function saveState(){
   const s={quizPassed,quizAttempts,levelDone,algoDone,fipsDone,eraDone,eraStep,
     algosSeen:Array.from(algosSeen),
+    levelsSeen:Array.from(levelsSeen),
     studentName:(document.getElementById('student-name')||{}).value||'',
     reflection:(document.getElementById('learning-reflection')||{}).value||'',
     labFeedback: (document.getElementById('lab-feedback')?.value||'')};
@@ -544,21 +614,17 @@ function loadState(){
   quizPassed=s.quizPassed||false;quizAttempts=s.quizAttempts||0;
   levelDone=s.levelDone||false;algoDone=s.algoDone||false;
   fipsDone=s.fipsDone||false;eraDone=s.eraDone||false;
-  eraStep=s.eraStep||0;algosSeen=new Set(s.algosSeen||[]);
+  eraStep=s.eraStep||0;algosSeen=new Set(s.algosSeen||[]);levelsSeen=new Set(s.levelsSeen||[]);
   if(s.studentName){const el=document.getElementById('student-name');if(el)el.value=s.studentName;}
   if(s.reflection){const el=document.getElementById('learning-reflection');if(el)el.value=s.reflection;}
   if(s.labFeedback&&document.getElementById('lab-feedback')){document.getElementById('lab-feedback').value=s.labFeedback;}
-  if(eraStep>=1)document.getElementById('era-2015').classList.add('active');
+  if(eraStep>=1){document.getElementById('era-2015').classList.add('active');document.getElementById('era-reset-btn').style.display='inline-block';}
   if(eraStep>=2){document.getElementById('era-2025').classList.add('active');document.getElementById('era-btn').textContent='✅ Fully Upgraded';document.getElementById('era-btn').disabled=true;}
   if(eraStep>0&&eraStep<=3)document.getElementById('era-insight').textContent=ERA_INSIGHTS[eraStep-1]||'';
   if(quizPassed){
-    _qAnswered=true;
-    const btns=document.querySelectorAll('.opt-btn');
-    if(btns.length>1)btns[1].classList.add('correct');
+    const wb=document.getElementById('why-box');if(wb)wb.classList.add('show');
     const fb=document.getElementById('q-feedback');
-    fb.className='feedback-box show feedback-correct';
-    fb.innerHTML='✅ <strong>Correct!</strong> AES-128-GCM with SHA-256 satisfies FIPS 140-3 requirements.';
-    document.getElementById('why-box').classList.add('show');
+    if(fb){fb.className='feedback-box show feedback-correct';}
   }
   if(algosSeen.size>0)document.getElementById('algo-progress').textContent=`${algosSeen.size}/12 algorithms explored`;
   updateObj();
@@ -591,7 +657,7 @@ function exportPDF(){
   document.getElementById('ps-interactions').innerHTML=`<table>
     <tr><td>Quiz:</td><td>${data.quizPassed?'✅ Passed':'❌ Not passed'} (${data.quizAttempts||0} attempts)</td></tr>
     <tr><td>NIST Levels:</td><td>${data.levelDone?'✅ Explored':'❌ Not done'}</td></tr>
-    <tr><td>Algorithm Dashboard:</td><td>${data.algoDone?'✅ ≥6 reviewed':'❌ Incomplete'}</td></tr>
+    <tr><td>Algorithm Dashboard:</td><td>${data.algoDone?'✅ All 12 reviewed':'❌ Incomplete'}</td></tr>
     <tr><td>FIPS Checker:</td><td>${data.fipsDone?'✅ Completed':'❌ Not done'}</td></tr>
     <tr><td>Agility Timeline:</td><td>${data.eraDone?'✅ Fully upgraded':'❌ Incomplete'}</td></tr>
   </table>`;
@@ -601,9 +667,191 @@ function exportPDF(){
   const slug=(data.studentName||'').replace(/[^\w\s-]/g,'').trim();
   if(slug)document.title=slug+' — '+orig;
   window.print();
-  setTimeout(()=>{document.title=orig;document.getElementById('print-summary').style.display='none';},500);
+  setTimeout(()=>{
+    document.title=orig;
+    document.getElementById('print-summary').style.display='none';
+    // Show success banner with exit button
+    const banner = document.getElementById('export-success-banner');
+    banner.classList.add('show');
+    setTimeout(() => banner.classList.remove('show'), 8000);
+  },500);
 }
 document.addEventListener('DOMContentLoaded',()=>{loadState();updateObj();});
 </script>
+<footer style="text-align:center;padding:1rem;border-top:1px solid #ccc;margin-top:2rem;color:#666;font-size:0.8rem;">
+    © <span id="copyright-year"></span> Clark Ngo
+  </footer>
+  <script>document.getElementById('copyright-year').textContent = new Date().getFullYear();
+
+// ═══════════════════════════════════════════════════
+// TOUR SYSTEM
+// ═══════════════════════════════════════════════════
+let tourCurrentStep = 1;
+const tourTotalSteps = 6;
+
+function initTourSystem() {
+  // Check if this is Lab 01 and first visit
+  const tourSeenKey = 'cryptography-tour-seen-v1';
+  const isLab01 = window.location.pathname.includes('01-cia-triad');
+  const tourSeen = localStorage.getItem(tourSeenKey);
+  
+  // Auto-show tour on Lab 01 first visit
+  if (isLab01 && !tourSeen) {
+    setTimeout(() => showTourModal(1), 800);
+  }
+}
+
+function showTourModal(stepNum) {
+  tourCurrentStep = stepNum;
+  const modal = document.getElementById('tour-modal');
+  modal.classList.add('show');
+  
+  // Show only current step
+  for (let i = 1; i <= tourTotalSteps; i++) {
+    const step = document.getElementById(`tour-step-${i}`);
+    if (step) step.classList.remove('show');
+  }
+  const currentStep = document.getElementById(`tour-step-${stepNum}`);
+  if (currentStep) currentStep.classList.add('show');
+  
+  // Update counter
+  document.getElementById('tour-counter').textContent = `Step ${stepNum} of ${tourTotalSteps}`;
+  
+  // Update button states
+  const prevBtn = document.getElementById('tour-prev-btn');
+  if (stepNum === 1) {
+    prevBtn.style.opacity = '.5';
+    prevBtn.style.pointerEvents = 'none';
+  } else {
+    prevBtn.style.opacity = '1';
+    prevBtn.style.pointerEvents = 'auto';
+  }
+  
+  const nextBtn = document.getElementById('tour-next-btn');
+  if (stepNum === tourTotalSteps) {
+    nextBtn.textContent = 'Close Tour →';
+    nextBtn.onclick = () => closeTour();
+  } else {
+    nextBtn.textContent = 'Next →';
+    nextBtn.onclick = () => nextTourStep();
+  }
+}
+
+function nextTourStep() {
+  if (tourCurrentStep < tourTotalSteps) {
+    showTourModal(tourCurrentStep + 1);
+  } else {
+    closeTour();
+  }
+}
+
+function prevTourStep() {
+  if (tourCurrentStep > 1) {
+    showTourModal(tourCurrentStep - 1);
+  }
+}
+
+function closeTour() {
+  const modal = document.getElementById('tour-modal');
+  modal.classList.remove('show');
+  localStorage.setItem('cryptography-tour-seen-v1', 'true');
+}
+
+function skipTour() {
+  closeTour();
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', initTourSystem);
+
+</script>
+<div id="export-success-banner">
+  <h3>✅ PDF exported successfully!</h3>
+  <p>Your lab work has been saved as a PDF. You can now exit the lab or continue exploring.</p>
+  <button onclick="closeTab()">✕ Exit Lab</button>
+</div>
+<div id="tour-modal">
+  <div class="tour-backdrop"></div>
+  <div class="tour-container">
+    <button class="tour-close" onclick="closeTour()">✕</button>
+    
+    <div id="tour-step-1" class="tour-step show">
+      <h2>🔐 Welcome to Cryptography Labs!</h2>
+      <p>Let's take a quick tour of how these labs work. By the end, you'll understand:</p>
+      <ul style="margin:1rem 0;padding-left:1.5rem;color:#8b949e">
+        <li>The objective system that unlocks submission</li>
+        <li>How to use interactive playgrounds</li>
+        <li>How to complete and submit your work</li>
+      </ul>
+      <p style="margin-top:1.5rem">Ready? Let's go!</p>
+    </div>
+    
+    <div id="tour-step-2" class="tour-step">
+      <h2>📋 Track Your Progress with Objectives</h2>
+      <p>Every lab has <strong>multiple objectives</strong> you need to complete. Different labs have different objectives based on what you'll learn:</p>
+      <ul style="margin:1rem 0;padding-left:1.5rem;color:#8b949e">
+        <li>Answer the mini quiz correctly</li>
+        <li>Complete interactive activities</li>
+        <li>Try different scenarios</li>
+        <li>Gather insights and explore concepts</li>
+      </ul>
+      <div class="tour-highlight">Look for the 📋 badge in the bottom-right corner →</div>
+      <p style="margin-top:1rem">Your <strong>submission area is locked</strong> until all objectives are done. This ensures you learn before submitting!</p>
+    </div>
+    
+    <div id="tour-step-3" class="tour-step">
+      <h2>🎮 Learn by Doing — Interactive Playgrounds</h2>
+      <p>Each lab has interactive sections where you can:</p>
+      <ul style="margin:1rem 0;padding-left:1.5rem;color:#8b949e">
+        <li><strong>Choose options</strong> — Select from encryption types, parameters, etc.</li>
+        <li><strong>Adjust sliders</strong> — Change key length, block size, sensitivity</li>
+        <li><strong>See results instantly</strong> — Outputs update as you experiment</li>
+        <li><strong>Learn patterns</strong> — Understand trade-offs between choices</li>
+      </ul>
+      <p style="margin-top:1rem">Don't worry about "wrong" answers — this is exploration! Try different combinations.</p>
+    </div>
+    
+    <div id="tour-step-4" class="tour-step">
+      <h2>❓ Test Your Understanding with the Quiz</h2>
+      <p>Each lab has a multiple-choice question to test what you've learned.</p>
+      <div class="tour-highlight">💡 Answers are randomized every time you reload — no guessing!</div>
+      <ul style="margin:1rem 0;padding-left:1.5rem;color:#8b949e">
+        <li>Read each option carefully</li>
+        <li>Think about what you observed in the playground</li>
+        <li>Instant feedback tells you if you're right</li>
+      </ul>
+      <p style="margin-top:1rem">Getting it wrong is fine! You can try again.</p>
+    </div>
+    
+    <div id="tour-step-5" class="tour-step">
+      <h2>📝 Share Your Learning in the Reflection</h2>
+      <p>Once all objectives are complete, the submission area unlocks.</p>
+      <p><strong>📌 Required: Learning Reflection</strong></p>
+      <p style="color:#8b949e;margin:.5rem 0">Share what you learned in your own words. How would you explain this to a friend? Why does it matter?</p>
+      <p><strong>🔍 Optional: Lab Observations</strong></p>
+      <p style="color:#8b949e;margin:.5rem 0">Any interesting findings? Edge cases you discovered? Patterns you noticed?</p>
+      <p style="margin-top:1rem;color:#f85149"><strong>Tip:</strong> Write thoughtfully — this reflection proves you understand the concept, not just completed activities.</p>
+    </div>
+    
+    <div id="tour-step-6" class="tour-step">
+      <h2>📄 Export Your Work & Exit</h2>
+      <p>When you're ready to finish:</p>
+      <ul style="margin:1rem 0;padding-left:1.5rem;color:#8b949e">
+        <li><strong>Click "Export PDF"</strong> — Saves a summary of your work (quiz result, interactions, reflection)</li>
+        <li><strong>See the success banner</strong> — Green notification appears at the bottom with an "Exit Lab" button</li>
+        <li><strong>Click to exit</strong> — Closes the lab and returns to the lab home page</li>
+      </ul>
+      <div class="tour-highlight">You can always return to previous labs — all your work is saved in the browser</div>
+      <p style="margin-top:1rem">One more thing: <strong>you can only navigate backward</strong> through labs. This ensures you don't skip ahead! 🔒</p>
+    </div>
+    
+    <div class="tour-nav">
+      <button id="tour-prev-btn" class="tour-btn" onclick="prevTourStep()" style="opacity:.5;cursor:not-allowed">← Previous</button>
+      <span id="tour-counter">Step 1 of 6</span>
+      <button id="tour-next-btn" class="tour-btn" onclick="nextTourStep()">Next →</button>
+      <button class="tour-btn tour-btn-skip" onclick="skipTour()" style="float:right">Skip</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
