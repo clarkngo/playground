@@ -109,3 +109,21 @@ badge.textContent = `${completed}/${checks.length} objectives`;
 ```
 
 Or hardcode it in the HTML and double-check it matches every time the `checks` array changes.
+
+---
+
+## Build a Canonical Template Before Creating a Series
+
+**Context:** The Playground has multiple 10-part series — Cryptography Labs, Encryption Labs, Coding Agents, Case Studies, Trainer Series. Each was built by creating one file, then copying it for the remaining 9.
+
+**Lesson:** Spend extra time getting the first file right before copying. Every flaw in the template multiplies by N.
+
+**Checklist for the template file:**
+- Correct folder paths and nav links
+- Shared CSS/JS patterns (objectives overlay, reflection lock, save/load state)
+- Metadata tags and footer
+- Naming convention (kebab-case, consistent numbering `01-`, `02-`)
+
+**Anti-pattern:** Copying too early, then having to fix the same thing across all 10 files. This happened with "Why and Purpose" → "Why This Matters" (41 occurrences across 10 files) and the `.lab-input` CSS missing from Labs 01–02.
+
+**Rule:** If you find yourself fixing the same thing in more than 2 files, it should have been in the template.
