@@ -7,6 +7,15 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ## 2026-03-25
 
+### [feature] `index.html` — Lessons Learned section added
+- New sidebar nav entry "🧠 Lessons Learned" under Meta group; collection card + 5 direct file-card shortcuts
+- Links to viewer, prompting, bug-fixes, feature-dev, ux, and workflow topics
+
+### [feature] `lessons-learned/workflow.md` — new topic: Claude Code Workflow
+- Covers: branch/PR/merge cadence, plan mode, verify-one-then-batch, context window management, parallel vs sequential tool calls, git stash mid-session, CLAUDE.md purpose, commit message quality
+
+### [feature] CLAUDE.md — workflow.md added to lessons-learned post-write checklist
+
 ### [feature] CLAUDE.md — post-write checklist now includes lessons-learned update step
 - Added 5-line checklist item: after any change, check if it warrants updating `bug-fixes.md`, `feature-dev.md`, `ux.md`, `refactor.md`, or `prompting.md`
 

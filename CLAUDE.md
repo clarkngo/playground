@@ -68,6 +68,7 @@ After writing any `.html` file:
   - UX decision or layout rule → `lessons-learned/ux.md`
   - Code restructure insight → `lessons-learned/refactor.md`
   - Better prompting pattern discovered → `lessons-learned/prompting.md`
+  - Better Claude Code process or workflow insight → `lessons-learned/workflow.md`
 
 ---
 
