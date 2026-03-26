@@ -119,3 +119,21 @@ This reduces ambiguity about whether it's one request or multiple.
 - "gh auth login" — direct command to execute
 
 **Lesson:** You don't need long explanations to redirect or confirm. Short, direct responses are fine and keep momentum.
+
+---
+
+## Ask Claude to Maintain Living Documentation
+
+**What you asked:**
+> "should Claude also update the lessons-learned files when a new bug/fix/pattern is discovered, the same way it updates the changelog?"
+
+**Why this works:** Framing the question as "should Claude do X the same way it does Y" ties a new behavior to an existing one Claude already follows. Claude inherits the habit from the analogy.
+
+**What it unlocks:** Instead of a one-time snapshot, lessons-learned becomes a living document that grows automatically with every session — no separate prompt needed.
+
+**General pattern:**
+> "Should Claude also [new behavior] the same way it [existing behavior]?"
+
+This is more effective than "add a rule that Claude always does X" because it grounds the new rule in something already working.
+
+**Result:** Added to CLAUDE.md post-write checklist — Claude now checks whether each change warrants a lessons-learned update, same as changelog.

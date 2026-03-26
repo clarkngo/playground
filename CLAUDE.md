@@ -62,6 +62,12 @@ After writing any `.html` file:
 - [ ] Page loads without console errors (`preview_console_logs`)
 - [ ] Key interactive elements are visible (`preview_screenshot`)
 - [ ] Changelog updated (see below)
+- [ ] Lessons-learned updated? — if the change introduced or confirmed a pattern, update the relevant file:
+  - New bug root cause → `lessons-learned/bug-fixes.md`
+  - New feature/state pattern → `lessons-learned/feature-dev.md`
+  - UX decision or layout rule → `lessons-learned/ux.md`
+  - Code restructure insight → `lessons-learned/refactor.md`
+  - Better prompting pattern discovered → `lessons-learned/prompting.md`
 
 ---
 

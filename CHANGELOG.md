@@ -10,6 +10,8 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 ## 2026-03-25
 
 ### Root / Global
+- `[feature]` CLAUDE.md — post-write checklist now prompts lessons-learned update alongside changelog
+- `[feature]` lessons-learned/prompting.md — new entry on analogy-based prompting pattern ("do X the same way you do Y")
 - `[bug]` Added `.nojekyll` at repo root — fixes `fetch()` failing for `.md` files on GitHub Pages (Jekyll was intercepting them)
 - `[feature]` Created `changelog/index.html` — visual markdown viewer for all 21 changelog files; tag badges colored inline (feature/bug/ux/refactor); sidebar grouped by category
 
