@@ -7,6 +7,15 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ## 2026-03-25
 
+### [feature] CLAUDE.md — post-write checklist now includes lessons-learned update step
+- Added 5-line checklist item: after any change, check if it warrants updating `bug-fixes.md`, `feature-dev.md`, `ux.md`, `refactor.md`, or `prompting.md`
+
+### [feature] lessons-learned/prompting.md — new entry: Ask Claude to maintain living documentation
+- Documents the "should Claude do X the same way it does Y" prompting pattern
+- Explains why analogy-based framing is more effective than issuing a direct rule
+
+---
+
 ### [bug] `fetch()` failed for .md files on GitHub Pages
 - **Symptom:** `Could not load root-playground.md: Failed to fetch` on GitHub Pages
 - **Root cause:** GitHub Pages runs Jekyll by default; Jekyll intercepts `.md` files, transforming or blocking them so `fetch()` receives HTML or a 404 instead of raw markdown
