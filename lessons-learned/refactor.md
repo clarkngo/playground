@@ -110,3 +110,33 @@ document.addEventListener('DOMContentLoaded', () => {
 **Anti-pattern:** Slight variations creep in between files over time — one file uses `class="info-box"`, another uses `class="tip-box"` for the same visual element. These diverge further with each edit.
 
 **Maintenance rule:** When you find a variation from the canonical pattern, fix it back to the standard. Don't let drift compound.
+
+---
+
+## Consolidate Standalone Files Into a Folder When a Section Grows
+
+**Context:** 18 standalone security HTML files were scattered at the root level. As the section grew, navigation and maintenance became unwieldy.
+
+**Fix:** `[refactor]` Moved all 18 files into `security/` folder, updated all links.
+
+**Signal that consolidation is needed:**
+- More than ~5 files sharing a topic at the root level
+- File names need a common prefix to be understood (`security-xss.html`, `security-sqli.html`, etc.)
+- The homepage nav entry becomes a list instead of a single card
+
+**Rule:** A folder is the right abstraction when a section has its own index page, shared assets, or more than one level of content.
+
+---
+
+## Consistent File Naming Convention: kebab-case
+
+**Context:** `baron_smite.html` was renamed to `baron-smite.html`.
+
+**Convention across this project:** All HTML files use kebab-case (hyphens, no underscores, all lowercase).
+
+**Why it matters:**
+- URLs on GitHub Pages are case-sensitive — `Baron-Smite.html` and `baron-smite.html` are different files
+- Underscores can be invisible in some underlined link styles
+- Consistency makes glob patterns and scripts predictable (`*.html`, `cryptography-labs/0*.html`)
+
+**Rule:** When creating any new file, use kebab-case. When renaming, update every link that references it.

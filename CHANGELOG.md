@@ -9,6 +9,9 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ## 2026-03-25
 
+### Lessons Learned
+- `[feature]` 10 new entries from project history review — hardcoded counts, script-before-DOM, canvas z-index, threshold/label mismatch, series template pattern, folder consolidation, kebab-case naming, file:// vs HTTP server, archive before replace, commit message discipline
+
 ### Root / Global
 - `[feature]` `index.html` — Lessons Learned section added with sidebar nav, collection card, and 5 topic shortcuts
 - `[feature]` `lessons-learned/workflow.md` — new topic: Claude Code Workflow (branch/PR cadence, plan mode, context management, CLAUDE.md)

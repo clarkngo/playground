@@ -135,3 +135,53 @@ fix bug
 ```
 
 **Why it matters:** `git log` is your session history. Good messages mean you can reconstruct what happened without re-reading all the code.
+
+---
+
+## Always Use a Local HTTP Server for Dev — Not `file://`
+
+**Problem:** Opening `changelog/index.html` or `lessons-learned/index.html` directly from the filesystem (`file://`) causes `fetch()` to fail with a CORS or network error. The `.md` files can't be loaded.
+
+**Fix:**
+```bash
+python3 -m http.server 8080
+# then open http://localhost:8080/changelog/
+```
+
+**Why `file://` breaks `fetch()`:** Browsers block `fetch()` requests to other `file://` URLs as a security measure. Even same-folder fetches fail.
+
+**Rule:** Any page that uses `fetch()` — including markdown viewers, data loaders, or API calls — must be served over HTTP, even locally.
+
+---
+
+## Archive Before Replacing — Don't Delete Immediately
+
+**Context:** Database Labs had v1–v3 versions (customers/employees schema). Before creating the new HOS04/PE04 labs, old versions were moved to `archives/database/` rather than deleted.
+
+**Why:** Old versions often contain working code snippets, UI patterns, or content that's useful for reference or recovery. Deletion is permanent; archiving costs almost nothing.
+
+**Pattern:**
+```
+archives/
+  database/
+    v1-customers.html
+    v2-employees.html
+```
+
+**Rule:** Before replacing a working file with a new version, move the old one to `archives/<section>/`. Only delete if you are certain it has zero reuse value.
+
+---
+
+## Commit Message Discipline Starts From Day One
+
+**Context:** Early commits in this project used messages like `update`, `updates`, `fix`, `type`, `touch`. These are permanent and unsearchable.
+
+**What was lost:** It's impossible to know from `git log` what changed in those early commits without reading the full diff.
+
+**What good looks like** (from later in the project):
+```
+Cryptography labs: objectives overhaul, UX fixes, and bug fixes
+Fix objectives resetting on refresh in Labs 02 and 08
+```
+
+**Rule:** Write commit messages as if the reader has no context. If you can't summarize what changed in one line, the commit is probably too large. Start this habit from commit #1 — retrofitting is not possible.

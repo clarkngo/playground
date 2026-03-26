@@ -7,6 +7,12 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ## 2026-03-25
 
+### [feature] lessons-learned — 10 new entries from history review
+- **bug-fixes.md**: hardcoded count string, script-before-DOM, canvas z-index overlap, threshold/label mismatch
+- **feature-dev.md**: canonical template pattern for series (build one right, then copy)
+- **refactor.md**: consolidate standalone files into folder, kebab-case naming convention
+- **workflow.md**: `file://` vs HTTP server, archive before replacing, commit message discipline from day one
+
 ### [feature] `index.html` — Lessons Learned section added
 - New sidebar nav entry "🧠 Lessons Learned" under Meta group; collection card + 5 direct file-card shortcuts
 - Links to viewer, prompting, bug-fixes, feature-dev, ux, and workflow topics
