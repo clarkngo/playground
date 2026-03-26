@@ -7,6 +7,96 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-03-26
+
+### [bug] primer/fintech — Market Dynamics and Evolution tabs both broken; three fixes applied
+
+### [feature] primer/telecom — Evolution & Foundations tab (Tab 9) added; 8-era timeline + 6 foundational works; JS PASS
+
+### [feature] primer/index.html — manufacturing card + nav link added; all 17 primers updated to 9 / 9 sections
+
+### [feature] CLAUDE.md — primer-building instructions updated to 9-tab structure with Evolution & Foundations spec
+
+### [feature] primer — Evolution & Foundations tab added to logistics, video-platform, oil, fishing
+- Added Tab 9 (`id="tab-evolution"`) with 8 timeline cards + foundational works table to all four files; all JS syntax checks pass
+
+### [feature] primer — Evolution & Foundations tab added to healthcare, esports, video-game-retail, insurance
+- Added Tab 9 (`id="tab-evolution"`) with 8 timeline cards + foundational works table to all four files; all JS syntax checks pass
+
+### [feature] Manufacturing — Corrugated Packaging industry primer
+- Created `primer/manufacturing/index.html` — 9-tab primer covering containerboard mills, box plants, e-commerce packaging, OCC recycling; IP, Smurfit WestRock, PCA; 20 glossary terms, 3 workflows, 9 timeline milestones, 8 foundational standards
+
+### [feature] primer — Evolution & Foundations tab added to restaurant, sports, maritime
+- 8-card historical timeline + foundational works table in each; all JS syntax checks pass
+
+### [feature] primer — Evolution & Foundations tab added to fintech, ecommerce, edtech, ai-infrastructure
+- 8-card historical timeline + foundational works table in each; all JS syntax checks pass
+
+### [feature] CLAUDE.md — Industry Primer build instructions added
+- Added "Building a New Industry Primer" section covering: canonical template (insurance), 8-tab structure, required content per tab, JS rules (no apostrophes, showTab/toggleGloss patterns), header block HTML, post-creation checklist, and changelog routing
+- Added `primer/` → `changelog/primer.md` to the changelog routing table
+
+### [feature] primer/index.html — 6 new industry cards + nav links (maritime, telecom, logistics, video-platform, oil, fishing)
+- Added 6 industry cards with `data-search` attributes and sidebar nav links; updated all card section counts to 8 / 8
+
+### [feature] Telecommunications industry primer
+- Created `primer/telecom/index.html` — 8-tab primer featuring T-Mobile, AT&T, Verizon; 20 glossary terms (ARPU, churn, 5G NR, spectrum, MVNO, FWA, eSIM, Open RAN), 3 workflows (subscriber onboarding, 5G site build, enterprise private 5G sale)
+
+### [feature] Logistics & Supply Chain industry primer
+- Created `primer/logistics/index.html` — 8-tab primer featuring Maersk integrated logistics, DHL, UPS, FedEx, Amazon; 20 glossary terms (3PL, TMS, WMS, drayage, OTIF, cross-docking, control tower), 3 workflows (inbound warehouse receipt, e-commerce fulfillment, freight broker load execution)
+
+### [feature] Video Platforms & Streaming industry primer
+- Created `primer/video-platform/index.html` — 8-tab primer featuring YouTube, Netflix, TikTok; 20 glossary terms (CPM, RPM, watch time, CTR, algorithm, SVOD/AVOD/FAST, Content ID, CTV, Super Chat), 3 workflows (YouTube upload lifecycle, streaming content licensing, YouTube ad campaign setup)
+
+### [feature] Oil & Gas industry primer
+- Created `primer/oil/index.html` — 8-tab primer featuring ExxonMobil, Chevron, Saudi Aramco, SLB; 20 glossary terms (Brent/WTI, upstream/midstream/downstream, proved reserves, lifting cost, fracking, OPEC+, crack spread, CII), 3 workflows (shale well drilling, crude oil trading, refinery crude procurement)
+
+### [feature] Commercial Fishing & Aquaculture industry primer
+- Created `primer/fishing/index.html` — 8-tab primer featuring Mowi, Trident Seafoods, Alaska pollock; 18 glossary terms (IUU, MSC/ASC, TAC, ITQ, bycatch, FIFO ratio, FCR, sea lice, traceability), 3 workflows (Alaska pollock season, salmon farm grow-out, seafood restaurant supply chain)
+
+### [feature] Market Dynamics tab added to ecommerce, edtech, and ai-infrastructure primers
+- Added 8th tab button + Market Dynamics section to `primer/ecommerce/index.html`, `primer/edtech/index.html`, and `primer/ai-infrastructure/index.html`; 5 pain-point cards + 6 monetization models each; JS syntax checks pass
+
+### [feature] Market Dynamics tab content added to esports, video-game-retail, and maritime primers
+- Added `tab-dynamics` section HTML to `primer/esports/index.html`, `primer/video-game-retail/index.html`, and `primer/maritime/index.html` — 5 pain-point cards + monetization table each; JS syntax checks pass
+
+### [feature] Market Dynamics tab content added to insurance, restaurant, sports primers
+- Added `#tab-dynamics` section to `primer/insurance/index.html`, `primer/restaurant/index.html`, and `primer/sports/index.html` — 5 industry-specific pain-point cards + Monetization Models table in each; JS syntax checks passed
+
+### [feature] Market Dynamics section added to healthcare and fintech primers
+- Added Market Dynamics tab content to `primer/healthcare/index.html` and `primer/fintech/index.html` — 5 industry-specific cards + Monetization Models table in each
+
+### [feature] Maritime & Shipping industry primer
+- Created `primer/maritime/index.html` — 7-tab primer featuring Maersk, MSC, CMA CGM; 20 glossary terms (TEU, B/L, SCFI, demurrage, CII, Incoterms), 3 workflows (container booking to vessel load, port call ops, freight rate negotiation cycle)
+
+## 2026-03-25 (primer batch 2)
+
+### [feature] Insurance industry primer
+- Created `primer/insurance/index.html` — 7-tab primer featuring Allstate, State Farm, Geico, Progressive; 18 glossary terms, 3 workflows (auto quote-to-bind, claims FNOL-to-settlement, actuarial rate filing)
+
+### [feature] Restaurant & Food Service industry primer
+- Created `primer/restaurant/index.html` — 7-tab primer featuring ramen shop + poke shop; 16 glossary terms (FOH/BOH, prime cost, RevPASH, menu engineering, ghost kitchen), 3 workflows
+
+### [feature] Sports & Athletics industry primer
+- Created `primer/sports/index.html` — 7-tab primer featuring NBA; 15 glossary terms (salary cap, Bird Rights, EPM/RAPTOR, Second Spectrum), 3 workflows (draft scouting, in-game coaching, cap construction)
+
+### [feature] primer/index.html — 3 new industry cards + nav links (insurance, restaurant, sports)
+- Added insurance, restaurant, sports cards with searchable `data-search` attributes and sidebar nav links with "New" badges
+
+## 2026-03-25 (primer batch)
+
+### [feature] Healthcare & MedTech industry primer
+- Created `primer/healthcare/index.html` — 7-tab primer featuring Stryker/Mako, FDA pathways, GPO/VAC procurement, MedTech value chain, 25 glossary terms, 3 workflows
+
+### [feature] eSports & Competitive Gaming industry primer
+- Created `primer/esports/index.html` — 7-tab primer featuring Wild Rift / WCS SEA, tournament production, org sponsorship lifecycle, 18 glossary terms, 3 workflows
+
+### [feature] Video Game Retail industry primer
+- Created `primer/video-game-retail/index.html` — 7-tab primer featuring GameStop, trade-in economics, digital storefront pipeline, 18 glossary terms, 3 workflows
+
+### [feature] primer/index.html — 3 new industry cards + nav links
+- Added Healthcare, eSports, and Video Game Retail cards to hub grid; added sidebar nav links with New badges
+
 ## 2026-03-25
 
 ### Lessons Learned

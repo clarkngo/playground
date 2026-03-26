@@ -1,5 +1,298 @@
 # Primer Changelog
 
+## 2026-03-26 (bugfix — fintech tab system)
+
+### [bug] primer/fintech — Market Dynamics and Evolution tabs non-functional
+- **Symptom:** Clicking "Market Dynamics & Monetization" showed nothing; Evolution tab entirely dead; dots 7–8 click unresponsive
+- **Root cause 1:** `sections["dynamics"]` looked up `id="sec-dynamics"` but the section has `id="dynamics"` — `getElementById` returned `null`
+- **Root cause 2:** `sections` map and `tabOrder` array both omitted `"evolution"` entirely — tab button had no wired section
+- **Root cause 3:** Dots 7 and 8 used `id="dot-7/8"` with no `data-idx` attribute; JS dot-click handler reads `dot.dataset.idx` (undefined), so clicking those dots did nothing
+- **Fix:** Updated `sections["dynamics"]` to reference correct ID; added `sections["evolution"]` entry; added `"evolution"` to `tabOrder`; changed dot 7/8 from `id=` to `data-idx=`; added "9." prefix to Evolution tab button label
+- JS syntax check: PASS
+
+## 2026-03-26 (batch 8 — telecom Evolution & Foundations + hub updates)
+
+### [feature] primer/telecom — Tab 9: Evolution & Foundations
+- Added `<section class="tab-section" id="tab-evolution">` to `primer/telecom/index.html`
+- 8 timeline cards: Bell & Monopoly Seed (1876–1906) → Bell System Era → AT&T Breakup (1984) → 1G–3G Wireless (1983–2000) → Telecom Act & Data Era (1996–2007) → 4G LTE & Un-carrier (2009–2013) → 5G & Sprint Merger (2018–2020) → Network Maturity & AI (2021–Present)
+- 6 foundational works: Shannon 1948, MFJ/AT&T Divestiture, Telecom Act 1996, 3GPP Releases 8/15/16, GSMA Mobile Economy Report, Innovator's Dilemma
+- JS syntax check: PASS
+
+### [feature] primer/index.html — manufacturing card + nav link + section count update
+- Added `manufacturing` nav link (📦 Manufacturing (Packaging), New badge) to sidebar
+- Added `manufacturing` industry card with full search keywords, description, and tags
+- Updated all 16 existing primer cards from `8 / 8 sections` / `· 8 sections` → `9 / 9 sections` / `· 9 sections`
+- Manufacturing card shows `9 / 9 sections` from initial creation
+
+### [feature] CLAUDE.md — updated primer-building instructions to 9 tabs
+- Changed "8 tabs" → "9 tabs"; updated tab table to include Tab 9 (Evolution & Foundations, `tab-evolution`)
+- Updated progress label spec: `"Section N of 9"` with 9 dots (dot-0 through dot-8)
+- Renamed Tab 8 to "Market Dynamics & Monetization" in table
+- Added Tab 9 content spec: 8 timeline milestone cards + foundational works metrics-table
+
+## 2026-03-26 (batch 6 — manufacturing / corrugated packaging)
+
+### [feature] Manufacturing — Corrugated Packaging industry primer
+- Created `primer/manufacturing/index.html` — comprehensive single-page primer with 9-tab navigation
+- Title: "Manufacturing — Corrugated Packaging"; features IP, Smurfit WestRock, PCA
+- Header tags: [corrugated packaging] [containerboard] [converting] [e-commerce]
+- Tab 1 Overview: 6 sub-sector cards + value chain (Timber/OCC through Recycling) + 6 market context cards
+- Tab 2 Terminology: 20 searchable accordion terms covering materials, structure, testing, equipment, printing, and industry bodies
+- Tab 3 Major Players: 4 categories — Integrated Producers, Independent Converters, Specialty/Protective, Equipment/Technology
+- Tab 4 Core Metrics: 4 metric categories — Mill Production, Converting Efficiency, Financial, Quality & Customer (25 metrics total)
+- Tab 5 Technology Stack: 7 layers from CAD/prepress to sustainability analytics
+- Tab 6 Workflows: 3 workflows — Custom Box Quote-to-Ship, Corrugator Trim Optimization, E-Commerce Packaging Qualification
+- Tab 7 Trends: 6 trend cards — E-Commerce Surge, Price Cycles, Sustainability, Digital Printing, Automation, Consolidation
+- Tab 8 Market Dynamics: 5 pain point cards + 6-model monetization table
+- Tab 9 Evolution: 9 timeline milestone cards (1817–2020s) + 8 foundational standards cards (TAPPI, ASTM, ISTA-6, ISO 2233, McKee formula)
+
+## 2026-03-26 (batch 7 — Evolution & Foundations tab)
+
+### [feature] primer/logistics, video-platform, oil, fishing — Tab 9: Evolution & Foundations
+- Added `<section id="tab-evolution" class="tab-section">` to all four primers, immediately before the closing page-wrap `</div>`
+- Each section: 8 timeline cards (`.card-grid` + `.card` with `.card-icon` for era label) + `.metrics-table` (Work | Author/Year | Why It Matters)
+- logistics: Railroad 1800s → COVID Resilience/Nearshoring 2020+; 6 foundational works (The Goal, Taylor, Machine That Changed the World, SCOR Model, The Box, Amazon Leadership Principles)
+- video-platform: Motion Picture/Broadcast 1888–1950s → Monetization Maturity 2022+; 6 foundational works (McLuhan, Betamax Case, DMCA §512, YouTube Partner Program, Kahneman, Nielsen)
+- oil: Drake Well 1859 → Energy Transition Tension 2021+; 6 foundational works (The Prize, Hubbert Peak, Tragedy of Commons, Texas RRC, MacKay, IPCC Reports)
+- fishing: Artisanal/Sail-era → Digital Integration/Climate Stress 2020+; 6 foundational works (Tragedy of Commons, Magnuson-Stevens Act, End of the Line, FAO Code of Conduct, Four Fish, MSC Standard)
+- All four JS syntax checks pass (`node --check`)
+
+## 2026-03-26 (batch 5 — Evolution & Foundations tab)
+
+### [feature] primer/healthcare, esports, video-game-retail, insurance — Tab 9: Evolution & Foundations
+- Added `<section id="tab-evolution" class="tab-section">` to all four primers, immediately before the closing page-wrap `</div>`
+- Each section: 8 timeline cards (`.card-grid` + `.card` with `.card-icon` for era label) + `.metrics-table` (Work | Author/Year | Why It Matters)
+- Healthcare: X-Ray 1895 → AI/Value-Based Care 2021+; 6 foundational works (FDA Device Amendments, ISO 13485, ISO 14971, Charnley hip paper, HIPAA, Crossing the Quality Chasm)
+- Esports: 1972 Spacewar tournament → 2022 org restructuring; 5 foundational works (T.L. Taylor, Homo Ludens, Twitch DMCA framework, KeSPA, Riot LCS ruleset)
+- Video Game Retail: Arcade origins 1972 → collectibles/retro 2021+; 5 foundational works (NES Seal of Quality, McLuhan Understanding Media, Steam model, Kerr 2006, ESRB)
+- Insurance: Lloyd's 1688 → AI underwriting/climate risk 2017+; 6 foundational works (McCarran-Ferguson, ISO CGL, Against the Gods, NAIC Model Laws, CAT Modeling text, ASOPs)
+- All four JS syntax checks pass (`node --check`)
+
+### [feature] primer/fintech, ecommerce, edtech, ai-infrastructure — Tab 9: Evolution & Foundations
+- Added `<section id="evolution">` (fintech, ecommerce, ai-infrastructure) and `<section id="tab-evolution">` (edtech) to all four primers
+- Each section contains: 8-card historical timeline (decade-by-decade milestones) + `.metrics-table` of foundational papers, books, and standards
+- Section classes match each file's existing pattern: `tab-section` (fintech, edtech), `section` (ecommerce, ai-infrastructure)
+- All four JS syntax checks pass (`node --check`)
+
+### [feature] primer/restaurant, sports, maritime — Tab 9: Evolution & Foundations
+- Added `id="tab-evolution"` `class="tab-section"` section to restaurant, sports, and maritime primers
+- restaurant: 8 timeline cards (Ancient–Medieval → 2020-Present) + 6 foundational works (Escoffier, HACCP, Flandrin/Montanari, ServSafe, FSMA, Menu Engineering Matrix)
+- sports: 8 timeline cards (1891 Naismith invention → 2020-Present Bubble/Betting era) + 6 foundational works (Holzman philosophy, CBA, Moneyball, Basketball on Paper, Second Spectrum, PASPA repeal)
+- maritime: 8 timeline cards (3000 BC ancient routes → 2023-Present Red Sea crisis) + 6 foundational works (The Box, SOLAS, MARPOL, Incoterms, UNCLOS, ISM Code)
+- All three JS syntax checks pass (`node --check`)
+
+## 2026-03-26 (batch 4 — new industries + Market Dynamics)
+
+### [feature] primer/index.html — 6 new industry cards + nav links
+- Added maritime, telecom, logistics, video-platform, oil, fishing cards to the industry grid with `data-search` attributes
+- Added 6 new nav links to sidebar (with "New" badges)
+- Updated all existing and new cards to show "8 / 8 sections" (Market Dynamics tab added to all primers)
+
+### [feature] Telecommunications industry primer
+- Created `primer/telecom/index.html` — comprehensive single-page primer with 8-tab navigation
+- Featured carrier: T-Mobile (and AT&T, Verizon, Dish/EchoStar)
+- Tabs: Overview, Key Terminology, Major Players, Core Metrics, Technology Stack, Common Workflows, Trends & Challenges, Market Dynamics
+- Header tags: [wireless] [5G] [network infra] [T-Mobile]
+- Overview: 6 sub-sector cards (Wireless/Mobile, Broadband/Fixed Line, Enterprise B2B, Tower Infrastructure, Satellite, MVNOs/Prepaid) + value chain + 6 market context cards
+- Terminology: 20 terms — ARPU, Churn Rate, Postpaid/Prepaid, 5G NR, Spectrum, MVNO, EBITDA, Capex Intensity, EIP, Core Network, RAN, Network Slicing, eSIM, FWA, IMS, Roaming, NPS, SD-WAN, UCaaS, MNO
+- Major Players: 4 categories — US National Carriers, Infrastructure & Tower, Equipment & Vendors, MVNOs & Disruptors
+- Core Metrics: Subscriber Health, Financial, Network Quality, Customer Experience
+- Technology Stack: 7 layers — RAN, Core Network, Transport/Backhaul, OSS/BSS, Customer/Digital, Enterprise/IoT, Data/Analytics
+- Workflows: Subscriber Onboarding (5-step), 5G Site Build & Activation (5-step), Enterprise Private 5G Sale Cycle (5-step)
+- Trends: 5G Monetization Lag, FWA Disruption, Network Commoditization, Open RAN, Spectrum Scarcity, Satellite/Direct-to-Device
+- Market Dynamics: 5 pain-point cards (CAC, churn/switching, capex treadmill, regulatory/spectrum, ARPU pressure) + monetization table (service revenue, equipment, FWA, enterprise, wholesale, advertising, roaming)
+
+### [feature] Logistics & Supply Chain industry primer
+- Created `primer/logistics/index.html` — comprehensive single-page primer with 8-tab navigation
+- Featured company: Maersk (integrated logistics transformation from ocean carrier)
+- Tabs: Overview, Key Terminology, Major Players, Core Metrics, Technology Stack, Common Workflows, Trends & Challenges, Market Dynamics
+- Header tags: [3PL] [last-mile] [supply chain] [Maersk]
+- Overview: 6 sub-sector cards (3PL, Freight Brokerage, Integrated Express, Last-Mile, Warehousing/Fulfillment, Integrated Logistics) + full value chain + 6 market context cards
+- Terminology: 20 terms — 3PL, Freight Forwarder, TL/LTL, Drayage, POD, Lead Time, Safety Stock, SKU, WMS, TMS, Cross-Docking, Cold Chain, Reverse Logistics, Intermodal, FOB, Demurrage, NMFC, OTD, Control Tower, Scope 3
+- Major Players: Integrated Express, 3PL/Warehousing, Freight Brokerage, Logistics Technology
+- Core Metrics: Delivery Performance, Cost & Efficiency, Asset Utilization, Customer & Revenue
+- Technology Stack: 7 layers — Visibility/Control Tower, TMS, WMS, Warehouse Automation, Last-Mile/Route Optimization, Data/Analytics, IoT/Hardware
+- Workflows: Inbound Shipment to Warehouse Receipt (5-step), E-Commerce Order Fulfillment (5-step), Freight Broker Load Execution (5-step)
+- Trends: Amazon Disintermediation, Visibility as Table Stakes, Last-Mile Economics Crisis, Warehouse Automation, Nearshoring, Sustainability/Carbon
+- Market Dynamics: 5 pain-point cards (rate volatility, capacity fragmentation, last-mile profitability, visibility gaps, labor/driver shortage) + monetization table (asset-based transport, brokerage take rate, 3PL warehousing, integrated logistics, SaaS/technology, fuel surcharge)
+
+### [feature] Video Platforms & Streaming industry primer
+- Created `primer/video-platform/index.html` — comprehensive single-page primer with 8-tab navigation
+- Featured platforms: YouTube, Netflix, TikTok
+- Tabs: Overview, Key Terminology, Major Players, Core Metrics, Technology Stack, Common Workflows, Trends & Challenges, Market Dynamics
+- Header tags: [YouTube] [streaming] [creator economy] [ad-supported]
+- Overview: 6 sub-sector cards (UGC, SVOD, AVOD/FAST, Live Streaming, Short-Form Video, Professional/Educational) + value chain + 6 market context cards
+- Terminology: 20 terms — CPM, RPM, Watch Time/AVD, Retention Curve, CTR, Algorithm, Monetization Threshold, CPL, SVOD/AVOD/TVOD/FAST, Churn Rate, Content ID, Mid-Roll/Pre-Roll/Bumper, Shorts Fund/Creator Fund, DAU/MAU, Transcoding/ABR, CDN, CTV, Channel Membership/Super Chat, Video SEO, Audience Retention Signal
+- Major Players: UGC/Short-Form, SVOD/Premium, AVOD/FAST, Creator Economy & Infrastructure
+- Core Metrics: Audience & Reach, Content Performance, Monetization, Platform Health
+- Technology Stack: 7 layers — Video Ingest/Processing, CDN/Delivery, Recommendation/Discovery, Ad Tech, Creator Tools/Analytics, Search/Metadata, Trust & Safety
+- Workflows: YouTube Video Production & Upload Lifecycle (5-step), Streaming Platform Content Licensing Deal (5-step), YouTube Ad Campaign Setup (5-step)
+- Trends: Attention Economy vs Creator Burnout, CTV Living Room Shift, TikTok Pressure/Ban Risk, AI-Generated Content, Subscription Fatigue, Creator Monetization Diversification
+- Market Dynamics: 5 pain-point cards (algorithm dependency, content moderation at scale, creator economics imbalance, streaming profitability crisis, piracy/Content ID evasion) + monetization table (CPM advertising, subscription SVOD, hybrid ad+sub, transactional TVOD, live donations, licensing, creator commerce)
+
+### [feature] Oil & Gas industry primer
+- Created `primer/oil/index.html` — comprehensive single-page primer with 8-tab navigation
+- Featured companies: ExxonMobil, Chevron, Saudi Aramco, SLB (Schlumberger), Halliburton
+- Tabs: Overview, Key Terminology, Major Players, Core Metrics, Technology Stack, Common Workflows, Trends & Challenges, Market Dynamics
+- Header tags: [upstream] [refining] [OPEC] [energy transition]
+- Overview: 6 sub-sector cards (Upstream/E&P, Midstream, Downstream/Refining, NOCs, Oilfield Services, LNG) + full value chain + 6 market context cards
+- Terminology: 20 terms — Brent/WTI, Barrel, Upstream/Midstream/Downstream, Proved Reserves, Reserve Replacement Ratio, Lifting Cost, Breakeven Price, Crack Spread, Fracking, OPEC+, Henry Hub, LNG, Wellbore/Completion, API Gravity, Wet/Dry Gas, EUR, Day Rate, Netback, Carbon Intensity, Royalty/Working Interest
+- Major Players: Integrated Majors/IOCs, E&P/Independents, National Oil Companies, Oilfield Services
+- Core Metrics: Production & Reserves, Financial, Drilling Efficiency, Downstream/Refining
+- Technology Stack: 7 layers — Seismic/Exploration, Drilling/Completion, Production Optimization, Midstream Operations, Refinery Process Control, Data/Analytics, ESG/Carbon
+- Workflows: Shale Well Drilling & Completion (5-step), Crude Oil Trading & Physical Delivery (5-step), Refinery Crude Procurement & Scheduling (5-step)
+- Trends: Energy Transition vs Demand Reality, US Shale Maturity & Consolidation, OPEC+ Cohesion, Methane Regulation/ESG, LNG as Bridge Fuel, Digital Oilfield/AI
+- Market Dynamics: 5 pain-point cards (commodity price volatility, permitting/regulatory uncertainty, asset stranding risk, workforce/skill gap, water management in shale) + monetization table (upstream E&P, midstream tolls, downstream refining, oilfield services, LNG tolling, trading/marketing)
+
+### [feature] Commercial Fishing & Aquaculture industry primer
+- Created `primer/fishing/index.html` — comprehensive single-page primer with 8-tab navigation
+- Featured companies: Mowi, Trident Seafoods, Cermaq, Maruha Nichiro
+- Tabs: Overview, Key Terminology, Major Players, Core Metrics, Technology Stack, Common Workflows, Trends & Challenges, Market Dynamics
+- Header tags: [wild-catch] [aquaculture] [seafood supply chain] [sustainability]
+- Overview: 6 sub-sector cards (Wild-Catch, Aquaculture/Fish Farming, Processing/Value-Added, Seafood Distribution/Wholesale, Retail/Food Service, Fishmeal/Feed) + value chain + 6 market context cards
+- Terminology: 18 terms — IUU Fishing, MSC, ASC, TAC, ITQ, Bycatch, FIFO Ratio, Biomass, FCR, Sea Lice, Traceability, DWT, Purse Seine, Longlining, Cold Chain Integrity, Roe/ROE Value, Smolt, SRS/IHN
+- Major Players: Wild-Catch/Processors, Aquaculture, Distribution/Wholesale, Seafood Tech/Sustainability
+- Core Metrics: Wild-Catch, Aquaculture, Processing, Market & Supply Chain
+- Technology Stack: 7 layers — Vessel Monitoring/Navigation, Aquaculture Operations, Feed/Precision Feeding, Processing Automation, Cold Chain/Logistics, Traceability/Compliance, Market Data/Analytics
+- Workflows: Alaska Pollock Fishing Season Operations (5-step), Atlantic Salmon Farm Grow-Out Cycle (5-step), Seafood Restaurant Supply Chain — Dock to Plate (5-step)
+- Trends: Aquaculture Technology/Land-Based RAS, Overfishing & Stock Recovery, Alternative Protein in Feed, Traceability/IUU Crackdown, Climate Change Impacts, DTC & Premiumization
+- Market Dynamics: 5 pain-point cards (quota/regulatory volatility, disease/mortality risk, volatile ex-vessel prices, labor/crew availability, cold chain/food safety compliance) + monetization table (wild-catch commodity, value-added processing, aquaculture salmon, DTC subscription, fishmeal/fish oil, data/traceability platform)
+
+### [feature] Market Dynamics tab added to all existing primers (11 primers)
+- Added 8th tab "Market Dynamics" with pain-point cards + monetization models table to: insurance, restaurant, sports, esports, video-game-retail, maritime, healthcare, fintech, ecommerce, edtech, ai-infrastructure
+- showTab-system primers: added tab button + progress dot-7 via sed; added section HTML via Edit
+- data-tab-system primers (ecommerce, edtech, ai-infrastructure): added `data-tab="dynamics"` button + section HTML
+- JS "of 7" updated to "of 8" across all primers (sed batch + per-file fix)
+- All JS syntax checks PASS
+
+### [feature] Market Dynamics tab added to ecommerce, edtech, and ai-infrastructure primers
+- Added 8th tab button (`data-tab="dynamics"`) to `primer/ecommerce/index.html`, `primer/edtech/index.html`, and `primer/ai-infrastructure/index.html`
+- No progress dots exist in any of the three files; no dot or label changes were needed
+- ecommerce: new `<section class="section" id="dynamics">` — 5 pain-point trend-cards + 6 monetization metric-cards matching file's existing card/grid patterns
+- edtech: new `<section class="tab-section" id="tab-dynamics">` (ID prefixed per JS `getElementById("tab-" + target)` convention) — 5 pain-point trend-cards + 6 monetization metric-cards
+- ai-infrastructure: new `<section id="dynamics" class="section">` — 5 pain-point trend-cards (grid-2 layout) + 6 monetization metric-rows (metrics-category pattern)
+- All three files pass JS syntax check (`node --check`)
+
+### [feature] Market Dynamics tab content added to esports, video-game-retail, and maritime primers
+- Added `#tab-dynamics` section to `primer/esports/index.html` — 5 pain-point cards (org profitability crisis, publisher dependency risk, broadcast rights value gap, mobile vs PC economics, player career lifecycle) + monetization table (6 models: sponsorship & brand deals, in-game cosmetics, media rights, merch & apparel, creator & streaming revenue, prize pool winnings)
+- Added `#tab-dynamics` section to `primer/video-game-retail/index.html` — 5 pain-point cards (digital distribution cannibalization, publisher DTC & subscription bypass, pre-owned margin under pressure, gray market key resellers, inventory complexity & price decay) + monetization table (6 models: new physical game sales, pre-owned, hardware, digital aggregation, collectibles & merch, trade-in credit float)
+- Added `#tab-dynamics` section to `primer/maritime/index.html` — 5 pain-point cards (rate cycle volatility, alliance concentration risk, geopolitical route disruption, decarbonization cost burden, demurrage & detention controversy) + monetization table (6 models: spot freight rate, long-term contract, D&D fees, THC, logistics & integrated services, vessel charter)
+- JS syntax checks passed for all three files
+
+### [feature] Market Dynamics tab content added to insurance, restaurant, sports primers
+- Added `#tab-dynamics` section to `primer/insurance/index.html` — 5 pain-point cards (regulatory rate-filing lag, catastrophe & climate exposure, social inflation & litigation, InsurTech disintermediation, fraud detection) + monetization table (6 models: written premium, investment income, captive agent, D2C, reinsurance ceding commission, MGA/program business)
+- Added `#tab-dynamics` section to `primer/restaurant/index.html` — 5 pain-point cards (3PD commission trap, labor/minimum wage, lease & occupancy, food cost inflation, review & reputation dependency) + monetization table (6 models: dine-in, counter service/fast-casual, 3PD, direct online ordering, catering & B2B, ghost kitchen/virtual brand)
+- Added `#tab-dynamics` section to `primer/sports/index.html` — 5 pain-point cards (salary cap escalation, media rights cliff, sports betting cannibalization, international expansion economics, arena economics & real estate) + monetization table (6 models: national media rights, gate/ticket, naming rights & sponsorship, merchandise & licensing, sports betting partnerships, local media/DTC)
+- JS syntax checks passed for all three files
+
+### [feature] Market Dynamics section added to healthcare and fintech primers
+- Added `<!-- 8. Market Dynamics -->` section to `primer/healthcare/index.html` (`id="tab-dynamics"`) — 5 cards (Regulatory Clearance Timeline, Reimbursement Access Complexity, IDN Consolidation, Cybersecurity & Connected Device Risk, Clinical Evidence Requirements) + Monetization Models table (Capital Equipment Sales, Disposables/Consumables, Service Contracts, Value-Based Contracts, Digital Health SaaS, Direct Sales Force)
+- Added `<!-- 8. Market Dynamics -->` section to `primer/fintech/index.html` (`id="dynamics"`) — 5 cards (Regulatory Fragmentation, Legacy Core Banking Integration, Trust & Security, Unit Economics at Scale, AI Bias & Fair Lending Risk) + Monetization Models table (NIM, Interchange Fees, SaaS/API Pricing, AUM Fee, Trading Revenue/PFOF, Lending Spread)
+
+### [feature] Maritime & Shipping industry primer
+- Created `primer/maritime/index.html` — comprehensive single-page primer with 7-tab navigation
+- Featured carriers: Maersk, MSC, CMA CGM, COSCO/OOCL, Hapag-Lloyd, ONE, Evergreen, Yang Ming
+- Tabs: Overview, Key Terminology, Major Players, Core Metrics, Technology Stack, Common Workflows, Trends & Challenges
+- Header tags: [container shipping] [port ops] [freight] [supply chain]
+- Overview: 6 sub-sector cards (Container Shipping, Bulk Carriers, Port Operations, Ship Management, Freight Forwarding & Logistics, Maritime Finance & Insurance) + full value chain (Shipper → Freight Forwarder → Ocean Carrier → Port/Terminal → Customs → Inland Transport → Consignee) + 6 market context cards (Maersk, MSC, CMA CGM, Alliance System, Spot vs Contract rates, IMO 2050)
+- Terminology: 20 searchable/expandable terms — TEU, FCL/LCL, Bill of Lading, Dead Freight, Demurrage & Detention, NVOCC, Freight Rate, BAF/CAF, ETA/ETD, Port Congestion, Dry-Docking, Flag State, IMO, Incoterms, SCFI, Slot Charter, Charter Party, GRI/PSS, AIS, CII
+- Major Players: 4 categories — Container Lines (8 carriers), Ports & Terminal Operators (PSA, DP World, Hutchison, APM Terminals, ICTSI), Freight Forwarders & 3PL (Kuehne+Nagel, DB Schenker, Expeditors, Flexport, C.H. Robinson/Bolloré), Maritime Tech & Data (Windward, Kpler, Freightos, ZeroNorth/Nautilus Labs)
+- Core Metrics: Fleet & Capacity (TEU capacity, utilization, vessel count, avg age, fuel efficiency), Rate & Revenue (spot vs contract, SCFI, yield per TEU, revenue per TEU), Port & Terminal (berth utilization, crane moves/hr, vessel turnaround, throughput, dwell time), Operations (schedule reliability, on-time arrival, bunker cost/TEU, CO2/TEU/NM, D&D revenue)
+- Technology Stack: 7 layers — Vessel Management (DNV Nauticus, ShipNet, Danaos, AIS), Port & Terminal OS (NAVIS TOS, Tideworks, Jade, CTMS), Freight Booking (Freightos, Flexport, project44, Inttra), Rate Management (CargoSphere, Xeneta, Drewry, FBX), Fleet Analytics & Decarb (Nautilus Labs, ZeroNorth, Wartsila Voyage), Trade Compliance & Docs (CargoWise, Descartes, CrimsonLogic, WAVE eBL), AI & Predictive (Windward, Kpler, IBM Sterling, Portcast)
+- Workflows: 3 detailed flows — Container Booking to Vessel Load (5-step), Port Call Operations — Container Terminal (5-step), Freight Rate Negotiation Cycle (5-step)
+- Trends: 6 trend cards — Decarbonization & Green Fuels, Digital Freight Platforms, Supply Chain Resilience Post-2021, Alliance Consolidation & Antitrust, Autonomous & Remote Vessels, Red Sea & Geopolitical Risk
+
+## 2026-03-25 (batch 3)
+
+### [feature] Insurance industry primer
+- Created `primer/insurance/index.html` — comprehensive single-page primer with 7-tab navigation
+- Featured carriers: Allstate, State Farm, Geico, Progressive
+- Tabs: Overview, Key Terminology, Major Players, Core Metrics, Technology Stack, Common Workflows, Trends & Challenges
+- Header: tag-row with [p&c insurance] [actuarial] [claims] [telematics]
+- Overview: 6 sub-sector cards (P&C, Life & Annuity, Health Insurance, Reinsurance, InsurTech, Commercial/Specialty) + insurance value chain (Risk Assessment → Underwriting → Policy Issuance → Premium Collection → Claims Management → Subrogation/Recovery) + 6 market context cards
+- Terminology: 18 searchable/expandable terms — Combined Ratio, Loss Ratio, Expense Ratio, Underwriting, Actuary, Premium, Deductible, FNOL, Subrogation, Reinsurance, NAIC, Telematics, Bird Rights (analogy), MLE, Policyholder Surplus, Direct Written Premium, Adverse Selection, Moral Hazard
+- Major Players: 4 categories — Personal Lines Carriers (Allstate, State Farm, Geico, Progressive, USAA), Commercial & Specialty (Travelers, Chubb, Zurich, AIG, Markel), Reinsurers (Munich Re, Swiss Re, Berkshire), InsurTech (Lemonade, Root, Hippo, Oscar)
+- Core Metrics: Underwriting (combined ratio, loss ratio, expense ratio, policy count, renewal rate), Claims (frequency, severity, LAE ratio, cycle time, fraud rate), Distribution (acquisition cost, agent count, retention rate, NPS), Financial (DWP, investment yield, RoE, solvency ratio)
+- Technology Stack: 7 layers — Core Policy Admin (Guidewire, Duck Creek, Applied Epic), Underwriting & Pricing (Verisk, ISO, telematics platforms), Claims Management (Mitchell, CCC, Snapsheet), Data & Analytics (Snowflake, Tableau, SAS), AI & Fraud Detection (Shift Technology, FRISS), Customer & Distribution (Salesforce, agency portals), Compliance (NAIC SERFF)
+- Workflows: 3 detailed flows — Auto Quote-to-Bind Process (5-step), Auto Claims FNOL to Settlement (5-step), Actuarial Rate Filing (5-step)
+- Trends: 6 trend cards — Telematics & Usage-Based Insurance, AI Underwriting, Direct-to-Consumer Disruption, Climate Risk & Catastrophe Modeling, Embedded Insurance, Real-Time Claims via AI
+
+### [feature] Restaurant & Food Service industry primer
+- Created `primer/restaurant/index.html` — comprehensive single-page primer with 7-tab navigation
+- Featured concepts: Ramen shop, poke shop (fast-casual)
+- Tabs: Overview, Key Terminology, Major Players, Core Metrics, Technology Stack, Common Workflows, Trends & Challenges
+- Header: tag-row with [food service] [fast-casual] [ghost kitchen] [unit economics]
+- Overview: 6 sub-sector cards (QSR, Fast-Casual, Full-Service, Ghost Kitchens, Food Halls, Catering) + restaurant value chain (Supplier → Receiving → Prep/Kitchen → FOH Service → POS/Payment → Delivery/Takeout) + 6 market context cards
+- Terminology: 16 searchable/expandable terms — FOH/BOH, Cover, Table Turn, Food Cost %, Prime Cost, Mise en Place, 86, PAR, RevPASH, Menu Engineering, 3PD Commission, Ghost Kitchen, HACCP, Same-Store Sales, Labor Cost %, POS
+- Major Players: 4 categories — QSR & Fast-Casual Chains (McDonald's, Chipotle, Sweetgreen, Cava, Pokeworks), Delivery Platforms (DoorDash, Uber Eats, Grubhub), Restaurant Tech (Toast, Square, Olo, SevenRooms), Suppliers & Distributors (Sysco, US Foods, local farms)
+- Core Metrics: Financial Health (food cost %, labor cost %, prime cost %, gross profit per cover), Operational (table turn time, covers/day, RevPASH, avg ticket, order error rate), Delivery & Digital (3PD mix %, delivery margin, online order %, avg delivery rating), Growth (same-store sales growth, unit-level EBITDA, payback period)
+- Technology Stack: 7 layers — POS (Toast, Square, Revel), Kitchen Display (KDS), Online Ordering & Aggregation (Olo, DoorDash Storefront), Inventory & Procurement (MarketMan, BlueCart), Reservations & Waitlist (OpenTable, Resy, Yelp Waitlist), Analytics & Reporting (Restaurant365, Avero), Payments & Loyalty (Stripe, Square, app-based loyalty)
+- Workflows: 3 detailed flows — Daily Opening Prep Sequence (5-step), Poke Bowl Order Fulfillment — FOH to Pickup (5-step), End-of-Day Close & Reporting (5-step)
+- Trends: 6 trend cards — Ghost Kitchen Expansion, Dynamic Menu Pricing, 3PD Commission Pressure, AI-Driven Demand Forecasting, Sustainability & Sourcing Transparency, Labor Cost Automation
+
+### [feature] Sports & Athletics industry primer
+- Created `primer/sports/index.html` — comprehensive single-page primer with 7-tab navigation
+- Featured league: NBA (basketball)
+- Tabs: Overview, Key Terminology, Major Players, Core Metrics, Technology Stack, Common Workflows, Trends & Challenges
+- Header: tag-row with [nba] [sports analytics] [media rights] [salary cap]
+- Overview: 6 sub-sector cards (Professional Leagues, Media & Broadcast, Sports Betting, Team Operations, Sports Technology, Sponsorship & Brand) + sports value chain (League/Commissioner → Team Ownership → Coaching Staff → Player Roster → Broadcast/Media → Fans & Bettors) + 6 market context cards
+- Terminology: 15 searchable/expandable terms — Salary Cap, Bird Rights, Max/Supermax Contract, MLE (Mid-Level Exception), Net Rating, TS% (True Shooting), PER, EPM/RAPTOR/BPM, Pace, Media Rights, Luxury Tax, Trade Deadline, Draft Pick/Lottery, Load Management, Second Spectrum
+- Major Players: 4 categories — NBA Teams & Ownership (Golden State, Boston, Lakers, Celtics), Media & Broadcast (ESPN/ABC, TNT, Amazon Prime, Apple TV+), Sports Tech & Analytics (Second Spectrum, Synergy Sports, Sportradar, Genius Sports), Venues & Operations (AEG, Oak View Group, Ticketmaster/Live Nation)
+- Core Metrics: On-Court (net rating, TS%, pace, AST/TO ratio, ORtg/DRtg, EPM), Team Business (gate revenue, media revenue share, luxury tax bill, payroll efficiency), Media & Fan Engagement (TV ratings, streaming viewers, social followers, jersey sales, arena attendance), Betting (handle, hold %, market share)
+- Technology Stack: 7 layers — Player Tracking (Second Spectrum, Hawk-Eye, SportVU), Video & Analytics (Synergy, nba.com/stats, Catapult), Broadcast (EVS, ChyronHego, IBM Watson Highlights), Sports Betting Integration (Sportradar, Genius Sports, OpenBet), Fan Experience (NBA App, Ticketmaster, arena Wi-Fi), Team Operations (Catapult GPS, Kitman Labs, force plates), Data & Visualization (Tableau, Python/R, STATS Perform)
+- Workflows: 3 detailed flows — NBA Draft Scouting Pipeline (5-step), In-Game Coaching & Analytics (5-step), Salary Cap & Roster Construction (5-step)
+- Trends: 6 trend cards — Sports Betting Normalization, Direct-to-Consumer Streaming, AI in Coaching & Player Development, International Expansion (NBA Global), Arena as Experience Hub, Sports Data as Competitive Moat
+
+### [feature] primer/index.html — 3 new industry cards + nav links (insurance, restaurant, sports)
+- Added insurance, restaurant, and sports cards to the industry grid with `data-search` attributes
+- Added 3 new nav links to sidebar (with "New" badge) for insurance, restaurant, and sports
+
+## 2026-03-25 (batch 2)
+
+### [feature] Healthcare & MedTech industry primer
+- Created `primer/healthcare/index.html` — comprehensive single-page primer with 7-tab navigation
+- Featured company: Stryker (Mako robotic platform, ortho, neurotechnology, MedSurg)
+- Tabs: Overview, Key Terminology, Major Players, Core Metrics, Technology Stack, Common Workflows, Trends & Challenges
+- Header: tag-row with [medical devices] [surgical robotics] [digital health] [clinical]
+- Overview: 6 sub-sector cards (Medical Devices, Surgical Robotics, Diagnostics, Digital Health, Hospital Systems, Pharma Interface) + MedTech value chain (R&D → Clinical Trials → FDA Clearance → Manufacturing → Distribution → Hospital/OR → Patient Outcome) + 6 market context cards
+- Terminology: 25 searchable/expandable terms — 510(k), PMA, De Novo, Device Classification, CE Mark/MDR, UDI, IDE, IDN, GPO, VAC, ASC, Capital Equipment vs. Consumables, DRG, CPT Code, Mako, Total Joint Arthroplasty, Biocompatibility, Sterilization, GMP/ISO 13485, Post-Market Surveillance, DICOM/PACS, EHR/Epic, HIPAA, PROMs, Trauma & Spine
+- Major Players: 4 categories — Large-Cap OEMs (Stryker, Medtronic, J&J MedTech, Zimmer Biomet, Boston Scientific, Abbott), Surgical Robotics (Intuitive, Mako, ROSA, Hugo), Imaging & Diagnostics (Siemens, GE HealthCare, Philips, Hologic), Health Systems & Purchasing (HCA, Mayo Clinic, Vizient GPO, Epic)
+- Core Metrics: Commercial Performance (organic growth, gross margin, ASP, installed base, procedures/system, win rate), Operational & R&D (R&D%, clearance timeline, recall rate, DSO, inventory turns), Clinical Outcomes (revision rate, PROMs, SSI rate, LOS, implant positioning accuracy)
+- Technology Stack: 7 layers — Imaging & Standards (DICOM, PACS, HL7 FHIR), Surgical Planning (Mako pre-op CT, Brainlab), Robotic Platforms (Mako, da Vinci, ROSA, Hugo), EHR/Integration (Epic, Cerner, FHIR R4), AI & Analytics (Aidoc, Nuance DAX, Med-Gemini), IoT & Connectivity (remote monitoring, wearables), Regulatory & Quality (Veeva Vault, MasterControl, GUDID)
+- Workflows: 3 detailed flows — FDA 510(k) Clearance Process (7-step), Stryker Mako Surgical Case Day-of Workflow (6-step), Hospital Device Procurement / VAC Process (5-step)
+- Trends: 6 trend cards — Surgical Robotics Expansion, AI in Diagnostic Imaging, ASC Shift, Value-Based Care Pressure, Digital Health Integration, Regulatory Complexity & MDR
+- JS: tab switching, glossary search, click-to-expand terms, `/` keyboard shortcut, progress dots
+
+### [feature] eSports & Competitive Gaming industry primer
+- Created `primer/esports/index.html` — comprehensive single-page primer with 7-tab navigation
+- Featured title: Wild Rift (League of Legends: Wild Rift by Riot Games / Garena SEA) and WCS (Wild Rift Champions SEA)
+- Tabs: Overview, Key Terminology, Major Players, Core Metrics, Technology Stack, Common Workflows, Trends & Challenges
+- Header: tag-row with [competitive gaming] [mobile esports] [streaming] [Wild Rift]
+- Overview: 6 sub-sector cards (Tournament Ecosystem, Team Orgs, Streaming & Media, Sponsorships, Mobile eSports, Creator Economy) + eSports value chain (Developer → Tournament Org → Teams/Players → Broadcast → Sponsors → Fans) + 6 market context cards
+- Terminology: 18 searchable/expandable terms — MOBA, KDA, Meta, Draft/Pick & Ban, Major Objectives (Wild Rift), Roles & Lanes, Gank, CS/Farm, MMR/Elo, WCS Champions SEA, Esports Org, Prize Pool, Media Rights, Skins & Cosmetics, Battle Pass, Scrim, Patch/Balance Update, Content Creator/Streamer
+- Major Players: 4 categories — Publishers (Riot, Valve, Activision Blizzard, Tencent/Garena), Esports Orgs (T1, Cloud9, FaZe Clan, Team Flash, RSG, 100 Thieves), Broadcast & Streaming (Twitch, YouTube Gaming, Nimo TV/Booyah, FACEIT/ESL), Sponsors (HyperX, Red Bull, Logitech G, BMW/Mercedes)
+- Core Metrics: Viewership (peak CCV, hours watched, AMA, unique viewers), Team & Org Business (sponsorship revenue, merch GMV, social following, engagement rate, team valuation), Player Performance — Wild Rift (KDA, damage share, CS/min, objective participation, vision score)
+- Technology Stack: 7 layers — Game Platform, Broadcast & Production, Tournament Platforms, Player Analytics, Streaming CDN, Team Comms & Ops, Anti-Cheat & Security
+- Workflows: 3 detailed flows — Pro Team Weekly Preparation Cycle (6-step, patch analysis through post-match debrief), Tournament Production Match Day Ops (6-step), Esports Org Sponsorship Deal Lifecycle (5-step)
+- Trends: 6 trend cards — Mobile Esports Explosion, Org Profitability Crisis, AI Coaching & Analytics, Regionalization vs. Global Format, Creator Economy Blurring, Franchise League Debate
+
+### [feature] Video Game Retail industry primer
+- Created `primer/video-game-retail/index.html` — comprehensive single-page primer with 7-tab navigation
+- Featured platform: GameStop (video game retail aggregator / marketplace)
+- Tabs: Overview, Key Terminology, Major Players, Core Metrics, Technology Stack, Common Workflows, Trends & Challenges
+- Header: tag-row with [retail] [digital distribution] [pre-owned market] [GameStop]
+- Overview: 6 sub-sector cards (Physical Retail, Digital Storefronts, Pre-Owned & Resale, Subscription Gaming, Collector Market, Marketplace Aggregators) + retail value chain (Publisher → Distributor → Retailer → Consumer → Secondary Market) + 6 market context cards
+- Terminology: 18 searchable/expandable terms — SKU, MSRP, Trade-In, Pre-Owned, Pre-Order, DLC, Game Pass/Subscription, Digital Key, Attach Rate, Sell-Through Rate, Inventory Turns, AAA Title, Indie Games, Limited/Collector Edition, Platform Exclusivity, Gray Market/Key Resellers, GMV, Back Catalog
+- Major Players: 4 categories — Physical Retailers (GameStop, Best Buy, Walmart/Target, Amazon), Digital Storefronts (Steam, PlayStation Store, Xbox Store, Nintendo eShop, Epic Games Store), Subscription Services (Xbox Game Pass Ultimate, PlayStation Plus, EA Play, Apple Arcade), Marketplace & Resale (GameStop, StockX, eBay, WATA Games/VGA)
+- Core Metrics: Retail Performance (gross margin by category, AOV, trade-in rate, pre-owned mix, launch week sell-through), Digital Platform (take rate, MAU/DAU, subscriber count, digital vs. physical ratio), Marketplace/Aggregator — GameStop (GMV, take rate, catalog depth, price accuracy/freshness, user library size)
+- Technology Stack: 7 layers — E-Commerce Platform, POS, Digital Delivery APIs (Steam, Xbox, PSN, IGDB), Price Intelligence (IsThereAnyDeal, CheapShark, eBay API), Inventory & ERP, Payments, Analytics & Personalization
+- Workflows: 3 detailed flows — Game Launch Day Operations (5-step), Pre-Owned Trade-In & Resale Process (5-step), Digital Storefront Game Listing Pipeline including GameStop aggregation (5-step)
+- Trends: 6 trend cards — Digital-First Shift, Subscription Cannibalization, Collector Market & Nostalgia Premium, AI-Driven Trade-In Pricing, Cross-Platform Play Reducing Lock-In, Marketplace Aggregation as Consumer Value
+
+### [feature] primer/index.html — 3 new industry cards + nav links added
+- Added healthcare, esports, and video-game-retail cards to the industry grid with searchable data-search attributes
+- Added 3 new nav links to sidebar (with "New" badge) for each new industry
+
 ## 2026-03-25
 
 ### [feature] Higher Education & EdTech industry primer
