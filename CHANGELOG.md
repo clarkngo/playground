@@ -9,6 +9,17 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ## 2026-03-25
 
+### Root / Global
+- `[bug]` Added `.nojekyll` at repo root — fixes `fetch()` failing for `.md` files on GitHub Pages (Jekyll was intercepting them)
+- `[feature]` Created `changelog/index.html` — visual markdown viewer for all 21 changelog files; tag badges colored inline (feature/bug/ux/refactor); sidebar grouped by category
+
+### Lessons Learned (new section)
+- `[feature]` Created `lessons-learned/` — markdown knowledge base with single-page viewer (marked.js CDN); 5 category files: feature-dev, bug-fixes, ux, refactor, prompting
+
+### Root / Global
+- `[feature]` CLAUDE.md — added Prompting Guidance: Claude now auto-suggests clearer phrasing when a prompt is ambiguous
+- `[feature]` CLAUDE.md — added JS State Pattern Checklist (6 checks for saveState/loadState correctness, init order, default-active seeding, badge count)
+
 ### Cryptography Labs
 - `[ux]` Lab 08 — Demo 1 IPsec: 2-button bar replaced with 2×2 combo grid (Transport+ESP, Transport+AH, Tunnel+ESP, Tunnel+AH); cards mark themselves visited with green on click
 - `[bug]` Lab 08 — All objectives reset on refresh; `buildPacket()` was calling `saveState()` before `loadState()` ran, overwriting saved state

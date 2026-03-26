@@ -5,6 +5,37 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-03-25
+
+### [bug] `fetch()` failed for .md files on GitHub Pages
+- **Symptom:** `Could not load root-playground.md: Failed to fetch` on GitHub Pages
+- **Root cause:** GitHub Pages runs Jekyll by default; Jekyll intercepts `.md` files, transforming or blocking them so `fetch()` receives HTML or a 404 instead of raw markdown
+- **Fix:** Added `.nojekyll` at repo root — disables Jekyll entirely, all files served as static assets
+
+### [feature] Created `changelog/index.html` — visual changelog viewer
+- Single-page markdown viewer (marked.js CDN) matching lessons-learned viewer style
+- Sidebar grouped by category (Security, System Design, Content, Tools & Misc); home card grid with all 21 sections
+- Tag badges `[feature]` `[bug]` `[ux]` `[refactor]` rendered as colored inline pills (green/red/blue/purple)
+- URL param `?f=filename.md` for deep links; browser back/forward navigation supported
+
+### [feature] Created `lessons-learned/` section — knowledge base for patterns and insights
+- `lessons-learned/index.html` — single-page markdown viewer using marked.js (CDN); sidebar nav + home card grid; supports URL param `?f=filename.md` for deep links; works with `python3 -m http.server`
+- `lessons-learned/feature-dev.md` — Set-based tracking, default-active seeding, 2×2 combo grid, localStorage versioning, badge count sync
+- `lessons-learned/bug-fixes.md` — init order (saveState before loadState), missing re-render after loadState, default tab seeding, first-click objective completion, JS syntax errors causing blank pages
+- `lessons-learned/ux.md` — overlay placement (bottom-right DOM order), objectives ordered to match page flow, choice vs auto-execute, demo null start state, export success feedback
+- `lessons-learned/refactor.md` — global sed replace across N files, boolean→Set refactor, centralizing objective evaluation, removing hardcoded defaults
+- `lessons-learned/prompting.md` — reference file beats description, symptom-first, batch after verify, "no + reference" redirect, compound requests as lists, planning mode
+
+### [feature] CLAUDE.md — added Prompting Guidance section
+- Claude now auto-suggests clearer prompt phrasing when it detects ambiguity (vague layout references, missing reference files, bundled tasks, presumed-fix mismatch)
+- Inline suggestion format defined; only triggers when rewrite would have meaningfully changed interpretation
+
+### [feature] CLAUDE.md — added JS State Pattern Checklist
+- New section after Post-Write Checklist covering 6 state-pattern checks: saveState includes new var, loadState restores it, re-render called after load, init order guard, default-active seeding, badge count matches checks.length
+- Added `lessons-learned/` → `changelog/root-playground.md` to the changelog routing table
+
+---
+
 ## 2026-03-24
 
 ### [feature] Global attribution — metadata + copyright footer on all 353 HTML files

@@ -1,5 +1,23 @@
 # Playground — Agent Instructions
 
+## Prompting Guidance — Auto-Suggest Better Phrasing
+
+When a user prompt is ambiguous or likely to cause a misunderstanding, **proactively suggest a clearer rephrasing** before or after completing the task. Do not wait to be asked.
+
+**Trigger conditions — suggest a rewrite when the prompt:**
+- Describes a visual/layout change without naming a reference file (e.g., "move it to the top" — ask or note which file to follow)
+- Uses relative terms without anchors ("the button", "that section") when multiple candidates exist
+- Bundles multiple distinct tasks in one sentence without separators — suggest breaking into a numbered list
+- Specifies a symptom but also a presumed fix that might be wrong — confirm the fix before applying
+- Is a vague completion request ("make it work", "fix it") — clarify which behavior is expected
+
+**Format for the suggestion** (keep it short, inline):
+> **Clearer prompt would be:** "Follow Lab 05's overlay placement exactly — `bottom:1rem; right:1rem`, badge first in DOM."
+
+Only suggest when it would have meaningfully changed the interpretation. Don't suggest rewrites for clear, specific prompts.
+
+---
+
 ## After Writing or Editing HTML Files
 
 Always run a JS syntax check on any HTML file you write or edit that contains `<script>` blocks:
@@ -47,6 +65,28 @@ After writing any `.html` file:
 
 ---
 
+## JS State Pattern Checklist
+
+After adding or modifying **any interactive state variable** in a lab (objectives, Sets, booleans):
+
+- [ ] **saveState includes the new variable?** — every variable that needs to persist must be serialized (Sets: `[...mySet]`)
+- [ ] **loadState restores it?** — deserialize Sets with `new Set(s.myVar || [])`, booleans with `s.myVar || false`
+- [ ] **updateObj / checkReflectionLock called after loadState?** — restoring variables is not enough; the overlay must be re-rendered from them
+- [ ] **Init order: nothing calls saveState before loadState?** — any function in `DOMContentLoaded` that internally calls `saveState()` must run AFTER `loadState()`
+- [ ] **Default-active elements seeded in Set?** — if a tab/card/button is pre-highlighted in HTML, seed its value into the tracking Set after `loadState()` when the Set is empty (first visit only)
+- [ ] **Badge count matches checks array length?** — `0/N objectives` in HTML must equal `checks.length` in `updateObj()`
+
+**Common pattern for default-active element:**
+```javascript
+loadState();
+if (myTabsSeen.size === 0) {
+  myTabsSeen.add('default-tab-id'); // pre-highlighted in HTML
+}
+checkReflectionLock();
+```
+
+---
+
 ## Changelog Update — Required After Every Change
 
 After **any** file is created or edited in this project, update the changelog before declaring the task done.
@@ -74,6 +114,7 @@ After **any** file is created or edited in this project, update the changelog be
 | `prototypes/` | `changelog/prototypes.md` |
 | `database-labs/` | `changelog/database-labs.md` |
 | `cityu-tools/` | `changelog/cityu-tools.md` |
+| `lessons-learned/` | `changelog/root-playground.md` |
 | `index.html`, `CLAUDE.md`, shared infra | `changelog/root-playground.md` |
 
 Always **also** add a one-line summary entry to `CHANGELOG.md` (root) under today's date.
