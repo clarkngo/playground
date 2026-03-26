@@ -10,6 +10,9 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 ## 2026-03-25
 
 ### Root / Global
+- `[feature]` `index.html` — Lessons Learned section added with sidebar nav, collection card, and 5 topic shortcuts
+- `[feature]` `lessons-learned/workflow.md` — new topic: Claude Code Workflow (branch/PR cadence, plan mode, context management, CLAUDE.md)
+- `[feature]` CLAUDE.md — workflow.md added to lessons-learned post-write checklist
 - `[feature]` CLAUDE.md — post-write checklist now prompts lessons-learned update alongside changelog
 - `[feature]` lessons-learned/prompting.md — new entry on analogy-based prompting pattern ("do X the same way you do Y")
 - `[bug]` Added `.nojekyll` at repo root — fixes `fetch()` failing for `.md` files on GitHub Pages (Jekyll was intercepting them)
