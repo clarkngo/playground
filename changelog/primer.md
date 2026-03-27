@@ -2,6 +2,26 @@
 
 ## 2026-03-27
 
+### [feature] primer/insurance — added Tab 10 (Data Architecture & Flows) and Tab 11 (Failure Modes & Incidents)
+- Tab nav expanded from 9 to 11 buttons (indices 9 and 10); progress bar gains dot-9 and dot-10; initial label updated to "Section 1 of 11"
+- **Tab 10 — Data Architecture & Flows**: 7-row Data Domains table (Policy Administration, Claims, Underwriting & Rating, Actuarial/Reserving, Telematics/IoT, Reinsurance, Regulatory/Compliance); 9-node end-to-end data flow diagram (Risk Submission → Underwriting Engine → Rating/Pricing → Policy Issuance (PAS) → Premium Collection → Claims FNOL → Claims Adjudication → Payment & Reserving → Reinsurance Recovery); 8-chip Key Protocols row (ACORD XML, ACORD AL3, EDI, ISO rating, NAIC statutory accounting, FHIR, SWIFT, HL7); 4-card Governance grid (State Regulation, NAIC Model Laws, Credit Scoring Restrictions, Catastrophe Model Governance)
+- **Tab 11 — Failure Modes & Incidents**: 6-card incident grid covering Hurricane Katrina CAT Model Failure (2005, $125B insured losses, levee breach not modeled), Texas Winter Storm Uri Business Interruption Disputes (Feb 2021, utility failure exclusion gaps), Cyber Insurance Mispricing Crisis (2020-2022, correlated loss misunderstood, combined ratios >100%), LMI Mortgage Insurance Scandal Australia (2017-2019, mis-sold to borrowers via Royal Commission), Workers Compensation Fraud Ring Detection Failure (ongoing, $34B+ annual cost, siloed carrier systems), Guidewire/Duck Creek Outages During CAT Events (recurring, 100x FNOL surge not load-tested) — each card includes what happened, what it revealed, and the lesson
+
+### [feature] primer/healthcare — added Tab 10 (Data Architecture & Flows) and Tab 11 (Failure Modes & Incidents)
+- Tab nav expanded from 9 to 11 buttons (indices 9 and 10); progress bar gains dot-9 and dot-10; initial label updated to "Section 1 of 11"
+- **Tab 10 — Data Architecture & Flows**: 7-row Data Domains table (Clinical Records/EHR-EMR, Medical Imaging, Lab & Diagnostics, Claims & Billing, Wearables & IoT, Pharmacy, Public Health); healthcare data flow diagram (Patient Encounter → EHR → HL7 FHIR API → HIE → Payer → Analytics → Quality Reporting/CMS); 11-chip Key Protocols row (HL7 v2, HL7 FHIR R4, DICOM, ICD-10-CM/PCS, CPT codes, SNOMED CT, LOINC, EDI 837/835, NCPDP SCRIPT, CCD/CDA, SMART on FHIR); 4-card Governance grid (HIPAA, 21st Century Cures Act, De-identification, AI & HIPAA)
+- **Tab 11 — Failure Modes & Incidents**: 6-card incident grid covering Change Healthcare Ransomware Attack (Feb 2024, ~100M records, no MFA on Citrix portal), Epic/Cerner Downtime & Diversion Protocols (recurring, medication errors 3-4x during outages), AI Diagnostic Bias — Pulse Oximetry (2020-2022, skin-tone disparity, delayed COVID treatment), Theranos Fraud (2003-2018, falsified lab results, LDT regulatory gaps), Meta Pixel PHI Transmission (2022, hospital websites leaking health data to Meta), FDA Recall of AI Diagnostic Software (ongoing, training vs. deployment distribution gap)
+
+### [feature] primer/logistics — added Tab 10 (Data Architecture & Flows) and Tab 11 (Failure Modes & Incidents)
+- Tab nav expanded from 9 to 11 buttons (indices 9 and 10); progress bar gains dot-9 and dot-10; initial label updated to "Section 1 of 11"
+- **Tab 10 — Data Architecture & Flows**: 7-row Data Domains table (Transportation/TMS, Warehousing/WMS, Track & Trace/telematics, International Trade/customs, Last Mile, Demand & Inventory, Carrier & Rate Data); Order-to-Delivery value-chain flow (PO → OMS → WMS → TMS → carrier → tracking → last mile → POD/invoice); EDI/trade and visibility chip rows (204/210/214, EDIFACT, ACE, GS1/RFID, ELD); 4-card governance (FMCSA/ELD, Customs 10+2, Cold Chain FSMA, Carbon/Scope 3)
+- **Tab 11 — Failure Modes & Incidents**: 6-card incident grid (Ever Given Suez 2021, CrowdStrike July 2024 logistics IT outage, plus four additional logistics/supply-chain case studies) with lessons per card
+
+### [feature] primer/manufacturing — added Tab 10 (Data Architecture & Flows) and Tab 11 (Failure Modes & Incidents)
+- Tab nav expanded from 9 to 11 buttons (indices 9 and 10); progress bar gains dot-9 and dot-10; initial label updated to "Section 1 of 11"
+- **Tab 10 — Data Architecture & Flows**: 7-row Data Domains table (Production/OT & MES, Quality, Maintenance/CMMS, Supply Chain/ERP, PLM, Energy, Digital Twin); Production Data Flow chain (raw material → ERP → MES → SCADA → historian → quality → WMS → shipping); Key Protocols chips (OPC-UA, MQTT, MTConnect, ISA-95/88, GS1, STEP, EDIFACT); 4-card Governance (ISA/IEC 62443, FDA 21 CFR Part 11, IATF 16949, Environmental/ISO 14001)
+- **Tab 11 — Failure Modes & Incidents**: 6-card incident grid (Norsk Hydro ransomware 2019, Boeing 737 MAX MCAS, Toyota earthquake/JIT cascades, Colonial Pipeline feedstock context, plus additional manufacturing safety/supply cases) with event / revealed / lesson structure
+
 ### [feature] primer/ai-infrastructure — added Tab 10 (Data Architecture & Flows) and Tab 11 (Failure Modes & Incidents)
 - Tab nav expanded from 9 to 11 buttons; progress bar gains dot-9 and dot-10; initial label updated to "Section 1 of 11"
 - Updated `shared.js` to dynamically compute "of N" from the number of `.progress-dot` elements, making all primers forward-compatible with variable tab counts

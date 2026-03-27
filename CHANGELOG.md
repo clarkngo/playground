@@ -9,6 +9,14 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ## 2026-03-27
 
+### [feature] primer/healthcare — added Tab 10 (Data Architecture & Flows) and Tab 11 (Failure Modes & Incidents); progress bar expanded to 11 dots
+
+### [feature] primer/insurance — added Tab 10 (Data Architecture & Flows) and Tab 11 (Failure Modes & Incidents); progress bar expanded to 11 dots
+
+### [feature] primer/logistics — added Tab 10 (Data Architecture & Flows) and Tab 11 (Failure Modes & Incidents); progress bar expanded to 11 dots
+
+### [feature] primer/manufacturing — added Tab 10 (Data Architecture & Flows) and Tab 11 (Failure Modes & Incidents); progress bar expanded to 11 dots
+
 ### [feature] primer/ai-infrastructure — added Tab 10 (Data Architecture & Flows) and Tab 11 (Failure Modes & Incidents); shared.js updated to compute "of N" dynamically from progress-dot count
 
 ### [feature] primer/edtech — added Tab 10 (Data Architecture & Flows) and Tab 11 (Failure Modes & Incidents); progress bar and showTab override updated to 11 tabs
