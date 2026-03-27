@@ -1,5 +1,31 @@
 # Primer Changelog
 
+## 2026-03-27
+
+### [feature] primer/ai-infrastructure — added Tab 10 (Data Architecture & Flows) and Tab 11 (Failure Modes & Incidents)
+- Tab nav expanded from 9 to 11 buttons; progress bar gains dot-9 and dot-10; initial label updated to "Section 1 of 11"
+- Updated `shared.js` to dynamically compute "of N" from the number of `.progress-dot` elements, making all primers forward-compatible with variable tab counts
+- **Tab 10 — Data Architecture & Flows**: 8-row Data Domains table (Source Documents, Chunked Text, Embeddings, Vector Index, Metadata Store, Conversation/Session State, Model Artifacts, Observability Logs); two-pipeline CSS flow diagram (Ingestion: S3 → Chunker → Embedding Model → Vector DB → Metadata Store; Retrieval/Inference: User Query → Query Embedder → ANN Search → BM25 Hybrid → Reranker → Context Assembly → LLM → Output Validator → Response); 7-row Key Protocols table (OpenAI API Spec, MCP, OpenAPI 3.0, gRPC, JWT, GGUF/GPTQ/AWQ, HuggingFace Model Card); 5-card Data Governance grid (Training Data Provenance, Inference Data Privacy, RAG Access Control, PII in Vector Stores, Eval Data Contamination)
+- **Tab 11 — Failure Modes & Incidents**: 6-card incident grid covering ChatGPT Chat History Exposure (March 2023, Redis cache collision), Air Canada Chatbot Liability Ruling (Feb 2024, hallucinated fare policy), Prompt Injection via Indirect Content (ongoing RAG threat), Bing Chat/Sydney Jailbreak (Feb 2023, adversarial alignment failure), Vector DB Stale Embeddings (common RAG lifecycle failure), LLM-as-Judge Bias in Evals (position/verbosity/self-enhancement bias) — each card includes incident date, what happened, root cause, and lesson
+
+### [feature] primer/edtech — added Tab 10 (Data Architecture & Flows) and Tab 11 (Failure Modes & Incidents)
+- Tab nav expanded from 9 to 11 buttons; progress bar gains dot-9 and dot-10; progress label updated to "of 11"
+- Inline `showTab` override added after `shared.js` load to display "Section N of 11" correctly
+- **Tab 10 — Data Architecture & Flows**: 7-row Data Domains table (Student Records/SIS, Learning Activity/xAPI, Assessment, Engagement/Telemetry, Content Metadata, Financial/Enrollment, AI Interaction Logs); two-row CSS data flow diagram (xAPI pipeline: LMS → LRS → Analytics → Early Alert → Advisor Dashboard; SIS pipeline: SIS → Data Warehouse → BI → Academic Leadership); 6-card Key Protocols section (xAPI/Tin Can, SCORM 1.2/2004, cmi5, LTI 1.3+Advantage, SAML 2.0/SSO, Caliper/Ed-Fi); 5-card Data Governance section (FERPA, COPPA, Data Residency, AI and FERPA, Retention Policies)
+- **Tab 11 — Failure Modes & Incidents**: 6-card incident grid covering COVID-19 LMS Collapse (2020), Chegg Data Breach (2018), ProctorU Breach (2020), AI Cheating Detection False Positives (2022-2023), Pearson Data Breach (2018/2019), Online Proctoring Bias & Skin Tone Failures (2020-2021) — each with what happened, what it revealed, and a lesson
+
+### [feature] primer/ecommerce — added Tab 10 (Data Architecture & Flows) and Tab 11 (Failure Modes & Incidents)
+- Tab nav expanded from 9 to 11 buttons; progress bar gains dot-9 and dot-10; progress label updated to "of 11"
+- Inline `showTab` override added after `shared.js` load to display "Section N of 11" correctly
+- **Tab 10 — Data Architecture & Flows**: 7-row Data Domains table (Product Catalog, User Behavior, Transaction, Inventory/Supply Chain, Seller/Merchant, Search/Discovery, Fraud Signals); CSS data flow diagram (clickstream pipeline via Kafka/Flink/Feature Store/ML/Redis and OMS pipeline to Snowflake/BI); 4-card Key Protocols section (HTTP/REST, GraphQL, Webhooks/SFTP, EDI, ISO 8583, PCI-DSS); 4-row Data Governance table (first-party data/cookie deprecation, CCPA/GDPR, seller data portability, PCI-DSS tokenization)
+- **Tab 11 — Failure Modes & Incidents**: 6-card incident grid covering Amazon S3 outage (2017), eBay data breach (2014), Target POS malware (2013), Shopify insider threat (2020), fake review epidemic (ongoing), recommendation amplification bias (ongoing) — each with what happened, what it revealed, and a lesson
+
+### [feature] primer/fintech — added Tab 10 (Data Architecture & Flows) and Tab 11 (Failure Modes & Incidents)
+- Tab nav expanded from 9 to 11 buttons; progress bar gains dot-9 and dot-10; progress label updated to "of 11"
+- Inline `showTab` override added after `shared.js` load to display "Section N of 11" correctly
+- **Tab 10 — Data Architecture & Flows**: 7-row Data Domains table (Market, Reference, Fundamental, Transaction, Alternative, Risk, Regulatory); CSS data flow diagram (exchange feed pipeline + EDGAR/XBRL pipeline); Key Protocols chip row (FIX, SWIFT, ISO 20022, XBRL, FpML, SFTP/MFT); 4-card Data Governance section (licensing costs, MNPI walls, GDPR/CCPA, SOX data lineage)
+- **Tab 11 — Failure Modes & Incidents**: 6-card incident grid covering Knight Capital (2012), Flash Crash (2010), Robinhood halt (2020), SVB run (2023), LIBOR manipulation (2012), Mt. Gox collapse (2014) — each with what happened, what it revealed, and a lesson
+
 ## 2026-03-26
 
 ### [ux] primer/video-platform, ecommerce, edtech, ai-infrastructure, fintech — rewrote tab-evolution section layout

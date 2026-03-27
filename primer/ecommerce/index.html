@@ -30,6 +30,8 @@
     <button class="tab-btn" onclick="showTab('trends',6)">Trends &amp; Challenges</button>
     <button class="tab-btn" onclick="showTab('dynamics',7)">Market Dynamics &amp; Monetization</button>
     <button class="tab-btn" onclick="showTab('evolution',8)">Evolution &amp; Foundations</button>
+    <button class="tab-btn" onclick="showTab('dataarch',9)">Data Architecture &amp; Flows</button>
+    <button class="tab-btn" onclick="showTab('incidents',10)">Failure Modes &amp; Incidents</button>
   </nav>
 
   <div class="progress-bar">
@@ -42,7 +44,9 @@
     <div class="progress-dot" id="dot-6"></div>
     <div class="progress-dot" id="dot-7"></div>
     <div class="progress-dot" id="dot-8"></div>
-    <span class="progress-label" id="progress-label">Section 1 of 9</span>
+    <div class="progress-dot" id="dot-9"></div>
+    <div class="progress-dot" id="dot-10"></div>
+    <span class="progress-label" id="progress-label">Section 1 of 11</span>
   </div>
 
   <!-- ── Section 1: Overview ── -->
@@ -831,7 +835,151 @@
     </div>
   </div>
 
+  <!-- ── Section 10: Data Architecture & Flows ── -->
+  <div class="tab-section" id="tab-dataarch">
+    <div class="section-title">Data Architecture &amp; Flows</div>
+    <div class="section-desc">How e-commerce platforms collect, process, and act on data across the buyer, seller, and logistics lifecycle.</div>
+
+    <div class="section-title" style="font-size:16px; margin-top:8px; margin-bottom:12px;">Data Domains</div>
+    <table class="metrics-table">
+      <thead><tr><th>Domain</th><th>Key Data Points</th><th>Primary Sources</th></tr></thead>
+      <tbody>
+        <tr><td>Product Catalog</td><td>SKU attributes, images, descriptions, pricing, inventory levels</td><td>Seller feeds, internal PIM (Product Information Manager), image CDN</td></tr>
+        <tr><td>User Behavior (Clickstream)</td><td>Page views, search queries, add-to-cart events, session data</td><td>Event tracking (Snowplow, Segment, custom pixel)</td></tr>
+        <tr><td>Transaction Data</td><td>Orders, payments, refunds, chargebacks</td><td>OMS + payment processor</td></tr>
+        <tr><td>Inventory &amp; Supply Chain</td><td>Warehouse stock, in-transit shipments, supplier lead times</td><td>WMS (Warehouse Management System), ERP</td></tr>
+        <tr><td>Seller / Merchant Data</td><td>Seller profiles, catalog listings, performance metrics, trust scores</td><td>Seller platform</td></tr>
+        <tr><td>Search &amp; Discovery</td><td>Query logs, ranking signals, click-through data, A/B test results</td><td>Search platform logs</td></tr>
+        <tr><td>Fraud Signals</td><td>Device fingerprints, IP reputation, velocity patterns, behavioral biometrics</td><td>Fraud platform</td></tr>
+      </tbody>
+    </table>
+
+    <div class="section-title" style="font-size:16px; margin-top:28px; margin-bottom:12px;">Data Flow Diagram</div>
+    <div class="value-chain">
+      <div class="chain-row">
+        <div class="chain-node">User Browser</div>
+        <div class="chain-arrow">&#8594;</div>
+        <div class="chain-node">Event Collector (Kafka)</div>
+        <div class="chain-arrow">&#8594;</div>
+        <div class="chain-node">Stream Processor (Flink / Spark)</div>
+        <div class="chain-arrow">&#8594;</div>
+        <div class="chain-node">Feature Store (Feast)</div>
+        <div class="chain-arrow">&#8594;</div>
+        <div class="chain-node">ML Models (Fraud / Rec / Ranking)</div>
+        <div class="chain-arrow">&#8594;</div>
+        <div class="chain-node">Serving Layer (Redis)</div>
+        <div class="chain-arrow">&#8594;</div>
+        <div class="chain-node">User Experience</div>
+      </div>
+      <div class="chain-row" style="margin-top:12px">
+        <div class="chain-node">OMS</div>
+        <div class="chain-arrow">&#8594;</div>
+        <div class="chain-node">Data Warehouse (Snowflake)</div>
+        <div class="chain-arrow">&#8594;</div>
+        <div class="chain-node">Analytics / BI</div>
+        <div class="chain-arrow">&#8594;</div>
+        <div class="chain-node">Business Decisions</div>
+      </div>
+    </div>
+
+    <div class="section-title" style="font-size:16px; margin-top:28px; margin-bottom:12px;">Key Protocols &amp; Standards</div>
+    <div class="card-grid">
+      <div class="card">
+        <div class="card-icon">🔌</div>
+        <h3>HTTP / REST &amp; GraphQL</h3>
+        <p>HTTP/REST drives catalog APIs; GraphQL enables flexible product queries, reducing over-fetching for complex product detail pages with variant data.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">📡</div>
+        <h3>Webhooks &amp; SFTP</h3>
+        <p>Webhooks deliver real-time seller notifications (order placed, refund issued); SFTP handles bulk seller feed ingestion for catalog synchronization.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🏭</div>
+        <h3>EDI (Electronic Data Interchange)</h3>
+        <p>Supply chain standard for purchase orders, invoices, and advance ship notices between retailers and suppliers. Still dominant in enterprise B2B.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">💳</div>
+        <h3>ISO 8583 &amp; PCI-DSS</h3>
+        <p>ISO 8583 defines payment card message format; PCI-DSS mandates cardholder data security controls — tokenization minimizes raw card data in transit and storage.</p>
+      </div>
+    </div>
+
+    <div class="section-title" style="font-size:16px; margin-top:28px; margin-bottom:12px;">Data Ownership &amp; Governance</div>
+    <table class="metrics-table">
+      <thead><tr><th>Topic</th><th>Detail</th><th>Operational Impact</th></tr></thead>
+      <tbody>
+        <tr><td>First-party vs. Third-party Data</td><td>Cookie deprecation (Chrome 2024+) eliminates third-party behavioral tracking; platforms with first-party data (login, purchase history) gain durable advantage</td><td>Retail media networks become strategic assets; onsite behavioral data replaces off-site signals</td></tr>
+        <tr><td>CCPA / GDPR Compliance</td><td>Right to deletion must cascade into recommendation models; explicit consent required for personalization; data residency rules affect cross-border architecture</td><td>Model retraining pipelines must support user data deletion; consent management platforms required</td></tr>
+        <tr><td>Seller Data Portability</td><td>Antitrust pressure forces platforms to allow sellers to export performance data, customer insights, and catalog history</td><td>Reduces platform lock-in; shapes seller negotiating leverage in take-rate disputes</td></tr>
+        <tr><td>PCI-DSS Scope Reduction</td><td>Tokenization (Stripe, Braintree) routes raw card data through certified processors; platform never stores PANs (Primary Account Numbers)</td><td>Dramatically reduces audit scope and breach liability; enables faster checkout integrations</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── Section 11: Failure Modes & Incidents ── -->
+  <div class="tab-section" id="tab-incidents">
+    <div class="section-title">Failure Modes &amp; Incidents</div>
+    <div class="section-desc">Real incidents and systemic failure patterns that define reliability, security, and trust requirements in e-commerce platforms.</div>
+
+    <div class="trend-grid">
+      <div class="trend-card">
+        <div class="trend-icon">☁️</div>
+        <div class="trend-title">Amazon S3 US-East-1 Outage (February 2017)</div>
+        <div class="trend-desc">
+          A typo in a maintenance command took down S3, knocking out a significant portion of internet infrastructure including many e-commerce sites. Revealed: single-region dependency is catastrophic; even the AWS status page was hosted on S3. <strong>Lesson:</strong> Multi-region active-active; health checks must not share the failure domain.
+        </div>
+      </div>
+      <div class="trend-card">
+        <div class="trend-icon">🔓</div>
+        <div class="trend-title">eBay Data Breach (May 2014)</div>
+        <div class="trend-desc">
+          Attackers used compromised employee credentials to access 145 million user records over 229 days before detection. Revealed: long dwell time due to insufficient internal monitoring; hashed passwords still exposed. <strong>Lesson:</strong> Privileged access monitoring, anomaly detection on internal data access, and breach notification speed are critical.
+        </div>
+      </div>
+      <div class="trend-card">
+        <div class="trend-icon">💳</div>
+        <div class="trend-title">Target POS Malware Attack (2013)</div>
+        <div class="trend-desc">
+          Attackers gained entry via an HVAC vendor credential, installed POS malware, and exfiltrated 40M card numbers and 70M personal records. Revealed: third-party vendor access is a critical attack surface; network segmentation between POS and corporate network was absent. <strong>Lesson:</strong> Zero-trust for vendor access; POS systems must be isolated from the corporate network.
+        </div>
+      </div>
+      <div class="trend-card">
+        <div class="trend-icon">🏢</div>
+        <div class="trend-title">Shopify Insider Threat (September 2020)</div>
+        <div class="trend-desc">
+          Two rogue support employees accessed transaction records of approximately 200 merchants. Revealed: insider threat is underweighted versus external threats; over-permissioned support roles create systemic exposure. <strong>Lesson:</strong> Least-privilege access, just-in-time access grants, and behavioral monitoring for data access anomalies.
+        </div>
+      </div>
+      <div class="trend-card">
+        <div class="trend-icon">⭐</div>
+        <div class="trend-title">Fake Review Epidemic (Ongoing)</div>
+        <div class="trend-desc">
+          Coordinated networks of fake reviews systematically manipulate rankings on Amazon, Yelp, and Google Shopping. Revealed: marketplace trust is a public goods problem; detection is an arms race between platforms and manipulation networks. <strong>Lesson:</strong> Graph-based anomaly detection, velocity checks, and verified-purchase-only review gating are baseline requirements.
+        </div>
+      </div>
+      <div class="trend-card">
+        <div class="trend-icon">🔄</div>
+        <div class="trend-title">Recommendation Amplification Bias (Ongoing)</div>
+        <div class="trend-desc">
+          Feedback loops in collaborative filtering cause popular items to get more clicks, more data, and better recommendations — systematically suppressing new or niche sellers. Revealed: pure ML optimization without fairness constraints creates power-law concentration. <strong>Lesson:</strong> Diversity injection, exploration vs. exploitation balance, and seller-side fairness metrics are necessary.
+        </div>
+      </div>
+    </div>
+  </div>
+
 </div>
 <script src="../shared.js"></script>
+<script>
+// Override showTab for 11-tab layout
+(function() {
+  var _orig = window.showTab;
+  window.showTab = function(name, idx) {
+    _orig(name, idx);
+    document.getElementById("progress-label").textContent = "Section " + (idx + 1) + " of 11";
+  };
+})();
+</script>
 </body>
 </html>

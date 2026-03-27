@@ -5,7 +5,8 @@ function showTab(name, idx) {
   document.getElementById("tab-" + name).classList.add("active");
   document.querySelectorAll(".tab-btn")[idx].classList.add("active");
   document.querySelectorAll(".progress-dot").forEach(function(d, i) { d.classList.toggle("active", i === idx); });
-  document.getElementById("progress-label").textContent = "Section " + (idx + 1) + " of 9";
+  var total = document.querySelectorAll(".progress-dot").length;
+  document.getElementById("progress-label").textContent = "Section " + (idx + 1) + " of " + total;
 }
 function toggleGloss(header) { header.parentElement.classList.toggle("open"); }
 (function() {
