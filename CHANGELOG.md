@@ -9,6 +9,16 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ## 2026-03-26
 
+### [refactor] primer/fintech — migrated from data-tab + activateTab system to canonical showTab system; replaced ~450-line inline style block with shared.css; replaced inline script with shared.js; all 9 tab sections, glossary, player cards, metrics, workflows, and trends converted to canonical classes
+
+### [refactor] primer/ai-infrastructure — migrated from data-tab system to canonical showTab system; shared CSS/JS; all 9 tab sections converted to tab-section divs with canonical IDs
+
+### [refactor] primer/edtech — migrated from old data-tab system to canonical showTab system; shared CSS/JS; all components converted to canonical classes
+
+### [refactor] primer/ecommerce — migrated from old data-tab system to canonical showTab system; shared CSS/JS; 9 canonical tabs
+
+### [refactor] primer — extract shared.css and shared.js; eliminate ~1,400 lines of duplication across 13 primers
+
 ### [bug] primer/fintech — Market Dynamics and Evolution tabs both broken; three fixes applied
 
 ### [feature] primer/telecom — Evolution & Foundations tab (Tab 9) added; 8-era timeline + 6 foundational works; JS PASS
