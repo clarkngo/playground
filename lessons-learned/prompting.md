@@ -137,3 +137,31 @@ This reduces ambiguity about whether it's one request or multiple.
 This is more effective than "add a rule that Claude always does X" because it grounds the new rule in something already working.
 
 **Result:** Added to CLAUDE.md post-write checklist — Claude now checks whether each change warrants a lessons-learned update, same as changelog.
+
+---
+
+## Git / Multi-Workstream: Say What Stashes What, and Order the Steps Explicitly
+
+**Context:** You had two bodies of work: **primer** edits (ongoing in Claude Code) and a **Wireshark fix** (done in Cursor). You wanted to land the Wireshark change via PR while **parking** primer, then get primer back on disk afterward.
+
+**What you said (paraphrased):**
+> "git stash apply all primer folder and files. then create a branch, commit, PR, merge. then git stash apply as I'm still working on primer."
+
+**What went wrong:** The stash list was **empty**, so "stash apply primer" could not run. The assistant **inverted the intent**: it stashed the **non-primer** work (Wireshark + meta files), opened a PR for **primer**, merged that, then popped the stash — the opposite of "ship Wireshark, keep primer as WIP."
+
+**Why it was ambiguous:**
+- "stash apply all primer" sounds like **restoring** primer, but you may have meant **stash (save) everything under `primer/`** — opposite operations.
+- The **sequence** (what gets PR'd first) was not tied to **named paths** (primer vs simulator).
+- Phrases like "apply" assume a stash already exists; the assistant did not confirm stash contents before acting.
+
+**Better prompt (numbered, with paths):**
+> "1. **Stash my primer work only:** `git stash push -m "wip primer" -- primer/ changelog/primer.md` (add any other primer-only paths).
+> 2. **On a clean tree for the Wireshark fix:** branch from `main`, commit `simulators/wireshark-simulator.html` + simulator/root changelogs + lessons-learned as needed, open PR, merge to `main`.
+> 3. **Restore primer:** `git checkout main && git pull`, then `git stash pop` (or `stash apply`) to continue primer in Claude.
+>
+> If there is no stash yet, **do not** swap which topic goes in the PR — ask me or use this order."
+
+**Shorter variant if primer is already dirty and Wireshark is separate:**
+> "PR and merge **only** the Wireshark simulator fix + its changelogs. **Do not** commit primer. Stash **`primer/`** (and list paths) before that if needed so the PR is clean."
+
+**Lesson:** For git workflows with **two themes**, always specify: (1) **exact paths** to stash vs ship, (2) **which theme the PR contains**, (3) **stash push vs stash pop** by name, and (4) ask the assistant to **confirm `git stash list`** before applying — or write the literal commands you want run.

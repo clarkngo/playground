@@ -7,6 +7,9 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ## 2026-03-27
 
+### [feature] lessons-learned/prompting.md — git / multi-workstream prompting (stash vs PR order, primer vs Wireshark mix-up)
+- New section: name paths for stash vs ship, explicit numbered steps, stash push vs pop, confirm `git stash list`
+
 ### [refactor] `.gitignore` — ignore `.DS_Store`; `git rm --cached` for four tracked `.DS_Store` files so they stay local only
 
 ### [bug] lessons-learned/bug-fixes.md — document `</script>` inside inline HTML scripts
