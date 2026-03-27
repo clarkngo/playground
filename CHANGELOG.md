@@ -9,6 +9,10 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ## 2026-03-27
 
+### [refactor] lessons-learned/prompting.md — added multi-workstream git prompting pattern (stash paths, PR scope, avoid primer vs fix inversion)
+
+### [refactor] `.gitignore` — ignore `.DS_Store`; removed 4 tracked macOS metadata files from the index (root, cryptography-labs, passport-shop, retro-game)
+
 ### [bug] simulators/wireshark-simulator — fixed broken page: embedded sample HTML contained `</script>`, which terminated the main script; escaped tag and used template literal for multi-line body
 
 ### [refactor] lessons-learned/bug-fixes — documented inline-HTML `</script>` string pitfall (related Wireshark simulator root cause)
