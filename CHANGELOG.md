@@ -9,6 +9,14 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ## 2026-03-26
 
+### [ux] primer/video-platform, ecommerce, edtech, ai-infrastructure, fintech — rewrote tab-evolution: Foundational Works moved to top, card-grid timelines replaced with new alternating tl-item timeline structure
+
+### [ux] primer/sports, restaurant, fishing, telecom — rewrote tab-evolution: Foundational Works moved to top, card-grid timelines replaced with new alternating tl-item timeline structure
+
+### [ux] primer/oil, healthcare, esports, video-game-retail — rewrote tab-evolution: Foundational Works moved to top, card-grid timelines replaced with new alternating tl-item timeline structure
+
+### [ux] primer/insurance, manufacturing, maritime, logistics — rewrote tab-evolution: Foundational Works moved to top, card-grid timelines replaced with alternating tl-item timeline structure; manufacturing card-grid foundations converted to metrics-table
+
 ### [refactor] primer/fintech — migrated from data-tab + activateTab system to canonical showTab system; replaced ~450-line inline style block with shared.css; replaced inline script with shared.js; all 9 tab sections, glossary, player cards, metrics, workflows, and trends converted to canonical classes
 
 ### [refactor] primer/ai-infrastructure — migrated from data-tab system to canonical showTab system; shared CSS/JS; all 9 tab sections converted to tab-section divs with canonical IDs

@@ -1,5 +1,36 @@
 # Primer Changelog
 
+## 2026-03-26
+
+### [ux] primer/video-platform, ecommerce, edtech, ai-infrastructure, fintech — rewrote tab-evolution section layout
+- Moved Foundational Works table to the TOP of each evolution section (before timeline)
+- Replaced existing Foundational Works headings with `<div class="section-title">Foundational Works</div>`
+- Replaced all `card-grid` / `card` / `card-icon` timeline blocks with new `<div class="timeline">` structure using alternating `tl-left` / `tl-right` `tl-item` rows (8 items each, odd on left, even on right)
+- Added `<div class="section-title" style="margin-top:28px">Historical Timeline</div>` label before timeline div
+- All content (years, titles, descriptions) preserved exactly; only markup structure and order changed
+
+### [ux] primer/sports, restaurant, fishing, telecom — rewrote tab-evolution section layout
+- Moved Foundational Works table to the TOP of each evolution section (before timeline)
+- Replaced `<h3>Foundational Works</h3>` with `<div class="section-title">Foundational Works</div>`
+- Replaced all `card-grid` / `card` / `card-icon` timeline blocks with new `<div class="timeline">` structure using alternating `tl-left` / `tl-right` `tl-item` rows (8 items each, odd on left, even on right)
+- Added `<div class="section-title" style="margin-top:28px">Historical Timeline</div>` label before timeline div
+- All content (years, titles, descriptions) preserved exactly; only markup structure changed
+
+### [ux] primer/oil, healthcare, esports, video-game-retail — rewrote tab-evolution section layout
+- Moved Foundational Works table to the TOP of each evolution section (before timeline)
+- Replaced `<h3>Foundational Works</h3>` with `<div class="section-title">Foundational Works</div>`
+- Replaced all `card-grid` / `card` / `card-icon` timeline blocks with new `<div class="timeline">` structure using alternating `tl-left` / `tl-right` `tl-item` rows (8 items each, odd on left, even on right)
+- Added `<div class="section-title" style="margin-top:28px">Historical Timeline</div>` label before timeline div
+- All content (years, titles, descriptions) preserved exactly; only markup structure changed
+
+### [ux] primer/insurance, manufacturing, maritime, logistics — rewrote tab-evolution section layout
+- Moved Foundational Works table to the TOP of each evolution section (before timeline)
+- Replaced `<h3>` / inline-styled headings with `<div class="section-title">Foundational Works</div>`
+- Replaced all `card-grid` / `card` / `card-icon` timeline blocks with new `<div class="timeline">` structure using alternating `tl-left` / `tl-right` `tl-item` rows (odd on left, even on right)
+- Added `<div class="section-title" style="margin-top:28px">Historical Timeline</div>` label before timeline div
+- manufacturing: converted second `card-grid` ("Foundational Standards &amp; Research") into a `metrics-table` with Work / Author/Year / Why It Matters columns
+- All content (years, titles, descriptions, table rows) preserved exactly; only markup structure changed
+
 ## 2026-03-26 (ux — remove Live/New badges from hub)
 
 ### [ux] primer/index.html — removed all status and nav badges
