@@ -9,6 +9,10 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ## 2026-03-27
 
+### [bug] simulators/wireshark-simulator — fixed broken page: embedded sample HTML contained `</script>`, which terminated the main script; escaped tag and used template literal for multi-line body
+
+### [refactor] lessons-learned/bug-fixes — documented inline-HTML `</script>` string pitfall (related Wireshark simulator root cause)
+
 ### [feature] primer/healthcare — added Tab 10 (Data Architecture & Flows) and Tab 11 (Failure Modes & Incidents); progress bar expanded to 11 dots
 
 ### [feature] primer/insurance — added Tab 10 (Data Architecture & Flows) and Tab 11 (Failure Modes & Incidents); progress bar expanded to 11 dots
