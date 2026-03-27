@@ -1,5 +1,73 @@
 # Primer Changelog
 
+## 2026-03-26 (refactor — fintech migration to showTab system)
+
+### [refactor] primer/fintech — migrated from data-tab + activateTab system to canonical showTab system
+- Replaced entire inline `<style>` block (lines 7–456, ~450 lines) with `<link rel="stylesheet" href="/primer/shared.css" />`
+- Replaced inline `<script>` block (activateTab, dot click events, glossary addEventListener, filterGlossary, keyboard shortcut) with `<script src="/primer/shared.js"></script>`
+- Simplified breadcrumb from 3-level (Playground / Industry Primer / FinTech) to canonical 2-level (Industry Primer / FinTech)
+- Converted 9 tab buttons from `data-tab="..."` event-listener system to `onclick="showTab('name',idx)"` format with clean labels (removed "1.", "2." numbering prefixes)
+- Replaced old progress bar (`id="progressBar"`, `id="progressLabel"`, `data-idx` dots) with canonical 9-dot bar (`id="dot-0"` through `id="dot-8"` + `id="progress-label"`)
+- Converted all section elements from `<section class="tab-section" id="sec-X">` to `<div class="tab-section" id="tab-X">`: sec-overview→tab-overview, sec-terminology→tab-terminology, sec-players→tab-players, sec-metrics→tab-metrics, sec-techstack→tab-stack, sec-workflows→tab-workflows, sec-trends→tab-trends, dynamics→tab-dynamics, evolution→tab-evolution
+- Glossary search input ID changed from `id="glossarySearch"` to `id="gloss-search"` for shared.js compatibility
+- All glossary items converted to shared.js pattern: `onclick="toggleGloss(this)"` on `.glossary-header`; `data-term` + `data-cat` attributes replaced with `data-terms` space-separated string for shared.js filter; `.glossary-short` span removed (content merged into `.glossary-body`); `.glossary-cat` span moved inside header alongside `.glossary-term`
+- Player cards migrated from old `.p-emoji`/`.p-name`/`.p-desc`/`.p-tag` classes to canonical `.player-name`/`.player-role`/`.player-tag` classes
+- Metrics table removed old `.metrics-wrap` wrapper + `.metrics-category-header` row pattern; replaced with canonical `<span class="metrics-cat">` inside a colspan=4 `<td>`
+- Tech stack layers migrated from `.stack-layer-content` + `.stack-chips` to canonical `.chip-row` directly inside `.stack-layer`
+- Workflow steps migrated from old horizontal `.workflow-step` (`.step-num` span + `.step-name` span + `.step-desc` span + `.workflow-arrow` dividers) to canonical vertical layout (`.step-num` div + `.step-content` > `.step-title` + `.step-detail`)
+- Trends section: `.trends-grid` → `.trend-grid`; `.t-icon` → `.trend-icon`; `<h3>` for title → `.trend-title` div; `<p>` → `.trend-desc` div; `.t-tag` spans removed
+- All existing content (27 glossary terms, 6 player sections, metrics rows, 7 stack layers, 3 workflows, 6 trends, 5 pain point cards, 6 monetization rows, 8 timeline cards, 6 foundational works rows) preserved exactly
+
+## 2026-03-26 (refactor — ai-infrastructure migration to showTab system)
+
+### [refactor] primer/ai-infrastructure — migrated from data-tab system to canonical showTab system
+- Replaced entire inline `<style>` block with `<link rel="stylesheet" href="/primer/shared.css" />` plus a local `<style>` block for components not covered by shared.css (term-card glossary, player-chip, metrics-category, stack-layer with layer-* colors, workflow-steps, trend-card, vc-node, grid-2/3/4)
+- Removed `<header class="page-header">` wrapper; replaced with flat `<div class="breadcrumb">` + `<div class="page-header">` inside `<div class="page-wrap">`; breadcrumb simplified to 2-level (Industry Primer / AI Infrastructure); `<div class="page-title">` → `<h1>`; `<div class="page-subtitle">` → `<div class="subtitle">`
+- Removed `<main class="content">` wrapper; content lives directly inside `.page-wrap`
+- Converted 9 tab buttons from `data-tab="..."` event-listener system to `onclick="showTab('name',idx)"` format; nav element changed from `class="tabs"` to `class="tab-nav"`
+- Added 9-dot progress bar (`#dot-0` through `#dot-8`) + `#progress-label "Section 1 of 9"`
+- All 9 section elements converted: `<section class="section" id="X">` → `<div class="tab-section" id="tab-X">`, closing `</section>` → `</div>`; ID mapping: overview→tab-overview, terminology→tab-terminology, players→tab-players, metrics→tab-metrics, stack→tab-stack, workflows→tab-workflows, trends→tab-trends, dynamics→tab-dynamics, evolution→tab-evolution
+- Replaced old inline `<script>` (switchTab + data-tab event listeners) with `<script src="/primer/shared.js"></script>`; retained a small local script for the ai-infrastructure-specific `.term-card` expand/collapse and `#termSearch` filter (not in shared.js which targets `.glossary-item`); updated keydown handler to call `showTab('terminology', 1)` instead of old `switchTab('terminology')`
+- All existing content (35 terms, player chips, metrics rows, stack layers, workflows, trends, dynamics, evolution timeline, foundational works table) preserved exactly
+
+## 2026-03-26 (refactor — edtech migration to showTab system)
+
+### [refactor] primer/edtech — migrated from data-tab system to canonical showTab system
+- Replaced entire inline `<style>` block with `<link rel="stylesheet" href="/primer/shared.css" />`
+- Replaced inline `<script>` block with `<script src="/primer/shared.js"></script>`
+- Replaced `<div class="page">` + `<nav class="breadcrumb">` + `<header class="page-header">` with canonical `<div class="page-wrap">` + `<div class="breadcrumb">` + `<div class="page-header">` structure; breadcrumb simplified to 2-level (Industry Primer / Higher Education & EdTech)
+- Converted 9 tab buttons from `data-tab="..."` to `onclick="showTab('name',idx)"` format
+- Added 9-dot progress bar (`#dot-0` through `#dot-8`) + `#progress-label`
+- All 9 `<section class="tab-section" id="tab-...">` elements converted to `<div class="tab-section" id="tab-...">` (already had correct IDs; changed closing `</section>` to `</div>`)
+- Converted `<h2 class="section-title">` / `<p class="section-desc">` to `<div class="section-title">` / `<div class="section-desc">` throughout
+- Converted glossary from `.gloss-item`/`.gloss-trigger`/`.gloss-body` + JS event listeners to canonical `.glossary-item`/`.glossary-header[onclick="toggleGloss(this)"]`/`.glossary-body`; `id="glossSearch"` → `id="gloss-search"`; `data-term` → `data-terms` with full keyword strings on all 30 terms
+- Converted player sections from `.players-section`/`.players-grid`/`.player-chip` to canonical `.player-section`/`.player-section-title`/`.player-grid`/`.player-card` with `.player-name` + `.player-role`
+- Converted metrics from custom `.metrics-section`/`.metrics-grid`/`.metric-card` layout to canonical `.metrics-table` with `.metrics-cat` group rows covering all 6 original metric categories (enrollment, success, engagement, outcomes, platform, financial)
+- Converted tech stack from `.stack-layer`/`.stack-items`/`.stack-item` + `.stack-note` to canonical `.stack-layer`/`.stack-layer-label`/`.chip-row`/`.chip` (blue/green/purple/muted variants)
+- Converted workflows from `.workflow`/`.workflow-title`/`.workflow-steps`/`.wf-step`/`.wf-arrow` to canonical `.workflow`/`h3`/`.workflow-desc`/`.workflow-steps`/`.workflow-step`/`.step-num`/`.step-content`/`.step-title`/`.step-detail` (5 steps per workflow)
+- Trend section already had `.trend-card` class structure; converted to canonical `.trend-grid`/`.trend-card`/`.trend-icon`/`.trend-title`/`.trend-desc`
+- Market Dynamics: pain points converted from `.trends-grid` to `.card-grid`/`.card`; monetization models converted from `.metrics-grid` to `.metrics-table` with Margin Profile column; 7 monetization model rows
+- Evolution: historical timeline card-grid retained (8 era cards); foundational works `.metrics-table` retained (6 rows)
+- Verification: shared_css=1, shared_js=1, inline_script=0; all 9 section IDs present; 9 showTab buttons; 0 data-tab attributes
+
+## 2026-03-26 (refactor — ecommerce migration to showTab system)
+
+### [refactor] primer/ecommerce — migrated from data-tab system to canonical showTab system
+- Replaced entire inline `<style>` block with `<link rel="stylesheet" href="/primer/shared.css" />`
+- Replaced inline `<script>` block with `<script src="/primer/shared.js"></script>`
+- Replaced `<header class="page-header">` + `<main class="main">` with canonical `<div class="page-wrap">` + `<div class="page-header">` structure
+- Converted 9 tab buttons from `data-tab="..."` to `onclick="showTab('name',idx)"` format
+- Added 9-dot progress bar (`#dot-0` through `#dot-8`) + `#progress-label`
+- Converted all `<section class="section" id="...">` to `<div class="tab-section" id="tab-...">` with renamed IDs (`techstack` → `stack`)
+- Converted `<h2 class="section-heading">` to `<div class="section-title">` throughout
+- Converted glossary search from `id="glossarySearch"` to `id="gloss-search"`; `data-term` → `data-terms`; added `onclick="toggleGloss(this)"` to each glossary header
+- Converted player cards to canonical `.player-section` / `.player-section-title` / `.player-grid` / `.player-name` / `.player-role` structure
+- Converted metrics from card-grid layout to canonical `.metrics-table` with `.metrics-cat` group rows
+- Converted tech stack from `.stack-section` / `.stack-chips` to canonical `.stack-layer` / `.stack-layer-label` / `.chip-row`
+- Converted workflow steps to canonical `.workflow` / `.workflow-desc` / `.workflow-steps` / `.workflow-step` / `.step-num` / `.step-content` structure
+- Converted trend cards to canonical `.trend-grid` / `.trend-card` / `.trend-title` / `.trend-desc`
+- Verification: css_link=1, js_src=1, inline_script=0; all 9 section IDs present; 9 showTab buttons; 0 data-tab attributes
+
 ## 2026-03-26 (refactor — shared CSS/JS extraction)
 
 ### [refactor] primer/shared.css + primer/shared.js — created shared asset files
