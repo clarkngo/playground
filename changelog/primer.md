@@ -1,5 +1,13 @@
 # Primer Changelog
 
+## 2026-03-26 (ux — remove Live/New badges from hub)
+
+### [ux] primer/index.html — removed all status and nav badges
+- Removed all `<span class="status-badge live">Live</span>` from 17 industry cards
+- Removed all `<span class="nav-badge">New</span>` from sidebar nav links
+- Removed `new-badge` CSS class from all nav link elements
+- Cleaned up dead CSS rules: `.nav-badge` and `.nav-link.new-badge .nav-badge`
+
 ## 2026-03-26 (refactor — fintech migration to showTab system)
 
 ### [refactor] primer/fintech — migrated from data-tab + activateTab system to canonical showTab system

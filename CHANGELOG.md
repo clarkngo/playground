@@ -17,6 +17,7 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ### [refactor] primer/ecommerce — migrated from old data-tab system to canonical showTab system; shared CSS/JS; 9 canonical tabs
 
+### [ux] primer/index.html — remove all Live/New status badges from hub cards and sidebar
 ### [refactor] primer — extract shared.css and shared.js; eliminate ~1,400 lines of duplication across 13 primers
 
 ### [bug] primer/fintech — Market Dynamics and Evolution tabs both broken; three fixes applied
