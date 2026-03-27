@@ -1,5 +1,20 @@
 # Primer Changelog
 
+## 2026-03-26 (refactor — shared CSS/JS extraction)
+
+### [refactor] primer/shared.css + primer/shared.js — created shared asset files
+- Created `primer/shared.css` (96 lines): canonical design tokens, layout, tab system, all component classes (glossary, player, metrics-table, stack-layer, chip, workflow, trend-grid, market-note, mono-table)
+- Created `primer/shared.js` (25 lines): `showTab`, `toggleGloss`, glossary search, `/` keyboard shortcut
+- Both files serve all 13 showTab-system primers; data-tab primers (fintech, ecommerce, edtech, ai-infrastructure) retain inline styles (different system)
+
+### [refactor] All 13 showTab primers — replaced inline style/script with shared file references
+- **5 identical-CSS** (insurance, manufacturing, maritime, logistics, oil): removed 88-line `<style>` block + 23-line `<script>` → `<link>` + `<script src>`
+- **3 multiline-CSS** (healthcare, esports, video-game-retail): removed ~100–200 line bloated `<style>` block (same rules, expanded whitespace) → shared link
+- **3 duplication-bug** (sports, restaurant, video-platform): stripped `<style>` blocks that duplicated rules already in canonical
+- **2 with genuine extras** (telecom, fishing): replaced `<style>` with `<link>` + small inline `<style>` for primer-specific rules only (3 rules for telecom, 4 for fishing)
+- Verification: `shared.js` node --check PASS; all 13 primers: css_link=1, js_src=1, inline_script=0
+- **Lines eliminated**: ~1,144 CSS + ~299 JS = ~1,443 total lines removed from primer files
+
 ## 2026-03-26 (bugfix — fintech tab system)
 
 ### [bug] primer/fintech — Market Dynamics and Evolution tabs non-functional

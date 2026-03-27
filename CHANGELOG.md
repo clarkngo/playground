@@ -9,6 +9,8 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ## 2026-03-26
 
+### [refactor] primer — extract shared.css and shared.js; eliminate ~1,400 lines of duplication across 13 primers
+
 ### [bug] primer/fintech — Market Dynamics and Evolution tabs both broken; three fixes applied
 
 ### [feature] primer/telecom — Evolution & Foundations tab (Tab 9) added; 8-era timeline + 6 foundational works; JS PASS
