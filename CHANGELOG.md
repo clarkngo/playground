@@ -7,6 +7,16 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-03-27
+
+### [feature] primer/ai-infrastructure — added Tab 10 (Data Architecture & Flows) and Tab 11 (Failure Modes & Incidents); shared.js updated to compute "of N" dynamically from progress-dot count
+
+### [feature] primer/edtech — added Tab 10 (Data Architecture & Flows) and Tab 11 (Failure Modes & Incidents); progress bar and showTab override updated to 11 tabs
+
+### [feature] primer/ecommerce — added Tab 10 (Data Architecture & Flows) and Tab 11 (Failure Modes & Incidents); progress bar and showTab override updated to 11 tabs
+
+### [feature] primer/fintech — added Tab 10 (Data Architecture & Flows) and Tab 11 (Failure Modes & Incidents); progress bar and showTab updated to 11 tabs
+
 ## 2026-03-26
 
 ### [ux] primer/video-platform, ecommerce, edtech, ai-infrastructure, fintech — rewrote tab-evolution: Foundational Works moved to top, card-grid timelines replaced with new alternating tl-item timeline structure
