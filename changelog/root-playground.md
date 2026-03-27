@@ -5,6 +5,11 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-03-27
+
+### [bug] lessons-learned/bug-fixes.md — document `</script>` inside inline HTML scripts
+- New section: HTML parser terminates `<script>` at first `</script>` even inside JS strings; use `<\/script>` in source
+
 ## 2026-03-25
 
 ### [feature] lessons-learned — 10 new entries from history review

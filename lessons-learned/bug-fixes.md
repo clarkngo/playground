@@ -4,6 +4,18 @@ Root causes and patterns for bugs found across the cryptography labs.
 
 ---
 
+## `</script>` Inside Inline `<script>` (HTML)
+
+**Symptom:** Nothing after a certain line runs; globals missing; UI frozen. View source shows stray text where script continuation should be.
+
+**Root cause:** In HTML, the parser ends a `<script>` block at the first `</script>` byte sequence. It does not parse JavaScript, so a `</script>` inside a string or comment still closes the element.
+
+**Fix:** In JS source embedded in HTML, write `<\/script>` so the HTML tokenizer does not see a closing script tag; the JS string value is still `</script>`. Prefer template literals or concatenation for multi-line sample HTML so strings stay valid JS.
+
+**Affected:** `simulators/wireshark-simulator.html` (sample HTTP body in packet data).
+
+---
+
 ## Init Order: saveState Called Before loadState
 
 **Symptom:** All objectives reset on page refresh. localStorage exists but is overwritten on load.
