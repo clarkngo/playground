@@ -7,6 +7,12 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-03-31
+
+### Cryptography Labs
+- `[ux]` Lab 10 — Removed all "Capstone" wording from navbar, scenario, Demo 4, reflection, and print summary
+- `[feature]` Lab 10 — Demo 3 ZK proof now requires all 8 rounds to complete objective (was 5)
+
 ## 2026-03-30
 
 ### Primer

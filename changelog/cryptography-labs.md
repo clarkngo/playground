@@ -5,6 +5,25 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-03-31
+
+### [ux] Lab 10 — Removed all "Capstone" wording
+- Navbar subtitle: `Module 10 Lab · Capstone` → `Module 10 Lab · Emerging Crypto`
+- Scenario box: removed "capstone lab" phrasing
+- Demo 4 Why This Matters box: "capstone assessment" → "assessment"; "capstone security framework" → "security framework"
+- Reflection section title: `💭 Capstone Reflection Submission` → `💭 Reflection Submission`
+- Reflection label: `📝 Your Capstone Reflection` → `📝 Your Reflection`
+- Print summary h1: removed `(Capstone)` from title
+- Print summary h2: `Capstone Reflection` → `Reflection`
+- `labCompleted` field: `Module 10 Lab (Capstone)` → `Module 10 Lab`
+
+### [feature] Lab 10 — Demo 3 ZK proof now requires all 8 rounds
+- Previously `zkDone=true` triggered at round 5; button disabled at round 8
+- Now `zkDone` only sets to `true` at round 8 (when button disables)
+- Objective label updated: `Completed ≥5 ZK proof rounds` → `Completed all 8 ZK proof rounds`
+- Print summary row updated to `All 8 rounds` from `≥5 rounds`
+- Intermediate state at rounds 5–7 now shows "Proving knowledge…" / "Getting convinced…" text
+
 ## 2026-03-25
 
 ### [ux] Lab 08 — Demo 1 IPsec: replaced 2-button bar with 2×2 combo grid
