@@ -5,6 +5,17 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-03-31 (2)
+
+### [ux] Lab 10 — Demo 4 renamed to Assessment
+- `Demo 4 — Protocol Design Security Checklist` → `📝 Assessment — Protocol Security True/False`
+- HTML comment updated to match
+
+### [feature] Lab 10 — Assessment requires all 20 questions answered
+- Previously `checklistDone=true` when `correct >= 15`; now requires `answered >= 20` (all questions must be answered regardless of score)
+- Objective label updated: `Checked ≥15/20 security controls` → `Answered all 20 security questions`
+- Print summary row updated: `Security Checklist` → `Security Assessment`; shows `All 20 answered (N/20 correct)`
+
 ## 2026-03-31
 
 ### [ux] Lab 10 — Removed all "Capstone" wording
