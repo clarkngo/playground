@@ -7,6 +7,12 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-03-30
+
+### Primer
+- `[feature]` Added Data Architecture & Flows + Failure Modes & Incidents tabs to all 9 remaining primers (maritime, oil, telecom, esports, sports, restaurant, video-game-retail, video-platform, fishing) via direct Python injection — no subagents
+- `[feature]` Created `changelog/token-usage.md` — session-by-session token consumption tracking with cost estimates and usage guidance
+
 ## 2026-03-27
 
 ### [refactor] lessons-learned/prompting.md — added multi-workstream git prompting pattern (stash paths, PR scope, avoid primer vs fix inversion)
