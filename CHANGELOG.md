@@ -10,6 +10,10 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 ## 2026-03-31
 
 ### Cryptography Labs
+- `[ux]` Lab 10 — Demo 4 renamed to "📝 Assessment — Protocol Security True/False"
+- `[feature]` Lab 10 — Assessment now requires all 20 questions answered (was ≥15 correct)
+
+### Cryptography Labs
 - `[ux]` Lab 10 — Removed all "Capstone" wording from navbar, scenario, Demo 4, reflection, and print summary
 - `[feature]` Lab 10 — Demo 3 ZK proof now requires all 8 rounds to complete objective (was 5)
 
