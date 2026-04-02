@@ -7,6 +7,25 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-04-02
+
+### Dev Foundations Activities
+- `[ux]` All 10 activities — simulator dropdown replaced with two always-visible side-by-side panels, each with its own Simulate button
+- `[ux]` All 10 activities — Validate Architecture and Export PDF buttons normalized to identical placement (toolbox column) and label text across all activities
+
+---
+
+## 2026-04-01
+
+### Dev Foundations Activities
+- `[feature]` Activities 02–10 live — full collection of 10 system design sequencing activities complete (Git, REST APIs, Databases, Testing, Architecture, Security, CI/CD, Microservices, Resiliency)
+- `[feature]` `dev-foundations-activities/index.html` — homepage with 10-card grid, "How It Works" section, and answer key banner
+- `[feature]` `answer-key.html` — all 10 modules updated to Live with correct sequences and distractor chips
+- `[feature]` Created `dev-foundations-activities/` collection — Activity 01 (Container Runtime Architecture) live with GitHub dark theme, 7 correct layers + 4 VM distractors, count-mismatch validation
+- `[feature]` `index.html` — Added "Dev Foundations" sidebar nav entry and 10-activity section
+
+---
+
 ## 2026-03-31
 
 ### Cryptography Labs

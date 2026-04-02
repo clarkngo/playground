@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dev Foundations | REST API Gateway Architecture</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0d1117; color: #c9d1d9; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; min-height: 100vh; padding: 0; }
+    .navbar { background: #161b22; border-bottom: 1px solid #30363d; padding: .75rem 1.5rem; display: flex; align-items: center; justify-content: space-between; }
+    .navbar a { color: #e6edf3; text-decoration: none; font-weight: 700; font-size: 1rem; }
+    .navbar a:hover { color: #58a6ff; }
+    .nav-pill { font-size: .8rem; color: #8b949e; }
+    .page-body { padding: 2rem; }
+    #game-container { max-width: 960px; margin: 0 auto; background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 2rem; }
+    .pdf-only { display: none; }
+    @media print {
+      .pdf-only { display: block; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 6px; padding: .75rem 1rem; margin-bottom: 1.25rem; font-size: .85rem; color: #333; }
+      .pdf-only table { width: 100%; border-collapse: collapse; }
+      .pdf-only td { padding: .2rem .5rem; }
+      .pdf-only td:first-child { font-weight: 700; color: #555; width: 110px; }
+    }
+    .lab-badge { display: inline-block; background: #1f6feb; color: #fff; font-size: .72rem; font-weight: 700; padding: 2px 11px; border-radius: 12px; text-transform: uppercase; letter-spacing: .07em; margin-bottom: .5rem; }
+    .lab-header { margin-bottom: 1.5rem; padding-bottom: 1.25rem; border-bottom: 1px solid #30363d; }
+    .lab-header h1 { color: #e6edf3; font-size: 1.75rem; font-weight: 800; margin: .25rem 0 0; line-height: 1.2; }
+    .scenario-box { background: #0d1117; border-left: 4px solid #1f6feb; border-radius: 0 8px 8px 0; padding: 1rem 1.25rem; margin-bottom: 1.75rem; color: #c9d1d9; line-height: 1.7; font-size: .93rem; }
+    .scenario-box strong { color: #58a6ff; }
+    .activity-layout { display: grid; grid-template-columns: 210px 1fr; gap: 1.5rem; }
+    .col-label { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; margin-bottom: .75rem; }
+    .toolbox-label { color: #58a6ff; }
+    .canvas-label { color: #8b949e; }
+    .component { background: #21262d; border: 1px solid #30363d; border-radius: 6px; padding: .65rem .85rem; color: #c9d1d9; font-size: .83rem; font-weight: 600; cursor: grab; user-select: none; transition: border-color .15s, background .15s, transform .12s; margin-bottom: .5rem; }
+    .component:hover { border-color: #58a6ff; background: #1c2940; color: #e6edf3; transform: scale(1.02); }
+    .component:active { cursor: grabbing; }
+    .btn-validate { width: 100%; background: #1f6feb; color: #fff; border: none; border-radius: 6px; padding: .6rem 1rem; font-size: .88rem; font-weight: 700; cursor: pointer; margin-top: .85rem; transition: background .15s; }
+    .btn-validate:hover { background: #388bfd; }
+    .btn-pdf { width: 100%; background: #238636; color: #fff; border: 1px solid #2ea043; border-radius: 6px; padding: .6rem 1rem; font-size: .88rem; font-weight: 700; cursor: pointer; margin-top: .5rem; transition: background .15s; }
+    .btn-pdf:hover { background: #2ea043; }
+    .drop-indicator { width: 100%; max-width: 560px; height: 3px; background: #58a6ff; border-radius: 2px; box-shadow: 0 0 6px #58a6ff; pointer-events: none; flex-shrink: 0; }
+    .drop-zone { min-height: 420px; background: #0d1117; border: 2px dashed #30363d; border-radius: 10px; padding: 1.25rem; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: .65rem; transition: border-color .2s, background .2s; }
+    .drop-zone.drag-over { border-color: #58a6ff; background: #0d1929; }
+    .placeholder-text { color: #484f58; font-style: italic; margin-top: 5rem; font-size: .93rem; text-align: center; }
+    .placed-item { display: flex; align-items: center; justify-content: space-between; width: 100%; max-width: 560px; background: #21262d; border: 1px solid #30363d; border-radius: 8px; padding: .7rem 1rem; color: #e6edf3; font-weight: 600; font-size: .88rem; }
+    .remove-btn { background: none; border: none; color: #484f58; cursor: pointer; font-size: 1rem; padding: 0 .2rem; line-height: 1; transition: color .15s; }
+    .remove-btn:hover { color: #f85149; }
+    #feedback { margin-top: 1rem; border-radius: 8px; padding: 1rem 1.25rem; display: none; font-size: .9rem; line-height: 1.65; }
+    #feedback.pass { background: #1c2a1c; border: 1px solid #238636; color: #3fb950; }
+    #feedback.fail { background: #2a1c1c; border: 1px solid #da3633; color: #f85149; }
+    #feedback-status { font-weight: 800; font-size: .95rem; text-transform: uppercase; margin-bottom: .4rem; letter-spacing: .04em; }
+    #feedback-content { color: #c9d1d9; }
+    #feedback.pass #feedback-content { color: #7ee787; }
+    .prompt-guide { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 1.25rem; margin-top: 1.25rem; }
+    .prompt-guide-title { font-weight: 700; color: #e3b341; font-size: .83rem; margin-bottom: .65rem; }
+    .prompt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+    .prompt-item { background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: .75rem; font-size: .77rem; color: #8b949e; font-style: italic; line-height: 1.6; }
+    .prompt-item strong { color: #e3b341; font-style: normal; }
+    .why-section { background: #0d1117; border: 1px solid #30363d; border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; }
+    .why-section-title { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #3fb950; margin-bottom: .75rem; }
+    .why-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+    .why-card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: .85rem 1rem; }
+    .why-card-label { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: #8b949e; margin-bottom: .35rem; }
+    .why-card-label.green { color: #3fb950; }
+    .why-card-label.blue  { color: #58a6ff; }
+    .why-card-label.yellow{ color: #e3b341; }
+    .why-card-label.purple{ color: #bc8cff; }
+    .why-card p { font-size: .85rem; color: #c9d1d9; line-height: 1.6; margin: 0; }
+    .ref-section { border: 1px solid #30363d; border-radius: 10px; overflow: hidden; margin-bottom: 1.75rem; }
+    .ref-header { background: #161b22; border-bottom: 1px solid #30363d; padding: .75rem 1.25rem; display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none; }
+    .ref-header-title { font-size: .8rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: #58a6ff; }
+    .ref-header-sub { font-size: .75rem; color: #8b949e; }
+    .ref-toggle { font-size: .75rem; color: #8b949e; transition: transform .2s; }
+    .ref-toggle.open { transform: rotate(180deg); }
+    .ref-body { display: none; background: #0d1117; }
+    .ref-body.open { display: block; }
+    .ref-item { display: grid; grid-template-columns: 200px 1fr; gap: 0; border-bottom: 1px solid #21262d; }
+    .ref-item:last-child { border-bottom: none; }
+    .ref-item-name { padding: .8rem 1rem; font-size: .83rem; font-weight: 700; color: #e6edf3; border-right: 1px solid #21262d; background: #161b22; display: flex; align-items: center; gap: .5rem; }
+    .ref-item-name .ref-icon { font-size: 1rem; flex-shrink: 0; }
+    .ref-item-desc { padding: .8rem 1rem; font-size: .83rem; color: #c9d1d9; line-height: 1.6; }
+    .ref-item-desc em { color: #58a6ff; font-style: normal; font-weight: 600; }
+    .ref-item-hint { font-size: .75rem; color: #e3b341; margin-top: .3rem; font-style: italic; }
+    .distractor-hint { background: #2a1f00; border: 1px solid #9e6a03; border-radius: 6px; padding: .55rem .75rem; font-size: .74rem; color: #e3b341; font-weight: 600; margin-bottom: .85rem; line-height: 1.45; }
+    .sim-section { background: #0d1117; border: 1px solid #30363d; border-radius: 10px; padding: 1.25rem; margin-bottom: 1.75rem; }
+    .sim-title { font-weight: 700; color: #e6edf3; font-size: .93rem; margin-bottom: .3rem; }
+    .sim-sub { font-size: .78rem; color: #8b949e; margin-bottom: 1rem; line-height: 1.5; }
+    .sim-dual {
+      display: flex;
+      gap: .85rem;
+      margin-bottom: .85rem;
+    }
+    .sim-panel {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: .45rem;
+    }
+    .sim-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: .5rem;
+    }
+    .sim-panel-label {
+      font-size: .79rem;
+      font-weight: 700;
+      color: #e6edf3;
+    }
+    .sim-btn { background: #1f6feb; color: #fff; border: none; border-radius: 6px; padding: .45rem .9rem; font-size: .83rem; font-weight: 700; cursor: pointer; white-space: nowrap; transition: background .15s; }
+    .sim-btn:hover { background: #388bfd; }
+    .sim-btn:disabled { opacity: .55; cursor: default; }
+    .sim-phases { display: flex; border-radius: 6px; overflow: hidden; border: 1px solid #30363d; margin-bottom: .6rem; display: none; }
+    .sim-phase { flex: 1; padding: .3rem .35rem; text-align: center; font-size: .67rem; background: #161b22; color: #8b949e; border-right: 1px solid #30363d; transition: background .35s, color .35s; }
+    .sim-phase:last-child { border-right: none; }
+    .sim-phase.active { background: #0d1929; color: #58a6ff; font-weight: 700; }
+    .sim-phase.done { background: #162016; color: #3fb950; }
+    .sim-flow { display: none; align-items: center; justify-content: center; padding: .65rem .5rem; background: #161b22; border: 1px solid #30363d; border-radius: 6px; margin-bottom: .5rem; gap: 0; }
+    .sim-node { text-align: center; padding: .35rem .45rem; border-radius: 6px; background: #0d1117; border: 2px solid #30363d; min-width: 66px; transition: border-color .4s, background .4s; flex-shrink: 0; }
+    .sim-node .nd-icon { font-size: 1.3rem; line-height: 1.2; }
+    .sim-node .nd-label { font-size: .6rem; color: #8b949e; margin-top: .12rem; white-space: nowrap; }
+    .sim-node.sn-active { border-color: #58a6ff !important; background: #0d1929 !important; animation: sn-glow 1.1s ease-in-out infinite; }
+    .sim-node.sn-done { border-color: #238636 !important; background: #162016 !important; }
+    @keyframes sn-glow { 0%,100%{box-shadow:0 0 0 0 rgba(88,166,255,.4)} 55%{box-shadow:0 0 0 7px rgba(88,166,255,0)} }
+    .sim-conn { flex: 1; height: 2px; background: #30363d; position: relative; align-self: center; margin: 0 3px; overflow: visible; transition: background .3s; }
+    .sim-conn::after { content: "›"; position: absolute; right: -6px; top: -9px; color: #30363d; font-size: 1rem; transition: color .3s; pointer-events: none; }
+    .sim-conn.sc-lit { background: #58a6ff; }
+    .sim-conn.sc-lit::after { color: #58a6ff; }
+    .sim-pkt { position: absolute; width: 9px; height: 9px; border-radius: 50%; background: #58a6ff; top: -3.5px; left: 0; pointer-events: none; box-shadow: 0 0 5px #58a6ff; }
+    .sim-log { display: none; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: .5rem .75rem; font-family: "SFMono-Regular", Consolas, monospace; font-size: .73rem; height: 96px; overflow-y: auto; margin-bottom: .5rem; scroll-behavior: smooth; }
+    .sim-log .sl { line-height: 1.75; animation: sl-in .2s ease both; }
+    .sim-log .sl-info { color: #8b949e; }
+    .sim-log .sl-ok   { color: #3fb950; }
+    .sim-log .sl-blue { color: #58a6ff; }
+    .sim-log .sl-warn { color: #e3b341; }
+    @keyframes sl-in { from{opacity:0;transform:translateY(3px)} to{opacity:1;transform:none} }
+    .sim-result { display: none; background: #162016; border: 1px solid #238636; border-radius: 6px; padding: .65rem .9rem; font-size: .82rem; color: #3fb950; line-height: 1.55; animation: sl-in .3s ease both; }
+    .sim-result.show { display: block; }
+    .sim-result strong { color: #7ee787; }
+    .site-footer { text-align: center; padding: 1.25rem; border-top: 1px solid #21262d; margin-top: 2rem; color: #484f58; font-size: .78rem; }
+    @media print {
+      body { background: #fff; color: #000; }
+      .navbar, #toolbox-col, .btn-validate, .btn-pdf, .prompt-guide, .remove-btn, .sim-section, .distractor-hint, .ref-section { display: none !important; }
+      .page-body { padding: 0; }
+      #game-container { border: none; background: #fff; padding: 0; max-width: 100%; }
+      .scenario-box { background: #f0f4ff; border-left-color: #4a6cf7; color: #333; }
+      .scenario-box strong { color: #4a6cf7; }
+      .drop-zone { border: 1px solid #ccc; min-height: auto; background: #fff; }
+      .placed-item { background: #f8f9fa; border-color: #dee2e6; color: #000; }
+      #feedback { display: block !important; }
+      #feedback.pass { background: #f0fff4; border-color: #68d391; color: #276749; }
+      #feedback.fail { background: #fff5f5; border-color: #fc8181; color: #c53030; }
+      #feedback-content { color: inherit; }
+      .placeholder-text { display: none; }
+      .lab-badge { background: #4a6cf7; -webkit-print-color-adjust: exact; }
+      .lab-header { border-bottom-color: #dee2e6; }
+      .lab-header h1 { color: #000; }
+      .site-footer { border-top-color: #dee2e6; color: #555; }
+      .activity-layout { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 620px) { .activity-layout { grid-template-columns: 1fr; } .prompt-grid { grid-template-columns: 1fr; } .sim-dual { flex-direction: column; } }
+  </style>
+  <meta name="author" content="Clark Ngo">
+  <meta name="copyright" content="Clark Ngo">
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="../index.html">Playground</a>
+  <span class="nav-pill">Dev Foundations Activities &rsaquo; REST API Gateway Architecture</span>
+</nav>
+
+<div class="page-body">
+<div id="game-container">
+
+  <div id="pdf-header" class="pdf-only">
+    <table>
+      <tr><td>Student</td><td id="pdf-name"></td></tr>
+      <tr><td>Started</td><td id="pdf-start"></td></tr>
+      <tr><td>Submitted</td><td id="pdf-end"></td></tr>
+    </table>
+  </div>
+
+  <div class="lab-header">
+    <span class="lab-badge">Module 3 &mdash; REST APIs</span>
+    <h1>REST API Gateway Architecture</h1>
+  </div>
+
+  <div class="why-section">
+    <div class="why-section-title">Why This Matters</div>
+    <div class="why-grid">
+      <div class="why-card">
+        <div class="why-card-label green">The Problem</div>
+        <p>Without a structured API layer, clients talk directly to backend services and databases. This exposes internal infrastructure, creates security holes, and makes it impossible to scale or change services independently.</p>
+      </div>
+      <div class="why-card">
+        <div class="why-card-label blue">The Solution</div>
+        <p>An API Gateway sits between clients and backend services, routing traffic, enforcing authentication, and abstracting infrastructure. Each request flows through a defined sequence of network and security layers.</p>
+      </div>
+      <div class="why-card">
+        <div class="why-card-label yellow">Real-World Use</div>
+        <p>AWS API Gateway, Kong, and NGINX are used by companies like Netflix and Stripe to handle millions of API requests daily, enforcing rate limits, auth, and routing without touching application code.</p>
+      </div>
+      <div class="why-card">
+        <div class="why-card-label purple">Your Goal</div>
+        <p>Understand the full path of an API request from the client browser to the database, so you can reason about where latency, failures, and security vulnerabilities occur in production systems.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="scenario-box">
+    <strong>The Objective:</strong> You are designing the architecture of a REST API gateway system.
+    Sequence the components from the client making a request, through the network and security layers, to the database at the back end.<br><br>
+    <strong>Think about:</strong> How does a client find the server's IP address? What balances traffic across multiple servers?
+    Where does authentication happen relative to the application? Watch out for decoys &mdash; some components do not belong in the critical request path.
+  </div>
+
+  <div class="sim-section no-pdf">
+    <div class="sim-title">&#127760; Secure Request vs Direct Request Simulator</div>
+    <div class="sim-sub">See how a request travels through a properly designed API gateway versus going directly to the database without any protection layers.</div>
+    <div class="sim-dual">
+      <!-- Scenario A -->
+      <div class="sim-panel">
+        <div class="sim-panel-header">
+          <span class="sim-panel-label">Secure API Gateway Path</span>
+          <button class="sim-btn" id="sim-run-btn-a" onclick="runSimulator('gateway','a')">&#x25B6; Simulate</button>
+        </div>
+        <div class="sim-phases" id="sim-phases-a">
+          <div class="sim-phase" id="sim-ph-0-a"></div>
+          <div class="sim-phase" id="sim-ph-1-a"></div>
+          <div class="sim-phase" id="sim-ph-2-a"></div>
+          <div class="sim-phase" id="sim-ph-3-a"></div>
+        </div>
+        <div class="sim-flow" id="sim-flow-a">
+          <div class="sim-node" id="sim-n0-a"><div class="nd-icon" id="sim-n0-i-a"></div><div class="nd-label" id="sim-n0-l-a"></div></div>
+          <div class="sim-conn" id="sim-c0-a"></div>
+          <div class="sim-node" id="sim-n1-a"><div class="nd-icon" id="sim-n1-i-a"></div><div class="nd-label" id="sim-n1-l-a"></div></div>
+          <div class="sim-conn" id="sim-c1-a"></div>
+          <div class="sim-node" id="sim-n2-a"><div class="nd-icon" id="sim-n2-i-a"></div><div class="nd-label" id="sim-n2-l-a"></div></div>
+          <div class="sim-conn" id="sim-c2-a"></div>
+          <div class="sim-node" id="sim-n3-a"><div class="nd-icon" id="sim-n3-i-a"></div><div class="nd-label" id="sim-n3-l-a"></div></div>
+        </div>
+        <div class="sim-log" id="sim-log-a"></div>
+        <div class="sim-result" id="sim-result-a"></div>
+      </div>
+      <!-- Scenario B -->
+      <div class="sim-panel">
+        <div class="sim-panel-header">
+          <span class="sim-panel-label">Direct Client-to-Database (Insecure)</span>
+          <button class="sim-btn" id="sim-run-btn-b" onclick="runSimulator('direct','b')">&#x25B6; Simulate</button>
+        </div>
+        <div class="sim-phases" id="sim-phases-b">
+          <div class="sim-phase" id="sim-ph-0-b"></div>
+          <div class="sim-phase" id="sim-ph-1-b"></div>
+          <div class="sim-phase" id="sim-ph-2-b"></div>
+          <div class="sim-phase" id="sim-ph-3-b"></div>
+        </div>
+        <div class="sim-flow" id="sim-flow-b">
+          <div class="sim-node" id="sim-n0-b"><div class="nd-icon" id="sim-n0-i-b"></div><div class="nd-label" id="sim-n0-l-b"></div></div>
+          <div class="sim-conn" id="sim-c0-b"></div>
+          <div class="sim-node" id="sim-n1-b"><div class="nd-icon" id="sim-n1-i-b"></div><div class="nd-label" id="sim-n1-l-b"></div></div>
+          <div class="sim-conn" id="sim-c1-b"></div>
+          <div class="sim-node" id="sim-n2-b"><div class="nd-icon" id="sim-n2-i-b"></div><div class="nd-label" id="sim-n2-l-b"></div></div>
+          <div class="sim-conn" id="sim-c2-b"></div>
+          <div class="sim-node" id="sim-n3-b"><div class="nd-icon" id="sim-n3-i-b"></div><div class="nd-label" id="sim-n3-l-b"></div></div>
+        </div>
+        <div class="sim-log" id="sim-log-b"></div>
+        <div class="sim-result" id="sim-result-b"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ref-section no-pdf">
+    <div class="ref-header" onclick="toggleRef(this)">
+      <div>
+        <div class="ref-header-title">&#128196; Component Reference</div>
+        <div class="ref-header-sub">Click to expand &mdash; descriptions of all toolbox items to help guide your design</div>
+      </div>
+      <span class="ref-toggle">&#9660;</span>
+    </div>
+    <div class="ref-body">
+      <div class="ref-item">
+        <div class="ref-item-name"><span class="ref-icon">&#128100;</span>Client</div>
+        <div class="ref-item-desc">The browser, mobile app, or service that initiates an HTTP request. The client knows the domain name but not the server's IP address or internal architecture.
+          <div class="ref-item-hint">&#128161; Every request originates here before going anywhere.</div>
+        </div>
+      </div>
+      <div class="ref-item">
+        <div class="ref-item-name"><span class="ref-icon">&#127760;</span>DNS Resolver</div>
+        <div class="ref-item-desc">Translates a human-readable domain name (api.example.com) into an IP address. <em>Every network request starts with a DNS lookup</em> before a TCP connection can be made.
+          <div class="ref-item-hint">&#128161; The client needs an IP address before it can connect. What provides that?</div>
+        </div>
+      </div>
+      <div class="ref-item">
+        <div class="ref-item-name"><span class="ref-icon">&#9878;</span>Load Balancer</div>
+        <div class="ref-item-desc">Distributes incoming requests across multiple server instances to prevent any single server from being overloaded. Sits at the network edge, <em>before application logic</em>.
+          <div class="ref-item-hint">&#128161; Traffic is distributed before reaching application-level components.</div>
+        </div>
+      </div>
+      <div class="ref-item">
+        <div class="ref-item-name"><span class="ref-icon">&#128272;</span>API Gateway</div>
+        <div class="ref-item-desc">The single entry point for all API traffic. It handles routing, rate limiting, request transformation, and forwards requests to the appropriate backend service.
+          <div class="ref-item-hint">&#128161; The gateway sits between the load balancer and the auth + business logic layers.</div>
+        </div>
+      </div>
+      <div class="ref-item">
+        <div class="ref-item-name"><span class="ref-icon">&#128274;</span>Auth Service</div>
+        <div class="ref-item-desc">Validates the caller's identity by verifying JWT tokens, API keys, or OAuth credentials. <em>Authentication must happen before the application processes the request</em>.
+          <div class="ref-item-hint">&#128161; You must verify who is calling before letting them interact with business logic.</div>
+        </div>
+      </div>
+      <div class="ref-item">
+        <div class="ref-item-name"><span class="ref-icon">&#128187;</span>Application Server</div>
+        <div class="ref-item-desc">Runs the business logic, validates inputs, processes the request, and coordinates reads/writes. It talks to the database but is <em>never directly exposed to the internet</em>.
+          <div class="ref-item-hint">&#128161; Business logic runs after auth, not before.</div>
+        </div>
+      </div>
+      <div class="ref-item">
+        <div class="ref-item-name"><span class="ref-icon">&#128451;</span>Database</div>
+        <div class="ref-item-desc">The persistent data store (PostgreSQL, MySQL, MongoDB) that the application server reads from and writes to. <em>Databases are never directly reachable from the internet</em>.
+          <div class="ref-item-hint">&#128161; The database is always the last component in the chain, not the first.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="activity-layout">
+    <div id="toolbox-col">
+      <div class="col-label toolbox-label">Toolbox</div>
+      <div class="distractor-hint">&#9888; Not all items belong in the API request path &mdash; some are infrastructure components that sit outside this flow.</div>
+      <div id="toolbox"></div>
+      <button class="btn-validate" onclick="checkSystem()">Validate Architecture</button>
+      <button class="btn-pdf no-pdf" onclick="exportPDF()">Export PDF</button>
+    </div>
+    <div>
+      <div class="col-label canvas-label">Design Canvas &mdash; drag components in the correct order</div>
+      <div id="canvas" class="drop-zone">
+        <p class="placeholder-text" id="placeholder">Drag components here in the correct order&hellip;</p>
+      </div>
+      <div id="feedback">
+        <div id="feedback-status"></div>
+        <div id="feedback-content"></div>
+      </div>
+      <div class="prompt-guide no-pdf">
+        <div class="prompt-guide-title">AI Senior Engineer Prompt Guide</div>
+        <div class="prompt-grid">
+          <div class="prompt-item">"What is the role of an <strong>API Gateway</strong> vs a <strong>Load Balancer</strong>? Can one replace the other, or do they serve different functions?"</div>
+          <div class="prompt-item">"Why must <strong>authentication</strong> happen before <strong>business logic</strong> is executed? What happens if auth is checked after the request is processed?"</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<footer class="site-footer">
+  &copy; <span id="copyright-year"></span> Clark Ngo
+</footer>
+
+<script>
+  const canvas = document.getElementById("canvas");
+  const placeholder = document.getElementById("placeholder");
+  const toolboxEl = document.getElementById("toolbox");
+  var startTime = null;
+
+  const toolData = [
+    { type: "Client",        label: "Client (Browser / App)" },
+    { type: "DNS",           label: "DNS Resolver" },
+    { type: "LoadBalancer",  label: "Load Balancer" },
+    { type: "APIGateway",    label: "API Gateway" },
+    { type: "AuthService",   label: "Auth Service (JWT / OAuth)" },
+    { type: "AppServer",     label: "Application Server" },
+    { type: "Database",      label: "Database" }
+  ];
+
+  const distractors = [
+    { type: "CDNProxy",      label: "CDN Edge Cache" },
+    { type: "MessageQueue",  label: "Message Queue Broker" },
+    { type: "DirectDB",      label: "Client Direct DB Connector" }
+  ];
+
+  const LAB_CONFIG = {
+    correctOrder: ["Client","DNS","LoadBalancer","APIGateway","AuthService","AppServer","Database"],
+    clues: {
+      "Client":       "Every request originates from the Client. It knows a domain name but must resolve it to an IP before connecting.",
+      "DNS":          "The DNS Resolver translates the domain name into an IP address. This lookup always happens before a network connection is established.",
+      "LoadBalancer": "The Load Balancer distributes traffic across server instances. It operates at the network edge, before any application-level gateway.",
+      "APIGateway":   "The API Gateway is the single entry point for API traffic, handling routing, rate limiting, and request forwarding.",
+      "AuthService":  "The Auth Service validates the caller's identity (JWT, API key) before the application processes any business logic.",
+      "AppServer":    "The Application Server runs business logic and reads/writes data only after authentication has been verified.",
+      "Database":     "The Database is the final destination, storing persistent data. It is never directly reachable from outside the application layer."
+    },
+    passMessage: "REST API gateway architecture verified. Requests flow from the Client through DNS resolution, Load Balancer, API Gateway, Auth Service, and Application Server before reaching the Database. Each layer adds a necessary function: routing, distribution, identity verification, and business logic."
+  };
+
+  function toggleRef(header) {
+    var body = header.nextElementSibling;
+    var toggle = header.querySelector(".ref-toggle");
+    var isOpen = body.classList.contains("open");
+    body.classList.toggle("open", !isOpen);
+    toggle.classList.toggle("open", !isOpen);
+    header.querySelector(".ref-header-sub").textContent = isOpen
+      ? "Click to expand \u2014 descriptions of all toolbox items to help guide your design"
+      : "Click to collapse";
+  }
+
+  var _simTimers = { a: [], b: [] };
+  var SIM_SCENARIOS = {
+    gateway: {
+      phases: ["DNS + LB", "API Gateway", "Auth Check", "App + DB"],
+      nodes: [
+        { i: "&#128100;", l: "Client" },
+        { i: "&#128272;", l: "API Gateway" },
+        { i: "&#128274;", l: "Auth Service" },
+        { i: "&#128451;", l: "App + DB" }
+      ],
+      steps: [
+        { d: 0,    ph: 0, log: ["info",  "> Client sends GET /api/users/42 -- DNS resolves api.example.com to 10.0.1.5..."] },
+        { d: 700,  ph: 0, log: ["blue",  "> Load Balancer selects backend-02 (round robin). Request forwarded."] },
+        { d: 1400, ph: 1, log: ["info",  "> API Gateway receives request. Checks rate limit: 47/500 req/min. OK."], fc: 0 },
+        { d: 2100, ph: 1, log: ["blue",  "> Route matched: /api/users/:id -- forwarding to Auth Service..."] },
+        { d: 2800, ph: 2, log: ["info",  "> Auth Service validates Bearer token eyJhbGciOiJSUzI1NiJ9..."], fc: 1 },
+        { d: 3500, ph: 2, log: ["ok",    "> Token valid. User ID 42 authorized. Passing to Application Server."] },
+        { d: 4200, ph: 3, log: ["info",  "> App Server executes: SELECT * FROM users WHERE id=42..."], fc: 2 },
+        { d: 4900, ph: 3, log: ["ok",    "> DB returns row. App Server formats JSON response."] },
+        { d: 5400, ph: 3, log: ["ok",    "&#9650; 200 OK returned to client in 43ms. All layers passed."], final: true }
+      ],
+      result: "<strong>Secure API Gateway Path:</strong> The request flows through DNS, Load Balancer, API Gateway (rate limit + routing), Auth Service (token validation), Application Server (business logic), and Database. Each layer is a controlled checkpoint."
+    },
+    direct: {
+      phases: ["Client Connects", "No Auth Check", "Raw DB Query", "Data Exposed"],
+      nodes: [
+        { i: "&#128100;", l: "Client" },
+        { i: "&#128683;", l: "No Gateway" },
+        { i: "&#128451;", l: "Database" },
+        { i: "&#128680;", l: "Data Leak" }
+      ],
+      steps: [
+        { d: 0,    ph: 0, log: ["warn",  "> Client connects directly to database port 5432 -- no gateway, no LB..."] },
+        { d: 700,  ph: 0, log: ["warn",  "> &#9888; Database port exposed to the internet. No rate limiting."] },
+        { d: 1400, ph: 1, log: ["warn",  "> No auth service. Any client can send arbitrary SQL queries..."], fc: 0 },
+        { d: 2100, ph: 1, log: ["warn",  "> Attacker sends: SELECT * FROM users; -- full table dump"] },
+        { d: 2800, ph: 2, log: ["warn",  "> Database executes query without validation or auth check..."], fc: 1 },
+        { d: 3500, ph: 2, log: ["warn",  "> 2.4 million user records returned. No query audit log."] },
+        { d: 4200, ph: 3, log: ["warn",  "> Attacker now drops tables: DROP TABLE payments; ..."], fc: 2 },
+        { d: 4900, ph: 3, log: ["warn",  "> &#9888; Data breach in progress. No layer to block or alert."] },
+        { d: 5400, ph: 3, log: ["warn",  "&#9660; Direct DB access bypasses every security and routing layer"], final: true }
+      ],
+      result: "<strong>Direct Client-to-Database (Insecure):</strong> Without a gateway, load balancer, and auth service, the database is exposed directly to clients. There is no authentication, no rate limiting, no query validation, and no audit trail. This is a critical vulnerability."
+    }
+  };
+
+  function _firePkt(connId) {
+    var fc = document.getElementById(connId);
+    if (!fc) { return; }
+    fc.classList.add("sc-lit");
+    var dot = document.createElement("div");
+    dot.className = "sim-pkt";
+    dot.style.left = "0px";
+    fc.appendChild(dot);
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() {
+        dot.style.transition = "left 520ms linear";
+        dot.style.left = "calc(100% - 9px)";
+        setTimeout(function() { if (dot.parentNode) { dot.remove(); } }, 620);
+      });
+    });
+    setTimeout(function() { fc.classList.remove("sc-lit"); }, 680);
+  }
+
+  function runSimulator() {
+    var key = document.getElementById("sim-scenario").value;
+    if (!key) { var sel = document.getElementById("sim-scenario"); sel.style.borderColor = "#f85149"; setTimeout(function() { sel.style.borderColor = ""; }, 1200); return; }
+    _simTimers.forEach(function(t) { clearTimeout(t); }); _simTimers = [];
+    var s = SIM_SCENARIOS[key];
+    var btn = document.getElementById("sim-run-btn");
+    btn.disabled = true; btn.textContent = "Running...";
+    var phWrap = document.getElementById("sim-phases"); phWrap.style.display = "flex";
+    for (var p = 0; p < 4; p++) { var ph = document.getElementById("sim-ph-" + p); ph.textContent = s.phases[p]; ph.className = "sim-phase"; }
+    var flowEl = document.getElementById("sim-flow"); flowEl.style.display = "flex";
+    for (var n = 0; n < 4; n++) { document.getElementById("sim-n" + n + "-i").innerHTML = s.nodes[n].i; document.getElementById("sim-n" + n + "-l").textContent = s.nodes[n].l; document.getElementById("sim-n" + n).className = "sim-node"; }
+    ["sim-c0","sim-c1","sim-c2"].forEach(function(id) { var el = document.getElementById(id); el.className = "sim-conn"; el.querySelectorAll(".sim-pkt").forEach(function(d) { d.remove(); }); });
+    var logEl = document.getElementById("sim-log"); logEl.style.display = "block"; logEl.innerHTML = "";
+    var resEl = document.getElementById("sim-result"); resEl.className = "sim-result"; resEl.innerHTML = "";
+    var lastPh = -1;
+    s.steps.forEach(function(step) {
+      var t = setTimeout(function() {
+        if (step.ph !== lastPh) { if (lastPh >= 0) { var prev = document.getElementById("sim-ph-" + lastPh); if (prev) { prev.classList.remove("active"); prev.classList.add("done"); } } var cur = document.getElementById("sim-ph-" + step.ph); if (cur) { cur.classList.add("active"); } lastPh = step.ph; }
+        if (step.fc !== undefined) { _firePkt("sim-c" + step.fc); var tn = document.getElementById("sim-n" + (step.fc + 1)); if (tn) { tn.classList.add("sn-active"); setTimeout(function() { tn.classList.remove("sn-active"); tn.classList.add("sn-done"); }, 900); } }
+        var cls = step.log[0] === "ok" ? "sl-ok" : step.log[0] === "blue" ? "sl-blue" : step.log[0] === "warn" ? "sl-warn" : "sl-info";
+        var line = document.createElement("div"); line.className = "sl " + cls; line.innerHTML = step.log[1]; logEl.appendChild(line); logEl.scrollTop = logEl.scrollHeight;
+        if (step.final) { var cur2 = document.getElementById("sim-ph-" + step.ph); if (cur2) { cur2.classList.remove("active"); cur2.classList.add("done"); } }
+      }, step.d);
+      _simTimers.push(t);
+    });
+    var doneTimer = setTimeout(function() { btn.disabled = false; btn.textContent = "\u25B6 Simulate"; var r = document.getElementById("sim-result"); r.innerHTML = s.result; r.classList.add("show"); }, 5800);
+    _simTimers.push(doneTimer);
+  }
+
+  function shuffle(arr) { const a = [...arr]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+
+  var allItemsMap = {};
+  [...toolData, ...distractors].forEach(function(item) { allItemsMap[item.type] = item; });
+
+  var STORAGE_KEY = "dfa-03-canvas";
+  function saveState() { var items = Array.from(canvas.querySelectorAll("[data-placed]")).map(function(el) { return el.dataset.placed; }); try { localStorage.setItem(STORAGE_KEY, JSON.stringify(items)); } catch(e) {} }
+  function loadState() { try { var raw = localStorage.getItem(STORAGE_KEY); if (!raw) { return []; } return JSON.parse(raw); } catch(e) { return []; } }
+
+  function makeToolItem(item) { var div = document.createElement("div"); div.className = "component"; div.draggable = true; div.dataset.type = item.type; div.textContent = item.label; div.addEventListener("dragstart", function(e) { e.dataTransfer.setData("itemType", item.type); e.dataTransfer.setData("itemLabel", item.label); e.dataTransfer.setData("fromToolbox", "1"); e.dataTransfer.effectAllowed = "move"; }); return div; }
+  function syncToolbox() { var placed = new Set(Array.from(canvas.querySelectorAll("[data-placed]")).map(function(el) { return el.dataset.placed; })); Array.from(toolboxEl.querySelectorAll(".component")).forEach(function(el) { el.style.display = placed.has(el.dataset.type) ? "none" : ""; }); placeholder.style.display = canvas.querySelectorAll("[data-placed]").length ? "none" : ""; }
+  function makePlacedItem(type, label) { var el = document.createElement("div"); el.className = "placed-item"; el.dataset.placed = type; el.draggable = true; el.innerHTML = "<span class=\"placed-label\"></span><button class=\"remove-btn no-pdf\" onclick=\"removePlaced(this)\">&#x2716;</button>"; el.addEventListener("dragstart", function(e) { e.dataTransfer.setData("itemType", type); e.dataTransfer.setData("itemLabel", label); e.dataTransfer.setData("fromCanvas", "1"); e.dataTransfer.effectAllowed = "move"; el.dataset.dragging = "1"; }); el.addEventListener("dragend", function() { delete el.dataset.dragging; removeIndicator(); }); return el; }
+  function renumber() { Array.from(canvas.querySelectorAll("[data-placed]")).forEach(function(el, i) { el.querySelector(".placed-label").textContent = (i + 1) + ". " + allItemsMap[el.dataset.placed].label; }); }
+  var indicator = null;
+  function removeIndicator() { if (indicator && indicator.parentNode) { indicator.parentNode.removeChild(indicator); } indicator = null; }
+  function insertIndicator(beforeEl) { removeIndicator(); indicator = document.createElement("div"); indicator.className = "drop-indicator"; canvas.insertBefore(indicator, beforeEl || null); }
+  function getInsertTarget(y) { var items = Array.from(canvas.querySelectorAll("[data-placed]:not([data-dragging])")); for (var i = 0; i < items.length; i++) { var rect = items[i].getBoundingClientRect(); if (y < rect.top + rect.height / 2) { return items[i]; } } return null; }
+  canvas.addEventListener("dragover", function(e) { e.preventDefault(); e.dataTransfer.dropEffect = "move"; canvas.classList.add("drag-over"); insertIndicator(getInsertTarget(e.clientY)); });
+  canvas.addEventListener("dragleave", function(e) { if (!canvas.contains(e.relatedTarget)) { canvas.classList.remove("drag-over"); removeIndicator(); } });
+  canvas.addEventListener("drop", function(e) { e.preventDefault(); canvas.classList.remove("drag-over"); var type = e.dataTransfer.getData("itemType"); var label = e.dataTransfer.getData("itemLabel"); var fromCanvas = e.dataTransfer.getData("fromCanvas") === "1"; var insertBefore = indicator ? indicator.nextSibling : null; removeIndicator(); if (!type) { return; } if (fromCanvas) { var existing = canvas.querySelector("[data-placed='" + type + "']"); if (existing) { existing.parentNode.removeChild(existing); } } var el = makePlacedItem(type, label); if (insertBefore && insertBefore.parentNode === canvas) { canvas.insertBefore(el, insertBefore); } else { canvas.appendChild(el); } renumber(); syncToolbox(); saveState(); });
+  toolboxEl.addEventListener("dragover", function(e) { e.preventDefault(); });
+  toolboxEl.addEventListener("drop", function(e) { var fromCanvas = e.dataTransfer.getData("fromCanvas") === "1"; if (!fromCanvas) { return; } e.preventDefault(); var type = e.dataTransfer.getData("itemType"); var existing = canvas.querySelector("[data-placed='" + type + "']"); if (existing) { existing.parentNode.removeChild(existing); } renumber(); syncToolbox(); saveState(); });
+  function removePlaced(btn) { var item = btn.parentElement; item.parentNode.removeChild(item); renumber(); syncToolbox(); saveState(); }
+
+  function init() {
+    startTime = new Date();
+    document.getElementById("copyright-year").textContent = startTime.getFullYear();
+    var allItems = shuffle([...toolData, ...distractors]);
+    allItems.forEach(function(item) { toolboxEl.appendChild(makeToolItem(item)); });
+    var saved = loadState();
+    saved.forEach(function(type) { var item = allItemsMap[type]; if (!item) { return; } canvas.appendChild(makePlacedItem(type, item.label)); });
+    renumber(); syncToolbox();
+  }
+
+  function checkSystem() {
+    var nodes = Array.from(canvas.querySelectorAll("[data-placed]"));
+    var current = nodes.map(function(n) { return n.dataset.placed; });
+    var correct = LAB_CONFIG.correctOrder;
+    var feedback = document.getElementById("feedback");
+    var status = document.getElementById("feedback-status");
+    var content = document.getElementById("feedback-content");
+    feedback.style.display = "block";
+    var isPass = JSON.stringify(current) === JSON.stringify(correct);
+    feedback.className = isPass ? "pass" : "fail";
+    status.textContent = isPass ? "STATUS: PASS / COMPLETED" : "STATUS: FAIL / ATTEMPTED";
+    if (isPass) {
+      content.textContent = LAB_CONFIG.passMessage;
+    } else {
+      var hint = "The architecture sequence is incorrect.";
+      if (current.length !== correct.length) { hint = "Incorrect number of components: " + current.length + " placed, expected " + correct.length + ". Remove any distractor components that do not belong in the API request path.";
+      } else { for (var i = 0; i < correct.length; i++) { if (current[i] !== correct[i]) { hint = "Issue at Layer " + (i + 1) + ": " + LAB_CONFIG.clues[correct[i]]; break; } } }
+      content.innerHTML = "<strong>" + hint + "</strong>";
+    }
+  }
+
+  function exportPDF() {
+    var fb = document.getElementById("feedback");
+    if (fb.style.display === "none" || !fb.style.display) { alert("Please click Validate Architecture before exporting."); return; }
+    var name = (prompt("Enter your full name for the PDF:") || "").trim();
+    if (!name) { return; }
+    var endTime = new Date();
+    document.getElementById("pdf-name").textContent = name;
+    document.getElementById("pdf-start").textContent = startTime.toLocaleString();
+    document.getElementById("pdf-end").textContent = endTime.toLocaleString();
+    window.print();
+  }
+
+  init();
+</script>
+</body>
+</html>
