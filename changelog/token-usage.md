@@ -67,3 +67,9 @@ Pull from: `~/.claude/projects/-Users-clark-playground/<session-id>.jsonl`
 - Subagents share the same rate limit pool as the main conversation
 - Hitting limits mid-task leaves files in partial states — prefer completing work in fewer, larger operations
 | 2026-03-30 19:47 | 1,564 | 105,535 | 15,578,417 | $11.3991 | auto-hook snapshot <!-- hook:1774925223 -->
+| 2026-03-31 09:05 | 11,741 | 864,913 | 245,833,936 | $116.3286 | auto-hook snapshot <!-- hook:1774973152 -->
+| 2026-04-01 14:12 | 51 | 10,089 | 930,040 | $1.0896 | auto-hook snapshot <!-- hook:1775077952 -->
+| 2026-04-01 19:01 | 295 | 59,516 | 17,310,992 | $14.0864 | auto-hook snapshot <!-- hook:1775095295 -->
+| 2026-04-02 01:54 | 1,959 | 159,743 | 23,855,969 | $19.7649 | auto-hook snapshot <!-- hook:1775120092 -->
+| 2026-04-02 06:58 | 2,580 | 187,842 | 27,125,928 | $22.3970 | auto-hook snapshot <!-- hook:1775138321 -->
+| 2026-04-02 11:11 | 28 | 25,739 | 518,062 | $0.7746 | auto-hook snapshot <!-- hook:1775153496 -->

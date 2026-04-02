@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="author" content="Clark Ngo">
+  <title>System Design Interview — Scale from Zero to Millions of Users</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+  <style>
+    :root {
+      --bg: #0b1220;
+      --surface: #0f1a2e;
+      --card: #111c30;
+      --border-solid: #1e2d45;
+      --text: #dde5f0;
+      --muted: #7a8fa8;
+      --accent: #38bdf8;
+      --accent2: #818cf8;
+      --orange: #f97316;
+      --green: #22c55e;
+      --red: #ef4444;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.7;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ── Top bar ── */
+    .top-bar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border-solid);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      height: 52px;
+    }
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+    .breadcrumb a { color: var(--muted); }
+    .breadcrumb a:hover { color: var(--text); text-decoration: none; }
+    .bc-sep { color: var(--border-solid); }
+    .bc-current { color: var(--text); font-weight: 500; }
+    .nav-arrows { display: flex; gap: 8px; }
+    .nav-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 6px;
+      border: 1px solid var(--border-solid);
+      background: transparent;
+      color: var(--text);
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+    }
+    .nav-btn:hover { background: var(--card); border-color: var(--accent); color: var(--accent); }
+    .nav-btn:disabled { opacity: 0.35; cursor: default; pointer-events: none; }
+
+    /* ── App shell ── */
+    .app-layout { display: flex; min-height: calc(100vh - 52px); }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: 264px;
+      flex-shrink: 0;
+      background: var(--surface);
+      border-right: 1px solid var(--border-solid);
+      display: flex;
+      flex-direction: column;
+      position: sticky;
+      top: 52px;
+      height: calc(100vh - 52px);
+      overflow-y: auto;
+    }
+    .sidebar-header {
+      padding: 18px 16px 14px;
+      border-bottom: 1px solid var(--border-solid);
+    }
+    .sidebar-course-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      margin-bottom: 5px;
+    }
+    .sidebar-course-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.3;
+    }
+    .chapter-list { flex: 1; padding: 6px 0; overflow-y: auto; }
+    .chapter-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 16px;
+      cursor: pointer;
+      border-left: 3px solid transparent;
+      transition: background 0.12s, border-color 0.12s, color 0.12s;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+    .chapter-item:hover { background: rgba(255,255,255,0.03); color: var(--text); }
+    .chapter-item.active {
+      border-left-color: var(--accent);
+      background: rgba(56,189,248,0.07);
+      color: var(--text);
+      font-weight: 500;
+    }
+    .chapter-item.active .ch-num { color: var(--accent); }
+    .ch-num {
+      font-size: 11px;
+      color: var(--muted);
+      min-width: 22px;
+      font-variant-numeric: tabular-nums;
+      flex-shrink: 0;
+    }
+    .ch-title { flex: 1; }
+    .badge-free {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 20px;
+      background: rgba(249,115,22,0.15);
+      color: var(--orange);
+      flex-shrink: 0;
+    }
+    .lock-icon { font-size: 11px; color: var(--muted); flex-shrink: 0; opacity: 0.7; }
+    .sidebar-footer {
+      padding: 14px 16px;
+      border-top: 1px solid var(--border-solid);
+    }
+    .progress-label { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+    .progress-bar-bg {
+      background: var(--border-solid);
+      border-radius: 4px;
+      height: 4px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      background: var(--accent);
+      height: 4px;
+      border-radius: 4px;
+    }
+
+    /* ── Main content ── */
+    .main-content {
+      flex: 1;
+      padding: 52px 72px 96px;
+      max-width: 860px;
+    }
+
+    /* ── Prose typography ── */
+    .chapter-tag {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+    .lesson-title {
+      font-size: 30px;
+      font-weight: 800;
+      color: #f0f6ff;
+      line-height: 1.22;
+      margin-bottom: 28px;
+    }
+    .prose p { margin-bottom: 20px; }
+    .prose strong { color: #f0f6ff; }
+    .prose h3 {
+      font-size: 19px;
+      font-weight: 700;
+      color: #f0f6ff;
+      margin: 40px 0 14px;
+    }
+    .prose h4 {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      margin: 28px 0 10px;
+    }
+    .prose ol {
+      list-style: none;
+      counter-reset: step-counter;
+      margin: 14px 0 24px;
+      padding: 0;
+    }
+    .prose ol li {
+      counter-increment: step-counter;
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      margin-bottom: 14px;
+    }
+    .prose ol li::before {
+      content: counter(step-counter);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: rgba(56,189,248,0.12);
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 700;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .prose ul { padding-left: 22px; margin: 10px 0 18px; }
+    .prose ul li { margin-bottom: 9px; }
+
+    /* ── Callout boxes ── */
+    .callout {
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin: 24px 0;
+    }
+    .callout-info {
+      border-left: 3px solid var(--accent);
+      background: rgba(56,189,248,0.05);
+    }
+    .callout-takeaway {
+      border-left: 3px solid var(--orange);
+      background: rgba(249,115,22,0.05);
+    }
+    .callout-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 8px;
+    }
+    .callout-info .callout-label { color: var(--accent); }
+    .callout-takeaway .callout-label { color: var(--orange); }
+    .callout p { margin-bottom: 0; }
+    .callout ul { margin-bottom: 0; }
+
+    /* ── Diagrams ── */
+    .diagram-wrap {
+      background: #090f1c;
+      border: 1px solid var(--border-solid);
+      border-radius: 10px;
+      padding: 32px 24px 18px;
+      margin: 24px 0 4px;
+      text-align: center;
+      overflow-x: auto;
+    }
+    .diagram-caption {
+      font-size: 13px;
+      color: var(--muted);
+      text-align: center;
+      margin-bottom: 28px;
+      font-style: italic;
+    }
+    .mermaid { display: inline-block; }
+
+    /* ── Code block ── */
+    .code-block {
+      background: #0d1117;
+      border: 1px solid var(--border-solid);
+      border-radius: 10px;
+      overflow: hidden;
+      margin: 24px 0;
+      font-family: "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    }
+    .code-tabs {
+      display: flex;
+      align-items: center;
+      border-bottom: 1px solid var(--border-solid);
+      background: #090f1c;
+      padding: 0 14px;
+    }
+    .code-tab-btn {
+      padding: 10px 14px;
+      font-size: 13px;
+      font-family: inherit;
+      color: var(--muted);
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      cursor: pointer;
+      transition: color 0.12s, border-color 0.12s;
+    }
+    .code-tab-btn:hover { color: var(--text); }
+    .code-tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .code-header {
+      display: flex;
+      justify-content: flex-end;
+      padding: 10px 16px 0;
+    }
+    .copy-btn {
+      font-size: 12px;
+      font-family: inherit;
+      color: var(--muted);
+      background: transparent;
+      border: 1px solid var(--border-solid);
+      border-radius: 5px;
+      padding: 4px 10px;
+      cursor: pointer;
+      transition: color 0.12s, border-color 0.12s;
+    }
+    .copy-btn:hover { color: var(--text); border-color: var(--text); }
+    .copy-btn.copied { color: var(--green); border-color: var(--green); }
+    .code-content { padding: 12px 20px 22px; overflow-x: auto; }
+    .code-panel { display: none; }
+    .code-panel.active { display: block; }
+    pre {
+      font-family: inherit;
+      font-size: 13px;
+      line-height: 1.7;
+      white-space: pre;
+      color: #e6edf3;
+    }
+    .kw  { color: #ff7b72; }
+    .fn  { color: #d2a8ff; }
+    .st  { color: #a5d6ff; }
+    .cm  { color: #6a7a8a; font-style: italic; }
+    .nm  { color: #79c0ff; }
+    .op  { color: #ff7b72; }
+
+    /* ── Q&A simulation ── */
+    .qa-block {
+      background: var(--surface);
+      border: 1px solid var(--border-solid);
+      border-radius: 10px;
+      padding: 24px 26px;
+      margin: 24px 0;
+    }
+    .qa-block-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--accent2);
+      margin-bottom: 22px;
+    }
+    .qa-exchange {
+      margin-bottom: 20px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border-solid);
+    }
+    .qa-exchange:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+    .qa-speaker {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 6px;
+    }
+    .qa-interviewer { color: var(--muted); }
+    .qa-candidate   { color: var(--accent); }
+    .qa-text { font-size: 15px; line-height: 1.65; }
+
+    /* ── Trade-off table ── */
+    .table-wrap { overflow-x: auto; margin: 24px 0; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    thead tr { background: rgba(255,255,255,0.035); }
+    th {
+      text-align: left;
+      padding: 11px 16px;
+      font-weight: 600;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border-solid);
+    }
+    td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-solid);
+      vertical-align: top;
+      line-height: 1.55;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,0.015); }
+    .td-approach { font-weight: 600; color: #f0f6ff; min-width: 160px; }
+    .td-pro { color: #4ade80; }
+    .td-con { color: #f87171; }
+
+    /* ── Section divider ── */
+    .divider { border: none; border-top: 1px solid var(--border-solid); margin: 40px 0; }
+
+    /* ── Bottom chapter nav ── */
+    .bottom-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: stretch;
+      gap: 16px;
+      margin-top: 60px;
+      padding-top: 28px;
+      border-top: 1px solid var(--border-solid);
+    }
+    .bnav-btn {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      padding: 14px 20px;
+      border-radius: 8px;
+      border: 1px solid var(--border-solid);
+      background: transparent;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+      min-width: 200px;
+    }
+    .bnav-btn:hover { background: var(--card); border-color: var(--accent); }
+    .bnav-btn:disabled { opacity: 0.35; cursor: default; pointer-events: none; }
+    .bnav-btn.right { text-align: right; }
+    .bnav-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; }
+    .bnav-title { font-size: 14px; font-weight: 500; color: var(--text); line-height: 1.3; }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border-solid); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #2a3a50; }
+
+    /* ── Mobile ── */
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .main-content { padding: 28px 20px 64px; }
+      .lesson-title { font-size: 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════  TOP BAR  ═════════════════════════════ -->
+<div class="top-bar">
+  <div class="breadcrumb">
+    <a href="#">System Design Interview</a>
+    <span class="bc-sep">/</span>
+    <span class="bc-current">Scale from Zero to Millions</span>
+  </div>
+  <div class="nav-arrows">
+    <button class="nav-btn" disabled>
+      &#8592; Prev
+    </button>
+    <button class="nav-btn" onclick="alert('Next: Database Replication')">
+      Next &#8594;
+    </button>
+  </div>
+</div>
+
+<div class="app-layout">
+
+  <!-- ══════════════════════  SIDEBAR  ══════════════════════════════ -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-course-label">Course</div>
+      <div class="sidebar-course-title">System Design Interview</div>
+    </div>
+
+    <nav class="chapter-list">
+      <div class="chapter-item" onclick="">
+        <span class="ch-num">01</span>
+        <span class="ch-title">Introduction</span>
+        <span class="badge-free">FREE</span>
+      </div>
+      <div class="chapter-item" onclick="">
+        <span class="ch-num">02</span>
+        <span class="ch-title">Back-of-the-Envelope Estimation</span>
+        <span class="badge-free">FREE</span>
+      </div>
+      <div class="chapter-item active">
+        <span class="ch-num">03</span>
+        <span class="ch-title">Scale from Zero to Millions</span>
+        <span class="badge-free">FREE</span>
+      </div>
+      <div class="chapter-item" onclick="">
+        <span class="ch-num">04</span>
+        <span class="ch-title">Database Replication</span>
+        <span class="lock-icon">&#128274;</span>
+      </div>
+      <div class="chapter-item" onclick="">
+        <span class="ch-num">05</span>
+        <span class="ch-title">Rate Limiting</span>
+        <span class="lock-icon">&#128274;</span>
+      </div>
+      <div class="chapter-item" onclick="">
+        <span class="ch-num">06</span>
+        <span class="ch-title">Consistent Hashing</span>
+        <span class="lock-icon">&#128274;</span>
+      </div>
+      <div class="chapter-item" onclick="">
+        <span class="ch-num">07</span>
+        <span class="ch-title">Design a Key-Value Store</span>
+        <span class="lock-icon">&#128274;</span>
+      </div>
+      <div class="chapter-item" onclick="">
+        <span class="ch-num">08</span>
+        <span class="ch-title">Design a URL Shortener</span>
+        <span class="lock-icon">&#128274;</span>
+      </div>
+      <div class="chapter-item" onclick="">
+        <span class="ch-num">09</span>
+        <span class="ch-title">Design a Web Crawler</span>
+        <span class="lock-icon">&#128274;</span>
+      </div>
+      <div class="chapter-item" onclick="">
+        <span class="ch-num">10</span>
+        <span class="ch-title">Design a Notification System</span>
+        <span class="lock-icon">&#128274;</span>
+      </div>
+      <div class="chapter-item" onclick="">
+        <span class="ch-num">11</span>
+        <span class="ch-title">Design a News Feed</span>
+        <span class="lock-icon">&#128274;</span>
+      </div>
+      <div class="chapter-item" onclick="">
+        <span class="ch-num">12</span>
+        <span class="ch-title">Design a Chat System</span>
+        <span class="lock-icon">&#128274;</span>
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="progress-label">3 of 12 chapters completed</div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" style="width: 25%"></div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ══════════════════════  MAIN CONTENT  ═════════════════════════ -->
+  <main class="main-content">
+
+    <div class="chapter-tag">Chapter 03 &nbsp;&middot;&nbsp; Fundamentals</div>
+    <h2 class="lesson-title">Scale from Zero to Millions of Users</h2>
+
+    <div class="prose">
+      <p>
+        Every large-scale system started as a single server handling a handful of requests.
+        Understanding how to evolve that system — methodically, step by step — is one of
+        the most critical skills you can demonstrate in a system design interview.
+        In this chapter, we walk through the full journey from a single-box deployment
+        to a distributed architecture capable of serving millions of concurrent users.
+      </p>
+      <p>
+        Rather than jumping straight to the end state, we focus on the
+        <strong>decision points</strong>: what specific bottleneck forces a change,
+        what trade-offs each solution introduces, and how to communicate those
+        choices clearly under interview conditions.
+      </p>
+    </div>
+
+    <!-- Info callout -->
+    <div class="callout callout-info">
+      <div class="callout-label">&#9432;&nbsp; Key Concept</div>
+      <p>
+        Start simple, scale incrementally. A strong system design answer does not
+        begin with microservices and a global CDN — it begins with the smallest
+        architecture that works, then introduces complexity only when a concrete
+        bottleneck demands it.
+      </p>
+    </div>
+
+    <div class="prose">
+      <h3>Single Server Setup</h3>
+      <p>
+        The simplest starting point is a single server that handles everything:
+        application logic, the database, and static asset serving — all on one machine.
+        As Figure 1.1 shows, a user request travels through DNS to resolve the server IP,
+        then the server handles the request and reads or writes directly to its local database.
+      </p>
+    </div>
+
+    <div class="diagram-wrap">
+      <div class="mermaid">
+flowchart LR
+    U(["&#128100; User"]) -->|"DNS lookup"| DNS["DNS"]
+    DNS -->|"IP address"| WS["Web Server"]
+    WS <-->|"queries"| DB[("Database")]
+    style U   fill:#1e3a5f,stroke:#38bdf8,color:#dde5f0
+    style DNS fill:#2d1f5e,stroke:#818cf8,color:#dde5f0
+    style WS  fill:#14532d,stroke:#22c55e,color:#dde5f0
+    style DB  fill:#1e3a5f,stroke:#38bdf8,color:#dde5f0
+      </div>
+    </div>
+    <p class="diagram-caption">Figure 1.1 — Single-server setup: one machine handles all tiers.</p>
+
+    <div class="prose">
+      <p>
+        This works well at low traffic — a startup MVP, an internal tool, a side project.
+        When load grows, this machine becomes both the <strong>performance bottleneck</strong>
+        and the <strong>single point of failure</strong>. Both problems must be addressed
+        before the system can meaningfully scale.
+      </p>
+
+      <h4>Traffic flow — step by step</h4>
+      <ol>
+        <li>The user enters a domain name. A DNS query returns the server IP address.</li>
+        <li>The browser sends an HTTP or HTTPS request directly to that IP address.</li>
+        <li>The web server processes the request, reading or writing to the local database.</li>
+        <li>The server returns a response — HTML, JSON, or binary — to the browser.</li>
+      </ol>
+
+      <hr class="divider">
+
+      <h3>Separating Web and Data Tiers</h3>
+      <p>
+        The first meaningful scale step is giving the database its own dedicated host,
+        separate from the web server. This allows each tier to be scaled independently —
+        when CPU is the bottleneck you add web servers; when storage is the bottleneck
+        you upgrade the database machine. Figure 1.2 adds a <strong>load balancer</strong>
+        in front of two web servers, eliminating the application-layer single point of failure.
+      </p>
+    </div>
+
+    <div class="diagram-wrap">
+      <div class="mermaid">
+flowchart LR
+    U(["&#128100; User"]) --> LB["Load Balancer"]
+    LB --> WS1["Web Server 1"]
+    LB --> WS2["Web Server 2"]
+    WS1 <--> DB[("Primary DB")]
+    WS2 <--> DB
+    style U   fill:#1e3a5f,stroke:#38bdf8,color:#dde5f0
+    style LB  fill:#2d1f5e,stroke:#818cf8,color:#dde5f0
+    style WS1 fill:#14532d,stroke:#22c55e,color:#dde5f0
+    style WS2 fill:#14532d,stroke:#22c55e,color:#dde5f0
+    style DB  fill:#1e3a5f,stroke:#38bdf8,color:#dde5f0
+      </div>
+    </div>
+    <p class="diagram-caption">Figure 1.2 — Separated tiers: load balancer distributes traffic across two stateless web servers.</p>
+
+    <div class="prose">
+      <p>
+        If one web server goes down, the load balancer automatically routes all traffic
+        to the remaining healthy instance. The database is still a single point of failure
+        at this stage — we address that in the next chapter with primary/replica replication.
+      </p>
+
+      <hr class="divider">
+
+      <h3>Database Query Example</h3>
+      <p>
+        Web servers communicate with the database through a lightweight query layer.
+        Below is a simplified example of fetching a user record. The pattern is the same
+        whether you use a relational database (MySQL, PostgreSQL) or a document store (MongoDB).
+      </p>
+    </div>
+
+    <!-- ── Code block ── -->
+    <div class="code-block">
+      <div class="code-tabs">
+        <button class="code-tab-btn active" onclick="switchTab(this, 'py')">Python</button>
+        <button class="code-tab-btn" onclick="switchTab(this, 'js')">JavaScript</button>
+        <button class="code-tab-btn" onclick="switchTab(this, 'java')">Java</button>
+      </div>
+      <div class="code-header">
+        <button class="copy-btn" id="copy-btn" onclick="copyCode()">Copy</button>
+      </div>
+      <div class="code-content">
+
+        <div class="code-panel active" id="panel-py">
+<pre><span class="cm"># Fetch a user record from a PostgreSQL database</span>
+<span class="kw">import</span> <span class="nm">psycopg2</span>
+
+<span class="kw">def</span> <span class="fn">get_user</span>(user_id: <span class="nm">int</span>) <span class="op">-></span> <span class="nm">dict</span> <span class="op">|</span> <span class="kw">None</span>:
+    conn = <span class="fn">psycopg2.connect</span>(<span class="st">"host=db.internal dbname=app user=svc"</span>)
+    <span class="kw">with</span> conn.<span class="fn">cursor</span>() <span class="kw">as</span> cur:
+        cur.<span class="fn">execute</span>(
+            <span class="st">"SELECT id, name, email FROM users WHERE id = %s"</span>,
+            (user_id,)
+        )
+        row = cur.<span class="fn">fetchone</span>()
+        <span class="kw">if</span> row <span class="kw">is</span> <span class="kw">None</span>:
+            <span class="kw">return</span> <span class="kw">None</span>
+        <span class="kw">return</span> {<span class="st">"id"</span>: row[<span class="nm">0</span>], <span class="st">"name"</span>: row[<span class="nm">1</span>], <span class="st">"email"</span>: row[<span class="nm">2</span>]}</pre>
+        </div>
+
+        <div class="code-panel" id="panel-js">
+<pre><span class="cm">// Fetch a user record from a PostgreSQL database</span>
+<span class="kw">const</span> { Pool } = <span class="fn">require</span>(<span class="st">"pg"</span>);
+<span class="kw">const</span> pool = <span class="kw">new</span> <span class="fn">Pool</span>({ connectionString: <span class="st">"postgresql://svc@db.internal/app"</span> });
+
+<span class="kw">async function</span> <span class="fn">getUser</span>(userId) {
+  <span class="kw">const</span> { rows } = <span class="kw">await</span> pool.<span class="fn">query</span>(
+    <span class="st">"SELECT id, name, email FROM users WHERE id = $1"</span>,
+    [userId]
+  );
+  <span class="kw">return</span> rows[<span class="nm">0</span>] <span class="op">??</span> <span class="kw">null</span>;
+}</pre>
+        </div>
+
+        <div class="code-panel" id="panel-java">
+<pre><span class="cm">// Fetch a user record from a relational database</span>
+<span class="kw">public</span> <span class="nm">Optional</span>&lt;<span class="nm">User</span>&gt; <span class="fn">getUser</span>(<span class="kw">long</span> userId) <span class="kw">throws</span> <span class="nm">SQLException</span> {
+    <span class="nm">String</span> sql = <span class="st">"SELECT id, name, email FROM users WHERE id = ?"</span>;
+    <span class="kw">try</span> (<span class="nm">PreparedStatement</span> ps = conn.<span class="fn">prepareStatement</span>(sql)) {
+        ps.<span class="fn">setLong</span>(<span class="nm">1</span>, userId);
+        <span class="nm">ResultSet</span> rs = ps.<span class="fn">executeQuery</span>();
+        <span class="kw">if</span> (!rs.<span class="fn">next</span>()) <span class="kw">return</span> <span class="nm">Optional</span>.<span class="fn">empty</span>();
+        <span class="kw">return</span> <span class="nm">Optional</span>.<span class="fn">of</span>(<span class="kw">new</span> <span class="fn">User</span>(
+            rs.<span class="fn">getLong</span>(<span class="st">"id"</span>),
+            rs.<span class="fn">getString</span>(<span class="st">"name"</span>),
+            rs.<span class="fn">getString</span>(<span class="st">"email"</span>)
+        ));
+    }
+}</pre>
+        </div>
+
+      </div>
+    </div><!-- /.code-block -->
+
+    <div class="prose">
+      <hr class="divider">
+      <h3>Interview Simulation</h3>
+      <p>
+        The following exchange shows how to walk an interviewer through an architecture
+        evolution. Notice how the candidate proactively surfaces trade-offs rather than
+        waiting to be challenged — this signals engineering maturity.
+      </p>
+    </div>
+
+    <!-- ── Q&A block ── -->
+    <div class="qa-block">
+      <div class="qa-block-label">&#9654;&nbsp; Interview Simulation</div>
+
+      <div class="qa-exchange">
+        <div class="qa-speaker qa-interviewer">Interviewer</div>
+        <div class="qa-text">
+          Walk me through how you would design the back-end infrastructure for a social
+          feed application. Start from the simplest possible setup and scale it up.
+        </div>
+      </div>
+
+      <div class="qa-exchange">
+        <div class="qa-speaker qa-candidate">Candidate</div>
+        <div class="qa-text">
+          I would start with a single web server and a single relational database on the
+          same machine. That handles the first few thousand users with zero operational
+          complexity. The two bottlenecks I watch for early on are CPU — if the application
+          logic is compute-heavy — and disk I/O, when read volume starts to outpace the
+          hardware limit.
+        </div>
+      </div>
+
+      <div class="qa-exchange">
+        <div class="qa-speaker qa-interviewer">Interviewer</div>
+        <div class="qa-text">
+          Good. What is your first move when that single server starts to struggle?
+        </div>
+      </div>
+
+      <div class="qa-exchange">
+        <div class="qa-speaker qa-candidate">Candidate</div>
+        <div class="qa-text">
+          I separate the web tier from the data tier — they have very different scaling
+          profiles. Then I put a load balancer in front of two stateless web server
+          instances. That gives horizontal scalability for the application layer and
+          removes the single point of failure there. The database is still a single point
+          of failure at this stage, so the next step is adding a read replica.
+        </div>
+      </div>
+
+      <div class="qa-exchange">
+        <div class="qa-speaker qa-interviewer">Interviewer</div>
+        <div class="qa-text">
+          When does a single primary database become a problem, and how do you address it?
+        </div>
+      </div>
+
+      <div class="qa-exchange">
+        <div class="qa-speaker qa-candidate">Candidate</div>
+        <div class="qa-text">
+          When read traffic significantly outpaces write traffic — typical for a social feed.
+          I add one or more read replicas and route all SELECT queries there, reserving the
+          primary exclusively for writes. This gives a near-linear improvement in read
+          throughput. The trade-off is replication lag: reads may return slightly stale data.
+          That is acceptable for a feed, but it would not be acceptable for something like
+          a payment balance or inventory count.
+        </div>
+      </div>
+    </div><!-- /.qa-block -->
+
+    <div class="prose">
+      <hr class="divider">
+      <h3>Architectural Trade-offs</h3>
+      <p>
+        Each step in the scaling journey introduces a specific trade-off. Being able to
+        articulate these clearly — without being prompted — is what separates a strong
+        answer from a weak one.
+      </p>
+    </div>
+
+    <!-- ── Trade-off table ── -->
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Approach</th>
+            <th>Benefit</th>
+            <th>Limitation</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="td-approach">Single server</td>
+            <td class="td-pro">Zero operational overhead; simplest possible deployment</td>
+            <td class="td-con">Single point of failure; vertical scaling has a hard ceiling</td>
+          </tr>
+          <tr>
+            <td class="td-approach">Separated web + DB tiers</td>
+            <td class="td-pro">Each tier scales independently; isolates failure domains</td>
+            <td class="td-con">Adds a network hop; more infrastructure to manage</td>
+          </tr>
+          <tr>
+            <td class="td-approach">Load balancer + multiple web servers</td>
+            <td class="td-pro">Horizontal scalability; eliminates app-layer SPOF</td>
+            <td class="td-con">Sessions must be externalized (Redis or sticky sessions)</td>
+          </tr>
+          <tr>
+            <td class="td-approach">Primary + read replicas</td>
+            <td class="td-pro">Linear read throughput improvement; DB-level redundancy</td>
+            <td class="td-con">Replication lag; write bottleneck remains on primary</td>
+          </tr>
+          <tr>
+            <td class="td-approach">In-memory cache (Redis)</td>
+            <td class="td-pro">Sub-millisecond reads for hot data; offloads DB</td>
+            <td class="td-con">Cache invalidation complexity; stale data risk</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Key takeaways callout -->
+    <div class="callout callout-takeaway">
+      <div class="callout-label">&#9733;&nbsp; Key Takeaways</div>
+      <ul class="prose">
+        <li>Always start with the simplest architecture and evolve it as specific bottlenecks appear — never over-engineer upfront.</li>
+        <li>Separating the web tier from the data tier is almost always the first meaningful scaling step.</li>
+        <li>A load balancer removes the single point of failure for the application layer; read replicas do the same for the database read path.</li>
+        <li>Surfacing trade-offs proactively — before being asked — is the clearest signal of engineering maturity in an interview.</li>
+        <li>Replication lag is acceptable for eventually-consistent reads; it is never acceptable for financial or inventory data.</li>
+      </ul>
+    </div>
+
+    <!-- ── Bottom chapter nav ── -->
+    <div class="bottom-nav">
+      <button class="bnav-btn" disabled>
+        <span class="bnav-label">&#8592; Previous</span>
+        <span class="bnav-title">Back-of-the-Envelope Estimation</span>
+      </button>
+      <button class="bnav-btn right" onclick="alert('Next: Database Replication')">
+        <span class="bnav-label">Next &#8594;</span>
+        <span class="bnav-title">Database Replication</span>
+      </button>
+    </div>
+
+  </main>
+</div><!-- /.app-layout -->
+
+<script>
+  // ── Mermaid initialization ──
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: "dark",
+    themeVariables: {
+      background: "#090f1c",
+      primaryColor: "#1e3a5f",
+      primaryTextColor: "#dde5f0",
+      primaryBorderColor: "#38bdf8",
+      lineColor: "#4a6a8a",
+      secondaryColor: "#14532d",
+      tertiaryColor: "#2d1f5e"
+    },
+    flowchart: { curve: "basis", htmlLabels: true }
+  });
+
+  // ── Code tab switching ──
+  function switchTab(tabEl, lang) {
+    document.querySelectorAll(".code-tab-btn").forEach(function(t) {
+      t.classList.remove("active");
+    });
+    document.querySelectorAll(".code-panel").forEach(function(p) {
+      p.classList.remove("active");
+    });
+    tabEl.classList.add("active");
+    document.getElementById("panel-" + lang).classList.add("active");
+  }
+
+  // ── Copy code to clipboard ──
+  function copyCode() {
+    var activePanel = document.querySelector(".code-panel.active pre");
+    if (!activePanel) { return; }
+    var text = activePanel.innerText;
+    navigator.clipboard.writeText(text).then(function() {
+      var btn = document.getElementById("copy-btn");
+      btn.textContent = "Copied!";
+      btn.classList.add("copied");
+      setTimeout(function() {
+        btn.textContent = "Copy";
+        btn.classList.remove("copied");
+      }, 1800);
+    });
+  }
+</script>
+</body>
+</html>
