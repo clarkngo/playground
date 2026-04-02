@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="author" content="Clark Ngo">
+  <meta name="copyright" content="Clark Ngo">
+  <title>Dev Foundations | CI/CD Pipeline Architecture</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0d1117; color: #c9d1d9; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; min-height: 100vh; }
+    .navbar { background: #161b22; border-bottom: 1px solid #30363d; padding: .75rem 1.5rem; display: flex; align-items: center; justify-content: space-between; }
+    .navbar a { color: #e6edf3; text-decoration: none; font-weight: 700; font-size: 1rem; }
+    .navbar a:hover { color: #58a6ff; }
+    .nav-pill { font-size: .8rem; color: #8b949e; }
+    .page-body { padding: 2rem; }
+    #game-container { max-width: 960px; margin: 0 auto; background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 2rem; }
+    .pdf-only { display: none; }
+    @media print { .pdf-only { display: block; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 6px; padding: .75rem 1rem; margin-bottom: 1.25rem; font-size: .85rem; color: #333; } .pdf-only table { width: 100%; border-collapse: collapse; } .pdf-only td { padding: .2rem .5rem; } .pdf-only td:first-child { font-weight: 700; color: #555; width: 110px; } }
+    .lab-badge { display: inline-block; background: #1f6feb; color: #fff; font-size: .72rem; font-weight: 700; padding: 2px 11px; border-radius: 12px; text-transform: uppercase; letter-spacing: .07em; margin-bottom: .5rem; }
+    .lab-header { margin-bottom: 1.5rem; padding-bottom: 1.25rem; border-bottom: 1px solid #30363d; }
+    .lab-header h1 { color: #e6edf3; font-size: 1.75rem; font-weight: 800; margin: .25rem 0 0; line-height: 1.2; }
+    .scenario-box { background: #0d1117; border-left: 4px solid #1f6feb; border-radius: 0 8px 8px 0; padding: 1rem 1.25rem; margin-bottom: 1.75rem; color: #c9d1d9; line-height: 1.7; font-size: .93rem; }
+    .scenario-box strong { color: #58a6ff; }
+    .activity-layout { display: grid; grid-template-columns: 210px 1fr; gap: 1.5rem; }
+    .col-label { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; margin-bottom: .75rem; }
+    .toolbox-label { color: #58a6ff; } .canvas-label { color: #8b949e; }
+    .component { background: #21262d; border: 1px solid #30363d; border-radius: 6px; padding: .65rem .85rem; color: #c9d1d9; font-size: .83rem; font-weight: 600; cursor: grab; user-select: none; transition: border-color .15s, background .15s, transform .12s; margin-bottom: .5rem; }
+    .component:hover { border-color: #58a6ff; background: #1c2940; color: #e6edf3; transform: scale(1.02); }
+    .component:active { cursor: grabbing; }
+    .btn-validate { width: 100%; background: #1f6feb; color: #fff; border: none; border-radius: 6px; padding: .6rem 1rem; font-size: .88rem; font-weight: 700; cursor: pointer; margin-top: .85rem; transition: background .15s; }
+    .btn-validate:hover { background: #388bfd; }
+    .btn-pdf { width: 100%; background: #238636; color: #fff; border: 1px solid #2ea043; border-radius: 6px; padding: .6rem 1rem; font-size: .88rem; font-weight: 700; cursor: pointer; margin-top: .5rem; transition: background .15s; }
+    .btn-pdf:hover { background: #2ea043; }
+    .drop-indicator { width: 100%; max-width: 560px; height: 3px; background: #58a6ff; border-radius: 2px; box-shadow: 0 0 6px #58a6ff; pointer-events: none; flex-shrink: 0; }
+    .drop-zone { min-height: 420px; background: #0d1117; border: 2px dashed #30363d; border-radius: 10px; padding: 1.25rem; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: .65rem; transition: border-color .2s, background .2s; }
+    .drop-zone.drag-over { border-color: #58a6ff; background: #0d1929; }
+    .placeholder-text { color: #484f58; font-style: italic; margin-top: 5rem; font-size: .93rem; text-align: center; }
+    .placed-item { display: flex; align-items: center; justify-content: space-between; width: 100%; max-width: 560px; background: #21262d; border: 1px solid #30363d; border-radius: 8px; padding: .7rem 1rem; color: #e6edf3; font-weight: 600; font-size: .88rem; }
+    .remove-btn { background: none; border: none; color: #484f58; cursor: pointer; font-size: 1rem; padding: 0 .2rem; line-height: 1; transition: color .15s; }
+    .remove-btn:hover { color: #f85149; }
+    #feedback { margin-top: 1rem; border-radius: 8px; padding: 1rem 1.25rem; display: none; font-size: .9rem; line-height: 1.65; }
+    #feedback.pass { background: #1c2a1c; border: 1px solid #238636; color: #3fb950; }
+    #feedback.fail { background: #2a1c1c; border: 1px solid #da3633; color: #f85149; }
+    #feedback-status { font-weight: 800; font-size: .95rem; text-transform: uppercase; margin-bottom: .4rem; letter-spacing: .04em; }
+    #feedback-content { color: #c9d1d9; }
+    #feedback.pass #feedback-content { color: #7ee787; }
+    .prompt-guide { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 1.25rem; margin-top: 1.25rem; }
+    .prompt-guide-title { font-weight: 700; color: #e3b341; font-size: .83rem; margin-bottom: .65rem; }
+    .prompt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+    .prompt-item { background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: .75rem; font-size: .77rem; color: #8b949e; font-style: italic; line-height: 1.6; }
+    .prompt-item strong { color: #e3b341; font-style: normal; }
+    .why-section { background: #0d1117; border: 1px solid #30363d; border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; }
+    .why-section-title { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #3fb950; margin-bottom: .75rem; }
+    .why-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+    .why-card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: .85rem 1rem; }
+    .why-card-label { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; margin-bottom: .35rem; }
+    .why-card-label.green { color: #3fb950; } .why-card-label.blue { color: #58a6ff; } .why-card-label.yellow { color: #e3b341; } .why-card-label.purple { color: #bc8cff; }
+    .why-card p { font-size: .85rem; color: #c9d1d9; line-height: 1.6; margin: 0; }
+    .ref-section { border: 1px solid #30363d; border-radius: 10px; overflow: hidden; margin-bottom: 1.75rem; }
+    .ref-header { background: #161b22; border-bottom: 1px solid #30363d; padding: .75rem 1.25rem; display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none; }
+    .ref-header-title { font-size: .8rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: #58a6ff; }
+    .ref-header-sub { font-size: .75rem; color: #8b949e; }
+    .ref-toggle { font-size: .75rem; color: #8b949e; transition: transform .2s; }
+    .ref-toggle.open { transform: rotate(180deg); }
+    .ref-body { display: none; background: #0d1117; }
+    .ref-body.open { display: block; }
+    .ref-item { display: grid; grid-template-columns: 200px 1fr; border-bottom: 1px solid #21262d; }
+    .ref-item:last-child { border-bottom: none; }
+    .ref-item-name { padding: .8rem 1rem; font-size: .83rem; font-weight: 700; color: #e6edf3; border-right: 1px solid #21262d; background: #161b22; display: flex; align-items: center; gap: .5rem; }
+    .ref-item-name .ref-icon { font-size: 1rem; flex-shrink: 0; }
+    .ref-item-desc { padding: .8rem 1rem; font-size: .83rem; color: #c9d1d9; line-height: 1.6; }
+    .ref-item-desc em { color: #58a6ff; font-style: normal; font-weight: 600; }
+    .ref-item-hint { font-size: .75rem; color: #e3b341; margin-top: .3rem; font-style: italic; }
+    .distractor-hint { background: #2a1f00; border: 1px solid #9e6a03; border-radius: 6px; padding: .55rem .75rem; font-size: .74rem; color: #e3b341; font-weight: 600; margin-bottom: .85rem; line-height: 1.45; }
+    .sim-section { background: #0d1117; border: 1px solid #30363d; border-radius: 10px; padding: 1.25rem; margin-bottom: 1.75rem; }
+    .sim-title { font-weight: 700; color: #e6edf3; font-size: .93rem; margin-bottom: .3rem; }
+    .sim-sub { font-size: .78rem; color: #8b949e; margin-bottom: 1rem; line-height: 1.5; }
+    .sim-dual { display: flex; gap: .85rem; margin-bottom: .85rem; }
+    .sim-panel { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: .45rem; }
+    .sim-panel-header { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+    .sim-panel-label { font-size: .79rem; font-weight: 700; color: #e6edf3; }
+    .sim-btn { background: #1f6feb; color: #fff; border: none; border-radius: 6px; padding: .45rem .9rem; font-size: .83rem; font-weight: 700; cursor: pointer; white-space: nowrap; transition: background .15s; }
+    .sim-btn:hover { background: #388bfd; } .sim-btn:disabled { opacity: .55; cursor: default; }
+    .sim-phases { display: flex; border-radius: 6px; overflow: hidden; border: 1px solid #30363d; margin-bottom: .6rem; display: none; }
+    .sim-phase { flex: 1; padding: .3rem .35rem; text-align: center; font-size: .67rem; background: #161b22; color: #8b949e; border-right: 1px solid #30363d; transition: background .35s, color .35s; }
+    .sim-phase:last-child { border-right: none; }
+    .sim-phase.active { background: #0d1929; color: #58a6ff; font-weight: 700; } .sim-phase.done { background: #162016; color: #3fb950; }
+    .sim-flow { display: none; align-items: center; justify-content: center; padding: .65rem .5rem; background: #161b22; border: 1px solid #30363d; border-radius: 6px; margin-bottom: .5rem; gap: 0; }
+    .sim-node { text-align: center; padding: .35rem .45rem; border-radius: 6px; background: #0d1117; border: 2px solid #30363d; min-width: 66px; transition: border-color .4s, background .4s; flex-shrink: 0; }
+    .sim-node .nd-icon { font-size: 1.3rem; line-height: 1.2; } .sim-node .nd-label { font-size: .6rem; color: #8b949e; margin-top: .12rem; white-space: nowrap; }
+    .sim-node.sn-active { border-color: #58a6ff !important; background: #0d1929 !important; animation: sn-glow 1.1s ease-in-out infinite; }
+    .sim-node.sn-done { border-color: #238636 !important; background: #162016 !important; }
+    @keyframes sn-glow { 0%,100%{box-shadow:0 0 0 0 rgba(88,166,255,.4)} 55%{box-shadow:0 0 0 7px rgba(88,166,255,0)} }
+    .sim-conn { flex: 1; height: 2px; background: #30363d; position: relative; align-self: center; margin: 0 3px; overflow: visible; transition: background .3s; }
+    .sim-conn::after { content: "\203A"; position: absolute; right: -6px; top: -9px; color: #30363d; font-size: 1rem; transition: color .3s; pointer-events: none; }
+    .sim-conn.sc-lit { background: #58a6ff; } .sim-conn.sc-lit::after { color: #58a6ff; }
+    .sim-pkt { position: absolute; width: 9px; height: 9px; border-radius: 50%; background: #58a6ff; top: -3.5px; left: 0; pointer-events: none; box-shadow: 0 0 5px #58a6ff; }
+    .sim-log { display: none; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: .5rem .75rem; font-family: "SFMono-Regular", Consolas, monospace; font-size: .73rem; height: 96px; overflow-y: auto; margin-bottom: .5rem; scroll-behavior: smooth; }
+    .sim-log .sl { line-height: 1.75; animation: sl-in .2s ease both; }
+    .sim-log .sl-info { color: #8b949e; } .sim-log .sl-ok { color: #3fb950; } .sim-log .sl-blue { color: #58a6ff; } .sim-log .sl-warn { color: #e3b341; }
+    @keyframes sl-in { from{opacity:0;transform:translateY(3px)} to{opacity:1;transform:none} }
+    .sim-result { display: none; background: #162016; border: 1px solid #238636; border-radius: 6px; padding: .65rem .9rem; font-size: .82rem; color: #3fb950; line-height: 1.55; animation: sl-in .3s ease both; }
+    .sim-result.show { display: block; } .sim-result strong { color: #7ee787; }
+    .site-footer { text-align: center; padding: 1.25rem; border-top: 1px solid #21262d; margin-top: 2rem; color: #484f58; font-size: .78rem; }
+    @media print { body { background: #fff; color: #000; } .navbar, #toolbox-col, .btn-validate, .btn-pdf, .prompt-guide, .remove-btn, .sim-section, .distractor-hint, .ref-section { display: none !important; } .page-body { padding: 0; } #game-container { border: none; background: #fff; padding: 0; max-width: 100%; } .scenario-box { background: #f0f4ff; border-left-color: #4a6cf7; color: #333; } .scenario-box strong { color: #4a6cf7; } .drop-zone { border: 1px solid #ccc; min-height: auto; background: #fff; } .placed-item { background: #f8f9fa; border-color: #dee2e6; color: #000; } #feedback { display: block !important; } #feedback.pass { background: #f0fff4; border-color: #68d391; color: #276749; } #feedback.fail { background: #fff5f5; border-color: #fc8181; color: #c53030; } #feedback-content { color: inherit; } .placeholder-text { display: none; } .lab-badge { background: #4a6cf7; -webkit-print-color-adjust: exact; } .lab-header { border-bottom-color: #dee2e6; } .lab-header h1 { color: #000; } .site-footer { border-top-color: #dee2e6; color: #555; } .activity-layout { grid-template-columns: 1fr; } }
+    @media (max-width: 620px) { .activity-layout { grid-template-columns: 1fr; } .prompt-grid { grid-template-columns: 1fr; } .sim-dual { flex-direction: column; } }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="../index.html">Dev Foundations Activities</a>
+  <span class="nav-pill">Dev Foundations Activities &rsaquo; CI/CD Pipeline Architecture</span>
+</nav>
+
+<div class="page-body">
+<div id="game-container">
+
+  <!-- PDF-only header -->
+  <div class="pdf-only">
+    <table>
+      <tr><td>Name:</td><td id="pdf-name"></td></tr>
+      <tr><td>Lab:</td><td>Module 8 &mdash; CI/CD Pipeline Architecture</td></tr>
+      <tr><td>Started:</td><td id="pdf-start"></td></tr>
+      <tr><td>Submitted:</td><td id="pdf-end"></td></tr>
+    </table>
+  </div>
+
+  <!-- Lab header -->
+  <div class="lab-header">
+    <div class="lab-badge">Module 8 &mdash; CI/CD</div>
+    <h1>CI/CD Pipeline Architecture</h1>
+  </div>
+
+  <!-- Why this matters -->
+  <div class="why-section">
+    <div class="why-section-title">Why This Matters</div>
+    <div class="why-grid">
+      <div class="why-card">
+        <div class="why-card-label green">Problem</div>
+        <p>Manually deploying code is error-prone, inconsistent, and slow. Without a structured pipeline, teams deploy untested code to production, causing outages and rollbacks that erode user trust.</p>
+      </div>
+      <div class="why-card">
+        <div class="why-card-label blue">Solution</div>
+        <p>A CI/CD pipeline automates every step from commit to production. Code is built, tested, stored as an immutable artifact, deployed to staging, tested again, and then approved for production.</p>
+      </div>
+      <div class="why-card">
+        <div class="why-card-label yellow">Real-World Use</div>
+        <p>GitHub Actions, GitLab CI/CD, Jenkins, and CircleCI implement this pipeline. Companies like Amazon deploy thousands of times per day using fully automated pipelines with approval gates.</p>
+      </div>
+      <div class="why-card">
+        <div class="why-card-label purple">Your Goal</div>
+        <p>Understand the purpose of each pipeline stage &mdash; particularly why staging exists as a separate environment and why artifacts must be stored before deployment.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reference section -->
+  <div class="ref-section">
+    <div class="ref-header" onclick="toggleRef(this)">
+      <span class="ref-header-title">Component Reference</span>
+      <span class="ref-header-sub">Click to expand &mdash; descriptions of all toolbox items to help guide your design</span>
+      <span class="ref-toggle">&#9660;</span>
+    </div>
+    <div class="ref-body">
+      <div class="ref-item">
+        <div class="ref-item-name"><span class="ref-icon">📁</span> Source Repository</div>
+        <div class="ref-item-desc">
+          Git repository (GitHub, GitLab) that is the source of truth. Push or merge events trigger the CI pipeline.
+          <div class="ref-item-hint">Every pipeline starts with a code event in the repository.</div>
+        </div>
+      </div>
+      <div class="ref-item">
+        <div class="ref-item-name"><span class="ref-icon">🔧</span> CI Build Server</div>
+        <div class="ref-item-desc">
+          Automated server (GitHub Actions, Jenkins) that compiles code, runs unit tests, and produces a build artifact. Triggered by repository events.
+          <div class="ref-item-hint">The build happens before storage &mdash; you cannot store what has not been built.</div>
+        </div>
+      </div>
+      <div class="ref-item">
+        <div class="ref-item-name"><span class="ref-icon">📦</span> Artifact Registry</div>
+        <div class="ref-item-desc">
+          Stores versioned, immutable build outputs (Docker Hub, AWS ECR, Nexus). Provides a single source of truth for what gets deployed.
+          <div class="ref-item-hint">The registry is between build and deployment.</div>
+        </div>
+      </div>
+      <div class="ref-item">
+        <div class="ref-item-name"><span class="ref-icon">🧪</span> Staging Environment</div>
+        <div class="ref-item-desc">
+          A production-identical environment where artifacts are deployed for pre-production testing. Isolates risk from real users.
+          <div class="ref-item-hint">Staging comes before automated tests because you need somewhere to deploy before testing.</div>
+        </div>
+      </div>
+      <div class="ref-item">
+        <div class="ref-item-name"><span class="ref-icon">✅</span> Automated Test Suite</div>
+        <div class="ref-item-desc">
+          Integration, end-to-end, and performance tests run against the staging deployment. Provides confidence before promotion.
+          <div class="ref-item-hint">Automated tests run against staging, not against the source code directly.</div>
+        </div>
+      </div>
+      <div class="ref-item">
+        <div class="ref-item-name"><span class="ref-icon">⛩️</span> Approval Gate</div>
+        <div class="ref-item-desc">
+          A checkpoint requiring human review or policy compliance before promoting to production. Can be manual or policy-based.
+          <div class="ref-item-hint">The gate is the last stop before production &mdash; it requires test results from staging.</div>
+        </div>
+      </div>
+      <div class="ref-item">
+        <div class="ref-item-name"><span class="ref-icon">🚀</span> Production Environment</div>
+        <div class="ref-item-desc">
+          The live environment serving real users. Only receives artifacts that have been built, stored, staged, tested, and approved.
+          <div class="ref-item-hint">Production is always the final stage.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Simulator -->
+  <div class="sim-section">
+    <div class="sim-title">&#128640; Full Pipeline Deploy vs Direct-to-Production Simulator</div>
+    <div class="sim-sub">Compare a properly staged deployment pipeline against the dangerous shortcut of pushing code directly to production without testing or staging.</div>
+    <div class="sim-dual">
+      <div class="sim-panel">
+        <div class="sim-panel-header">
+          <span class="sim-panel-label">Full CI/CD Pipeline Deploy</span>
+          <button class="sim-btn" id="sim-run-btn-a" onclick="runSimulator('pipeline','a')">&#x25B6; Simulate</button>
+        </div>
+        <div class="sim-phases" id="sim-phases-a">
+          <div class="sim-phase" id="sim-ph-0-a"></div>
+          <div class="sim-phase" id="sim-ph-1-a"></div>
+          <div class="sim-phase" id="sim-ph-2-a"></div>
+          <div class="sim-phase" id="sim-ph-3-a"></div>
+        </div>
+        <div class="sim-flow" id="sim-flow-a">
+          <div class="sim-node" id="sim-n0-a"><div class="nd-icon" id="sim-n0-i-a"></div><div class="nd-label" id="sim-n0-l-a"></div></div>
+          <div class="sim-conn" id="sim-c0-a"></div>
+          <div class="sim-node" id="sim-n1-a"><div class="nd-icon" id="sim-n1-i-a"></div><div class="nd-label" id="sim-n1-l-a"></div></div>
+          <div class="sim-conn" id="sim-c1-a"></div>
+          <div class="sim-node" id="sim-n2-a"><div class="nd-icon" id="sim-n2-i-a"></div><div class="nd-label" id="sim-n2-l-a"></div></div>
+          <div class="sim-conn" id="sim-c2-a"></div>
+          <div class="sim-node" id="sim-n3-a"><div class="nd-icon" id="sim-n3-i-a"></div><div class="nd-label" id="sim-n3-l-a"></div></div>
+        </div>
+        <div class="sim-log" id="sim-log-a"></div>
+        <div class="sim-result" id="sim-result-a"></div>
+      </div>
+      <div class="sim-panel">
+        <div class="sim-panel-header">
+          <span class="sim-panel-label">Direct-to-Production (dangerous)</span>
+          <button class="sim-btn" id="sim-run-btn-b" onclick="runSimulator('direct','b')">&#x25B6; Simulate</button>
+        </div>
+        <div class="sim-phases" id="sim-phases-b">
+          <div class="sim-phase" id="sim-ph-0-b"></div>
+          <div class="sim-phase" id="sim-ph-1-b"></div>
+          <div class="sim-phase" id="sim-ph-2-b"></div>
+          <div class="sim-phase" id="sim-ph-3-b"></div>
+        </div>
+        <div class="sim-flow" id="sim-flow-b">
+          <div class="sim-node" id="sim-n0-b"><div class="nd-icon" id="sim-n0-i-b"></div><div class="nd-label" id="sim-n0-l-b"></div></div>
+          <div class="sim-conn" id="sim-c0-b"></div>
+          <div class="sim-node" id="sim-n1-b"><div class="nd-icon" id="sim-n1-i-b"></div><div class="nd-label" id="sim-n1-l-b"></div></div>
+          <div class="sim-conn" id="sim-c1-b"></div>
+          <div class="sim-node" id="sim-n2-b"><div class="nd-icon" id="sim-n2-i-b"></div><div class="nd-label" id="sim-n2-l-b"></div></div>
+          <div class="sim-conn" id="sim-c2-b"></div>
+          <div class="sim-node" id="sim-n3-b"><div class="nd-icon" id="sim-n3-i-b"></div><div class="nd-label" id="sim-n3-l-b"></div></div>
+        </div>
+        <div class="sim-log" id="sim-log-b"></div>
+        <div class="sim-result" id="sim-result-b"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scenario -->
+  <div class="scenario-box">
+    You are designing the architecture of a CI/CD pipeline. Sequence the stages from when a developer pushes code to the source repository all the way to the production deployment. Think about: <strong>What happens automatically when code is pushed?</strong> Why is an artifact registry needed? What is the purpose of a staging environment? Watch out for decoys &mdash; some items are anti-patterns or concepts that bypass critical stages.
+  </div>
+
+  <!-- Distractor hint -->
+  <div class="distractor-hint">
+    &#9888; Not all items belong in a CI/CD pipeline &mdash; some are anti-patterns or shortcuts that skip critical safety stages.
+  </div>
+
+  <!-- Activity layout -->
+  <div class="activity-layout">
+    <div id="toolbox-col">
+      <div class="col-label toolbox-label">Components</div>
+      <div id="toolbox"></div>
+      <button class="btn-validate" onclick="checkSystem()">Validate Architecture</button>
+      <button class="btn-pdf no-pdf" onclick="exportPDF()">Export PDF</button>
+    </div>
+    <div>
+      <div class="col-label canvas-label">Your Pipeline (drag to order)</div>
+      <div id="canvas" class="drop-zone">
+        <div id="placeholder" class="placeholder-text">Drag pipeline stages here to build the CI/CD flow</div>
+      </div>
+      <div id="feedback">
+        <div id="feedback-status"></div>
+        <div id="feedback-content"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Prompt guide -->
+  <div class="prompt-guide">
+    <div class="prompt-guide-title">&#128172; AI Prompts to Deepen Your Understanding</div>
+    <div class="prompt-grid">
+      <div class="prompt-item">"What is the difference between <strong>Continuous Integration</strong>, <strong>Continuous Delivery</strong>, and <strong>Continuous Deployment</strong>? When would you choose each model?"</div>
+      <div class="prompt-item">"Why is it important to deploy the <strong>same artifact</strong> to staging and production, rather than building separately for each environment?"</div>
+    </div>
+  </div>
+
+</div><!-- /#game-container -->
+</div><!-- /.page-body -->
+
+<footer class="site-footer">
+  &copy; <span id="copyright-year"></span> Clark Ngo
+</footer>
+
+<script>
+  const canvas = document.getElementById("canvas");
+  const placeholder = document.getElementById("placeholder");
+  const toolboxEl = document.getElementById("toolbox");
+  var startTime = null;
+
+  var toolData = [
+    { type: "SourceRepo",   label: "Source Repository" },
+    { type: "CIBuild",      label: "CI Build Server" },
+    { type: "ArtifactReg",  label: "Artifact Registry" },
+    { type: "Staging",      label: "Staging Environment" },
+    { type: "AutoTests",    label: "Automated Test Suite" },
+    { type: "ApprovalGate", label: "Approval Gate" },
+    { type: "Production",   label: "Production Environment" }
+  ];
+
+  var distractors = [
+    { type: "DirectProd",  label: "Direct Production Push" },
+    { type: "MergedEnvs",  label: "Merged Staging and Prod" },
+    { type: "LocalCache",  label: "Developer Local Build Cache" }
+  ];
+
+  var LAB_CONFIG = {
+    correctOrder: ["SourceRepo","CIBuild","ArtifactReg","Staging","AutoTests","ApprovalGate","Production"],
+    passMessage: "CI/CD pipeline architecture verified. Code flows from the Source Repository through the CI Build Server, Artifact Registry, Staging Environment, Automated Test Suite, and Approval Gate before reaching Production. Each stage adds confidence before promotion.",
+    clues: {
+      "SourceRepo":   "All pipeline activity starts with a push or merge to the Source Repository. The CI system detects this event and begins the pipeline.",
+      "CIBuild":      "The CI Build Server compiles the code, runs unit tests, and produces a build artifact. This happens automatically after every push to the repository.",
+      "ArtifactReg":  "The Artifact Registry stores versioned, immutable build outputs (Docker images, JARs). Only successfully built artifacts are stored here.",
+      "Staging":      "The Staging Environment is a production-like environment where the artifact is deployed for final testing. It isolates risk from the real production environment.",
+      "AutoTests":    "The Automated Test Suite runs integration, end-to-end, and performance tests against the staging deployment. These tests verify the artifact in a realistic environment.",
+      "ApprovalGate": "The Approval Gate is a manual or automated checkpoint that reviews test results and approves promotion to production. It enforces a final human or policy check.",
+      "Production":   "The Production Environment receives the approved artifact only after all previous stages pass. It serves real users."
+    }
+  };
+
+  var SIM_SCENARIOS = {
+    pipeline: {
+      phases: ["Build + Store", "Deploy Staging", "Test + Gate", "Prod Deploy"],
+      nodes: [
+        { i: "\uD83D\uDD27", l: "Build + Artifact" },
+        { i: "\uD83E\uDDEA", l: "Staging" },
+        { i: "\u26E9\uFE0F", l: "Approval Gate" },
+        { i: "\uD83D\uDE80", l: "Production" }
+      ],
+      steps: [
+        { d: 200,  ph: 0, log: ["info",  "[ Source Repo ] Commit abc123f pushed by dev-team. Pipeline triggered."] },
+        { d: 700,  ph: 0, fc: 0, log: ["blue",  "[ CI Build ] Compiling source... unit tests running (312 tests)."] },
+        { d: 1300, ph: 0, log: ["ok",    "[ CI Build ] Build successful. Artifact: app-v2.4.1.jar stored in registry."] },
+        { d: 1900, ph: 1, fc: 0, log: ["info",  "[ Artifact Registry ] Image app-v2.4.1 pulled for staging deploy."] },
+        { d: 2500, ph: 1, fc: 1, log: ["blue",  "[ Staging ] Artifact deployed to staging-us-east-1. Health check OK."] },
+        { d: 3100, ph: 2, log: ["warn",  "[ Auto Tests ] Config issue detected: DB connection pool limit too low."] },
+        { d: 3700, ph: 2, log: ["ok",    "[ Auto Tests ] 47 integration tests passed after config fix. E2E: PASS."] },
+        { d: 4300, ph: 2, fc: 1, log: ["ok",    "[ Approval Gate ] Test results reviewed. Promotion approved."] },
+        { d: 4900, ph: 3, fc: 2, log: ["ok",    "[ Production ] Artifact app-v2.4.1 deployed. Zero downtime. 3 min total."] }
+      ],
+      result: "<strong>Full Pipeline:</strong> The artifact was built once and promoted through stages. Staging tests caught a config issue before it reached production. The approval gate confirmed readiness. Production deployment took 3 minutes with zero downtime."
+    },
+    direct: {
+      phases: ["Skip Build", "Skip Staging", "Direct Push", "Outage"],
+      nodes: [
+        { i: "\u26A1", l: "Direct Push" },
+        { i: "\uD83D\uDD25", l: "Prod Breaks" },
+        { i: "\uD83D\uDE31", l: "No Rollback" },
+        { i: "\uD83D\uDD34", l: "Incident" }
+      ],
+      steps: [
+        { d: 200,  ph: 0, log: ["warn",  "[ Developer ] Direct push to production branch. No CI triggered."] },
+        { d: 700,  ph: 0, fc: 0, log: ["warn",  "[ No Build ] Untested source code deployed directly from laptop."] },
+        { d: 1300, ph: 1, log: ["warn",  "[ No Staging ] No staging environment. Code goes straight to prod."] },
+        { d: 1900, ph: 1, fc: 0, log: ["warn",  "[ Production ] Deployment started. No artifact stored in registry."] },
+        { d: 2500, ph: 2, fc: 1, log: ["warn",  "[ Production ] NullPointerException on startup. Service crash."] },
+        { d: 3100, ph: 2, log: ["warn",  "[ Production ] 503 errors for all users. On-call paged at 2:14 AM."] },
+        { d: 3700, ph: 3, fc: 2, log: ["warn",  "[ No Rollback ] No artifact in registry. Cannot roll back cleanly."] },
+        { d: 4300, ph: 3, log: ["warn",  "[ Incident ] Manual hotfix required. 3 engineers engaged. ETA: 2+ hours."] },
+        { d: 4900, ph: 3, log: ["warn",  "[ Post-Mortem ] MTTR: 2h 47m. Root cause: no pipeline, no staging, no gate."] }
+      ],
+      result: "<strong>Direct-to-Production:</strong> Bypassing the pipeline skips testing, staging, and the approval gate. The first failure in production requires a manual hotfix, and without an artifact registry there is no clean rollback target. Mean time to recovery is hours, not minutes."
+    }
+  };
+
+  function toggleRef(header) {
+    var body = header.nextElementSibling;
+    var toggle = header.querySelector(".ref-toggle");
+    var isOpen = body.classList.contains("open");
+    body.classList.toggle("open", !isOpen);
+    toggle.classList.toggle("open", !isOpen);
+    header.querySelector(".ref-header-sub").textContent = isOpen
+      ? "Click to expand \u2014 descriptions of all toolbox items to help guide your design"
+      : "Click to collapse";
+  }
+
+  var _simTimers = { a: [], b: [] };
+
+  function _firePkt(connId) {
+    var fc = document.getElementById(connId);
+    if (!fc) { return; }
+    fc.classList.add("sc-lit");
+    var dot = document.createElement("div");
+    dot.className = "sim-pkt";
+    dot.style.left = "0px";
+    fc.appendChild(dot);
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() {
+        dot.style.transition = "left 520ms linear";
+        dot.style.left = "calc(100% - 9px)";
+        setTimeout(function() { if (dot.parentNode) { dot.remove(); } }, 620);
+      });
+    });
+    setTimeout(function() { fc.classList.remove("sc-lit"); }, 680);
+  }
+
+  function runSimulator(key, sfx) {
+    _simTimers[sfx].forEach(function(t) { clearTimeout(t); });
+    _simTimers[sfx] = [];
+    var s = SIM_SCENARIOS[key];
+    var btn = document.getElementById("sim-run-btn-" + sfx);
+    btn.disabled = true; btn.textContent = "Running...";
+    var phWrap = document.getElementById("sim-phases-" + sfx); phWrap.style.display = "flex";
+    for (var p = 0; p < 4; p++) { var ph = document.getElementById("sim-ph-" + p + "-" + sfx); ph.textContent = s.phases[p]; ph.className = "sim-phase"; }
+    var flowEl = document.getElementById("sim-flow-" + sfx); flowEl.style.display = "flex";
+    for (var n = 0; n < 4; n++) { document.getElementById("sim-n" + n + "-i-" + sfx).innerHTML = s.nodes[n].i; document.getElementById("sim-n" + n + "-l-" + sfx).textContent = s.nodes[n].l; document.getElementById("sim-n" + n + "-" + sfx).className = "sim-node"; }
+    ["sim-c0-" + sfx, "sim-c1-" + sfx, "sim-c2-" + sfx].forEach(function(id) { var el = document.getElementById(id); el.className = "sim-conn"; el.querySelectorAll(".sim-pkt").forEach(function(d) { d.remove(); }); });
+    var logEl = document.getElementById("sim-log-" + sfx); logEl.style.display = "block"; logEl.innerHTML = "";
+    var resEl = document.getElementById("sim-result-" + sfx); resEl.className = "sim-result"; resEl.innerHTML = "";
+    var lastPh = -1;
+    s.steps.forEach(function(step) {
+      var t = setTimeout(function() {
+        if (step.ph !== lastPh) { if (lastPh >= 0) { var prev = document.getElementById("sim-ph-" + lastPh + "-" + sfx); if (prev) { prev.classList.remove("active"); prev.classList.add("done"); } } var cur = document.getElementById("sim-ph-" + step.ph + "-" + sfx); if (cur) { cur.classList.add("active"); } lastPh = step.ph; }
+        if (step.fc !== undefined) { _firePkt("sim-c" + step.fc + "-" + sfx); var tn = document.getElementById("sim-n" + (step.fc + 1) + "-" + sfx); if (tn) { tn.classList.add("sn-active"); setTimeout(function() { tn.classList.remove("sn-active"); tn.classList.add("sn-done"); }, 900); } }
+        var cls = step.log[0] === "ok" ? "sl-ok" : step.log[0] === "blue" ? "sl-blue" : step.log[0] === "warn" ? "sl-warn" : "sl-info";
+        var line = document.createElement("div"); line.className = "sl " + cls; line.innerHTML = step.log[1]; logEl.appendChild(line); logEl.scrollTop = logEl.scrollHeight;
+        if (step.final) { var cur2 = document.getElementById("sim-ph-" + step.ph + "-" + sfx); if (cur2) { cur2.classList.remove("active"); cur2.classList.add("done"); } }
+      }, step.d);
+      _simTimers[sfx].push(t);
+    });
+    var doneTimer = setTimeout(function() { btn.disabled = false; btn.textContent = "\u25B6 Simulate"; var r = document.getElementById("sim-result-" + sfx); r.innerHTML = s.result; r.classList.add("show"); }, 5800);
+    _simTimers[sfx].push(doneTimer);
+  }
+
+  function shuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  var allItemsMap = {};
+  [...toolData, ...distractors].forEach(function(item) { allItemsMap[item.type] = item; });
+
+  var STORAGE_KEY = "dfa-08-canvas";
+
+  function saveState() {
+    var items = Array.from(canvas.querySelectorAll("[data-placed]")).map(function(el) { return el.dataset.placed; });
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(items)); } catch(e) {}
+  }
+
+  function loadState() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) { return []; }
+      return JSON.parse(raw);
+    } catch(e) { return []; }
+  }
+
+  function makeToolItem(item) {
+    var div = document.createElement("div");
+    div.className = "component";
+    div.draggable = true;
+    div.dataset.type = item.type;
+    div.textContent = item.label;
+    div.addEventListener("dragstart", function(e) {
+      e.dataTransfer.setData("itemType", item.type);
+      e.dataTransfer.setData("itemLabel", item.label);
+      e.dataTransfer.setData("fromToolbox", "1");
+      e.dataTransfer.effectAllowed = "move";
+    });
+    return div;
+  }
+
+  function syncToolbox() {
+    var placed = new Set(Array.from(canvas.querySelectorAll("[data-placed]")).map(function(el) { return el.dataset.placed; }));
+    Array.from(toolboxEl.querySelectorAll(".component")).forEach(function(el) {
+      el.style.display = placed.has(el.dataset.type) ? "none" : "";
+    });
+    placeholder.style.display = canvas.querySelectorAll("[data-placed]").length ? "none" : "";
+  }
+
+  function makePlacedItem(type, label) {
+    var el = document.createElement("div");
+    el.className = "placed-item";
+    el.dataset.placed = type;
+    el.draggable = true;
+    el.innerHTML = "<span class=\"placed-label\"></span><button class=\"remove-btn no-pdf\" onclick=\"removePlaced(this)\">&#x2716;</button>";
+    el.addEventListener("dragstart", function(e) {
+      e.dataTransfer.setData("itemType", type);
+      e.dataTransfer.setData("itemLabel", label);
+      e.dataTransfer.setData("fromCanvas", "1");
+      e.dataTransfer.effectAllowed = "move";
+      el.dataset.dragging = "1";
+    });
+    el.addEventListener("dragend", function() { delete el.dataset.dragging; removeIndicator(); });
+    return el;
+  }
+
+  function renumber() {
+    Array.from(canvas.querySelectorAll("[data-placed]")).forEach(function(el, i) {
+      el.querySelector(".placed-label").textContent = (i + 1) + ". " + allItemsMap[el.dataset.placed].label;
+    });
+  }
+
+  var indicator = null;
+  function removeIndicator() { if (indicator && indicator.parentNode) { indicator.parentNode.removeChild(indicator); } indicator = null; }
+
+  function insertIndicator(beforeEl) {
+    removeIndicator();
+    indicator = document.createElement("div");
+    indicator.className = "drop-indicator";
+    canvas.insertBefore(indicator, beforeEl || null);
+  }
+
+  function getInsertTarget(y) {
+    var items = Array.from(canvas.querySelectorAll("[data-placed]:not([data-dragging])"));
+    for (var i = 0; i < items.length; i++) {
+      var rect = items[i].getBoundingClientRect();
+      if (y < rect.top + rect.height / 2) { return items[i]; }
+    }
+    return null;
+  }
+
+  canvas.addEventListener("dragover", function(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    canvas.classList.add("drag-over");
+    insertIndicator(getInsertTarget(e.clientY));
+  });
+
+  canvas.addEventListener("dragleave", function(e) {
+    if (!canvas.contains(e.relatedTarget)) { canvas.classList.remove("drag-over"); removeIndicator(); }
+  });
+
+  canvas.addEventListener("drop", function(e) {
+    e.preventDefault();
+    canvas.classList.remove("drag-over");
+    var type = e.dataTransfer.getData("itemType");
+    var label = e.dataTransfer.getData("itemLabel");
+    var fromCanvas = e.dataTransfer.getData("fromCanvas") === "1";
+    var insertBefore = indicator ? indicator.nextSibling : null;
+    removeIndicator();
+    if (!type) { return; }
+    if (fromCanvas) {
+      var existing = canvas.querySelector("[data-placed='" + type + "']");
+      if (existing) { existing.parentNode.removeChild(existing); }
+    }
+    var el = makePlacedItem(type, label);
+    if (insertBefore && insertBefore.parentNode === canvas) {
+      canvas.insertBefore(el, insertBefore);
+    } else {
+      canvas.appendChild(el);
+    }
+    renumber();
+    syncToolbox();
+    saveState();
+  });
+
+  toolboxEl.addEventListener("dragover", function(e) { e.preventDefault(); });
+  toolboxEl.addEventListener("drop", function(e) {
+    var fromCanvas = e.dataTransfer.getData("fromCanvas") === "1";
+    if (!fromCanvas) { return; }
+    e.preventDefault();
+    var type = e.dataTransfer.getData("itemType");
+    var existing = canvas.querySelector("[data-placed='" + type + "']");
+    if (existing) { existing.parentNode.removeChild(existing); }
+    renumber();
+    syncToolbox();
+    saveState();
+  });
+
+  function removePlaced(btn) {
+    var item = btn.parentElement;
+    item.parentNode.removeChild(item);
+    renumber();
+    syncToolbox();
+    saveState();
+  }
+
+  function init() {
+    startTime = new Date();
+    document.getElementById("copyright-year").textContent = startTime.getFullYear();
+    var allItems = shuffle([...toolData, ...distractors]);
+    allItems.forEach(function(item) { toolboxEl.appendChild(makeToolItem(item)); });
+    var saved = loadState();
+    saved.forEach(function(type) {
+      var item = allItemsMap[type];
+      if (!item) { return; }
+      canvas.appendChild(makePlacedItem(type, item.label));
+    });
+    renumber();
+    syncToolbox();
+  }
+
+  function checkSystem() {
+    var nodes = Array.from(canvas.querySelectorAll("[data-placed]"));
+    var current = nodes.map(function(n) { return n.dataset.placed; });
+    var correct = LAB_CONFIG.correctOrder;
+    var feedback = document.getElementById("feedback");
+    var status = document.getElementById("feedback-status");
+    var content = document.getElementById("feedback-content");
+    feedback.style.display = "block";
+    var isPass = JSON.stringify(current) === JSON.stringify(correct);
+    feedback.className = isPass ? "pass" : "fail";
+    status.textContent = isPass ? "STATUS: PASS / COMPLETED" : "STATUS: FAIL / ATTEMPTED";
+    if (isPass) {
+      content.textContent = LAB_CONFIG.passMessage;
+    } else {
+      var hint = "The pipeline sequence is incorrect.";
+      if (current.length !== correct.length) {
+        hint = "Incorrect number of components: " + current.length + " placed, expected " + correct.length + ". Remove any distractor components.";
+      } else {
+        for (var i = 0; i < correct.length; i++) {
+          if (current[i] !== correct[i]) {
+            hint = "Issue at Stage " + (i + 1) + ": " + LAB_CONFIG.clues[correct[i]];
+            break;
+          }
+        }
+      }
+      content.innerHTML = "<strong>" + hint + "</strong>";
+    }
+  }
+
+  function exportPDF() {
+    var fb = document.getElementById("feedback");
+    if (fb.style.display === "none" || !fb.style.display) {
+      alert("Please click Validate Pipeline before exporting.");
+      return;
+    }
+    var name = (prompt("Enter your full name for the PDF:") || "").trim();
+    if (!name) { return; }
+    var endTime = new Date();
+    document.getElementById("pdf-name").textContent = name;
+    document.getElementById("pdf-start").textContent = startTime.toLocaleString();
+    document.getElementById("pdf-end").textContent = endTime.toLocaleString();
+    window.print();
+  }
+
+  init();
+</script>
+</body>
+</html>
