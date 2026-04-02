@@ -9,6 +9,9 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ## 2026-04-02
 
+### [feature] ByteByteGo-style course platform prototype
+- `prototypes/course-platform.html` — full course lesson page prototype with sidebar nav, FREE/locked chapter badges, progress bar, Mermaid architecture diagrams, multi-tab code block with copy, Q&A interview simulation, trade-off table, callout boxes, and bottom chapter nav
+
 ### Dev Foundations Activities
 - `[ux]` All 10 activities — simulator dropdown replaced with two always-visible side-by-side panels, each with its own Simulate button
 - `[ux]` All 10 activities — Validate Architecture and Export PDF buttons normalized to identical placement (toolbox column) and label text across all activities

@@ -5,6 +5,17 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-04-02
+
+### [feature] ByteByteGo-style course platform prototype
+- `prototypes/course-platform.html` (349 lines) — self-contained lesson page prototype inspired by ByteByteGo's course UI
+- Layout: sticky top bar with breadcrumb + prev/next nav; 264px sidebar with chapter list; max-width main content column
+- Sidebar: sequential chapter numbering, FREE badge (orange pill) on first 3 chapters, lock icon on premium chapters, active chapter highlight with accent border-left, progress bar footer
+- Main content: chapter tag + large lesson title; info and takeaway callout box variants; two Mermaid `flowchart LR` architecture diagrams with captions; multi-tab code block (Python / JavaScript / Java) with syntax-colored spans and clipboard copy; Q&A interview simulation with Interviewer/Candidate speaker labels; trade-off table (Approach / Benefit / Limitation); Key Takeaways callout; bottom prev/next chapter nav
+- Design system: dark theme (`--bg: #0b1220`) matching playground CSS variable palette; Tailwind CDN for utilities; Mermaid CDN for diagrams; no external font dependencies
+
+---
+
 ## 2026-03-20
 
 ### [refactor] Moved security labs under prototypes/security/
