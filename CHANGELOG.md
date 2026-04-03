@@ -9,6 +9,10 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ## 2026-04-02
 
+### [feature] Conversation to Design — 10-activity requirements engineering series
+- New `conversation-to-design/` collection: 10 self-contained HTML activities teaching actors/FRs/NFRs/open questions/design-doc/architecture from realistic team conversations (Slack, email, Jira, Discord)
+- Root `index.html` updated with sidebar nav link and section block
+
 ### [feature] ByteByteGo-style course platform prototype
 - `prototypes/course-platform.html` — full course lesson page prototype with sidebar nav, FREE/locked chapter badges, progress bar, Mermaid architecture diagrams, multi-tab code block with copy, Q&A interview simulation, trade-off table, callout boxes, and bottom chapter nav
 
