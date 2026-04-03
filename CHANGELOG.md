@@ -7,6 +7,16 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-04-03
+
+### [feature] Deep Dives series — Wild Rift entry 01
+- New series `deep-dives/` for cross-domain technology internals deep dives
+- `deep-dives/index.html` — hub with animated network-graph canvas, coming-soon cards for ServiceNow, OpenSearch, SAP
+- `deep-dives/01-wild-rift.html` — 6-tab deep dive: game engine internals, matchmaking (Glicko-2, MMR vs rank, interactive queue slider), tech stack, F2P business model, key numbers
+- Root `index.html` updated: nav link + section block added
+
+---
+
 ## 2026-04-02
 
 ### [feature] Conversation to Design — 10-activity requirements engineering series
