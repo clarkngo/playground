@@ -1,0 +1,925 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Wild Rift — Deep Dive</title>
+  <style>
+    :root {
+      --bg:#0b1220; --surface:#0f1a2e; --card:#111c30;
+      --border:rgba(255,255,255,0.06); --muted:#7a8899;
+      --text:#dde5f0; --accent:#38bdf8; --accent2:#818cf8; --green:#34d399;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%}
+    body{background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,sans-serif;font-size:14px;line-height:1.6}
+    a{color:var(--accent);text-decoration:none}
+    a:hover{text-decoration:underline}
+
+    /* ── Page wrap ── */
+    .page-wrap{max-width:1100px;margin:0 auto;padding:0 20px 60px}
+
+    /* ── Breadcrumb ── */
+    .breadcrumb{padding:16px 0 0;font-size:12px;color:var(--muted)}
+    .breadcrumb a{color:var(--accent)}
+    .breadcrumb a:hover{text-decoration:underline}
+    .breadcrumb span{margin:0 6px}
+
+    /* ── Page header ── */
+    .page-header{padding:20px 0 24px;border-bottom:1px solid var(--border)}
+    .page-header h1{font-size:28px;font-weight:800;color:var(--text);margin-bottom:6px}
+    .page-header .subtitle{color:var(--muted);font-size:15px;margin-bottom:12px}
+    .tag-row{display:flex;gap:8px;flex-wrap:wrap}
+    .tag{background:rgba(56,189,248,0.1);color:var(--accent);border:1px solid rgba(56,189,248,0.2);border-radius:4px;padding:2px 10px;font-size:11px;font-weight:600;letter-spacing:.04em}
+    .tag.green{background:rgba(52,211,153,0.1);color:var(--green);border-color:rgba(52,211,153,0.2)}
+    .tag.purple{background:rgba(129,140,248,0.1);color:var(--accent2);border-color:rgba(129,140,248,0.2)}
+
+    /* ── Tabs ── */
+    .tab-nav{display:flex;gap:2px;padding:20px 0 0;border-bottom:1px solid var(--border);flex-wrap:wrap}
+    .tab-btn{background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);cursor:pointer;padding:8px 16px;font-size:13px;font-weight:500;font-family:inherit;transition:color .15s,border-color .15s;white-space:nowrap;margin-bottom:-1px}
+    .tab-btn:hover{color:var(--text)}
+    .tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+    .progress-bar{display:flex;gap:6px;align-items:center;padding:12px 0 0}
+    .progress-dot{width:6px;height:6px;border-radius:50%;background:var(--border);transition:background .2s}
+    .progress-dot.active{background:var(--accent)}
+    .progress-label{font-size:11px;color:var(--muted);margin-left:8px}
+    .tab-section{display:none;padding:28px 0 0}
+    .tab-section.active{display:block}
+
+    /* ── Typography ── */
+    .section-title{font-size:20px;font-weight:700;color:var(--text);margin-bottom:6px}
+    .section-desc{color:var(--muted);font-size:13px;margin-bottom:24px;line-height:1.6}
+    .prose{font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:20px}
+    .prose strong{color:var(--text)}
+    .sub-heading{font-size:15px;font-weight:700;color:var(--text);margin:24px 0 10px}
+
+    /* ── Cards ── */
+    .card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-bottom:28px}
+    .card-grid.cols-3{grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:18px}
+    .card h3{font-size:14px;font-weight:700;color:var(--accent);margin-bottom:6px}
+    .card p{font-size:13px;color:var(--muted);line-height:1.5}
+    .card .card-icon{font-size:22px;margin-bottom:8px}
+
+    /* ── Callout ── */
+    .callout{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:6px;padding:14px 18px;font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:20px}
+    .callout strong{color:var(--text)}
+    .callout.purple{border-left-color:var(--accent2)}
+    .callout.green{border-left-color:var(--green)}
+
+    /* ── Metrics cards ── */
+    .metrics-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:28px}
+    .metric-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:16px}
+    .metric-value{font-size:22px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums;margin-bottom:4px}
+    .metric-value.purple{color:var(--accent2)}
+    .metric-value.green{color:var(--green)}
+    .metric-label{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+    .metric-note{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.4}
+
+    /* ── Canvas sections ── */
+    .canvas-wrap{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px;margin-bottom:24px}
+    .canvas-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:12px}
+    canvas{display:block;border-radius:4px;background:#070f1c}
+
+    /* ── Stack layers ── */
+    .stack-layer{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:16px 20px;margin-bottom:10px;display:flex;align-items:flex-start;gap:16px}
+    .stack-layer-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);min-width:140px;padding-top:2px}
+    .chip-row{display:flex;flex-wrap:wrap;gap:6px}
+    .chip{background:rgba(56,189,248,0.08);color:var(--accent);border:1px solid rgba(56,189,248,0.15);border-radius:4px;padding:3px 10px;font-size:12px;font-weight:500}
+    .chip.green{background:rgba(52,211,153,0.08);color:var(--green);border-color:rgba(52,211,153,0.15)}
+    .chip.purple{background:rgba(129,140,248,0.08);color:var(--accent2);border-color:rgba(129,140,248,0.15)}
+    .chip.muted{background:rgba(255,255,255,0.04);color:var(--muted);border-color:var(--border)}
+
+    /* ── Table ── */
+    .data-table{width:100%;border-collapse:collapse;margin-bottom:28px;font-size:13px}
+    .data-table th{text-align:left;padding:10px 14px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);background:var(--surface);border-bottom:1px solid var(--border)}
+    .data-table td{padding:10px 14px;border-bottom:1px solid var(--border);color:var(--muted);vertical-align:top}
+    .data-table td:first-child{color:var(--text);font-weight:600}
+    .data-table tr:last-child td{border-bottom:none}
+    .table-cat{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--accent);padding:14px 14px 6px;display:block}
+
+    /* ── Value chain ── */
+    .value-chain{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px 24px;margin-bottom:28px;overflow-x:auto}
+    .value-chain h3{font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:16px}
+    .chain-row{display:flex;align-items:center;flex-wrap:nowrap;min-width:600px}
+    .chain-node{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:10px 16px;text-align:center;flex:1}
+    .chain-node .node-label{font-size:11px;font-weight:700;color:var(--accent);display:block;margin-bottom:2px}
+    .chain-node .node-sub{font-size:10px;color:var(--muted)}
+    .chain-arrow{color:var(--muted);font-size:18px;padding:0 6px;flex-shrink:0}
+
+    /* ── Slider control ── */
+    .slider-wrap{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px 24px;margin-bottom:20px}
+    .slider-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+    .slider-title{font-size:14px;font-weight:700;color:var(--text)}
+    .slider-value{font-size:18px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums}
+    input[type=range]{width:100%;accent-color:var(--accent);margin-bottom:12px}
+    .slider-row{display:flex;justify-content:space-between;font-size:11px;color:var(--muted)}
+
+    /* ── MMR diagram ── */
+    .mmr-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+    .mmr-box{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:16px}
+    .mmr-box h4{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:8px}
+    .mmr-box p{font-size:12px;color:var(--muted);line-height:1.55}
+    .mmr-box strong{color:var(--text)}
+
+    /* ── Revenue bars ── */
+    .rev-bar-wrap{margin-bottom:28px}
+    .rev-bar-row{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+    .rev-bar-label{font-size:12px;color:var(--muted);width:130px;flex-shrink:0}
+    .rev-bar-track{flex:1;background:rgba(255,255,255,0.05);border-radius:4px;height:10px;overflow:hidden}
+    .rev-bar-fill{height:100%;border-radius:4px;transition:width 1s ease}
+    .rev-bar-pct{font-size:12px;font-weight:700;color:var(--text);width:38px;text-align:right}
+  </style>
+</head>
+<body>
+<div class="page-wrap">
+
+  <div class="breadcrumb">
+    <a href="index.html">Deep Dives</a><span>/</span>Wild Rift
+  </div>
+
+  <div class="page-header">
+    <h1>🎮 Wild Rift — How It Really Works</h1>
+    <div class="subtitle">Matchmaking algorithms, game server architecture, F2P monetization, and the full tech stack behind Riot's mobile MOBA.</div>
+    <div class="tag-row">
+      <span class="tag">Gaming</span>
+      <span class="tag green">Matchmaking</span>
+      <span class="tag purple">F2P</span>
+      <span class="tag">Mobile</span>
+    </div>
+  </div>
+
+  <nav class="tab-nav">
+    <button class="tab-btn active" onclick="showTab('overview',0)">Overview</button>
+    <button class="tab-btn" onclick="showTab('engine',1)">Game Engine</button>
+    <button class="tab-btn" onclick="showTab('matchmaking',2)">Matchmaking</button>
+    <button class="tab-btn" onclick="showTab('stack',3)">Tech Stack</button>
+    <button class="tab-btn" onclick="showTab('bizmodel',4)">Business Model</button>
+    <button class="tab-btn" onclick="showTab('numbers',5)">Key Numbers</button>
+  </nav>
+  <div class="progress-bar">
+    <div class="progress-dot active" id="dot-0"></div>
+    <div class="progress-dot" id="dot-1"></div>
+    <div class="progress-dot" id="dot-2"></div>
+    <div class="progress-dot" id="dot-3"></div>
+    <div class="progress-dot" id="dot-4"></div>
+    <div class="progress-dot" id="dot-5"></div>
+    <span class="progress-label" id="progress-label">Section 1 of 6</span>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       TAB 1 — OVERVIEW
+  ══════════════════════════════════════ -->
+  <section class="tab-section active" id="tab-overview">
+    <div class="section-title">What Wild Rift Is</div>
+    <div class="section-desc">Wild Rift is Riot Games' mobile and console adaptation of League of Legends — a 5v5 MOBA (Multiplayer Online Battle Arena) where two teams compete to destroy the opposing base. Launched in 2020, it is engineered from the ground up for touchscreen play while preserving the strategic depth of the PC original.</div>
+
+    <div class="metrics-row">
+      <div class="metric-card">
+        <div class="metric-value">80M+</div>
+        <div class="metric-label">Downloads</div>
+        <div class="metric-note">Global launch 2020–2021</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value purple">160+</div>
+        <div class="metric-label">Champions</div>
+        <div class="metric-note">Ported from LoL PC roster</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value green">15–20</div>
+        <div class="metric-label">Min. avg match</div>
+        <div class="metric-note">Shorter than PC (30–40 min)</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value">5v5</div>
+        <div class="metric-label">Format</div>
+        <div class="metric-note">Summoners Rift, mobile-scaled map</div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <strong>Why this matters:</strong> Wild Rift is not a port — it is a re-engineered game. The map is ~20% smaller, baron and dragon respawn faster, and the entire input model was rebuilt for dual thumbstick virtual controls. The backend infrastructure must handle real-time state synchronization for 10 concurrent players at sub-30ms latency across Asia, Europe, and the Americas.
+    </div>
+
+    <div class="canvas-wrap">
+      <div class="canvas-label">Live Minimap — 5v5 match simulation</div>
+      <canvas id="minimapCanvas" width="660" height="200" style="width:100%;max-width:660px"></canvas>
+    </div>
+
+    <div class="sub-heading">Core Game Loop</div>
+    <div class="value-chain">
+      <h3>Match Flow</h3>
+      <div class="chain-row">
+        <div class="chain-node"><span class="node-label">Queue</span><span class="node-sub">matchmaking finds 10</span></div>
+        <div class="chain-arrow">→</div>
+        <div class="chain-node"><span class="node-label">Champ Select</span><span class="node-sub">picks &amp; bans, 60s</span></div>
+        <div class="chain-arrow">→</div>
+        <div class="chain-node"><span class="node-label">Loading</span><span class="node-sub">assets stream to client</span></div>
+        <div class="chain-arrow">→</div>
+        <div class="chain-node"><span class="node-label">Game</span><span class="node-sub">15–20 min live play</span></div>
+        <div class="chain-arrow">→</div>
+        <div class="chain-node"><span class="node-label">End Screen</span><span class="node-sub">XP, LP, loot</span></div>
+        <div class="chain-arrow">→</div>
+        <div class="chain-node"><span class="node-label">Stats Push</span><span class="node-sub">server writes to DB</span></div>
+      </div>
+    </div>
+
+    <div class="card-grid">
+      <div class="card">
+        <div class="card-icon">🗺️</div>
+        <h3>Scaled Map</h3>
+        <p>The Summoners Rift map is ~20% smaller than PC, with tighter jungle camps and faster objective respawns — engineered to fit 15-minute match windows on mobile sessions.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🕹️</div>
+        <h3>Touch Controls</h3>
+        <p>Rebuilt input system: virtual left joystick for movement, skill buttons on the right, auto-attack target lock, and smart cast. No keyboard — every interaction is designed for thumb reach on a 6-inch screen.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🌏</div>
+        <h3>Regional Servers</h3>
+        <p>Dedicated game server regions in Southeast Asia, East Asia, Europe, Americas, and Middle East. Players connect to the nearest region; cross-region matchmaking is disabled to maintain latency guarantees.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🏆</div>
+        <h3>Ranked System</h3>
+        <p>Iron through Challenger with 5 divisions each. Promotional series removed in 2022. LP (League Points) earned and lost per match. A hidden MMR drives match quality independently of visible rank.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════
+       TAB 2 — GAME ENGINE
+  ══════════════════════════════════════ -->
+  <section class="tab-section" id="tab-engine">
+    <div class="section-title">Game Engine Internals</div>
+    <div class="section-desc">Wild Rift runs on a custom authoritative-server architecture. Every frame of game state is calculated on Riot's servers, not on your phone. Your client renders what the server tells it — and predicts ahead to hide latency.</div>
+
+    <div class="sub-heading">Authoritative Server Model</div>
+    <div class="prose">
+      In a <strong>client-authoritative</strong> model (used in some mobile games to save server cost), your phone decides what happened. In Wild Rift, Riot uses a <strong>server-authoritative</strong> model: the game server runs the entire simulation at ~30 ticks per second. Your client sends <em>inputs</em> (move here, cast spell) and the server responds with <em>state</em> (everyone's positions, health, spell effects). This prevents cheating and ensures every player sees the same game world.
+    </div>
+
+    <div class="canvas-wrap">
+      <div class="canvas-label">Client-Server tick loop — inputs up, state down</div>
+      <canvas id="tickCanvas" width="660" height="180" style="width:100%;max-width:660px"></canvas>
+    </div>
+
+    <div class="callout">
+      <strong>30 Hz tick rate:</strong> The server processes one game tick every ~33ms. At 33ms per tick, a player with 50ms ping sees their actions reflected in ~83ms (33ms server tick + 50ms round trip). Compare this to Counter-Strike (64–128 Hz) — MOBAs trade tick rate for lower server costs since positional precision matters less than in FPS games.
+    </div>
+
+    <div class="sub-heading">Client Prediction</div>
+    <div class="prose">
+      To hide the 50–100ms round-trip latency, your client <strong>predicts ahead</strong>: when you tap to move, your champion immediately starts walking on screen before the server confirms it. If the server disagrees (due to a collision or spell interrupt), the client <strong>reconciles</strong> — snapping back to the server-authoritative position. Done well, this is invisible. Done poorly, it causes the rubber-banding you see in poorly-engineered mobile games.
+    </div>
+
+    <div class="sub-heading">Fog of War — Partial State Broadcast</div>
+    <div class="prose">
+      One of the most important security properties of the server-authoritative model is <strong>fog of war integrity</strong>. The server never sends you data about enemy champions outside your vision range. This prevents wallhack-style cheats. The server maintains two views of game state: a global view (all positions, health, actions) and a per-player view (only what that player can see). Each player receives only their partial view — roughly 30–60% of total game state in a typical game tick.
+    </div>
+
+    <div class="mmr-grid">
+      <div class="mmr-box">
+        <h4>What the server knows</h4>
+        <p>All 10 champions: position, health, mana, cooldowns, buff/debuff status, vision sources, jungle camp timers, objective health, projectile trajectories, item inventories.</p>
+      </div>
+      <div class="mmr-box">
+        <h4>What your client receives</h4>
+        <p>Only entities within your team vision range. Enemy positions outside vision are sent as "last seen" coordinates. Invisible enemies (stealthed, in fog) are <strong>not broadcast</strong> to your client at all.</p>
+      </div>
+    </div>
+
+    <div class="sub-heading">Network Protocol</div>
+    <div class="prose">
+      Wild Rift uses <strong>UDP</strong>, not TCP, for game data. TCP guarantees delivery and order — but its retransmission behavior introduces variable latency spikes unacceptable in real-time games. UDP is fire-and-forget: packets can arrive out of order or be lost. Riot implements a custom reliability layer on top of UDP that handles <em>selective retransmission</em> (only resend critical state, not cosmetic effects) and <em>sequence numbering</em> (discard out-of-order packets). The result: consistent low latency with graceful handling of packet loss.
+    </div>
+
+    <div class="card-grid cols-3">
+      <div class="card">
+        <div class="card-icon">⏱️</div>
+        <h3>30 Hz tick rate</h3>
+        <p>Server processes one simulation step every ~33ms. Sufficient for MOBA positional accuracy; much cheaper than FPS tick rates.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🔮</div>
+        <h3>Client prediction</h3>
+        <p>Local movement applied immediately; reconciled against authoritative server state on every tick to maintain consistency.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">📡</div>
+        <h3>UDP + custom layer</h3>
+        <p>Low-latency transport with application-level selective reliability. Critical state (champion position) retransmitted; cosmetic effects dropped on loss.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════
+       TAB 3 — MATCHMAKING
+  ══════════════════════════════════════ -->
+  <section class="tab-section" id="tab-matchmaking">
+    <div class="section-title">How Matchmaking Works</div>
+    <div class="section-desc">Wild Rift runs two parallel rating systems simultaneously: a visible rank (Iron through Challenger) and a hidden MMR (Matchmaking Rating). These are related but independent — and understanding the difference explains why your rank can feel wrong.</div>
+
+    <div class="mmr-grid">
+      <div class="mmr-box">
+        <h4>Visible Rank (LP)</h4>
+        <p><strong>What players see.</strong> Iron → Bronze → Silver → Gold → Platinum → Emerald → Diamond → Master → Grandmaster → Challenger. Moves with League Points. Designed for <em>motivation</em> — slow enough to feel meaningful, fast enough to feel responsive to recent performance.</p>
+      </div>
+      <div class="mmr-box">
+        <h4>Hidden MMR</h4>
+        <p><strong>What matchmaking uses.</strong> A continuous numerical rating updated after every game. Higher MMR = better opponents. Your LP gain/loss is multiplied by how far your MMR is from your rank — if MMR is ahead of rank, you gain more LP per win.</p>
+      </div>
+    </div>
+
+    <div class="sub-heading">Glicko-2 Inspired Rating</div>
+    <div class="prose">
+      Wild Rift uses a rating algorithm inspired by <strong>Glicko-2</strong> (the system used in chess and most competitive games). Beyond a simple MMR number, each player also has a <strong>Rating Deviation (RD)</strong> — a measure of uncertainty. A new player has high RD (the system is unsure how good they are). After 30+ games, RD converges. A high RD means your MMR moves fast after each game. A low RD means the system is confident in your rating and makes smaller adjustments.
+    </div>
+
+    <div class="callout purple">
+      <strong>Why your first 5 placement games matter so much:</strong> Early games have maximum RD — the system is uncertain, so each result moves your MMR dramatically. After placement, RD shrinks. This is intentional: calibrate quickly, then stabilize.
+    </div>
+
+    <div class="sub-heading">Queue Time vs Match Quality Trade-off</div>
+    <div class="prose">
+      The matchmaker cannot always find 10 players with identical MMR. It balances two competing objectives: <strong>match quality</strong> (close MMR spread across all 10 players) and <strong>queue time</strong> (nobody waits forever). Its solution: start with a tight MMR window, then <em>expand the search radius</em> every few seconds until a match is found.
+    </div>
+
+    <div class="slider-wrap">
+      <div class="slider-header">
+        <span class="slider-title">Wait time in queue</span>
+        <span class="slider-value" id="queueVal">0s</span>
+      </div>
+      <input type="range" id="queueSlider" min="0" max="120" value="0" oninput="updateQueue(this.value)" />
+      <div class="slider-row"><span>0s</span><span>30s</span><span>60s</span><span>90s</span><span>120s</span></div>
+    </div>
+
+    <div class="canvas-wrap">
+      <div class="canvas-label">MMR search radius expanding over time</div>
+      <canvas id="queueCanvas" width="660" height="160" style="width:100%;max-width:660px"></canvas>
+    </div>
+
+    <div id="queueStats" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:24px">
+      <div class="metric-card">
+        <div class="metric-value" id="searchRadius">±50</div>
+        <div class="metric-label">MMR Search Window</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value purple" id="matchQuality">98%</div>
+        <div class="metric-label">Match Quality</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value green" id="poolSize">~120</div>
+        <div class="metric-label">Players in Pool</div>
+      </div>
+    </div>
+
+    <div class="sub-heading">Role Preference Weighting</div>
+    <div class="prose">
+      Players queue with a <strong>primary and secondary role</strong> preference (Baron lane, Jungle, Mid, Dragon lane, Support). The matchmaker scores candidate 10-player groups by how many players receive their primary role. A group where all 10 get their primary preference scores higher than one where 4 players get their secondary. This role score is combined with the MMR balance score — a 95% MMR match where 8/10 get primary roles is preferred over a 99% MMR match where only 6/10 do.
+    </div>
+
+    <div class="card-grid cols-3">
+      <div class="card">
+        <div class="card-icon">🎯</div>
+        <h3>Target: &lt;90s queue</h3>
+        <p>Riot targets median queue time under 90 seconds in peak hours. Off-peak hours (early morning) may see 3–5 minute queues for Diamond+ players where the pool is thin.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🌐</div>
+        <h3>Regional pools</h3>
+        <p>Matchmaking is strictly regional. A Southeast Asia server player never matches with a Europe player. This hard boundary protects latency but shrinks the matchmaking pool.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">⚖️</div>
+        <h3>Premade handling</h3>
+        <p>Duo queues are matched against other premades or solos with compensating MMR adjustment. Full 5-stack can only match other 5-stacks in ranked to prevent coordination advantages.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════
+       TAB 4 — TECH STACK
+  ══════════════════════════════════════ -->
+  <section class="tab-section" id="tab-stack">
+    <div class="section-title">Technology Stack</div>
+    <div class="section-desc">Wild Rift's infrastructure separates into two distinct tiers: real-time game servers (latency-critical, bare-metal) and backend platform services (reliability-critical, cloud-hosted microservices).</div>
+
+    <div class="callout">
+      <strong>Key architectural insight:</strong> Game servers run on bare-metal hardware in Riot's own data centers — not cloud VMs. Cloud VMs introduce jitter (variable CPU scheduling by the hypervisor) that causes inconsistent tick timing. For a game where 33ms precision matters, that jitter is unacceptable. All other services (accounts, store, social) run on Kubernetes in cloud.
+    </div>
+
+    <div class="stack-layer">
+      <span class="stack-layer-label">Game Servers</span>
+      <div class="chip-row">
+        <span class="chip">Bare-metal (own DCs)</span>
+        <span class="chip">C++ game sim engine</span>
+        <span class="chip">30 Hz authoritative loop</span>
+        <span class="chip green">UDP custom protocol</span>
+        <span class="chip muted">Regional (SEA, EAS, EU, NA, MENA)</span>
+      </div>
+    </div>
+
+    <div class="stack-layer">
+      <span class="stack-layer-label">Matchmaking</span>
+      <div class="chip-row">
+        <span class="chip">Glicko-2 inspired MMR</span>
+        <span class="chip">Go service</span>
+        <span class="chip purple">Redis (session state, queues)</span>
+        <span class="chip muted">Pub/sub lobby orchestration</span>
+      </div>
+    </div>
+
+    <div class="stack-layer">
+      <span class="stack-layer-label">Backend Platform</span>
+      <div class="chip-row">
+        <span class="chip green">Kubernetes (EKS)</span>
+        <span class="chip">gRPC internal services</span>
+        <span class="chip">Go + Java microservices</span>
+        <span class="chip muted">Account, Social, Store, Leaderboard</span>
+      </div>
+    </div>
+
+    <div class="stack-layer">
+      <span class="stack-layer-label">Data Storage</span>
+      <div class="chip-row">
+        <span class="chip purple">Apache Cassandra</span>
+        <span class="chip muted">player stats (high write throughput)</span>
+        <span class="chip">Redis Cluster</span>
+        <span class="chip muted">session state, queue state</span>
+        <span class="chip green">Elasticsearch</span>
+        <span class="chip muted">leaderboard, search</span>
+      </div>
+    </div>
+
+    <div class="stack-layer">
+      <span class="stack-layer-label">Real-time Comms</span>
+      <div class="chip-row">
+        <span class="chip">Custom UDP (game data)</span>
+        <span class="chip green">WebSocket (lobby, chat)</span>
+        <span class="chip muted">XMPP-derived social presence</span>
+      </div>
+    </div>
+
+    <div class="stack-layer">
+      <span class="stack-layer-label">CDN / Assets</span>
+      <div class="chip-row">
+        <span class="chip">Fastly CDN</span>
+        <span class="chip muted">champion skin assets, patch delivery</span>
+        <span class="chip green">Delta patches</span>
+        <span class="chip muted">only changed assets downloaded on update</span>
+      </div>
+    </div>
+
+    <div class="stack-layer">
+      <span class="stack-layer-label">Client (Mobile)</span>
+      <div class="chip-row">
+        <span class="chip purple">Unity engine</span>
+        <span class="chip muted">C# gameplay layer</span>
+        <span class="chip">iOS (Metal) / Android (Vulkan)</span>
+        <span class="chip muted">60 fps target, adaptive quality</span>
+      </div>
+    </div>
+
+    <div class="sub-heading">Why Cassandra for Player Stats?</div>
+    <div class="prose">
+      After every match, Wild Rift must write stats for 10 players simultaneously: kills, deaths, assists, gold earned, damage dealt, items purchased, and dozens of other metrics. Multiply by peak concurrent matches (tens of thousands) and you get a write workload that relational databases struggle with. <strong>Cassandra</strong> is optimized for high-throughput writes with tunable consistency — a natural fit. Reads (loading player profiles) are less frequent and can tolerate eventual consistency.
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════
+       TAB 5 — BUSINESS MODEL
+  ══════════════════════════════════════ -->
+  <section class="tab-section" id="tab-bizmodel">
+    <div class="section-title">Business Model</div>
+    <div class="section-desc">Wild Rift is free-to-play with cosmetic-only monetization. No champion is pay-to-win — all gameplay content can be earned through play. Revenue comes entirely from players choosing to spend on appearance and convenience.</div>
+
+    <div class="callout green">
+      <strong>The F2P principle Riot commits to:</strong> Every champion is available for free via in-game currency (Blue Motes) earned by playing. Paying money only unlocks cosmetics faster or buys visual-only skins. This is not universal in mobile gaming — Wild Rift is notably strict about this boundary.
+    </div>
+
+    <div class="sub-heading">Revenue Streams</div>
+    <div class="rev-bar-wrap" id="revBars">
+      <div class="rev-bar-row">
+        <span class="rev-bar-label">Champion Skins</span>
+        <div class="rev-bar-track"><div class="rev-bar-fill" style="width:0%;background:#38bdf8" data-target="72"></div></div>
+        <span class="rev-bar-pct">72%</span>
+      </div>
+      <div class="rev-bar-row">
+        <span class="rev-bar-label">Battle Pass</span>
+        <div class="rev-bar-track"><div class="rev-bar-fill" style="width:0%;background:#818cf8" data-target="12"></div></div>
+        <span class="rev-bar-pct">12%</span>
+      </div>
+      <div class="rev-bar-row">
+        <span class="rev-bar-label">Event Passes</span>
+        <div class="rev-bar-track"><div class="rev-bar-fill" style="width:0%;background:#34d399" data-target="9"></div></div>
+        <span class="rev-bar-pct">9%</span>
+      </div>
+      <div class="rev-bar-row">
+        <span class="rev-bar-label">Champion Bundles</span>
+        <div class="rev-bar-track"><div class="rev-bar-fill" style="width:0%;background:#f59e0b" data-target="5"></div></div>
+        <span class="rev-bar-pct">5%</span>
+      </div>
+      <div class="rev-bar-row">
+        <span class="rev-bar-label">Other</span>
+        <div class="rev-bar-track"><div class="rev-bar-fill" style="width:0%;background:#7a8899" data-target="2"></div></div>
+        <span class="rev-bar-pct">2%</span>
+      </div>
+    </div>
+
+    <div class="sub-heading">Pricing Psychology</div>
+    <div class="prose">
+      Real money buys <strong>Wild Cores</strong> (premium currency), not skins directly. This indirection is intentional: it obscures the real price. A skin that costs 990 Wild Cores requires a bundle of 1,020 Cores ($9.99) — leaving 30 Cores of "change" that encourages another purchase. Bundle anchoring presents a 3-skin bundle at a price that makes individual skin purchases feel expensive by comparison.
+    </div>
+
+    <table class="data-table">
+      <thead><tr><th>Model</th><th>Description</th><th>Margin Profile</th></tr></thead>
+      <tbody>
+        <tr><td>Champion Skins</td><td>Cosmetic reskins with new animations, voice, VFX. Tiered: Standard (975 WC), Epic (1350 WC), Legendary (1820 WC). Once created, marginal cost is near zero — pure digital good.</td><td>~85–90% gross margin</td></tr>
+        <tr><td>Battle Pass</td><td>Seasonal 60-day pass (~590 WC). Unlocks rewards through play time. Drives daily active engagement — players log in to complete pass missions.</td><td>~80% gross margin</td></tr>
+        <tr><td>Event Passes</td><td>Themed 2–4 week events tied to champion releases or esports. Limited-time urgency drives conversion. Event-exclusive skins become status symbols after expiry.</td><td>~80% gross margin</td></tr>
+        <tr><td>Champion Bundles</td><td>New champion launch bundles combine champion + skin + accessories at a "discount." Drives early spend on new champions. Champion alone is free via Blue Motes over time.</td><td>~75% gross margin</td></tr>
+        <tr><td>Wild Pass (subscription)</td><td>Monthly subscription for daily Wild Cores, bonus XP, and exclusive profile icon. Recurring revenue with high retention if integrated into daily habit.</td><td>~85% gross margin</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout purple">
+      <strong>Whale economics:</strong> In F2P games, roughly 2% of players generate ~50% of revenue. Wild Rift Legendary and Ultimate skins ($20–$30+) target high-spending players. Prestige skins (available only via grinding or premium currency) create aspirational tiers that motivate spending across all player segments.
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════
+       TAB 6 — KEY NUMBERS
+  ══════════════════════════════════════ -->
+  <section class="tab-section" id="tab-numbers">
+    <div class="section-title">Key Numbers</div>
+    <div class="section-desc">Concrete figures on Wild Rift scale, infrastructure, and economics — the numbers that define the engineering and business challenges.</div>
+
+    <div class="sub-heading">Scale &amp; Reach</div>
+    <div class="metrics-row">
+      <div class="metric-card">
+        <div class="metric-value">80M+</div>
+        <div class="metric-label">Total Downloads</div>
+        <div class="metric-note">iOS + Android, global launch 2020–21</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value purple">5M+</div>
+        <div class="metric-label">Peak DAU</div>
+        <div class="metric-note">Daily active players at peak</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value green">180+</div>
+        <div class="metric-label">Countries</div>
+        <div class="metric-note">Not available in China (separate LoL Mobile)</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value">5</div>
+        <div class="metric-label">Server Regions</div>
+        <div class="metric-note">SEA, East Asia, EU, Americas, MENA</div>
+      </div>
+    </div>
+
+    <div class="sub-heading">Infrastructure &amp; Performance</div>
+    <div class="metrics-row">
+      <div class="metric-card">
+        <div class="metric-value">30 Hz</div>
+        <div class="metric-label">Server Tick Rate</div>
+        <div class="metric-note">One simulation step every 33ms</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value purple">&lt;20ms</div>
+        <div class="metric-label">Target Latency</div>
+        <div class="metric-note">Within each server region</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value green">~300 KB</div>
+        <div class="metric-label">Data per Match</div>
+        <div class="metric-note">Game state UDP traffic, 15-min match</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value">60 fps</div>
+        <div class="metric-label">Client Target</div>
+        <div class="metric-note">High-end devices; 30fps fallback</div>
+      </div>
+    </div>
+
+    <div class="sub-heading">Matchmaking</div>
+    <div class="metrics-row">
+      <div class="metric-card">
+        <div class="metric-value">&lt;90s</div>
+        <div class="metric-label">Median Queue Time</div>
+        <div class="metric-note">Peak hours, Gold–Diamond rank</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value purple">±50 MMR</div>
+        <div class="metric-label">Initial Search Window</div>
+        <div class="metric-note">Expands by ~25 MMR every 15 seconds</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value green">10</div>
+        <div class="metric-label">Players per Match</div>
+        <div class="metric-note">5v5, all matched simultaneously</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value">2</div>
+        <div class="metric-label">Rating Systems</div>
+        <div class="metric-note">Visible LP rank + hidden MMR</div>
+      </div>
+    </div>
+
+    <div class="sub-heading">Economics</div>
+    <div class="metrics-row">
+      <div class="metric-card">
+        <div class="metric-value">$150M+</div>
+        <div class="metric-label">Est. Annual Revenue</div>
+        <div class="metric-note">Riot does not break out Wild Rift separately</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value purple">~85%</div>
+        <div class="metric-label">Gross Margin (skins)</div>
+        <div class="metric-note">Digital good, near-zero marginal cost</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value green">2%</div>
+        <div class="metric-label">Paying Players</div>
+        <div class="metric-note">Generate ~50% of revenue (whale economics)</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value">$0</div>
+        <div class="metric-label">Pay-to-Win Cost</div>
+        <div class="metric-note">All gameplay content earnable for free</div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <strong>Context on the ~300 KB per match figure:</strong> A 15-minute match at 30 Hz generates roughly 27,000 game ticks. Each tick sends a partial state update per player — typically 10–50 bytes of compressed delta state. Summed across the match, the raw game data is surprisingly small. The bulk of mobile data usage is loading champion assets and skin files (10–50 MB) before the match begins, served via CDN.
+    </div>
+  </section>
+
+</div><!-- /page-wrap -->
+
+<script>
+function showTab(name, idx) {
+  document.querySelectorAll('.tab-section').forEach(function(s) { s.classList.remove('active'); });
+  document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+  document.querySelectorAll('.progress-dot').forEach(function(d) { d.classList.remove('active'); });
+  document.getElementById('tab-' + name).classList.add('active');
+  document.querySelectorAll('.tab-btn')[idx].classList.add('active');
+  document.getElementById('dot-' + idx).classList.add('active');
+  document.getElementById('progress-label').textContent = 'Section ' + (idx + 1) + ' of 6';
+  if (name === 'bizmodel') animateRevBars();
+  if (name === 'matchmaking') drawQueue(0);
+}
+
+/* ── Minimap canvas (Tab 1) ── */
+(function() {
+  var canvas = document.getElementById('minimapCanvas');
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var W = canvas.width, H = canvas.height;
+  var t = 0;
+
+  var blueTeam = [
+    {x:60, y:140, tx:120, ty:90, speed:0.008, col:'#38bdf8'},
+    {x:80, y:100, tx:180, ty:60,  speed:0.010, col:'#38bdf8'},
+    {x:50, y:170, tx:200, ty:140, speed:0.007, col:'#38bdf8'},
+    {x:100,y:80,  tx:250, ty:50,  speed:0.009, col:'#38bdf8'},
+    {x:70, y:50,  tx:150, ty:30,  speed:0.011, col:'#38bdf8'}
+  ];
+  var redTeam = [
+    {x:580,y:60,  tx:500, ty:110, speed:0.008, col:'#f85149'},
+    {x:560,y:100, tx:480, ty:140, speed:0.010, col:'#f85149'},
+    {x:590,y:140, tx:460, ty:60,  speed:0.007, col:'#f85149'},
+    {x:540,y:50,  tx:420, ty:150, speed:0.009, col:'#f85149'},
+    {x:570,y:170, tx:440, ty:120, speed:0.011, col:'#f85149'}
+  ];
+
+  function lerp(a, b, t) { return a + (b - a) * t; }
+
+  function moveHero(hero, time) {
+    var progress = (Math.sin(time * hero.speed) + 1) / 2;
+    return {
+      x: lerp(hero.x, hero.tx, progress),
+      y: lerp(hero.y, hero.ty, progress)
+    };
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    t++;
+
+    // map bg
+    ctx.fillStyle = '#070f1c';
+    ctx.fillRect(0, 0, W, H);
+
+    // map outline
+    ctx.strokeStyle = 'rgba(56,189,248,0.15)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(4, 4, W - 8, H - 8);
+
+    // lanes (simplified)
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+    ctx.lineWidth = 12;
+    ctx.lineCap = 'round';
+    // top lane
+    ctx.beginPath(); ctx.moveTo(30, 20); ctx.lineTo(W - 30, 20); ctx.stroke();
+    // bot lane
+    ctx.beginPath(); ctx.moveTo(30, H - 20); ctx.lineTo(W - 30, H - 20); ctx.stroke();
+    // mid lane
+    ctx.beginPath(); ctx.moveTo(40, H - 40); ctx.lineTo(W - 40, 40); ctx.stroke();
+
+    // draw heroes
+    var allHeroes = blueTeam.concat(redTeam);
+    allHeroes.forEach(function(h) {
+      var pos = moveHero(h, t);
+      ctx.fillStyle = h.col;
+      ctx.beginPath();
+      ctx.arc(pos.x, pos.y, 5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    });
+
+    // base indicators
+    ctx.fillStyle = 'rgba(56,189,248,0.3)';
+    ctx.beginPath(); ctx.arc(20, H - 20, 8, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgba(248,81,73,0.3)';
+    ctx.beginPath(); ctx.arc(W - 20, 20, 8, 0, Math.PI * 2); ctx.fill();
+
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+/* ── Tick canvas (Tab 2) ── */
+(function() {
+  var canvas = document.getElementById('tickCanvas');
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var W = canvas.width, H = canvas.height;
+  var t = 0;
+  var packets = [];
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    t++;
+
+    // bg
+    ctx.fillStyle = '#070f1c';
+    ctx.fillRect(0, 0, W, H);
+
+    // labels
+    ctx.font = '11px Inter,system-ui,sans-serif';
+    ctx.fillStyle = '#7a8899';
+    ctx.fillText('CLIENT', 20, 24);
+    ctx.fillText('SERVER', W - 70, 24);
+
+    // client box
+    ctx.fillStyle = 'rgba(56,189,248,0.1)';
+    ctx.strokeStyle = 'rgba(56,189,248,0.3)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.roundRect(10, 30, 100, 50, 6); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#38bdf8';
+    ctx.font = '10px Inter,system-ui,sans-serif';
+    ctx.fillText('Renders frame', 18, 52);
+    ctx.fillText('Sends inputs', 22, 66);
+
+    // server box
+    ctx.fillStyle = 'rgba(129,140,248,0.1)';
+    ctx.strokeStyle = 'rgba(129,140,248,0.3)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.roundRect(W - 120, 30, 110, 50, 6); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#818cf8';
+    ctx.font = '10px Inter,system-ui,sans-serif';
+    ctx.fillText('Runs sim @30Hz', W - 114, 52);
+    ctx.fillText('Broadcasts state', W - 116, 66);
+
+    // spawn packets periodically
+    if (t % 30 === 0) {
+      // input packet: client -> server
+      packets.push({x: 115, y: 65, tx: W - 125, ty: 65, progress: 0, speed: 0.03, col: '#38bdf8', label: 'input'});
+    }
+    if (t % 30 === 15) {
+      // state packet: server -> client
+      packets.push({x: W - 125, y: 45, tx: 115, ty: 45, progress: 0, speed: 0.03, col: '#818cf8', label: 'state'});
+    }
+
+    // move + draw packets
+    packets = packets.filter(function(p) { return p.progress <= 1; });
+    packets.forEach(function(p) {
+      p.progress += p.speed;
+      var cx = p.x + (p.tx - p.x) * p.progress;
+      var cy = p.y + (p.ty - p.y) * p.progress;
+      ctx.fillStyle = p.col;
+      ctx.beginPath(); ctx.arc(cx, cy, 4, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = p.col;
+      ctx.font = '9px Inter,system-ui,sans-serif';
+      ctx.fillText(p.label, cx + 6, cy + 3);
+    });
+
+    // latency labels
+    ctx.fillStyle = 'rgba(255,255,255,0.2)';
+    ctx.font = '10px Inter,system-ui,sans-serif';
+    ctx.fillText('~33ms tick window', W / 2 - 40, H - 12);
+
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+/* ── Queue canvas (Tab 3) ── */
+var queueWaitTime = 0;
+
+function drawQueue(waitSec) {
+  var canvas = document.getElementById('queueCanvas');
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var W = canvas.width, H = canvas.height;
+
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#070f1c';
+  ctx.fillRect(0, 0, W, H);
+
+  var cx = W / 2, cy = H / 2;
+  var baseR = 20;
+  var maxR = Math.min(cx, cy) - 10;
+  // radius expands: starts at baseR, grows to maxR over 120 seconds
+  var progress = Math.min(waitSec / 120, 1);
+  var radius = baseR + (maxR - baseR) * Math.pow(progress, 0.6);
+
+  // draw expanding ring
+  var alpha = 0.15 + 0.25 * (1 - progress);
+  ctx.strokeStyle = 'rgba(56,189,248,' + (alpha * 3) + ')';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([6, 4]);
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // inner fill
+  ctx.fillStyle = 'rgba(56,189,248,0.04)';
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+  ctx.fill();
+
+  // player dot in center
+  ctx.fillStyle = '#38bdf8';
+  ctx.beginPath();
+  ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+  ctx.fill();
+
+  // scatter some candidate players
+  var numPlayers = Math.floor(4 + progress * 20);
+  for (var i = 0; i < numPlayers; i++) {
+    var angle = (i / numPlayers) * Math.PI * 2;
+    var r = radius * (0.5 + 0.45 * ((i * 37 % 100) / 100));
+    var px = cx + Math.cos(angle + progress * 2) * r;
+    var py = cy + Math.sin(angle + progress * 2) * r;
+    var inPool = r <= radius;
+    ctx.fillStyle = inPool ? 'rgba(52,211,153,0.7)' : 'rgba(255,255,255,0.15)';
+    ctx.beginPath();
+    ctx.arc(px, py, 3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // labels
+  ctx.fillStyle = '#7a8899';
+  ctx.font = '10px Inter,system-ui,sans-serif';
+  ctx.fillText('You', cx + 9, cy + 4);
+  ctx.fillText('Search radius: +' + Math.round(radius * 0.6) + ' MMR', cx - radius + 4, cy - radius + 14);
+}
+
+function updateQueue(val) {
+  queueWaitTime = parseInt(val, 10);
+  document.getElementById('queueVal').textContent = val + 's';
+
+  // expand window by ~25 MMR every 15 seconds
+  var extra = Math.floor(queueWaitTime / 15) * 25;
+  var window = 50 + extra;
+  var quality = Math.max(60, 98 - extra * 0.35);
+  var pool = Math.round(120 + extra * 4.5);
+
+  document.getElementById('searchRadius').textContent = '+/-' + window;
+  document.getElementById('matchQuality').textContent = quality.toFixed(0) + '%';
+  document.getElementById('poolSize').textContent = '~' + pool;
+
+  drawQueue(queueWaitTime);
+}
+
+/* ── Revenue bars (Tab 5) ── */
+function animateRevBars() {
+  var fills = document.querySelectorAll('.rev-bar-fill');
+  fills.forEach(function(fill) {
+    var target = fill.getAttribute('data-target');
+    setTimeout(function() { fill.style.width = target + '%'; }, 80);
+  });
+}
+
+/* init queue canvas on load */
+drawQueue(0);
+</script>
+</body>
+</html>

@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Deep Dives</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:#0b1220;color:#dde5f0;font-family:Inter,system-ui,-apple-system,sans-serif;min-height:100vh;overflow-x:hidden}
+a{text-decoration:none}
+
+/* ── Nav ── */
+.navbar{background:#0f1a2e;border-bottom:1px solid rgba(255,255,255,0.06);padding:.75rem 1.5rem;display:flex;align-items:center;gap:.5rem}
+.navbar-brand{font-size:1rem;font-weight:700;color:#dde5f0}
+.navbar a.back{color:#7a8899;font-size:.85rem;margin-left:auto;transition:color .2s}
+.navbar a.back:hover{color:#38bdf8}
+
+/* ── Hero ── */
+.hero{position:relative;overflow:hidden;padding:3.5rem 1.5rem 3rem;text-align:center;min-height:240px;display:flex;align-items:center;justify-content:center}
+#heroCanvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.hero-content{position:relative;z-index:1}
+.hero-eyebrow{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:#38bdf8;margin-bottom:.85rem;display:flex;align-items:center;justify-content:center;gap:.5rem}
+.hero-eyebrow::before,.hero-eyebrow::after{content:'';width:32px;height:1px;background:linear-gradient(90deg,transparent,rgba(56,189,248,0.5))}
+.hero-eyebrow::after{background:linear-gradient(90deg,rgba(56,189,248,0.5),transparent)}
+.hero-title{font-size:2.2rem;font-weight:800;color:#dde5f0;line-height:1.18;margin-bottom:.85rem;letter-spacing:-.02em}
+.hero-title span{background:linear-gradient(135deg,#38bdf8,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-sub{color:#7a8899;font-size:.92rem;max-width:540px;margin:0 auto 1.5rem;line-height:1.65}
+.hero-badges{display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap}
+.h-badge{padding:.22rem .7rem;border-radius:12px;font-size:.72rem;font-weight:600;border:1px solid}
+.hb-b{background:rgba(56,189,248,0.08);color:#38bdf8;border-color:rgba(56,189,248,0.2)}
+.hb-p{background:rgba(129,140,248,0.08);color:#818cf8;border-color:rgba(129,140,248,0.2)}
+.hb-g{background:rgba(52,211,153,0.08);color:#34d399;border-color:rgba(52,211,153,0.2)}
+
+/* ── Container ── */
+.container{max-width:1020px;margin:0 auto;padding:2.25rem 1.5rem 4rem}
+
+/* ── Section header ── */
+.section-label{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#7a8899;margin-bottom:.9rem;padding-bottom:.4rem;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;gap:.5rem}
+.section-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(255,255,255,0.06),transparent)}
+
+/* ── Cards grid ── */
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:.9rem;margin-bottom:2.5rem}
+
+/* ── Entry card ── */
+.entry-card{display:flex;align-items:stretch;background:#111c30;border:1px solid rgba(255,255,255,0.06);border-radius:10px;overflow:hidden;transition:border-color .25s,transform .2s,box-shadow .25s;position:relative;opacity:0}
+.entry-card:hover{transform:translateY(-3px)}
+.entry-card.live:hover{border-color:#38bdf8;box-shadow:0 8px 28px rgba(56,189,248,.14)}
+.entry-card.soon{cursor:default;opacity:.5 !important}
+
+/* ── Viz panel ── */
+.entry-viz{width:84px;min-height:100px;flex-shrink:0;background:#0b1220;display:flex;align-items:center;justify-content:center;overflow:hidden;border-right:1px solid rgba(255,255,255,0.06)}
+
+/* ── Card body ── */
+.entry-body{flex:1;padding:.9rem 1rem;min-width:0;display:flex;flex-direction:column;justify-content:center}
+.entry-num{font-size:.65rem;font-weight:700;color:#38405a;margin-bottom:.2rem;letter-spacing:.04em}
+.entry-title{font-size:.9rem;font-weight:700;line-height:1.3;margin-bottom:.28rem;color:#dde5f0}
+.entry-desc{font-size:.74rem;color:#7a8899;line-height:1.45;flex:1}
+.entry-tags{display:flex;gap:4px;margin-top:.4rem;flex-wrap:wrap}
+.etag{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:.1rem .42rem;border-radius:8px}
+.etag-b{background:rgba(56,189,248,0.1);color:#38bdf8}
+.etag-p{background:rgba(129,140,248,0.1);color:#818cf8}
+.etag-g{background:rgba(52,211,153,0.1);color:#34d399}
+.etag-m{background:rgba(255,255,255,0.05);color:#7a8899}
+.coming-soon-badge{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:.15rem .5rem;border-radius:6px;background:rgba(255,255,255,0.05);color:#7a8899;border:1px solid rgba(255,255,255,0.08);margin-top:.4rem;display:inline-block}
+
+/* ── Card appear animation ── */
+@keyframes cardIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.entry-card{animation:cardIn .4s ease forwards}
+.entry-card:nth-child(1){animation-delay:.05s}
+.entry-card:nth-child(2){animation-delay:.12s}
+.entry-card:nth-child(3){animation-delay:.19s}
+.entry-card:nth-child(4){animation-delay:.26s}
+.entry-card.soon{animation-delay:.33s}
+
+/* ── Viz: Wild Rift minimap pulse ── */
+.viz-wr{position:relative;width:60px;height:60px}
+.wr-map{position:absolute;inset:6px;border:1px solid rgba(56,189,248,0.3);border-radius:3px;background:rgba(56,189,248,0.04)}
+.wr-dot{position:absolute;width:5px;height:5px;border-radius:50%}
+@keyframes wrMove1{0%,100%{left:10px;top:10px}50%{left:36px;top:28px}}
+@keyframes wrMove2{0%,100%{left:36px;top:10px}50%{left:14px;top:34px}}
+@keyframes wrMove3{0%,100%{left:22px;top:22px}50%{left:38px;top:14px}}
+@keyframes wrPulse{0%,100%{opacity:.6}50%{opacity:1}}
+.wr-d1{background:#38bdf8;animation:wrMove1 3s ease infinite,wrPulse 1.5s ease infinite}
+.wr-d2{background:#818cf8;animation:wrMove2 3.5s ease infinite,wrPulse 1.5s .4s ease infinite}
+.wr-d3{background:#34d399;animation:wrMove3 2.8s ease infinite,wrPulse 1.5s .8s ease infinite}
+
+/* ── Footer ── */
+.footer{margin-top:40px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.06);color:#7a8899;font-size:12px}
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <span class="navbar-brand">🔬 Deep Dives</span>
+  <a class="back" href="../index.html">← Playground</a>
+</nav>
+
+<div class="hero">
+  <canvas id="heroCanvas"></canvas>
+  <div class="hero-content">
+    <div class="hero-eyebrow">Technology Internals</div>
+    <h1 class="hero-title">Deep <span>Dives</span></h1>
+    <p class="hero-sub">How real products actually work under the hood — matchmaking algorithms, data models, business mechanics, and the technology that supports them.</p>
+    <div class="hero-badges">
+      <span class="h-badge hb-b">Cross-domain</span>
+      <span class="h-badge hb-p">Internals</span>
+      <span class="h-badge hb-g">Interactive</span>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+  <div class="section-label">Live Entries</div>
+  <div class="cards-grid">
+
+    <a href="01-wild-rift.html" class="entry-card live">
+      <div class="entry-viz">
+        <div class="viz-wr">
+          <div class="wr-map"></div>
+          <div class="wr-dot wr-d1"></div>
+          <div class="wr-dot wr-d2"></div>
+          <div class="wr-dot wr-d3"></div>
+        </div>
+      </div>
+      <div class="entry-body">
+        <div class="entry-num">01</div>
+        <div class="entry-title">Wild Rift — How It Really Works</div>
+        <div class="entry-desc">Matchmaking algorithms, game server tick-rate architecture, F2P business model, and the full technology stack behind Riot's mobile MOBA.</div>
+        <div class="entry-tags">
+          <span class="etag etag-b">Gaming</span>
+          <span class="etag etag-p">Matchmaking</span>
+          <span class="etag etag-g">F2P</span>
+        </div>
+      </div>
+    </a>
+
+  </div>
+
+  <div class="section-label">Coming Soon</div>
+  <div class="cards-grid">
+
+    <div class="entry-card soon">
+      <div class="entry-viz" style="background:#0b1220;font-size:28px;color:rgba(255,255,255,0.15)">⚙️</div>
+      <div class="entry-body">
+        <div class="entry-num">02</div>
+        <div class="entry-title">ServiceNow — How It Really Works</div>
+        <div class="entry-desc">Workflow engine internals, CMDB graph model, platform architecture, and how ServiceNow monetizes the enterprise IT market.</div>
+        <div class="entry-tags">
+          <span class="etag etag-m">Enterprise</span>
+          <span class="etag etag-m">ITSM</span>
+          <span class="etag etag-m">SaaS</span>
+        </div>
+        <span class="coming-soon-badge">Coming Soon</span>
+      </div>
+    </div>
+
+    <div class="entry-card soon">
+      <div class="entry-viz" style="background:#0b1220;font-size:28px;color:rgba(255,255,255,0.15)">🔍</div>
+      <div class="entry-body">
+        <div class="entry-num">03</div>
+        <div class="entry-title">OpenSearch — How It Really Works</div>
+        <div class="entry-desc">Inverted index internals, shard routing, relevance scoring (BM25), and how search engines handle distributed query execution at scale.</div>
+        <div class="entry-tags">
+          <span class="etag etag-m">Search</span>
+          <span class="etag etag-m">Distributed</span>
+          <span class="etag etag-m">Open Source</span>
+        </div>
+        <span class="coming-soon-badge">Coming Soon</span>
+      </div>
+    </div>
+
+    <div class="entry-card soon">
+      <div class="entry-viz" style="background:#0b1220;font-size:28px;color:rgba(255,255,255,0.15)">🏭</div>
+      <div class="entry-body">
+        <div class="entry-num">04</div>
+        <div class="entry-title">SAP — How It Really Works</div>
+        <div class="entry-desc">ERP data model, ABAP runtime, HANA in-memory architecture, the module system, and how SAP dominates enterprise software across 180 countries.</div>
+        <div class="entry-tags">
+          <span class="etag etag-m">ERP</span>
+          <span class="etag etag-m">Enterprise</span>
+          <span class="etag etag-m">HANA</span>
+        </div>
+        <span class="coming-soon-badge">Coming Soon</span>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="footer">Deep Dives · Clark Ngo</div>
+</div>
+
+<script>
+(function() {
+  const canvas = document.getElementById('heroCanvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, nodes, t = 0;
+
+  function resize() {
+    W = canvas.width = canvas.offsetWidth;
+    H = canvas.height = canvas.offsetHeight;
+    nodes = Array.from({length: 28}, () => ({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      vx: (Math.random() - 0.5) * 0.35,
+      vy: (Math.random() - 0.5) * 0.35,
+      r: 1.5 + Math.random() * 2
+    }));
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    t++;
+
+    // move
+    nodes.forEach(n => {
+      n.x += n.vx;
+      n.y += n.vy;
+      if (n.x < 0 || n.x > W) n.vx *= -1;
+      if (n.y < 0 || n.y > H) n.vy *= -1;
+    });
+
+    // edges
+    for (let i = 0; i < nodes.length; i++) {
+      for (let j = i + 1; j < nodes.length; j++) {
+        const dx = nodes[i].x - nodes[j].x;
+        const dy = nodes[i].y - nodes[j].y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 110) {
+          const alpha = (1 - dist / 110) * 0.18;
+          ctx.strokeStyle = `rgba(56,189,248,${alpha})`;
+          ctx.lineWidth = 0.8;
+          ctx.beginPath();
+          ctx.moveTo(nodes[i].x, nodes[i].y);
+          ctx.lineTo(nodes[j].x, nodes[j].y);
+          ctx.stroke();
+        }
+      }
+    }
+
+    // nodes
+    nodes.forEach(n => {
+      ctx.fillStyle = 'rgba(56,189,248,0.45)';
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    requestAnimationFrame(draw);
+  }
+
+  resize();
+  window.addEventListener('resize', resize);
+  draw();
+})();
+</script>
+</body>
+</html>
