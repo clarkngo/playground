@@ -9,6 +9,11 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ## 2026-04-03
 
+### [feature] Primer — reorganized into industry/ + technology/ subfolders; added Real-Time Systems technology primer (9 tabs)
+- 17 existing industry primers moved to `primer/industry/`; all paths updated
+- New `primer/technology/` category with `shared.css` stub and Technology Primer section on index page
+- `primer/technology/real-time-systems/index.html` — 9 tabs: RTOS kernels, scheduling theory, embedded hardware, safety standards, major players (VxWorks, QNX, FreeRTOS, Zephyr), workflows, trends (RISC-V, TSN, mixed-criticality), monetization, and evolution timeline
+
 ### [feature] Deep Dives series — Wild Rift entry 01
 - New series `deep-dives/` for cross-domain technology internals deep dives
 - `deep-dives/index.html` — hub with animated network-graph canvas, coming-soon cards for ServiceNow, OpenSearch, SAP
