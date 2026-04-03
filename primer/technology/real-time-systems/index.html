@@ -1,0 +1,973 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Real-Time Systems — Technology Primer</title>
+  <link rel="stylesheet" href="../../shared.css" />
+  <link rel="stylesheet" href="../shared.css" />
+</head>
+<body>
+<div class="page-wrap">
+
+  <div class="breadcrumb"><a href="../../index.html">Primer</a><span>/</span>Real-Time Systems</div>
+
+  <div class="page-header">
+    <h1>⏱️ Real-Time Systems</h1>
+    <div class="subtitle">Deterministic computing for safety-critical and time-constrained applications — RTOS kernels, scheduling theory, embedded hardware, and certification standards. From FreeRTOS on a microcontroller to VxWorks in an aircraft flight management system.</div>
+    <div class="tag-row">
+      <span class="tag accent">RTOS</span>
+      <span class="tag">Embedded Systems</span>
+      <span class="tag purple">Safety-Critical</span>
+      <span class="tag green">Determinism</span>
+    </div>
+  </div>
+
+  <nav class="tab-nav">
+    <button class="tab-btn active" onclick="showTab('overview',0)">Overview</button>
+    <button class="tab-btn" onclick="showTab('terminology',1)">Key Terminology</button>
+    <button class="tab-btn" onclick="showTab('players',2)">Major Players</button>
+    <button class="tab-btn" onclick="showTab('metrics',3)">Core Metrics</button>
+    <button class="tab-btn" onclick="showTab('stack',4)">Technology Stack</button>
+    <button class="tab-btn" onclick="showTab('workflows',5)">Common Workflows</button>
+    <button class="tab-btn" onclick="showTab('trends',6)">Trends & Challenges</button>
+    <button class="tab-btn" onclick="showTab('dynamics',7)">Market Dynamics & Monetization</button>
+    <button class="tab-btn" onclick="showTab('evolution',8)">Evolution & Foundations</button>
+  </nav>
+
+  <div class="progress-bar-wrap">
+    <div class="progress-dot active" id="dot-0"></div>
+    <div class="progress-dot" id="dot-1"></div>
+    <div class="progress-dot" id="dot-2"></div>
+    <div class="progress-dot" id="dot-3"></div>
+    <div class="progress-dot" id="dot-4"></div>
+    <div class="progress-dot" id="dot-5"></div>
+    <div class="progress-dot" id="dot-6"></div>
+    <div class="progress-dot" id="dot-7"></div>
+    <div class="progress-dot" id="dot-8"></div>
+    <span class="progress-label" id="progress-label">Section 1 of 9</span>
+  </div>
+
+  <!-- ── Tab 0: Overview ── -->
+  <section class="tab-section active" id="tab-overview">
+    <div class="section-title">Overview</div>
+    <div class="section-desc">Real-time systems guarantee that computations complete within defined time bounds — not just fast, but predictably fast. A missed deadline can mean a dropped call or a plane crash, depending on the application class.</div>
+
+    <div class="card-grid">
+      <div class="card">
+        <div class="card-icon">🧠</div>
+        <h3>RTOS Kernels</h3>
+        <p>Specialized operating system kernels that schedule tasks with bounded, deterministic latency. Examples: FreeRTOS, VxWorks, QNX Neutrino, Zephyr. The kernel is the heart of any real-time system.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">📐</div>
+        <h3>Scheduling Algorithms</h3>
+        <p>Mathematical frameworks for deciding which task runs when. Rate-Monotonic Scheduling (RMS) and Earliest Deadline First (EDF) are the two foundational approaches with proven schedulability bounds.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🔩</div>
+        <h3>Embedded Hardware</h3>
+        <p>Microcontrollers (MCUs) and microprocessors designed for real-time workloads. ARM Cortex-M (bare-metal/RTOS) and Cortex-R (hard real-time with ECC) are the dominant architectures.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🛡️</div>
+        <h3>Safety Standards</h3>
+        <p>Certification frameworks governing software in life-critical systems: IEC 61508 (functional safety), DO-178C (avionics), ISO 26262 (automotive), IEC 62443 (industrial). Compliance is mandatory, not optional.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🔌</div>
+        <h3>Communication Buses</h3>
+        <p>Deterministic fieldbus and network protocols: CAN (automotive), LIN (low-speed automotive), FlexRay (ADAS), ARINC 429/664 (avionics), EtherCAT and TSN (industrial Ethernet).</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🛠️</div>
+        <h3>Development Tools</h3>
+        <p>Cross-compilers (GCC, LLVM, IAR, Green Hills MULTI), JTAG/SWD debuggers, logic analyzers, WCET analysis tools (AbsInt aiT), and hardware-in-the-loop (HIL) test rigs.</p>
+      </div>
+    </div>
+
+    <div class="value-chain">
+      <h3>Real-Time Processing Pipeline</h3>
+      <div class="chain-row">
+        <div class="chain-node">
+          <span class="node-label">Sensor / Event</span>
+          <span class="node-sub">physical stimulus</span>
+        </div>
+        <div class="chain-arrow">→</div>
+        <div class="chain-node">
+          <span class="node-label">ISR</span>
+          <span class="node-sub">interrupt fires</span>
+        </div>
+        <div class="chain-arrow">→</div>
+        <div class="chain-node">
+          <span class="node-label">Task Queue</span>
+          <span class="node-sub">scheduler selects</span>
+        </div>
+        <div class="chain-arrow">→</div>
+        <div class="chain-node">
+          <span class="node-label">Processing</span>
+          <span class="node-sub">within WCET</span>
+        </div>
+        <div class="chain-arrow">→</div>
+        <div class="chain-node">
+          <span class="node-label">Actuator / Output</span>
+          <span class="node-sub">before deadline</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-grid cols-3">
+      <div class="card">
+        <div class="card-icon">🚗</div>
+        <h3>Automotive</h3>
+        <p>Engine control units (ECUs), ADAS perception stacks, airbag systems, and brake-by-wire — all running on AUTOSAR-compliant RTOS under ISO 26262 constraints.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">✈️</div>
+        <h3>Avionics</h3>
+        <p>Flight management, fly-by-wire, and avionics displays running VxWorks or LynxOS under DO-178C with strict partitioning via ARINC 653.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🏥</div>
+        <h3>Medical Devices</h3>
+        <p>Pacemakers, infusion pumps, surgical robots, and patient monitors. IEC 62304 governs software lifecycle; hard deadlines can be life-or-death.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🏭</div>
+        <h3>Industrial Control</h3>
+        <p>PLCs, robotics, CNC machines, and SCADA systems. Cycle times of 1–10 ms are typical; EtherCAT and PROFINET carry deterministic control traffic.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🛰️</div>
+        <h3>Space & Defense</h3>
+        <p>Satellite attitude control, missile guidance, radar processing. RTEMS and VxWorks are common; radiation-hardened hardware adds hardware-level constraints.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">📡</div>
+        <h3>Telecom / 5G RAN</h3>
+        <p>5G base station L1 physical layer processing has sub-millisecond deadlines. Real-time Linux with PREEMPT_RT and DPDK handles user-plane offload.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Tab 1: Key Terminology ── -->
+  <section class="tab-section" id="tab-terminology">
+    <div class="section-title">Key Terminology</div>
+    <div class="section-desc">Essential vocabulary for real-time systems engineering — from scheduling theory to hardware constraints.</div>
+
+    <input class="search-box" id="gloss-search" placeholder="Search terms… (press / to focus)" />
+
+    <div class="glossary-list" id="glossary-list">
+
+      <div class="glossary-item" data-terms="determinism deterministic predictable bounded">
+        <div class="glossary-header" onclick="toggleGloss(this)">
+          <span class="glossary-term">Determinism</span>
+          <span class="glossary-cat">Core Concept</span>
+          <span class="glossary-chevron">▼</span>
+        </div>
+        <div class="glossary-body">
+          A system is deterministic when the same input always produces the same output within the same time bound, regardless of other system activity. This is the defining property of real-time systems — not just correctness, but temporal correctness. A non-deterministic system may occasionally miss deadlines, which is acceptable for soft RT but catastrophic for hard RT.
+        </div>
+      </div>
+
+      <div class="glossary-item" data-terms="hard real time deadline miss catastrophic">
+        <div class="glossary-header" onclick="toggleGloss(this)">
+          <span class="glossary-term">Hard Real-Time</span>
+          <span class="glossary-cat">System Classification</span>
+          <span class="glossary-chevron">▼</span>
+        </div>
+        <div class="glossary-body">
+          A system where missing any deadline is catastrophic — the failure has consequences more severe than not completing the task at all. Examples: airbag controllers, pacemakers, fly-by-wire flight control. The system must be proven to never miss a deadline under any load scenario, typically via schedulability analysis.
+        </div>
+      </div>
+
+      <div class="glossary-item" data-terms="soft real time deadline miss degraded quality">
+        <div class="glossary-header" onclick="toggleGloss(this)">
+          <span class="glossary-term">Soft Real-Time</span>
+          <span class="glossary-cat">System Classification</span>
+          <span class="glossary-chevron">▼</span>
+        </div>
+        <div class="glossary-body">
+          A system where missing a deadline degrades performance or quality but is not catastrophic. Examples: video streaming (a late frame causes a glitch), audio playback, user interfaces. The system optimizes for meeting deadlines but can tolerate occasional misses gracefully.
+        </div>
+      </div>
+
+      <div class="glossary-item" data-terms="firm real time deadline miss useless">
+        <div class="glossary-header" onclick="toggleGloss(this)">
+          <span class="glossary-term">Firm Real-Time</span>
+          <span class="glossary-cat">System Classification</span>
+          <span class="glossary-chevron">▼</span>
+        </div>
+        <div class="glossary-body">
+          Between hard and soft. A missed deadline renders the result useless (it is discarded), but missing it is not actively harmful. Example: a financial trading system that must process a market tick within 50 ms — a late result is ignored, not acted upon incorrectly.
+        </div>
+      </div>
+
+      <div class="glossary-item" data-terms="rtos real time operating system kernel">
+        <div class="glossary-header" onclick="toggleGloss(this)">
+          <span class="glossary-term">RTOS (Real-Time Operating System)</span>
+          <span class="glossary-cat">Core Technology</span>
+          <span class="glossary-chevron">▼</span>
+        </div>
+        <div class="glossary-body">
+          An operating system designed to service requests within guaranteed time bounds. Key differences from general-purpose OSes: fully preemptive kernel, bounded interrupt latency, priority-based scheduling with no unbounded priority inversions, and deterministic memory allocation. Examples: FreeRTOS, VxWorks, QNX Neutrino, Zephyr, RTEMS.
+        </div>
+      </div>
+
+      <div class="glossary-item" data-terms="wcet worst case execution time analysis">
+        <div class="glossary-header" onclick="toggleGloss(this)">
+          <span class="glossary-term">WCET (Worst-Case Execution Time)</span>
+          <span class="glossary-cat">Timing Analysis</span>
+          <span class="glossary-chevron">▼</span>
+        </div>
+        <div class="glossary-body">
+          The maximum time a task can take to execute under any input and hardware state. WCET analysis is the foundation of schedulability proofs — you cannot guarantee deadlines without knowing WCET. Measured via static analysis tools (AbsInt aiT, Bound-T) or safe over-approximation on hardware with predictable pipelines. Caches and branch predictors make WCET analysis extremely difficult on modern out-of-order CPUs.
+        </div>
+      </div>
+
+      <div class="glossary-item" data-terms="latency response time interrupt">
+        <div class="glossary-header" onclick="toggleGloss(this)">
+          <span class="glossary-term">Latency</span>
+          <span class="glossary-cat">Timing</span>
+          <span class="glossary-chevron">▼</span>
+        </div>
+        <div class="glossary-body">
+          The delay between an event occurring and the system responding to it. In real-time systems, interrupt latency (time from interrupt assert to first instruction of ISR) and scheduling latency (time from task becoming ready to task running) are the two critical latency figures. Both must be bounded and small.
+        </div>
+      </div>
+
+      <div class="glossary-item" data-terms="jitter variation timing determinism">
+        <div class="glossary-header" onclick="toggleGloss(this)">
+          <span class="glossary-term">Jitter</span>
+          <span class="glossary-cat">Timing</span>
+          <span class="glossary-chevron">▼</span>
+        </div>
+        <div class="glossary-body">
+          The variation in timing of a recurring event or task execution. A task that should run every 1 ms but sometimes runs at 0.95 ms and sometimes at 1.05 ms has 50 µs of jitter. Low jitter is critical in control systems (motor control, audio) and network time-sensitive applications. General-purpose OSes have high jitter due to non-deterministic scheduling.
+        </div>
+      </div>
+
+      <div class="glossary-item" data-terms="preemption preemptive context switch higher priority">
+        <div class="glossary-header" onclick="toggleGloss(this)">
+          <span class="glossary-term">Preemption</span>
+          <span class="glossary-cat">Scheduling</span>
+          <span class="glossary-chevron">▼</span>
+        </div>
+        <div class="glossary-body">
+          The ability of the scheduler to interrupt a running lower-priority task and immediately switch to a higher-priority task that has become ready. Full preemption is essential for meeting deadlines in hard real-time systems. Without it, a high-priority task must wait for the current task to voluntarily yield — an unbounded and unacceptable delay.
+        </div>
+      </div>
+
+      <div class="glossary-item" data-terms="context switch task switch cpu state save restore">
+        <div class="glossary-header" onclick="toggleGloss(this)">
+          <span class="glossary-term">Context Switch</span>
+          <span class="glossary-cat">Scheduling</span>
+          <span class="glossary-chevron">▼</span>
+        </div>
+        <div class="glossary-body">
+          The process of saving the CPU state (registers, program counter, stack pointer) of the currently running task and restoring the state of the next task. Context switch time is a key RTOS benchmark — typical values range from a few hundred nanoseconds (bare-metal MCU) to a few microseconds (Linux). This time directly adds to scheduling latency.
+        </div>
+      </div>
+
+      <div class="glossary-item" data-terms="isr interrupt service routine handler">
+        <div class="glossary-header" onclick="toggleGloss(this)">
+          <span class="glossary-term">ISR (Interrupt Service Routine)</span>
+          <span class="glossary-cat">Hardware Interface</span>
+          <span class="glossary-chevron">▼</span>
+        </div>
+        <div class="glossary-body">
+          A function that executes immediately when hardware signals an interrupt (e.g., timer tick, UART byte received, GPIO edge). ISRs must be as short as possible — they block all lower-priority interrupts. The best practice is to do minimal work in the ISR (read a register, set a flag, post a semaphore) and defer processing to a task.
+        </div>
+      </div>
+
+      <div class="glossary-item" data-terms="priority inversion mars pathfinder mutex inheritance">
+        <div class="glossary-header" onclick="toggleGloss(this)">
+          <span class="glossary-term">Priority Inversion</span>
+          <span class="glossary-cat">Hazard</span>
+          <span class="glossary-chevron">▼</span>
+        </div>
+        <div class="glossary-body">
+          A scheduling anomaly where a high-priority task is effectively blocked by a lower-priority task holding a shared resource (mutex). A medium-priority task can preempt the low-priority task, causing the high-priority task to wait indefinitely. The Mars Pathfinder mission (1997) experienced this bug. Solutions: Priority Inheritance Protocol (PIP) or Priority Ceiling Protocol (PCP) — both implemented in POSIX mutexes and RTOS mutexes.
+        </div>
+      </div>
+
+      <div class="glossary-item" data-terms="mutex semaphore synchronization lock shared resource">
+        <div class="glossary-header" onclick="toggleGloss(this)">
+          <span class="glossary-term">Mutex / Semaphore</span>
+          <span class="glossary-cat">Synchronization</span>
+          <span class="glossary-chevron">▼</span>
+        </div>
+        <div class="glossary-body">
+          Synchronization primitives for protecting shared resources. A mutex (mutual exclusion) is owned by one task at a time and supports priority inheritance. A semaphore is a signaling mechanism (counting or binary) used to coordinate producer-consumer relationships. In real-time systems, both must have bounded acquisition time to maintain determinism.
+        </div>
+      </div>
+
+      <div class="glossary-item" data-terms="watchdog timer hardware reset safety">
+        <div class="glossary-header" onclick="toggleGloss(this)">
+          <span class="glossary-term">Watchdog Timer</span>
+          <span class="glossary-cat">Safety Mechanism</span>
+          <span class="glossary-chevron">▼</span>
+        </div>
+        <div class="glossary-body">
+          A hardware timer that resets the system if not periodically "kicked" (reset) by the software. If the application hangs, deadlocks, or enters an infinite loop, the watchdog fires and forces a safe restart. Both hardware watchdogs (MCU peripheral) and software watchdogs (RTOS task monitoring) are used in safety-critical systems.
+        </div>
+      </div>
+
+      <div class="glossary-item" data-terms="tick system clock timer period rate">
+        <div class="glossary-header" onclick="toggleGloss(this)">
+          <span class="glossary-term">Tick / System Clock</span>
+          <span class="glossary-cat">Timing</span>
+          <span class="glossary-chevron">▼</span>
+        </div>
+        <div class="glossary-body">
+          The periodic interrupt that drives the RTOS scheduler. Common tick rates: 1 kHz (1 ms per tick) for FreeRTOS defaults, 100–1000 Hz for Linux. Tasks with periods shorter than one tick require tickless modes or hardware timers. Tickless (dynamic tickless) kernels suppress idle ticks to reduce power on battery-constrained MCUs.
+        </div>
+      </div>
+
+      <div class="glossary-item" data-terms="rms rate monotonic scheduling liu layland priority">
+        <div class="glossary-header" onclick="toggleGloss(this)">
+          <span class="glossary-term">RMS (Rate-Monotonic Scheduling)</span>
+          <span class="glossary-cat">Scheduling Theory</span>
+          <span class="glossary-chevron">▼</span>
+        </div>
+        <div class="glossary-body">
+          A static-priority scheduling algorithm where higher-rate (shorter period) tasks get higher priority. Proven optimal among fixed-priority algorithms by Liu and Layland (1973). The schedulability bound: a set of n periodic tasks is schedulable if total CPU utilization U does not exceed n(2^(1/n) - 1), which approaches ~69.3% as n grows. Simple to implement, widely used in safety-certified systems.
+        </div>
+      </div>
+
+      <div class="glossary-item" data-terms="edf earliest deadline first dynamic priority optimal">
+        <div class="glossary-header" onclick="toggleGloss(this)">
+          <span class="glossary-term">EDF (Earliest Deadline First)</span>
+          <span class="glossary-cat">Scheduling Theory</span>
+          <span class="glossary-chevron">▼</span>
+        </div>
+        <div class="glossary-body">
+          A dynamic-priority scheduling algorithm where the task with the nearest absolute deadline runs next. EDF is optimal: it can schedule any task set that is theoretically schedulable (utilization up to 100%). The drawback is complexity in implementation and catastrophic behavior at overload — when overloaded, EDF misses deadlines unpredictably, whereas RMS degrades more gracefully. Less common in safety-critical systems due to certification complexity.
+        </div>
+      </div>
+
+      <div class="glossary-item" data-terms="posix real time extensions pthreads signals timers">
+        <div class="glossary-header" onclick="toggleGloss(this)">
+          <span class="glossary-term">POSIX.1b Real-Time Extensions</span>
+          <span class="glossary-cat">Standard</span>
+          <span class="glossary-chevron">▼</span>
+        </div>
+        <div class="glossary-body">
+          IEEE standard (1993) extending POSIX for real-time applications. Adds: real-time signals, POSIX timers (timer_create), priority scheduling (SCHED_FIFO, SCHED_RR), semaphores (sem_open), shared memory, message queues, and memory locking (mlockall). QNX Neutrino is fully POSIX.1b compliant; Linux supports it via pthreads and the rt library.
+        </div>
+      </div>
+
+      <div class="glossary-item" data-terms="time triggered event triggered architecture">
+        <div class="glossary-header" onclick="toggleGloss(this)">
+          <span class="glossary-term">Time-Triggered Architecture</span>
+          <span class="glossary-cat">Design Pattern</span>
+          <span class="glossary-chevron">▼</span>
+        </div>
+        <div class="glossary-body">
+          A design where all task activations are driven by a global clock, not by events. Tasks execute in predetermined time slots — no task can interfere with another. FlexRay and TT-Ethernet use this model. Extremely predictable and analyzable, but inflexible. Contrast with event-triggered systems, which respond to stimuli — more efficient but harder to analyze for WCET.
+        </div>
+      </div>
+
+      <div class="glossary-item" data-terms="hypervisor virtualization partitioning isolation mixed criticality">
+        <div class="glossary-header" onclick="toggleGloss(this)">
+          <span class="glossary-term">Hypervisor / Partitioning</span>
+          <span class="glossary-cat">Architecture</span>
+          <span class="glossary-chevron">▼</span>
+        </div>
+        <div class="glossary-body">
+          A software layer that runs multiple operating systems (partitions) on one processor with hardware isolation. In avionics, ARINC 653 defines space and time partitioning: each partition gets exactly its allocated CPU time and cannot access other partitions memory. Real-time hypervisors (Wind River Hypervisor, QNX Hypervisor, Xen with RT extensions) allow a certified RTOS to share a chip with an Linux infotainment stack — common in modern vehicles.
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── Tab 2: Major Players ── -->
+  <section class="tab-section" id="tab-players">
+    <div class="section-title">Major Players</div>
+    <div class="section-desc">The ecosystem spans commercial RTOS vendors, open-source projects, silicon providers, and end-user domains where real-time software runs.</div>
+
+    <div class="player-section">
+      <div class="player-section-title">Commercial RTOS Vendors</div>
+      <div class="player-grid">
+        <div class="player-card">
+          <div class="player-name">Wind River — VxWorks</div>
+          <div class="player-role">The dominant commercial RTOS for 40+ years. Runs in F-35 fighters, Boeing 777, Mars rovers, and medical devices. POSIX-compliant, DO-178C and IEC 61508 certified. Wind River also offers a Linux distribution for mixed-criticality applications.</div>
+          <span class="player-tag">Avionics / Defense</span>
+        </div>
+        <div class="player-card">
+          <div class="player-name">BlackBerry — QNX Neutrino</div>
+          <div class="player-role">Microkernel-based RTOS renowned for robustness and POSIX compliance. Dominant in automotive (runs in 195M+ vehicles including Toyota, BMW, GM). QNX Software Development Platform (SDP) targets ADAS and digital cockpit. ISO 26262 ASIL D certified.</div>
+          <span class="player-tag">Automotive</span>
+        </div>
+        <div class="player-card">
+          <div class="player-name">Green Hills Software — INTEGRITY</div>
+          <div class="player-role">A separation kernel RTOS used in the most security-sensitive environments: NSA-evaluated, Common Criteria EAL6+ certified. Used in military avionics, secure communications, and nuclear plant controls where formal verification is required.</div>
+          <span class="player-tag">Defense / Security</span>
+        </div>
+        <div class="player-card">
+          <div class="player-name">LynxOS / LynxSecure</div>
+          <div class="player-role">POSIX-compliant RTOS and separation hypervisor by Lynx Software Technologies. Common in military avionics and space applications. LynxSecure provides hardware-enforced partitioning for mixed-criticality systems.</div>
+          <span class="player-tag">Avionics / Space</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="player-section">
+      <div class="player-section-title">Open-Source RTOS</div>
+      <div class="player-grid">
+        <div class="player-card">
+          <div class="player-name">FreeRTOS (Amazon)</div>
+          <div class="player-role">The most widely deployed RTOS on microcontrollers. MIT-licensed, extremely lightweight (kernel fits in ~6 KB Flash). Runs on 40+ MCU architectures. Amazon maintains it as FreeRTOS with AWS IoT integrations. Ideal for resource-constrained embedded systems where cost matters more than certification.</div>
+          <span class="player-tag">IoT / MCU</span>
+        </div>
+        <div class="player-card">
+          <div class="player-name">Zephyr RTOS (Linux Foundation)</div>
+          <div class="player-role">A modern, modular RTOS backed by Intel, Nordic Semiconductor, NXP, and Google. Designed for connected IoT devices with a native Bluetooth and 802.15.4 stack. Growing safety certification story (IEC 61508 SIL 2). Increasingly used where FreeRTOS was previously default.</div>
+          <span class="player-tag">IoT / Wireless</span>
+        </div>
+        <div class="player-card">
+          <div class="player-name">Linux + PREEMPT_RT</div>
+          <div class="player-role">The PREEMPT_RT patch set (now partially mainlined) converts Linux into a soft/firm real-time OS by making most kernel code preemptible. Used in 5G base stations, industrial robotics, and audio production systems. Not suitable for hard real-time; latency typically in the 50–200 µs range with jitter, vs. single-digit µs for a dedicated RTOS.</div>
+          <span class="player-tag">Industrial / Telecom</span>
+        </div>
+        <div class="player-card">
+          <div class="player-name">RTEMS</div>
+          <div class="player-role">An open-source RTOS with POSIX support, originally developed for the US Army. Widely used in space applications (European Space Agency, NASA CubeSats) due to its radiation-tolerant port availability and long-term maintenance commitment. DO-178B qualified build environments exist.</div>
+          <span class="player-tag">Space / Defense</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="player-section">
+      <div class="player-section-title">Silicon & Hardware Platforms</div>
+      <div class="player-grid">
+        <div class="player-card">
+          <div class="player-name">ARM — Cortex-M / Cortex-R</div>
+          <div class="player-role">Cortex-M (M0 through M85) targets microcontrollers for cost-sensitive embedded/IoT. Cortex-R targets hard real-time with lockstep dual-core (for fault detection), ECC memory, and low-latency cache. Used in automotive ECUs, disk controllers, and industrial drives. The dominant embedded architecture globally.</div>
+          <span class="player-tag">MCU / Hard RT</span>
+        </div>
+        <div class="player-card">
+          <div class="player-name">Texas Instruments</div>
+          <div class="player-role">TI Sitara (AM64x, AM57x) and C2000 series are staples of industrial motor control, grid infrastructure, and ADAS. TI provides extensive real-time firmware libraries and the TI-RTOS (SYS/BIOS) kernel, now open-sourced as TI FreeRTOS SDK.</div>
+          <span class="player-tag">Industrial / Automotive</span>
+        </div>
+        <div class="player-card">
+          <div class="player-name">NXP Semiconductors</div>
+          <div class="player-role">i.MX RT crossover MCUs combine Cortex-M speed with application-processor features. S32K and S32G families target automotive networking and ADAS. NXP acquired Freescale and holds strong positions in automotive and industrial real-time silicon.</div>
+          <span class="player-tag">Automotive / MCU</span>
+        </div>
+        <div class="player-card">
+          <div class="player-name">STMicroelectronics — STM32</div>
+          <div class="player-role">The STM32 family (Cortex-M0 through M7) is the most popular MCU line among embedded hobbyists and industrial designers. ST provides the STM32Cube ecosystem with FreeRTOS integration, making it a training ground for professional RTOS development.</div>
+          <span class="player-tag">General Embedded</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="player-section">
+      <div class="player-section-title">End-User Domains</div>
+      <div class="player-grid">
+        <div class="player-card">
+          <div class="player-name">Automotive OEMs & Tier 1s</div>
+          <div class="player-role">Bosch, Continental, Aptiv, Magna, and the OEMs (Toyota, BMW, GM) consume the largest share of embedded real-time software. Each modern vehicle has 80–150 ECUs; next-gen zonal architectures consolidate these onto fewer, more powerful processors running hypervisors.</div>
+          <span class="player-tag">Automotive</span>
+        </div>
+        <div class="player-card">
+          <div class="player-name">Aerospace & Defense Primes</div>
+          <div class="player-role">Boeing, Airbus, Lockheed Martin, RTX, and L3Harris build or integrate the flight management, weapons, and mission systems that rely on certified RTOS. Long product lifecycles (30–50 years) mean VxWorks versions from the 1990s still fly on certified aircraft today.</div>
+          <span class="player-tag">Avionics</span>
+        </div>
+        <div class="player-card">
+          <div class="player-name">Medical Device Manufacturers</div>
+          <div class="player-role">Medtronic, Abbott, BD, and Siemens Healthineers build pacemakers, infusion pumps, imaging systems, and surgical robots. IEC 62304 governs software development; a Class C device failure is life-threatening, so exhaustive testing and formal verification are the norm.</div>
+          <span class="player-tag">Medical</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Tab 3: Core Metrics ── -->
+  <section class="tab-section" id="tab-metrics">
+    <div class="section-title">Core Metrics</div>
+    <div class="section-desc">How real-time systems are measured, characterized, and proven correct. These metrics appear in datasheets, design reviews, and certification audits.</div>
+
+    <table class="metrics-table">
+      <thead>
+        <tr><th>Metric</th><th>Definition</th><th>Benchmark / Notes</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Interrupt Latency</strong></td>
+          <td>Time from hardware interrupt assertion to first instruction of the ISR executing.</td>
+          <td>Bare-metal MCU: &lt;1 µs. RTOS with critical section: 1–10 µs. Linux PREEMPT_RT: 50–200 µs. Hard RT systems target single-digit µs.</td>
+        </tr>
+        <tr>
+          <td><strong>Context Switch Time</strong></td>
+          <td>Time to save current task state and restore next task state, measured from last instruction of outgoing task to first instruction of incoming task.</td>
+          <td>FreeRTOS on Cortex-M4: ~1–3 µs. VxWorks: ~2–5 µs. Linux: ~5–20 µs with PREEMPT_RT.</td>
+        </tr>
+        <tr>
+          <td><strong>WCET (Worst-Case Execution Time)</strong></td>
+          <td>Upper bound on how long a task can run, across all inputs and system states. Must be provably safe, not just measured.</td>
+          <td>Measured via static analysis tools (AbsInt aiT) or safe measurement-based bounds. Must be less than task period minus blocking time for schedulability.</td>
+        </tr>
+        <tr>
+          <td><strong>Jitter</strong></td>
+          <td>Variation in task start time or period from one instance to the next. A task scheduled every 1 ms that sometimes starts at 0.98 ms and sometimes at 1.03 ms has 50 µs of jitter.</td>
+          <td>Industrial motor control: &lt;10 µs jitter required. Audio systems: &lt;1 µs (or sample-rate jitter causes audible artifacts). EtherCAT achieves &lt;1 µs network jitter.</td>
+        </tr>
+        <tr>
+          <td><strong>CPU Utilization Ceiling</strong></td>
+          <td>Maximum safe CPU utilization for a task set under RMS: n(2^(1/n) - 1). For large n this approaches ~69.3%.</td>
+          <td>A task set using more than ~70% CPU under RMS is not guaranteed schedulable. EDF allows up to 100% but at overload risk. Safety margins typically target &lt;60% utilization.</td>
+        </tr>
+        <tr>
+          <td><strong>Deadline Miss Rate</strong></td>
+          <td>Fraction of task activations that fail to complete before their deadline. For hard RT this must be 0; for soft RT it is a design parameter.</td>
+          <td>Hard RT: 0% — any miss is a failure. Soft RT: system designers define acceptable miss rates (e.g., &lt;0.01% for video decode). Monitoring requires hardware performance counters or RTOS trace tools.</td>
+        </tr>
+        <tr>
+          <td><strong>Stack Usage (HWM)</strong></td>
+          <td>Maximum stack depth reached by a task. Expressed as high-water mark (HWM). Stack overflow is undefined behavior on most MCUs and will corrupt adjacent memory silently.</td>
+          <td>FreeRTOS: uxTaskGetStackHighWaterMark() returns remaining free words. Typical practice: allocate 2x measured HWM, verify in system test. Static stack analysis tools (PC-lint, StackAnalyzer) provide formal bounds.</td>
+        </tr>
+        <tr>
+          <td><strong>Schedulability</strong></td>
+          <td>Whether a task set can be proven to always meet all deadlines given worst-case execution times and periods. A binary property: schedulable or not.</td>
+          <td>Proven via utilization bound tests (RMS) or response-time analysis (RTA). RTA is more accurate but more complex. Safety-critical systems require a formal schedulability proof in the design documentation.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ── Tab 4: Technology Stack ── -->
+  <section class="tab-section" id="tab-stack">
+    <div class="section-title">Technology Stack</div>
+    <div class="section-desc">The layered stack from silicon to safety certification. Each layer must meet determinism constraints imposed by the layers above it.</div>
+
+    <div class="stack-layer">
+      <div class="stack-layer-label">Hardware / MCU</div>
+      <div class="chip-row">
+        <span class="chip">ARM Cortex-M</span>
+        <span class="chip">ARM Cortex-R</span>
+        <span class="chip green">RISC-V</span>
+        <span class="chip">Texas Instruments C2000</span>
+        <span class="chip">NXP S32K</span>
+        <span class="chip">STM32</span>
+        <span class="chip purple">Rad-Hard FPGAs</span>
+      </div>
+    </div>
+
+    <div class="stack-layer">
+      <div class="stack-layer-label">RTOS Kernel</div>
+      <div class="chip-row">
+        <span class="chip accent">VxWorks</span>
+        <span class="chip accent">QNX Neutrino</span>
+        <span class="chip accent">INTEGRITY</span>
+        <span class="chip green">FreeRTOS</span>
+        <span class="chip green">Zephyr</span>
+        <span class="chip green">RTEMS</span>
+        <span class="chip">Linux PREEMPT_RT</span>
+      </div>
+    </div>
+
+    <div class="stack-layer">
+      <div class="stack-layer-label">BSP & HAL</div>
+      <div class="chip-row">
+        <span class="chip">Board Support Package (BSP)</span>
+        <span class="chip">Hardware Abstraction Layer (HAL)</span>
+        <span class="chip">CMSIS (ARM)</span>
+        <span class="chip">Device Tree (Linux)</span>
+        <span class="chip green">AUTOSAR MCAL</span>
+      </div>
+    </div>
+
+    <div class="stack-layer">
+      <div class="stack-layer-label">Middleware & Stacks</div>
+      <div class="chip-row">
+        <span class="chip">ARINC 653 (Partitioning)</span>
+        <span class="chip green">AUTOSAR Classic / Adaptive</span>
+        <span class="chip">ROS 2 (Robotics)</span>
+        <span class="chip purple">DDS (Data Distribution Service)</span>
+        <span class="chip">POSIX.1b RT</span>
+        <span class="chip">lwIP / uIP (TCP/IP)</span>
+      </div>
+    </div>
+
+    <div class="stack-layer">
+      <div class="stack-layer-label">Communication Buses</div>
+      <div class="chip-row">
+        <span class="chip">CAN / CAN-FD</span>
+        <span class="chip">LIN</span>
+        <span class="chip">FlexRay</span>
+        <span class="chip">ARINC 429 / 664</span>
+        <span class="chip green">EtherCAT</span>
+        <span class="chip green">TSN (802.1Qbv)</span>
+        <span class="chip purple">PROFINET</span>
+        <span class="chip">SPI / I2C / UART</span>
+      </div>
+    </div>
+
+    <div class="stack-layer">
+      <div class="stack-layer-label">Development & Debug Tools</div>
+      <div class="chip-row">
+        <span class="chip">GCC / LLVM cross-compiler</span>
+        <span class="chip">IAR Embedded Workbench</span>
+        <span class="chip">Green Hills MULTI</span>
+        <span class="chip green">JTAG / SWD (OpenOCD, J-Link)</span>
+        <span class="chip">AbsInt aiT (WCET)</span>
+        <span class="chip purple">TRACE32 (Lauterbach)</span>
+        <span class="chip">Percepio Tracealyzer</span>
+        <span class="chip">HIL Test Rigs</span>
+      </div>
+    </div>
+
+    <div class="stack-layer">
+      <div class="stack-layer-label">Safety Certification Layer</div>
+      <div class="chip-row">
+        <span class="chip accent">IEC 61508 (Functional Safety)</span>
+        <span class="chip accent">ISO 26262 (Automotive)</span>
+        <span class="chip accent">DO-178C (Avionics)</span>
+        <span class="chip accent">IEC 62304 (Medical SW)</span>
+        <span class="chip purple">IEC 62443 (Industrial)</span>
+        <span class="chip">Common Criteria (Security)</span>
+        <span class="chip">MISRA C / MISRA C++</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Tab 5: Common Workflows ── -->
+  <section class="tab-section" id="tab-workflows">
+    <div class="section-title">Common Workflows</div>
+    <div class="section-desc">Three foundational runtime patterns every real-time systems engineer must understand deeply.</div>
+
+    <div class="workflow">
+      <h3>Preemptive Task Scheduling Cycle</h3>
+      <div class="workflow-desc">The core loop of a preemptive RTOS — how multiple tasks share one CPU without any task monopolizing it beyond its WCET.</div>
+      <div class="workflow-steps">
+        <div class="workflow-step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <div class="step-title">Timer Tick Interrupt</div>
+            <div class="step-detail">The hardware timer fires at the system tick rate (e.g., 1 kHz). The RTOS ISR is invoked. Tick counter incremented; sleeping tasks whose delay has expired are moved from blocked to ready state.</div>
+          </div>
+        </div>
+        <div class="workflow-step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <div class="step-title">Scheduler Runs</div>
+            <div class="step-detail">The RTOS scheduler inspects the ready queue and selects the highest-priority ready task. If it is different from the currently running task, a context switch is triggered.</div>
+          </div>
+        </div>
+        <div class="workflow-step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <div class="step-title">Context Switch</div>
+            <div class="step-detail">CPU registers (including stack pointer and program counter) of the outgoing task are saved to its Task Control Block (TCB). The incoming task TCB registers are restored to the CPU. Execution resumes at exactly the point the incoming task was last preempted.</div>
+          </div>
+        </div>
+        <div class="workflow-step">
+          <div class="step-num">4</div>
+          <div class="step-content">
+            <div class="step-title">Task Executes Within WCET</div>
+            <div class="step-detail">The selected task runs. If a higher-priority task becomes ready mid-execution (e.g., due to an ISR posting a semaphore), the scheduler immediately preempts the current task and switches again.</div>
+          </div>
+        </div>
+        <div class="workflow-step">
+          <div class="step-num">5</div>
+          <div class="step-content">
+            <div class="step-title">Task Blocks or Completes</div>
+            <div class="step-detail">Task calls a blocking RTOS API (e.g., vTaskDelay, xSemaphoreTake) or completes its current activation. It returns to the blocked or ready queue. The scheduler selects the next highest-priority ready task and the cycle repeats.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="workflow">
+      <h3>ISR → Deferred Processing (Bottom-Half Pattern)</h3>
+      <div class="workflow-desc">The canonical pattern for handling hardware interrupts in real-time systems without blocking the ISR for extended periods.</div>
+      <div class="workflow-steps">
+        <div class="workflow-step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <div class="step-title">Hardware Event Fires</div>
+            <div class="step-detail">A sensor, timer, or peripheral asserts an interrupt line. The CPU finishes the current instruction, saves minimal state (PC, PSR on Cortex-M via hardware), and vectors to the ISR.</div>
+          </div>
+        </div>
+        <div class="workflow-step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <div class="step-title">ISR — Minimal Work Only</div>
+            <div class="step-detail">The ISR reads the critical hardware register (e.g., received byte from UART FIFO), clears the interrupt flag, and immediately signals a waiting task via a semaphore or task notification. ISR returns in microseconds. No processing, no memory allocation, no blocking calls.</div>
+          </div>
+        </div>
+        <div class="workflow-step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <div class="step-title">Deferred Handler Task Unblocks</div>
+            <div class="step-detail">The handler task, which was blocked waiting on the semaphore, becomes ready. If it has the highest priority among ready tasks, the RTOS immediately preempts the current task (yield from ISR) and runs the handler.</div>
+          </div>
+        </div>
+        <div class="workflow-step">
+          <div class="step-num">4</div>
+          <div class="step-content">
+            <div class="step-title">Process Data in Task Context</div>
+            <div class="step-detail">The handler task processes the data — parse a packet, run a PID control loop, write to a ring buffer. Running in task context means it can block, call OS services, and be preempted by even higher-priority tasks. The ISR is free to fire again.</div>
+          </div>
+        </div>
+        <div class="workflow-step">
+          <div class="step-num">5</div>
+          <div class="step-content">
+            <div class="step-title">Output or Forward</div>
+            <div class="step-detail">Processed result is written to an output queue, sent over a bus, or used to update actuator state. Task blocks again waiting for the next semaphore signal. Total response time (ISR to output) must be provably within the application deadline.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="workflow">
+      <h3>Safety-Critical Boot Sequence & Watchdog Validation</h3>
+      <div class="workflow-desc">How a safety-critical embedded system transitions from power-on to normal operation with all integrity checks passed.</div>
+      <div class="workflow-steps">
+        <div class="workflow-step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <div class="step-title">Power-On Reset & Boot ROM</div>
+            <div class="step-detail">Hardware reset de-asserts. Boot ROM (mask-programmed, immutable) runs. It verifies the bootloader signature using a hardware public key stored in OTP fuses. Failed verification halts boot — no way to proceed with untrusted code.</div>
+          </div>
+        </div>
+        <div class="workflow-step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <div class="step-title">Bootloader — Self-Test & Init</div>
+            <div class="step-detail">Bootloader runs CPU built-in self-test (BIST), verifies RAM via march test patterns, validates application flash CRC/hash. Initializes clocks, watchdog timer (with short timeout), and minimum peripherals. Watchdog must be kicked quickly or it resets the system.</div>
+          </div>
+        </div>
+        <div class="workflow-step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <div class="step-title">RTOS Initialization</div>
+            <div class="step-detail">Application image loaded. RTOS kernel initializes scheduler data structures, creates all tasks and queues. Tasks are not yet running. Watchdog period extended to application-level timeout.</div>
+          </div>
+        </div>
+        <div class="workflow-step">
+          <div class="step-num">4</div>
+          <div class="step-content">
+            <div class="step-title">Application Self-Test</div>
+            <div class="step-detail">Before entering normal operation, all critical subsystems run POST (power-on self-test): sensor calibration checks, actuator range tests, CRC verification of calibration data in NVM. Failed tests set a fault flag and enter a safe state (limp mode) rather than normal operation.</div>
+          </div>
+        </div>
+        <div class="workflow-step">
+          <div class="step-num">5</div>
+          <div class="step-content">
+            <div class="step-title">Normal Operation & Watchdog Supervision</div>
+            <div class="step-detail">RTOS scheduler starts. A dedicated watchdog task (highest-priority or separate MCU) periodically verifies all critical tasks are alive and executing within expected timing. Only when all tasks check in does it kick the hardware watchdog. Any hung task causes a supervised system reset to safe state.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Tab 6: Trends & Challenges ── -->
+  <section class="tab-section" id="tab-trends">
+    <div class="section-title">Trends & Challenges</div>
+    <div class="section-desc">The forces reshaping real-time systems engineering in the 2020s — from new silicon architectures to the collision of AI and determinism.</div>
+
+    <div class="trend-grid">
+      <div class="trend-card">
+        <div class="trend-icon">🔓</div>
+        <div class="trend-title">RISC-V in Real-Time</div>
+        <div class="trend-desc">The open RISC-V ISA is entering safety-critical domains. SiFive, Andes, and Bosch are developing RISC-V cores for automotive (Bosch AURIX successors) and space. FreeRTOS and Zephyr already support RISC-V. The challenge: no established safety-certified toolchains yet — compiler qualification for DO-178C/ISO 26262 is ongoing.</div>
+      </div>
+      <div class="trend-card">
+        <div class="trend-icon">🔀</div>
+        <div class="trend-title">Mixed-Criticality Systems</div>
+        <div class="trend-desc">Running safety-critical (ASIL D) and non-critical (QM) software on the same chip using hypervisors. Automotive next-gen zone controllers combine AUTOSAR Classic RT control with Linux ADAS stacks on one SoC (e.g., Qualcomm SA8xxx, Renesas R-Car). The engineering challenge: proving the ASIL D partition is unaffected by the Linux side.</div>
+      </div>
+      <div class="trend-card">
+        <div class="trend-icon">🌐</div>
+        <div class="trend-title">TSN — Time-Sensitive Networking</div>
+        <div class="trend-desc">IEEE 802.1 TSN brings deterministic timing to standard Ethernet, replacing proprietary fieldbuses like PROFIBUS and CANopen. TSN enables sub-1 ms latency with &lt;1 µs jitter on standard Ethernet switches. Automotive Ethernet (100BASE-T1) + TSN is the backbone of next-gen vehicle networks. Industrial TSN is displacing EtherCAT in new designs.</div>
+      </div>
+      <div class="trend-card">
+        <div class="trend-icon">🤖</div>
+        <div class="trend-title">AI Inference on the Edge</div>
+        <div class="trend-desc">Running neural network inference in real-time embedded systems (object detection in ADAS, anomaly detection in industrial PLCs). The tension: neural nets are inherently non-deterministic in execution time due to data-dependent operations, making WCET analysis nearly impossible. Industry workaround: dedicated NPU hardware with bounded execution on fixed-topology networks.</div>
+      </div>
+      <div class="trend-card">
+        <div class="trend-icon">🏛️</div>
+        <div class="trend-title">Certification Complexity & Cost</div>
+        <div class="trend-desc">DO-178C DAL A certification for avionics software costs $1,000–$10,000 per line of code when including qualification of tools, development data, and test evidence. ISO 26262 ASIL D is similarly expensive. As systems grow in complexity (autonomous vehicles have 100M+ lines of code), the economics of full certification are forcing new approaches: model-based development, formal verification, and incremental certification.</div>
+      </div>
+      <div class="trend-card">
+        <div class="trend-icon">☁️</div>
+        <div class="trend-title">Cloud-Connected Real-Time</div>
+        <div class="trend-desc">Industrial IoT and connected vehicles require real-time embedded software to coexist with cloud connectivity. The architectural pattern: an RTOS core handles hard RT control; a Linux partition manages OTA updates, telemetry, and cloud APIs over TLS. The hard challenge is security — the cloud-connected partition must not compromise the certified RT partition.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Tab 7: Market Dynamics & Monetization ── -->
+  <section class="tab-section" id="tab-dynamics">
+    <div class="section-title">Market Dynamics & Monetization</div>
+    <div class="section-desc">The economics of the real-time systems ecosystem — from RTOS licensing to safety certification as a revenue moat.</div>
+
+    <div class="section-title" style="font-size:14px;margin-top:0;margin-bottom:10px;">Pain Points</div>
+    <div class="card-grid">
+      <div class="card">
+        <div class="card-icon">💸</div>
+        <h3>Certification Cost</h3>
+        <p>Safety certification dominates project budgets. DO-178C DAL A costs $1K–$10K per source line. ISO 26262 ASIL D adds months of documentation, testing, and third-party auditing. Small teams building safety-critical products often spend more on certification than on engineering.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🔒</div>
+        <h3>Toolchain Lock-In</h3>
+        <p>Switching RTOS vendors mid-project is nearly impossible. Certified toolchains (qualified compilers, RTOS safety manuals) are tightly coupled to specific versions. A project that certifies with IAR + VxWorks cannot switch to GCC + FreeRTOS without recertifying — a multi-year, multi-million-dollar effort.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">📏</div>
+        <h3>Memory & Resource Constraints</h3>
+        <p>MCU-class systems still operate with 256 KB Flash and 64 KB RAM. Dynamic memory allocation is often forbidden in safety-critical code (MISRA C Rule 21.3). Engineers must statically size all buffers, task stacks, and queues at design time — an increasingly difficult constraint as system complexity grows.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🔄</div>
+        <h3>Priority Inversion Bugs</h3>
+        <p>Priority inversion is subtle, intermittent, and devastating. It only manifests under specific task scheduling scenarios that may not appear in testing but surface in production. The Mars Pathfinder experience (1997) is the canonical warning: the bug caused resets 18 minutes into the mission. Detection requires specialized RTOS trace tools.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🏚️</div>
+        <h3>Legacy Porting</h3>
+        <p>Aerospace and automotive systems have 20–40 year lifecycles. Software written for VxWorks 5.x in the 1990s must eventually move to modern hardware while maintaining certification equivalency. The porting cost, retesting burden, and re-certification effort are enormous — many programs choose to keep aging hardware flying rather than port.</p>
+      </div>
+    </div>
+
+    <div class="section-title" style="font-size:14px;margin-top:28px;margin-bottom:10px;">Monetization Models</div>
+    <table class="metrics-table">
+      <thead>
+        <tr><th>Model</th><th>Description</th><th>Margin Profile</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Commercial RTOS License</strong></td>
+          <td>Per-unit or per-project royalty for commercial RTOS (VxWorks, QNX). Enterprise agreements cover entire product lines. Wind River and BlackBerry charge $10–$200+ per unit depending on volume and market.</td>
+          <td>Very high — software COGS near zero. Gross margins 80–90%. Revenue is highly recurring as products ship for years.</td>
+        </tr>
+        <tr>
+          <td><strong>Safety Certification Package</strong></td>
+          <td>Pre-certified RTOS source code, safety manual, and qualification artifacts sold separately from the base RTOS. Dramatically reduces customers own certification cost and timeline. This is the primary revenue differentiator for commercial RTOS vs. FreeRTOS.</td>
+          <td>Premium pricing — often 3–5x the base RTOS license. The certification work is done once but sold many times.</td>
+        </tr>
+        <tr>
+          <td><strong>Long-Term Support (LTS) / Maintenance</strong></td>
+          <td>Annual maintenance contracts covering security patches, bug fixes, and technical support. Critical for aerospace (30-year product lives) and medical (re-certification triggers if base RTOS changes). Customers are essentially locked in once certified.</td>
+          <td>High-margin recurring revenue. Churn is near zero — customers cannot easily switch once a product is certified on a specific RTOS version.</td>
+        </tr>
+        <tr>
+          <td><strong>Silicon Vendor Bundling</strong></td>
+          <td>RTOS pre-ported and bundled with MCU SDK at no additional cost (TI includes FreeRTOS, NXP includes Zephyr). Silicon vendor absorbs the RTOS cost to reduce customer friction. Creates enormous volume for open-source RTOS at the expense of commercial alternatives.</td>
+          <td>Low or zero direct margin from RTOS — monetized through silicon sales. Accelerates ecosystem adoption but commoditizes the OS layer.</td>
+        </tr>
+        <tr>
+          <td><strong>Consulting & Integration Services</strong></td>
+          <td>RTOS vendors and system integrators (Siemens, Esterel, Rapita) offer porting, optimization, and certification consulting. Common for new chip bring-up, WCET analysis campaigns, and MISRA C compliance reviews.</td>
+          <td>50–70% gross margin for specialized consulting. Time-and-materials or fixed-bid. Highly differentiated due to scarce expertise.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ── Tab 8: Evolution & Foundations ── -->
+  <section class="tab-section" id="tab-evolution">
+    <div class="section-title">Evolution & Foundations</div>
+    <div class="section-desc">From the first preemptive operating systems to modern safety-certified hypervisors — the 60-year arc of real-time systems.</div>
+
+    <div class="section-title" style="font-size:14px;margin-top:0;margin-bottom:12px;">Historical Timeline</div>
+    <div class="card-grid">
+      <div class="card">
+        <div class="card-icon">1961</div>
+        <h3>First Preemptive OS — CTSS</h3>
+        <p>MIT Computation Center Timesharing System introduces preemptive scheduling, allowing the computer to interrupt running programs. This foundational concept — that the OS controls task scheduling rather than the task controlling the OS — underlies every RTOS designed since.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">1973</div>
+        <h3>Liu & Layland — RMS Paper</h3>
+        <p>C. L. Liu and James W. Layland publish "Scheduling Algorithms for Multiprogramming in a Hard-Real-Time Environment" in the Journal of the ACM. This paper establishes Rate-Monotonic Scheduling and provides the first rigorous mathematical foundation for real-time schedulability analysis. Still directly cited in avionics certification documents today.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">1988</div>
+        <h3>VxWorks 1.0 — Wind River</h3>
+        <p>Wind River Systems releases VxWorks, the first commercial RTOS to gain widespread industry adoption. Its deterministic preemptive kernel, POSIX compatibility, and networking stack make it the standard for aerospace and defense embedded software throughout the 1990s and 2000s. It remains in active use in new programs today.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">1993</div>
+        <h3>POSIX.1b Real-Time Standard</h3>
+        <p>IEEE ratifies POSIX.1b (formerly POSIX.4), standardizing real-time extensions: priority scheduling (SCHED_FIFO), real-time signals, timers, semaphores, and shared memory. This allows real-time applications to be written portably across RTOS platforms that claim POSIX compliance — a critical step toward software reuse in certified systems.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">1995</div>
+        <h3>QNX Neutrino — Microkernel RTOS</h3>
+        <p>QNX Software Systems (later acquired by Blackberry) releases Neutrino, a microkernel RTOS where even device drivers run as user-space processes. A crash in a driver cannot corrupt the kernel. This architectural approach becomes the dominant model for automotive-grade RTOS, and QNX grows to run in 195M+ vehicles by 2024.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">2003</div>
+        <h3>FreeRTOS Goes Open Source</h3>
+        <p>Richard Barry releases FreeRTOS under a modified GPL license (later MIT). Its tiny footprint (~6 KB), zero licensing cost, and ARM Cortex-M support drive massive adoption on microcontrollers. Amazon acquires FreeRTOS in 2017 and adds AWS IoT integration, making it the most widely deployed RTOS in the world by unit volume.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">2012</div>
+        <h3>PREEMPT_RT Matures — Linux Gets Real</h3>
+        <p>The PREEMPT_RT patch set, developed by Thomas Gleixner and Ingo Molnar over a decade, reaches production maturity. Linux with PREEMPT_RT achieves sub-200 µs worst-case latency on x86, making it viable for soft/firm real-time in industrial and telecom applications. In 2021, core PREEMPT_RT changes are merged into Linux mainline.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">2017</div>
+        <h3>Zephyr RTOS — Linux Foundation</h3>
+        <p>The Linux Foundation launches Zephyr as an open-source, Apache 2.0-licensed RTOS for connected IoT and embedded systems. Backed by Intel, Nordic Semiconductor, NXP, and Google, Zephyr integrates native Bluetooth, Wi-Fi, and 802.15.4 stacks with a modular architecture. It is now the primary open-source challenger to FreeRTOS in the IoT and wireless sensor space.</p>
+      </div>
+    </div>
+
+    <div class="section-title" style="font-size:14px;margin-top:28px;margin-bottom:10px;">Foundational Works</div>
+    <table class="metrics-table">
+      <thead>
+        <tr><th>Work</th><th>Author / Year</th><th>Why It Matters</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Scheduling Algorithms for Multiprogramming in a Hard-Real-Time Environment</strong></td>
+          <td>Liu & Layland / 1973</td>
+          <td>Establishes Rate-Monotonic Scheduling (RMS) and provides the utilization bound. The mathematical foundation of real-time scheduling theory. Every real-time systems engineer must understand this paper.</td>
+        </tr>
+        <tr>
+          <td><strong>Hard Real-Time Computing Systems (Buttazzo)</strong></td>
+          <td>Giorgio Buttazzo / 1997 (3rd ed. 2011)</td>
+          <td>The definitive textbook covering task models, scheduling algorithms (RMS, EDF, DMS), resource sharing protocols (PCP, PIP), aperiodic servers, and multiprocessor scheduling. The graduate-level reference for real-time systems courses worldwide.</td>
+        </tr>
+        <tr>
+          <td><strong>POSIX.1b-1993 (IEEE Std 1003.1b)</strong></td>
+          <td>IEEE / 1993</td>
+          <td>Standardizes real-time OS interfaces (scheduling policies, timers, semaphores, signals). Enables portable real-time application code across compliant RTOS platforms. The lingua franca of commercial RTOS APIs.</td>
+        </tr>
+        <tr>
+          <td><strong>IEC 61508 — Functional Safety of E/E/PE Systems</strong></td>
+          <td>IEC / 1998 (Ed. 2: 2010)</td>
+          <td>The parent safety standard for electrical, electronic, and programmable electronic safety systems. Defines Safety Integrity Levels (SIL 1–4) and the V-model development lifecycle. IS0 26262 (automotive) and IEC 62304 (medical) are derivative standards. Compliance is mandatory in most industrial and safety-critical domains.</td>
+        </tr>
+        <tr>
+          <td><strong>DO-178C — Software Considerations in Airborne Systems</strong></td>
+          <td>RTCA / 2011</td>
+          <td>The governing standard for avionics software certification. Defines Development Assurance Levels (DAL A–E), required software lifecycle data, and verification objectives. DAL A software requires 100% decision coverage and has no known safety defects. Compliance is required by the FAA and EASA for any software controlling flight-critical functions.</td>
+        </tr>
+        <tr>
+          <td><strong>AUTOSAR Classic & Adaptive Specification</strong></td>
+          <td>AUTOSAR Consortium / 2003–present</td>
+          <td>Defines the standard software architecture for automotive ECUs. AUTOSAR Classic standardizes the RTOS (OSEK/VDX-based), communication stacks (COM, PDU Router), and hardware abstraction for body control and powertrain ECUs. AUTOSAR Adaptive (POSIX-based, C++14) targets ADAS and connected vehicle high-compute platforms. Nearly every automotive ECU shipped today uses some layer of AUTOSAR.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+</div>
+
+<script src="../../shared.js"></script>
+</body>
+</html>

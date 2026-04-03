@@ -1,5 +1,34 @@
 # Primer Changelog
 
+## 2026-04-03
+
+### [feature] Primer directory reorganization — industry/ subfolder
+- Moved all 17 existing industry primers from `primer/<name>/` into `primer/industry/<name>/`
+- Updated all moved primers: `href="../shared.css"` → `../../shared.css`, `src="../shared.js"` → `../../shared.js`, breadcrumb `href="../index.html"` → `../../index.html`
+- Updated all 17 card hrefs and sidebar nav hrefs in `primer/index.html` to `industry/<name>/index.html`
+- Sidebar logo updated: "Industry Primer" → "Primer", subtitle → "Industry & technology foundations"
+- Page title updated to "📚 Primer", subtitle broadened to include technology domains
+- Search placeholder updated to "Search primers…"
+- `updateCount()` scoped to `#industry-grid` so tech cards are not counted in the industry count
+
+### [feature] Technology Primer section — new category
+- New `primer/technology/` category directory with `shared.css` stub for future tech-specific styles
+- `primer/index.html` gains a "Technologies" sidebar nav group (All Technologies + Real-Time Systems links) and a `#technologies-section` card grid below the industries grid
+- `filterCards()` JS extended with `TECH_INDUSTRIES` Set and `all-tech` filter case
+
+### [feature] Real-Time Systems — first Technology Primer (9 tabs)
+- New file: `primer/technology/real-time-systems/index.html`
+- Loads `../../shared.css` + `../shared.css` (layered CSS pattern for tech category)
+- **Tab 1 — Overview**: 6 sub-domain cards (RTOS Kernels, Scheduling Algorithms, Embedded Hardware, Safety Standards, Communication Buses, Development Tools); 5-node processing pipeline value chain (Sensor → ISR → Task Queue → Processing → Actuator); 6 market-context cards (Automotive, Avionics, Medical Devices, Industrial Control, Space & Defense, Telecom/5G RAN)
+- **Tab 2 — Key Terminology**: 20 searchable glossary terms covering Determinism, Hard/Soft/Firm RT, RTOS, WCET, Latency, Jitter, Preemption, Context Switch, ISR, Priority Inversion, Mutex/Semaphore, Watchdog Timer, Tick, RMS, EDF, POSIX.1b, Time-Triggered Architecture, Hypervisor/Partitioning
+- **Tab 3 — Major Players**: 4 sections — Commercial RTOS (VxWorks, QNX, INTEGRITY, LynxOS), Open-Source (FreeRTOS, Zephyr, PREEMPT_RT, RTEMS), Silicon (ARM Cortex-M/R, TI, NXP, STM32), End-User Domains (Automotive OEMs, Aerospace Primes, Medical Device Manufacturers)
+- **Tab 4 — Core Metrics**: 8-row table covering Interrupt Latency, Context Switch Time, WCET, Jitter, CPU Utilization Ceiling, Deadline Miss Rate, Stack HWM, Schedulability with benchmarks
+- **Tab 5 — Technology Stack**: 7 layers — MCU/Hardware, RTOS Kernel, BSP & HAL, Middleware & Stacks, Communication Buses, Dev & Debug Tools, Safety Certification Layer
+- **Tab 6 — Common Workflows**: 3 workflows — (1) Preemptive Task Scheduling Cycle (5 steps), (2) ISR → Deferred Processing bottom-half pattern (5 steps), (3) Safety-Critical Boot Sequence & Watchdog Validation (5 steps)
+- **Tab 7 — Trends & Challenges**: 6 trend cards — RISC-V in RT, Mixed-Criticality Systems, TSN, AI Inference on Edge, Certification Cost, Cloud-Connected RT
+- **Tab 8 — Market Dynamics & Monetization**: 5 pain-point cards (Certification Cost, Toolchain Lock-In, Memory Constraints, Priority Inversion Bugs, Legacy Porting); 5-row monetization table (Commercial RTOS License, Safety Cert Package, LTS/Maintenance, Silicon Bundling, Consulting)
+- **Tab 9 — Evolution & Foundations**: 8 timeline cards (1961 CTSS → 1973 Liu & Layland → 1988 VxWorks → 1993 POSIX.1b → 1995 QNX Neutrino → 2003 FreeRTOS → 2012 PREEMPT_RT → 2017 Zephyr); 6-row foundational works table (Liu & Layland 1973, Buttazzo textbook, POSIX.1b-1993, IEC 61508, DO-178C, AUTOSAR)
+
 ## 2026-03-27
 
 ### [feature] primer/insurance — added Tab 10 (Data Architecture & Flows) and Tab 11 (Failure Modes & Incidents)
