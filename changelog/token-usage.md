@@ -78,3 +78,4 @@ Pull from: `~/.claude/projects/-Users-clark-playground/<session-id>.jsonl`
 | 2026-04-03 05:24 | 50 | 8,821 | 883,785 | $0.6461 | auto-hook snapshot <!-- hook:1775219046 -->
 | 2026-04-03 10:50 | 153 | 40,524 | 7,379,859 | $4.1282 | auto-hook snapshot <!-- hook:1775238649 -->
 | 2026-04-06 23:29 | 108 | 33,293 | 4,755,845 | $2.8218 | auto-hook snapshot <!-- hook:1775543387 -->
+| 2026-04-07 14:08 | 15,351 | 26,465 | 800,460 | $1.3731 | auto-hook snapshot <!-- hook:1775596132 -->

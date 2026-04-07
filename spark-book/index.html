@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Learning Spark — Interactive Supplement</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --bg:       #100e0c;
+      --surface:  #1c1814;
+      --card:     #221f1a;
+      --border:   #3a342c;
+      --text:     #e8ddd0;
+      --muted:    #9c8e7e;
+      --amber:    #f59e0b;
+      --orange:   #ff7c43;
+      --green:    #3fb950;
+      --dim:      #6b5f50;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    .site-header {
+      padding: 3rem 1.5rem 2rem;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(180deg, #1a140e 0%, var(--bg) 100%);
+    }
+    .flame { font-size: 3.2rem; line-height: 1; display: block; margin-bottom: .75rem }
+    .book-title {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(1.6rem, 4vw, 2.5rem);
+      font-weight: 700;
+      color: var(--amber);
+      letter-spacing: -.01em;
+    }
+    .book-subtitle {
+      font-size: .9rem;
+      color: var(--muted);
+      margin-top: .3rem;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+    .book-byline {
+      font-size: .8rem;
+      color: var(--dim);
+      margin-top: .6rem;
+    }
+    .tag-row { display: flex; gap: .5rem; justify-content: center; flex-wrap: wrap; margin-top: 1rem }
+    .tag {
+      font-size: .7rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
+      padding: .2rem .6rem; border-radius: 4px;
+      border: 1px solid var(--border); color: var(--muted);
+      background: var(--surface);
+    }
+    .tag.amber { border-color: var(--amber); color: var(--amber); background: rgba(245,158,11,.08) }
+    .tag.orange { border-color: var(--orange); color: var(--orange); background: rgba(255,124,67,.08) }
+
+    /* ── Main ── */
+    .main { max-width: 860px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem }
+
+    .section-label {
+      font-size: .7rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+      color: var(--dim); margin-bottom: 1rem; padding-bottom: .4rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* ── Chapter cards ── */
+    .chapter-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2.5rem;
+    }
+    .ch-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.25rem 1.25rem 1rem;
+      text-decoration: none;
+      color: var(--text);
+      transition: border-color .2s, transform .15s, background .2s;
+      display: block;
+      position: relative;
+      overflow: hidden;
+    }
+    .ch-card:hover { border-color: var(--amber); transform: translateY(-2px); background: #28221c }
+    .ch-card.coming-soon {
+      opacity: .5; pointer-events: none; cursor: default;
+    }
+    .ch-card.coming-soon:hover { transform: none }
+    .ch-num {
+      font-size: .65rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+      color: var(--dim); margin-bottom: .5rem;
+    }
+    .ch-icon { font-size: 1.8rem; margin-bottom: .5rem; display: block }
+    .ch-title {
+      font-family: Georgia, serif;
+      font-size: 1rem; font-weight: 700; color: var(--amber);
+      margin-bottom: .3rem; line-height: 1.3;
+    }
+    .ch-desc { font-size: .8rem; color: var(--muted); line-height: 1.55 }
+    .ch-interactive {
+      margin-top: .75rem;
+      font-size: .7rem; color: var(--orange); font-weight: 600;
+      display: flex; align-items: center; gap: .3rem;
+    }
+    .ch-interactive::before { content: "▶"; font-size: .6rem }
+    .soon-badge {
+      position: absolute; top: .75rem; right: .75rem;
+      font-size: .6rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+      background: var(--surface); color: var(--dim); border: 1px solid var(--border);
+      border-radius: 4px; padding: .15rem .45rem;
+    }
+
+    /* ── About section ── */
+    .about-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--amber);
+      border-radius: 8px;
+      padding: 1.2rem 1.4rem;
+      font-size: .85rem;
+      color: var(--muted);
+      line-height: 1.7;
+      margin-bottom: 2.5rem;
+    }
+    .about-box strong { color: var(--text) }
+
+    /* ── How to use ── */
+    .how-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: .75rem;
+      margin-bottom: 2.5rem;
+    }
+    .how-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+    }
+    .how-icon { font-size: 1.4rem; margin-bottom: .4rem; display: block }
+    .how-title { font-size: .8rem; font-weight: 700; color: var(--text); margin-bottom: .25rem }
+    .how-desc { font-size: .75rem; color: var(--muted); line-height: 1.5 }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      font-size: .73rem;
+      color: var(--dim);
+      padding: 1.5rem;
+      border-top: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+
+<header class="site-header">
+  <span class="flame">🔥</span>
+  <div class="book-title">Learning Spark</div>
+  <div class="book-subtitle">Interactive Supplement &mdash; 2nd Edition</div>
+  <div class="book-byline">Damji &bull; Wenig &bull; Das &bull; Lee &mdash; covers Apache Spark 3.0</div>
+  <div class="tag-row">
+    <span class="tag amber">Apache Spark 3.x</span>
+    <span class="tag orange">Interactive Diagrams</span>
+    <span class="tag">Distributed Systems</span>
+    <span class="tag">Data Engineering</span>
+  </div>
+</header>
+
+<main class="main">
+
+  <div class="about-box">
+    <strong>What this is:</strong> A hands-on companion to the book. Each chapter is paired with an interactive diagram so you can <em>see</em> the concept react to your inputs &mdash; not just read about it. Adjust sliders, trigger jobs, build DAGs. The book explains the <em>what</em>; this explains the <em>why it feels that way</em>.
+  </div>
+
+  <div class="section-label">Chapters — Phase 1</div>
+  <div class="chapter-grid">
+
+    <a href="ch/01-architecture.html" class="ch-card">
+      <div class="ch-num">Chapter 1</div>
+      <span class="ch-icon">🏗️</span>
+      <div class="ch-title">Spark Architecture</div>
+      <div class="ch-desc">Driver, executors, cluster managers, and how a job travels from your laptop to HDFS.</div>
+      <div class="ch-interactive">Job flow animator — 3 live scenarios</div>
+    </a>
+
+    <a href="ch/02-lazy-eval.html" class="ch-card">
+      <div class="ch-num">Chapter 2</div>
+      <span class="ch-icon">🕰️</span>
+      <div class="ch-title">Lazy Evaluation &amp; DAGs</div>
+      <div class="ch-desc">Build a transformation chain step by step. Watch nothing execute until you trigger an action.</div>
+      <div class="ch-interactive">Interactive DAG builder</div>
+    </a>
+
+    <a href="ch/03-partitions.html" class="ch-card">
+      <div class="ch-num">Chapter 3</div>
+      <span class="ch-icon">🗂️</span>
+      <div class="ch-title">Partitions &amp; Parallelism</div>
+      <div class="ch-desc">Tune partition count against executor count. See tasks pile up or spread evenly.</div>
+      <div class="ch-interactive">Live partition layout + cost model</div>
+    </a>
+
+  </div>
+
+  <div class="section-label">Coming Soon — Phase 2 &amp; 3</div>
+  <div class="chapter-grid">
+
+    <div class="ch-card coming-soon">
+      <span class="soon-badge">Coming Soon</span>
+      <div class="ch-num">Chapter 4</div>
+      <span class="ch-icon">🌐</span>
+      <div class="ch-title">Narrow vs Wide Transformations</div>
+      <div class="ch-desc">Watch data particles cross executor boundaries during a shuffle — or not.</div>
+      <div class="ch-interactive">Data movement animation</div>
+    </div>
+
+    <div class="ch-card coming-soon">
+      <span class="soon-badge">Coming Soon</span>
+      <div class="ch-num">Chapter 5</div>
+      <span class="ch-icon">🔬</span>
+      <div class="ch-title">Catalyst Optimizer</div>
+      <div class="ch-desc">Step through Unresolved → Analyzed → Optimized logical plans for a live query.</div>
+      <div class="ch-interactive">3-panel query plan walkthrough</div>
+    </div>
+
+    <div class="ch-card coming-soon">
+      <span class="soon-badge">Coming Soon</span>
+      <div class="ch-num">Chapter 6</div>
+      <span class="ch-icon">🌊</span>
+      <div class="ch-title">Structured Streaming</div>
+      <div class="ch-desc">Tune the watermark and watch late-arriving events land inside or outside the window.</div>
+      <div class="ch-interactive">Live event timeline + watermark</div>
+    </div>
+
+    <div class="ch-card coming-soon">
+      <span class="soon-badge">Coming Soon</span>
+      <div class="ch-num">Chapter 7</div>
+      <span class="ch-icon">🔺</span>
+      <div class="ch-title">Delta Lake</div>
+      <div class="ch-desc">Append, update, delete &mdash; then time-travel the table back to any version.</div>
+      <div class="ch-interactive">Transaction log + time travel slider</div>
+    </div>
+
+  </div>
+
+  <div class="section-label">How to use this supplement</div>
+  <div class="how-grid">
+    <div class="how-card">
+      <span class="how-icon">📖</span>
+      <div class="how-title">Read first</div>
+      <div class="how-desc">Skim the book chapter to get the vocabulary. Come here when a diagram feels static.</div>
+    </div>
+    <div class="how-card">
+      <span class="how-icon">🎛️</span>
+      <div class="how-title">Break things</div>
+      <div class="how-desc">Try the edge cases — OOM, zero partitions, 100% late events. That is where intuition forms.</div>
+    </div>
+    <div class="how-card">
+      <span class="how-icon">💡</span>
+      <div class="how-title">Read the log</div>
+      <div class="how-desc">Each interactive shows a live log. The messages match what you will see in Spark UI.</div>
+    </div>
+    <div class="how-card">
+      <span class="how-icon">🔁</span>
+      <div class="how-title">Re-run scenarios</div>
+      <div class="how-desc">Each chapter has 2–3 scenarios. Run all of them — differences between them teach more than the happy path.</div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  Interactive supplement &mdash; not affiliated with O&apos;Reilly or the book authors.
+  Book: <em>Learning Spark, 2nd Ed.</em> &mdash; Damji, Wenig, Das &amp; Lee.
+</footer>
+
+</body>
+</html>

@@ -7,6 +7,11 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-04-07
+
+### [feature] Learning Spark interactive book supplement — Phase 1
+- `spark-book/` — 4-page interactive companion to "Learning Spark 2nd Ed.": hub + Ch 1 (job flow animator + cluster topology), Ch 2 (lazy eval DAG builder), Ch 3 (partition layout visualizer with cost model)
+
 ## 2026-04-06
 
 ### [feature] node-flow-animator skill + test prototypes

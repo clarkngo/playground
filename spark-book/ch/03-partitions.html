@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ch 3 &mdash; Partitions &amp; Parallelism | Learning Spark Supplement</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0 }
+  :root {
+    --accent:   #ff7c43;
+    --success:  #3fb950;
+    --warning:  #e3b341;
+    --error:    #f85149;
+    --muted:    #8b949e;
+    --bg-base:  #0d1117;
+    --bg-card:  #161b22;
+    --border:   #30363d;
+    --text:     #e6edf3;
+    --blue:     #58a6ff;
+    --purple:   #bc8cff;
+  }
+  body {
+    background: var(--bg-base);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  /* ── Top bar ── */
+  .top-bar {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--bg-card); border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 1.25rem; height: 48px;
+  }
+  .breadcrumb { display: flex; align-items: center; gap: .5rem; font-size: .8rem; color: var(--muted) }
+  .breadcrumb a { color: var(--muted); text-decoration: none }
+  .breadcrumb a:hover { color: var(--text) }
+  .nav-arrows { display: flex; gap: .5rem; align-items: center }
+  .nav-btn {
+    padding: .3rem .8rem; border-radius: 6px; border: 1px solid var(--border);
+    background: transparent; color: var(--text); font-size: .78rem; cursor: pointer;
+    text-decoration: none; display: inline-flex; align-items: center;
+    transition: border-color .15s, color .15s;
+  }
+  .nav-btn:hover { border-color: var(--accent); color: var(--accent) }
+  .ch-badge {
+    font-size: .72rem; font-weight: 700; background: rgba(255,124,67,.12);
+    color: var(--accent); border: 1px solid rgba(255,124,67,.3);
+    border-radius: 4px; padding: .15rem .55rem; letter-spacing: .04em;
+  }
+
+  /* ── Page ── */
+  .page { max-width: 860px; margin: 0 auto; padding: 2rem 1.25rem 4rem }
+  .hero { margin-bottom: 2rem }
+  .hero-tag { font-size: .68rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: .4rem }
+  .hero h1 { font-size: clamp(1.4rem, 3vw, 2rem); font-weight: 700; margin-bottom: .4rem }
+  .hero-desc { font-size: .9rem; color: var(--muted); max-width: 620px; line-height: 1.65 }
+
+  .section-title {
+    font-size: .7rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: .85rem; padding-bottom: .35rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* ── Concept cards ── */
+  .concept-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: .75rem; margin-bottom: 2rem }
+  .concept-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 1rem }
+  .concept-card .icon { font-size: 1.4rem; margin-bottom: .4rem }
+  .concept-card h3 { font-size: .85rem; font-weight: 700; color: var(--text); margin-bottom: .25rem }
+  .concept-card p { font-size: .78rem; color: var(--muted); line-height: 1.55 }
+
+  /* ── Interactive ── */
+  .interactive {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px;
+    padding: 1.25rem; margin-bottom: 2rem;
+  }
+  .interactive h2 { font-size: .95rem; font-weight: 600; margin-bottom: .2rem }
+  .sub { font-size: .78rem; color: var(--muted); margin-bottom: 1.1rem }
+
+  /* ── Sliders ── */
+  .sliders-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: .85rem; margin-bottom: 1rem }
+  .slider-group { display: flex; flex-direction: column; gap: .3rem }
+  .slider-label { font-size: .78rem; color: var(--muted); display: flex; justify-content: space-between; align-items: center }
+  .slider-val { font-weight: 700; color: var(--text); font-size: .85rem }
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 6px; border-radius: 3px;
+    background: var(--border); cursor: pointer; outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--accent); border: 2px solid var(--bg-base); cursor: pointer;
+  }
+
+  /* ── Metric chips ── */
+  .metrics-row { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1rem }
+  .metric-chip {
+    background: var(--bg-base); border: 2px solid var(--border); border-radius: 8px;
+    padding: .45rem .85rem; text-align: center; min-width: 100px; transition: border-color .3s;
+  }
+  .metric-chip.good   { border-color: var(--success) }
+  .metric-chip.warn   { border-color: var(--warning) }
+  .metric-chip.bad    { border-color: var(--error) }
+  .metric-val { font-size: 1.15rem; font-weight: 700; font-variant-numeric: tabular-nums; display: block }
+  .metric-val.green  { color: var(--success) }
+  .metric-val.orange { color: var(--accent) }
+  .metric-val.yellow { color: var(--warning) }
+  .metric-val.red    { color: var(--error) }
+  .metric-val.blue   { color: var(--blue) }
+  .metric-lbl { font-size: .65rem; color: var(--muted); display: block; margin-top: .1rem }
+
+  /* ── Insight box ── */
+  .insight-box {
+    background: var(--bg-base); border: 1px solid var(--border); border-left: 3px solid var(--warning);
+    border-radius: 8px; padding: .75rem 1rem; font-size: .8rem; color: var(--muted);
+    margin-bottom: 1rem; line-height: 1.65; transition: border-left-color .4s;
+  }
+  .insight-box.good { border-left-color: var(--success) }
+  .insight-box.bad  { border-left-color: var(--error) }
+  .insight-box strong { color: var(--text) }
+
+  /* ── Executor grid ── */
+  .exec-grid-wrap {
+    background: var(--bg-base); border: 1px solid var(--border); border-radius: 8px;
+    padding: .75rem; overflow-x: auto;
+  }
+  .exec-grid { display: flex; flex-direction: column; gap: .45rem; min-width: max-content }
+
+  .exec-row { display: flex; align-items: center; gap: .4rem }
+  .exec-label {
+    font-size: .68rem; font-weight: 700; color: var(--muted); width: 56px;
+    flex-shrink: 0; text-align: right; font-variant-numeric: tabular-nums;
+  }
+  .exec-partitions { display: flex; gap: 3px; flex-wrap: wrap; max-width: 600px }
+
+  .part-block {
+    width: 22px; height: 22px; border-radius: 4px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .48rem; font-weight: 700; color: rgba(255,255,255,.75);
+    border: 1px solid rgba(255,255,255,.08);
+    transition: background .3s, opacity .3s;
+    animation: part-pop .2s ease both;
+  }
+  @keyframes part-pop {
+    from { opacity: 0; transform: scale(.6) }
+    to   { opacity: 1; transform: scale(1) }
+  }
+
+  .exec-util-bar {
+    height: 6px; border-radius: 3px; transition: width .4s, background .4s;
+    background: var(--success); min-width: 4px;
+  }
+  .exec-util-wrap {
+    flex: 1; background: var(--border); border-radius: 3px; height: 6px; max-width: 80px;
+  }
+  .exec-util-pct { font-size: .62rem; color: var(--muted); width: 30px; flex-shrink: 0 }
+
+  /* ── Sweet-spot rule ── */
+  .rule-box {
+    background: rgba(255,124,67,.06); border: 1px solid rgba(255,124,67,.25);
+    border-radius: 8px; padding: .85rem 1rem; font-size: .8rem; color: var(--muted);
+    margin-top: .85rem; line-height: 1.65;
+  }
+  .rule-box strong { color: var(--accent) }
+
+  /* ── Comparison ── */
+  .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; margin-bottom: 2rem }
+  .compare-card {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 1rem;
+  }
+  .compare-card.bad  { border-left: 3px solid var(--error) }
+  .compare-card.good { border-left: 3px solid var(--success) }
+  .compare-card h4 { font-size: .82rem; font-weight: 700; color: var(--text); margin-bottom: .35rem }
+  .compare-card p { font-size: .77rem; color: var(--muted); line-height: 1.55; margin-bottom: .4rem }
+  .compare-tag {
+    display: inline-block; font-size: .62rem; font-weight: 600; border-radius: 4px;
+    padding: .1rem .4rem; margin-bottom: .45rem; letter-spacing: .04em; text-transform: uppercase;
+  }
+  .compare-tag.red   { background: rgba(248,81,73,.1); color: var(--error) }
+  .compare-tag.green { background: rgba(63,185,80,.1); color: var(--success) }
+
+  /* ── Use cases ── */
+  .uc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: .75rem; margin-bottom: 2rem }
+  .uc-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; border-left: 3px solid var(--accent) }
+  .uc-card h3 { font-size: .83rem; font-weight: 700; color: var(--text); margin-bottom: .3rem }
+  .uc-card p  { font-size: .77rem; color: var(--muted); line-height: 1.55 }
+  .uc-tag {
+    display: inline-block; font-size: .62rem; font-weight: 600;
+    background: rgba(255,124,67,.1); color: var(--accent);
+    border-radius: 4px; padding: .1rem .4rem; margin-bottom: .45rem;
+    letter-spacing: .04em; text-transform: uppercase;
+  }
+
+  /* ── Gotchas ── */
+  .gotcha-list { display: flex; flex-direction: column; gap: .6rem; margin-bottom: 2rem }
+  .gotcha { background: var(--bg-card); border: 1px solid var(--border); border-left: 3px solid var(--warning); border-radius: 8px; padding: .85rem 1rem; display: flex; gap: .75rem; align-items: flex-start }
+  .gotcha-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: .05rem }
+  .gotcha h4 { font-size: .82rem; font-weight: 700; color: var(--text); margin-bottom: .2rem }
+  .gotcha p  { font-size: .77rem; color: var(--muted); line-height: 1.55 }
+
+  code { background: rgba(255,255,255,.07); border-radius: 3px; padding: .1rem .3rem; font-size: .85em; font-family: monospace }
+</style>
+</head>
+<body>
+
+<nav class="top-bar">
+  <div class="breadcrumb">
+    <a href="../index.html">Learning Spark</a>
+    <span>/</span>
+    <span>Chapter 3</span>
+  </div>
+  <div class="nav-arrows">
+    <a href="02-lazy-eval.html" class="nav-btn">&#8592; Prev</a>
+    <span class="ch-badge">3 / 7</span>
+    <a href="../index.html" class="nav-btn disabled">Next &#8594;</a>
+  </div>
+</nav>
+
+<div class="page">
+
+  <div class="hero">
+    <div class="hero-tag">Chapter 3 &mdash; Structured APIs</div>
+    <h1>Partitions &amp; Parallelism</h1>
+    <p class="hero-desc">A partition is the unit of parallelism in Spark. Too few and cores sit idle. Too many and scheduling overhead eats your gains. Drag the sliders below and watch the task distribution change in real time.</p>
+  </div>
+
+  <div class="section-title">Key concepts</div>
+  <div class="concept-grid">
+    <div class="concept-card">
+      <div class="icon">&#128193;</div>
+      <h3>Partition</h3>
+      <p>A logical chunk of the dataset. Each partition becomes exactly one task per stage. Spark processes them in parallel, one per available core slot.</p>
+    </div>
+    <div class="concept-card">
+      <div class="icon">&#9881;</div>
+      <h3>Task slots</h3>
+      <p>Total slots = executors &times; cores per executor. If partitions &gt; slots, tasks queue and run in waves. If partitions &lt; slots, cores sit idle.</p>
+    </div>
+    <div class="concept-card">
+      <div class="icon">&#127793;</div>
+      <h3>Skew</h3>
+      <p>When one partition is 10&times; larger than others, one task runs long after the rest finish. The stage cannot complete until the last task does.</p>
+    </div>
+    <div class="concept-card">
+      <div class="icon">&#128202;</div>
+      <h3>Default: 200</h3>
+      <p><code>spark.sql.shuffle.partitions</code> defaults to 200. Often too many for small data (tiny files) and too few for very large shuffles.</p>
+    </div>
+  </div>
+
+  <div class="section-title">Interactive &mdash; Partition layout visualizer</div>
+  <div class="interactive">
+    <h2>Distribute partitions across executors</h2>
+    <p class="sub">Adjust partitions, executors, and cores. The layout shows which executor runs which partition. Utilization bars show how evenly the work is spread.</p>
+
+    <div class="sliders-grid">
+      <div class="slider-group">
+        <div class="slider-label">Partitions <span class="slider-val" id="lbl-parts">16</span></div>
+        <input type="range" id="sl-parts" min="1" max="64" value="16" oninput="update()">
+      </div>
+      <div class="slider-group">
+        <div class="slider-label">Executors <span class="slider-val" id="lbl-execs">4</span></div>
+        <input type="range" id="sl-execs" min="1" max="12" value="4" oninput="update()">
+      </div>
+      <div class="slider-group">
+        <div class="slider-label">Cores / executor <span class="slider-val" id="lbl-cores">4</span></div>
+        <input type="range" id="sl-cores" min="1" max="8" value="4" oninput="update()">
+      </div>
+      <div class="slider-group">
+        <div class="slider-label">Partition size (MB) <span class="slider-val" id="lbl-size">128</span></div>
+        <input type="range" id="sl-size" min="1" max="512" value="128" oninput="update()">
+      </div>
+    </div>
+
+    <div class="metrics-row" id="metrics-row"></div>
+    <div class="insight-box" id="insight-box"></div>
+
+    <div class="exec-grid-wrap">
+      <div class="exec-grid" id="exec-grid"></div>
+    </div>
+
+    <div class="rule-box" id="rule-box"></div>
+  </div>
+
+  <div class="section-title">Under- vs over-partitioned</div>
+  <div class="compare-grid">
+    <div class="compare-card bad">
+      <span class="compare-tag red">Under-partitioned</span>
+      <h4>1 partition, 16 cores</h4>
+      <p>Only 1 task runs. 15 cores sit idle the entire time. The job takes the same time as a single-core run. Classic symptom: Spark UI shows 1 active task, stage never parallelizes.</p>
+    </div>
+    <div class="compare-card good">
+      <span class="compare-tag green">Well-partitioned</span>
+      <h4>2&ndash;4 &times; total cores</h4>
+      <p>Tasks run in waves. Cores stay busy. Small tasks finish and pick up stragglers. Even if one partition is slightly large, others absorb the slack. Aim for 128&ndash;256 MB per partition as a starting point.</p>
+    </div>
+    <div class="compare-card bad">
+      <span class="compare-tag red">Over-partitioned</span>
+      <h4>10,000 tiny partitions</h4>
+      <p>Scheduler overhead dominates. Thousands of task metadata entries flood the Driver. Each tiny file read incurs HDFS/S3 latency. The job spends more time scheduling than computing.</p>
+    </div>
+    <div class="compare-card good">
+      <span class="compare-tag green">After coalesce()</span>
+      <h4>Merge before write</h4>
+      <p>Writing 10,000 partitions creates 10,000 small output files. <code>coalesce(N)</code> reduces partition count without a full shuffle &mdash; use before <code>write()</code> to avoid the small-files problem.</p>
+    </div>
+  </div>
+
+  <div class="section-title">Real-world use cases</div>
+  <div class="uc-grid">
+    <div class="uc-card">
+      <span class="uc-tag">Skew</span>
+      <h3>Joining a skewed dataset</h3>
+      <p>User IDs often follow a power-law distribution. A join on <code>user_id</code> sends 90% of records to one executor. Fix with salting: append a random suffix to the key, join, then aggregate.</p>
+    </div>
+    <div class="uc-card">
+      <span class="uc-tag">Cloud</span>
+      <h3>Right-sizing a Glue job</h3>
+      <p>AWS Glue defaults to 200 shuffle partitions on a 10 DPU cluster (40 cores). For a 5 GB dataset that is 200 &times; 25 MB partitions &mdash; fine. For a 500 GB dataset, raise to 2000+.</p>
+    </div>
+    <div class="uc-card">
+      <span class="uc-tag">Storage</span>
+      <h3>S3 small-files problem</h3>
+      <p>Writing 500 partitions to S3 Parquet means 500 files. Reading them back multiplies LIST and GET calls. Coalesce to ~128 MB target file size before writing to keep downstream reads fast.</p>
+    </div>
+  </div>
+
+  <div class="section-title">Common pitfalls</div>
+  <div class="gotcha-list">
+    <div class="gotcha">
+      <span class="gotcha-icon">&#9888;</span>
+      <div>
+        <h4>repartition() vs coalesce()</h4>
+        <p><code>repartition(N)</code> does a full shuffle &mdash; use it to increase partitions or balance skew. <code>coalesce(N)</code> merges partitions without shuffle &mdash; use it only to decrease, typically before writing.</p>
+      </div>
+    </div>
+    <div class="gotcha">
+      <span class="gotcha-icon">&#9888;</span>
+      <div>
+        <h4>spark.sql.shuffle.partitions is global</h4>
+        <p>The default 200 applies to every shuffle in the job. A job with a small first shuffle and a large second shuffle both get 200. Override per-DataFrame with <code>df.repartition(N)</code> instead.</p>
+      </div>
+    </div>
+    <div class="gotcha">
+      <span class="gotcha-icon">&#9888;</span>
+      <div>
+        <h4>Partition count does not equal parallelism</h4>
+        <p>If you have 32 partitions but only 4 cores, tasks run in 8 sequential waves. True parallelism is <code>min(partitions, totalCores)</code>. Adding more partitions past total cores only adds wave count.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// Partition color palette — 8 hues cycling
+var COLORS = [
+  '#1f6feb','#388bfd','#58a6ff','#79c0ff',
+  '#3fb950','#56d364','#7ee787','#a0eeab',
+  '#d29922','#e3b341','#f0c64c','#f9d86e',
+  '#bc4c00','#ff7c43','#ffa657','#ffc680',
+  '#8957e5','#a371f7','#bc8cff','#d2a8ff',
+];
+
+function getColor(idx) {
+  return COLORS[idx % COLORS.length];
+}
+
+function update() {
+  var parts  = parseInt(document.getElementById('sl-parts').value);
+  var execs  = parseInt(document.getElementById('sl-execs').value);
+  var cores  = parseInt(document.getElementById('sl-cores').value);
+  var sizeMB = parseInt(document.getElementById('sl-size').value);
+
+  document.getElementById('lbl-parts').textContent = parts;
+  document.getElementById('lbl-execs').textContent = execs;
+  document.getElementById('lbl-cores').textContent = cores;
+  document.getElementById('lbl-size').textContent  = sizeMB;
+
+  var totalSlots     = execs * cores;
+  var totalDataGB    = (parts * sizeMB / 1024).toFixed(2);
+  var tasksPerExec   = Math.ceil(parts / execs);
+  var waves          = Math.ceil(parts / totalSlots);
+  var utilPct        = Math.min(100, Math.round((parts / totalSlots) * 100));
+  var idealParts     = totalSlots * 2;
+  var ratio          = parts / totalSlots;
+
+  // Metrics
+  var mr = document.getElementById('metrics-row');
+  mr.innerHTML =
+    metricChip(totalSlots, 'Total task slots', slotColor(parts, totalSlots), slotBorder(parts, totalSlots)) +
+    metricChip(tasksPerExec, 'Tasks / executor', 'orange', '') +
+    metricChip(waves, 'Scheduling waves', waves <= 2 ? 'green' : waves <= 4 ? 'orange' : 'red', waves <= 2 ? 'good' : waves <= 4 ? 'warn' : 'bad') +
+    metricChip(utilPct + '%', 'Slot utilization', utilPct >= 80 ? 'green' : utilPct >= 50 ? 'orange' : 'red', utilPct >= 80 ? 'good' : utilPct >= 50 ? 'warn' : 'bad') +
+    metricChip(totalDataGB + ' GB', 'Total data', 'blue', '');
+
+  // Insight
+  var ib = document.getElementById('insight-box');
+  var msg, cls;
+  if (ratio < 0.5) {
+    msg = '<strong>Under-partitioned.</strong> Only ' + parts + ' task(s) for ' + totalSlots + ' slots &mdash; ' + (totalSlots - parts) + ' cores will idle the entire job. Increase partitions to at least ' + totalSlots + ' (ideally ' + idealParts + ').';
+    cls = 'bad';
+  } else if (ratio > 8) {
+    msg = '<strong>Over-partitioned.</strong> ' + parts + ' partitions across ' + totalSlots + ' slots means ' + waves + ' scheduling waves. Tiny ' + sizeMB + ' MB partitions add Driver overhead and small-file problems. Consider coalesce(' + idealParts + ').';
+    cls = 'bad';
+  } else if (utilPct >= 80 && waves <= 3) {
+    msg = '<strong>Well-balanced.</strong> ' + parts + ' partitions across ' + totalSlots + ' slots gives ' + waves + ' wave(s) at ' + utilPct + '% slot utilization. This is the sweet spot.';
+    cls = 'good';
+  } else {
+    msg = '<strong>Acceptable.</strong> ' + parts + ' partitions, ' + totalSlots + ' slots, ' + waves + ' wave(s). Tweak toward ' + idealParts + ' partitions to maximize throughput.';
+    cls = '';
+  }
+  ib.innerHTML = msg;
+  ib.className = 'insight-box ' + cls;
+
+  // Executor grid
+  var grid = document.getElementById('exec-grid');
+  grid.innerHTML = '';
+
+  // Assign partitions round-robin to executors
+  var assignment = [];
+  for (var i = 0; i < execs; i++) assignment.push([]);
+  for (var p = 0; p < parts; p++) assignment[p % execs].push(p);
+
+  for (var e = 0; e < execs; e++) {
+    var row = document.createElement('div');
+    row.className = 'exec-row';
+
+    var lbl = document.createElement('div');
+    lbl.className = 'exec-label';
+    lbl.textContent = 'E-' + (e + 1);
+    row.appendChild(lbl);
+
+    var partsWrap = document.createElement('div');
+    partsWrap.className = 'exec-partitions';
+
+    var myParts = assignment[e];
+    for (var pi = 0; pi < myParts.length; pi++) {
+      var block = document.createElement('div');
+      block.className = 'part-block';
+      block.style.background = getColor(myParts[pi]);
+      block.style.animationDelay = (pi * 18) + 'ms';
+      block.title = 'P' + myParts[pi];
+      block.textContent = myParts[pi] < 100 ? myParts[pi] : '';
+      partsWrap.appendChild(block);
+    }
+    row.appendChild(partsWrap);
+
+    // Utilization bar
+    var utilWrap = document.createElement('div');
+    utilWrap.className = 'exec-util-wrap';
+    var myUtil = Math.min(100, Math.round((myParts.length / cores) * 100));
+    var bar = document.createElement('div');
+    bar.className = 'exec-util-bar';
+    bar.style.width = myUtil + '%';
+    bar.style.background = myUtil >= 80 ? 'var(--success)' : myUtil >= 50 ? 'var(--warning)' : 'var(--error)';
+    utilWrap.appendChild(bar);
+    row.appendChild(utilWrap);
+
+    var pct = document.createElement('div');
+    pct.className = 'exec-util-pct';
+    pct.textContent = myUtil + '%';
+    row.appendChild(pct);
+
+    grid.appendChild(row);
+  }
+
+  // Rule box
+  var sweetLow  = totalSlots * 2;
+  var sweetHigh = totalSlots * 4;
+  var rb = document.getElementById('rule-box');
+  rb.innerHTML = '<strong>Rule of thumb:</strong> target <strong>' + sweetLow + '&ndash;' + sweetHigh + ' partitions</strong> for this cluster (' + execs + ' executors &times; ' + cores + ' cores). That is 2&ndash;4 &times; total slots (' + totalSlots + '). Each partition should be <strong>128&ndash;256 MB</strong> for good task granularity.';
+}
+
+function metricChip(val, lbl, valClass, borderClass) {
+  return '<div class="metric-chip ' + borderClass + '">' +
+    '<span class="metric-val ' + valClass + '">' + val + '</span>' +
+    '<span class="metric-lbl">' + lbl + '</span>' +
+  '</div>';
+}
+
+function slotColor(parts, slots) {
+  var r = parts / slots;
+  return r < 0.5 ? 'red' : r > 8 ? 'yellow' : 'green';
+}
+function slotBorder(parts, slots) {
+  var r = parts / slots;
+  return r < 0.5 ? 'bad' : r > 8 ? 'warn' : 'good';
+}
+
+// Init
+update();
+</script>
+</body>
+</html>
