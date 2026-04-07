@@ -9,6 +9,9 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ## 2026-04-07
 
+### [feature] Add Book Supplements section to playground home page
+- `index.html` — new "Book Supplements" nav section + content section with cards for `spark-book/` (Learning Spark) and `data-gov-book/` (Data Governance: The Definitive Guide); both grouped as a collection with chapter counts and search tags
+
 ### [feature] Data Governance: The Definitive Guide — interactive book supplement (Phase 1)
 - `data-gov-book/` — 3-page interactive companion: hub + Ch 1 (maturity model + 5-pillar trust simulator) + Ch 2 (role explorer + RACI decision matrix)
 
