@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ch 2 — Roles &amp; Responsibilities | Data Governance Supplement</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0 }
+  :root {
+    --accent:  #3b82f6;
+    --cyan:    #06b6d4;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --error:   #ef4444;
+    --purple:  #a78bfa;
+    --muted:   #7899bb;
+    --bg-base: #080e1a;
+    --bg-card: #0f1929;
+    --border:  #1e3352;
+    --text:    #d4e4f7;
+  }
+  body { background: var(--bg-base); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 15px; line-height: 1.6 }
+
+  /* ── Top bar ── */
+  .top-bar {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--bg-card); border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 1.25rem; height: 48px;
+  }
+  .breadcrumb { display: flex; align-items: center; gap: .5rem; font-size: .8rem; color: var(--muted) }
+  .breadcrumb a { color: var(--muted); text-decoration: none }
+  .breadcrumb a:hover { color: var(--text) }
+  .nav-arrows { display: flex; gap: .5rem; align-items: center }
+  .nav-btn {
+    padding: .3rem .8rem; border-radius: 6px; border: 1px solid var(--border);
+    background: transparent; color: var(--text); font-size: .78rem; cursor: pointer;
+    text-decoration: none; display: inline-flex; align-items: center;
+    transition: border-color .15s, color .15s;
+  }
+  .nav-btn:hover { border-color: var(--accent); color: var(--accent) }
+  .nav-btn.disabled { opacity: .35; pointer-events: none }
+  .ch-badge {
+    font-size: .72rem; font-weight: 700; background: rgba(59,130,246,.12);
+    color: var(--accent); border: 1px solid rgba(59,130,246,.3);
+    border-radius: 4px; padding: .15rem .55rem; letter-spacing: .04em;
+  }
+
+  /* ── Page ── */
+  .page { max-width: 820px; margin: 0 auto; padding: 2rem 1.25rem 4rem }
+  .hero { margin-bottom: 2rem }
+  .hero-tag { font-size: .68rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: .4rem }
+  .hero h1 { font-size: clamp(1.4rem, 3vw, 2rem); font-weight: 700; color: var(--text); margin-bottom: .4rem }
+  .hero-desc { font-size: .9rem; color: var(--muted); max-width: 640px; line-height: 1.65 }
+
+  .section-title {
+    font-size: .7rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: .85rem; padding-bottom: .35rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* ── Concept cards ── */
+  .concept-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(175px, 1fr)); gap: .75rem; margin-bottom: 2rem }
+  .concept-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 1rem }
+  .concept-card .icon { font-size: 1.4rem; margin-bottom: .4rem }
+  .concept-card h3 { font-size: .85rem; font-weight: 700; color: var(--text); margin-bottom: .25rem }
+  .concept-card p { font-size: .78rem; color: var(--muted); line-height: 1.55 }
+
+  /* ── Interactive ── */
+  .interactive {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px;
+    padding: 1.25rem; margin-bottom: 2rem;
+  }
+  .interactive h2 { font-size: .95rem; font-weight: 600; margin-bottom: .2rem }
+  .sub { font-size: .78rem; color: var(--muted); margin-bottom: 1rem }
+
+  /* ── Role Explorer ── */
+  .role-tabs { display: flex; gap: .4rem; flex-wrap: wrap; margin-bottom: 1.1rem }
+  .role-tab {
+    padding: .35rem 1rem; border-radius: 6px; border: 1px solid var(--border);
+    background: transparent; color: var(--muted); font-size: .78rem; font-weight: 600;
+    cursor: pointer; transition: all .15s;
+  }
+  .role-tab:hover { border-color: var(--accent); color: var(--text) }
+  .role-tab.active { color: #fff }
+
+  .role-panel { display: none }
+  .role-panel.active { display: block }
+
+  .role-header {
+    display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 1rem;
+    padding-bottom: 1rem; border-bottom: 1px solid var(--border);
+  }
+  .role-avatar {
+    width: 52px; height: 52px; border-radius: 10px; display: flex; align-items: center;
+    justify-content: center; font-size: 1.6rem; flex-shrink: 0;
+  }
+  .role-name { font-size: 1.05rem; font-weight: 700; color: var(--text); margin-bottom: .15rem }
+  .role-tagline { font-size: .8rem; color: var(--muted); line-height: 1.5 }
+  .role-level {
+    margin-left: auto; padding: .2rem .65rem; border-radius: 12px;
+    font-size: .68rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; flex-shrink: 0;
+  }
+
+  .role-cols { display: grid; grid-template-columns: repeat(auto-fill, minmax(185px, 1fr)); gap: .7rem }
+  .role-col { background: rgba(255,255,255,.03); border: 1px solid var(--border); border-radius: 7px; padding: .85rem }
+  .role-col-title { font-size: .63rem; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; margin-bottom: .5rem }
+  .role-col ul { list-style: none }
+  .role-col li { font-size: .76rem; color: var(--muted); padding: .18rem 0; display: flex; align-items: flex-start; gap: .35rem }
+  .role-col li::before { content: "•"; flex-shrink: 0; margin-top: .05rem }
+
+  /* ── RACI Matrix ── */
+  .scenario-row { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1rem }
+  .scen-btn {
+    padding: .3rem .85rem; border-radius: 6px; border: 1px solid var(--border);
+    background: transparent; color: var(--muted); font-size: .76rem; cursor: pointer;
+    transition: all .15s;
+  }
+  .scen-btn:hover { border-color: var(--accent); color: var(--text) }
+  .scen-btn.active { border-color: var(--cyan); color: var(--cyan); background: rgba(6,182,212,.08) }
+
+  .raci-wrap { overflow-x: auto }
+  .raci-table { width: 100%; border-collapse: collapse; min-width: 540px }
+  .raci-table th {
+    font-size: .68rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
+    color: var(--muted); padding: .5rem .65rem; border-bottom: 1px solid var(--border);
+    text-align: center; white-space: nowrap;
+  }
+  .raci-table th:first-child { text-align: left; min-width: 180px }
+  .raci-table td {
+    font-size: .78rem; padding: .5rem .65rem; border-bottom: 1px solid rgba(30,51,82,.6);
+    text-align: center; vertical-align: middle;
+  }
+  .raci-table td:first-child { text-align: left; color: var(--text); font-weight: 500 }
+  .raci-table tr:last-child td { border-bottom: none }
+  .raci-table tr:hover td { background: rgba(59,130,246,.04) }
+
+  .raci-chip {
+    display: inline-block; padding: .18rem .55rem; border-radius: 4px;
+    font-size: .7rem; font-weight: 700; letter-spacing: .05em; cursor: help;
+  }
+  .raci-chip.R { background: rgba(59,130,246,.18); color: #93c5fd; border: 1px solid rgba(59,130,246,.3) }
+  .raci-chip.A { background: rgba(167,139,250,.18); color: #c4b5fd; border: 1px solid rgba(167,139,250,.3) }
+  .raci-chip.C { background: rgba(16,185,129,.13); color: #6ee7b7; border: 1px solid rgba(16,185,129,.25) }
+  .raci-chip.I { background: rgba(255,255,255,.05); color: var(--muted); border: 1px solid var(--border) }
+  .raci-chip.dash { background: transparent; color: rgba(255,255,255,.12); border: none }
+
+  .raci-legend { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: .85rem }
+  .legend-item { display: flex; align-items: center; gap: .4rem; font-size: .73rem; color: var(--muted) }
+
+  .raci-detail {
+    margin-top: 1rem; background: rgba(59,130,246,.06); border: 1px solid rgba(59,130,246,.18);
+    border-radius: 7px; padding: .85rem 1rem; font-size: .8rem; color: var(--muted);
+    line-height: 1.65; min-height: 52px;
+  }
+  .raci-detail strong { color: var(--text) }
+
+  /* ── Key quote ── */
+  .key-quote {
+    background: rgba(59,130,246,.06); border: 1px solid rgba(59,130,246,.2);
+    border-left: 3px solid var(--accent); border-radius: 0 7px 7px 0;
+    padding: 1rem 1.25rem; margin-bottom: 2rem; font-size: .85rem;
+    color: var(--muted); line-height: 1.7;
+  }
+  .key-quote em { color: #93c5fd; font-style: normal; font-weight: 600 }
+
+  footer { text-align: center; font-size: .73rem; color: #3d5a7a; padding: 1.5rem; border-top: 1px solid var(--border) }
+</style>
+</head>
+<body>
+
+<nav class="top-bar">
+  <div class="breadcrumb">
+    <a href="../index.html">Data Governance Guide</a>
+    <span>/</span>
+    <span class="ch-badge">Chapter 2</span>
+  </div>
+  <div class="nav-arrows">
+    <a href="01-what-is-data-governance.html" class="nav-btn">&larr; Prev</a>
+    <span class="nav-btn disabled">Next &rarr;</span>
+  </div>
+</nav>
+
+<div class="page">
+
+  <div class="hero">
+    <div class="hero-tag">Chapter 2</div>
+    <h1>👥 Roles &amp; Responsibilities</h1>
+    <div class="hero-desc">Governance fails when everyone assumes someone else owns the data. This chapter defines the four core roles — CDO, Data Owner, Data Steward, and Data Custodian — and explains how a governance council ties them together into a decision-making structure.</div>
+  </div>
+
+  <div class="section-title">Core Roles</div>
+  <div class="concept-grid">
+    <div class="concept-card">
+      <div class="icon">🏢</div>
+      <h3>Chief Data Officer</h3>
+      <p>Executive sponsor. Sets the data strategy, secures budget, and holds the org accountable for data trustworthiness.</p>
+    </div>
+    <div class="concept-card">
+      <div class="icon">🗂️</div>
+      <h3>Data Owner</h3>
+      <p>Business-side. Accountable for a data domain (e.g., Customer, Product). Approves access and defines quality standards.</p>
+    </div>
+    <div class="concept-card">
+      <div class="icon">🔧</div>
+      <h3>Data Steward</h3>
+      <p>Day-to-day manager. Writes definitions, monitors quality, resolves data issues, and keeps the catalog up to date.</p>
+    </div>
+    <div class="concept-card">
+      <div class="icon">⚙️</div>
+      <h3>Data Custodian</h3>
+      <p>Technical implementation. Manages storage, pipelines, access controls, and backup — without setting policy.</p>
+    </div>
+  </div>
+
+  <div class="key-quote">
+    <em>"The Data Owner decides what the data means and who can access it. The Data Steward makes sure that decision is enforced day to day. The Custodian makes sure the infrastructure supports it."</em>
+    &mdash; Chapter 2, Data Governance: The Definitive Guide
+  </div>
+
+  <!-- ────────────────────────────────────────────── -->
+  <!-- Interactive 1: Role Explorer                   -->
+  <!-- ────────────────────────────────────────────── -->
+  <div class="interactive">
+    <h2>🔍 Role Explorer <span style="font-size:.7rem;font-weight:400;color:var(--muted);margin-left:.4rem">Interactive</span></h2>
+    <div class="sub">Select a role to see their full scope — responsibilities, decisions they own, tools they use, and who they partner with.</div>
+
+    <div class="role-tabs">
+      <button class="role-tab active" style="border-color:#3b82f6;color:#3b82f6;background:rgba(59,130,246,.1)" onclick="showRole('cdo')">🏢 CDO</button>
+      <button class="role-tab" onclick="showRole('owner')">🗂️ Data Owner</button>
+      <button class="role-tab" onclick="showRole('steward')">🔧 Data Steward</button>
+      <button class="role-tab" onclick="showRole('custodian')">⚙️ Data Custodian</button>
+      <button class="role-tab" onclick="showRole('council')">🏛️ Governance Council</button>
+    </div>
+
+    <!-- CDO -->
+    <div id="role-cdo" class="role-panel active">
+      <div class="role-header">
+        <div class="role-avatar" style="background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.3)">🏢</div>
+        <div>
+          <div class="role-name">Chief Data Officer (CDO)</div>
+          <div class="role-tagline">Sets the vision, secures the budget, and is ultimately accountable for the organization treating data as a strategic asset.</div>
+        </div>
+        <span class="role-level" style="background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.3);color:#93c5fd">C-Suite</span>
+      </div>
+      <div class="role-cols">
+        <div class="role-col">
+          <div class="role-col-title" style="color:#60a5fa">Responsibilities</div>
+          <ul>
+            <li>Define enterprise data strategy</li>
+            <li>Sponsor governance program</li>
+            <li>Chair the governance council</li>
+            <li>Report data KPIs to the board</li>
+            <li>Align data investment priorities</li>
+          </ul>
+        </div>
+        <div class="role-col">
+          <div class="role-col-title" style="color:#34d399">Decisions Owned</div>
+          <ul>
+            <li>Data governance framework choice</li>
+            <li>Federated vs. centralized model</li>
+            <li>Budget for data tooling</li>
+            <li>Data monetization strategy</li>
+            <li>Escalated policy disputes</li>
+          </ul>
+        </div>
+        <div class="role-col">
+          <div class="role-col-title" style="color:#a78bfa">Key Partnerships</div>
+          <ul>
+            <li>CEO / board — strategy</li>
+            <li>CTO — architecture alignment</li>
+            <li>Legal / Compliance — risk</li>
+            <li>Business unit heads — adoption</li>
+            <li>Data Owners — accountability</li>
+          </ul>
+        </div>
+        <div class="role-col">
+          <div class="role-col-title" style="color:#fb923c">Typical Tools</div>
+          <ul>
+            <li>Executive data dashboards</li>
+            <li>Governance program trackers</li>
+            <li>Data catalog (oversight view)</li>
+            <li>Risk &amp; compliance platforms</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Data Owner -->
+    <div id="role-owner" class="role-panel">
+      <div class="role-header">
+        <div class="role-avatar" style="background:rgba(6,182,212,.15);border:1px solid rgba(6,182,212,.3)">🗂️</div>
+        <div>
+          <div class="role-name">Data Owner</div>
+          <div class="role-tagline">A senior business leader accountable for a specific data domain (e.g., Customer, Product, Finance). The final word on what the data means and who can see it.</div>
+        </div>
+        <span class="role-level" style="background:rgba(6,182,212,.15);border:1px solid rgba(6,182,212,.3);color:#67e8f9">Business VP / Director</span>
+      </div>
+      <div class="role-cols">
+        <div class="role-col">
+          <div class="role-col-title" style="color:#60a5fa">Responsibilities</div>
+          <ul>
+            <li>Own a named data domain</li>
+            <li>Approve access requests</li>
+            <li>Set domain quality standards</li>
+            <li>Review steward escalations</li>
+            <li>Sign off on data definitions</li>
+          </ul>
+        </div>
+        <div class="role-col">
+          <div class="role-col-title" style="color:#34d399">Decisions Owned</div>
+          <ul>
+            <li>Who can access domain data</li>
+            <li>Retention period for domain</li>
+            <li>Authoritative definition of fields</li>
+            <li>Data sharing with external parties</li>
+            <li>Quality threshold for SLAs</li>
+          </ul>
+        </div>
+        <div class="role-col">
+          <div class="role-col-title" style="color:#a78bfa">Key Partnerships</div>
+          <ul>
+            <li>CDO — strategy alignment</li>
+            <li>Data Stewards — day-to-day ops</li>
+            <li>Other Owners — shared datasets</li>
+            <li>Legal — sensitive data policies</li>
+            <li>IT / Custodians — tech controls</li>
+          </ul>
+        </div>
+        <div class="role-col">
+          <div class="role-col-title" style="color:#fb923c">Typical Tools</div>
+          <ul>
+            <li>Access approval workflow</li>
+            <li>Business glossary (approver role)</li>
+            <li>Domain quality scorecards</li>
+            <li>Data catalog ownership panel</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Data Steward -->
+    <div id="role-steward" class="role-panel">
+      <div class="role-header">
+        <div class="role-avatar" style="background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.3)">🔧</div>
+        <div>
+          <div class="role-name">Data Steward</div>
+          <div class="role-tagline">The operational backbone of governance. Writes and maintains definitions, monitors quality metrics, resolves data issues, and is the person practitioners contact with data questions.</div>
+        </div>
+        <span class="role-level" style="background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.3);color:#6ee7b7">Senior Analyst / Manager</span>
+      </div>
+      <div class="role-cols">
+        <div class="role-col">
+          <div class="role-col-title" style="color:#60a5fa">Responsibilities</div>
+          <ul>
+            <li>Maintain business glossary</li>
+            <li>Monitor quality dashboards daily</li>
+            <li>Triage and route data issues</li>
+            <li>Catalog new data assets</li>
+            <li>Train staff on data standards</li>
+          </ul>
+        </div>
+        <div class="role-col">
+          <div class="role-col-title" style="color:#34d399">Decisions Owned</div>
+          <ul>
+            <li>Term definitions (draft)</li>
+            <li>Data issue classification</li>
+            <li>Escalation to Data Owner</li>
+            <li>Catalog tagging standards</li>
+            <li>Quality rule thresholds</li>
+          </ul>
+        </div>
+        <div class="role-col">
+          <div class="role-col-title" style="color:#a78bfa">Key Partnerships</div>
+          <ul>
+            <li>Data Owner — approvals</li>
+            <li>Custodian — technical fixes</li>
+            <li>Analysts — clarify definitions</li>
+            <li>Compliance — regulatory tags</li>
+            <li>Product teams — new data assets</li>
+          </ul>
+        </div>
+        <div class="role-col">
+          <div class="role-col-title" style="color:#fb923c">Typical Tools</div>
+          <ul>
+            <li>Data catalog (editor role)</li>
+            <li>Quality monitoring dashboards</li>
+            <li>Issue tracking (Jira / ServiceNow)</li>
+            <li>Business glossary editor</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Data Custodian -->
+    <div id="role-custodian" class="role-panel">
+      <div class="role-header">
+        <div class="role-avatar" style="background:rgba(167,139,250,.15);border:1px solid rgba(167,139,250,.3)">⚙️</div>
+        <div>
+          <div class="role-name">Data Custodian</div>
+          <div class="role-tagline">The technical implementer. Builds and operates the infrastructure that stores, moves, and protects data according to policies set by Owners and Stewards. Does not set policy.</div>
+        </div>
+        <span class="role-level" style="background:rgba(167,139,250,.15);border:1px solid rgba(167,139,250,.3);color:#c4b5fd">Data / Platform Engineer</span>
+      </div>
+      <div class="role-cols">
+        <div class="role-col">
+          <div class="role-col-title" style="color:#60a5fa">Responsibilities</div>
+          <ul>
+            <li>Build and maintain data pipelines</li>
+            <li>Implement access controls</li>
+            <li>Manage storage &amp; backups</li>
+            <li>Apply encryption &amp; masking</li>
+            <li>Monitor infrastructure health</li>
+          </ul>
+        </div>
+        <div class="role-col">
+          <div class="role-col-title" style="color:#34d399">Decisions Owned</div>
+          <ul>
+            <li>Technology stack choices</li>
+            <li>Storage tier / cost optimization</li>
+            <li>Backup frequency &amp; RTO/RPO</li>
+            <li>Infrastructure SLA commitments</li>
+            <li>Security patching schedule</li>
+          </ul>
+        </div>
+        <div class="role-col">
+          <div class="role-col-title" style="color:#a78bfa">Key Partnerships</div>
+          <ul>
+            <li>Stewards — quality rule impl.</li>
+            <li>Owner — access policy execution</li>
+            <li>Security team — controls review</li>
+            <li>DevOps — CI/CD for pipelines</li>
+            <li>Compliance — audit log delivery</li>
+          </ul>
+        </div>
+        <div class="role-col">
+          <div class="role-col-title" style="color:#fb923c">Typical Tools</div>
+          <ul>
+            <li>dbt, Airflow, Spark pipelines</li>
+            <li>Cloud IAM (AWS / GCP / Azure)</li>
+            <li>Data warehouse (BigQuery, Snowflake)</li>
+            <li>Monitoring: Datadog, OpenTelemetry</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Governance Council -->
+    <div id="role-council" class="role-panel">
+      <div class="role-header">
+        <div class="role-avatar" style="background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.3)">🏛️</div>
+        <div>
+          <div class="role-name">Data Governance Council</div>
+          <div class="role-tagline">The cross-functional committee that resolves conflicts, sets policy, and reviews governance health. Typically meets monthly. Chaired by the CDO.</div>
+        </div>
+        <span class="role-level" style="background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.3);color:#fcd34d">Cross-Functional</span>
+      </div>
+      <div class="role-cols">
+        <div class="role-col">
+          <div class="role-col-title" style="color:#60a5fa">Membership</div>
+          <ul>
+            <li>CDO (chair)</li>
+            <li>All Data Owners (1 per domain)</li>
+            <li>Lead Data Steward</li>
+            <li>Head of IT / Platform</li>
+            <li>Legal / Privacy Officer</li>
+          </ul>
+        </div>
+        <div class="role-col">
+          <div class="role-col-title" style="color:#34d399">Agenda Items</div>
+          <ul>
+            <li>Policy changes &amp; approvals</li>
+            <li>Cross-domain disputes</li>
+            <li>Quarterly quality KPI review</li>
+            <li>New data initiative review</li>
+            <li>Compliance risk updates</li>
+          </ul>
+        </div>
+        <div class="role-col">
+          <div class="role-col-title" style="color:#a78bfa">Decision Authority</div>
+          <ul>
+            <li>Approve new governance policies</li>
+            <li>Resolve owner-vs-owner conflicts</li>
+            <li>Authorize major data sharing</li>
+            <li>Set governance program roadmap</li>
+            <li>Escalation of last resort</li>
+          </ul>
+        </div>
+        <div class="role-col">
+          <div class="role-col-title" style="color:#fb923c">Operating Model</div>
+          <ul>
+            <li>Monthly standing meeting</li>
+            <li>Async approval workflows</li>
+            <li>Published meeting minutes</li>
+            <li>Rotating domain spotlight</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ────────────────────────────────────────────── -->
+  <!-- Interactive 2: RACI Decision Matrix            -->
+  <!-- ────────────────────────────────────────────── -->
+  <div class="interactive">
+    <h2>📋 RACI Decision Matrix <span style="font-size:.7rem;font-weight:400;color:var(--muted);margin-left:.4rem">Interactive</span></h2>
+    <div class="sub">Select a governance scenario to see who is Responsible, Accountable, Consulted, and Informed. Click any cell for an explanation.</div>
+
+    <div class="scenario-row" id="scenario-row"></div>
+
+    <div class="raci-wrap">
+      <table class="raci-table" id="raci-table">
+        <thead>
+          <tr>
+            <th>Task</th>
+            <th>CDO</th>
+            <th>Data Owner</th>
+            <th>Data Steward</th>
+            <th>Data Custodian</th>
+            <th>Legal / Privacy</th>
+            <th>Business User</th>
+          </tr>
+        </thead>
+        <tbody id="raci-body"></tbody>
+      </table>
+    </div>
+
+    <div class="raci-legend">
+      <div class="legend-item"><span class="raci-chip R">R</span> Responsible — does the work</div>
+      <div class="legend-item"><span class="raci-chip A">A</span> Accountable — final sign-off</div>
+      <div class="legend-item"><span class="raci-chip C">C</span> Consulted — input required</div>
+      <div class="legend-item"><span class="raci-chip I">I</span> Informed — kept in the loop</div>
+    </div>
+
+    <div class="raci-detail" id="raci-detail">
+      Click any cell in the table to learn what that role does for that task.
+    </div>
+  </div>
+
+</div><!-- /page -->
+
+<footer>
+  Chapter 2 &mdash; Data Governance: The Definitive Guide &mdash; Interactive Supplement
+</footer>
+
+<script>
+// ── Role Explorer ──
+var roleColors = {
+  cdo:      { border: "#3b82f6", bg: "rgba(59,130,246,.1)",   color: "#3b82f6"  },
+  owner:    { border: "#06b6d4", bg: "rgba(6,182,212,.1)",    color: "#06b6d4"  },
+  steward:  { border: "#10b981", bg: "rgba(16,185,129,.1)",   color: "#10b981"  },
+  custodian:{ border: "#a78bfa", bg: "rgba(167,139,250,.1)",  color: "#a78bfa"  },
+  council:  { border: "#f59e0b", bg: "rgba(245,158,11,.1)",   color: "#f59e0b"  }
+};
+
+function showRole(name) {
+  document.querySelectorAll(".role-panel").forEach(function(p) { p.classList.remove("active"); });
+  document.querySelectorAll(".role-tab").forEach(function(t) {
+    t.style.borderColor = "";
+    t.style.color = "";
+    t.style.background = "";
+    t.classList.remove("active");
+  });
+  document.getElementById("role-" + name).classList.add("active");
+  var tabs = document.querySelectorAll(".role-tab");
+  var order = ["cdo", "owner", "steward", "custodian", "council"];
+  var idx = order.indexOf(name);
+  if (idx >= 0 && tabs[idx]) {
+    var c = roleColors[name];
+    tabs[idx].style.borderColor = c.border;
+    tabs[idx].style.color = c.color;
+    tabs[idx].style.background = c.bg;
+    tabs[idx].classList.add("active");
+  }
+}
+
+// ── RACI Matrix ──
+var scenarios = [
+  {
+    label: "Define a Data Standard",
+    tasks: [
+      {
+        name: "Draft field definitions",
+        cdo: "-", owner: "C", steward: "R", custodian: "I", legal: "C", user: "C",
+        notes: {
+          cdo: "Not directly involved in drafting; sets the mandate for standardization.",
+          owner: "Consulted to confirm the business meaning and authoritative source.",
+          steward: "Responsible: writes the definitions, curates synonyms, and publishes to catalog.",
+          custodian: "Informed so they can align technical field names in pipelines.",
+          legal: "Consulted if field relates to PII or regulated data categories.",
+          user: "Consulted — their feedback catches confusing or ambiguous wording."
+        }
+      },
+      {
+        name: "Approve final standard",
+        cdo: "I", owner: "A", steward: "R", custodian: "I", legal: "C", user: "I",
+        notes: {
+          cdo: "Informed of final approval; escalation path if Owner is unavailable.",
+          owner: "Accountable: signs off that the standard is correct for the domain.",
+          steward: "Responsible for preparing the final document and routing for approval.",
+          custodian: "Informed so infrastructure changes can be scheduled.",
+          legal: "Consulted on any regulatory compliance implications.",
+          user: "Informed — standard is now published and they must adopt it."
+        }
+      },
+      {
+        name: "Publish to data catalog",
+        cdo: "I", owner: "I", steward: "R", custodian: "C", legal: "I", user: "I",
+        notes: {
+          cdo: "Informed as part of governance program health metrics.",
+          owner: "Informed — their domain catalog entries are now live.",
+          steward: "Responsible: adds entries, tags, lineage, and ownership metadata to catalog.",
+          custodian: "Consulted to verify technical metadata (table names, column types) is correct.",
+          legal: "Informed if standard affects PII handling documentation.",
+          user: "Informed — they can now discover and use the standard definitions."
+        }
+      }
+    ]
+  },
+  {
+    label: "Handle a Data Breach",
+    tasks: [
+      {
+        name: "Detect and classify incident",
+        cdo: "I", owner: "C", steward: "R", custodian: "R", legal: "C", user: "I",
+        notes: {
+          cdo: "Immediately informed; may escalate to exec comms or board.",
+          owner: "Consulted to confirm which data domain and assets are affected.",
+          steward: "Responsible (with Custodian) for identifying affected data assets and scope.",
+          custodian: "Responsible for technical investigation — logs, access records, blast radius.",
+          legal: "Consulted immediately to assess regulatory notification obligations.",
+          user: "Informed only after classification to avoid panic; may be part of affected group."
+        }
+      },
+      {
+        name: "Contain and remediate",
+        cdo: "A", owner: "C", steward: "C", custodian: "R", legal: "C", user: "I",
+        notes: {
+          cdo: "Accountable: authorizes remediation actions, coordinates across teams.",
+          owner: "Consulted on business impact of containment steps (e.g., temporary access revoke).",
+          steward: "Consulted on which data assets to quarantine or flag in catalog.",
+          custodian: "Responsible: revokes access, patches vulnerability, rebuilds affected pipelines.",
+          legal: "Consulted throughout to ensure remediation aligns with legal obligations.",
+          user: "Informed of service disruption and timeline for restoration."
+        }
+      },
+      {
+        name: "Notify regulators / users",
+        cdo: "A", owner: "I", steward: "I", custodian: "I", legal: "R", user: "I",
+        notes: {
+          cdo: "Accountable: approves all external communications and regulatory filings.",
+          owner: "Informed — their domain data was involved.",
+          steward: "Informed — may need to update catalog records post-breach.",
+          custodian: "Informed — technical report may be included in filing.",
+          legal: "Responsible: drafts and submits regulatory notifications (GDPR 72hr, etc.).",
+          user: "Informed — receives breach notification as required by law."
+        }
+      }
+    ]
+  },
+  {
+    label: "Approve Data Access",
+    tasks: [
+      {
+        name: "User submits access request",
+        cdo: "-", owner: "I", steward: "R", custodian: "I", legal: "-", user: "R",
+        notes: {
+          cdo: "Not involved at this stage.",
+          owner: "Informed so they are aware of pending request in their domain.",
+          steward: "Responsible: receives request, validates business justification, routes to Owner.",
+          custodian: "Informed so they can prepare provisioning once approved.",
+          legal: "Not involved unless dataset is legally sensitive.",
+          user: "Responsible: submits the request and justification through the access portal."
+        }
+      },
+      {
+        name: "Review and approve request",
+        cdo: "-", owner: "A", steward: "R", custodian: "I", legal: "C", user: "I",
+        notes: {
+          cdo: "Not involved unless request is cross-domain or high-risk escalation.",
+          owner: "Accountable: final approval or denial — their domain, their call.",
+          steward: "Responsible: validates classification, checks against policy, recommends approve/deny.",
+          custodian: "Informed so provisioning can begin upon approval.",
+          legal: "Consulted if request covers PII, regulated, or sensitive datasets.",
+          user: "Informed of outcome. If denied, receives reason and appeal path."
+        }
+      },
+      {
+        name: "Provision technical access",
+        cdo: "-", owner: "I", steward: "I", custodian: "R", legal: "-", user: "I",
+        notes: {
+          cdo: "Not involved.",
+          owner: "Informed that provisioning is complete.",
+          steward: "Informed; updates catalog to reflect new user access grant.",
+          custodian: "Responsible: implements role/permission grant in IAM, warehouse, or RBAC system.",
+          legal: "Not involved at this stage.",
+          user: "Informed — access is now live and they receive confirmation."
+        }
+      }
+    ]
+  },
+  {
+    label: "Launch a Data Product",
+    tasks: [
+      {
+        name: "Define scope and ownership",
+        cdo: "C", owner: "A", steward: "R", custodian: "C", legal: "C", user: "C",
+        notes: {
+          cdo: "Consulted to ensure alignment with enterprise data strategy.",
+          owner: "Accountable: commits to owning the data product domain and quality SLAs.",
+          steward: "Responsible: facilitates scoping workshop, documents definitions and lineage.",
+          custodian: "Consulted on technical feasibility — pipelines, storage, refresh rates.",
+          legal: "Consulted for privacy impact assessment if product uses personal data.",
+          user: "Consulted — target users define what they need from the product."
+        }
+      },
+      {
+        name: "Build and test pipelines",
+        cdo: "-", owner: "I", steward: "C", custodian: "R", legal: "-", user: "I",
+        notes: {
+          cdo: "Not involved in build phase.",
+          owner: "Informed of build progress; reviews acceptance criteria.",
+          steward: "Consulted on data quality rules and catalog tagging during build.",
+          custodian: "Responsible: builds ETL/ELT pipelines, tests data accuracy, monitors loads.",
+          legal: "Not involved unless PII masking changes require review.",
+          user: "Informed — UAT will be requested before launch."
+        }
+      },
+      {
+        name: "Publish to catalog and launch",
+        cdo: "I", owner: "A", steward: "R", custodian: "R", legal: "I", user: "I",
+        notes: {
+          cdo: "Informed; may feature the launch in governance program comms.",
+          owner: "Accountable: signs off that the data product meets quality standards for launch.",
+          steward: "Responsible: publishes catalog entry, sets quality SLA alerts, announces to users.",
+          custodian: "Responsible: promotes pipeline to production, sets up monitoring and alerting.",
+          legal: "Informed that the data product is live; retains audit trail.",
+          user: "Informed — data product is now discoverable and accessible."
+        }
+      }
+    ]
+  }
+];
+
+var activeScenario = 0;
+var roles = ["cdo", "owner", "steward", "custodian", "legal", "user"];
+var roleLabels = ["CDO", "Data Owner", "Data Steward", "Data Custodian", "Legal / Privacy", "Business User"];
+
+function buildScenarioButtons() {
+  var row = document.getElementById("scenario-row");
+  scenarios.forEach(function(s, i) {
+    var btn = document.createElement("button");
+    btn.className = "scen-btn" + (i === 0 ? " active" : "");
+    btn.textContent = s.label;
+    btn.onclick = (function(idx) { return function() { loadScenario(idx); }; })(i);
+    row.appendChild(btn);
+  });
+}
+
+function loadScenario(idx) {
+  activeScenario = idx;
+  document.querySelectorAll(".scen-btn").forEach(function(b, i) {
+    b.classList.toggle("active", i === idx);
+  });
+  var tbody = document.getElementById("raci-body");
+  tbody.innerHTML = "";
+  var s = scenarios[idx];
+  s.tasks.forEach(function(task) {
+    var tr = document.createElement("tr");
+    var tdName = document.createElement("td");
+    tdName.textContent = task.name;
+    tr.appendChild(tdName);
+
+    roles.forEach(function(role) {
+      var td = document.createElement("td");
+      var val = task[role];
+      if (val && val !== "-") {
+        var chip = document.createElement("span");
+        chip.className = "raci-chip " + val;
+        chip.textContent = val;
+        chip.title = val === "R" ? "Responsible" : val === "A" ? "Accountable" : val === "C" ? "Consulted" : "Informed";
+        chip.onclick = (function(t, r) {
+          return function() {
+            var note = t.notes[r];
+            var detail = document.getElementById("raci-detail");
+            detail.innerHTML = "<strong>" + roleLabels[roles.indexOf(r)] + " \u2014 " + t.name + ":</strong> " + note;
+          };
+        })(task, role);
+        td.appendChild(chip);
+      } else {
+        var dash = document.createElement("span");
+        dash.className = "raci-chip dash";
+        dash.textContent = "\u2014";
+        td.appendChild(dash);
+      }
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+  document.getElementById("raci-detail").innerHTML = "Click any cell to learn what that role does for this scenario.";
+}
+
+buildScenarioButtons();
+loadScenario(0);
+</script>
+
+</body>
+</html>

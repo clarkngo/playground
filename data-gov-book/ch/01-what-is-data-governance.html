@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ch 1 — What Is Data Governance? | Data Governance Supplement</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0 }
+  :root {
+    --accent:   #3b82f6;
+    --cyan:     #06b6d4;
+    --success:  #10b981;
+    --warning:  #f59e0b;
+    --error:    #ef4444;
+    --muted:    #7899bb;
+    --bg-base:  #080e1a;
+    --bg-card:  #0f1929;
+    --border:   #1e3352;
+    --text:     #d4e4f7;
+  }
+  body { background: var(--bg-base); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 15px; line-height: 1.6 }
+
+  /* ── Top bar ── */
+  .top-bar {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--bg-card); border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 1.25rem; height: 48px;
+  }
+  .breadcrumb { display: flex; align-items: center; gap: .5rem; font-size: .8rem; color: var(--muted) }
+  .breadcrumb a { color: var(--muted); text-decoration: none }
+  .breadcrumb a:hover { color: var(--text) }
+  .nav-arrows { display: flex; gap: .5rem; align-items: center }
+  .nav-btn {
+    padding: .3rem .8rem; border-radius: 6px; border: 1px solid var(--border);
+    background: transparent; color: var(--text); font-size: .78rem; cursor: pointer;
+    text-decoration: none; display: inline-flex; align-items: center;
+    transition: border-color .15s, color .15s;
+  }
+  .nav-btn:hover { border-color: var(--accent); color: var(--accent) }
+  .nav-btn.disabled { opacity: .35; pointer-events: none }
+  .ch-badge {
+    font-size: .72rem; font-weight: 700; background: rgba(59,130,246,.12);
+    color: var(--accent); border: 1px solid rgba(59,130,246,.3);
+    border-radius: 4px; padding: .15rem .55rem; letter-spacing: .04em;
+  }
+
+  /* ── Page ── */
+  .page { max-width: 820px; margin: 0 auto; padding: 2rem 1.25rem 4rem }
+  .hero { margin-bottom: 2rem }
+  .hero-tag { font-size: .68rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: .4rem }
+  .hero h1 { font-size: clamp(1.4rem, 3vw, 2rem); font-weight: 700; color: var(--text); margin-bottom: .4rem }
+  .hero-desc { font-size: .9rem; color: var(--muted); max-width: 640px; line-height: 1.65 }
+
+  .section-title {
+    font-size: .7rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: .85rem; padding-bottom: .35rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* ── Concept cards ── */
+  .concept-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: .75rem; margin-bottom: 2rem }
+  .concept-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 1rem }
+  .concept-card .icon { font-size: 1.4rem; margin-bottom: .4rem }
+  .concept-card h3 { font-size: .85rem; font-weight: 700; color: var(--text); margin-bottom: .25rem }
+  .concept-card p { font-size: .78rem; color: var(--muted); line-height: 1.55 }
+
+  /* ── Interactive ── */
+  .interactive {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px;
+    padding: 1.25rem; margin-bottom: 2rem;
+  }
+  .interactive h2 { font-size: .95rem; font-weight: 600; margin-bottom: .2rem }
+  .sub { font-size: .78rem; color: var(--muted); margin-bottom: 1rem }
+
+  /* ── Maturity Model ── */
+  .maturity-track { display: flex; gap: 0; margin-bottom: 1.25rem; border-radius: 8px; overflow: hidden; border: 1px solid var(--border) }
+  .mat-btn {
+    flex: 1; padding: .55rem .4rem; font-size: .72rem; font-weight: 700; text-align: center;
+    border: none; cursor: pointer; transition: all .2s; letter-spacing: .03em;
+    background: var(--bg-base); color: var(--muted); border-right: 1px solid var(--border);
+  }
+  .mat-btn:last-child { border-right: none }
+  .mat-btn.active { background: var(--accent); color: #fff }
+  .mat-btn:hover:not(.active) { background: #142033; color: var(--text) }
+
+  .mat-panel { display: none }
+  .mat-panel.active { display: block }
+
+  .mat-level-header {
+    display: flex; align-items: baseline; gap: .75rem; margin-bottom: 1rem;
+  }
+  .mat-level-num {
+    font-size: 2.5rem; font-weight: 800; line-height: 1;
+    background: linear-gradient(135deg, var(--accent), var(--cyan));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .mat-level-name { font-size: 1.1rem; font-weight: 700; color: var(--text) }
+  .mat-level-desc { font-size: .82rem; color: var(--muted); margin-bottom: 1rem; line-height: 1.6 }
+
+  .mat-cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: .75rem; margin-bottom: 1rem }
+  .mat-col { background: rgba(255,255,255,.03); border: 1px solid var(--border); border-radius: 7px; padding: .85rem }
+  .mat-col-title { font-size: .65rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; margin-bottom: .5rem }
+  .mat-col-title.people  { color: #60a5fa }
+  .mat-col-title.process { color: #34d399 }
+  .mat-col-title.tools   { color: #a78bfa }
+  .mat-col ul { list-style: none; padding: 0 }
+  .mat-col li { font-size: .76rem; color: var(--muted); padding: .2rem 0; display: flex; align-items: flex-start; gap: .35rem }
+  .mat-col li::before { content: "•"; color: var(--accent); flex-shrink: 0; margin-top: .05rem }
+
+  .mat-metric {
+    display: flex; align-items: center; gap: 1rem; background: rgba(59,130,246,.07);
+    border: 1px solid rgba(59,130,246,.2); border-radius: 7px; padding: .75rem 1rem;
+  }
+  .mat-metric-label { font-size: .78rem; color: var(--muted) }
+  .mat-metric-bar-wrap { flex: 1; height: 8px; background: rgba(255,255,255,.06); border-radius: 4px; overflow: hidden }
+  .mat-metric-bar { height: 100%; border-radius: 4px; transition: width .5s ease; background: linear-gradient(90deg, var(--accent), var(--cyan)) }
+  .mat-metric-pct { font-size: .8rem; font-weight: 700; color: #60a5fa; min-width: 36px; text-align: right }
+
+  /* ── Pillar simulator ── */
+  .pillar-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(145px, 1fr)); gap: .65rem; margin-bottom: 1.25rem }
+  .pillar-card {
+    border: 1px solid var(--border); border-radius: 8px; padding: .85rem .75rem;
+    cursor: pointer; transition: all .2s; user-select: none; text-align: center;
+    background: var(--bg-base);
+  }
+  .pillar-card.on  { border-color: var(--success); background: rgba(16,185,129,.08) }
+  .pillar-card.off { border-color: var(--error);   background: rgba(239,68,68,.07); opacity: .7 }
+  .pillar-icon { font-size: 1.5rem; margin-bottom: .3rem }
+  .pillar-name { font-size: .78rem; font-weight: 700; color: var(--text); margin-bottom: .2rem }
+  .pillar-state { font-size: .65rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase }
+  .pillar-card.on  .pillar-state { color: var(--success) }
+  .pillar-card.off .pillar-state { color: var(--error) }
+
+  .trust-meter {
+    background: rgba(255,255,255,.03); border: 1px solid var(--border);
+    border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1.25rem;
+    display: flex; align-items: center; gap: 1.25rem;
+  }
+  .trust-label { font-size: .8rem; color: var(--muted); min-width: 110px }
+  .trust-bar-wrap { flex: 1; height: 12px; background: rgba(255,255,255,.06); border-radius: 6px; overflow: hidden }
+  .trust-bar { height: 100%; border-radius: 6px; transition: width .4s ease, background .4s ease }
+  .trust-pct { font-size: 1.1rem; font-weight: 800; min-width: 48px; text-align: right; transition: color .4s }
+
+  .consumers { display: grid; grid-template-columns: repeat(3, 1fr); gap: .65rem; margin-bottom: 1rem }
+  .consumer-card {
+    border: 1px solid var(--border); border-radius: 7px; padding: .75rem;
+    background: var(--bg-base); transition: all .3s;
+  }
+  .consumer-card.healthy  { border-color: var(--success); background: rgba(16,185,129,.06) }
+  .consumer-card.degraded { border-color: var(--warning); background: rgba(245,158,11,.06) }
+  .consumer-card.broken   { border-color: var(--error);   background: rgba(239,68,68,.06) }
+  .consumer-icon { font-size: 1.3rem; margin-bottom: .25rem }
+  .consumer-name { font-size: .75rem; font-weight: 700; color: var(--text); margin-bottom: .2rem }
+  .consumer-status { font-size: .68rem; color: var(--muted) }
+  .consumer-alert { font-size: .7rem; font-weight: 600; margin-top: .3rem }
+  .consumer-card.healthy  .consumer-alert { color: var(--success) }
+  .consumer-card.degraded .consumer-alert { color: var(--warning) }
+  .consumer-card.broken   .consumer-alert { color: var(--error) }
+
+  .sim-controls { display: flex; gap: .6rem; flex-wrap: wrap; align-items: center }
+  .sim-btn {
+    padding: .32rem .85rem; border-radius: 6px; border: 1px solid var(--border);
+    background: transparent; color: var(--text); font-size: .78rem; cursor: pointer;
+    transition: all .15s;
+  }
+  .sim-btn:hover { border-color: var(--accent); color: var(--accent) }
+  .sim-btn.danger { border-color: rgba(239,68,68,.4); color: #f87171 }
+  .sim-btn.danger:hover { border-color: var(--error); background: rgba(239,68,68,.08) }
+
+  /* ── Key quote ── */
+  .key-quote {
+    background: rgba(59,130,246,.06); border: 1px solid rgba(59,130,246,.2);
+    border-left: 3px solid var(--accent); border-radius: 0 7px 7px 0;
+    padding: 1rem 1.25rem; margin-bottom: 2rem; font-size: .85rem;
+    color: var(--muted); line-height: 1.7;
+  }
+  .key-quote em { color: #93c5fd; font-style: normal; font-weight: 600 }
+
+  footer { text-align: center; font-size: .73rem; color: #3d5a7a; padding: 1.5rem; border-top: 1px solid var(--border) }
+</style>
+</head>
+<body>
+
+<nav class="top-bar">
+  <div class="breadcrumb">
+    <a href="../index.html">Data Governance Guide</a>
+    <span>/</span>
+    <span class="ch-badge">Chapter 1</span>
+  </div>
+  <div class="nav-arrows">
+    <span class="nav-btn disabled">&larr; Prev</span>
+    <a href="02-roles-responsibilities.html" class="nav-btn">Next &rarr;</a>
+  </div>
+</nav>
+
+<div class="page">
+
+  <div class="hero">
+    <div class="hero-tag">Chapter 1</div>
+    <h1>🏛️ What Is Data Governance?</h1>
+    <div class="hero-desc">Data governance is the set of people, processes, and technology required to create consistent and proper management of an organization's data. At its core, the goal is <strong>data trustworthiness</strong> — data that can be relied on for decisions.</div>
+  </div>
+
+  <div class="section-title">Core Concepts</div>
+  <div class="concept-grid">
+    <div class="concept-card">
+      <div class="icon">🎯</div>
+      <h3>Data Trustworthiness</h3>
+      <p>The ultimate goal — data that is accurate, complete, consistent, timely, and accessible to those who need it.</p>
+    </div>
+    <div class="concept-card">
+      <div class="icon">📋</div>
+      <h3>Governance Framework</h3>
+      <p>The policies, standards, and processes that define how data is created, stored, used, and retired across the org.</p>
+    </div>
+    <div class="concept-card">
+      <div class="icon">🔄</div>
+      <h3>Data Lifecycle</h3>
+      <p>From ingestion to archival, every stage of a data asset requires governance controls to maintain quality.</p>
+    </div>
+    <div class="concept-card">
+      <div class="icon">🏷️</div>
+      <h3>Metadata</h3>
+      <p>Data about data. Without rich metadata (lineage, ownership, definitions), governance cannot scale beyond one team.</p>
+    </div>
+  </div>
+
+  <div class="key-quote">
+    <em>"Data governance is not about locking data down. It is about making data trustworthy enough that the business is confident using it — and confident sharing it."</em>
+    &mdash; Chapter 1, Data Governance: The Definitive Guide
+  </div>
+
+  <!-- ────────────────────────────────────────────── -->
+  <!-- Interactive 1: Maturity Model                  -->
+  <!-- ────────────────────────────────────────────── -->
+  <div class="interactive">
+    <h2>📈 Data Governance Maturity Model <span style="font-size:.7rem;font-weight:400;color:var(--muted);margin-left:.4rem">Interactive</span></h2>
+    <div class="sub">Click each level to explore what people, processes, and tools exist at that stage — and how much of your data is actually trustworthy.</div>
+
+    <div class="maturity-track">
+      <button class="mat-btn active" onclick="showMaturity(0)">L1<br><span style="font-weight:400;font-size:.65rem">Ad-Hoc</span></button>
+      <button class="mat-btn" onclick="showMaturity(1)">L2<br><span style="font-weight:400;font-size:.65rem">Aware</span></button>
+      <button class="mat-btn" onclick="showMaturity(2)">L3<br><span style="font-weight:400;font-size:.65rem">Proactive</span></button>
+      <button class="mat-btn" onclick="showMaturity(3)">L4<br><span style="font-weight:400;font-size:.65rem">Managed</span></button>
+      <button class="mat-btn" onclick="showMaturity(4)">L5<br><span style="font-weight:400;font-size:.65rem">Optimized</span></button>
+    </div>
+
+    <div id="mat-0" class="mat-panel active">
+      <div class="mat-level-header">
+        <div class="mat-level-num">1</div>
+        <div class="mat-level-name">Ad-Hoc</div>
+      </div>
+      <div class="mat-level-desc">No formal governance exists. Data is managed individually by each team or analyst. There is no shared vocabulary, no ownership, and quality issues are discovered only when something breaks downstream.</div>
+      <div class="mat-cols">
+        <div class="mat-col">
+          <div class="mat-col-title people">People</div>
+          <ul>
+            <li>No dedicated data roles</li>
+            <li>Analysts own their own datasets</li>
+            <li>No executive sponsorship</li>
+          </ul>
+        </div>
+        <div class="mat-col">
+          <div class="mat-col-title process">Process</div>
+          <ul>
+            <li>No data standards</li>
+            <li>Undocumented pipelines</li>
+            <li>Fire-fighting quality issues</li>
+          </ul>
+        </div>
+        <div class="mat-col">
+          <div class="mat-col-title tools">Tools</div>
+          <ul>
+            <li>Spreadsheets, local files</li>
+            <li>No catalog or glossary</li>
+            <li>Manual data sharing (email)</li>
+          </ul>
+        </div>
+      </div>
+      <div class="mat-metric">
+        <div class="mat-metric-label">Trusted data estimate</div>
+        <div class="mat-metric-bar-wrap"><div class="mat-metric-bar" style="width:12%"></div></div>
+        <div class="mat-metric-pct">12%</div>
+      </div>
+    </div>
+
+    <div id="mat-1" class="mat-panel">
+      <div class="mat-level-header">
+        <div class="mat-level-num">2</div>
+        <div class="mat-level-name">Aware</div>
+      </div>
+      <div class="mat-level-desc">The organization recognizes the problem. A small team is forming governance practices, usually triggered by a data incident, regulatory pressure, or a new CDO hire. Documentation is spotty but growing.</div>
+      <div class="mat-cols">
+        <div class="mat-col">
+          <div class="mat-col-title people">People</div>
+          <ul>
+            <li>1-2 data stewards assigned</li>
+            <li>CDO or equivalent hired</li>
+            <li>Working group forming</li>
+          </ul>
+        </div>
+        <div class="mat-col">
+          <div class="mat-col-title process">Process</div>
+          <ul>
+            <li>Initial data glossary started</li>
+            <li>Critical datasets identified</li>
+            <li>Informal quality checks</li>
+          </ul>
+        </div>
+        <div class="mat-col">
+          <div class="mat-col-title tools">Tools</div>
+          <ul>
+            <li>Basic data catalog (pilot)</li>
+            <li>Shared wiki for definitions</li>
+            <li>Manual lineage tracking</li>
+          </ul>
+        </div>
+      </div>
+      <div class="mat-metric">
+        <div class="mat-metric-label">Trusted data estimate</div>
+        <div class="mat-metric-bar-wrap"><div class="mat-metric-bar" style="width:28%"></div></div>
+        <div class="mat-metric-pct">28%</div>
+      </div>
+    </div>
+
+    <div id="mat-2" class="mat-panel">
+      <div class="mat-level-header">
+        <div class="mat-level-num">3</div>
+        <div class="mat-level-name">Proactive</div>
+      </div>
+      <div class="mat-level-desc">Governance is formalized with defined roles, policies, and a data catalog in production. Quality checks run automatically. A governance council meets regularly. The business treats data as an asset.</div>
+      <div class="mat-cols">
+        <div class="mat-col">
+          <div class="mat-col-title people">People</div>
+          <ul>
+            <li>Data owners per domain</li>
+            <li>Stewards in each BU</li>
+            <li>Governance council active</li>
+          </ul>
+        </div>
+        <div class="mat-col">
+          <div class="mat-col-title process">Process</div>
+          <ul>
+            <li>Data classification policy</li>
+            <li>Access request workflow</li>
+            <li>Quality SLAs defined</li>
+          </ul>
+        </div>
+        <div class="mat-col">
+          <div class="mat-col-title tools">Tools</div>
+          <ul>
+            <li>Catalog with automated scan</li>
+            <li>Quality monitoring dashboard</li>
+            <li>Automated lineage capture</li>
+          </ul>
+        </div>
+      </div>
+      <div class="mat-metric">
+        <div class="mat-metric-label">Trusted data estimate</div>
+        <div class="mat-metric-bar-wrap"><div class="mat-metric-bar" style="width:55%"></div></div>
+        <div class="mat-metric-pct">55%</div>
+      </div>
+    </div>
+
+    <div id="mat-3" class="mat-panel">
+      <div class="mat-level-header">
+        <div class="mat-level-num">4</div>
+        <div class="mat-level-name">Managed</div>
+      </div>
+      <div class="mat-level-desc">Governance is measured and data quality is tracked via KPIs. Metadata is comprehensive. Privacy controls are automated. Most teams self-serve data through the catalog without needing to ask IT for access.</div>
+      <div class="mat-cols">
+        <div class="mat-col">
+          <div class="mat-col-title people">People</div>
+          <ul>
+            <li>Federated data mesh teams</li>
+            <li>Data product owners</li>
+            <li>Compliance &amp; privacy leads</li>
+          </ul>
+        </div>
+        <div class="mat-col">
+          <div class="mat-col-title process">Process</div>
+          <ul>
+            <li>Data quality KPI reviews</li>
+            <li>GDPR / CCPA workflows</li>
+            <li>Change impact assessment</li>
+          </ul>
+        </div>
+        <div class="mat-col">
+          <div class="mat-col-title tools">Tools</div>
+          <ul>
+            <li>ML-powered anomaly detection</li>
+            <li>Policy-as-code enforcement</li>
+            <li>Real-time quality scoring</li>
+          </ul>
+        </div>
+      </div>
+      <div class="mat-metric">
+        <div class="mat-metric-label">Trusted data estimate</div>
+        <div class="mat-metric-bar-wrap"><div class="mat-metric-bar" style="width:78%"></div></div>
+        <div class="mat-metric-pct">78%</div>
+      </div>
+    </div>
+
+    <div id="mat-4" class="mat-panel">
+      <div class="mat-level-header">
+        <div class="mat-level-num">5</div>
+        <div class="mat-level-name">Optimized</div>
+      </div>
+      <div class="mat-level-desc">Data governance is a continuous improvement discipline. AI-assisted quality remediation, automated compliance reporting, and real-time trust scoring are standard. Data is a recognized competitive asset at board level.</div>
+      <div class="mat-cols">
+        <div class="mat-col">
+          <div class="mat-col-title people">People</div>
+          <ul>
+            <li>Every team has data fluency</li>
+            <li>CDO reports to CEO/board</li>
+            <li>External data partnerships</li>
+          </ul>
+        </div>
+        <div class="mat-col">
+          <div class="mat-col-title process">Process</div>
+          <ul>
+            <li>Automated incident remediation</li>
+            <li>Continuous audit trails</li>
+            <li>Governance embedded in CI/CD</li>
+          </ul>
+        </div>
+        <div class="mat-col">
+          <div class="mat-col-title tools">Tools</div>
+          <ul>
+            <li>AI quality remediation agents</li>
+            <li>Real-time compliance reports</li>
+            <li>Cross-org data marketplace</li>
+          </ul>
+        </div>
+      </div>
+      <div class="mat-metric">
+        <div class="mat-metric-label">Trusted data estimate</div>
+        <div class="mat-metric-bar-wrap"><div class="mat-metric-bar" style="width:95%"></div></div>
+        <div class="mat-metric-pct">95%</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ────────────────────────────────────────────── -->
+  <!-- Interactive 2: Trust Pillar Simulator           -->
+  <!-- ────────────────────────────────────────────── -->
+  <div class="interactive">
+    <h2>🏗️ The 5 Pillars of Data Trustworthiness <span style="font-size:.7rem;font-weight:400;color:var(--muted);margin-left:.4rem">Interactive</span></h2>
+    <div class="sub">Click any pillar to toggle it off. Watch how removing each governance control degrades the downstream data consumers. All 5 pillars must be active for full trustworthiness.</div>
+
+    <div class="pillar-grid" id="pillar-grid">
+      <div class="pillar-card on" id="p-availability" onclick="togglePillar('availability')">
+        <div class="pillar-icon">📡</div>
+        <div class="pillar-name">Availability</div>
+        <div class="pillar-state" id="ps-availability">Active</div>
+      </div>
+      <div class="pillar-card on" id="p-usability" onclick="togglePillar('usability')">
+        <div class="pillar-icon">🔎</div>
+        <div class="pillar-name">Usability</div>
+        <div class="pillar-state" id="ps-usability">Active</div>
+      </div>
+      <div class="pillar-card on" id="p-integrity" onclick="togglePillar('integrity')">
+        <div class="pillar-icon">✅</div>
+        <div class="pillar-name">Integrity</div>
+        <div class="pillar-state" id="ps-integrity">Active</div>
+      </div>
+      <div class="pillar-card on" id="p-security" onclick="togglePillar('security')">
+        <div class="pillar-icon">🔒</div>
+        <div class="pillar-name">Security</div>
+        <div class="pillar-state" id="ps-security">Active</div>
+      </div>
+      <div class="pillar-card on" id="p-safety" onclick="togglePillar('safety')">
+        <div class="pillar-icon">🛡️</div>
+        <div class="pillar-name">Safety</div>
+        <div class="pillar-state" id="ps-safety">Active</div>
+      </div>
+    </div>
+
+    <div class="trust-meter">
+      <div class="trust-label">Overall Trust Score</div>
+      <div class="trust-bar-wrap">
+        <div class="trust-bar" id="trust-bar" style="width:100%;background:linear-gradient(90deg,#10b981,#06b6d4)"></div>
+      </div>
+      <div class="trust-pct" id="trust-pct" style="color:#10b981">100%</div>
+    </div>
+
+    <div class="section-title" style="margin-bottom:.65rem">Downstream Impact</div>
+    <div class="consumers">
+      <div class="consumer-card healthy" id="c-analytics">
+        <div class="consumer-icon">📊</div>
+        <div class="consumer-name">Analytics Dashboard</div>
+        <div class="consumer-status" id="cs-analytics">All metrics reliable</div>
+        <div class="consumer-alert" id="ca-analytics">✓ Healthy</div>
+      </div>
+      <div class="consumer-card healthy" id="c-ml">
+        <div class="consumer-icon">🤖</div>
+        <div class="consumer-name">ML Model Training</div>
+        <div class="consumer-status" id="cs-ml">Clean training data</div>
+        <div class="consumer-alert" id="ca-ml">✓ Healthy</div>
+      </div>
+      <div class="consumer-card healthy" id="c-compliance">
+        <div class="consumer-icon">⚖️</div>
+        <div class="consumer-name">Compliance Report</div>
+        <div class="consumer-status" id="cs-compliance">Audit-ready data</div>
+        <div class="consumer-alert" id="ca-compliance">✓ Healthy</div>
+      </div>
+    </div>
+
+    <div class="sim-controls">
+      <button class="sim-btn danger" onclick="breakAll()">💥 Break all pillars</button>
+      <button class="sim-btn" onclick="fixAll()">✓ Restore all pillars</button>
+      <button class="sim-btn danger" onclick="breakRandom()">⚡ Random failure</button>
+    </div>
+  </div>
+
+</div><!-- /page -->
+
+<footer>
+  Chapter 1 &mdash; Data Governance: The Definitive Guide &mdash; Interactive Supplement
+</footer>
+
+<script>
+// ── Maturity Model ──
+function showMaturity(idx) {
+  for (var i = 0; i < 5; i++) {
+    document.getElementById("mat-" + i).classList.remove("active");
+  }
+  document.querySelectorAll(".mat-btn").forEach(function(b, i) {
+    b.classList.toggle("active", i === idx);
+  });
+  document.getElementById("mat-" + idx).classList.add("active");
+}
+
+// ── Pillar Simulator ──
+var pillars = {
+  availability: true,
+  usability: true,
+  integrity: true,
+  security: true,
+  safety: true
+};
+
+var pillarImpact = {
+  analytics:  ["availability", "usability", "integrity"],
+  ml:         ["integrity", "usability", "safety"],
+  compliance: ["security", "safety", "availability"]
+};
+
+var consumerMessages = {
+  analytics: {
+    healthy:  { status: "All metrics reliable",        alert: "Healthy" },
+    degraded: { status: "Some metrics may be wrong",   alert: "Quality Warning" },
+    broken:   { status: "Dashboard data unreliable",   alert: "Data Incident" }
+  },
+  ml: {
+    healthy:  { status: "Clean training data",         alert: "Healthy" },
+    degraded: { status: "Label noise detected",        alert: "Training Risk" },
+    broken:   { status: "Model bias risk high",        alert: "Training Halted" }
+  },
+  compliance: {
+    healthy:  { status: "Audit-ready data",            alert: "Healthy" },
+    degraded: { status: "Some fields unverified",      alert: "Audit Gap" },
+    broken:   { status: "Regulatory exposure risk",    alert: "Compliance Breach" }
+  }
+};
+
+function togglePillar(name) {
+  pillars[name] = !pillars[name];
+  var card = document.getElementById("p-" + name);
+  var state = document.getElementById("ps-" + name);
+  card.classList.toggle("on",  pillars[name]);
+  card.classList.toggle("off", !pillars[name]);
+  state.textContent = pillars[name] ? "Active" : "Failed";
+  updateTrust();
+}
+
+function updateTrust() {
+  var on = Object.values(pillars).filter(Boolean).length;
+  var pct = Math.round((on / 5) * 100);
+  var bar = document.getElementById("trust-bar");
+  var pctEl = document.getElementById("trust-pct");
+  bar.style.width = pct + "%";
+
+  if (pct >= 80) {
+    bar.style.background = "linear-gradient(90deg,#10b981,#06b6d4)";
+    pctEl.style.color = "#10b981";
+  } else if (pct >= 40) {
+    bar.style.background = "linear-gradient(90deg,#f59e0b,#fb923c)";
+    pctEl.style.color = "#f59e0b";
+  } else {
+    bar.style.background = "linear-gradient(90deg,#ef4444,#f97316)";
+    pctEl.style.color = "#ef4444";
+  }
+  pctEl.textContent = pct + "%";
+
+  ["analytics", "ml", "compliance"].forEach(function(consumer) {
+    var brokenCount = pillarImpact[consumer].filter(function(p) { return !pillars[p]; }).length;
+    var state = brokenCount === 0 ? "healthy" : brokenCount === 1 ? "degraded" : "broken";
+    var card   = document.getElementById("c-" + consumer);
+    var status = document.getElementById("cs-" + consumer);
+    var alert  = document.getElementById("ca-" + consumer);
+
+    card.className = "consumer-card " + state;
+    status.textContent = consumerMessages[consumer][state].status;
+
+    var prefix = state === "healthy" ? "Healthy" : state === "degraded" ? "Warning" : "Incident";
+    var symbol = state === "healthy" ? "✓ " : state === "degraded" ? "⚠ " : "✗ ";
+    alert.textContent = symbol + consumerMessages[consumer][state].alert;
+  });
+}
+
+function breakAll() {
+  Object.keys(pillars).forEach(function(p) {
+    pillars[p] = false;
+    var card = document.getElementById("p-" + p);
+    var state = document.getElementById("ps-" + p);
+    card.className = "pillar-card off";
+    state.textContent = "Failed";
+  });
+  updateTrust();
+}
+
+function fixAll() {
+  Object.keys(pillars).forEach(function(p) {
+    pillars[p] = true;
+    var card = document.getElementById("p-" + p);
+    var state = document.getElementById("ps-" + p);
+    card.className = "pillar-card on";
+    state.textContent = "Active";
+  });
+  updateTrust();
+}
+
+function breakRandom() {
+  fixAll();
+  var keys = Object.keys(pillars);
+  var pick = keys[Math.floor(Math.random() * keys.length)];
+  togglePillar(pick);
+}
+</script>
+
+</body>
+</html>

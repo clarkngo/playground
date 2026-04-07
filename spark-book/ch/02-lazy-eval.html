@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ch 2 &mdash; Lazy Evaluation &amp; DAGs | Learning Spark Supplement</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0 }
+  :root {
+    --accent:   #ff7c43;
+    --success:  #3fb950;
+    --warning:  #e3b341;
+    --error:    #f85149;
+    --muted:    #8b949e;
+    --bg-base:  #0d1117;
+    --bg-card:  #161b22;
+    --border:   #30363d;
+    --text:     #e6edf3;
+    --stage-a:  #58a6ff;
+    --stage-b:  #bc8cff;
+    --stage-c:  #ff7c43;
+  }
+  body {
+    background: var(--bg-base);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  /* ── Top bar ── */
+  .top-bar {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--bg-card); border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 1.25rem; height: 48px;
+  }
+  .breadcrumb { display: flex; align-items: center; gap: .5rem; font-size: .8rem; color: var(--muted) }
+  .breadcrumb a { color: var(--muted); text-decoration: none }
+  .breadcrumb a:hover { color: var(--text) }
+  .nav-arrows { display: flex; gap: .5rem; align-items: center }
+  .nav-btn {
+    padding: .3rem .8rem; border-radius: 6px; border: 1px solid var(--border);
+    background: transparent; color: var(--text); font-size: .78rem; cursor: pointer;
+    text-decoration: none; display: inline-flex; align-items: center;
+    transition: border-color .15s, color .15s;
+  }
+  .nav-btn:hover { border-color: var(--accent); color: var(--accent) }
+  .ch-badge {
+    font-size: .72rem; font-weight: 700; background: rgba(255,124,67,.12);
+    color: var(--accent); border: 1px solid rgba(255,124,67,.3);
+    border-radius: 4px; padding: .15rem .55rem; letter-spacing: .04em;
+  }
+
+  /* ── Page ── */
+  .page { max-width: 820px; margin: 0 auto; padding: 2rem 1.25rem 4rem }
+
+  .hero { margin-bottom: 2rem }
+  .hero-tag { font-size: .68rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: .4rem }
+  .hero h1 { font-size: clamp(1.4rem, 3vw, 2rem); font-weight: 700; margin-bottom: .4rem }
+  .hero-desc { font-size: .9rem; color: var(--muted); max-width: 620px; line-height: 1.65 }
+
+  .section-title {
+    font-size: .7rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: .85rem; padding-bottom: .35rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* ── Concept cards ── */
+  .concept-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: .75rem; margin-bottom: 2rem }
+  .concept-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 1rem }
+  .concept-card .icon { font-size: 1.4rem; margin-bottom: .4rem }
+  .concept-card h3 { font-size: .85rem; font-weight: 700; color: var(--text); margin-bottom: .25rem }
+  .concept-card p { font-size: .78rem; color: var(--muted); line-height: 1.55 }
+
+  /* ── Interactive card ── */
+  .interactive {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px;
+    padding: 1.25rem; margin-bottom: 2rem;
+  }
+  .interactive h2 { font-size: .95rem; font-weight: 600; margin-bottom: .2rem }
+  .sub { font-size: .78rem; color: var(--muted); margin-bottom: 1rem }
+
+  /* ── Transform palette ── */
+  .palette { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: .9rem }
+  .tx-btn {
+    font-size: .75rem; font-weight: 600; padding: .3rem .75rem; border-radius: 6px;
+    border: 1px solid; cursor: pointer; transition: opacity .15s, transform .1s;
+  }
+  .tx-btn:hover { opacity: .85; transform: translateY(-1px) }
+  .tx-btn:active { transform: none }
+  .tx-btn.narrow { background: rgba(88,166,255,.1); border-color: var(--stage-a); color: var(--stage-a) }
+  .tx-btn.wide   { background: rgba(188,140,255,.1); border-color: var(--stage-b); color: var(--stage-b) }
+  .tx-btn.action { background: rgba(255,124,67,.15); border-color: var(--accent);  color: var(--accent);
+                   font-size: .8rem; padding: .3rem 1rem }
+  .tx-btn:disabled { opacity: .35; cursor: default; transform: none }
+
+  .palette-legend { font-size: .68rem; color: var(--muted); margin-bottom: .5rem; display: flex; gap: 1rem; flex-wrap: wrap }
+  .legend-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: .3rem; vertical-align: middle }
+
+  /* ── Stats bar ── */
+  .stats-bar {
+    display: flex; gap: .5rem; margin-bottom: .6rem; flex-wrap: wrap;
+  }
+  .stat-chip {
+    background: var(--bg-base); border: 1px solid var(--border); border-radius: 6px;
+    padding: .3rem .75rem; font-size: .73rem; display: flex; align-items: center; gap: .4rem;
+  }
+  .stat-val { font-weight: 700; font-variant-numeric: tabular-nums }
+  .stat-val.orange { color: var(--accent) }
+  .stat-val.green  { color: var(--success) }
+  .stat-val.blue   { color: var(--stage-a) }
+  .stat-val.purple { color: var(--stage-b) }
+  .stat-lbl { color: var(--muted) }
+
+  /* ── DAG canvas ── */
+  .dag-scroll {
+    overflow-x: auto; overflow-y: visible;
+    background: var(--bg-base); border: 1px solid var(--border); border-radius: 8px;
+    padding: 1rem .75rem; min-height: 180px; margin-bottom: .6rem;
+  }
+  .dag-container {
+    display: flex; align-items: flex-start; gap: 0; min-width: max-content; position: relative;
+  }
+
+  /* Stage lane backgrounds */
+  .stage-lane {
+    display: flex; align-items: center; border-radius: 6px;
+    padding: .25rem .2rem; gap: 0; position: relative;
+  }
+  .stage-lane.lane-a { background: rgba(88,166,255,.05); border: 1px dashed rgba(88,166,255,.2) }
+  .stage-lane.lane-b { background: rgba(188,140,255,.05); border: 1px dashed rgba(188,140,255,.2) }
+  .stage-lane.lane-c { background: rgba(255,124,67,.05);  border: 1px dashed rgba(255,124,67,.2) }
+
+  .stage-label {
+    position: absolute; top: -18px; left: 6px;
+    font-size: .58rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+    opacity: .7;
+  }
+  .lane-a .stage-label { color: var(--stage-a) }
+  .lane-b .stage-label { color: var(--stage-b) }
+  .lane-c .stage-label { color: var(--stage-c) }
+
+  /* Stage boundary (shuffle wall) */
+  .stage-break {
+    width: 28px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    position: relative; align-self: stretch;
+  }
+  .stage-break-line {
+    width: 2px; height: 100%; background: repeating-linear-gradient(
+      to bottom, var(--stage-b) 0, var(--stage-b) 6px, transparent 6px, transparent 10px
+    );
+  }
+  .stage-break-label {
+    position: absolute; top: 50%; transform: translateY(-50%) rotate(-90deg);
+    font-size: .55rem; font-weight: 700; color: var(--stage-b); white-space: nowrap;
+    letter-spacing: .05em; text-transform: uppercase;
+  }
+
+  /* Arrow between nodes */
+  .dag-arrow {
+    width: 24px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    color: var(--border); font-size: 1rem; align-self: center;
+  }
+  .dag-arrow.lit { color: var(--accent) }
+
+  /* DAG nodes */
+  .dag-node {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    width: 76px; min-height: 68px; border-radius: 8px; padding: .4rem .3rem;
+    border: 2px dashed var(--border); background: var(--bg-card);
+    text-align: center; flex-shrink: 0; position: relative;
+    transition: border-color .35s, background .35s, box-shadow .35s;
+  }
+  .dag-node .n-icon { font-size: 1.2rem; line-height: 1.1 }
+  .dag-node .n-name { font-size: .62rem; font-weight: 700; margin-top: .2rem; white-space: nowrap }
+  .dag-node .n-type { font-size: .55rem; margin-top: .1rem; opacity: .7 }
+  .dag-node.narrow-node { border-color: var(--stage-a); }
+  .dag-node.wide-node   { border-color: var(--stage-b); }
+  .dag-node.action-node { border-color: var(--accent); background: rgba(255,124,67,.08) }
+
+  /* animation states */
+  .dag-node.pending  { border-style: dashed; opacity: .75 }
+  .dag-node.running  {
+    border-style: solid; border-color: var(--accent) !important; background: #2a1200 !important;
+    animation: node-run 1s ease-in-out infinite; opacity: 1;
+  }
+  .dag-node.done-ok  {
+    border-style: solid; border-color: var(--success) !important; background: #1c2a1c !important;
+    opacity: 1; animation: none;
+  }
+  .dag-node.done-skip { border-style: solid; border-color: var(--muted) !important; opacity: .5; animation: none }
+
+  @keyframes node-run {
+    0%,100% { box-shadow: 0 0 0 0 rgba(255,124,67,.4) }
+    55%      { box-shadow: 0 0 0 8px rgba(255,124,67,0) }
+  }
+  @keyframes node-appear {
+    from { opacity: 0; transform: scale(.8) translateY(6px) }
+    to   { opacity: 1; transform: scale(1) translateY(0) }
+  }
+  .dag-node { animation: node-appear .25s ease both }
+
+  /* ── Task counter ── */
+  .task-counter {
+    background: var(--bg-base); border: 1px solid var(--border); border-radius: 6px;
+    padding: .5rem .85rem; font-family: monospace; font-size: .8rem;
+    display: flex; align-items: center; gap: .5rem; margin-bottom: .6rem;
+  }
+  .task-counter .tc-label { color: var(--muted) }
+  .tc-value { font-weight: 700; color: var(--accent); font-size: 1rem; transition: color .3s }
+  .tc-value.active { color: var(--success) }
+  .tc-insight { font-size: .72rem; color: var(--muted); font-family: sans-serif }
+
+  /* ── Action controls ── */
+  .action-row {
+    display: flex; gap: .6rem; align-items: center; flex-wrap: wrap; margin-bottom: .6rem;
+  }
+  .reset-btn {
+    font-size: .75rem; padding: .3rem .75rem; border-radius: 6px;
+    border: 1px solid var(--border); background: transparent; color: var(--muted);
+    cursor: pointer; transition: border-color .15s, color .15s;
+  }
+  .reset-btn:hover { border-color: var(--error); color: var(--error) }
+
+  /* ── Log ── */
+  .mini-log {
+    background: var(--bg-base); border: 1px solid var(--border); border-radius: 6px;
+    padding: .5rem .75rem; font-family: monospace; font-size: .73rem;
+    height: 90px; overflow-y: auto; scroll-behavior: smooth;
+  }
+  .log-line { line-height: 1.75; animation: log-in .15s ease both }
+  .log-ok   { color: var(--success) }
+  .log-info { color: var(--muted); opacity: .85 }
+  .log-warn { color: var(--warning) }
+  .log-spark { color: var(--accent) }
+  @keyframes log-in { from{opacity:0;transform:translateY(3px)} to{opacity:1;transform:none} }
+
+  /* ── Use cases ── */
+  .uc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: .75rem; margin-bottom: 2rem }
+  .uc-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; border-left: 3px solid var(--accent) }
+  .uc-card h3 { font-size: .83rem; font-weight: 700; color: var(--text); margin-bottom: .3rem }
+  .uc-card p { font-size: .77rem; color: var(--muted); line-height: 1.55 }
+  .uc-tag {
+    display: inline-block; font-size: .62rem; font-weight: 600;
+    background: rgba(255,124,67,.1); color: var(--accent);
+    border-radius: 4px; padding: .1rem .4rem; margin-bottom: .45rem;
+    letter-spacing: .04em; text-transform: uppercase;
+  }
+
+  /* ── Gotchas ── */
+  .gotcha-list { display: flex; flex-direction: column; gap: .6rem; margin-bottom: 2rem }
+  .gotcha { background: var(--bg-card); border: 1px solid var(--border); border-left: 3px solid var(--warning); border-radius: 8px; padding: .85rem 1rem; display: flex; gap: .75rem; align-items: flex-start }
+  .gotcha-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: .05rem }
+  .gotcha h4 { font-size: .82rem; font-weight: 700; color: var(--text); margin-bottom: .2rem }
+  .gotcha p  { font-size: .77rem; color: var(--muted); line-height: 1.55 }
+
+  /* ── Code inline ── */
+  code { background: rgba(255,255,255,.07); border-radius: 3px; padding: .1rem .3rem; font-size: .85em; font-family: monospace }
+</style>
+</head>
+<body>
+
+<nav class="top-bar">
+  <div class="breadcrumb">
+    <a href="../index.html">Learning Spark</a>
+    <span>/</span>
+    <span>Chapter 2</span>
+  </div>
+  <div class="nav-arrows">
+    <a href="01-architecture.html" class="nav-btn">&#8592; Prev</a>
+    <span class="ch-badge">2 / 7</span>
+    <a href="03-partitions.html" class="nav-btn">Next &#8594;</a>
+  </div>
+</nav>
+
+<div class="page">
+
+  <div class="hero">
+    <div class="hero-tag">Chapter 2 &mdash; Spark Core Concepts</div>
+    <h1>Lazy Evaluation &amp; DAGs</h1>
+    <p class="hero-desc">Spark never runs a transformation immediately. It builds a <strong>Directed Acyclic Graph</strong> of work, then executes the whole plan at once when you call an action. Build the DAG below and watch what happens when you hit <em>collect()</em>.</p>
+  </div>
+
+  <div class="section-title">Key concepts</div>
+  <div class="concept-grid">
+    <div class="concept-card">
+      <div class="icon">&#128338;</div>
+      <h3>Lazy evaluation</h3>
+      <p>Transformations like <code>map()</code> and <code>filter()</code> return a new RDD description &mdash; no computation happens yet.</p>
+    </div>
+    <div class="concept-card">
+      <div class="icon">&#128202;</div>
+      <h3>DAG</h3>
+      <p>Spark records each transformation as a node in a graph. Edges show data dependencies. No cycles allowed.</p>
+    </div>
+    <div class="concept-card">
+      <div class="icon">&#9889;</div>
+      <h3>Action triggers execution</h3>
+      <p><code>collect()</code>, <code>count()</code>, <code>save()</code> &mdash; calling any action kicks off the scheduler to execute the full DAG.</p>
+    </div>
+    <div class="concept-card">
+      <div class="icon">&#9986;</div>
+      <h3>Stage boundaries</h3>
+      <p>Wide transformations (shuffle) split the DAG into <em>stages</em>. Each stage is fully pipelined; stages run sequentially.</p>
+    </div>
+  </div>
+
+  <div class="section-title">Interactive &mdash; DAG builder</div>
+  <div class="interactive">
+    <h2>Build your transformation pipeline</h2>
+    <p class="sub">Click transforms to add them. Narrow transforms (blue) stay in the same stage. Wide transforms (purple) create a shuffle boundary &mdash; a new stage begins after them. Nothing runs until you trigger an action.</p>
+
+    <div class="palette-legend">
+      <span><span class="legend-dot" style="background:var(--stage-a)"></span>Narrow &mdash; no shuffle, same stage</span>
+      <span><span class="legend-dot" style="background:var(--stage-b)"></span>Wide &mdash; shuffle, new stage</span>
+      <span><span class="legend-dot" style="background:var(--accent)"></span>Action &mdash; triggers execution</span>
+    </div>
+
+    <div class="palette" id="palette">
+      <button class="tx-btn narrow" onclick="addNode('map','map()','&#128257;','narrow')">+ map()</button>
+      <button class="tx-btn narrow" onclick="addNode('filter','filter()','&#128269;','narrow')">+ filter()</button>
+      <button class="tx-btn narrow" onclick="addNode('flatMap','flatMap()','&#128260;','narrow')">+ flatMap()</button>
+      <button class="tx-btn narrow" onclick="addNode('union','union()','&#8746;','narrow')">+ union()</button>
+      <button class="tx-btn wide"   onclick="addNode('groupByKey','groupByKey()','&#127974;','wide')">+ groupByKey()</button>
+      <button class="tx-btn wide"   onclick="addNode('reduceByKey','reduceByKey()','&#8721;','wide')">+ reduceByKey()</button>
+      <button class="tx-btn wide"   onclick="addNode('join','join()','&#128259;','wide')">+ join()</button>
+      <button class="tx-btn wide"   onclick="addNode('repartition','repartition()','&#9881;','wide')">+ repartition()</button>
+    </div>
+
+    <div class="stats-bar" id="stats-bar">
+      <div class="stat-chip"><span class="stat-val orange" id="stat-nodes">0</span><span class="stat-lbl">transforms</span></div>
+      <div class="stat-chip"><span class="stat-val blue" id="stat-stages">1</span><span class="stat-lbl">stages</span></div>
+      <div class="stat-chip"><span class="stat-val purple" id="stat-shuffles">0</span><span class="stat-lbl">shuffles</span></div>
+      <div class="stat-chip"><span class="stat-val green" id="stat-tasks">0</span><span class="stat-lbl">tasks run</span></div>
+    </div>
+
+    <div class="dag-scroll" id="dag-scroll">
+      <div class="dag-container" id="dag-container">
+        <!-- Source node always present -->
+        <div class="stage-lane lane-a" id="lane-0">
+          <span class="stage-label">Stage 1</span>
+          <div class="dag-node narrow-node" id="node-source">
+            <span class="n-icon">&#128196;</span>
+            <span class="n-name">parallelize</span>
+            <span class="n-type">source</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="task-counter">
+      <span class="tc-label">Tasks executed:</span>
+      <span class="tc-value" id="task-val">0</span>
+      <span class="tc-insight" id="task-insight">&mdash; add transforms, then trigger an action</span>
+    </div>
+
+    <div class="action-row">
+      <button class="tx-btn action" id="collect-btn" onclick="triggerAction('collect()')">&#9654; collect()</button>
+      <button class="tx-btn action" id="count-btn"   onclick="triggerAction('count()')">&#9654; count()</button>
+      <button class="tx-btn action" id="save-btn"    onclick="triggerAction('saveAsTextFile()')">&#9654; saveAsTextFile()</button>
+      <button class="reset-btn" onclick="resetDag()">&#8635; Reset</button>
+    </div>
+
+    <div class="mini-log" id="mini-log">
+      <div class="log-line log-info">&gt; DAG initialized. Add transforms, then trigger an action to execute.</div>
+    </div>
+  </div>
+
+  <div class="section-title">Real-world use cases</div>
+  <div class="uc-grid">
+    <div class="uc-card">
+      <span class="uc-tag">Debug</span>
+      <h3>Why nothing is running</h3>
+      <p>New Spark users often build a long chain and wonder why it finished instantly. Lazy eval is why &mdash; you need <code>count()</code> or <code>show()</code> to trigger execution.</p>
+    </div>
+    <div class="uc-card">
+      <span class="uc-tag">Optimize</span>
+      <h3>Filter early, shuffle late</h3>
+      <p>Because nothing runs until the action, Catalyst can reorder your transformations. Put <code>filter()</code> before <code>groupByKey()</code> and Spark may push it down even if you wrote it after.</p>
+    </div>
+    <div class="uc-card">
+      <span class="uc-tag">Inspect</span>
+      <h3>Read the DAG with explain()</h3>
+      <p>Calling <code>df.explain()</code> prints the physical plan without executing it &mdash; lazy eval makes this possible. Use it to spot unexpected shuffles before the job runs.</p>
+    </div>
+  </div>
+
+  <div class="section-title">Common pitfalls</div>
+  <div class="gotcha-list">
+    <div class="gotcha">
+      <span class="gotcha-icon">&#9888;</span>
+      <div>
+        <h4>groupByKey() vs reduceByKey()</h4>
+        <p>Both are wide. But <code>groupByKey()</code> shuffles all values to the reducer, while <code>reduceByKey()</code> pre-aggregates on each partition first. On large data, <code>groupByKey()</code> can OOM executors.</p>
+      </div>
+    </div>
+    <div class="gotcha">
+      <span class="gotcha-icon">&#9888;</span>
+      <div>
+        <h4>Calling collect() on huge RDDs</h4>
+        <p><code>collect()</code> pulls everything to the Driver. Add it to your DAG here and watch the log. In production, prefer writing to storage over collecting.</p>
+      </div>
+    </div>
+    <div class="gotcha">
+      <span class="gotcha-icon">&#9888;</span>
+      <div>
+        <h4>Recomputation without caching</h4>
+        <p>If you trigger two actions on the same RDD, Spark recomputes the full lineage both times. Call <code>rdd.cache()</code> or <code>rdd.persist()</code> before the first action to avoid this.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+var nodes   = [];
+var running = false;
+var nodeSeq = 0;
+
+var LANE_COLORS = ['lane-a', 'lane-b', 'lane-c', 'lane-a', 'lane-b', 'lane-c'];
+
+// Cached DOM refs
+var _logEl      = null;
+var _statNodes  = null;
+var _statStages = null;
+var _statShuf   = null;
+var _taskVal    = null;
+var _taskHint   = null;
+
+function getStageCount() {
+  return 1 + nodes.filter(function(n) { return n.kind === 'wide'; }).length;
+}
+
+function log(cls, msg) {
+  var line = document.createElement('div');
+  line.className = 'log-line log-' + cls;
+  line.textContent = msg;
+  if (_logEl.children.length > 80) _logEl.removeChild(_logEl.firstChild);
+  _logEl.appendChild(line);
+  _logEl.scrollTop = _logEl.scrollHeight;
+}
+
+function updateStats() {
+  var shuffles = nodes.filter(function(n) { return n.kind === 'wide'; }).length;
+  _statNodes.textContent  = nodes.length;
+  _statStages.textContent = 1 + shuffles;
+  _statShuf.textContent   = shuffles;
+}
+
+function setNodeState(id, state) {
+  var el = document.getElementById('dag-' + id);
+  if (!el) return;
+  el.classList.remove('pending', 'running', 'done-ok', 'done-skip');
+  el.classList.add(state);
+}
+
+// ── Add a transform node ──
+function addNode(id, label, icon, kind) {
+  if (running) return;
+  nodeSeq++;
+  var node = { id: 'n' + nodeSeq, name: label, icon: icon, kind: kind };
+  nodes.push(node);
+
+  rebuildDag();
+  updateStats();
+
+  var verb = kind === 'wide' ? 'Wide transform added \u2014 shuffle boundary created' : 'Narrow transform added \u2014 same stage';
+  log('info', '> ' + label + ' \u2014 ' + verb);
+}
+
+// ── Rebuild the whole DAG DOM ──
+function rebuildDag() {
+  var container = document.getElementById('dag-container');
+  container.innerHTML = '';
+
+  // Source node in stage 1
+  var laneIdx = 0;
+  var lane = makeLane(laneIdx, 'Stage 1');
+  var srcNode = makeNodeEl({ id: 'source', name: 'parallelize', icon: '\uD83D\uDCC4', kind: 'narrow' }, 'pending');
+  lane.appendChild(srcNode);
+  container.appendChild(lane);
+
+  for (var i = 0; i < nodes.length; i++) {
+    var n = nodes[i];
+    if (n.kind === 'wide') {
+      // Close current lane, add shuffle break, open new lane
+      var brk = document.createElement('div');
+      brk.className = 'stage-break';
+      brk.id = 'break-' + i;
+      brk.innerHTML = '<div class="stage-break-line"></div><div class="stage-break-label">shuffle</div>';
+      container.appendChild(brk);
+      laneIdx++;
+      lane = makeLane(laneIdx, 'Stage ' + (laneIdx + 1));
+      container.appendChild(lane);
+    } else {
+      // Arrow within lane
+      var arr = document.createElement('div');
+      arr.className = 'dag-arrow';
+      arr.id = 'arr-' + i;
+      arr.innerHTML = '\u203A';
+      lane.appendChild(arr);
+    }
+
+    var nodeEl = makeNodeEl(n, 'pending');
+    lane.appendChild(nodeEl);
+  }
+}
+
+function makeLane(idx, label) {
+  var lane = document.createElement('div');
+  lane.className = 'stage-lane ' + (LANE_COLORS[idx % LANE_COLORS.length]);
+  lane.id = 'lane-' + idx;
+  lane.style.marginTop = '18px';
+  var lbl = document.createElement('span');
+  lbl.className = 'stage-label';
+  lbl.textContent = label;
+  lane.appendChild(lbl);
+  return lane;
+}
+
+function makeNodeEl(n, state) {
+  var el = document.createElement('div');
+  el.className = 'dag-node ' + n.kind + '-node ' + state;
+  el.id = 'dag-' + n.id;
+  el.innerHTML =
+    '<span class="n-icon">' + n.icon + '</span>' +
+    '<span class="n-name">' + n.name + '</span>' +
+    '<span class="n-type">' + n.kind + '</span>';
+  return el;
+}
+
+// ── Trigger action ──
+function triggerAction(actionName) {
+  if (running) return;
+  if (nodes.length === 0) {
+    log('warn', '> Add at least one transform before triggering an action.');
+    return;
+  }
+  running = true;
+  setActionBtns(true);
+
+  var sc = getStageCount();
+  log('spark', '> Action triggered: ' + actionName);
+  log('info',  '> DAGScheduler: building job from ' + sc + ' stage(s)...');
+
+  rebuildDag();
+  addActionNodeToDOM(actionName);
+
+  var allNodeIds = ['source'].concat(nodes.map(function(n) { return n.id; }));
+  var partitions = 8;
+  var taskTotal  = sc * partitions;
+  var tasksDone  = 0;
+  var delay      = 0;
+  var stageShown = 0;
+
+  for (var i = 0; i < allNodeIds.length; i++) {
+    (function(idx, nid) {
+      if (idx > 0 && nodes[idx - 1] && nodes[idx - 1].kind === 'wide') {
+        (function(s) {
+          setTimeout(function() {
+            stageShown++;
+            log('info', '> Starting Stage ' + (stageShown + 1) + ' (after shuffle)...');
+          }, delay - 100);
+        })(stageShown);
+      }
+
+      setTimeout(function() {
+        setNodeState(nid, 'running');
+        if (idx === 0) {
+          log('info', '> Stage 1: executing ' + partitions + ' tasks on source partitions...');
+        }
+      }, delay);
+
+      delay += 480;
+
+      setTimeout(function() {
+        setNodeState(nid, 'done-ok');
+        tasksDone += Math.ceil(partitions / allNodeIds.length);
+        tasksDone = Math.min(tasksDone, taskTotal);
+        _taskVal.textContent = tasksDone;
+        _taskVal.className = 'tc-value active';
+        _taskHint.textContent = '\u2014 ' + tasksDone + ' / ' + taskTotal + ' tasks complete';
+      }, delay);
+
+      delay += 120;
+    })(i, allNodeIds[i]);
+  }
+
+  var finalDelay = delay;
+  setTimeout(function() { setNodeState('action', 'running'); }, finalDelay);
+
+  setTimeout(function() {
+    setNodeState('action', 'done-ok');
+    _taskVal.textContent = taskTotal;
+    document.getElementById('stat-tasks').textContent = taskTotal;
+    log('ok',    '> All ' + sc + ' stage(s) complete \u2014 ' + taskTotal + ' tasks finished');
+    log('spark', '> ' + actionName + ' returned \u2014 job duration: ' + (sc * 1.4).toFixed(1) + 's');
+    running = false;
+    setActionBtns(false);
+  }, finalDelay + 700);
+}
+
+function addActionNodeToDOM(actionName) {
+  var container = document.getElementById('dag-container');
+  var arr = document.createElement('div');
+  arr.className = 'dag-arrow';
+  arr.innerHTML = '\u203A';
+  container.appendChild(arr);
+
+  var el = document.createElement('div');
+  el.className = 'dag-node action-node pending';
+  el.id = 'dag-action';
+  el.innerHTML =
+    '<span class="n-icon">\u26A1</span>' +
+    '<span class="n-name">' + actionName + '</span>' +
+    '<span class="n-type">action</span>';
+  container.appendChild(el);
+}
+
+function setActionBtns(disabled) {
+  ['collect-btn', 'count-btn', 'save-btn'].forEach(function(id) {
+    document.getElementById(id).disabled = disabled;
+  });
+}
+
+function resetDag() {
+  if (running) return;
+  nodes = [];
+  nodeSeq = 0;
+  rebuildDag();
+  updateStats();
+  _taskVal.textContent = '0';
+  _taskVal.className = 'tc-value';
+  _taskHint.textContent = '\u2014 add transforms, then trigger an action';
+  document.getElementById('stat-tasks').textContent = '0';
+  _logEl.innerHTML = '';
+  log('info', '> DAG reset. Add transforms and trigger an action.');
+}
+
+// Init — cache refs once
+document.addEventListener('DOMContentLoaded', function() {
+  _logEl      = document.getElementById('mini-log');
+  _statNodes  = document.getElementById('stat-nodes');
+  _statStages = document.getElementById('stat-stages');
+  _statShuf   = document.getElementById('stat-shuffles');
+  _taskVal    = document.getElementById('task-val');
+  _taskHint   = document.getElementById('task-insight');
+  rebuildDag();
+  updateStats();
+});
+</script>
+</body>
+</html>
