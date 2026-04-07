@@ -7,6 +7,12 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ## 2026-04-07
 
+### [feature] Data Governance: The Definitive Guide — interactive book supplement (Phase 1)
+- `data-gov-book/index.html` — hub page; navy/blue dark theme; book icon + O'Reilly attribution; 2 live chapter cards + 4 coming-soon; "How to use" guidance section; Tailwind CDN only
+- `data-gov-book/ch/01-what-is-data-governance.html` — Ch 1 interactive: (1) 5-level maturity model click-through (Ad-Hoc → Optimized) showing People/Process/Tools per level and trusted-data % bar; (2) 5-pillar trust simulator (Availability, Usability, Integrity, Security, Safety) — toggle pillars off and watch trust score + 3 downstream consumers (Analytics, ML, Compliance) degrade with context-aware messages; "break all / restore all / random failure" buttons
+- `data-gov-book/ch/02-roles-responsibilities.html` — Ch 2 interactive: (1) Role Explorer — 5 tabs (CDO, Data Owner, Data Steward, Data Custodian, Governance Council); each shows Responsibilities / Decisions Owned / Key Partnerships / Typical Tools in 4-column layout; (2) RACI Decision Matrix — 4 selectable scenarios (Define a Data Standard, Handle a Data Breach, Approve Data Access, Launch a Data Product); R/A/C/I chips per role per task; click any cell for a plain-English explanation of what that role does
+- All pages: sticky top bar with prev/next nav, hero + concept cards + key quote layout; JS syntax check passes
+
 ### [feature] Learning Spark — interactive book supplement (Phase 1)
 - `spark-book/index.html` — warm-dark hub ("book on a shelf at night" aesthetic); amber/Georgia serif title; 7 chapter cards (3 live, 4 coming-soon); "How to use" guidance section; no external dependencies beyond Tailwind CDN
 - `spark-book/ch/01-architecture.html` — Ch 1 interactive: ports `spark-flow-test.html` node-flow animator (all 3 scenarios: Batch WordCount, Kafka Streaming, Executor OOM); adds 4th outcome cell (Shuffle I/O); adds Cluster Topology view toggle with executor/cores/partitions sliders, task-slot metrics, and utilization indicators; sticky top bar with prev/next nav

@@ -9,6 +9,9 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ## 2026-04-07
 
+### [feature] Data Governance: The Definitive Guide — interactive book supplement (Phase 1)
+- `data-gov-book/` — 3-page interactive companion: hub + Ch 1 (maturity model + 5-pillar trust simulator) + Ch 2 (role explorer + RACI decision matrix)
+
 ### [feature] Learning Spark interactive book supplement — Phase 1
 - `spark-book/` — 4-page interactive companion to "Learning Spark 2nd Ed.": hub + Ch 1 (job flow animator + cluster topology), Ch 2 (lazy eval DAG builder), Ch 3 (partition layout visualizer with cost model)
 
