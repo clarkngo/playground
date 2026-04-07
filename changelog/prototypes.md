@@ -5,6 +5,15 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-04-06
+
+### [feature] node-flow-animator skill test prototypes
+- `prototypes/node-flow-test.html` — system design request flow simulator; 3 scenarios: normal GET (cache miss), normal GET (cache hit), downstream timeout; nodes: Client → API Gateway → User Service → Postgres/Redis; outcome grid: Latency / Error Rate / Cache; blue accent theme
+- `prototypes/spark-flow-test.html` — Apache Spark job flow simulator; 3 scenarios: Batch WordCount (HDFS), Structured Streaming (Kafka → Delta Lake), Executor OOM during shuffle; nodes: Driver → YARN RM → Executor Pool → Storage; outcome grid: Job Status / Stage Duration / Records; orange Spark accent theme; adds `node-error` red-glow class distinct from `node-hit` for failed-node state
+- Both files test the `node-flow-animator` skill pattern (DOM + CSS transitions, double-RAF packet dots, timed step orchestrator) applied to non-security domains
+
+---
+
 ## 2026-04-02
 
 ### [feature] ByteByteGo-style course platform prototype

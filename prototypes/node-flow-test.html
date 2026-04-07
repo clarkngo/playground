@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>System Design Request Flow — node-flow-animator test</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0 }
+  body { background: #0d1117; color: #e6edf3; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+         display: flex; justify-content: center; padding: 2rem 1rem }
+  .card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1.5rem;
+          width: 100%; max-width: 700px }
+  h2   { font-size: 1rem; font-weight: 600; margin-bottom: .25rem }
+  .sub { font-size: .78rem; color: #8b949e; margin-bottom: 1.2rem }
+
+  /* Controls */
+  .controls { display: flex; gap: .6rem; margin-bottom: .9rem; align-items: center }
+  select { background: #0d1117; color: #e6edf3; border: 1px solid #30363d; border-radius: 6px;
+           padding: .35rem .6rem; font-size: .8rem; flex: 1; cursor: pointer }
+  button { background: #238636; color: #fff; border: none; border-radius: 6px;
+           padding: .35rem .9rem; font-size: .8rem; font-weight: 600; cursor: pointer;
+           transition: opacity .2s }
+  button:disabled { opacity: .5; cursor: default }
+  button:not(:disabled):hover { opacity: .85 }
+
+  :root {
+    --accent:          #58a6ff;
+    --success:         #3fb950;
+    --warning:         #e3b341;
+    --muted:           #8b949e;
+    --bg-base:         #0d1117;
+    --bg-card:         #161b22;
+    --border:          #30363d;
+    --dot-color-flood: #58a6ff;
+  }
+
+  /* Phase strip */
+  .phase-strip      { display:flex; border:1px solid var(--border); border-radius:6px;
+                      overflow:hidden; margin-bottom:.6rem }
+  .flow-phase       { flex:1; padding:.32rem .4rem; text-align:center; font-size:.69rem;
+                      background:var(--bg-card); color:var(--muted);
+                      border-right:1px solid var(--border); transition:background .35s,color .35s }
+  .flow-phase:last-child { border-right:none }
+  .flow-phase.active{ background:#0d1f3c; color:var(--accent); font-weight:600 }
+  .flow-phase.done  { background:#162016; color:var(--success) }
+
+  /* Node-flow row */
+  .flow-row         { display:flex; align-items:center; justify-content:center;
+                      background:var(--bg-base); border:1px solid var(--border);
+                      border-radius:6px; padding:.7rem .5rem; margin-bottom:.6rem; gap:0 }
+  .flow-node        { text-align:center; padding:.35rem .5rem; border-radius:6px;
+                      background:var(--bg-card); border:2px solid var(--border); min-width:64px;
+                      transition:border-color .4s,background .4s; flex-shrink:0 }
+  .node-icon        { font-size:1.3rem; line-height:1.2 }
+  .node-label       { font-size:.62rem; color:var(--muted); margin-top:.15rem; white-space:nowrap }
+  .flow-node.node-hit { border-color:var(--accent)!important; background:#0d1f3c!important;
+                        animation:node-pulse 1.2s ease-in-out infinite }
+  @keyframes node-pulse { 0%,100%{box-shadow:0 0 0 0 rgba(88,166,255,.4)}
+                          55%{box-shadow:0 0 0 7px rgba(88,166,255,0)} }
+
+  /* Connections */
+  .flow-conn        { flex:1; height:2px; background:var(--border); position:relative;
+                      align-self:center; margin:0 3px; overflow:visible; transition:background .3s }
+  .flow-conn.conn-lit{ background:var(--accent) }
+  .flow-conn::after { content:"›"; position:absolute; right:-6px; top:-9px;
+                      color:var(--border); font-size:1rem; transition:color .3s; pointer-events:none }
+  .flow-conn.conn-lit::after { color:var(--accent) }
+  .flow-dot         { position:absolute; width:9px; height:9px; border-radius:50%;
+                      background:var(--accent); top:-3.5px; left:0;
+                      pointer-events:none; box-shadow:0 0 5px var(--accent) }
+
+  /* Log panel */
+  .flow-log         { background:var(--bg-base); border:1px solid var(--border); border-radius:6px;
+                      padding:.5rem .75rem; font-family:monospace; font-size:.74rem;
+                      height:108px; overflow-y:auto; scroll-behavior:smooth; margin-bottom:.6rem }
+  .log-line         { line-height:1.75; animation:log-in .2s ease both }
+  .log-err          { color:#f85149 }
+  .log-warn         { color:var(--warning) }
+  .log-ok           { color:var(--success) }
+  .log-info         { color:var(--muted); opacity:.85 }
+  @keyframes log-in { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:none} }
+
+  /* Outcome grid */
+  .outcome-grid     { display:grid; grid-template-columns:repeat(3,1fr); gap:.4rem }
+  .outcome-cell     { text-align:center; padding:.45rem .3rem; border-radius:6px;
+                      background:var(--bg-card); border:2px solid var(--border);
+                      font-size:.75rem; font-weight:600; color:var(--muted); transition:all .5s }
+  .outcome-icon     { display:block; font-size:1rem; margin-bottom:.15rem }
+  .outcome-name     { display:block; font-size:.65rem; font-weight:400; color:var(--muted); margin-bottom:.15rem }
+  .outcome-status   { display:block; font-size:.7rem; color:#555; transition:color .5s }
+  .outcome-cell.outcome-pass    { border-color:var(--success); background:#1c2a1c; color:var(--success);
+                                   animation:outcome-flash .5s }
+  .outcome-cell.outcome-pass .outcome-status { color:var(--success) }
+  .outcome-cell.outcome-warn    { border-color:var(--warning); background:#2a2010; color:var(--warning);
+                                   animation:outcome-flash .5s }
+  .outcome-cell.outcome-warn .outcome-status { color:var(--warning) }
+  .outcome-cell.outcome-fail    { border-color:#f85149; background:#2a1c1c; color:#f85149;
+                                   animation:outcome-flash .5s }
+  .outcome-cell.outcome-fail .outcome-status { color:#f85149 }
+  @keyframes outcome-flash { 0%,100%{opacity:1} 40%{opacity:.4} }
+</style>
+</head>
+<body>
+<div class="card">
+  <h2>System Design Request Flow</h2>
+  <p class="sub">Trace how a request travels through a distributed system — node-flow-animator skill test</p>
+
+  <div class="controls">
+    <select id="scenario-select">
+      <option value="">— Select a scenario —</option>
+      <option value="normal">Normal GET /users (cache miss)</option>
+      <option value="cached">Normal GET /users (cache hit)</option>
+      <option value="timeout">Downstream timeout</option>
+    </select>
+    <button id="run-btn" onclick="runScenario()">▶ Run</button>
+  </div>
+
+  <div id="phase-strip" class="phase-strip" style="display:none">
+    <div id="phase-0" class="flow-phase"></div>
+    <div id="phase-1" class="flow-phase"></div>
+    <div id="phase-2" class="flow-phase"></div>
+    <div id="phase-3" class="flow-phase"></div>
+  </div>
+
+  <div id="flow-row" class="flow-row" style="display:none">
+    <div id="node-client" class="flow-node">
+      <div class="node-icon">🌐</div>
+      <div class="node-label">Client</div>
+    </div>
+    <div id="conn-0" class="flow-conn"></div>
+    <div id="node-gateway" class="flow-node">
+      <div id="node-gateway-icon" class="node-icon"></div>
+      <div id="node-gateway-label" class="node-label"></div>
+    </div>
+    <div id="conn-1" class="flow-conn"></div>
+    <div id="node-service" class="flow-node">
+      <div id="node-service-icon" class="node-icon"></div>
+      <div id="node-service-label" class="node-label"></div>
+    </div>
+    <div id="conn-2" class="flow-conn"></div>
+    <div id="node-data" class="flow-node">
+      <div id="node-data-icon" class="node-icon"></div>
+      <div id="node-data-label" class="node-label"></div>
+    </div>
+  </div>
+
+  <div id="flow-log" class="flow-log" style="display:none"></div>
+
+  <div id="outcome-grid" class="outcome-grid" style="display:none">
+    <div id="cell-latency" class="outcome-cell">
+      <span class="outcome-icon">⏱</span>
+      <span class="outcome-name">Latency</span>
+      <span id="cell-latency-status" class="outcome-status">—</span>
+    </div>
+    <div id="cell-errors" class="outcome-cell">
+      <span class="outcome-icon">🔴</span>
+      <span class="outcome-name">Error Rate</span>
+      <span id="cell-errors-status" class="outcome-status">—</span>
+    </div>
+    <div id="cell-cache" class="outcome-cell">
+      <span class="outcome-icon">⚡</span>
+      <span class="outcome-name">Cache</span>
+      <span id="cell-cache-status" class="outcome-status">—</span>
+    </div>
+  </div>
+</div>
+
+<script>
+const FLOW_SCENARIOS = {
+  normal: {
+    phases: ['Receive', 'Auth & Route', 'Process', 'Respond'],
+    nodes: [
+      { id: 'node-gateway', i: '⚖️', l: 'API Gateway' },
+      { id: 'node-service', i: '⚙️', l: 'User Service' },
+      { id: 'node-data',    i: '🗄️', l: 'Postgres DB'  },
+    ],
+    steps: [
+      { d: 0,    ph: 0, log: ['info', '> GET /api/users  — client request received'] },
+      { d: 500,  ph: 0, log: ['info', '> Routing to API Gateway...'], conn: 'conn-0' },
+      { d: 1000, ph: 1, log: ['info', '> JWT validated — rate limit: 98/100 req/min'], hit: 'node-gateway' },
+      { d: 1500, ph: 1, log: ['info', '> Forwarding to User Service...'], conn: 'conn-1' },
+      { d: 2000, ph: 2, log: ['warn', '> Cache MISS — querying database'], hit: 'node-service' },
+      { d: 2500, ph: 2, log: ['info', '> SELECT * FROM users LIMIT 20...'], conn: 'conn-2' },
+      { d: 3000, ph: 2, log: ['ok',   '> DB returned 20 rows  (12ms)'], hit: 'node-data' },
+      { d: 3500, ph: 3, log: ['ok',   '> Response serialized — writing to cache (TTL 60s)'] },
+      { d: 4000, ph: 3, log: ['ok',   '> 200 OK  — 47ms total  — 20 users returned'], final: true },
+    ],
+    outcome: {
+      'cell-latency': 'pass',
+      'cell-errors':  'pass',
+      'cell-cache':   'warn',
+    },
+    outcomeDelay: 4300,
+    outcomeText: {
+      'cell-latency': '47ms ✓',
+      'cell-errors':  '0% ✓',
+      'cell-cache':   'MISS ⚠',
+    },
+  },
+
+  cached: {
+    phases: ['Receive', 'Auth & Route', 'Cache Lookup', 'Respond'],
+    nodes: [
+      { id: 'node-gateway', i: '⚖️', l: 'API Gateway' },
+      { id: 'node-service', i: '⚙️', l: 'User Service' },
+      { id: 'node-data',    i: '⚡', l: 'Redis Cache'  },
+    ],
+    steps: [
+      { d: 0,    ph: 0, log: ['info', '> GET /api/users  — client request received'] },
+      { d: 400,  ph: 0, log: ['info', '> Routing to API Gateway...'], conn: 'conn-0' },
+      { d: 800,  ph: 1, log: ['ok',   '> JWT validated — forwarding'], hit: 'node-gateway' },
+      { d: 1200, ph: 1, log: ['info', '> Forwarding to User Service...'], conn: 'conn-1' },
+      { d: 1600, ph: 2, log: ['ok',   '> Cache lookup...'], hit: 'node-service', conn: 'conn-2' },
+      { d: 2000, ph: 2, log: ['ok',   '> Cache HIT — key: users:list:p1'], hit: 'node-data' },
+      { d: 2400, ph: 3, log: ['ok',   '> Returning cached payload — TTL: 43s remaining'] },
+      { d: 2800, ph: 3, log: ['ok',   '> 200 OK  — 8ms total  — 20 users returned'], final: true },
+    ],
+    outcome: {
+      'cell-latency': 'pass',
+      'cell-errors':  'pass',
+      'cell-cache':   'pass',
+    },
+    outcomeDelay: 3100,
+    outcomeText: {
+      'cell-latency': '8ms ✓',
+      'cell-errors':  '0% ✓',
+      'cell-cache':   'HIT ✓',
+    },
+  },
+
+  timeout: {
+    phases: ['Receive', 'Auth & Route', 'Process', 'Error'],
+    nodes: [
+      { id: 'node-gateway', i: '⚖️', l: 'API Gateway' },
+      { id: 'node-service', i: '⚙️', l: 'User Service' },
+      { id: 'node-data',    i: '🗄️', l: 'Postgres DB'  },
+    ],
+    steps: [
+      { d: 0,    ph: 0, log: ['info', '> GET /api/users  — client request received'] },
+      { d: 500,  ph: 0, log: ['info', '> Routing to API Gateway...'], conn: 'conn-0' },
+      { d: 1000, ph: 1, log: ['ok',   '> JWT validated — forwarding'], hit: 'node-gateway' },
+      { d: 1500, ph: 1, log: ['info', '> Forwarding to User Service...'], conn: 'conn-1' },
+      { d: 2000, ph: 2, log: ['warn', '> Cache MISS — querying database'], hit: 'node-service' },
+      { d: 2500, ph: 2, log: ['info', '> SELECT * FROM users... (waiting)'], conn: 'conn-2', multi: true },
+      { d: 3200, ph: 2, log: ['warn', '> DB response slow — 700ms elapsed (threshold: 500ms)'] },
+      { d: 4000, ph: 2, log: ['err',  '> DB connection timeout after 2000ms'], hit: 'node-data' },
+      { d: 4500, ph: 3, log: ['err',  '> Circuit breaker tripped — marking DB unhealthy'] },
+      { d: 5000, ph: 3, log: ['err',  '> 503 Service Unavailable — returned to client'], final: true },
+    ],
+    outcome: {
+      'cell-latency': 'fail',
+      'cell-errors':  'fail',
+      'cell-cache':   'warn',
+    },
+    outcomeDelay: 5300,
+    outcomeText: {
+      'cell-latency': '5000ms ✗',
+      'cell-errors':  '100% ✗',
+      'cell-cache':   'MISS ⚠',
+    },
+  },
+};
+
+let _scenarioTimers = [];
+
+function _fireDot(connId, multi) {
+  const conn = document.getElementById(connId);
+  if (!conn) return;
+  conn.classList.add('conn-lit');
+  const count = multi ? 4 : 1;
+  const spd   = multi ? 380 : 540;
+  for (let j = 0; j < count; j++) {
+    setTimeout(() => {
+      const dot = document.createElement('div');
+      dot.className = 'flow-dot';
+      dot.style.left = '0px';
+      if (multi) dot.style.background = 'var(--dot-color-flood)';
+      conn.appendChild(dot);
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        dot.style.transition = `left ${spd}ms linear`;
+        dot.style.left = 'calc(100% - 9px)';
+        setTimeout(() => { if (dot.parentNode) dot.remove(); }, spd + 80);
+      }));
+    }, j * 140);
+  }
+  setTimeout(() => conn.classList.remove('conn-lit'), spd + count * 140 + 100);
+}
+
+function runScenario() {
+  const key = document.getElementById('scenario-select').value;
+  if (!key) {
+    const sel = document.getElementById('scenario-select');
+    sel.style.borderColor = '#f85149';
+    setTimeout(() => sel.style.borderColor = '', 1200);
+    return;
+  }
+
+  _scenarioTimers.forEach(t => clearTimeout(t));
+  _scenarioTimers = [];
+
+  const s = FLOW_SCENARIOS[key];
+
+  // Reset phases
+  const phaseStrip = document.getElementById('phase-strip');
+  phaseStrip.style.display = 'flex';
+  for (let i = 0; i < 4; i++) {
+    const el = document.getElementById(`phase-${i}`);
+    el.textContent = s.phases[i];
+    el.className = 'flow-phase';
+  }
+
+  // Reset nodes
+  document.getElementById('flow-row').style.display = 'flex';
+  ['node-gateway', 'node-service', 'node-data'].forEach(id => {
+    document.getElementById(id).className = 'flow-node';
+  });
+  s.nodes.forEach(n => {
+    document.getElementById(n.id + '-icon').textContent  = n.i;
+    document.getElementById(n.id + '-label').textContent = n.l;
+  });
+
+  // Reset connections
+  ['conn-0', 'conn-1', 'conn-2'].forEach(id => {
+    const fc = document.getElementById(id);
+    fc.className = 'flow-conn';
+    fc.querySelectorAll('.flow-dot').forEach(d => d.remove());
+  });
+
+  // Reset log
+  const logEl = document.getElementById('flow-log');
+  logEl.style.display = 'block';
+  logEl.innerHTML = '';
+
+  // Reset outcome
+  document.getElementById('outcome-grid').style.display = 'grid';
+  ['cell-latency', 'cell-errors', 'cell-cache'].forEach(id => {
+    document.getElementById(id).className = 'outcome-cell';
+    document.getElementById(id + '-status').textContent = '—';
+  });
+
+  // Disable button
+  const btn = document.getElementById('run-btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Running...';
+
+  // Execute steps
+  let lastPh = -1;
+  s.steps.forEach(step => {
+    const t = setTimeout(() => {
+      if (step.ph !== lastPh) {
+        if (lastPh >= 0) {
+          const prev = document.getElementById(`phase-${lastPh}`);
+          if (prev) prev.classList.replace('active', 'done');
+        }
+        const cur = document.getElementById(`phase-${step.ph}`);
+        if (cur) cur.classList.add('active');
+        lastPh = step.ph;
+      }
+      if (step.conn) _fireDot(step.conn, step.multi);
+      if (step.hit)  document.getElementById(step.hit).classList.add('node-hit');
+      const cls = { err: 'log-err', warn: 'log-warn', ok: 'log-ok', info: 'log-info' }[step.log[0]];
+      const line = document.createElement('div');
+      line.className = `log-line ${cls}`;
+      line.textContent = step.log[1];
+      logEl.appendChild(line);
+      logEl.scrollTop = logEl.scrollHeight;
+      if (step.final) {
+        const cur = document.getElementById(`phase-${step.ph}`);
+        if (cur) { cur.classList.remove('active'); cur.classList.add('done'); }
+      }
+    }, step.d);
+    _scenarioTimers.push(t);
+  });
+
+  // Reveal outcome
+  const outcomeT = setTimeout(() => {
+    Object.entries(s.outcome).forEach(([id, state]) => {
+      document.getElementById(id).className = `outcome-cell outcome-${state}`;
+      document.getElementById(id + '-status').textContent = s.outcomeText[id] || state;
+    });
+    btn.disabled = false;
+    btn.textContent = '▶ Run';
+  }, s.outcomeDelay);
+  _scenarioTimers.push(outcomeT);
+}
+</script>
+</body>
+</html>

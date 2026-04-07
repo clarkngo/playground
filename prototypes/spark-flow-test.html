@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Apache Spark Job Flow — node-flow-animator test</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0 }
+  body { background: #0d1117; color: #e6edf3;
+         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+         display: flex; justify-content: center; padding: 2rem 1rem }
+  .card { background: #161b22; border: 1px solid #30363d; border-radius: 10px;
+          padding: 1.5rem; width: 100%; max-width: 700px }
+  h2   { font-size: 1rem; font-weight: 600; margin-bottom: .25rem }
+  .sub { font-size: .78rem; color: #8b949e; margin-bottom: 1.2rem }
+  .badge { display:inline-block; background:#2a1800; color:#ff7c43;
+           border:1px solid #ff7c43; border-radius:4px; font-size:.65rem;
+           font-weight:700; padding:.1rem .45rem; margin-left:.5rem;
+           vertical-align:middle; letter-spacing:.04em }
+
+  /* Controls */
+  .controls { display:flex; gap:.6rem; margin-bottom:.9rem; align-items:center }
+  select { background:#0d1117; color:#e6edf3; border:1px solid #30363d; border-radius:6px;
+           padding:.35rem .6rem; font-size:.8rem; flex:1; cursor:pointer }
+  button { background:#b45309; color:#fff; border:none; border-radius:6px;
+           padding:.35rem .9rem; font-size:.8rem; font-weight:600; cursor:pointer;
+           transition:opacity .2s }
+  button:disabled { opacity:.5; cursor:default }
+  button:not(:disabled):hover { opacity:.85 }
+
+  :root {
+    --accent:          #ff7c43;
+    --success:         #3fb950;
+    --warning:         #e3b341;
+    --muted:           #8b949e;
+    --bg-base:         #0d1117;
+    --bg-card:         #161b22;
+    --border:          #30363d;
+    --dot-color-flood: #ff7c43;
+  }
+
+  /* Phase strip */
+  .phase-strip      { display:flex; border:1px solid var(--border); border-radius:6px;
+                      overflow:hidden; margin-bottom:.6rem }
+  .flow-phase       { flex:1; padding:.32rem .4rem; text-align:center; font-size:.69rem;
+                      background:var(--bg-card); color:var(--muted);
+                      border-right:1px solid var(--border); transition:background .35s,color .35s }
+  .flow-phase:last-child { border-right:none }
+  .flow-phase.active{ background:#2a1800; color:var(--accent); font-weight:600 }
+  .flow-phase.done  { background:#162016; color:var(--success) }
+
+  /* Node-flow row */
+  .flow-row         { display:flex; align-items:center; justify-content:center;
+                      background:var(--bg-base); border:1px solid var(--border);
+                      border-radius:6px; padding:.7rem .5rem; margin-bottom:.6rem; gap:0 }
+  .flow-node        { text-align:center; padding:.35rem .5rem; border-radius:6px;
+                      background:var(--bg-card); border:2px solid var(--border); min-width:68px;
+                      transition:border-color .4s,background .4s; flex-shrink:0 }
+  .node-icon        { font-size:1.3rem; line-height:1.2 }
+  .node-label       { font-size:.62rem; color:var(--muted); margin-top:.15rem; white-space:nowrap }
+  .flow-node.node-hit   { border-color:var(--accent)!important; background:#2a1200!important;
+                          animation:node-pulse 1.2s ease-in-out infinite }
+  .flow-node.node-error { border-color:#f85149!important; background:#2a1c1c!important;
+                          animation:node-error-pulse 1.2s ease-in-out infinite }
+  @keyframes node-pulse {
+    0%,100%{box-shadow:0 0 0 0 rgba(255,124,67,.4)}
+    55%{box-shadow:0 0 0 7px rgba(255,124,67,0)}
+  }
+  @keyframes node-error-pulse {
+    0%,100%{box-shadow:0 0 0 0 rgba(248,81,73,.45)}
+    55%{box-shadow:0 0 0 7px rgba(248,81,73,0)}
+  }
+
+  /* Connections */
+  .flow-conn        { flex:1; height:2px; background:var(--border); position:relative;
+                      align-self:center; margin:0 3px; overflow:visible; transition:background .3s }
+  .flow-conn.conn-lit  { background:var(--accent) }
+  .flow-conn.conn-err  { background:#f85149 }
+  .flow-conn::after    { content:"›"; position:absolute; right:-6px; top:-9px;
+                         color:var(--border); font-size:1rem; transition:color .3s; pointer-events:none }
+  .flow-conn.conn-lit::after { color:var(--accent) }
+  .flow-conn.conn-err::after { color:#f85149 }
+  .flow-dot         { position:absolute; width:9px; height:9px; border-radius:50%;
+                      background:var(--accent); top:-3.5px; left:0;
+                      pointer-events:none; box-shadow:0 0 5px var(--accent) }
+
+  /* Log panel */
+  .flow-log         { background:var(--bg-base); border:1px solid var(--border); border-radius:6px;
+                      padding:.5rem .75rem; font-family:monospace; font-size:.74rem;
+                      height:108px; overflow-y:auto; scroll-behavior:smooth; margin-bottom:.6rem }
+  .log-line         { line-height:1.75; animation:log-in .2s ease both }
+  .log-err  { color:#f85149 }
+  .log-warn { color:var(--warning) }
+  .log-ok   { color:var(--success) }
+  .log-info { color:var(--muted); opacity:.85 }
+  @keyframes log-in { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:none} }
+
+  /* Outcome grid */
+  .outcome-grid     { display:grid; grid-template-columns:repeat(3,1fr); gap:.4rem }
+  .outcome-cell     { text-align:center; padding:.45rem .3rem; border-radius:6px;
+                      background:var(--bg-card); border:2px solid var(--border);
+                      font-size:.75rem; font-weight:600; color:var(--muted); transition:all .5s }
+  .outcome-icon     { display:block; font-size:1rem; margin-bottom:.15rem }
+  .outcome-name     { display:block; font-size:.65rem; font-weight:400; color:var(--muted); margin-bottom:.15rem }
+  .outcome-status   { display:block; font-size:.7rem; color:#555; transition:color .5s }
+  .outcome-cell.outcome-pass { border-color:var(--success); background:#1c2a1c; color:var(--success); animation:outcome-flash .5s }
+  .outcome-cell.outcome-pass .outcome-status { color:var(--success) }
+  .outcome-cell.outcome-warn { border-color:var(--warning); background:#2a2010; color:var(--warning); animation:outcome-flash .5s }
+  .outcome-cell.outcome-warn .outcome-status { color:var(--warning) }
+  .outcome-cell.outcome-fail { border-color:#f85149; background:#2a1c1c; color:#f85149; animation:outcome-flash .5s }
+  .outcome-cell.outcome-fail .outcome-status { color:#f85149 }
+  @keyframes outcome-flash { 0%,100%{opacity:1} 40%{opacity:.4} }
+</style>
+</head>
+<body>
+<div class="card">
+  <h2>Apache Spark Job Flow <span class="badge">Spark 3.x</span></h2>
+  <p class="sub">Trace how a Spark job moves through Driver → Cluster Manager → Executors → Storage — node-flow-animator skill test</p>
+
+  <div class="controls">
+    <select id="scenario-select">
+      <option value="">— Select a job scenario —</option>
+      <option value="batch_wordcount">Batch: WordCount (HDFS)</option>
+      <option value="streaming_kafka">Structured Streaming (Kafka → Delta Lake)</option>
+      <option value="executor_oom">Executor OOM during Shuffle</option>
+    </select>
+    <button id="run-btn" onclick="runJob()">▶ Run</button>
+  </div>
+
+  <div id="phase-strip" class="phase-strip" style="display:none">
+    <div id="phase-0" class="flow-phase"></div>
+    <div id="phase-1" class="flow-phase"></div>
+    <div id="phase-2" class="flow-phase"></div>
+    <div id="phase-3" class="flow-phase"></div>
+  </div>
+
+  <div id="flow-row" class="flow-row" style="display:none">
+    <!-- Driver is always the source -->
+    <div id="node-driver" class="flow-node">
+      <div class="node-icon">🖥</div>
+      <div class="node-label">Driver</div>
+    </div>
+    <div id="conn-0" class="flow-conn"></div>
+
+    <div id="node-cm" class="flow-node">
+      <div id="node-cm-icon" class="node-icon"></div>
+      <div id="node-cm-label" class="node-label"></div>
+    </div>
+    <div id="conn-1" class="flow-conn"></div>
+
+    <div id="node-exec" class="flow-node">
+      <div id="node-exec-icon" class="node-icon"></div>
+      <div id="node-exec-label" class="node-label"></div>
+    </div>
+    <div id="conn-2" class="flow-conn"></div>
+
+    <div id="node-store" class="flow-node">
+      <div id="node-store-icon" class="node-icon"></div>
+      <div id="node-store-label" class="node-label"></div>
+    </div>
+  </div>
+
+  <div id="flow-log" class="flow-log" style="display:none"></div>
+
+  <div id="outcome-grid" class="outcome-grid" style="display:none">
+    <div id="cell-job" class="outcome-cell">
+      <span class="outcome-icon">🎯</span>
+      <span class="outcome-name">Job Status</span>
+      <span id="cell-job-status" class="outcome-status">—</span>
+    </div>
+    <div id="cell-stage" class="outcome-cell">
+      <span class="outcome-icon">⏱</span>
+      <span class="outcome-name">Stage Duration</span>
+      <span id="cell-stage-status" class="outcome-status">—</span>
+    </div>
+    <div id="cell-records" class="outcome-cell">
+      <span class="outcome-icon">📦</span>
+      <span class="outcome-name">Records</span>
+      <span id="cell-records-status" class="outcome-status">—</span>
+    </div>
+  </div>
+</div>
+
+<script>
+const SPARK_SCENARIOS = {
+  batch_wordcount: {
+    phases: ['Submit', 'Schedule', 'Execute', 'Collect'],
+    nodes: [
+      { id: 'node-cm',    i: '⚖️', l: 'YARN RM'      },
+      { id: 'node-exec',  i: '⚡', l: 'Executors (4)' },
+      { id: 'node-store', i: '🗄️', l: 'HDFS'          },
+    ],
+    steps: [
+      { d: 0,    ph: 0, log: ['info', '> SparkContext init — app: WordCount  appId: app_1712345678_0042'] },
+      { d: 600,  ph: 0, log: ['info', '> Submitting job to YARN ResourceManager...'], conn: 'conn-0' },
+      { d: 1200, ph: 1, log: ['ok',   '> YARN allocated 4 executors (8 vCores, 16 GB each)'], hit: 'node-cm' },
+      { d: 1800, ph: 1, log: ['info', '> Broadcasting task serialized closures to executors...'], conn: 'conn-1' },
+      { d: 2400, ph: 2, log: ['info', '> Stage 0: reading /data/input.txt — 128 MB, 8 partitions'], hit: 'node-exec' },
+      { d: 3000, ph: 2, log: ['info', '> map() phase: tokenizing lines, emitting (word, 1) pairs...'], conn: 'conn-2', multi: false },
+      { d: 3600, ph: 2, log: ['ok',   '> Stage 1: shuffle write complete — 247 MB across 100 buckets'], hit: 'node-store' },
+      { d: 4200, ph: 2, log: ['info', '> reduceByKey(): aggregating counts, reading shuffle blocks...'], conn: 'conn-1' },
+      { d: 4800, ph: 3, log: ['ok',   '> Stage 2 complete — collecting RDD to driver (top-10 results)'] },
+      { d: 5400, ph: 3, log: ['ok',   '> Job SUCCEEDED — 47,832 unique words — elapsed: 6.2s'], final: true },
+    ],
+    outcome: {
+      'cell-job':     'pass',
+      'cell-stage':   'pass',
+      'cell-records': 'pass',
+    },
+    outcomeText: {
+      'cell-job':     'SUCCEEDED ✓',
+      'cell-stage':   '6.2s ✓',
+      'cell-records': '47,832 words ✓',
+    },
+    outcomeDelay: 5700,
+  },
+
+  streaming_kafka: {
+    phases: ['Trigger', 'Micro-batch', 'Transform', 'Sink'],
+    nodes: [
+      { id: 'node-cm',    i: '📨', l: 'Kafka'          },
+      { id: 'node-exec',  i: '⚡', l: 'Executors (6)'  },
+      { id: 'node-store', i: '🔺', l: 'Delta Lake'     },
+    ],
+    steps: [
+      { d: 0,    ph: 0, log: ['info', '> Structured Streaming query started — trigger: processingTime 5s'] },
+      { d: 500,  ph: 0, log: ['info', '> Micro-batch #47 — polling Kafka: topic=clickstream'], conn: 'conn-0' },
+      { d: 1000, ph: 1, log: ['ok',   '> Fetched offsets 1,248,931 to 1,261,414 — 12,483 records (2.3 MB)'], hit: 'node-cm' },
+      { d: 1500, ph: 1, log: ['info', '> Deserializing Avro records, distributing partitions...'], conn: 'conn-1', multi: true },
+      { d: 2100, ph: 2, log: ['ok',   '> Running filter/agg transforms — drop nulls, compute session_duration'], hit: 'node-exec' },
+      { d: 2700, ph: 2, log: ['info', '> Writing output batch to Delta sink...'], conn: 'conn-2' },
+      { d: 3300, ph: 3, log: ['ok',   '> Delta transaction committed — version 1,247 — partitioned by event_date'], hit: 'node-store' },
+      { d: 3800, ph: 3, log: ['ok',   '> Watermark advanced to 2026-04-06T18:34:55 — batch complete in 1.9s'], final: true },
+    ],
+    outcome: {
+      'cell-job':     'pass',
+      'cell-stage':   'pass',
+      'cell-records': 'pass',
+    },
+    outcomeText: {
+      'cell-job':     'RUNNING ✓',
+      'cell-stage':   '1.9s / batch ✓',
+      'cell-records': '12,483 recs ✓',
+    },
+    outcomeDelay: 4100,
+  },
+
+  executor_oom: {
+    phases: ['Submit', 'Shuffle', 'OOM Detected', 'Abort'],
+    nodes: [
+      { id: 'node-cm',    i: '⚖️', l: 'YARN RM'        },
+      { id: 'node-exec',  i: '⚡', l: 'Executor 3'     },
+      { id: 'node-store', i: '💾', l: 'Shuffle Store'  },
+    ],
+    steps: [
+      { d: 0,    ph: 0, log: ['info', '> Stage 2: wide shuffle — groupByKey(200 partitions)'] },
+      { d: 600,  ph: 0, log: ['warn', '> Shuffle write: 847 MB — executor heap: 5.1 GB / 8 GB'], conn: 'conn-0' },
+      { d: 1200, ph: 1, log: ['info', '> Fetching shuffle blocks from remote executors...'], conn: 'conn-1', hit: 'node-cm' },
+      { d: 1800, ph: 1, log: ['warn', '> GC overhead warning — executor 3 spending 82% in GC'], hit: 'node-exec' },
+      { d: 2400, ph: 2, log: ['err',  '> java.lang.OutOfMemoryError: GC overhead limit exceeded'], conn: 'conn-2', multi: true },
+      { d: 3000, ph: 2, log: ['err',  '> Executor 3 lost — container killed by YARN for exceeding memory limits'], hit: 'node-store' },
+      { d: 3600, ph: 2, log: ['err',  '> Marking 34 tasks as FAILED — rescheduling on surviving executors'] },
+      { d: 4200, ph: 3, log: ['err',  '> Stage 2 failed after 4 attempts — giving up'] },
+      { d: 4800, ph: 3, log: ['err',  '> Job ABORTED — SparkException: Job aborted due to stage failure'], final: true },
+    ],
+    outcome: {
+      'cell-job':     'fail',
+      'cell-stage':   'fail',
+      'cell-records': 'fail',
+    },
+    outcomeText: {
+      'cell-job':     'ABORTED ✗',
+      'cell-stage':   'Timeout ✗',
+      'cell-records': '0 / 8 stages ✗',
+    },
+    outcomeDelay: 5100,
+    errorNodes: ['node-exec'],
+  },
+};
+
+let _jobTimers = [];
+
+function _fireDot(connId, multi) {
+  const conn = document.getElementById(connId);
+  if (!conn) return;
+  conn.classList.add('conn-lit');
+  const count = multi ? 4 : 1;
+  const spd   = multi ? 380 : 540;
+  for (let j = 0; j < count; j++) {
+    setTimeout(() => {
+      const dot = document.createElement('div');
+      dot.className = 'flow-dot';
+      dot.style.left = '0px';
+      if (multi) dot.style.background = 'var(--dot-color-flood)';
+      conn.appendChild(dot);
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        dot.style.transition = `left ${spd}ms linear`;
+        dot.style.left = 'calc(100% - 9px)';
+        setTimeout(() => { if (dot.parentNode) dot.remove(); }, spd + 80);
+      }));
+    }, j * 140);
+  }
+  setTimeout(() => conn.classList.remove('conn-lit'), spd + count * 140 + 100);
+}
+
+function runJob() {
+  const key = document.getElementById('scenario-select').value;
+  if (!key) {
+    const sel = document.getElementById('scenario-select');
+    sel.style.borderColor = '#f85149';
+    setTimeout(() => sel.style.borderColor = '', 1200);
+    return;
+  }
+
+  _jobTimers.forEach(t => clearTimeout(t));
+  _jobTimers = [];
+
+  const s = SPARK_SCENARIOS[key];
+  const isError = key === 'executor_oom';
+
+  // Reset phase strip
+  document.getElementById('phase-strip').style.display = 'flex';
+  for (let i = 0; i < 4; i++) {
+    const el = document.getElementById(`phase-${i}`);
+    el.textContent = s.phases[i];
+    el.className = 'flow-phase';
+  }
+
+  // Reset nodes
+  document.getElementById('flow-row').style.display = 'flex';
+  ['node-driver', 'node-cm', 'node-exec', 'node-store'].forEach(id => {
+    document.getElementById(id).className = 'flow-node';
+  });
+  s.nodes.forEach(n => {
+    document.getElementById(n.id + '-icon').textContent  = n.i;
+    document.getElementById(n.id + '-label').textContent = n.l;
+  });
+
+  // Reset connections
+  ['conn-0', 'conn-1', 'conn-2'].forEach(id => {
+    const fc = document.getElementById(id);
+    fc.className = 'flow-conn';
+    fc.querySelectorAll('.flow-dot').forEach(d => d.remove());
+  });
+
+  // Reset log
+  const logEl = document.getElementById('flow-log');
+  logEl.style.display = 'block';
+  logEl.innerHTML = '';
+
+  // Reset outcome
+  document.getElementById('outcome-grid').style.display = 'grid';
+  ['cell-job', 'cell-stage', 'cell-records'].forEach(id => {
+    document.getElementById(id).className = 'outcome-cell';
+    document.getElementById(id + '-status').textContent = '—';
+  });
+
+  // Disable button
+  const btn = document.getElementById('run-btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Running...';
+
+  // Execute steps
+  let lastPh = -1;
+  s.steps.forEach(step => {
+    const t = setTimeout(() => {
+      if (step.ph !== lastPh) {
+        if (lastPh >= 0) {
+          const prev = document.getElementById(`phase-${lastPh}`);
+          if (prev) prev.classList.replace('active', 'done');
+        }
+        const cur = document.getElementById(`phase-${step.ph}`);
+        if (cur) cur.classList.add('active');
+        lastPh = step.ph;
+      }
+      if (step.conn) _fireDot(step.conn, step.multi);
+      if (step.hit) {
+        const hitEl = document.getElementById(step.hit);
+        if (hitEl) {
+          const cls = isError && (s.errorNodes || []).includes(step.hit)
+            ? 'flow-node node-error'
+            : 'flow-node node-hit';
+          hitEl.className = cls;
+        }
+      }
+      const cls = { err: 'log-err', warn: 'log-warn', ok: 'log-ok', info: 'log-info' }[step.log[0]];
+      const line = document.createElement('div');
+      line.className = `log-line ${cls}`;
+      line.textContent = step.log[1];
+      logEl.appendChild(line);
+      logEl.scrollTop = logEl.scrollHeight;
+      if (step.final) {
+        const cur = document.getElementById(`phase-${step.ph}`);
+        if (cur) { cur.classList.remove('active'); cur.classList.add('done'); }
+      }
+    }, step.d);
+    _jobTimers.push(t);
+  });
+
+  // Reveal outcome
+  const outcomeT = setTimeout(() => {
+    Object.entries(s.outcome).forEach(([id, state]) => {
+      document.getElementById(id).className = `outcome-cell outcome-${state}`;
+      document.getElementById(id + '-status').textContent = s.outcomeText[id] || state;
+    });
+    btn.disabled = false;
+    btn.textContent = '▶ Run';
+  }, s.outcomeDelay);
+  _jobTimers.push(outcomeT);
+}
+</script>
+</body>
+</html>

@@ -7,6 +7,13 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-04-06
+
+### [feature] node-flow-animator skill + test prototypes
+- New `node-flow-animator` Claude skill — generic DOM-based process-flow animation build tool (node row, packet dots, phase strip, log panel, outcome grid); covers network security, system design, CI/CD, business process, data pipeline domains
+- `prototypes/node-flow-test.html` — system design request flow (3 scenarios: cache miss/hit, timeout)
+- `prototypes/spark-flow-test.html` — Apache Spark job flow (3 scenarios: batch WordCount, Kafka streaming, executor OOM)
+
 ## 2026-04-03
 
 ### [feature] Primer — reorganized into industry/ + technology/ subfolders; added Real-Time Systems technology primer (9 tabs)
