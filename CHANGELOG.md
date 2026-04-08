@@ -9,6 +9,10 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ## 2026-04-07
 
+### [refactor] deep-dives — removed `docs/ads-platform/`; mind map + video list on `ebay-ads` hub
+- Deleted legacy `docs/ads-platform/` (old tabbed guide, wiki `.docx` exports, markdown notes); canonical content remains `deep-dives/ebay-ads/`
+- `ebay-ads/index.html` — Reference materials: `ads-platform-mind-map.png`, thirteen YouTube bookmarks (from former `ebay-internals.md`); `shared.css` — `.ref-lead`, `.mind-map-fig`, `.video-ref-list`
+
 ### [ux] `hos/module-10-conversation-to-design.html` — footer credit (Clark Ngo)
 
 ### [ux] `hos/module-10-conversation-to-design.html` — 5.6 App.js sample indented in `<pre class="hos-code-snippet">`
