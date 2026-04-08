@@ -9,6 +9,37 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ## 2026-04-07
 
+### [feature] `hos/dev-foundations-activities-hos/` — verbatim PDF text in curated HOS pages
+- `_pdf_extracts/hos04b_full.txt` + `hos_verbatim_pdf_append.py`; collapsible full step-by-step extraction under each HOS02–10 handout section
+
+### [feature] `hos/dev-foundations-activities-hos/` — HOS03A–HOS10A curated handouts
+- `build_hos_curated_03_10.py` splices structured PDF sections + figure grids; `generate_hos_02_10.py` skips modules 02–10; eight workflow HTML files updated
+
+### [feature] `hos/dev-foundations-activities-hos/` — HOS02A curated handout (HOS01 pattern)
+- `02-git-repositories-refactoring-hos-workflow.html` — replaced generated `<pre class="hos-pdf-full-raw">` block with structured `<section class="hos-pdf-source">`: metadata, Before You Start, uploads, Key Concepts, Sections 1–4 with `<h3>` steps, commands in `<span class="hos-cmd">`, code in `<pre class="hos-pre-df">`, 31 figures placed by section; `.hos-pdf-note` for PDF callouts; scenario box un-escaped; `generate_hos_02_10.py` skips module 02; `build_hos02_curated_handout.py` reapplies splice after template edits
+
+### [bug] `hos/dev-foundations-activities-hos/` — HOS02–10 layout + HOS04 PDF merge
+- **Symptom:** Broken `pdf-header` / missing lab header on generated pages; HOS04 needed both database PDFs. **Root cause:** Handout splice indices were taken from the template *before* injecting `.hos-pdf-full-raw` CSS, so `start` pointed into the middle of `<div id="pdf-header" class="pdf-only">`. **Fix:** Compute `start`/`end` after the inject; merge `HOS04A - Databases - without Docker.pdf` text + `hos04b-pdf-figures/` via `build_handout` alt block; spine comment uses `m["hos"]`.
+- `lessons-learned/bug-fixes.md` — documented stale `index()` / splice after earlier generator edit pattern.
+
+### [feature] `hos/dev-foundations-activities-hos/` — HOS02A–HOS10A generated activities + hub
+- Nine HTML pages from CS445 PDFs (Git, Flask, databases, pytest, UML, security, CI/CD, Azure Functions, AWS Lambda): full text extract + figures, shared drag/drop + dual simulator shell
+- `generate_hos_02_10.py` — fixed prompt-block regex (three closing `</div>`) and `esc_html_body` so reference labels are not double-entity-encoded
+- `index.html` — cards for modules 02–10
+
+### [feature] `hos/dev-foundations-activities-hos/` — HOS01A PDF screenshots as PNG assets
+- `hos01a-pdf-figures/` (17 images) inlined in handout section
+
+### [feature] `hos/dev-foundations-activities-hos/01-github-codespaces-hos-workflow.html` — full HOS01A PDF handout inline
+- Complete cookbook copy + Dockerfile + print-friendly styles
+
+### [refactor] `hos/full-stack-dev/` — CS628 track; Module 10 at `full-stack-dev/module-10/`
+- Mini-hub `hos/full-stack-dev/index.html`; `hos/index.html` card + `.hos-hub-sublink`; prior `hos/module-10/` path retired
+- Dev Foundations HOS unchanged at `hos/dev-foundations-activities-hos/`; `shared.css` includes `.hos-hub-cross`
+
+### [feature] `hos/dev-foundations-activities-hos/` — HOS01A GitHub Codespaces workflow activity + hub
+- PDF-infused drag/drop sequence from CS445 handout; dual simulator; playground index card points to `hos/…`
+
 ### [refactor] deep-dives — removed `docs/ads-platform/`; mind map + video list on `ebay-ads` hub
 - Deleted legacy `docs/ads-platform/` (old tabbed guide, wiki `.docx` exports, markdown notes); canonical content remains `deep-dives/ebay-ads/`
 - `ebay-ads/index.html` — Reference materials: `ads-platform-mind-map.png`, thirteen YouTube bookmarks (from former `ebay-internals.md`); `shared.css` — `.ref-lead`, `.mind-map-fig`, `.video-ref-list`
