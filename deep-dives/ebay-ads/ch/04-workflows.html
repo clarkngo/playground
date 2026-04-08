@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ch 4 — Workflows | eBay Ads Platform</title>
+<link rel="stylesheet" href="../shared.css">
+</head>
+<body class="chapter-workflows">
+<nav class="top-bar">
+  <div class="breadcrumb">
+    <a href="../../index.html">Deep Dives</a>
+    <span>/</span>
+    <a href="../index.html">eBay Ads</a>
+    <span>/</span>
+    <span>Workflows</span>
+  </div>
+  <div class="nav-arrows">
+    <a href="../ch/03-tech-stack.html" class="nav-btn">← Prev</a>
+    <span class="ch-badge">4 / 5</span>
+    <a href="../ch/05-operations.html" class="nav-btn">Next →</a>
+  </div>
+</nav>
+<main class="page">
+    <div class="content-card">
+      <h2>Core Workflows & Processes</h2>
+
+      <div id="eps-wf-root" class="eps-panel" aria-label="Interactive workflow simulator"></div>
+
+      <h3>1. Tracking & Attribution (Sojourner System)</h3>
+      <p class="lead" style="margin-bottom: 1rem">Accurate tracking is critical. User clicks an ad on mobile, switches tabs, clicks item on desktop — the system must link these events to one conversion.</p>
+      <div class="highlight-box">
+        <strong>Key Challenge:</strong> Multi-tab browsing, cross-device tracking, and missing data points in the user journey.
+      </div>
+      <div class="tech-grid">
+        <div class="tech-card">
+          <h4>Tracking Tags</h4>
+          <ul>
+            <li><strong>siid (Source Impression ID)</strong> — Unique ID of the initial ad impression</li>
+            <li><strong>ciid (Current Impression ID)</strong> — Current page impression (for multi-tab tracking)</li>
+            <li><strong>UBI Tables</strong> — User Behavior Interaction logs; raw click/view events</li>
+            <li>Converted to standard format in data pipeline</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <h4>Attribution Pipeline</h4>
+          <ul>
+            <li>Kafka ingests raw click/view events with siid/ciid tags</li>
+            <li>Spark Hadoop job joins clicks to conversions within 7-day window</li>
+            <li>Attribution model (last-click, first-click, multi-touch) applied</li>
+            <li>ClickHouse materialized view joins with GMV for daily reporting</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <h4>Data Quality Checks</h4>
+          <ul>
+            <li>Verify click volume matches from multiple sources</li>
+            <li>Monitor attribution ratio for sudden drops (sign of tracking failure)</li>
+            <li>Reconcile with seller-reported clicks</li>
+            <li>Anomaly detector flags 20%+ swings in attribution</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>2. Experimentation & A/B Testing (Touchstone)</h3>
+      <p class="lead" style="margin-bottom: 1rem">Every change to ranking, pricing, or UI flows through experimentation before production rollout. Use the <strong>Workflow simulator</strong> at the top — scenarios <em>Experiment ramp</em> and <em>Deploy pipeline</em> use the same phase strip, packet-on-wire, and log pattern as the tech-stack simulators.</p>
+      <div class="tech-grid">
+        <div class="tech-card">
+          <h4>Tracking Methods</h4>
+          <ul>
+            <li><strong>Legacy ET Tags</strong> — Placement-level; less granular</li>
+            <li><strong>Modern XT Tags</strong> — Event-level; precise impact measurement</li>
+            <li><strong>Real-Time Dashboards</strong> — Update every 1-5 minutes during ramp</li>
+            <li>Flink consumes tagged events; ClickHouse queries for metrics</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <h4>Statistical Rigor</h4>
+          <ul>
+            <li><strong>Sample Size Calculation</strong> — Determine N needed to detect effect</li>
+            <li><strong>Sequential Testing</strong> — Early stopping if clear winner emerges</li>
+            <li><strong>Multiple Comparisons Correction</strong> — Bonferroni adjustment if 100+ experiments</li>
+            <li><strong>Power Analysis</strong> — Minimize false positives and false negatives</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>3. Code Deployment & Change Tracking</h3>
+      <p class="lead" style="margin-bottom: 1rem">Code changes must be correlated with metric anomalies for quick RCA. The deploy scenario in the simulator above walks merge → image → staging → production with ServiceNow logging.</p>
+      <div class="tech-grid">
+        <div class="tech-card">
+          <h4>Sequential Deployment Order</h4>
+          <ul>
+            <li><strong>Workers First</strong> — Background job consumers updated first</li>
+            <li><strong>Beat Next</strong> — Scheduling rules applied next</li>
+            <li><strong>API Last</strong> — Request handlers rolled out last</li>
+            <li>Prevents version mismatch between services</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <h4>Rollback Strategy</h4>
+          <ul>
+            <li><strong>Quick Rollback</strong> — Keep previous version in ServiceNow; redeploy if needed</li>
+            <li><strong>Canary Deployment</strong> — Route 1% traffic to new version first</li>
+            <li><strong>Smoke Tests</strong> — Quick sanity checks (API up, CPU normal)</li>
+            <li><strong>Drain Period</strong> — Wait 30-60s before killing old pods</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <h4>Version Management</h4>
+          <ul>
+            <li><strong>Semantic Versioning</strong> — v1.2.3 for releases</li>
+            <li><strong>Commit Hash</strong> — Full git hash in Docker image tag</li>
+            <li><strong>Manifest Tracking</strong> — Link deployed version to JIRA tickets</li>
+            <li><strong>Rollback Records</strong> — Who rolled back, when, and why</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>4. Data Quality & Reconciliation</h3>
+      <p class="lead" style="margin-bottom: 1rem">Periodic jobs verify metrics match across systems (Kafka, ClickHouse, Hadoop, Elasticsearch).</p>
+      <div class="tech-grid">
+        <div class="tech-card">
+          <h4>Daily Reconciliation Jobs</h4>
+          <ul>
+            <li><strong>Raw Event Count</strong> — Kafka ingestion vs. Hadoop received</li>
+            <li><strong>Aggregation Accuracy</strong> — ClickHouse sum(gmv) vs. Hadoop sum(gmv)</li>
+            <li><strong>Deduplication Check</strong> — Raw events vs. deduplicated events</li>
+            <li><strong>Late Event Backfill</strong> — Delayed events matched to correct time bucket</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <h4>Alerts on Mismatch</h4>
+          <ul>
+            <li>Threshold: > 2% discrepancy triggers investigation</li>
+            <li>Automated email to data quality team</li>
+            <li>Dashboard shows which data pipeline is lagging</li>
+            <li>Potential causes: batch job failure, schema change, clock skew</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+
+</main>
+<script src="../ads-pipeline-sim.js"></script>
+</body>
+</html>

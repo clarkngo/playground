@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>eBay &amp; Apache Spark — Supplement | eBay Ads Deep Dive</title>
+  <link rel="stylesheet" href="shared.css">
+</head>
+<body class="chapter-stack spark-supplement-page">
+
+<nav class="top-bar">
+  <div class="breadcrumb">
+    <a href="../index.html">Deep Dives</a>
+    <span>/</span>
+    <a href="index.html">eBay Ads</a>
+    <span>/</span>
+    <span>Spark supplement</span>
+  </div>
+  <div class="nav-arrows">
+    <a href="ch/03-tech-stack.html" class="nav-btn">← Tech stack</a>
+    <span class="ch-badge">Supplement</span>
+    <a href="index.html" class="nav-btn">Hub →</a>
+  </div>
+</nav>
+
+<main class="page">
+  <div class="content-card">
+    <h2>eBay &amp; Apache Spark — digest for discussion</h2>
+    <p class="lead">
+      Two public write-ups from <strong>eBay Innovation</strong> bracket almost a decade of Spark adoption: a <strong>2014</strong> introduction focused on <em>why Spark</em> and <em>how jobs run on YARN</em>, and a <strong>2021</strong> piece on a <em>custom SQL-on-Hadoop engine</em> built to replace a vendor analytics platform. Below: condensed facts, how the stories connect, and prompts for discussion.
+    </p>
+    <div class="highlight-box">
+      <strong>Sources (primary):</strong>
+      <ul style="margin: .6rem 0 0 1.1rem; color: var(--muted); font-size: .92rem;">
+        <li style="margin-bottom: .4rem;">
+          <a href="https://innovation.ebayinc.com/stories/using-spark-to-ignite-data-analytics/" style="color: var(--accent); font-weight: 600;">Using Spark to Ignite Data Analytics</a> — Scheibmeir, May 28, 2014
+        </li>
+        <li>
+          <a href="https://innovation.ebayinc.com/stories/explore-ebays-new-optimized-spark-sql-engine-for-interactive-analysis/" style="color: var(--accent); font-weight: 600;">Explore eBay&rsquo;s New Optimized Spark SQL Engine for Interactive Analysis</a> — Ma, Li, Dhanpal, May 17, 2021
+        </li>
+      </ul>
+    </div>
+
+    <h3>One arc, two eras</h3>
+    <div class="tech-grid" style="margin-top: .75rem;">
+      <div class="tech-card">
+        <h4>2014 — &ldquo;Adopt &amp; explain&rdquo;</h4>
+        <p>Spark as a <strong>parallel engine</strong> for large-scale analytics: <strong>RDDs</strong> keep iterative work in memory; at eBay, jobs commonly ran on <strong>Hadoop via YARN</strong>, reading and writing <strong>HDFS</strong>. Audience: engineers and analysts learning <em>what Spark is for</em> and <em>how it sits next to Hive</em>.</p>
+      </div>
+      <div class="tech-card">
+        <h4>2021 — &ldquo;Operate &amp; optimize&rdquo;</h4>
+        <p>A <strong>production SQL service</strong> must match a legacy platform&rsquo;s latency and scale after a <strong>20+ PB migration</strong>. The post is about <strong>gateway architecture</strong>, <strong>governance</strong>, <strong>Delta-style mutability</strong>, and dozens of <strong>engine-level optimizations</strong> (caching, indexes, AQE, Parquet).</p>
+      </div>
+    </div>
+
+    <h3>Article A — what to take away (2014)</h3>
+    <ul style="margin-left: 1.25rem; color: var(--muted); font-size: .93rem; line-height: 1.75;">
+      <li style="margin-bottom: .5rem;"><strong>Problem Spark solves:</strong> iterative analytics on huge datasets — keeping intermediate state in memory can be <strong>orders of magnitude faster</strong> than rereading from disk each iteration.</li>
+      <li style="margin-bottom: .5rem;"><strong>Deployment pattern:</strong> Spark on <strong>YARN</strong>: ApplicationMaster negotiates containers; executors run tasks against data in <strong>HDFS</strong>.</li>
+      <li style="margin-bottom: .5rem;"><strong>Scale snapshot (stated in 2014):</strong> clusters on the order of <strong>~2k nodes</strong>, <strong>~100 TB RAM</strong>, <strong>~20k cores</strong> — useful as a historical sense of scale; today&rsquo;s numbers will differ.</li>
+      <li style="margin-bottom: .5rem;"><strong>Language &amp; libs:</strong> strong <strong>Scala</strong> usage; example of <strong>MLlib</strong> (e.g. K-means) over seller metrics in HDFS.</li>
+      <li><strong>Hive vs faster SQL:</strong> <strong>Shark</strong> (Spark SQL predecessor era) reported roughly <strong>5×</strong> faster than Hive for some workloads — illustrates the push toward interactive SQL on big data.</li>
+    </ul>
+
+    <h3>Article B — what to take away (2021)</h3>
+    <ul style="margin-left: 1.25rem; color: var(--muted); font-size: .93rem; line-height: 1.75;">
+      <li style="margin-bottom: .5rem;"><strong>Context:</strong> migration of <strong>&gt;20 PB</strong> off a vendor platform onto <strong>in-house Hadoop</strong>; need for a SQL engine with <strong>speed, stability, and security</strong> comparable to the old tool.</li>
+      <li style="margin-bottom: .5rem;"><strong>Core stack:</strong> customized <strong>Spark SQL</strong> on <strong>Apache Spark 2.3.1</strong>; <strong>Spark Thrift Server</strong> on YARN; <strong>Hive metastore</strong> on a separate cluster; JDBC/ODBC gateway (Hive Thrift–compatible) for BI tools.</li>
+      <li style="margin-bottom: .5rem;"><strong>Governance:</strong> authentication (e.g. internal IdP + Kerberos), SQL <strong>GRANT</strong>/<strong>REVOKE</strong>, TLS, and <strong>no direct end-user HDFS access</strong>.</li>
+      <li style="margin-bottom: .5rem;"><strong>Product features:</strong> <strong>Delta Lake</strong> patterns for <strong>UPDATE/DELETE</strong> (including joins); <strong>bulk download</strong> API for very large result sets; <strong>volatile</strong> (session-scoped materialized) tables vs heavy temp views.</li>
+      <li style="margin-bottom: .5rem;"><strong>Performance themes:</strong> <strong>transparent SSD cache</strong> on a dedicated analytics cluster; <strong>Bloom</strong>-style indexes for Parquet; <strong>AQE</strong> backported and extended for skew; <strong>bucket alignment</strong> (merge / re-bucketing); <strong>Parquet read</strong> path optimizations; <strong>dynamic partition pruning</strong> coexisting with AQE; <strong>runtime filters</strong>.</li>
+      <li><strong>Scale snapshot (stated in 2021):</strong> on the order of <strong>1,200+ distinct users/day</strong>, <strong>260k+ queries</strong>, <strong>80%</strong> of queries under <strong>27 seconds</strong> — a concrete SLA-oriented talking point.</li>
+    </ul>
+
+    <h3>How the two articles relate</h3>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Theme</th>
+            <th>2014</th>
+            <th>2021</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Audience question</td>
+            <td>What is Spark, and how do we run jobs?</td>
+            <td>How do we run <em>interactive SQL as a service</em> at vendor-grade performance?</td>
+          </tr>
+          <tr>
+            <td>Execution model</td>
+            <td>YARN + HDFS, batch/ML-oriented</td>
+            <td>Long-lived Thrift server + pooled executors + shared metastore</td>
+          </tr>
+          <tr>
+            <td>SQL</td>
+            <td>Hive comparison, Shark speedups</td>
+            <td>Deep customization of Spark SQL + operational features (ACLs, exports, mutability)</td>
+          </tr>
+          <tr>
+            <td>Optimization focus</td>
+            <td>In-memory RDDs, iterative algorithms</td>
+            <td>Scan path, indexes, adaptive execution, caching, Parquet I/O</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Discussion prompts</h3>
+    <p style="color: var(--dim); font-size: .88rem; margin-bottom: .75rem;">Use as openers or breakout questions. Cite <em>which article</em> supports each answer.</p>
+    <ol class="supplement-prompt-list">
+      <li>Why would a company standardize on <strong>Spark on YARN + HDFS</strong> instead of only a warehouse SaaS product?</li>
+      <li>The 2014 post emphasizes <strong>RDDs and memory</strong>. The 2021 post barely mentions RDDs. What shifted in how eBay used Spark?</li>
+      <li>After migrating <strong>20+ PB</strong>, why might <strong>&ldquo;same SQL, new engine&rdquo;</strong> still miss user expectations? What gaps did eBay need to close?</li>
+      <li>Pick one optimization from 2021 (e.g. <strong>transparent cache</strong>, <strong>Bloom index</strong>, <strong>AQE + skew</strong>). What failure mode does it mitigate?</li>
+      <li><strong>Security vs usability:</strong> How do SQL GRANTs and &ldquo;no raw HDFS&rdquo; change the threat model compared to giving analysts cluster accounts?</li>
+      <li><strong>Volatile tables vs temp views:</strong> When does plan complexity matter more than storage cost?</li>
+      <li>If you were introducing <strong>Spark 3/4</strong> today, which 2021 workarounds (backporting AQE, DPP coexistence) are now &ldquo;solved upstream&rdquo;?</li>
+      <li>How would you validate the <strong>80% &lt; 27s</strong> claim in your own org (measurement methodology, cohort bias)?</li>
+    </ol>
+
+    <h3>Tie-in to this deep dive</h3>
+    <p style="color: var(--muted); font-size: .95rem;">
+      Chapter 3 (<a href="ch/03-tech-stack.html" style="color: var(--accent); font-weight: 600;">Technology Stack</a>) places Spark next to <strong>Kafka</strong>, <strong>Flink</strong>, and <strong>ClickHouse</strong>. These articles ground the <strong>batch / SQL-on-Hadoop</strong> lane: historical scale, and what a mature <strong>managed SQL</strong> layer required in practice.
+    </p>
+  </div>
+</main>
+
+</body>
+</html>

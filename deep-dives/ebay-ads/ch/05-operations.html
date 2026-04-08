@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ch 5 — Operations | eBay Ads Platform</title>
+<link rel="stylesheet" href="../shared.css">
+</head>
+<body>
+<nav class="top-bar">
+  <div class="breadcrumb">
+    <a href="../../index.html">Deep Dives</a>
+    <span>/</span>
+    <a href="../index.html">eBay Ads</a>
+    <span>/</span>
+    <span>Operations</span>
+  </div>
+  <div class="nav-arrows">
+    <a href="../ch/04-workflows.html" class="nav-btn">← Prev</a>
+    <span class="ch-badge">5 / 5</span>
+    <span class="nav-btn" style="opacity:.35;pointer-events:none">Next →</span>
+  </div>
+</nav>
+<main class="page">
+    <div class="content-card">
+      <h2>Operations & Incident Response</h2>
+      <p style="color: var(--muted); font-size: .92rem; margin-bottom: 1.1rem; line-height: 1.65">
+        These playbooks assume you can <strong style="color: var(--text-secondary)">tie alerts to changes</strong>. The interactive strip below animates two common stories: a <strong style="color: var(--text-secondary)">bad deploy</strong> rolled back after Sherlock + Control Center correlation, and a <strong style="color: var(--text-secondary)">Kafka / Flink lag</strong> storm mitigated by scaling.</p>
+
+      <div id="eps-incident-root" class="eps-panel" aria-label="Incident response flow simulator"></div>
+
+      <h3>📊 Expanded Operational Tools & Dashboards</h3>
+      <p style="color: var(--muted); font-size: .9rem; margin: -.35rem 0 1rem; line-height: 1.65">
+        For <strong style="color: var(--text-secondary)">how</strong> anomaly pipelines are wired and <strong style="color: var(--text-secondary)">what</strong> an ads control center must satisfy technically, see <a href="ch/03-tech-stack.html#control-center-stack" style="color: var(--accent); font-weight: 600">Ch 3 — Sherlock implementation, Control Center requirements, stack map</a> (anchor on the stack table).
+      </p>
+
+      <h4>Monitoring Stack</h4>
+      <div class="tech-grid">
+        <div class="tech-card">
+          <h4>Prometheus + Grafana</h4>
+          <ul>
+            <li><strong>Revenue Dashboard</strong> — GMV, clicks, impressions, ROAS real-time</li>
+            <li><strong>Service Health Dashboard</strong> — API latency (p50, p99), error rates, availability</li>
+            <li><strong>Resource Dashboard</strong> — Pod CPU/Memory, disk I/O, network bandwidth</li>
+            <li><strong>Database Health</strong> — ClickHouse query latency, Elasticsearch shard status, Kafka consumer lag</li>
+            <li><strong>Custom Alerting</strong> — PromQL rules for revenue drops, latency spikes, error rate thresholds</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <h4>Control Center (Shepherd)</h4>
+          <ul>
+            <li><strong>Deployment Timeline</strong> — Visual markers for code pushes, services, versions</li>
+            <li><strong>Experiment Ramps</strong> — Experiment config and traffic split over time</li>
+            <li><strong>Metric Correlation</strong> — Overlay metrics on deployment/experiment timeline</li>
+            <li><strong>Alert Timeline</strong> — When alerts fired, severity, resolution time</li>
+            <li><strong>RCA Workbench</strong> — Link tickets, store findings, document remediation</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <h4>Sherlock.IO</h4>
+          <ul>
+            <li><strong>Anomaly Dashboard</strong> — Current alerts, historical patterns, baseline trends</li>
+            <li><strong>Service Log Browser</strong> — Full-text search across Elasticsearch logs</li>
+            <li><strong>Trending Errors</strong> — Error rates by service, error message clustering</li>
+            <li><strong>Correlation Analysis</strong> — Which service fault correlates with revenue drop?</li>
+            <li><strong>Predictive Alerts</strong> — Early warning if pattern looks like past incidents</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <h4>Kubernetes Dashboard (Tess.io)</h4>
+          <ul>
+            <li><strong>Pod Status</strong> — Running, pending, failed, restarting pods per service</li>
+            <li><strong>Rolling Deployments</strong> — Progress of code rollout, ready replicas count</li>
+            <li><strong>Node Status</strong> — CPU, memory, disk capacity per node</li>
+            <li><strong>Crash Loop Detection</strong> — Alert if pod restarting frequently</li>
+            <li><strong>Resource Quotas</strong> — Namespace limits; prevents one team starving others</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🚨 Incident Response Playbook</h3>
+      <p style="color: var(--muted); margin-bottom: 1rem">SLA: L1 Infra and L2 Domain/QE must respond within 15 minutes of alert.</p>
+
+      <div class="highlight-box">
+        <strong>Phase 1: Alert & Triage (0-5 min)</strong><br>
+        • PagerDuty fires alert on threshold breach (GMV drop, click drop, latency spike)<br>
+        • Slack notification with metric dashboard link and severity level<br>
+        • On-call engineer acknowledges and begins investigation<br>
+        • Open Control Center timeline for past hour to spot recent changes
+      </div>
+
+      <div class="highlight-box">
+        <strong>Phase 2: Investigation (5-15 min)</strong><br>
+        • Check Sherlock for log anomalies and error patterns<br>
+        • Review Control Center for recent deployments, experiments, or config changes<br>
+        • Query Prometheus/Grafana for service-level metrics (latency, error rate, CPU)<br>
+        • Check Kafka consumer lag; if high, possible data pipeline bottleneck<br>
+        • Check Flink job status; if lagging or restarting, data delay likely
+      </div>
+
+      <div class="highlight-box">
+        <strong>Phase 3: Diagnosis (15-30 min)</strong><br>
+        • Cross-check with multiple data sources (ClickHouse, Elasticsearch, Prometheus)<br>
+        • Narrow to likely root cause: deployment, experiment, resource, or data<br>
+        • Check CAL logs (Control Center Audit Log) for configuration changes<br>
+        • Consult team chat/wiki for known issues or recent work on alert system
+      </div>
+
+      <div class="highlight-box">
+        <strong>Phase 4: Remediation (30+ min)</strong><br>
+        • Rollback problematic code deployment<br>
+        • Kill failed experiment; traffic ramps back to control<br>
+        • Scale services up if resource-constrained<br>
+        • Restart failed workers or batch jobs<br>
+        • Monitor metrics to confirm recovery (usually 5-10 min lag before visible improvement)
+      </div>
+
+      <h3>📋 Post-Incident Review (RCA)</h3>
+      <div class="tech-grid">
+        <div class="tech-card">
+          <h4>Documentation</h4>
+          <ul>
+            <li><strong>Timeline</strong> — When alert fired, diagnosed, fixed, severity level</li>
+            <li><strong>Root Cause</strong> — The specific code, config, or experiment change</li>
+            <li><strong>Revenue Impact</strong> — Estimated lost GMV and ad impressions ($)</li>
+            <li><strong>Duration</strong> — How long before full recovery</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <h4>Analysis</h4>
+          <ul>
+            <li><strong>Why Was It Missed?</strong> — Was there an alert? Did it fire?</li>
+            <li><strong>Why Was Detection Slow?</strong> — Did MTTD (mean time to detect) meet SLA?</li>
+            <li><strong>Why Was Resolution Slow?</strong> — Did MTTR (mean time to respond) meet SLA?</li>
+            <li><strong>If Preventable?</strong> — What process/test/alert would have caught it?</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <h4>Preventative Measures</h4>
+          <ul>
+            <li><strong>New Alert Rule</strong> — Add threshold or pattern detector to catch similar issues</li>
+            <li><strong>Test Addition</strong> — Unit test or integration test to prevent regression</li>
+            <li><strong>Code Review Checklist</strong> — Require specific approval if code touches alert system</li>
+            <li><strong>Monitoring Improvement</strong> — Add metric dashboards or log patterns</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>⚠️ Common Incident Types & Diagnosis</h3>
+      <div class="table-wrapper">
+        <table>
+          <tr>
+            <th>Incident Type</th>
+            <th>Typical Causes</th>
+            <th>Investigation Tools</th>
+          </tr>
+          <tr>
+            <td><strong>GMV Drop</strong></td>
+            <td>Config error, ranking bug, experiment ramping up, placement disabled</td>
+            <td>Control Center deployments, Experiment dashboard, ClickHouse raw data check</td>
+          </tr>
+          <tr>
+            <td><strong>Click/Impression Drop</strong></td>
+            <td>Cassini latency spike, ad rendering issue, frontend bug, placement whitelist error</td>
+            <td>Prometheus latency graphs, Sherlock frontend error logs, Elasticsearch anomaly</td>
+          </tr>
+          <tr>
+            <td><strong>Data Latency / Delay</strong></td>
+            <td>Kafka broker down, Flink job stuck/restarting, ClickHouse ingestion lag, network saturation</td>
+            <td>Kafka UI lag metrics, Flink dashboard task status, ClickHouse queue depth</td>
+          </tr>
+          <tr>
+            <td><strong>Attribution Mismatch</strong></td>
+            <td>Tracking tag missing/corrupted, UBI pipeline failure, Sojourner bug, schema change</td>
+            <td>CAL logs schema changes, Sojourner job logs, UBI table sample query</td>
+          </tr>
+          <tr>
+            <td><strong>Billing Discrepancy</strong></td>
+            <td>Hive CRM sync failure, ClickHouse reconciliation lag, double charging</td>
+            <td>Hive sync logs, reconciliation job output, Elasticsearch audit logs</td>
+          </tr>
+          <tr>
+            <td><strong>API Timeout / Latency Spike</strong></td>
+            <td>Service CPU saturation, database query slowdown, network congestion</td>
+            <td>Prometheus service latencies, Kubernetes resource metrics, Elasticsearch query logs</td>
+          </tr>
+          <tr>
+            <td><strong>Batch Job Failure</strong></td>
+            <td>HDFS issue, schema mismatch, memory overflow, timeout</td>
+            <td>Hadoop logs (HDFS NameNode), Spark driver logs, Sherlock error patterns</td>
+          </tr>
+        </table>
+      </div>
+
+      <h3>📊 Key Monitoring Metrics (SLA Targets)</h3>
+      <div class="tech-grid">
+        <div class="tech-card">
+          <h4>Revenue Metrics</h4>
+          <ul>
+            <li><strong>GMV</strong> — $ billed to sellers</li>
+            <li><strong>Ad Revenue</strong> — $ collected from eBay</li>
+            <li><strong>ROAS</strong> — GMV ÷ Revenue (monitors ad spend efficiency)</li>
+            <li><strong>SLA Target:</strong> GMV variance &lt; 5% per day</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <h4>Engagement</h4>
+          <ul>
+            <li><strong>Clicks</strong> — Direct ad interactions</li>
+            <li><strong>Impressions</strong> — Ad views (tracked via JS pixel)</li>
+            <li><strong>CTR</strong> — Click-Through Rate (Clicks ÷ Impressions)</li>
+            <li><strong>SLA Target:</strong> CTR stable; alert if &gt;30% swing</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <h4>System Health</h4>
+          <ul>
+            <li><strong>API Latency</strong> — p50, p99 response times</li>
+            <li><strong>Error Rate</strong> — % requests failing</li>
+            <li><strong>Service Availability</strong> — Uptime %</li>
+            <li><strong>SLA Targets:</strong> p99 &lt; 500ms, error &lt; 1%, uptime 99.99%</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <h4>Data Quality</h4>
+          <ul>
+            <li><strong>Data Freshness</strong> — Lag between event generation and materialization</li>
+            <li><strong>Reconciliation Gap</strong> — Discrepancy between sources</li>
+            <li><strong>Schema Compliance</strong> — % events matching expected schema</li>
+            <li><strong>SLA Targets:</strong> Lag &lt; 5 min, gap &lt; 2%, compliance &gt; 99%</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+
+</main>
+<script src="../ads-pipeline-sim.js"></script>
+</body>
+</html>

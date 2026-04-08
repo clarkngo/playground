@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ch 3 — Technology Stack | eBay Ads Platform</title>
+<link rel="stylesheet" href="../shared.css">
+</head>
+<body class="chapter-stack">
+<nav class="top-bar">
+  <div class="breadcrumb">
+    <a href="../../index.html">Deep Dives</a>
+    <span>/</span>
+    <a href="../index.html">eBay Ads</a>
+    <span>/</span>
+    <span>Tech Stack</span>
+  </div>
+  <div class="nav-arrows">
+    <a href="../ch/02-concepts.html" class="nav-btn">← Prev</a>
+    <span class="ch-badge">3 / 5</span>
+    <a href="../ch/04-workflows.html" class="nav-btn">Next →</a>
+  </div>
+</nav>
+<main class="page">
+    <div class="content-card">
+      <h2>Deep Dive: Technology Stack</h2>
+
+      <div id="eps-tech-root" class="eps-panel" aria-label="Interactive data pipeline simulator"></div>
+
+      <h3>📨 Kafka — Event Streaming Backbone</h3>
+      <div class="highlight-box">
+        <strong>Role:</strong> Central nervous system. Every click, impression, and conversion flows through Kafka topics in real-time.
+      </div>
+      <div class="tech-grid">
+        <div class="tech-card">
+          <h4>Use Cases</h4>
+          <ul>
+            <li>Stream billions of click/impression events</li>
+            <li>Fan-out events to multiple consumers (Flink, Spark, Elasticsearch)</li>
+            <li>Guaranteed at-least-once delivery with rebalancing</li>
+            <li>Topic retention for replay/recovery</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <h4>Topics & Partitioning</h4>
+          <ul>
+            <li><strong>click-events</strong> — Partitioned by seller_id for parallel processing</li>
+            <li><strong>impression-events</strong> — High throughput, partitioned by ad placement</li>
+            <li><strong>conversion-events</strong> — Purchase confirmations, partitioned by order_id</li>
+            <li>Each partition replicated to minimize data loss</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <h4>Partitioning Strategy</h4>
+          <ul>
+            <li>Key-based partitioning ensures related events land on same partition</li>
+            <li>Flink consumers track per-partition offsets for exactly-once semantics</li>
+            <li>Offset management via Flink state backend (RocksDB) or ZooKeeper</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <h4>Operational Challenges</h4>
+          <ul>
+            <li><strong>Consumer Lag</strong> — Monitor lag between latest offset and consumer offset</li>
+            <li><strong>Broker Saturation</strong> — Network bandwidth can bottleneck during spikes</li>
+            <li><strong>Rebalancing Storms</strong> — Mass consumer failure can cause rebalancing cascades</li>
+            <li><strong>Topic Sprawl</strong> — Need governance to prevent topic saturation</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>⚡ Apache Flink — Real-Time Stream Processing</h3>
+      <div class="highlight-box">
+        <strong>Role:</strong> Real-time computation engine. Consumes Kafka events, computes aggregations, detects anomalies, and materializes results to storage.
+      </div>
+      <div class="tech-grid">
+        <div class="tech-card">
+          <h4>Job Examples</h4>
+          <ul>
+            <li><strong>Click Aggregator</strong> — Tumbling windows (1-min) grouping clicks by ad placement</li>
+            <li><strong>Impression Counter</strong> — Session windows detecting user impression patterns</li>
+            <li><strong>Revenue Aggregator</strong> — Sliding windows computing rolling 5-min GMV</li>
+            <li><strong>Anomaly Detector</strong> — Stateful operators comparing current rates to baseline</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <h4>State Management</h4>
+          <ul>
+            <li><strong>RocksDB Backend</strong> — Persists operator state to disk for fault tolerance</li>
+            <li><strong>Savepoint</strong> — Explicit checkpoints for planned restarts or version upgrades</li>
+            <li><strong>Checkpoint Alignment</strong> — Ensures exactly-once semantics across parallelism</li>
+            <li><strong>TTL State Cleanup</strong> — Auto-cleanup of old state to prevent unbounded memory</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <h4>Windowing Strategy</h4>
+          <ul>
+            <li><strong>Tumbling (1-min)</strong> — Non-overlapping; good for counts and sums</li>
+            <li><strong>Sliding (5-min, 1-min step)</strong> — Overlapping; for trending metrics</li>
+            <li><strong>Session (30-sec gap)</strong> — Detects user activity bursts/droughts</li>
+            <li>Late event handling: drop, redirect to side output, or merge with next window</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <h4>Operational Challenges</h4>
+          <ul>
+            <li><strong>Backpressure</strong> — Downstream sinks (ClickHouse) can't keep up; buffers fill</li>
+            <li><strong>Checkpoint Timeouts</strong> — Long-running operators can fail to checkpoint</li>
+            <li><strong>Job Restart Latency</strong> — Restoring state from RocksDB takes time during recovery</li>
+            <li><strong>Watermark Drift</strong> — Clock skew in event timestamps causes out-of-order processing</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🔥 Apache Spark — Batch & Interactive Processing</h3>
+      <div class="highlight-box">
+        <strong>Role:</strong> Batch processing for ETL, machine learning, and ad-hoc queries. Complements Flink for use cases needing distributed computing.
+      </div>
+      <p style="font-size:.88rem;color:var(--muted);margin:-.25rem 0 1rem;padding:.75rem 1rem;background:var(--surface);border:1px solid var(--border);border-radius:10px;line-height:1.6">
+        <strong style="color:var(--text-secondary)">Supplement:</strong> Condensed notes from eBay&rsquo;s public Spark write-ups (2014 adoption + 2021 SQL engine) — <a href="../spark-ebay-supplement.html" style="color:var(--accent);font-weight:600">eBay &amp; Apache Spark — digest for discussion</a>.
+      </p>
+      <div class="tech-grid">
+        <div class="tech-card">
+          <h4>Use Cases</h4>
+          <ul>
+            <li><strong>Nightly ETL</strong> — Transform and deduplicate raw events from HDFS</li>
+            <li><strong>Bid Recommendations</strong> — ML pipeline training models for keyword bids</li>
+            <li><strong>Attribution Reconstruction</strong> — Historical click-to-conversion linking</li>
+            <li><strong>Ad-hoc Analytics</strong> — Data scientists query for new insights</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <h4>DAG & Execution</h4>
+          <ul>
+            <li><strong>Transformations</strong> — map, filter, join, groupByKey, reduceByKey create DAG</li>
+            <li><strong>Actions</strong> — collect, count, saveAsParquet trigger driver submission</li>
+            <li><strong>Lazy Evaluation</strong> — Transformations don't execute until action is called</li>
+            <li><strong>Catalyst Optimizer</strong> — Rewrites logical plan to efficient physical plan</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <h4>Partitioning & Shuffling</h4>
+          <ul>
+            <li><strong>Hash Partitioning</strong> — Default for joins and group-bys</li>
+            <li><strong>Range Partitioning</strong> — Useful for time-series data (date ranges)</li>
+            <li><strong>Custom Partitioner</strong> — Route records to executors manually</li>
+            <li><strong>Shuffle Optimization</strong> — Sort-merge join vs. hash join trade-offs</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <h4>ML Pipeline Integration</h4>
+          <ul>
+            <li><strong>MLlib</strong> — Distributed algorithms (random forests, logistic regression)</li>
+            <li><strong>Feature Engineering</strong> — NLP, one-hot encoding, scaling pipelines</li>
+            <li><strong>Model Persistence</strong> — Save trained models to cloud storage for serving</li>
+            <li><strong>Training Jobs</strong> — Run nightly for bid recommendations and ranking</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🐘 Hadoop — Log Storage & Batch Archive</h3>
+      <div class="highlight-box">
+        <strong>Role:</strong> Long-term data archival and heavy-duty batch processing. Stores petabytes of historical data (Apollo/Hermes).
+      </div>
+      <div class="tech-grid">
+        <div class="tech-card">
+          <h4>Architecture</h4>
+          <ul>
+            <li><strong>HDFS (Hadoop Distributed File System)</strong> — Data distributed across nodes with 3x replication</li>
+            <li><strong>NameNode</strong> — Metadata server tracking file locations</li>
+            <li><strong>DataNodes</strong> — Physical storage nodes holding blocks</li>
+            <li><strong>MapReduce</strong> — Distributed batch computation (often replaced by Spark)</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <h4>Data Organization</h4>
+          <ul>
+            <li><strong>Daily Partitions</strong> — Data organized by date (e.g., /data/clicks/2025/04/07/)</li>
+            <li><strong>Format</strong> — Parquet for structured data, Avro for schemas, ORC for analytics</li>
+            <li><strong>Compression</strong> — Snappy or gzip to reduce storage footprint</li>
+            <li><strong>Retention</strong> — 2-3 years of hot data, older data archived to glacier</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <h4>Typical Workflow</h4>
+          <ul>
+            <li>Kafka Hadoop Connector ingests raw events to HDFS hourly</li>
+            <li>Nightly Spark job deduplicates and transforms raw events → Parquet</li>
+            <li>Data scientists query with Spark SQL or Hive meta store</li>
+            <li>Export subsets to ClickHouse for fast analytics</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <h4>Operational Challenges</h4>
+          <ul>
+            <li><strong>NameNode Bottleneck</strong> — Single point of metadata; HA requires Zookeeper</li>
+            <li><strong>Small Files Problem</strong> — Thousands of small files per day consume metadata</li>
+            <li><strong>Slow Queries</strong> — Full table scans on petabytes can take hours</li>
+            <li><strong>Network Saturation</strong> — Data movement during rebalancing can choke bandwidth</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🔍 Elasticsearch (Pronto Internal) — Logs & Metrics</h3>
+      <div class="highlight-box">
+        <strong>Role:</strong> Real-time log aggregation, anomaly detection, and metadata storage. Powers alerting and debugging dashboards.
+      </div>
+      <div class="tech-grid">
+        <div class="tech-card">
+          <h4>Use Cases</h4>
+          <ul>
+            <li><strong>Log Ingestion</strong> — Structured logs from microservices with JSON format</li>
+            <li><strong>Anomaly Detection</strong> — Elasticsearch ML detects unusual error patterns</li>
+            <li><strong>Troubleshooting</strong> — Full-text search for debugging incidents</li>
+            <li><strong>Metadata Storage</strong> — Config snapshots, experiment definitions, ad rules</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <h4>Indexing & Sharding</h4>
+          <ul>
+            <li><strong>Time-Based Indices</strong> — Daily indices (e.g., logs-2025.04.07) for retention</li>
+            <li><strong>Sharding</strong> — Distributes huge indices across cluster nodes</li>
+            <li><strong>Replicas</strong> — Each shard typically replicated 2x for availability</li>
+            <li><strong>Index Lifecycle</strong> — Auto-archive or delete old indices via ILM policies</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <h4>Query Patterns</h4>
+          <ul>
+            <li><strong>Match Queries</strong> — Full-text search on error messages</li>
+            <li><strong>Range Queries</strong> — @timestamp between two points in time</li>
+            <li><strong>Aggregations</strong> — terms aggs counting errors by service</li>
+            <li><strong>Painless Scripts</strong> — Custom scoring or filtering logic</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <h4>Operational Challenges</h4>
+          <ul>
+            <li><strong>Disk Pressure</strong> — Indices grow fast; need aggressive cleanup policies</li>
+            <li><strong>GC Pauses</strong> — Java garbage collection can cause brief unresponsiveness</li>
+            <li><strong>Shard Imbalance</strong> — Uneven data distribution across nodes</li>
+            <li><strong>Query Timeout</strong> — Slow aggregations can timeout at query layer</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>⚙️ ClickHouse (NuColumnar) — Real-Time Analytics</h3>
+      <div class="highlight-box">
+        <strong>Role:</strong> Ultra-fast columnar database for real-time metrics and reporting. Powers dashboards, alerts, and revenue tracking.
+      </div>
+      <div class="tech-grid">
+        <div class="tech-card">
+          <h4>Columnar Architecture</h4>
+          <ul>
+            <li><strong>Column Store</strong> — Data stored by column, not row (better compression)</li>
+            <li><strong>Vectorized Execution</strong> — Process millions of rows per second</li>
+            <li><strong>Data Skipping</strong> — Metadata (min/max per block) skips irrelevant data</li>
+            <li><strong>LZ4/Zstd Compression</strong> — High compression ratios reduce disk I/O</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <h4>Ingestion Pipeline</h4>
+          <ul>
+            <li><strong>Flink Consumer</strong> — Kafka → aggregated data → ClickHouse HTTP API</li>
+            <li><strong>Batch Inserts</strong> — Flink batches records (e.g., 1-min windows) for efficiency</li>
+            <li><strong>ReplacingMergeTree</strong> — Handles late updates and corrections</li>
+            <li><strong>Partitioning</strong> — By date for easy archival to cold storage</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <h4>Query Patterns</h4>
+          <ul>
+            <li><strong>GROUP BY Queries</strong> — Aggregate clicks/GMV by placement, seller, time</li>
+            <li><strong>Range Scans</strong> — Time-range queries for recent metrics (last 24 hours)</li>
+            <li><strong>JOIN Operations</strong> — Link placements to campaigns on lookup tables</li>
+            <li><strong>SUM/COUNT/AVG</strong> — Revenue aggregations via simple SQL</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <h4>Operational Challenges</h4>
+          <ul>
+            <li><strong>Memory Pressure</strong> — Large aggregations must fit in RAM</li>
+            <li><strong>Merges During Inserts</strong> — ReplacingMergeTree background merges can stall</li>
+            <li><strong>Query Complexity</strong> — No JOIN optimization; complex queries slow down</li>
+            <li><strong>Replica Lag</strong> — Replication lag can cause metric discrepancies</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🔍 Prometheus & Grafana — Metrics & Dashboards</h3>
+      <div class="highlight-box">
+        <strong>Role:</strong> Time-series metrics collection and visualization. Powers operational dashboards and PromQL-based alerting rules.
+      </div>
+      <div class="tech-grid">
+        <div class="tech-card">
+          <h4>Prometheus Architecture</h4>
+          <ul>
+            <li><strong>Pull Model</strong> — Prometheus scrapes /metrics endpoints from services</li>
+            <li><strong>Scrape Config</strong> — Target discovery via Kubernetes, Consul, or static files</li>
+            <li><strong>Remote Storage</strong> — Write metrics to remote TSDB for long-term storage</li>
+            <li><strong>Retention</strong> — Default 15 days local; long-term via remote write</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <h4>Metric Types</h4>
+          <ul>
+            <li><strong>Gauge</strong> — Current value (e.g., CPU %, memory used)</li>
+            <li><strong>Counter</strong> — Monotonically increasing (e.g., total requests)</li>
+            <li><strong>Histogram</strong> — Latency distribution (buckets for p50, p99)</li>
+            <li><strong>Summary</strong> — Quantile tracking (alternative to histogram)</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <h4>PromQL Queries</h4>
+          <ul>
+            <li><strong>Instant Vector</strong> — {job="ads-api"}[current value per series]</li>
+            <li><strong>Range Vector</strong> — {job="ads-api"}[5m] [last 5 min of values per series]</li>
+            <li><strong>rate()</strong> — Per-second increase; rate(requests[5m])</li>
+            <li><strong>histogram_quantile()</strong> — Derive p99 latency from histogram buckets</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <h4>Grafana Dashboards</h4>
+          <ul>
+            <li><strong>Revenue Dashboard</strong> — GMV, clicks, impressions real-time graphs</li>
+            <li><strong>Service Health</strong> — API latency, error rates, availability per service</li>
+            <li><strong>Resource Usage</strong> — Pod CPU/memory, disk I/O, network bandwidth</li>
+            <li><strong>Alert Status</strong> — Current firing alerts with severity levels</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🔦 Sherlock.IO (Internal) — Anomaly Detection</h3>
+      <div class="highlight-box">
+        <strong>Role:</strong> Real-time anomaly detection using statistical models. Identifies unusual patterns in logs, metrics, and events.
+      </div>
+      <div class="tech-grid">
+        <div class="tech-card">
+          <h4>Detection Methods</h4>
+          <ul>
+            <li><strong>Baseline Comparison</strong> — Compare current metrics to same time last week</li>
+            <li><strong>ARIMA Models</strong> — Forecast expected value; flag if actual exceeds threshold</li>
+            <li><strong>Clustering</strong> — Identify log patterns that are not in "normal" cluster</li>
+            <li><strong>Rate of Change</strong> — Flag if metric changes > 20% in 5 minutes</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <h4>Integration Points</h4>
+          <ul>
+            <li><strong>Elasticsearch ML</strong> — Consumer lag anomaly detection on Kafka topics</li>
+            <li><strong>Custom Detectors</strong> — Revenue drop, click drop, latency spike rules</li>
+            <li><strong>Alert Firing</strong> — Anomaly triggers PagerDuty alert + Slack message</li>
+            <li><strong>False Positive Tuning</strong> — Baseline adjustments to reduce noise</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <h4>Common Signals</h4>
+          <ul>
+            <li>GMV drop > 15% vs. baseline</li>
+            <li>Click/impression drop > 20% vs. rolling average</li>
+            <li>API latency p99 > 500ms</li>
+            <li>Error rate > 1% on critical services</li>
+          </ul>
+        </div>
+      </div>
+
+      <h4>How anomaly detection is implemented</h4>
+      <p style="color: var(--muted); font-size: .92rem; margin: -.25rem 0 1rem; line-height: 1.7">
+        In practice, &ldquo;anomaly detection&rdquo; here is a <strong style="color: var(--text-secondary)">pipeline</strong>, not a single model: raw telemetry becomes <em>features</em> (rates, ratios, lag, error shares), compared to <em>baselines</em> (rolling windows, same time last week, or forecasts), then <em>scored</em> and routed to alerting. Multiple implementations coexist — statistical rules, time-series models, and log/ML jobs — because ads systems need both <strong>fast</strong> path (minutes) and <strong>robust</strong> path (seasonality, marketing events).
+      </p>
+      <div class="tech-grid">
+        <div class="tech-card">
+          <h4>Data path</h4>
+          <ul>
+            <li><strong>Ingest</strong> — Prometheus scrapes; Kafka streams for event-derived KPIs; Elasticsearch for log-derived errors</li>
+            <li><strong>Windows</strong> — Tumbling/sliding windows (Flink or PromQL <code style="font-size:.8rem">rate()</code> over ranges) to form comparable rates</li>
+            <li><strong>Baseline store</strong> — Historical aggregates (same hour DOW, trailing median) or model output (ARIMA / ES ML expected value)</li>
+            <li><strong>Score &amp; decide</strong> — Deviation, z-score, or rule threshold → severity + deduplication key</li>
+            <li><strong>Notify</strong> — PagerDuty / Slack; optional ticket; fingerprint to suppress repeats</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <h4>Streaming vs batch roles</h4>
+          <ul>
+            <li><strong>Flink / stateful path</strong> — Compare live aggregates to in-state baselines for click fraud spikes, attribution swings, consumer lag (minutes-level)</li>
+            <li><strong>Scheduled jobs</strong> — Recompute slow-moving baselines, retrain seasonal components, backfill after outages</li>
+            <li><strong>Elasticsearch ML</strong> — Unsupervised patterns on log volumes and Kafka lag time series</li>
+            <li><strong>Static thresholds</strong> — Still used for hard SLOs (e.g. p99 cap) where models add noise</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <h4>Requirements (detection layer)</h4>
+          <ul>
+            <li><strong>Latency</strong> — Business KPI anomalies visible within SLA (often single-digit minutes for revenue)</li>
+            <li><strong>Precision vs recall</strong> — Tune to avoid alert fatigue; document false-negative risk for money metrics</li>
+            <li><strong>Explainability</strong> — Each alert should carry dimension hints (service, region, placement) for triage</li>
+            <li><strong>Ownership</strong> — Clear line between platform-owned detectors and product-owned experiment guards</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <h4>Ads-specific twists</h4>
+          <ul>
+            <li><strong>Campaign &amp; seasonality</strong> — Baselines must exclude known promos or use stratified series</li>
+            <li><strong>Auction dynamics</strong> — Bid floor changes can look like anomalies unless experiments are tagged</li>
+            <li><strong>Attribution delay</strong> — Conversion metrics lag clicks; detectors need lag-aware windows</li>
+            <li><strong>Multi-tenant noise</strong> — One large seller or DSP can skew aggregates; use top-N contribution views</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🎛️ Control Center (Shepherd) — Observability Hub</h3>
+      <div class="highlight-box">
+        <strong>Role:</strong> Central dashboard correlating deployments, experiments, metrics, and alerts. Enables rapid incident RCA by timeline.
+      </div>
+      <div class="tech-grid">
+        <div class="tech-card">
+          <h4>Features</h4>
+          <ul>
+            <li><strong>Deployment Timeline</strong> — Code pushes logged with commit hash and version</li>
+            <li><strong>Experiment Tracking</strong> — Experiment config, rampup percentage, impact metrics</li>
+            <li><strong>Metric Dashboards</strong> — Pull from Prometheus; synced with deployment markers</li>
+            <li><strong>Alert History</strong> — Time-correlated view of what fired when</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <h4>Investigation Workflow</h4>
+          <ul>
+            <li>Alert fires on GMV drop at 14:32 UTC</li>
+            <li>Open Control Center timeline for past hour</li>
+            <li>See code rollout at 14:30 to API service</li>
+            <li>See experiment ramp at 14:15 on search ranking</li>
+            <li>Correlate with metric dips in graph overlay</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <h4>Data Sources</h4>
+          <ul>
+            <li><strong>ServiceNow</strong> — Code deployment records (codeChangeScrubber)</li>
+            <li><strong>Kafka Metadata</strong> — Batch job start/end timestamps</li>
+            <li><strong>Prometheus</strong> — Real-time metrics for trending</li>
+            <li><strong>Elasticsearch</strong> — Error logs and event annotations</li>
+          </ul>
+        </div>
+      </div>
+
+      <h4>Requirements for an ads control center</h4>
+      <p style="color: var(--muted); font-size: .92rem; margin: -.25rem 0 1rem; line-height: 1.7">
+        A generic observability UI is not enough: monetization teams need a <strong style="color: var(--text-secondary)">single narrative</strong> that ties <em>what changed</em> (code, config, experiment, data feed) to <em>what broke</em> (revenue, latency, quality) on a <em>shared timeline</em>. Below are requirements typical of a control center built for programmatic ads.
+      </p>
+      <div class="tech-grid">
+        <div class="tech-card">
+          <h4>Product &amp; UX</h4>
+          <ul>
+            <li><strong>Unified timeline</strong> — Deployments, experiment ramps, config changes, and alerts on one axis (UTC)</li>
+            <li><strong>Metric overlay</strong> — GMV, impressions, clicks, latency, error rate with zoom and comparison windows</li>
+            <li><strong>RCA workspace</strong> — Attach incident ID, hypotheses, links to dashboards and queries</li>
+            <li><strong>Role-aware views</strong> — SRE vs ads PM: same data, different default slices (service vs placement)</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <h4>Technical &amp; integration</h4>
+          <ul>
+            <li><strong>Fresh markers</strong> — Deployment and experiment events within ~1 minute of ground truth</li>
+            <li><strong>Queryable backends</strong> — Prometheus (or compatible TSDB), log index, change DB (ServiceNow / internal)</li>
+            <li><strong>Audit trail</strong> — CAL-style log for who changed flags, budgets, or targeting (non-repudiation)</li>
+            <li><strong>APIs</strong> — Machine-readable timeline for automation and postmortems</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <h4>Reliability &amp; safety</h4>
+          <ul>
+            <li><strong>Availability</strong> — Control center itself must not be a SPOF during incidents; read-optimized</li>
+            <li><strong>RBAC</strong> — Revenue-sensitive metrics and customer identifiers restricted</li>
+            <li><strong>Correlation without false certainty</strong> — Show confidence; multiple overlapping changes are common</li>
+          </ul>
+        </div>
+      </div>
+
+      <h4 id="control-center-stack">Stack map: detection + control center</h4>
+      <p style="color: var(--dim); font-size: .88rem; margin: 0 0 .75rem">How the pieces in this chapter fit together for observe → detect → explain.</p>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Layer</th>
+              <th>Role</th>
+              <th>Typical components (this deep dive)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Telemetry</td>
+              <td>Expose counters, histograms, logs, traces</td>
+              <td>Prometheus exporters, Kafka topics, Elasticsearch, optional OpenTelemetry</td>
+            </tr>
+            <tr>
+              <td>Real-time compute</td>
+              <td>Aggregate streams, stateful compares</td>
+              <td>Flink jobs, PromQL over sliding windows</td>
+            </tr>
+            <tr>
+              <td>Anomaly detection</td>
+              <td>Rules + models; route to humans</td>
+              <td>Sherlock.IO, Elasticsearch ML, custom detectors, threshold alerts in Grafana/Alertmanager</td>
+            </tr>
+            <tr>
+              <td>Alerting &amp; comms</td>
+              <td>Wake on-call, thread context</td>
+              <td>PagerDuty, Slack</td>
+            </tr>
+            <tr>
+              <td>Change &amp; experiment truth</td>
+              <td>What shipped, when</td>
+              <td>ServiceNow / codeChangeScrubber, Touchstone metadata</td>
+            </tr>
+            <tr>
+              <td>Control center UI</td>
+              <td>Correlate signal + change + people</td>
+              <td>Shepherd / Control Center pulling the above</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Interactive: observe → alert → RCA</h3>
+      <p style="color: var(--muted); font-size: .88rem; margin: -.35rem 0 .75rem; line-height: 1.65">Walks the <strong style="color: var(--text-secondary)">Sherlock + PagerDuty + Control Center</strong> story next to a lighter <strong style="color: var(--text-secondary)">Prometheus / Alertmanager</strong> path — same UI pattern as Ch 1 and Ch 4 simulators.</p>
+      <div id="eps-obs-root" class="eps-panel" aria-label="Observability and anomaly flow simulator"></div>
+
+      <div class="arch-wrap">
+        <div class="arch-wrap-title">SQL-on-Hadoop access path (reference)</div>
+        <p style="color: var(--dim); font-size: .8rem; margin: 0 0 .75rem; line-height: 1.5">Simplified from eBay&rsquo;s public write-up on its <strong style="color: var(--text-secondary)">custom Spark SQL / Thrift</strong> stack — not the same as Prometheus → Sherlock observability above.</p>
+        <svg class="arch-svg" viewBox="0 0 720 268" xmlns="http://www.w3.org/2000/svg" aria-label="Gateway Spark Thrift YARN Hive metastore HDFS architecture">
+          <defs>
+            <marker id="arch-arr-spark" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto">
+              <polygon points="0 0, 7 3.5, 0 7" fill="#6b7c99"/>
+            </marker>
+          </defs>
+          <text x="360" y="16" text-anchor="middle" class="arch-title">Clients</text>
+          <rect class="arch-box" x="130" y="22" width="460" height="36" rx="6"/>
+          <text x="360" y="40" text-anchor="middle" class="arch-sub">BI &amp; analytics apps — JDBC / ODBC (e.g. Tableau, MicroStrategy, R)</text>
+          <text x="360" y="52" text-anchor="middle" class="arch-sub">Hive Thrift–compatible session + SQL</text>
+          <line class="arch-arrow" x1="360" y1="58" x2="360" y2="76" marker-end="url(#arch-arr-spark)"/>
+          <rect class="arch-box arch-box-hi" x="160" y="78" width="400" height="40" rx="6"/>
+          <text x="360" y="96" text-anchor="middle" class="arch-sub">Gateway — authentication, traffic distribution</text>
+          <text x="360" y="110" text-anchor="middle" class="arch-sub">(post: Tess-deployed access tier)</text>
+          <line class="arch-arrow" x1="360" y1="118" x2="360" y2="134" marker-end="url(#arch-arr-spark)"/>
+          <rect class="arch-box arch-box-hi" x="120" y="136" width="480" height="44" rx="6"/>
+          <text x="360" y="154" text-anchor="middle" class="arch-sub">Spark Thrift Server on YARN — long-running</text>
+          <text x="360" y="168" text-anchor="middle" class="arch-sub">Dedicated YARN queues per domain org · executors serve SQL for that queue</text>
+          <line class="arch-arrow" x1="360" y1="180" x2="360" y2="198" marker-end="url(#arch-arr-spark)"/>
+          <rect class="arch-box" x="40" y="200" width="300" height="38" rx="6"/>
+          <text x="190" y="218" text-anchor="middle" class="arch-sub">Shared Hive metastore</text>
+          <text x="190" y="232" text-anchor="middle" class="arch-sub">separate &ldquo;generic&rdquo; cluster (metadata)</text>
+          <rect class="arch-box" x="380" y="200" width="300" height="38" rx="6"/>
+          <text x="530" y="218" text-anchor="middle" class="arch-sub">HDFS — table data</text>
+          <text x="530" y="232" text-anchor="middle" class="arch-sub">executors read / write via Spark SQL engine</text>
+          <line class="arch-arrow" x1="360" y1="180" x2="190" y2="200" marker-end="url(#arch-arr-spark)"/>
+          <line class="arch-arrow" x1="360" y1="180" x2="530" y2="200" marker-end="url(#arch-arr-spark)"/>
+        </svg>
+        <p class="arch-caption">Shape follows Figure 1 in eBay Innovation, <a href="https://innovation.ebayinc.com/stories/explore-ebays-new-optimized-spark-sql-engine-for-interactive-analysis/" style="color: var(--accent); font-weight: 600;">Explore eBay&rsquo;s New Optimized Spark SQL Engine for Interactive Analysis</a> (2021): gateway → Spark Thrift Server in YARN with per-domain queues → shared Hive metastore + HDFS. Users do not get raw HDFS access; security (Keystone/Kerberos, GRANTs, TLS) is enforced at the gateway and engine.</p>
+      </div>
+
+      <h3>🧪 Touchstone — A/B Testing Framework</h3>
+      <div class="highlight-box">
+        <strong>Role:</strong> Experimentation platform. Manages experiment configuration, bucketing, and real-time statistical analysis.
+      </div>
+      <div class="tech-grid">
+        <div class="tech-card">
+          <h4>Core Components</h4>
+          <ul>
+            <li><strong>Experiment Config</strong> — Treatment/control assignment, traffic split, ramp schedule</li>
+            <li><strong>Bucketing Service</strong> — Deterministic assignment via user_id hash</li>
+            <li><strong>Event Tagging</strong> — ET (placement) and XT (event) tags on impressions</li>
+            <li><strong>Analysis Backend</strong> — Collects tagged events, runs t-tests, computes p-value</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <h4>Experiment Lifecycle</h4>
+          <ul>
+            <li><strong>Design</strong> — Define hypothesis, metric to track (GMV, clicks)</li>
+            <li><strong>Ramp</strong> — Start at 1%; gradually increase to 100% if safe</li>
+            <li><strong>Monitor</strong> — Real-time dashboards show impact vs. control</li>
+            <li><strong>Decide</strong> — Statistical significance; rollout to 100% or cleanup</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <h4>Statistical Framework</h4>
+          <ul>
+            <li><strong>Delta Method</strong> — Estimate variance of treatment effect</li>
+            <li><strong>Sequential Testing</strong> — Peek at results before full sample collected</li>
+            <li><strong>p-value Threshold</strong> — Usually 0.05; p &lt; 0.05 = statistically significant</li>
+            <li><strong>Power Analysis</strong> — Pre-calculate sample size needed to detect effect</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <h4>Operational Challenges</h4>
+          <ul>
+            <li><strong>Multiple Comparisons</strong> — Running 100 experiments increases false positive rate</li>
+            <li><strong>Network Effects</strong> — Treatment can affect control; coordination required</li>
+            <li><strong>Seasonality Confounds</strong> — Weekend vs. weekday differences</li>
+            <li><strong>Time-to-Significance</strong> — Large effects visible in hours; small effects need 2+ weeks</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>📋 ServiceNow — Change Management</h3>
+      <div class="highlight-box">
+        <strong>Role:</strong> Change tracking system. codeChangeScrubber logs all code deployments for RCA correlation with metric anomalies.
+      </div>
+      <div class="tech-grid">
+        <div class="tech-card">
+          <h4>Deployment Record Fields</h4>
+          <ul>
+            <li><strong>Service Name</strong> — Which microservice was deployed</li>
+            <li><strong>Version / Git Hash</strong> — Exact commit identifier</li>
+            <li><strong>Timestamp</strong> — Deployment finish time (UTC)</li>
+            <li><strong>Rollback Info</strong> — Previous version in case of quick rollback</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <h4>Integration Points</h4>
+          <ul>
+            <li>codeChangeScrubber service reads Jenkins build logs</li>
+            <li>Writes record to ServiceNow upon successful deploy</li>
+            <li>Control Center queries ServiceNow for timeline view</li>
+            <li>Incident response uses deployment timeline for root cause</li>
+          </ul>
+        </div>
+        <div class="tech-card">
+          <h4>RCA Example</h4>
+          <ul>
+            <li>GMV drops 25% at 14:30 UTC</li>
+            <li>Check ServiceNow: API service deployed at 14:28</li>
+            <li>Query git for changes: buggy ranking algorithm</li>
+            <li>Rollback API to previous version; GMV recovers</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+
+</main>
+<script src="../ads-pipeline-sim.js"></script>
+</body>
+</html>
