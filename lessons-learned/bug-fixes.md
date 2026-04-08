@@ -4,6 +4,18 @@ Root causes and patterns for bugs found across the cryptography labs.
 
 ---
 
+## String splice indices after earlier edit (HTML generators)
+
+**Symptom:** Replacement content appears to splice into the middle of an unrelated tag (e.g. `class="pd  <!-- …`), deleting the lab header and breaking the DOM.
+
+**Root cause:** `start = template.index(anchor)` was computed on the original file, then the script inserted a large block *earlier* in the document (e.g. CSS before `</style>`). All positions after the insert shift; stale indices point backward into wrong spans.
+
+**Fix:** Recompute `index(anchor)` on the **same string** you slice (`t`) after every mutation that changes length above the anchor, or derive anchors from unique markers after the last edit.
+
+**Affected:** `hos/dev-foundations-activities-hos/generate_hos_02_10.py` (handout replacement vs `mid_style_inject`).
+
+---
+
 ## `</script>` Inside Inline `<script>` (HTML)
 
 **Symptom:** Nothing after a certain line runs; globals missing; UI frozen. View source shows stray text where script continuation should be.

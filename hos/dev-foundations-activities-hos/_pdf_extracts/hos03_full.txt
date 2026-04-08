@@ -1,0 +1,571 @@
+ 
+ 
+ 
+1 | C S 4 4 5  
+ 
+CS445 Software Process Management 
+HOS03A - Restful API using Flask 
+ 
+04/17/2025 Developed by Kina Anh Bui 
+04/18/2025 Reviewed by Sam Chung 
+12/4/2025 Reviewed by Clark Ngo 
+ 
+School of Technology & Computing (STC) 
+City University of Seattle (CityU)  
+  
+ 
+ 
+ 
+Before You Start   
+• 
+Screenshots may be different from your environment.  
+• 
+The directory path shown in screenshots may be different from yours.  
+• 
+The steps might have subtle discrepancies. Please use your best judgment while completing each 
+step in this cookbook-style tutorial. 
+• 
+Some steps may not be explained in detail. If you are not sure what to do:  
+1. Consult the resources from the course.    
+2. If you cannot solve the problem after a few tries (usually 15 -30 minutes), ask a TA for help.  
+    
+Readings and Examples:  
+• Visit the CS 445 Repository for Examples. 
+o 
+Select the related module. 
+o 
+Visit the README.md file. 
+o 
+Find examples for your practice. 
+ 
+Learning Outcomes 
+● Section 1: Accessing GitHub Codespaces 
+● Section 2: Creating of Micro Service 
+● Section 3: Testing CRUD Operations 
+● Section 4: Pushing Your Work to GitHub  
+ 
+Upload the following to your GitHub Repository generated from GitHub Classroom. 
+1. Upload the screenshot of your ‘01 Install Flask’ as ‘01_install_flask_firstname_lastname.png’ by 
+using your first and last name.     
+2. Upload the screenshot of your ‘02 Install Flask-RESTful’ as 
+‘02_install_flask_restful_firstname_lastname.png’ by using your first and last name.  
+3. Upload the screenshot of your ‘03 Hello World’ as ‘03_hello_world_firstname_lastname.png’ by 
+using your first and last name. 
+4. Upload the screenshot of your ‘04 Body’ as ‘04_body_firstname_lastname.png’ by using your first 
+and last name. 
+5. Upload the screenshot of your ‘05 Retrieving Records’ as 
+‘05_retrieving_records_firstname_lastname.png’ by using your first and last name. 
+6. Upload the screenshot of your ‘06 Deleting Records’ as 
+‘06_deleting_records_firstname_lastname.png’ by using your first and last name.   
+ 
+ 
+ 
+ 
+
+ 
+ 
+ 
+2 | C S 4 4 5  
+ 
+Key Concepts 
+ 
+In this HOS, we will build a small project using Python. We will use Flask, a microframework for creating 
+REST APIs, CRUD operations, and Postman. 
+ 
+What is REST?   
+REST (Representational State Transfer), or RESTful, is a popular architectural pattern that allows a 
+system to reliably and predictably serve data to an external source, like a frontend. It enables different 
+systems, written in entirely different technologies, to communicate with your system. It is programming 
+language-agnostic, but you must adhere to standards to make the interoperability between various 
+systems dependable. In simple terms, REST is an HTTP, preferably an HTTPS request like requesting a 
+regular website, but with specific rules allowing for reliable and understandable data transfer. 
+ 
+ 
+ 
+ 
+
+ 
+ 
+ 
+3 | C S 4 4 5  
+ 
+Section 1: Accessing GitHub Codespaces 
+ 
+Follow the instructions here.  
+ 
+GitHub Codespaces are online cloud-based development environments that allow you to easily write, run, 
+and debug your code. It is fully integrated with your GitHub repository and provides a seamless experience 
+for developers. 
+ 
+Prerequisites:  
+• 
+Create your GitHub account 
+ 
+ 
+ 
+ 
+ 
+
+ 
+ 
+ 
+4 | C S 4 4 5  
+ 
+Section 2: Creating of Micro Service 
+ 
+1) Starting in Codespaces 
+📌 When you open a Codespace, you’re already inside the repository — no need to clone! 
+A terminal and editor (like VS Code) are already set up for you. 
+ 
+2) Initializing the Project 
+ 
+1. Open the terminal tab in Codespaces. 
+ 
+2. Type the following command to create a helloworld-app folder and change the current working 
+directory to it: 
+ 
+mkdir helloworld-app 
+cd helloworld-app 
+ 
+3. The output will be as follows. 
+ 
+ 
+ 
+3) Installing Flask 
+ 
+1. Type the following command: 
+ 
+pip install Flask 
+ 
+2. The output will be as follows. 
+ 
+ 
+ 
+Take a screenshot of your ‘01 Install Flask’ as ‘01_install_flask_firstname_lastname.png’ by using your 
+first and last name.   
+ 
+ 
+ 
+
+ 
+ 
+ 
+5 | C S 4 4 5  
+ 
+4) Installing Flask-RESTful 
+ 
+1. Type the following command: 
+This command will download and install the Flask-RESTful package, which is an extension for 
+Flask that adds support for quickly building REST APIs. 
+ 
+pip install Flask-RESTful 
+ 
+2. The output will be as follows: 
+ 
+ 
+ 
+Take a screenshot of your ‘02 Install Flask-RESTful’ as ‘02_install_flask_restful_firstname_lastname.png’ 
+by using your first and last name. 
+ 
+ 
+ 
+
+ 
+ 
+ 
+6 | C S 4 4 5  
+ 
+5) Adding Files 
+ 
+1. Create a New File named app.py inside helloworld-app. 
+ 
+touch app.py 
+ 
+2. Add this line inside the file: 
+ 
+ 
+from flask import Flask  
+from flask import request  
+import json  
+ 
+database = {}  
+ 
+app = Flask(__name__)  
+ 
+@app.route("/")  
+def index():  
+  return "Hello World!" 
+ 
+ 
+3. The output will be as follows. 
+ 
+ 
+ 
+ 
+ 
+
+ 
+ 
+ 
+7 | C S 4 4 5  
+ 
+6) Creating a REST Service - POST 
+ 
+An HTTP verb is something you use implicitly with every page load and every form submission on the 
+Internet. It is a mandatory part of every HTTP call. In REST, you use the verb explicitly to tell the backend 
+system what the action will be. We are going to explore four HTTP protocols. 
+• 
+GET retrieves data from the system. 
+• 
+POST adds new data to the system. 
+• 
+PUT replaces/modifies an entry entirely in the system. 
+• 
+DELETE removes an entry from the system. 
+ 
+We are creating a CRUD (Create, Read, Update, Delete) REST Service for students. In this CRUD operation, 
+we will only be storing names and ages. Please note HTTP POST and PUT are interchangeable terms, and 
+both protocols can serve the purpose of creation and updation. 
+ 
+To create a new Student Record in the system, add the code below inside the app.py file. 
+ 
+@app.route('/students', methods=['POST']) 
+def post_students_details(): 
+    try: 
+        data = request.get_json()  
+         
+        if not data or "name" not in data or "age" not in data: 
+            return jsonify({'message': 'Bad Request: Name and Age are required'}), 400 
+         
+        database[data["name"]] = data["age"] 
+         
+        return jsonify({'message': 'Student added successfully'}), 201 
+         
+    except Exception as e: 
+        return jsonify({'message': f'Error saving object: {str(e)}'}), 500 
+ 
+ 
+This code accepts the HTTP post request with the path 'Students.' It parses the student Json request and 
+stores it in a temporary data structure. 
+ 
+7) Reading a REST Service - GET 
+ 
+The GET method retrieves information from the given server using a given URI. Requests using GET should 
+only retrieve data and should have no other effect on the data. 
+ 
+Use the following code to get records 
+ 
+@app.route('/students/<Student_name>', methods=['GET']) 
+def get_students_details(Student_name): 
+    age = database.get(Student_name) 
+     
+    if age is None: 
+        return jsonify({'message': 'Record Not Found'}), 404 
+     
+    return jsonify({ 
+        'name': Student_name, 
+        'age': age, 
+        'message': 'Record Found' 
+    }), 200 
+ 
+This code snippet defines a route that accepts a student name as a parameter. It retrieves the 
+corresponding student record from a database. If the student is not found, it returns a 404 error. If found, 
+it returns the student's name and age in the response, along with a 200 status code indicating success. 
+
+ 
+ 
+ 
+8 | C S 4 4 5  
+ 
+8) Updating a REST Service - PUT 
+ 
+Updating/Modifying the existing records is the common request, and HTTP PUT request is the most used 
+protocol. 
+ 
+Use the code below to update existing records. 
+ 
+@app.route('/students', methods=['PUT']) 
+def put_students_details(): 
+    try: 
+        data = request.get_json() 
+         
+        if not data or "name" not in data or "age" not in data: 
+            return jsonify({'message': 'Bad Request: Name and Age are required'}), 400 
+ 
+        if data["name"] not in database: 
+             return jsonify({'message': 'Student not found, cannot update'}), 404 
+ 
+        database[data["name"]] = data["age"] 
+        return jsonify({'message': 'Student updated successfully'}), 200 
+         
+    except Exception as e: 
+        return jsonify({'message': f'Error updating object: {str(e)}'}), 500 
+ 
+This code defines a route /students that accepts PUT requests. It extracts the JSON data from the 
+request, updates the database dictionary with the new student detail, and returns a success message 
+with a status code of 200 if successful. If an error occurs during the process, it prints the error message 
+to the console and returns a "Failed" message with a status code of 400. 
+ 
+9) Deleting a REST Service - DELETE 
+ 
+An HTTP request of this type is sent to remove the target resource from the server. Precisely what happens 
+on the server's side, such as whether the space is reclaimed or the resource is instead just taken offline, 
+is under the server's control, and how its environment has been configured. 
+ 
+Use the following code 
+ 
+@app.route('/students/<Student_name>', methods=['DELETE']) 
+def delete_students_details(Student_name): 
+    result = database.pop(Student_name, None) 
+     
+    if result is None: 
+        return jsonify({'message': 'Record Not Found'}), 404 
+         
+    return jsonify({'message': 'Record deleted successfully'}), 200 
+ 
+This code defines a DELETE endpoint for removing a student record. It retrieves the student name from 
+the URL, then attempts to remove it from the 'database' list. If successful, it returns a 200 status code 
+with a message. If the student name is not found in the list, it returns a 404 status code. For any other 
+exceptions, it prints the error message and returns a 400 status code. 
+ 
+
+ 
+ 
+ 
+9 | C S 4 4 5  
+ 
+10) Starting Flask 
+ 
+1. Run the following commands from the helloworld-app directory. 
+ 
+export FLASK_APP=app.py 
+flask run --host=0.0.0.0 
+ 
+ 
+ 
+export FLASK_APP=app.py 
+This command sets the FLASK_APP environment variable to app.py, which tells Flask which file 
+to use as the application. Run this command in your terminal to specify the entry point of your 
+Flask application. 
+ 
+flask run --host=0.0.0.0 
+This command starts the Flask development server. The option makes the server publicly 
+accessible, allowing it to accept connections from any IP address. By default, Flask only listens 
+on localhost. 
+ 
+2. After running the command, the following message will appear, select the “Make Public” button. 
+ 
+ 
+ 
+3. Click the “PORTS” tab and select the URL of the port 5000. 
+ 
+ 
+ 
+ 
+4. You should see Hello World! in the browser. 
+ 
+ 
+ 
+Take a screenshot of your ‘03 Hello World’ as ‘03_hello_world_firstname_lastname.png’ by using your 
+first and last name. 
+ 
+
+ 
+ 
+ 
+10 | C S 4 4 5  
+ 
+Section 3: Testing CRUD Operations 
+ 
+Postman is a powerful platform for API development and testing. It provides tools for building, testing, 
+documenting, and sharing APIs, making it easier for developers to collaborate and streamline their 
+workflow. 
+ 
+1) Download Postman from here: 
+https://www.postman.com/downloads/ 
+ 
+ 
+2) Open Postman. 
+ 
+3) Click on the “Create Free Account” button. 
+ 
+ 
+ 
+ 
+4) Postman will give two options either by entering credentials or by Sign Up with Google. Click on 
+Sign Up with Google and choose your account. Postman will redirect to home screen. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+ 
+ 
+ 
+11 | C S 4 4 5  
+ 
+ 
+5) Postman will redirect to home screen. 
+ 
+ 
+ 
+6) Click on create Workspace. 
+ 
+ 
+ 
+ 
+ 
+
+ 
+ 
+ 
+12 | C S 4 4 5  
+ 
+7) Select Blank Workspace. Enter Name as TestApi and click on Create. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+ 
+ 
+ 
+13 | C S 4 4 5  
+ 
+8) Click on “New” next to TestApi. 
+ 
+ 
+ 
+ 
+ 
+9) Select POST, then enter the URL of your web application. For example, solid-meme-
+4jqx7x79j4qfj446-5000.app.github.dev. (You must use your URL.) Select POST and add “students” 
+to the URL. 
+ 
+ 
+ 
+ 
+ 
+
+ 
+ 
+ 
+14 | C S 4 4 5  
+ 
+ 
+ 
+
+ 
+ 
+ 
+15 | C S 4 4 5  
+ 
+10) Under headers, add Content-Type -> application/json. 
+ 
+ 
+ 
+11) Under the body, select raw and enter the following json 
+ 
+ 
+ 
+Take a screenshot of your ‘04 Body’ as ‘04_body_firstname_lastname.png’ by using your first and last 
+name. 
+ 
+ 
+ 
+
+ 
+ 
+ 
+16 | C S 4 4 5  
+ 
+12) Click Send then the following should be displayed. 
+ 
+ 
+ 
+13) Modifying records - PUT 
+ 
+Open the Terminal tab in Codespaces. Follow the steps before, but this time use the PUT method 
+and the json below. This will modify the record for John to 34 
+ 
+{ "name": "John",  "age": 34} 
+ 
+ 
+ 
+ 
+ 
+
+ 
+ 
+ 
+17 | C S 4 4 5  
+ 
+14) Retrieving records - GET 
+ 
+1. In Postman, use the method GET and the URL https://solid-meme-4jqx7x79j4qfj446-
+5000.app.github.dev/students/John (You must use your URL.)  
+ 
+2. Postman should display the following. 
+ 
+ 
+ 
+Take a screenshot of your ‘05 Retrieving Records’ as ‘05_retrieving_records_firstname_lastname.png’ by 
+using your first and last name. 
+ 
+ 
+ 
+
+ 
+ 
+ 
+18 | C S 4 4 5  
+ 
+15) Deleting Records - DELETE 
+ 
+1. In Postman, select DELETE and use the URL https://solid-meme-4jqx7x79j4qfj446-
+5000.app.github.dev/students/John (You must use your URL.)  
+ 
+2. Postman should display the following: 
+ 
+ 
+ 
+Take a screenshot of your ‘06 Deleting Records’ as ‘06_deleting_records_firstname_lastname.png’ by 
+using your first and last name. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+ 
+ 
+ 
+19 | C S 4 4 5  
+ 
+Section 4: Pushing Your Work to GitHub  
+ 
+How to submit your work in GitHub  
+ 
+How to submit your screenshots in GitHub 
+ 
+ 

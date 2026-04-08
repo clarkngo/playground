@@ -1,0 +1,515 @@
+1 | C S 4 4 5  
+ 
+CS445 Software Process Management  
+HOS08A – Continuous integration / Continuous Deployment (CI/CD) 
+ 
+05/12/2023 Developed by Ajay Naik  
+05/22/2025 Developed by Kina Anh Bui 
+05/24/2025 Reviewed by Sam Chung 
+12/04/2025 Reviewed by Clark Ngo 
+ 
+School of Technology & Computing (STC) 
+City University of Seattle (CityU)  
+ 
+ 
+Before You Start   
+• 
+Screenshots may be different from your environment.  
+• 
+The directory path shown in screenshots may be different from yours.  
+• 
+The steps might have subtle discrepancies. Please use your best judgment while completing each 
+step in this cookbook-style tutorial. 
+• 
+Some steps may not be explained in detail. If you are not sure what to do:  
+1. Consult the resources from the course.    
+2. If you cannot solve the problem after a few tries (usually 15 -30 minutes), ask a TA for help.  
+    
+Readings and Examples:  
+• Visit the CS 445 Repository for Examples. 
+o 
+Select the related module. 
+o 
+Visit the README.md file. 
+o 
+Find examples for your practice. 
+ 
+Learning Outcomes 
+● Section 1: Creating a Static Website 
+● Section 2: Conducting CI/CD Pipeline Integration 
+● Section 3: Cleaning Up Resources 
+● Section 4: Pushing Your Work to GitHub  
+ 
+Upload the following to your GitHub Repository generated from GitHub Classroom. 
+1. Upload the screenshot of your ‘01 push index.html’ as ‘01_push_index_firstname_lastname.png’ by 
+using your first and last name. 
+2. Upload the screenshot of your ‘02 hello’ as ‘02_hello_firstname_lastname.png’ by using your first 
+and last name. 
+3. Upload the screenshot of your ‘03 hello world’ as ‘03_hello_world_firstname_lastname.png’ by 
+using your first and last name. 
+ 
+Resources 
+• 
+Loubser, N. (n.d.-b). Software Engineering for Absolute Beginners: Your Guide to Creating Software 
+Products. O'Reilly Online Learning. https://learning.oreilly.com/library/view/software-engineering-
+for/9781484266229/ 
+• 
+What is CI/CD? | GeeksforGeeks 
+• 
+Azure Static Web Apps documentation | Microsoft Learn 
+• 
+Build configuration for Azure Static Web Apps | Microsoft Learn 
+• 
+Getting started with GitHub Actions 
+• 
+Microsoft Copilot is used to generate some contents of this HOS. 
+ 
+ 
+ 
+ 
+
+2 | C S 4 4 5  
+ 
+Key Concepts 
+What is CI/CD? | GeeksforGeeks 
+ 
+Aspect 
+Continuous Integration 
+Continuous Delivery 
+Continuous 
+Deployment 
+Definition 
+Frequently integrating 
+code changes into a 
+shared repository with 
+automated builds/tests. 
+Automatically deploying 
+code changes to a 
+staging or testing 
+environment after the 
+build stage. 
+Automatically deploy 
+every change that 
+passes all tests to 
+production. 
+Automation 
+Level 
+Automated builds and 
+tests. 
+Automated testing and 
+deployment to staging. 
+Fully automated 
+release pipeline. 
+Deployment 
+Frequency 
+Multiple times a day. 
+Regularly (e.g., daily, 
+weekly). 
+Continuously. 
+Human 
+Intervention 
+Required for merging 
+code changes. 
+Required for production 
+deployment. 
+Not required. 
+Benefits 
+Faster feedback, 
+reduced integration 
+problems, improved 
+collaboration. 
+Faster and safer releases, 
+reduced deployment 
+risks, higher software 
+quality. 
+Rapid delivery of 
+features and fixes, 
+shorter feedback loops, 
+increased productivity. 
+Common 
+Tools 
+Jenkins, GitHub Actions, 
+GitLab CI, CircleCI 
+GitLab, Spinnaker, AWS 
+CodeDeploy 
+ArgoCD, Flux, GitHub 
+Actions 
+ 
+Azure Static Web Apps 
+ 
+Azure Static Web Apps are tightly integrated with CI/CD workflows, making it easy to automate the build 
+and deployment of static websites and serverless APIs. Here's how they relate to CI/CD: 
+ 
+CI/CD Integration in Azure Static Web Apps 
+1. GitHub Actions Integration 
+When you create an Azure Static Web App and link it to a GitHub repository, Azure 
+automatically sets up a GitHub Actions workflow. This workflow: 
+• 
+Triggers on events like push or pull_request to the main branch. 
+• 
+Build your front-end app and optional Azure Functions API. 
+• 
+Deploys the output to the Azure Static Web App environment. 
+ 
+The workflow file is stored in .github/workflows/ and typically named like azure-static-web-
+apps-<RANDOM>.yml [1]. 
+ 
+2. Azure DevOps Pipelines Support 
+Azure Static Web Apps also support Azure Pipelines: 
+• 
+You can manually configure a YAML pipeline to build and deploy your app. 
+• 
+Requires setting up a deployment token for authentication. 
+• 
+Offers flexibility for teams using Azure DevOps instead of GitHub [2]. 
+ 
+CI/CD Workflow Components 
+Whether using GitHub Actions or Azure Pipelines, your CI/CD setup typically includes: 
+• 
+Build step: Compiles your static site (e.g., using npm run build). 
+• 
+API build step (optional): Builds Azure Functions if included. 
+• 
+Deploy step: Pushes the built assets to Azure Static Web Apps. 
+
+3 | C S 4 4 5  
+ 
+ 
+Benefits of CI/CD with Azure Static Web Apps 
+• 
+Automation: No manual deployment needed—just push code. 
+• 
+Speed: Fast build and deploy cycles. 
+• 
+Preview Environments: Automatically created for pull requests. 
+• 
+Security: Uses GitHub or Azure tokens for secure deployments. 
+ 
+References 
+[1] Build configuration for Azure Static Web Apps | Microsoft Learn 
+[2] Use Azure Static Web Apps with Azure DevOps pipelines - Dave Brock 
+ 
+GitHub Actions 
+GitHub Actions is a powerful feature of GitHub that enables you to automate, customize, and execute 
+your software development workflows directly in your GitHub repository. 
+ 
+What GitHub Actions Does 
+GitHub Actions allows you to: 
+• 
+Automate CI/CD pipelines (build, test, and deploy code). 
+• 
+Run workflows triggered by GitHub events (e.g., push, pull_request, issue). 
+• 
+Use or create reusable actions to simplify complex tasks. 
+• 
+Run jobs on different operating systems (Linux, Windows, macOS). 
+ 
+Core Concepts 
+Concept Description 
+Workflow A YAML file that defines the automation process. Stored in .github/workflows/. 
+Job 
+A set of steps that run on the same runner. 
+Step 
+A single task (e.g., run a script, use an action). 
+Action 
+A reusable unit of code (e.g., setup Node.js, deploy to Azure). 
+Runner 
+A server that runs your workflow (GitHub-hosted or self-hosted). 
+ 
+Example Workflow 
+name: Node.js CI 
+This workflow runs on every push, installs dependencies, and runs tests for a Node.js project. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Benefits 
+• 
+Integrated with GitHub: No need for external CI/CD tools. 
+• 
+Scalable: Supports parallel jobs and matrix builds. 
+• 
+Secure: Built-in secrets management. 
+• 
+Flexible: Works with any language or framework. 
+ 
+Reference 
+• 
+Getting started with GitHub Actions 
+ 
+on: [push] 
+ 
+jobs: 
+  build: 
+    runs-on: ubuntu-latest 
+    steps: 
+      - uses: actions/checkout@v3 
+      - name: Use Node.js 
+        uses: actions/setup-node@v3 
+        with: 
+          node-version: '18' 
+      - run: npm install 
+      - run: npm test 
+
+4 | C S 4 4 5  
+ 
+Section 1: Creating a Static Website 
+In this HOS, we will learn about creating a static website on the Azure platform with a CI/CD pipeline. 
+ 
+1) Create Your GitHub Repository. 
+ 
+1. Login to the GitHub account and click on New to create repository. 
+ 
+ 
+ 
+2. Enter the details as shown in the following picture and create the repository.    
+ 
+ 
+ 
+ 
+ 
+
+5 | C S 4 4 5  
+ 
+3. In the top-right corner, click on the “<>Code” drop-down menu. Select “Create a codespace on 
+main.” 
+ 
+ 
+4. Create a file called “index.html” and copy the code below. 
+>>> touch index.file 
+It creates a new empty file named index.file in your current directory if it doesn't already exist. If 
+the file already exists, touch updates its last modified timestamp without changing its contents. 
+ 
+<h1>Hello<h1> 
+ 
+ 
+5. Push the “index.html” file to the GitHub repository. 
+>>> git add . 
+Stages all changed files in the current directory (and subdirectories) for the next commit. 
+>>> git commit -m "index file" 
+Creates a new commit with the staged changes and adds the message "index file" to describe 
+the commit. 
+>>> git push origin 
+Pushes your committed changes to the remote repository named origin (usually on GitHub or 
+another Git server). By default, it pushes the current branch. 
+git add .  
+git commit -m "index file"   
+git push origin 
+ 
+ 
+ 
+Take a screenshot of your ‘01 push index.html’ as ‘01_push_index_firstname_lastname.png’ by using 
+your first and last name. 
+ 
+
+6 | C S 4 4 5  
+ 
+2) Azure Sign-In 
+ 
+1. Click on Azure, and click on Free Account (top right-side corner) and signup with your CityU 
+email. 
+ 
+2. Click on Start Free and Sign In with your Microsoft Account. Follow the Sign-up process. 
+For more information on the Sign-In process, follow https://learn.microsoft.com/en-
+us/training/modules/create-an-azure-account/.  
+ 
+Once the sign-up process is complete, you should see the following page. 
+ 
+ 
+3. Click On "Go to the Azure portal" and sign in with your Microsoft account. 
+ 
+ 
+ 
+ 
+ 
+
+7 | C S 4 4 5  
+ 
+3) Create Azure Static Web App. 
+ 
+1. In the Search bar, enter "Static" Click on the “Static Web Apps.” 
+ 
+ 
+ 
+2. Select either “Start with an Azure free trial” or “Access student benefits” for a free trial version. 
+ 
+3. Select Static Web Apps. 
+ 
+ 
+ 
+4. Click Create and Enter the details in the following picture. 
+Name: HOS08 
+Plan type: Free: For hobby or personal projects 
+Click on GitHub and provide your GitHub details. 
+Organization: Select GitHub Account   
+ 
+Important: Select Free: For hobby or personal projects as the Plan Type; otherwise, you will get 
+charged. 
+ 
+ 
+5. Click Sign in with GitHub 
+
+8 | C S 4 4 5  
+ 
+ 
+ 
+6. Click Authorize AzureAppService and follow the next steps to complete the authorization 
+process. 
+ 
+ 
+ 
+7. Continue filling up the form 
+ 
+ 
+ 
+ 
+8. Click on the “Review + create” button, then click Create button 
+ 
+
+9 | C S 4 4 5  
+ 
+ 
+ 
+ 
+ 
+
+10 | C S 4 4 5  
+ 
+9. on "Go to resource" 
+ 
+ 
+ 
+ 
+10. Copy the URL. 
+ 
+ 
+ 
+11. Open the URL link in a new tab. 
+ 
+ 
+Take a screenshot of your ‘02 hello’ as ‘02_hello_firstname_lastname.png’ by using your first and last 
+name. 
+ 
+ 
+ 
+
+11 | C S 4 4 5  
+ 
+Section 2: Conducting CI/CD Pipeline Integration 
+ 
+1. In your HOS08 GitHub Codespaces, open a new terminal, and type the following command. 
+>>> git checkout -b development 
+Creates a new branch called development from your current branch. Switches to that new branch so 
+you can start working on it. 
+ 
+git checkout -b development 
+ 
+ 
+ 
+2. Modify the “index.html” file with the following code. 
+ 
+<h1>Hello World!<h1> 
+ 
+3. Commit the changed file to your GitHub repository. 
+>>> git add --all 
+Stages all changes (new, modified, and deleted files) in your working directory for the next commit. 
+ 
+>>> git commit -m “development branch” 
+Create a new commit with all staged changes and adds the message "development branch" to describe 
+what was changed in this commit. 
+ 
+>>> git push -f origin development 
+Forcefully update the development branch on the remote repository (origin) with your 
+local development branch. 
+ 
+ 
+ 
+ 
+ 
+
+12 | C S 4 4 5  
+ 
+4. Go to your HOS08 repository GitHub, click “Compare & pull request”. 
+ 
+ 
+ 
+ 
+5. Click “Create pull request” -> “Merge pull request” -> “Confirm merge” 
+ 
+ 
+ 
+
+13 | C S 4 4 5  
+ 
+ 
+ 
+ 
+ 
+ 
+Note: Detailed steps about the merging process are explained in HOS02. 
+ 
+ 
+ 
+
+14 | C S 4 4 5  
+ 
+6. Click on “Actions” and wait till all the jobs are completed. 
+ 
+ 
+ 
+ 
+7. Go to Azure Portal -> Static Web Apps -> Select HOS08 
+ 
+ 
+ 
+8. Copy the URL and open it in the new tab. (If you did not close the web broweser, you can refresh it.) 
+ 
+ 
+Take a screenshot of your ‘03 hello world’ as ‘03_hello_world_firstname_lastname.png’ by using your 
+first and last name. 
+ 
+
+15 | C S 4 4 5  
+ 
+Section 3: Cleaning Up Resources 
+ 
+Once the Web App is running, we will delete the resources we have created. Azure Static Web Apps 
+have a free tier, but if you're using a Standard or higher tier, you may continue to 
+incur charges for hosting, bandwidth, custom domains, and serverless API executions (Azure 
+Functions). 
+ 
+1. Go to Azure Portal -> Static Web Apps -> Select HOS08. 
+ 
+ 
+ 
+2. Click on Delete, then click Yes, and wait for the process to complete. 
+ 
+ 
+ 
+ 
+ 
+ 
+
+16 | C S 4 4 5  
+ 
+Section 4: Pushing Your Work to GitHub  
+ 
+How to submit your work in GitHub  
+ 
+How to submit your screenshots on GitHub 
+ 
+ 

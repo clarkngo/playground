@@ -1,0 +1,226 @@
+1 | C S 4 4 5  
+ 
+CS445 Software Process Management  
+HOS09A – Microservices 
+ 
+05/21/2023 Developed by Ajay Naik  
+05/30/2025 Developed by Kina Anh Bui 
+05/30/2025 Reviewed by Clark Ngo 
+06/01/2025 Reviewed by Sam Chung 
+12/04/2025 Reviewed by Clark Ngo 
+ 
+School of Technology & Computing (STC) 
+City University of Seattle (CityU)  
+ 
+ 
+Before You Start   
+• 
+Screenshots may be different from your environment.  
+• 
+The directory path shown in the screenshots may differ from yours.  
+• 
+The steps might have subtle discrepancies. Please use your best judgment while completing each 
+step in this cookbook-style tutorial. 
+• 
+Some steps may not be explained in detail. If you are not sure what to do:  
+1. Consult the resources from the course.    
+2. If you cannot solve the problem after a few tries (usually 15 -30 minutes), ask a TA for help.  
+    
+Learning Outcomes 
+● Section 1: Azure Function 
+● Section 2: Pushing Your Work to GitHub 
+ 
+Upload the following to your GitHub Repository generated from GitHub Classroom. 
+1. Upload the screenshot of your ‘01 daysbetween.png’ as ‘01_daysbetween_firstname_lastname.png’ 
+by using your first and last name. 
+ 
+Resources 
+• 
+Azure Functions documentation | Microsoft Learn 
+• 
+MS’s Copilot, OpenAI’s ChatGPT, Google’s Gemini, Grammrly.com’s Grammarly are used to develop 
+this HOS. 
+ 
+Key Concepts 
+In this HOS, we will learn about creating and Deploying a Function on the Azure platform. 
+ 
+Azure Function 
+Azure Functions are a serverless compute service offered by Microsoft Azure that enables developers to 
+run event-driven code without having to explicitly provision or manage infrastructure.  
+• 
+The core idea behind serverless computing is that you don't have to provision, manage, or scale 
+servers yourself. Azure handles all of that, so you can focus solely on writing your application 
+logic.  
+• 
+Azure Functions are suitable for a wide variety of scenarios, including building serverless APIs by 
+Creating RESTful endpoints for web and mobile applications. 
+• 
+Azure Functions are a powerful and cost-effective way to build and deploy serverless 
+microservices, allowing you to focus on business logic and leverage Azure's automatic scaling 
+and infrastructure management capabilities. They fit perfectly into an event-driven 
+microservices architecture. 
+
+2 | C S 4 4 5  
+ 
+Section 1: Azure Function 
+ 
+Configure your environment 
+Before you begin, make sure that you have the following requirements in place: 
+• 
+An Azure account with an active subscription. Create an account for free. 
+• 
+A Python version that is supported by Azure Functions. For more information, see How to install 
+Python. 
+• 
+Visual Studio Code on one of the supported platforms. 
+• 
+The Python extension for Visual Studio Code. 
+• 
+The Azure Functions extension for Visual Studio Code, version 1.8.1 or later. 
+• 
+The Azurite V3 extension local storage emulator. While you can also use an actual Azure storage 
+account, this article assumes you're using the Azurite emulator. 
+ 
+Accessing GitHub Codespaces 
+ 
+Follow the instructions here.  
+ 
+GitHub Codespaces are online cloud-based development environments that allow you to easily write, run, 
+and debug your code. It is fully integrated with your GitHub repository and provides a seamless experience 
+for developers. 
+ 
+Prerequisites:  
+• 
+Create your GitHub account. 
+ 
+1) Install the following extensions – “Azure Functions” and “Azurite” 
+ 
+Azure Functions - An Azure Functions extension for Visual Studio Code. 
+ 
+ 
+2) Create your local project 
+1. In Visual Studio Code, press F1 to open the command palette and search for and run the 
+command “Azure Functions: Create New Project....” 
+ 
+ 
+2. Choose the directory location for your project workspace and choose Select. You should either 
+create a new folder or choose an empty folder for the project workspace. Don't choose a project 
+
+3 | C S 4 4 5  
+ 
+folder that is already part of a workspace. 
+ 
+ 
+ 
+3. Provide the following information at the prompts. Follow the given screenshots below. 
+ 
+Example: 
+ 
+ 
+ 
+ 
+ 
+
+4 | C S 4 4 5  
+ 
+ 
+ 
+ 
+ 
+4. Install dependencies. In your terminal: 
+• 
+>> npm install -g azure-functions-core-tools@4 --unsafe-perm true 
+It is used to globally install version 4 of the Azure Functions Core Tools using npm (Node 
+Package Manager). 
+ 
+ 
+
+5 | C S 4 4 5  
+ 
+5. Change the “function_app.py” file. 
+ 
+import logging 
+import datetime 
+import json 
+import azure.functions as func 
+ 
+app = func.FunctionApp(http_auth_level=func.AuthLevel.ANONYMOUS) 
+ 
+@app.route(route="daysbetween", methods=["POST"]) 
+def daysbetween(req: func.HttpRequest) -> func.HttpResponse: 
+    logging.info('Function triggered.') 
+ 
+    try: 
+        req_body = req.get_json() 
+         
+        start_date = req_body.get('start_date') 
+        end_date = req_body.get('end_date') 
+ 
+        if not start_date or not end_date: 
+            return func.HttpResponse( 
+                "Please provide both 'start_date' and 'end_date' in YYYY-MM-DD format.", 
+                status_code=400 
+            ) 
+ 
+        # Parse the dates with specific error handling 
+        try: 
+            start_date_obj = datetime.datetime.strptime(start_date, '%Y-%m-%d').date() 
+            end_date_obj = datetime.datetime.strptime(end_date, '%Y-%m-%d').date() 
+        except ValueError: 
+            return func.HttpResponse( 
+                "Invalid date format. Please use YYYY-MM-DD.", 
+                status_code=400 
+            ) 
+         
+        days_between = abs((end_date_obj - start_date_obj).days) 
+         
+        response = {'days_diff': days_between} 
+ 
+        return func.HttpResponse( 
+            json.dumps(response), 
+            mimetype="application/json", 
+            status_code=200 
+        ) 
+ 
+    except ValueError: 
+        return func.HttpResponse("Invalid JSON body.", status_code=400) 
+    except Exception as e: 
+        logging.error(f"Critical Error: {str(e)}") 
+        return func.HttpResponse("An internal server error occurred.", status_code=500) 
+ 
+Function Overview 
+• 
+Trigger: HTTP POST request to the /daysbetween route. 
+• 
+Input: JSON body with start_date and end_date in YYYY-MM-DD format. 
+• 
+Output: JSON response with the number of days between the two dates. 
+ 
+3) Test your code: 
+1. To start the function locally,  
+a. Change directory to azure-functions folder with cd ./azure-functions/ 
+b. type days in your terminal: 
+ 
+  
+
+6 | C S 4 4 5  
+ 
+ 
+ 
+2. Open a new terminal and paste the following curl POST request: 
+ 
+curl -X POST http://localhost:7071/api/daysbetween -H "Content-Type: application/json" -d 
+'{"start_date": "2023-01-01", "end_date": "2023-01-31"}' 
+ 
+Take a screenshot of your ‘01 daysbetween.png’ as ‘01_daysbetween_firstname_lastname.png’ by using 
+your first and last name. 
+ 
+
+7 | C S 4 4 5  
+ 
+Section 2: Pushing Your Work to GitHub  
+ 
+How to submit your work in GitHub  
+ 
+How to submit your screenshots on GitHub 
+ 
