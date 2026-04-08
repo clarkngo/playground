@@ -1,5 +1,13 @@
 # Primer Changelog
 
+## 2026-04-07
+
+### [feature] Data Governance tab — all industry primers (17)
+- **Placement:** New tab **Data Governance** (`id="tab-datagov"`, `showTab('datagov',9)`) immediately after **Evolution & Foundations**; **Data Architecture & Flows** and **Failure Modes & Incidents** shift to indices 10 and 11; progress bar has 12 dots (`dot-0` &hellip; `dot-11`); label **Section 1 of 12**
+- **Content:** Intro + table (6 rows: practice area / what good looks like / industry examples) + 4-card **Operating realities** grid; framing paragraph cites O&rsquo;Reilly *Data Governance: The Definitive Guide* pillars and links to `../../../data-gov-book/index.html`
+- **Per-industry copy:** `primer/tools/datagov_data.py` (slug-keyed `DATA`); injection helper `primer/tools/inject_datagov.py` (markers for section vs div wrappers, ecommerce banner, `ai-infrastructure` `tab-data-arch`, `showTab('failures',11)`)
+- **Hub:** `primer/index.html` — industry cards show **12 / 12 sections** and **· 12 sections** in meta (Real-Time Systems technology primer unchanged at 9)
+
 ## 2026-04-03
 
 ### [feature] Primer directory reorganization — industry/ subfolder

@@ -9,6 +9,25 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ## 2026-04-07
 
+### [refactor] deep-dives — `spark-ebay-supplement.html` (renamed); removed "classroom" wording from deep-dives hub, ebay-ads links, Spark supplement page, and CSS class names
+
+### [ux] deep-dives/ebay-ads — interactive process node flow (placement path + measure/settle) on fundamentals section; `ads-pipeline-sim.js` `RETAIL` scenarios
+
+### [ux] deep-dives/ebay-ads — removed disclaimer callouts; added "How ecommerce ads work" on hub; dropped reader tips and educational footers site-wide in that guide
+
+### [feature] Industry primers — Data Governance tab (all 17 industries)
+- New tab after Evolution: O'Reilly-style governance lenses (ownership, policy, metadata, quality, privacy, lifecycle), link to `data-gov-book/` supplement; nav/progress now 12 sections; `primer/tools/inject_datagov.py` + `datagov_data.py`; `primer/index.html` coverage labels updated to 12/12 for industry cards
+
+### [ux] deep-dives/ebay-ads — interactive pipeline flow sims (`ads-pipeline-sim.js`, scenario buttons not dropdowns)
+
+### [ux] deep-dives/ebay-ads — cooler high-contrast theme; CSS motion on Ch 3 tech cards & Ch 4 workflow pipelines (respects reduced-motion)
+
+### [refactor] deep-dives/ebay-ads/ — hub + `ch/*.html` chapters; `ebay-ads-platform.html` redirects; `shared.css` (spark-book-style nav)
+- Split former single-file guide into `deep-dives/ebay-ads/index.html` + five chapter pages; updated `deep-dives/index.html` card href; note in `docs/ads-platform/ebay-internals.md`
+
+### [feature] eBay Ads Platform — Deep Dive system architecture guide (spark-book styled)
+- New `deep-dives/ebay-ads-platform.html` — comprehensive 5-tab guide covering ad programs, tech stack (Kafka/Flink/Spark/Hadoop/ClickHouse/Prometheus/Sherlock/Control Center), A/B testing, and SRE operations playbook; integrated into deep-dives collection as entry #02
+
 ### [feature] Add Book Supplements section to playground home page
 - `index.html` — new "Book Supplements" nav section + content section with cards for `spark-book/` (Learning Spark) and `data-gov-book/` (Data Governance: The Definitive Guide); both grouped as a collection with chapter counts and search tags
 
@@ -83,6 +102,21 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 - `[feature]` Created `changelog/token-usage.md` — session-by-session token consumption tracking with cost estimates and usage guidance
 
 ## 2026-03-27
+
+### [ux] deep-dives/ebay-ads — drop "CIA-style" labels on pipeline sims (neutral copy)
+
+### [feature] deep-dives — eBay Spark primary-source supplement + home hub refresh
+- New `deep-dives/ebay-ads/spark-ebay-supplement.html` — digest of two eBay Innovation Spark articles (2014 adoption vs 2021 SQL engine), comparison table, discussion prompts; linked from `ebay-ads/index.html`, Ch 3 tech stack, and `deep-dives/index.html` supplements grid
+- `deep-dives/index.html` — hero copy + Primary-source supplements section; `shared.css` — `.supplement-prompt-list` styles
+
+### [ux] deep-dives/ebay-ads — `glossary.html` reader guide + jargon tables; hub onboarding box; chapter tips linking to glossary
+
+### [bug] deep-dives/ebay-ads Ch 3 — fixed architecture SVG; now matches eBay Spark SQL / Thrift gateway article (was misleading telemetry fan-in)
+
+### [ux] deep-dives/ebay-ads — more node-flow animations + SVG architecture diagrams (Ch 1–3, 5); `ads-pipeline-sim.js` scenario packs for overview, RTB, observability, incident paths
+
+### [feature] deep-dives/ebay-ads Ch 3 — anomaly detection implementation + control center requirements + stack map
+- `ch/03-tech-stack.html` — expanded Sherlock section (pipeline, streaming vs batch, requirements, ads quirks); Control Center requirements (product/UX, integration, safety); six-row stack table; `hub/index.html` Ch 3 blurb; `ch/05-operations.html` cross-link to `#control-center-stack`
 
 ### [refactor] lessons-learned/prompting.md — added multi-workstream git prompting pattern (stash paths, PR scope, avoid primer vs fix inversion)
 
