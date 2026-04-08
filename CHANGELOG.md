@@ -9,6 +9,18 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ## 2026-04-07
 
+### [ux] `hos/module-10-conversation-to-design.html` — footer credit (Clark Ngo)
+
+### [ux] `hos/module-10-conversation-to-design.html` — 5.6 App.js sample indented in `<pre class="hos-code-snippet">`
+
+### [ux] `hos/module-10-conversation-to-design.html` — Section 2 Requirements Gathering styled (orange task headers, peach bodies, navy section title)
+
+### [ux] `hos/module-10-conversation-to-design.html` — Section 4 architecture ASCII diagram fixed (`pre` + diagram table); component table header row semantic/styling
+
+### [ux] `hos/module-10-conversation-to-design.html` — styles matched to CityU HOS10A PDF (callouts, Slack bubbles, navy banner)
+
+### [ux] `hos/shared.css` — HOS10A Word Office theme colors (teal `#156082`, navy `#0E2841`, orange `#E97132`, blue `#0F9ED5`); light paper UI, title banner, section heading rails; recreated `hos/index.html`
+
 ### [refactor] deep-dives — `spark-ebay-supplement.html` (renamed); removed "classroom" wording from deep-dives hub, ebay-ads links, Spark supplement page, and CSS class names
 
 ### [ux] deep-dives/ebay-ads — interactive process node flow (placement path + measure/settle) on fundamentals section; `ads-pipeline-sim.js` `RETAIL` scenarios

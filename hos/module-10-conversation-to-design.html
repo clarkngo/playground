@@ -1,0 +1,1446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HOS10A — AI-Powered Web App: From Conversation to Code</title>
+  <link rel="stylesheet" href="shared.css" />
+  <link rel="stylesheet" href="module-10-pdf-theme.css" />
+</head>
+<body class="hos-module-page hos-pdf10-page">
+<nav class="hos-nav" aria-label="Module navigation">
+  <a class="hos-nav-back" href="index.html">← HOS modules</a>
+  <span class="hos-nav-badge">Module 10</span>
+  <span class="hos-nav-title">AI-First · Conversation to design doc</span>
+</nav>
+<main class="hos-doc hos-pdf10" id="top">
+<table>
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr>
+<td><strong>CS 628 Full-Stack Development - Web App</strong></td>
+</tr>
+</tbody>
+</table>
+<div class="hos-pdf-hero">
+<p><strong>HOS10A</strong></p>
+<p><strong>AI-Powered Web App: From Conversation to Code</strong></p>
+<p><em>AI-First | Architecture-First | Student-Authored Design
+Doc</em></p>
+<p>School of Technology &amp; Computing (STC)</p>
+<p>City University of Seattle (CityU)</p>
+</div>
+<p class="heading" id="before-you-start">Before You Start</p>
+<ul>
+<li><p>Screenshots may differ from your environment.</p></li>
+<li><p>This HOS is different from previous cookbook-style tutorials. You
+will read a client conversation, extract requirements, and build the app
+from a design doc you create.</p></li>
+<li><p>Use Gemini, Claude, or Cursor to help generate your design doc -
+but YOU make the decisions.</p></li>
+<li><p>Do not just copy-paste AI output. Read it, verify it, and own
+it.</p></li>
+</ul>
+<table class="hos-callout hos-callout-tools">
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr>
+<td><p><strong>Tools Required</strong></p>
+<p>VS Code + Cursor extension (primary IDE and AI assistant)</p>
+<p>Gemini (gemini.google.com) or Claude (claude.ai) - for design doc
+generation</p>
+<p>GitHub Codespaces - development environment</p>
+<p>Ollama - local LLM server</p>
+<p>MongoDB Atlas - database</p></td>
+</tr>
+</tbody>
+</table>
+<p class="heading" id="learning-outcomes">Learning Outcomes</p>
+<p>By the end of this HOS you will be able to:</p>
+<ul>
+<li><p>Read an unstructured client conversation and extract clear
+software requirements</p></li>
+<li><p>Create a structured design doc in Markdown using AI as a
+collaborative tool</p></li>
+<li><p>Translate a design doc into a working full-stack AI
+application</p></li>
+<li><p>Build a RAG (Retrieval-Augmented Generation) app using React,
+Express, MongoDB, and Ollama</p></li>
+<li><p>Validate your app against an EEAT-based pass/fail rubric</p></li>
+</ul>
+<table class="hos-callout hos-callout-deliverables">
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr>
+<td><p><strong>Deliverables</strong></p>
+<p>1. DESIGN_DOC.md - Your requirements and architecture document</p>
+<p>2. Working application (React + Express + Ollama + MongoDB)</p>
+<p>3. 7 screenshots as specified at the end of this document</p></td>
+</tr>
+</tbody>
+</table>
+<p class="heading" id="section-1-the-client-conversation">Section 1: The
+Client Conversation</p>
+<p>Below is a Slack thread from a product team. Read the full
+conversation carefully. This is your only source of requirements. There
+is no spec sheet yet - that is your job to create.</p>
+<div class="hos-slack-thread">
+<table class="hos-slack-channel">
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr>
+<td><strong>#product-dev-chat</strong></td>
+</tr>
+</tbody>
+</table>
+<table class="hos-msg hos-msg-maria">
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr>
+<td><strong>Maria (Product Manager)</strong> Monday 9:15 AM</td>
+</tr>
+<tr>
+<td>Hey team, quick update from the client meeting yesterday. They want
+to add a chat feature to the employee record system.</td>
+</tr>
+<tr>
+<td>Something where users can ask questions and get answers from the
+actual data in the database.</td>
+</tr>
+</tbody>
+</table>
+<table class="hos-msg hos-msg-alex">
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr>
+<td><strong>Alex (Developer)</strong> 9:22 AM</td>
+</tr>
+<tr>
+<td>Like a chatbot? Can you give more details on what they are
+envisioning?</td>
+</tr>
+</tbody>
+</table>
+<table class="hos-msg hos-msg-maria">
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr>
+<td><strong>Maria (Product Manager)</strong> 9:31 AM</td>
+</tr>
+<tr>
+<td>Basically yes. They showed me a demo of something called RAG - the
+idea is the AI should ONLY answer based on what is in their
+database.</td>
+</tr>
+<tr>
+<td>Not hallucinate stuff. Their exact words were "we want it to only
+tell us what it knows."</td>
+</tr>
+</tbody>
+</table>
+<table class="hos-msg hos-msg-alex">
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr>
+<td><strong>Alex (Developer)</strong> 9:34 AM</td>
+</tr>
+<tr>
+<td>OK so grounded responses. Makes sense. What data fields are they
+searching? All employee records?</td>
+</tr>
+</tbody>
+</table>
+<table class="hos-msg hos-msg-maria">
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr>
+<td><strong>Maria (Product Manager)</strong> 9:38 AM</td>
+</tr>
+<tr>
+<td>Yes - name, job title, job level mainly. They want to type something
+like "Who is a senior engineer?" and get a real answer with actual
+names.</td>
+</tr>
+</tbody>
+</table>
+<table class="hos-msg hos-msg-sam">
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr>
+<td><strong>Sam (Tech Lead)</strong> 9:45 AM</td>
+</tr>
+<tr>
+<td>Text search on MongoDB + an LLM. We can reuse the backend from
+HOS08.</td>
+</tr>
+<tr>
+<td>Add a /chat endpoint, hook it up to Ollama. Should be clean.</td>
+</tr>
+</tbody>
+</table>
+<table class="hos-msg hos-msg-alex">
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr>
+<td><strong>Alex (Developer)</strong> 9:47 AM</td>
+</tr>
+<tr>
+<td>Right. My thinking: React frontend sends message -&gt; Express
+backend does text search in Mongo -&gt; passes results as context to
+Ollama -&gt; streams response back.</td>
+</tr>
+<tr>
+<td>We use SSE (Server-Sent Events) for the streaming so the user sees
+tokens appear in real time.</td>
+</tr>
+</tbody>
+</table>
+<table class="hos-msg hos-msg-maria">
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr>
+<td><strong>Maria (Product Manager)</strong> 9:52 AM</td>
+</tr>
+<tr>
+<td>Yes but keep it LOCAL. They do not want to send employee data to
+OpenAI or any cloud LLM.</td>
+</tr>
+<tr>
+<td>That was a hard requirement from their legal team. Privacy
+compliance.</td>
+</tr>
+</tbody>
+</table>
+<table class="hos-msg hos-msg-alex">
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr>
+<td><strong>Alex (Developer)</strong> 9:55 AM</td>
+</tr>
+<tr>
+<td>Ollama handles that. We run Gemma 2 locally - no data leaves the
+machine.</td>
+</tr>
+</tbody>
+</table>
+<table class="hos-msg hos-msg-maria">
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr>
+<td><strong>Maria (Product Manager)</strong> 9:58 AM</td>
+</tr>
+<tr>
+<td>One more thing - they want to create new records and immediately be
+able to ask the AI about them.</td>
+</tr>
+<tr>
+<td>Like if I add "John Smith, Software Engineer, Level 2" I should be
+able to chat "who is a level 2 engineer" right away.</td>
+</tr>
+</tbody>
+</table>
+<table class="hos-msg hos-msg-sam">
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr>
+<td><strong>Sam (Tech Lead)</strong> 10:02 AM</td>
+</tr>
+<tr>
+<td>That is just real-time - our MongoDB text index covers that as long
+as it is set up correctly on the right fields.</td>
+</tr>
+</tbody>
+</table>
+<table class="hos-msg hos-msg-maria">
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr>
+<td><strong>Maria (Product Manager)</strong> 10:08 AM</td>
+</tr>
+<tr>
+<td>When can you have something working?</td>
+</tr>
+</tbody>
+</table>
+<table class="hos-msg hos-msg-alex">
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr>
+<td><strong>Alex (Developer)</strong> 10:10 AM</td>
+</tr>
+<tr>
+<td>Give me the sprint. Prototype by end of week.</td>
+</tr>
+</tbody>
+</table>
+<table class="hos-msg hos-msg-maria">
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr>
+<td><strong>Maria (Product Manager)</strong> 10:11 AM</td>
+</tr>
+<tr>
+<td>Great. Make sure the UI is clean - it is going to be demoed to the
+client.</td>
+</tr>
+<tr>
+<td>Chat should be in its own page, separate from the record list, but
+accessible from the same app.</td>
+</tr>
+</tbody>
+</table>
+<table class="hos-msg hos-msg-sam">
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr>
+<td><strong>Sam (Tech Lead)</strong> 10:15 AM</td>
+</tr>
+<tr>
+<td>Alex, use React Router for that. /record for the table view, /chat
+for the chat interface.</td>
+</tr>
+</tbody>
+</table>
+<table class="hos-msg hos-msg-alex">
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr>
+<td><strong>Alex (Developer)</strong> 10:17 AM</td>
+</tr>
+<tr>
+<td>On it.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<section class="hos-req-gathering" aria-labelledby="section-2-requirements-gathering">
+<p class="heading" id="section-2-requirements-gathering">Section 2:
+Requirements Gathering</p>
+<p>Now that you have read the conversation, extract the requirements.
+Use AI (Gemini, Claude, or Cursor) to help, but make sure you understand
+and can explain every item.</p>
+<table class="hos-req-task">
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr>
+<td><strong>Task 2.1: Identify Actors and Their Goals</strong></td>
+</tr>
+<tr>
+<td>List every person or system involved in the app.</td>
+</tr>
+<tr>
+<td>For each actor, write one sentence: what do they want from the
+system?</td>
+</tr>
+<tr>
+<td>Hint: There are at least 3 actors mentioned (end user, the AI, the
+database). Look for more.</td>
+</tr>
+<tr>
+<td></td>
+</tr>
+<tr>
+<td>Prompt to try in Gemini/Claude:</td>
+</tr>
+<tr>
+<td>"Based on this Slack conversation [paste conversation], list all
+actors and their goals for a software requirements doc."</td>
+</tr>
+</tbody>
+</table>
+<table class="hos-req-task">
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr>
+<td><strong>Task 2.2: Extract Functional Requirements</strong></td>
+</tr>
+<tr>
+<td>A functional requirement describes what the system must DO.</td>
+</tr>
+<tr>
+<td>Write each requirement in the format: "The system shall
+[action]."</td>
+</tr>
+<tr>
+<td>Aim for at least 8 functional requirements from the
+conversation.</td>
+</tr>
+<tr>
+<td></td>
+</tr>
+<tr>
+<td>Example: "The system shall allow users to submit a text query
+through a chat interface."</td>
+</tr>
+<tr>
+<td>Example: "The system shall return only data that exists in the
+MongoDB records collection."</td>
+</tr>
+<tr>
+<td></td>
+</tr>
+<tr>
+<td>Prompt to try:</td>
+</tr>
+<tr>
+<td>"Extract functional requirements from this conversation. Format each
+as: The system shall [action]."</td>
+</tr>
+</tbody>
+</table>
+<table class="hos-req-task">
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr>
+<td><strong>Task 2.3: Extract Non-Functional Requirements</strong></td>
+</tr>
+<tr>
+<td>A non-functional requirement describes HOW the system behaves
+(performance, privacy, usability).</td>
+</tr>
+<tr>
+<td>Find at least 3 non-functional requirements hidden in the
+conversation.</td>
+</tr>
+<tr>
+<td></td>
+</tr>
+<tr>
+<td>Hint: Look for statements about privacy, speed, user experience, and
+data freshness.</td>
+</tr>
+</tbody>
+</table>
+<table class="hos-req-task">
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr>
+<td><strong>Task 2.4: Identify Open Questions</strong></td>
+</tr>
+<tr>
+<td>No conversation is ever complete. List at least 3 questions you
+still have that are NOT answered in the chat.</td>
+</tr>
+<tr>
+<td>These are things you would ask in a follow-up meeting.</td>
+</tr>
+<tr>
+<td></td>
+</tr>
+<tr>
+<td>Example: "What happens when no records match the query - should the
+AI say it does not know, or should it guess?"</td>
+</tr>
+</tbody>
+</table>
+</section>
+<p class="heading"
+id="section-3-creating-the-design-doc-with-ai">Section 3: Creating the
+Design Doc with AI</p>
+<p>Your design doc is a Markdown file named DESIGN_DOC.md. It lives in
+the root of your project repository. Think of it as your blueprint
+before you write a single line of code.</p>
+<table>
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr>
+<td><p><strong>Why a Design Doc First?</strong></p>
+<p>Professional developers write design docs before coding - especially
+for AI features.</p>
+<p>A design doc forces you to think through architecture before you are
+deep in code.</p>
+<p>It gives AI tools (Cursor, Gemini) the context they need to generate
+better, more relevant code.</p>
+<p>It serves as documentation for anyone who reviews your
+project.</p></td>
+</tr>
+</tbody>
+</table>
+<p class="heading" id="required-sections-in-design_doc.md">3.1 Required
+Sections in DESIGN_DOC.md</p>
+<p>Your design doc MUST include all of the following sections:</p>
+<table>
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr>
+<td><p># Design Doc: AI-Powered Employee Record Chat</p>
+<p>## 1. Problem Statement</p>
+<p>## 2. Goals</p>
+<p>## 3. Non-Goals (what you are NOT building)</p>
+<p>## 4. Actors</p>
+<p>## 5. Functional Requirements</p>
+<p>## 6. Non-Functional Requirements</p>
+<p>## 7. Architecture Overview</p>
+<p>- System diagram (describe in text or ASCII art)</p>
+<p>- Component list with responsibilities</p>
+<p>## 8. API Design</p>
+<p>- Endpoints with method, path, request body, response</p>
+<p>## 9. Data Model</p>
+<p>- MongoDB collection schema</p>
+<p>## 10. Tech Stack Justification</p>
+<p>## 11. Open Questions</p></td>
+</tr>
+</tbody>
+</table>
+<p class="heading" id="ai-workflow-for-generating-your-design-doc">3.2
+AI Workflow for Generating Your Design Doc</p>
+<p>Follow this process to collaborate with AI effectively:</p>
+<table>
+<colgroup>
+<col style="width: 9%" />
+<col style="width: 61%" />
+<col style="width: 28%" />
+</colgroup>
+<tbody>
+<tr>
+<td style="text-align: center;"><strong>Step</strong></td>
+<td><strong>Action</strong></td>
+<td><strong>Tool</strong></td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>1</strong></td>
+<td>Paste the Slack conversation into Gemini/Claude. Ask it to generate
+a design doc draft using the template above.</td>
+<td><em>Gemini / Claude</em></td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>2</strong></td>
+<td>Review every section. Is each requirement actually in the
+conversation? Remove anything hallucinated.</td>
+<td><em>Your own judgement</em></td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>3</strong></td>
+<td>Add your open questions and any requirements you identified that AI
+missed.</td>
+<td><em>Your own judgement</em></td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>4</strong></td>
+<td>Ask AI to generate an architecture diagram in text/ASCII
+format.</td>
+<td><em>Gemini / Claude</em></td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>5</strong></td>
+<td>Ask AI to generate the API endpoint spec for /chat based on the
+requirements.</td>
+<td><em>Gemini / Claude</em></td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>6</strong></td>
+<td>Save the final doc as DESIGN_DOC.md in your repo root.</td>
+<td><em>VS Code</em></td>
+</tr>
+</tbody>
+</table>
+<table>
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr>
+<td><p><strong>Suggested Prompt for Gemini / Claude</strong></p>
+<p>Paste this prompt (replace [CONVERSATION] with the actual Slack
+thread):</p>
+<p>"You are a software architect. Based on the following Slack
+conversation [CONVERSATION],</p>
+<p>create a professional design doc in Markdown for a full-stack AI web
+application.</p>
+<p>The tech stack is React (frontend), Express.js (backend), MongoDB
+(database),</p>
+<p>and Ollama with Gemma 2 (local LLM). Include: problem statement,
+goals, actors,</p>
+<p>functional requirements (format: The system shall...), non-functional
+requirements,</p>
+<p>architecture overview, API endpoints, MongoDB schema, and open
+questions."</p></td>
+</tr>
+</tbody>
+</table>
+<p class="heading" id="section-4-architecture-overview">Section 4:
+Architecture Overview</p>
+<p>Before writing code, you need to understand how the pieces connect.
+This section maps out the system architecture you will build.</p>
+<table>
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr>
+<td><strong>System Architecture: React + Express + MongoDB + Ollama
+(RAG)</strong></td>
+</tr>
+</tbody>
+</table>
+<table class="hos-arch-diagram-table">
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr>
+<td><pre class="hos-arch-diagram">[ React Frontend ]
+        |
+        | HTTP POST /api/chat { content: "Who is a senior engineer?" }
+        v
+[ Express.js Backend ]
+        |
+        |-- 1. Text search MongoDB records
+        |     { name: "text", position: "text", level: "text" }
+        |
+        |-- 2. Build augmented prompt:
+        |     Context: [retrieved records]
+        |     Question: [user message]
+        |
+        |-- 3. POST http://localhost:11434/api/generate
+        |     { model: "gemma2:2b", prompt: augmented_prompt, stream: true }
+        |
+        |-- 4. Stream response via SSE back to frontend
+        v
+[ React Frontend ]
+        |
+        | Renders tokens as they arrive
+        v
+[ User sees answer ]</pre></td>
+</tr>
+</tbody>
+</table>
+<p class="heading" id="component-responsibilities">Component
+Responsibilities</p>
+<table class="hos-component-table">
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 37%" />
+<col style="width: 37%" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col">Component</th>
+<th scope="col">Responsibility</th>
+<th scope="col">Key Concept</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>React (frontend)</strong></td>
+<td>Send user messages, render streamed response tokens, route /record
+and /chat</td>
+<td><em>React Router, useState, EventSource</em></td>
+</tr>
+<tr>
+<td><strong>Express.js (backend)</strong></td>
+<td>Receive chat request, query MongoDB, build prompt, call Ollama,
+stream response</td>
+<td><em>SSE, Axios, RAG pattern</em></td>
+</tr>
+<tr>
+<td><strong>MongoDB Atlas</strong></td>
+<td>Store employee records, enable full-text search on
+name/position/level fields</td>
+<td><em>Text index, $text operator</em></td>
+</tr>
+<tr>
+<td><strong>Ollama + Gemma 2</strong></td>
+<td>Run LLM locally, receive augmented prompt, generate grounded
+response</td>
+<td><em>Local inference, streaming API</em></td>
+</tr>
+</tbody>
+</table>
+<p class="heading" id="section-5-building-with-cursor-gemini">Section 5:
+Building with Cursor + Gemini</p>
+<p>Now build the application. Your DESIGN_DOC.md is your blueprint. Feed
+it to Cursor to get contextual, architecture-aware code generation.</p>
+<p class="heading" id="environment-setup-github-codespaces">5.1
+Environment Setup (GitHub Codespaces)</p>
+<p>Access GitHub Codespaces as described in the TA Center guide. Confirm
+your HOS10 directory has the backend (from HOS08) and frontend (from
+HOS09) folders ready.</p>
+<p class="heading" id="running-ollama-and-pulling-gemma-2">5.2 Running
+Ollama and Pulling Gemma 2</p>
+<p>Open a terminal in Codespaces:</p>
+<table>
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr>
+<td><p># Install Ollama</p>
+<p>curl -fsSL https://ollama.com/install.sh | sh</p>
+<p># Start the Ollama server</p>
+<p>ollama serve</p>
+<p># In a NEW terminal tab - pull the model</p>
+<p>ollama pull gemma2:2b</p>
+<p># Test the model with a quick chat</p>
+<p>ollama run gemma2:2b</p></td>
+</tr>
+</tbody>
+</table>
+<table>
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr>
+<td><p><strong>Screenshot 01</strong></p>
+<p>Take a screenshot showing Ollama running and the model
+responding.</p>
+<p>Save as: 01_ollama_running_firstname_lastname.png</p></td>
+</tr>
+</tbody>
+</table>
+<p class="heading"
+id="using-cursor-to-build-the-backend-chat-endpoint">5.3 Using Cursor to
+Build the Backend /chat Endpoint</p>
+<p>Open the project in VS Code with the Cursor extension active. Use
+your DESIGN_DOC.md as context.</p>
+<table>
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr>
+<td><p><strong>Cursor Workflow</strong></p>
+<p>1. Open Cursor chat (Cmd+L or Ctrl+L)</p>
+<p>2. Paste your API design section from DESIGN_DOC.md</p>
+<p>3. Ask: "Based on this API design, implement the /chat route in
+record.mjs using Express SSE and Axios to call Ollama"</p>
+<p>4. Review the generated code - do NOT accept it blindly</p>
+<p>5. Ask Cursor to explain any line you do not understand</p>
+<p>6. Ask Cursor: "What edge cases are missing from this
+implementation?"</p></td>
+</tr>
+</tbody>
+</table>
+<p>The /chat endpoint must:</p>
+<ul>
+<li><p>Accept POST /chat with body { content: "user message" }</p></li>
+<li><p>Set SSE headers: Content-Type: text/event-stream</p></li>
+<li><p>Query MongoDB using $text search on name, position, level
+fields</p></li>
+<li><p>Build an augmented prompt with retrieved records as
+context</p></li>
+<li><p>POST to Ollama at http://localhost:11434/api/generate with
+stream: true</p></li>
+<li><p>Stream each token back to the client as SSE data: events</p></li>
+<li><p>Send data: [DONE] when the stream ends</p></li>
+</ul>
+<table>
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr>
+<td><p><strong>Screenshot 02</strong></p>
+<p>Take a screenshot showing the createContextRAG function (or
+equivalent) in your backend code.</p>
+<p>Save as: 02_create_context_rag_firstname_lastname.png</p></td>
+</tr>
+</tbody>
+</table>
+<p class="heading" id="running-the-backend">5.4 Running the Backend</p>
+<table>
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr>
+<td><p>cd backend</p>
+<p>npm install</p>
+<p>npm install axios</p>
+<p>node server.mjs</p></td>
+</tr>
+</tbody>
+</table>
+<p>Make the port public in the Codespaces Ports tab. Note the forwarded
+URL for port 5050.</p>
+<p class="heading" id="configuring-the-frontend">5.5 Configuring the
+Frontend</p>
+<p>The frontend reuses your HOS09 React app. Add a .env file and a new
+Chat component.</p>
+<table>
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr>
+<td><p># .env file in frontend root</p>
+<p>REACT_APP_BACKEND_URL=https://your-codespace-url-5050.app.github.dev</p></td>
+</tr>
+</tbody>
+</table>
+<table>
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr>
+<td><p><strong>Screenshot 03</strong></p>
+<p>Take a screenshot of the .env file showing the REACT_APP_BACKEND_URL
+value.</p>
+<p>Save as: 03_react_app_backend_url_firstname_lastname.png</p></td>
+</tr>
+</tbody>
+</table>
+<p>Use Cursor to build the Chat component. Provide the streaming
+requirements from your design doc:</p>
+<table>
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr>
+<td><p><strong>Cursor Prompt for Chat Component</strong></p>
+<p>Paste this into Cursor chat:</p>
+<p>Create a React Chat component that:</p>
+<p>- Has a text input and submit button</p>
+<p>- Sends POST to REACT_APP_BACKEND_URL/api/chat with { content:
+userMessage }</p>
+<p>- Uses EventSource to read SSE streaming response tokens</p>
+<p>- Appends each token to displayed response in real time</p>
+<p>- Handles the [DONE] signal to stop the stream</p>
+<p>- Has clean, minimal CSS styling</p></td>
+</tr>
+</tbody>
+</table>
+<table>
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr>
+<td><p><strong>Screenshot 04</strong></p>
+<p>Take a screenshot showing the EventSource / SSE parsing code in your
+Chat component.</p>
+<p>Save as: 04_parse_stream_json_firstname_lastname.png</p></td>
+</tr>
+</tbody>
+</table>
+<p class="heading" id="update-app.js-with-react-router">5.6 Update
+App.js with React Router</p>
+<p>Add routing so /record shows the record list and /chat shows the chat
+interface:</p>
+<table class="hos-code-block-table">
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr>
+<td><pre class="hos-code-snippet">import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import RecordList from "./components/recordList";
+import Chat from "./components/chat";
+
+function App() {
+  return (
+    &lt;Router&gt;
+      &lt;Routes&gt;
+        &lt;Route path="/record" element={&lt;RecordList /&gt;} /&gt;
+        &lt;Route path="/chat" element={&lt;Chat /&gt;} /&gt;
+      &lt;/Routes&gt;
+    &lt;/Router&gt;
+  );
+}</pre></td>
+</tr>
+</tbody>
+</table>
+<p class="heading" id="configure-mongodb-text-index">5.7 Configure
+MongoDB Text Index</p>
+<p>Without a text index, the $text search in the /chat endpoint will
+fail. Set this up in MongoDB Atlas:</p>
+<ul>
+<li><p>Go to your MongoDB Atlas collection (the one from HOS08)</p></li>
+<li><p>Click "Indexes" -&gt; "Create Index"</p></li>
+<li><p>In the Fields input, enter exactly (do not copy-paste, type
+manually):</p></li>
+</ul>
+<table>
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr>
+<td><p>{</p>
+<p>"name": "text",</p>
+<p>"position": "text",</p>
+<p>"level": "text"</p>
+<p>}</p></td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><p>Click "Create" and wait for the index to finish building</p></li>
+</ul>
+<p class="heading" id="section-6-testing-the-rag-application">Section 6:
+Testing the RAG Application</p>
+<p>Run all three test scenarios. These validate that your RAG
+implementation works correctly.</p>
+<p class="heading" id="test-1---query-an-existing-record">Test 1 - Query
+an Existing Record</p>
+<p>First confirm you have at least one record in the database (via
+/record). Then open /chat.</p>
+<ul>
+<li><p>Type a query that matches a record, e.g. "Who is a Software
+Engineer?"</p></li>
+<li><p>The AI should return a response that references the actual record
+data.</p></li>
+</ul>
+<table>
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr>
+<td><p><strong>Screenshot 05</strong></p>
+<p>Screenshot showing the chat response with a matched record.</p>
+<p>Save as: 05_rag_data_exist_firstname_lastname.png</p></td>
+</tr>
+</tbody>
+</table>
+<p class="heading" id="test-2---query-a-non-existing-record">Test 2 -
+Query a Non-Existing Record</p>
+<ul>
+<li><p>Type a query for something that does NOT exist, e.g. "Who is a
+NASA astronaut?"</p></li>
+<li><p>The AI should indicate it does not have that information (not
+hallucinate).</p></li>
+</ul>
+<table>
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr>
+<td><p><strong>Screenshot 06</strong></p>
+<p>Screenshot showing the chat response when no matching record
+exists.</p>
+<p>Save as: 06_rag_no_data_firstname_lastname.png</p></td>
+</tr>
+</tbody>
+</table>
+<p class="heading" id="test-3---create-record-then-query-it">Test 3 -
+Create Record Then Query It</p>
+<ul>
+<li><p>Go to /record and create a new employee record (new name, title,
+level).</p></li>
+<li><p>Immediately go to /chat and query for that new record.</p></li>
+<li><p>The AI should return the new record in its response (real-time
+verification).</p></li>
+</ul>
+<table>
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr>
+<td><p><strong>Screenshot 07</strong></p>
+<p>Screenshot showing the new record in the chat response.</p>
+<p>Save as: 07_rag_new_data_firstname_lastname.png</p></td>
+</tr>
+</tbody>
+</table>
+<p class="heading" id="section-7-eeat-passfail-checklist">Section 7:
+EEAT Pass/Fail Checklist</p>
+<p>Complete this checklist before submitting. A student worker will
+verify your submission against these criteria using AI assistance. ALL
+Pass criteria must be met.</p>
+<table>
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr>
+<td><strong>EXPERIENCE - Student demonstrates hands-on
+engagement</strong></td>
+</tr>
+</tbody>
+</table>
+<table>
+<colgroup>
+<col style="width: 5%" />
+<col style="width: 56%" />
+<col style="width: 18%" />
+<col style="width: 18%" />
+</colgroup>
+<tbody>
+<tr>
+<td style="text-align: center;"><strong>#</strong></td>
+<td><strong>Criterion</strong></td>
+<td style="text-align: center;"><strong>Pass / Fail</strong></td>
+<td><strong>Notes</strong></td>
+</tr>
+<tr>
+<td style="text-align: center;">E1</td>
+<td>DESIGN_DOC.md is present in the repo root</td>
+<td style="text-align: center;">[ ] Pass [ ] Fail</td>
+<td></td>
+</tr>
+<tr>
+<td style="text-align: center;">E2</td>
+<td>DESIGN_DOC.md contains all 11 required sections</td>
+<td style="text-align: center;">[ ] Pass [ ] Fail</td>
+<td></td>
+</tr>
+<tr>
+<td style="text-align: center;">E3</td>
+<td>Open Questions section has at least 3 original questions (not
+AI-generated)</td>
+<td style="text-align: center;">[ ] Pass [ ] Fail</td>
+<td></td>
+</tr>
+<tr>
+<td style="text-align: center;">E4</td>
+<td>All 7 screenshots are present with correct filenames</td>
+<td style="text-align: center;">[ ] Pass [ ] Fail</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<table>
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr>
+<td><strong>EXPERTISE - Technical implementation is
+correct</strong></td>
+</tr>
+</tbody>
+</table>
+<table>
+<colgroup>
+<col style="width: 5%" />
+<col style="width: 56%" />
+<col style="width: 18%" />
+<col style="width: 19%" />
+</colgroup>
+<tbody>
+<tr>
+<td style="text-align: center;"><strong>#</strong></td>
+<td><strong>Criterion</strong></td>
+<td style="text-align: center;"><strong>Pass / Fail</strong></td>
+<td><strong>Notes</strong></td>
+</tr>
+<tr>
+<td style="text-align: center;">X1</td>
+<td>App runs without unhandled errors in the terminal</td>
+<td style="text-align: center;">[ ] Pass [ ] Fail</td>
+<td></td>
+</tr>
+<tr>
+<td style="text-align: center;">X2</td>
+<td>POST /api/chat endpoint returns a streamed SSE response</td>
+<td style="text-align: center;">[ ] Pass [ ] Fail</td>
+<td></td>
+</tr>
+<tr>
+<td style="text-align: center;">X3</td>
+<td>MongoDB text index is configured on name, position, level
+fields</td>
+<td style="text-align: center;">[ ] Pass [ ] Fail</td>
+<td></td>
+</tr>
+<tr>
+<td style="text-align: center;">X4</td>
+<td>Gemma 2 model is used (not a cloud LLM)</td>
+<td style="text-align: center;">[ ] Pass [ ] Fail</td>
+<td></td>
+</tr>
+<tr>
+<td style="text-align: center;">X5</td>
+<td>/record and /chat are separate routes via React Router</td>
+<td style="text-align: center;">[ ] Pass [ ] Fail</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<table>
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr>
+<td><strong>AUTHORITATIVENESS - Architecture decisions are
+justified</strong></td>
+</tr>
+</tbody>
+</table>
+<table>
+<colgroup>
+<col style="width: 5%" />
+<col style="width: 56%" />
+<col style="width: 18%" />
+<col style="width: 18%" />
+</colgroup>
+<tbody>
+<tr>
+<td style="text-align: center;"><strong>#</strong></td>
+<td><strong>Criterion</strong></td>
+<td style="text-align: center;"><strong>Pass / Fail</strong></td>
+<td><strong>Notes</strong></td>
+</tr>
+<tr>
+<td style="text-align: center;">A1</td>
+<td>DESIGN_DOC.md Section 10 explains WHY each technology was
+chosen</td>
+<td style="text-align: center;">[ ] Pass [ ] Fail</td>
+<td></td>
+</tr>
+<tr>
+<td style="text-align: center;">A2</td>
+<td>Architecture section accurately describes the actual data flow</td>
+<td style="text-align: center;">[ ] Pass [ ] Fail</td>
+<td></td>
+</tr>
+<tr>
+<td style="text-align: center;">A3</td>
+<td>API design section matches the actual implementation</td>
+<td style="text-align: center;">[ ] Pass [ ] Fail</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<table>
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr>
+<td><strong>TRUSTWORTHINESS - App behaves reliably and
+honestly</strong></td>
+</tr>
+</tbody>
+</table>
+<table>
+<colgroup>
+<col style="width: 5%" />
+<col style="width: 56%" />
+<col style="width: 19%" />
+<col style="width: 19%" />
+</colgroup>
+<tbody>
+<tr>
+<td style="text-align: center;"><strong>#</strong></td>
+<td><strong>Criterion</strong></td>
+<td style="text-align: center;"><strong>Pass / Fail</strong></td>
+<td><strong>Notes</strong></td>
+</tr>
+<tr>
+<td style="text-align: center;">T1</td>
+<td>Test 1: AI returns real employee data (not hallucinated names)</td>
+<td style="text-align: center;">[ ] Pass [ ] Fail</td>
+<td></td>
+</tr>
+<tr>
+<td style="text-align: center;">T2</td>
+<td>Test 2: AI responds appropriately when no matching data exists</td>
+<td style="text-align: center;">[ ] Pass [ ] Fail</td>
+<td></td>
+</tr>
+<tr>
+<td style="text-align: center;">T3</td>
+<td>Test 3: Newly created record is immediately queryable via chat</td>
+<td style="text-align: center;">[ ] Pass [ ] Fail</td>
+<td></td>
+</tr>
+<tr>
+<td style="text-align: center;">T4</td>
+<td>.env file is NOT committed to the repository</td>
+<td style="text-align: center;">[ ] Pass [ ] Fail</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p class="heading" id="section-8-submission">Section 8: Submission</p>
+<p>Push the following to your GitHub Classroom repository:</p>
+<ul>
+<li><p>DESIGN_DOC.md (in repo root)</p></li>
+<li><p>backend/ directory (with the /chat route implemented)</p></li>
+<li><p>frontend/ directory (with Chat component and React
+Router)</p></li>
+<li><p>01_ollama_running_firstname_lastname.png</p></li>
+<li><p>02_create_context_rag_firstname_lastname.png</p></li>
+<li><p>03_react_app_backend_url_firstname_lastname.png</p></li>
+<li><p>04_parse_stream_json_firstname_lastname.png</p></li>
+<li><p>05_rag_data_exist_firstname_lastname.png</p></li>
+<li><p>06_rag_no_data_firstname_lastname.png</p></li>
+<li><p>07_rag_new_data_firstname_lastname.png</p></li>
+</ul>
+<table>
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr>
+<td><p>git add DESIGN_DOC.md backend/ frontend/ *.png</p>
+<p>git commit -m "HOS10: RAG chat app with design doc"</p>
+<p>git push origin main</p></td>
+</tr>
+</tbody>
+</table>
+<table>
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr>
+<td style="text-align: center;"><p><strong>APPENDIX: HOS10 Threat Model
+Extension</strong></p>
+<p><em>Apply threat modeling using pytm after building the
+application</em></p></td>
+</tr>
+</tbody>
+</table>
+<p>This extension applies AFTER completing the main HOS10 build. You
+will use pytm - a Pythonic framework for threat modeling - to analyze
+the security of the RAG application you just built.</p>
+<table>
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr>
+<td><p><strong>What is pytm?</strong></p>
+<p>pytm (Python Threat Modeling) is an open-source framework that lets
+you define your system in code and automatically generates threat
+reports and data flow diagrams (DFD).</p>
+<p>Instead of drawing boxes on a whiteboard, you write Python code that
+describes your components, data flows, and trust boundaries.</p>
+<p>pytm then applies STRIDE analysis automatically.</p>
+<p>GitHub: https://github.com/izar/pytm</p></td>
+</tr>
+</tbody>
+</table>
+<p class="heading" id="a.1-install-pytm">A.1 Install pytm</p>
+<table>
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr>
+<td><p># In your Codespaces terminal</p>
+<p>pip install pytm</p>
+<p># Verify installation</p>
+<p>python -c "import pytm; print(pytm.__version__)"</p></td>
+</tr>
+</tbody>
+</table>
+<p class="heading" id="a.2-write-your-threat-model">A.2 Write Your
+Threat Model</p>
+<p>Create a file named threat_model.py in your repo root. Model the
+components from your design doc:</p>
+<table>
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr>
+<td><p>from pytm import TM, Server, Datastore, Dataflow, Boundary,
+Actor</p>
+<p>tm = TM("HOS10 RAG Application")</p>
+<p>tm.description = "Threat model for the AI-powered employee record
+chat app"</p>
+<p>tm.isOrdered = True</p>
+<p># Trust Boundaries</p>
+<p>internet = Boundary("Internet")</p>
+<p>app_server = Boundary("App Server")</p>
+<p>db_zone = Boundary("Database Zone")</p>
+<p># Actors</p>
+<p>user = Actor("Employee User")</p>
+<p>user.inBoundary = internet</p>
+<p># Components</p>
+<p>react_app = Server("React Frontend")</p>
+<p>react_app.inBoundary = internet</p>
+<p>react_app.isEncrypted = False # HTTP in dev - flag this</p>
+<p>express_api = Server("Express.js Backend")</p>
+<p>express_api.inBoundary = app_server</p>
+<p>express_api.isEncrypted = True</p>
+<p>mongodb = Datastore("MongoDB Atlas")</p>
+<p>mongodb.inBoundary = db_zone</p>
+<p>mongodb.isEncrypted = True</p>
+<p>mongodb.isSQL = False</p>
+<p>ollama = Server("Ollama LLM Server")</p>
+<p>ollama.inBoundary = app_server</p>
+<p>ollama.isEncrypted = False # local only</p>
+<p># Data Flows</p>
+<p>Dataflow(user, react_app, "User submits chat query")</p>
+<p>Dataflow(react_app, express_api, "POST /api/chat { content }")</p>
+<p>Dataflow(express_api, mongodb, "Text search query")</p>
+<p>Dataflow(mongodb, express_api, "Matching employee records")</p>
+<p>Dataflow(express_api, ollama, "Augmented prompt POST
+/api/generate")</p>
+<p>Dataflow(ollama, express_api, "Streamed token response")</p>
+<p>Dataflow(express_api, react_app, "SSE stream to client")</p>
+<p>tm.process()</p></td>
+</tr>
+</tbody>
+</table>
+<p class="heading" id="a.3-generate-the-threat-report">A.3 Generate the
+Threat Report</p>
+<table>
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr>
+<td><p># Generate DFD (requires graphviz)</p>
+<p>pip install graphviz</p>
+<p>python threat_model.py --dfd | dot -Tpng -o dfd.png</p>
+<p># Generate full threat report</p>
+<p>python threat_model.py --report</p></td>
+</tr>
+</tbody>
+</table>
+<p class="heading" id="a.4-stride-analysis-task">A.4 STRIDE Analysis
+Task</p>
+<p>After running pytm, review the generated threats. For each threat
+category, answer the question using AI assistance:</p>
+<table>
+<colgroup>
+<col style="width: 15%" />
+<col style="width: 30%" />
+<col style="width: 53%" />
+</colgroup>
+<tbody>
+<tr>
+<td><strong>STRIDE</strong></td>
+<td><strong>Threat Type</strong></td>
+<td><strong>Question to Answer for This App</strong></td>
+</tr>
+<tr>
+<td><strong>S</strong></td>
+<td>Spoofing</td>
+<td><em>Can an attacker impersonate a legitimate user in the chat
+interface?</em></td>
+</tr>
+<tr>
+<td><strong>T</strong></td>
+<td>Tampering</td>
+<td><em>Can an attacker modify employee records to manipulate AI
+responses?</em></td>
+</tr>
+<tr>
+<td><strong>R</strong></td>
+<td>Repudiation</td>
+<td><em>Is there a log of who submitted which chat queries?</em></td>
+</tr>
+<tr>
+<td><strong>I</strong></td>
+<td>Information Disclosure</td>
+<td><em>Could the AI leak employee data to unauthorized users?</em></td>
+</tr>
+<tr>
+<td><strong>D</strong></td>
+<td>Denial of Service</td>
+<td><em>What happens if an attacker floods the /api/chat
+endpoint?</em></td>
+</tr>
+<tr>
+<td><strong>E</strong></td>
+<td>Elevation of Privilege</td>
+<td><em>Can a regular user trigger admin-level MongoDB
+operations?</em></td>
+</tr>
+</tbody>
+</table>
+<table>
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr>
+<td><p><strong>Cursor Prompt for Threat Analysis</strong></p>
+<p>Paste this into Cursor chat (replace [paste threat] with actual pytm
+output):</p>
+<p>I built a RAG web app: React frontend -&gt; Express backend -&gt;
+MongoDB text search -&gt; Ollama (local Gemma 2).</p>
+<p>My pytm threat model flagged [paste threat from output].</p>
+<p>Explain this threat in the context of my app and suggest a mitigation
+strategy.</p>
+<p>Keep the explanation beginner-friendly.</p></td>
+</tr>
+</tbody>
+</table>
+<p class="heading" id="a.5-threat-model-deliverables">A.5 Threat Model
+Deliverables</p>
+<ul>
+<li><p>threat_model.py - your pytm model file</p></li>
+<li><p>dfd.png - the generated data flow diagram</p></li>
+<li><p>THREAT_ANALYSIS.md - your STRIDE analysis (one paragraph per
+threat category)</p></li>
+</ul>
+<table>
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr>
+<td><p><strong>Learning Goal of the Threat Model Extension</strong></p>
+<p>Security is not an afterthought - it is part of architecture.</p>
+<p>By running pytm AFTER you build, you experience first-hand what
+threats you introduced.</p>
+<p>The goal is not to fix everything - it is to RECOGNIZE what the risks
+are and articulate mitigations.</p>
+<p>This is the same process used in professional security
+reviews.</p></td>
+</tr>
+</tbody>
+</table>
+<footer class="hos-pdf-doc-footer" role="contentinfo">
+  <p>School of Technology &amp; Computing (STC) | City University of Seattle</p>
+  <p class="hos-pdf-doc-credit">Developed by Clark Ngo.</p>
+</footer>
+</main>
+</body>
+</html>

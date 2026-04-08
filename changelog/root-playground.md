@@ -5,6 +5,20 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-04-07
+
+### [ux] `hos/module-10-conversation-to-design.html`
+- Footer credit: "Developed by Clark Ngo." (`hos-pdf-doc-credit`)
+
+### [ux] HOS10A module page — PDF handout styling
+- `hos/module-10-pdf-theme.css` + classes on `module-10-conversation-to-design.html`: solid navy course banner, centered hero block with blue rule, green **Tools Required** and blue **Deliverables** callouts, Slack thread (`#product-dev-chat` bar + Maria/Alex/Sam bubble tints), STC footer; `body.hos-pdf10-page` + paper column on gray backdrop
+- **Section 4 Architecture Overview:** ASCII diagram moved from one `<p>` per line (broken layout) to `<pre class="hos-arch-diagram">` inside `table.hos-arch-diagram-table`; component table uses `<thead>`/`<th>`; generic PDF table CSS excludes `hos-arch-diagram-table`
+- **Section 2 Requirements Gathering:** wrapped in `<section class="hos-req-gathering">`, task tables `hos-req-task`; colors aligned to handout — section title `#1f3864`, task header bar `#c55a11` / white text, body `#fde9d9` / `#111` text
+- **5.6 App.js / React Router:** sample code moved from one `<p>` per line to `<pre class="hos-code-snippet">` with proper JSX indentation; `table.hos-code-block-table` + CSS exclusion from generic table striping
+
+### [ux] `hos/shared.css` + `hos/index.html`
+- Styles aligned to embedded Word **Office** theme from `HOS10A_AIFirst_ConversationToDesignDoc.docx`: accent1 `#156082`, dk2 `#0E2841`, accent2 `#E97132`, accent4 `#0F9ED5`, lt2 `#E8E8E8`; Segoe UI / Inter stack; light page background; first table as gradient title banner; `p.heading` with orange left rail; callout tables with alternating tint; hub hero card with orange accent edge
+
 ## 2026-03-27
 
 ### [feature] lessons-learned/prompting.md — git / multi-workstream prompting (stash vs PR order, primer vs Wireshark mix-up)
