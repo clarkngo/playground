@@ -7,6 +7,10 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ## 2026-04-07
 
+### [refactor] Removed `docs/ads-platform/`; preserved assets on eBay Ads hub
+- Deleted entire `docs/ads-platform/` tree (superseded by `deep-dives/ebay-ads/`); wiki exports and old `index.html` tabbed guide removed from repo
+- `ebay-ads/ads-platform-mind-map.png` (copied from deleted folder); hub **Reference materials** section + `.ref-lead` / `.mind-map-fig` / `.video-ref-list` in `shared.css`
+
 ### [refactor] `deep-dives/ebay-ads/` — Spark page rename; no &ldquo;classroom&rdquo; wording in deep dives
 - Renamed `spark-ebay-classroom.html` → `spark-ebay-supplement.html`; `shared.css` — `.supplement-prompt-list`, `body.spark-supplement-page` (replaces `.classroom-prompt-list` / `body.classroom-supplement`)
 - `deep-dives/index.html` — hero subcopy and **Primary-source supplements** section (replaces &ldquo;Classroom supplements&rdquo;); card links + tags updated
