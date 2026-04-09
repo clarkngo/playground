@@ -1,0 +1,1278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Data Governance &mdash; Module 1 Class Notes</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0d1117; color: #c9d1d9; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; min-height: 100vh; }
+
+    /* Navbar */
+    .navbar { background: #161b22; border-bottom: 1px solid #30363d; padding: .75rem 1.5rem; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 200; }
+    .navbar a { color: #e6edf3; text-decoration: none; font-weight: 700; font-size: 1rem; }
+    .navbar a:hover { color: #58a6ff; }
+    .nav-pill { font-size: .78rem; color: #8b949e; }
+
+    /* Layout */
+    .layout { display: flex; max-width: 1280px; margin: 0 auto; padding: 0 1rem; gap: 2rem; }
+
+    /* Sidebar TOC */
+    .sidebar { width: 220px; flex-shrink: 0; position: sticky; top: 56px; align-self: flex-start; height: calc(100vh - 64px); overflow-y: auto; padding: 1.5rem 0; }
+    .toc-label { font-size: .67rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #484f58; margin-bottom: .65rem; padding-left: .5rem; }
+    .toc { display: flex; flex-direction: column; gap: 2px; }
+    .toc-link { font-size: .78rem; color: #8b949e; text-decoration: none; padding: .3rem .5rem; border-radius: 5px; border-left: 2px solid transparent; line-height: 1.4; transition: all .15s; }
+    .toc-link:hover { color: #e6edf3; background: #161b22; }
+    .toc-link.active { color: #58a6ff; border-left-color: #58a6ff; background: #0c1e38; font-weight: 600; }
+    .toc-group { font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: #484f58; margin: .85rem 0 .25rem .5rem; }
+
+    /* Main content */
+    .content { flex: 1; min-width: 0; padding: 2rem 0 4rem; }
+
+    /* Breadcrumb */
+    .breadcrumb { font-size: .78rem; color: #8b949e; display: flex; align-items: center; gap: .4rem; margin-bottom: .85rem; flex-wrap: wrap; }
+    .breadcrumb a { color: #58a6ff; text-decoration: none; font-weight: 600; }
+    .breadcrumb a:hover { text-decoration: underline; }
+    .breadcrumb span { color: #484f58; }
+
+    /* Page header */
+    .page-badge { display: inline-block; background: #1f6feb; color: #fff; font-size: .72rem; font-weight: 700; padding: 3px 12px; border-radius: 12px; text-transform: uppercase; letter-spacing: .07em; margin-bottom: .6rem; }
+    .page-header h1 { color: #e6edf3; font-size: 1.85rem; font-weight: 800; margin-bottom: .3rem; line-height: 1.2; }
+    .page-subtitle { color: #8b949e; font-size: .9rem; margin-bottom: .65rem; }
+    .tag-row { display: flex; gap: .4rem; flex-wrap: wrap; margin-bottom: 2rem; }
+    .tag { display: inline-block; font-size: .68rem; padding: 2px 8px; border-radius: 8px; font-weight: 600; }
+    .tag-blue   { background: #1f3a5c; color: #58a6ff; }
+    .tag-green  { background: #1a2f1a; color: #3fb950; }
+    .tag-yellow { background: #2d2009; color: #e3b341; }
+    .tag-purple { background: #24183a; color: #bc8cff; }
+
+    /* Section */
+    .notes-section { margin-bottom: 3rem; scroll-margin-top: 72px; }
+    .section-header { display: flex; align-items: baseline; gap: .75rem; margin-bottom: 1.35rem; padding-bottom: .75rem; border-bottom: 1px solid #21262d; }
+    .section-num { font-size: .72rem; font-weight: 700; color: #484f58; background: #161b22; border: 1px solid #30363d; padding: 2px 9px; border-radius: 8px; white-space: nowrap; }
+    .section-title { font-size: 1.25rem; font-weight: 800; color: #e6edf3; }
+
+    /* Prose */
+    .prose { font-size: .875rem; color: #c9d1d9; line-height: 1.8; margin-bottom: 1rem; }
+    .prose strong { color: #e6edf3; }
+    .prose em { color: #8b949e; font-style: italic; }
+
+    /* Definition card */
+    .def-card { background: #0c1e38; border: 1px solid #1f6feb; border-left: 4px solid #1f6feb; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+    .def-label { font-size: .67rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #58a6ff; margin-bottom: .4rem; }
+    .def-term { font-size: 1rem; font-weight: 800; color: #a5d6ff; margin-bottom: .35rem; }
+    .def-text { font-size: .85rem; color: #c9d1d9; line-height: 1.75; }
+
+    /* Concept card */
+    .concept-card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: .85rem; }
+    .concept-title { font-size: .85rem; font-weight: 700; color: #e6edf3; margin-bottom: .4rem; }
+    .concept-text { font-size: .84rem; color: #c9d1d9; line-height: 1.75; }
+    .concept-text ul { padding-left: 1.1rem; }
+    .concept-text li { margin-bottom: .3rem; }
+
+    /* Example card */
+    .example-card { background: #0b1f0b; border: 1px solid #238636; border-left: 4px solid #3fb950; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+    .example-label { font-size: .67rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #3fb950; margin-bottom: .4rem; }
+    .example-title { font-size: .9rem; font-weight: 700; color: #56d364; margin-bottom: .35rem; }
+    .example-text { font-size: .84rem; color: #c9d1d9; line-height: 1.75; }
+    .example-text ul, .example-text ol { padding-left: 1.1rem; }
+    .example-text li { margin-bottom: .3rem; }
+    .example-text strong { color: #56d364; }
+
+    /* Insight card */
+    .insight-card { background: #1d1600; border: 1px solid #9e6a03; border-left: 4px solid #e3b341; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+    .insight-label { font-size: .67rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #e3b341; margin-bottom: .4rem; }
+    .insight-text { font-size: .85rem; color: #c9d1d9; line-height: 1.75; }
+    .insight-text strong { color: #f0c674; }
+    .insight-text ul { padding-left: 1.1rem; }
+    .insight-text li { margin-bottom: .3rem; }
+
+    /* Warning / NOT card */
+    .warn-card { background: #2d1a1a; border: 1px solid #f85149; border-left: 4px solid #f85149; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+    .warn-label { font-size: .67rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #f85149; margin-bottom: .4rem; }
+    .warn-text { font-size: .85rem; color: #c9d1d9; line-height: 1.75; }
+    .warn-text ul { padding-left: 1.1rem; }
+    .warn-text li { margin-bottom: .3rem; }
+    .warn-text strong { color: #ff7b72; }
+
+    /* Compare table */
+    .compare-table { width: 100%; border-collapse: collapse; font-size: .84rem; margin-bottom: 1.1rem; }
+    .compare-table th { background: #0d1117; color: #8b949e; font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; padding: .55rem .85rem; text-align: left; border-bottom: 2px solid #30363d; }
+    .compare-table td { padding: .6rem .85rem; border-bottom: 1px solid #21262d; color: #c9d1d9; vertical-align: top; line-height: 1.6; }
+    .compare-table tr:last-child td { border-bottom: none; }
+    .compare-table tr:hover td { background: #161b22; }
+    .compare-table .col-a { color: #58a6ff; font-weight: 700; white-space: nowrap; }
+    .compare-table .col-b { color: #3fb950; font-weight: 700; white-space: nowrap; }
+    .compare-table .col-c { color: #bc8cff; font-weight: 700; white-space: nowrap; }
+
+    /* Flow diagram */
+    .flow-wrap { overflow-x: auto; margin-bottom: 1.25rem; }
+    .flow { display: flex; align-items: stretch; gap: 0; flex-wrap: nowrap; min-width: max-content; padding: .5rem 0; }
+    .flow-node { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: .65rem 1rem; font-size: .78rem; font-weight: 700; color: #e6edf3; text-align: center; min-width: 110px; display: flex; flex-direction: column; align-items: center; gap: .25rem; }
+    .flow-node .fn-sub { font-size: .67rem; font-weight: 400; color: #8b949e; margin-top: .1rem; }
+    .flow-arrow { display: flex; align-items: center; color: #30363d; font-size: 1.1rem; padding: 0 .2rem; }
+    .flow-node.blue   { border-color: #1f6feb; background: #0c1e38; color: #a5d6ff; }
+    .flow-node.green  { border-color: #238636; background: #0b1f0b; color: #56d364; }
+    .flow-node.yellow { border-color: #9e6a03; background: #1d1600; color: #f0c674; }
+    .flow-node.purple { border-color: #6e40c9; background: #18102d; color: #d2a8ff; }
+    .flow-node.red    { border-color: #da3633; background: #2d1a1a; color: #ff7b72; }
+
+    /* Two-column grid */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.1rem; }
+    .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.1rem; }
+    .four-col { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: .75rem; margin-bottom: 1.1rem; }
+
+    /* Pillar card */
+    .pillar-card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1.25rem 1rem; text-align: center; }
+    .pillar-icon { font-size: 1.8rem; margin-bottom: .5rem; }
+    .pillar-name { font-size: .95rem; font-weight: 800; color: #e6edf3; margin-bottom: .4rem; }
+    .pillar-desc { font-size: .78rem; color: #8b949e; line-height: 1.6; }
+
+    /* Numbered list card */
+    .num-list { display: flex; flex-direction: column; gap: .6rem; margin-bottom: 1rem; }
+    .num-item { display: flex; gap: .85rem; align-items: flex-start; }
+    .num-badge { width: 26px; height: 26px; border-radius: 50%; background: #1f6feb; color: #fff; font-size: .75rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: .1rem; }
+    .num-badge.green  { background: #238636; }
+    .num-badge.purple { background: #6e40c9; }
+    .num-badge.yellow { background: #9e6a03; }
+    .num-content { flex: 1; }
+    .num-title { font-size: .88rem; font-weight: 700; color: #e6edf3; margin-bottom: .2rem; }
+    .num-text  { font-size: .82rem; color: #c9d1d9; line-height: 1.65; }
+
+    /* Code snippet */
+    .code-label { font-size: .69rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: #8b949e; margin-bottom: .35rem; margin-top: .85rem; }
+    .code-block { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 1rem 1.25rem; font-family: "Menlo","Monaco","Courier New",monospace; font-size: .8rem; color: #c9d1d9; line-height: 1.7; overflow-x: auto; margin-bottom: .75rem; }
+    .ck { color: #ff7b72; } .cs { color: #a5d6ff; } .cf { color: #d2a8ff; } .cv { color: #ffa657; } .cm { color: #8b949e; }
+
+    /* Divider */
+    .divider { border: none; border-top: 1px solid #21262d; margin: 1.75rem 0; }
+
+    /* Sub-section label */
+    .sub-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: #8b949e; border-left: 3px solid #30363d; padding-left: .6rem; margin: 1.5rem 0 .85rem; }
+
+    /* Inline term */
+    .term { color: #a5d6ff; font-weight: 700; }
+    .term-g { color: #56d364; font-weight: 700; }
+    .term-y { color: #f0c674; font-weight: 700; }
+    .term-p { color: #d2a8ff; font-weight: 700; }
+
+    /* Footer */
+    .site-footer { text-align: center; padding: 1.5rem; border-top: 1px solid #21262d; color: #484f58; font-size: .77rem; margin-top: 2rem; }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .two-col, .three-col, .four-col { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 620px) {
+      .two-col { grid-template-columns: 1fr; }
+    }
+
+    /* Print */
+    @media print {
+      @page { size: A4; margin: 1.4cm 1.6cm; }
+      body { background: #fff !important; color: #111 !important; font-size: 9pt; }
+      .navbar, .sidebar, .site-footer { display: none !important; }
+      .layout { max-width: 100%; padding: 0; gap: 0; }
+      .content { padding: 0; }
+      .notes-section { margin-bottom: 1.5rem; page-break-inside: avoid; }
+      .section-header { border-bottom-color: #ccc !important; }
+      .section-num { background: #eee !important; color: #555 !important; border-color: #ccc !important; }
+      .section-title { color: #111 !important; font-size: 13pt; }
+      .def-card { background: #e8f0fe !important; border-color: #1a4fa0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .def-term { color: #1a4fa0 !important; }
+      .def-text, .concept-text, .example-text, .insight-text, .warn-text, .prose { color: #222 !important; font-size: 8.5pt; }
+      .example-card { background: #f0fdf4 !important; border-color: #15803d !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .example-title { color: #15803d !important; }
+      .insight-card { background: #fffbeb !important; border-color: #d97706 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .warn-card { background: #fef2f2 !important; border-color: #b91c1c !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .concept-card { background: #fafafa !important; border-color: #ccc !important; }
+      .pillar-card { background: #fafafa !important; border-color: #ccc !important; }
+      .flow-node { background: #f3f4f6 !important; border-color: #ccc !important; color: #111 !important; }
+      .compare-table th { background: #f3f4f6 !important; color: #555 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .compare-table td { color: #111 !important; border-bottom-color: #eee !important; }
+      .code-block { background: #f8f9fa !important; border-color: #ddd !important; color: #111 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="../../index.html">Playground</a>
+  <span class="nav-pill">Class Notes &rsaquo; Data Governance &rsaquo; Module 1</span>
+</nav>
+
+<div class="layout">
+
+  <!-- ── TOC SIDEBAR ─────────────────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="toc-label">Contents</div>
+    <nav class="toc">
+      <div class="toc-group">Foundations</div>
+      <a href="#s1" class="toc-link">1. Data Mgmt vs. Governance</a>
+      <a href="#s2" class="toc-link">2. Why Governance Matters</a>
+      <a href="#s3" class="toc-link">3. Data Quality</a>
+      <div class="toc-group">Access &amp; Flow</div>
+      <a href="#s4" class="toc-link">4. Data Discovery &amp; Catalog</a>
+      <a href="#s5" class="toc-link">5. Data Access &amp; Sharing</a>
+      <a href="#s6" class="toc-link">6. CIA Triad &amp; Integrity</a>
+      <a href="#s7" class="toc-link">7. Lineage &amp; Auditability</a>
+      <div class="toc-group">Framework</div>
+      <a href="#s8" class="toc-link">8. What Governance Is / Is Not</a>
+      <a href="#s9" class="toc-link">9. Data Classification</a>
+      <a href="#s10" class="toc-link">10. Core Components</a>
+      <a href="#s11" class="toc-link">11. Policies vs. Procedures</a>
+      <div class="toc-group">Operations</div>
+      <a href="#s12" class="toc-link">12. The Data Lifecycle</a>
+      <a href="#s13" class="toc-link">13. Master Data Management</a>
+      <a href="#s14" class="toc-link">14. Metadata Types</a>
+      <div class="toc-group">Architecture</div>
+      <a href="#s15" class="toc-link">15. Enterprise Architecture</a>
+      <a href="#s16" class="toc-link">16. Trust in Data</a>
+      <a href="#s17" class="toc-link">17. Why Governance Now</a>
+    </nav>
+  </aside>
+
+  <!-- ── MAIN CONTENT ────────────────────────────────────────── -->
+  <main class="content">
+
+    <!-- Header -->
+    <div class="breadcrumb">
+      <a href="../../index.html">Playground</a>
+      <span>/</span><span>Class Notes</span>
+      <span>/</span><span>Data Governance</span>
+      <span>/</span><span>Module 1</span>
+    </div>
+
+    <div class="page-badge">&#128221; Data Governance &mdash; Module 1</div>
+    <div class="page-header">
+      <h1>Data Governance Foundations</h1>
+    </div>
+    <p class="page-subtitle">What data governance is, why it matters, and how organizations enforce quality, trust, and accountability across their data assets.</p>
+    <div class="tag-row">
+      <span class="tag tag-blue">DMBOK</span>
+      <span class="tag tag-blue">MDM</span>
+      <span class="tag tag-green">Data Quality</span>
+      <span class="tag tag-green">Data Catalog</span>
+      <span class="tag tag-yellow">CIA Triad</span>
+      <span class="tag tag-yellow">Data Lifecycle</span>
+      <span class="tag tag-purple">Enterprise Architecture</span>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- SECTION 1 -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <section class="notes-section" id="s1">
+      <div class="section-header">
+        <span class="section-num">01</span>
+        <span class="section-title">Data Management vs. Data Governance</span>
+      </div>
+
+      <p class="prose">These two terms are often used interchangeably, but they have a precise relationship: <strong>data governance is a function within data management</strong>, not a separate discipline. Understanding the boundary between them is the first step to building a coherent data strategy.</p>
+
+      <div class="def-card">
+        <div class="def-label">Definition &mdash; DMBOK</div>
+        <div class="def-term">Data Management</div>
+        <div class="def-text">The development, execution, and supervision of <strong>all plans, programs, and practices</strong> that acquire, control, protect, deliver, and enhance the value of data and information assets. It is a continuous activity that spans the entire data lifecycle &mdash; from the moment data is conceived in a project brief to the moment it is purged from storage. It answers: <em>What data do we store? In what system? In what format? For how long?</em></div>
+      </div>
+
+      <div class="def-card">
+        <div class="def-label">Definition &mdash; DMBOK</div>
+        <div class="def-term">Data Governance</div>
+        <div class="def-text">The exercise of authority, control, and <strong>shared decision-making</strong> over the management of data assets. It is the <em>accountability framework</em> within data management &mdash; the set of policies, procedures, structures, roles, and responsibilities that enforce agreed standards on data. It answers: <em>Who owns this data? What rules govern its use? Who is accountable when quality fails?</em></div>
+      </div>
+
+      <div class="sub-label">How They Relate</div>
+      <table class="compare-table">
+        <thead>
+          <tr><th></th><th>Data Management</th><th>Data Governance</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Scope</strong></td><td>All data functions: storage, pipelines, security, quality, architecture, lifecycle</td><td>The accountability layer that sets the rules for all data functions</td></tr>
+          <tr><td><strong>Primary question</strong></td><td>How do we handle data?</td><td>Who decides, and who is responsible?</td></tr>
+          <tr><td><strong>Output</strong></td><td>Operational systems, databases, ETL pipelines, reports</td><td>Policies, business glossaries, ownership assignments, audit trails</td></tr>
+          <tr><td><strong>Nature</strong></td><td>Technical and operational</td><td>Organizational and behavioral</td></tr>
+          <tr><td><strong>Analogy</strong></td><td>Building and running a city</td><td>The city council that sets zoning laws and standards</td></tr>
+        </tbody>
+      </table>
+
+      <div class="insight-card">
+        <div class="insight-label">Key Insight</div>
+        <div class="insight-text">You can have data management without governance &mdash; organizations do it all the time. But the result is fragmented, siloed, and untrustworthy data. Governance is what transforms data management from a technical exercise into an <strong>organizational asset</strong>.</div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- SECTION 2 -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <section class="notes-section" id="s2">
+      <div class="section-header">
+        <span class="section-num">02</span>
+        <span class="section-title">Why Data Governance Matters</span>
+      </div>
+
+      <p class="prose">The starting point for any governance initiative is the question: <em>what happens to data if no one governs it?</em> The answer becomes obvious once you look at the scale and diversity of data inside a large organization.</p>
+
+      <div class="example-card">
+        <div class="example-label">Example &mdash; Amazon Scale</div>
+        <div class="example-title">A single e-commerce platform, many data domains</div>
+        <div class="example-text">
+          A platform like Amazon generates and stores data across completely separate domains:
+          <ul>
+            <li><strong>Customer data:</strong> profiles, preferences, purchase history, reviews</li>
+            <li><strong>Buyer data:</strong> payment methods, shipping addresses, wishlist behavior</li>
+            <li><strong>Seller data:</strong> seller accounts, product listings, fulfillment SLAs, fee structures</li>
+            <li><strong>Logistics data:</strong> driver routes, delivery timestamps, warehouse inventory, returns</li>
+            <li><strong>Employee data:</strong> HR records, payroll, access permissions, performance reviews</li>
+            <li><strong>Services data:</strong> AWS usage, subscriptions, API call logs</li>
+          </ul>
+          Without governance, each domain accumulates its own definitions, access rules, and quality standards. A &ldquo;customer&rdquo; in the logistics system may be a shipping address; in the marketing system, it may be an email subscriber. Reports built on these systems will conflict.
+        </div>
+      </div>
+
+      <div class="sub-label">Data Needs End Users to Have Value</div>
+      <p class="prose">Raw data with no consumer is storage cost. Data becomes valuable only when the right people can access it at the right time to make decisions. The e-commerce example above only generates value when:</p>
+
+      <div class="flow-wrap">
+        <div class="flow">
+          <div class="flow-node blue">Data Created<div class="fn-sub">Sales, logistics, CRM</div></div>
+          <div class="flow-arrow">&#8594;</div>
+          <div class="flow-node">Data Stored<div class="fn-sub">Warehouse, data lake</div></div>
+          <div class="flow-arrow">&#8594;</div>
+          <div class="flow-node green">Data Consumed<div class="fn-sub">Analysts, product teams</div></div>
+          <div class="flow-arrow">&#8594;</div>
+          <div class="flow-node yellow">Insights Generated<div class="fn-sub">Decisions, actions</div></div>
+          <div class="flow-arrow">&#8594;</div>
+          <div class="flow-node purple">Business Value<div class="fn-sub">Revenue, efficiency</div></div>
+        </div>
+      </div>
+
+      <div class="example-card">
+        <div class="example-label">Example &mdash; Cross-Department Data Impact</div>
+        <div class="example-title">How a single data point cascades across an organization</div>
+        <div class="example-text">
+          Imagine <strong>Widget X sales drop 40%</strong> over one quarter. This single signal in the sales dataset triggers decisions across every department:
+          <ul>
+            <li><strong>Operations:</strong> reduces Widget X production run volume; updates manufacturing schedules</li>
+            <li><strong>Procurement:</strong> cuts raw material purchase orders for Widget X components</li>
+            <li><strong>HR:</strong> may reassign production line workers; workforce planning data updated</li>
+            <li><strong>Finance:</strong> revises quarterly revenue forecast; updates budget model</li>
+            <li><strong>Marketing:</strong> launches discount campaign to clear inventory; attribution model updated</li>
+          </ul>
+          If the original sales data had a quality problem &mdash; say, one region&rsquo;s transactions were double-counted last quarter, making the apparent drop look worse than reality &mdash; every downstream decision cascades from a false premise. <strong>One bad data point, five wrong decisions.</strong>
+          <br><br>
+          The reverse is also true: a <strong>40% surge</strong> in Widget X would trigger over-production, excess raw material orders, and inflated forecasts. Governance ensures the sales data is trustworthy before it reaches downstream systems.
+        </div>
+      </div>
+
+      <div class="sub-label">FinTech: When Timing Is Everything</div>
+      <div class="concept-card">
+        <div class="concept-title">Data at the Right Time</div>
+        <div class="concept-text">In financial services, data quality is inseparable from timeliness. A credit decision made on 30-day-old income data may approve a borrower who has since defaulted elsewhere. A stock trade executed on stale price data creates real financial loss. In FinTech, data governance must ensure not only <em>accuracy</em> but <em>freshness</em> &mdash; the governance framework must define acceptable latency for each data asset.</div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- SECTION 3 -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <section class="notes-section" id="s3">
+      <div class="section-header">
+        <span class="section-num">03</span>
+        <span class="section-title">Data Quality &mdash; The Foundation of Trust</span>
+      </div>
+
+      <p class="prose">Data quality is the degree to which data accurately, completely, and consistently represents the real-world entities and events it is meant to describe. It is the most direct measure of whether data is fit for its intended purpose. Without quality, governance is a bureaucratic exercise; with it, governance becomes an organizational competitive advantage.</p>
+
+      <div class="four-col">
+        <div class="concept-card">
+          <div class="concept-title">&#9989; Accuracy</div>
+          <div class="concept-text">Does the data correctly represent reality? A customer address that was valid two years ago may no longer be accurate today.</div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">&#9989; Completeness</div>
+          <div class="concept-text">Is all required data present? A sales record with no product SKU or no transaction amount is incomplete and unusable for revenue analysis.</div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">&#9989; Consistency</div>
+          <div class="concept-text">Does the same fact appear the same way across systems? If Marketing records a customer email as lowercase and CRM stores it in mixed case, joins will fail.</div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">&#9989; Timeliness</div>
+          <div class="concept-text">Is data available when it is needed? Batch-processed sales data that arrives 48 hours late cannot support next-day operational decisions.</div>
+        </div>
+      </div>
+
+      <div class="example-card">
+        <div class="example-label">Example &mdash; Data Entry Quality</div>
+        <div class="example-title">Costco: Manual Entry vs. Automated POS</div>
+        <div class="example-text">
+          Imagine a Costco warehouse with no point-of-sale (POS) system &mdash; cashiers handwrite transaction slips. At end-of-day, someone manually enters them into a spreadsheet. The quality risks are immediate:
+          <ul>
+            <li>Handwriting misread: $12.99 recorded as $12.90 &mdash; small per transaction, large at scale</li>
+            <li>Missing fields: cashier skips item code for a produce item &mdash; inventory count breaks</li>
+            <li>Duplicate entry: same slip entered twice during a shift change</li>
+            <li>Delay: data from the morning shift is not in the system until evening &mdash; timeliness failure</li>
+          </ul>
+          An automated POS system eliminates most of these at the point of capture. But governance still matters: the POS must be configured to <em>require</em> all fields, validate product codes against a master catalog, and flag outliers. <strong>Technology reduces human error; governance eliminates structural gaps.</strong>
+        </div>
+      </div>
+
+      <div class="sub-label">Third-Party Data Quality</div>
+      <p class="prose">When an organization purchases external data &mdash; market research, demographic datasets, credit bureau feeds &mdash; they inherit the quality characteristics of that data without always having visibility into how it was collected, cleaned, or aged. A governance framework must include:</p>
+      <div class="num-list">
+        <div class="num-item">
+          <div class="num-badge">1</div>
+          <div class="num-content">
+            <div class="num-title">Vendor assessment criteria</div>
+            <div class="num-text">How was the data collected? What validation was applied? What is the refresh frequency?</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge">2</div>
+          <div class="num-content">
+            <div class="num-title">Ingestion-time profiling</div>
+            <div class="num-text">Automatically measure null rates, value distributions, and format consistency on every data feed upon arrival.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge">3</div>
+          <div class="num-content">
+            <div class="num-title">Contractual SLAs</div>
+            <div class="num-text">Define minimum quality thresholds in the vendor contract. If completeness drops below 95%, the SLA is breached.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-label">Key Insight</div>
+        <div class="insight-text">Quality must be enforced at <strong>every stage of the data lifecycle</strong>, not just at the point of storage. A record that enters the system at 100% quality can degrade over time if it is not refreshed, monitored, and validated during transformation. Governance provides the guardrails &mdash; but without quality, even the best-governed data cannot be trusted.</div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- SECTION 4 -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <section class="notes-section" id="s4">
+      <div class="section-header">
+        <span class="section-num">04</span>
+        <span class="section-title">Data Discovery &amp; the Data Catalog</span>
+      </div>
+
+      <p class="prose">Even high-quality data is worthless if no one can find it. In large organizations with dozens of teams producing data, the typical question is not &ldquo;does this data exist?&rdquo; but &ldquo;where does it exist, who owns it, and how do I request access?&rdquo; A <span class="term">data catalog</span> solves this problem by making data <strong>discoverable</strong>.</p>
+
+      <div class="def-card">
+        <div class="def-label">Definition</div>
+        <div class="def-term">Data Catalog</div>
+        <div class="def-text">An organized inventory of an organization&rsquo;s data assets that exposes <strong>metadata</strong> rather than actual data. It answers: what datasets exist, what fields they contain, who owns them, how fresh they are, and how to request access. The catalog is the &ldquo;storefront&rdquo; &mdash; the data itself lives in its source systems.</div>
+      </div>
+
+      <div class="sub-label">The Key Distinction: Metadata vs. Data</div>
+      <div class="two-col">
+        <div class="concept-card">
+          <div class="concept-title">What the Catalog Shows (Metadata)</div>
+          <div class="concept-text">
+            <ul>
+              <li>Table name: <code style="background:#21262d;padding:1px 5px;border-radius:4px;font-size:.85em;">orders.transactions</code></li>
+              <li>Fields: <code style="background:#21262d;padding:1px 5px;border-radius:4px;font-size:.85em;">order_id, customer_id, amount, ts</code></li>
+              <li>Owner: Sales Engineering team</li>
+              <li>Update frequency: Real-time</li>
+              <li>Sensitivity: Contains PII (customer_id)</li>
+              <li>Access policy: Request via self-service portal</li>
+            </ul>
+          </div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">What the Catalog Does NOT Show (Data)</div>
+          <div class="concept-text">
+            <ul>
+              <li>Actual order IDs or amounts</li>
+              <li>Actual customer names or addresses</li>
+              <li>Individual transaction records</li>
+            </ul>
+            <br>
+            You must request and be granted access to see the underlying data. The catalog tells you the data <em>exists and what shape it is in</em>; it does not grant open access to it.
+          </div>
+        </div>
+      </div>
+
+      <div class="sub-label">Questions the Catalog Must Answer</div>
+      <div class="num-list">
+        <div class="num-item">
+          <div class="num-badge green">1</div>
+          <div class="num-content">
+            <div class="num-title">Does this data exist?</div>
+            <div class="num-text">A data scientist looking for customer churn signals needs to know if behavioral clickstream data is even captured.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge green">2</div>
+          <div class="num-content">
+            <div class="num-title">Is this a legitimate request?</div>
+            <div class="num-text">The catalog supports governance by showing who has approved use cases for each dataset, preventing fishing expeditions.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge green">3</div>
+          <div class="num-content">
+            <div class="num-title">Do I need all the data or just a subset?</div>
+            <div class="num-text">A marketing analyst may only need aggregated purchase frequency &mdash; not individual transaction records. The catalog helps scope requests, reducing data exposure.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge green">4</div>
+          <div class="num-content">
+            <div class="num-title">How do I get access?</div>
+            <div class="num-text">The catalog links to the self-service access request portal, which routes requests through the data owner for approval.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge green">5</div>
+          <div class="num-content">
+            <div class="num-title">Can I keep a permanent copy?</div>
+            <div class="num-text">Governance policies in the catalog may specify whether data can be exported, how long a copy can be retained, and what must happen when the analysis is complete.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- SECTION 5 -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <section class="notes-section" id="s5">
+      <div class="section-header">
+        <span class="section-num">05</span>
+        <span class="section-title">Data Access &amp; Sharing</span>
+      </div>
+
+      <p class="prose">Once a consumer identifies data they need, the next governance question is <em>how</em> to share it. The two primary approaches are <span class="term">copying</span> the data to the consumer&rsquo;s environment, or <span class="term">reading</span> directly from the source. Each carries distinct tradeoffs.</p>
+
+      <table class="compare-table">
+        <thead>
+          <tr><th></th><th class="col-a">Copy the Data</th><th class="col-b">Read from Source</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Data freshness</strong></td><td>Snapshot at copy time; may go stale</td><td>Always reflects current state</td></tr>
+          <tr><td><strong>Ownership complexity</strong></td><td>Consumer becomes responsible for their copy</td><td>Source owner retains full control</td></tr>
+          <tr><td><strong>Risk of drift</strong></td><td>High &mdash; copy diverges from source over time</td><td>None &mdash; single source of truth</td></tr>
+          <tr><td><strong>Performance impact</strong></td><td>None on source after copy</td><td>Source system bears query load</td></tr>
+          <tr><td><strong>Regulatory risk</strong></td><td>Multiple PII copies increases compliance surface</td><td>Single copy, easier to audit</td></tr>
+          <tr><td><strong>Best for</strong></td><td>One-time analysis, archival, heavy compute jobs</td><td>Operational dashboards, real-time reporting</td></tr>
+        </tbody>
+      </table>
+
+      <div class="example-card">
+        <div class="example-label">Example &mdash; Data Marketplace</div>
+        <div class="example-title">Marketing team requests Sales data for attribution analysis</div>
+        <div class="example-text">
+          A data scientist on the Marketing team wants to merge sales conversion data with campaign impression data to measure ROI. They find the sales dataset in the catalog and submit a request.
+          <br><br>
+          <strong>Scenario A (Copy):</strong> Sales approves an export. Marketing receives a CSV snapshot of transactions from the past 90 days. Two weeks later, the Sales team corrects 200 records for a billing error &mdash; Marketing&rsquo;s copy is now permanently wrong. Their attribution model overstates campaign performance.
+          <br><br>
+          <strong>Scenario B (Read via API or shared view):</strong> Marketing is granted read-only access to a curated view of sales data (non-PII fields only). Their queries always reflect the current, corrected state. When Sales corrects the 200 records, Marketing&rsquo;s dashboard updates automatically.
+          <br><br>
+          The governance policy determines which approach is permitted based on data sensitivity, refresh requirements, and consumer use case.
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- SECTION 6 -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <section class="notes-section" id="s6">
+      <div class="section-header">
+        <span class="section-num">06</span>
+        <span class="section-title">CIA Triad &amp; Data Integrity</span>
+      </div>
+
+      <p class="prose">The CIA triad is a foundational security model, but it applies equally to data governance. Every time data moves &mdash; through ETL pipelines, API integrations, export jobs &mdash; all three properties must be preserved.</p>
+
+      <div class="three-col">
+        <div class="concept-card">
+          <div class="concept-title">&#128274; Confidentiality</div>
+          <div class="concept-text">Data is accessible only to those authorized to see it. During ETL, if a pipeline combines PII fields from a restricted table into a public-facing view, confidentiality is violated. Access controls must be re-applied after every transformation.</div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">&#128203; Integrity</div>
+          <div class="concept-text">Data has not been altered, corrupted, or lost during transit or transformation. Splitting a field, replacing nulls, or joining tables all carry integrity risk if not validated. The transformed data must accurately represent the original facts.</div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">&#9989; Availability</div>
+          <div class="concept-text">Data is accessible when needed. If an ETL job fails silently, consumers may receive stale or missing data without knowing it. Governance requires monitoring and alerting on data pipeline health.</div>
+        </div>
+      </div>
+
+      <div class="example-card">
+        <div class="example-label">Example &mdash; ETL Transformation Risk</div>
+        <div class="example-title">Splitting a single field into multiple columns</div>
+        <div class="example-text">
+          A source system stores a customer&rsquo;s address as a single string: <code style="background:#1a2f1a;padding:1px 6px;border-radius:4px;font-size:.85em;">full_address</code>. During ETL, the pipeline splits this into <code style="background:#1a2f1a;padding:1px 6px;border-radius:4px;font-size:.85em;">street</code>, <code style="background:#1a2f1a;padding:1px 6px;border-radius:4px;font-size:.85em;">city</code>, <code style="background:#1a2f1a;padding:1px 6px;border-radius:4px;font-size:.85em;">state</code>, <code style="background:#1a2f1a;padding:1px 6px;border-radius:4px;font-size:.85em;">zip</code>.
+          <br><br>
+          <strong>Integrity risks that must be governed:</strong>
+          <ul>
+            <li>International addresses: some countries have no &ldquo;state&rdquo; field &mdash; split logic may place city into the state column</li>
+            <li>Apartment numbers embedded in street: <em>123 Main St Apt 4B</em> &mdash; does &ldquo;Apt 4B&rdquo; get dropped?</li>
+            <li>Missing zip codes: do you store <code style="background:#1a2f1a;padding:1px 6px;border-radius:4px;font-size:.85em;">NULL</code>, <code style="background:#1a2f1a;padding:1px 6px;border-radius:4px;font-size:.85em;">0</code>, or an empty string? The choice affects downstream queries</li>
+            <li>Data loss: if the transformation fails on 3% of records and they are silently dropped, the consumer will never know</li>
+          </ul>
+          A governance policy must specify: what to do with unparseable records (reject, flag, or quarantine), how to handle nulls, and what validation rules must pass before the transformed data is published.
+        </div>
+      </div>
+
+      <div class="example-card">
+        <div class="example-label">Example &mdash; Correlation Integrity</div>
+        <div class="example-title">Transformation that breaks statistical relationships</div>
+        <div class="example-text">
+          A dataset shows a strong positive correlation between <strong>marketing spend</strong> and <strong>sales volume</strong>. During transformation, a developer normalizes the sales volume column using a different time-zone offset than the marketing spend column. The two series are now misaligned by 24 hours. After transformation, the correlation disappears. Analysts conclude marketing spend has no effect on sales &mdash; a completely false conclusion caused by a transformation integrity failure.
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- SECTION 7 -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <section class="notes-section" id="s7">
+      <div class="section-header">
+        <span class="section-num">07</span>
+        <span class="section-title">Data Lineage &amp; Auditability</span>
+      </div>
+
+      <p class="prose">Governance without accountability is just documentation. Organizations must be able to trace <em>who did what to data, when, and why</em>. This is the foundation of both regulatory compliance and organizational trust.</p>
+
+      <div class="def-card">
+        <div class="def-label">Definition</div>
+        <div class="def-term">Data Lineage</div>
+        <div class="def-text">A record of where data originated, how it has been transformed, and where it has traveled throughout its lifecycle. Lineage enables organizations to trace a value in a report all the way back to its source record &mdash; and every transformation in between. It answers: <em>Where did this number come from?</em></div>
+      </div>
+
+      <div class="def-card">
+        <div class="def-label">Definition</div>
+        <div class="def-term">Data Auditability</div>
+        <div class="def-text">The ability to produce a complete, verifiable history of all <strong>access, modification, and deletion</strong> events on a data asset. Auditability answers: <em>Who read this record? Who changed it? Who approved that change? When did all of this happen?</em> It is the operational log that supports both governance enforcement and regulatory compliance.</div>
+      </div>
+
+      <div class="example-card">
+        <div class="example-label">Example &mdash; SOX Compliance</div>
+        <div class="example-title">Financial reporting requires strict traceability</div>
+        <div class="example-text">
+          The Sarbanes-Oxley Act (SOX) requires companies to maintain internal controls over financial reporting. In practice, this means that any change to financial data must be:
+          <ul>
+            <li><strong>Authorized:</strong> only designated roles can modify financial records; no unauthorized write access</li>
+            <li><strong>Documented:</strong> every change includes who made it, what changed, and a business justification</li>
+            <li><strong>Reviewed:</strong> changes require approval from a second authorized party (separation of duties)</li>
+            <li><strong>Immutable in audit log:</strong> the audit trail itself cannot be altered after the fact</li>
+          </ul>
+          In a software engineering context, SOX-compliant Git practices mirror these requirements: <strong>branch protection</strong> prevents direct pushes to main; <strong>required pull request reviews</strong> enforce separation of duties; <strong>signed commits</strong> ensure identity; <strong>audit logs</strong> in GitHub Enterprise record all access and merge events. The governance policy says &ldquo;no one person can approve their own financial data change&rdquo; &mdash; the procedure implements that via required PR reviewers.
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- SECTION 8 -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <section class="notes-section" id="s8">
+      <div class="section-header">
+        <span class="section-num">08</span>
+        <span class="section-title">What Data Governance Is &mdash; and Is Not</span>
+      </div>
+
+      <p class="prose">One of the most common failure modes in governance programs is misunderstanding what governance actually is. Organizations either over-scope it (trying to govern everything equally) or under-scope it (delegating it entirely to IT).</p>
+
+      <div class="two-col">
+        <div class="concept-card" style="border-left:3px solid #3fb950;">
+          <div class="concept-title" style="color:#3fb950;">Data Governance IS&hellip;</div>
+          <div class="concept-text">
+            <ul>
+              <li><strong>About people and behavior first</strong> &mdash; the root of most data quality failures is human behavior (inconsistent entry, ignoring standards, skipping validation), not technology</li>
+              <li><strong>A shared agreement</strong> &mdash; cross-functional teams formally agree on definitions, ownership, and rules; these are written down and enforced</li>
+              <li><strong>An ongoing program</strong> &mdash; not a project with an end date; data changes continuously, so governance must adapt</li>
+              <li><strong>Value-adding</strong> &mdash; by increasing trust in data, governance directly improves the quality of decisions made from that data</li>
+              <li><strong>Risk management</strong> &mdash; governance reduces the risk of regulatory violations, data breaches, and reputational harm</li>
+            </ul>
+          </div>
+        </div>
+        <div class="warn-card">
+          <div class="warn-label">Data Governance IS NOT&hellip;</div>
+          <div class="warn-text">
+            <ul>
+              <li><strong>An IT-only responsibility</strong> &mdash; IT manages the tools and pipelines; business stakeholders own the data and define the rules. Delegating governance to IT is the most common reason programs fail</li>
+              <li><strong>Solved by technology</strong> &mdash; a data catalog, MDM platform, or lineage tool cannot govern without organizational commitment. Technology enables governance; it does not create it</li>
+              <li><strong>Applied equally to all data assets</strong> &mdash; not all data needs the same level of governance. Applying heavy controls to non-sensitive internal data wastes resources and generates resentment</li>
+              <li><strong>A one-time audit</strong> &mdash; governance is a continuous function, not a remediation project</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-label">Key Insight</div>
+        <div class="insight-text">The most important governance decision a business makes is <strong>who is responsible for the data</strong>. The person responsible may not be the person who uses the data. A data owner in the Sales department is accountable for the quality and access rules of sales data &mdash; even if it is a data scientist in Analytics who actually queries it. Separating ownership from consumption is a governance design principle, not a bureaucratic obstacle.</div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- SECTION 9 -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <section class="notes-section" id="s9">
+      <div class="section-header">
+        <span class="section-num">09</span>
+        <span class="section-title">Data Classification</span>
+      </div>
+
+      <p class="prose">Not all data carries the same sensitivity, compliance requirements, or business criticality. Before governance rules can be applied, data must be <span class="term">classified</span>. Classification is the act of assigning each data asset to a category that determines how it must be handled.</p>
+
+      <table class="compare-table">
+        <thead>
+          <tr><th>Classification</th><th>Description</th><th>Examples</th><th>Governance Implication</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span style="color:#f85149;font-weight:700;">Confidential / Restricted</span></td>
+            <td>Highest sensitivity; unauthorized disclosure causes serious harm</td>
+            <td>PII, health records, financial models, trade secrets</td>
+            <td>Strict access controls, encryption at rest and in transit, full audit trail, regulatory compliance (GDPR, HIPAA)</td>
+          </tr>
+          <tr>
+            <td><span style="color:#e3b341;font-weight:700;">Internal</span></td>
+            <td>For authorized employees only; not for external release</td>
+            <td>Salary bands, org charts, internal pricing, unreleased product roadmaps</td>
+            <td>Role-based access control, cannot be shared with vendors without NDA, limited retention policies</td>
+          </tr>
+          <tr>
+            <td><span style="color:#3fb950;font-weight:700;">Public</span></td>
+            <td>Approved for external disclosure; minimal restriction</td>
+            <td>Press releases, published pricing, marketing materials</td>
+            <td>No special access controls required, but content governance ensures accuracy before publication</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="example-card">
+        <div class="example-label">Example &mdash; Cross-Team Data Sharing with Classification</div>
+        <div class="example-title">What the Marketing team can access from the Sales team</div>
+        <div class="example-text">
+          The Sales team dataset contains:
+          <ul>
+            <li><span style="color:#f85149;font-weight:700;">Confidential:</span> customer name, email, phone, billing address, payment method</li>
+            <li><span style="color:#e3b341;font-weight:700;">Internal:</span> sales rep name, commission rate, pipeline stage, negotiated discount</li>
+            <li><span style="color:#3fb950;font-weight:700;">Shareable:</span> product category purchased, transaction month, region, order value (aggregated)</li>
+          </ul>
+          The Marketing team needs purchase behavior data to run attribution analysis. Governance ensures they receive only the <strong>shareable fields</strong> &mdash; aggregated order values and product categories by region &mdash; without access to individual customer identifiers or rep commission data. Classification is the mechanism that makes this surgical sharing possible.
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- SECTION 10 -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <section class="notes-section" id="s10">
+      <div class="section-header">
+        <span class="section-num">10</span>
+        <span class="section-title">Core Components: People, Processes, Technology</span>
+      </div>
+
+      <p class="prose">Every data governance program rests on three interdependent pillars. A program strong in technology but weak in people will have tools that go unused. Strong processes with no technology backbone will not scale. Strong people without clear processes will produce inconsistent results.</p>
+
+      <div class="three-col">
+        <div class="pillar-card">
+          <div class="pillar-icon">&#128101;</div>
+          <div class="pillar-name">People</div>
+          <div class="pillar-desc">Roles and responsibilities: Data Owners, Data Stewards, Data Custodians, Data Consumers, and the Governance Council. Each role has defined accountability for a specific aspect of data quality, access, and lifecycle.</div>
+        </div>
+        <div class="pillar-card">
+          <div class="pillar-icon">&#9881;&#65039;</div>
+          <div class="pillar-name">Processes</div>
+          <div class="pillar-desc">The formal workflows: how data access is requested and approved, how quality issues are escalated, how new data assets are registered in the catalog, how policy exceptions are handled, and how data is retired at end-of-life.</div>
+        </div>
+        <div class="pillar-card">
+          <div class="pillar-icon">&#128187;</div>
+          <div class="pillar-name">Technology</div>
+          <div class="pillar-desc">The tools that enable and enforce governance at scale: data catalogs (OpenMetadata, Collibra, Alation), lineage tools, ETL monitoring platforms, access management systems (IAM, Okta), and audit logging infrastructure.</div>
+        </div>
+      </div>
+
+      <div class="sub-label">Role Definitions</div>
+      <table class="compare-table">
+        <thead>
+          <tr><th>Role</th><th>Responsibility</th><th>Example</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><span class="term">Data Owner</span></td><td>Business decision-maker accountable for a data domain; approves access, sets quality standards, resolves disputes</td><td>VP of Sales owns the <em>sales transactions</em> domain</td></tr>
+          <tr><td><span class="term">Data Steward</span></td><td>Day-to-day custodian; implements owner&rsquo;s policies, maintains metadata, monitors quality</td><td>Sales Ops Analyst maintains field definitions and validates daily loads</td></tr>
+          <tr><td><span class="term">Data Custodian</span></td><td>Technical owner; manages the infrastructure where data lives (databases, storage, pipelines)</td><td>Data Engineering team manages the Databricks lakehouse</td></tr>
+          <tr><td><span class="term">Data Consumer</span></td><td>Uses data for analysis, reporting, or operational tasks; subject to access policies</td><td>Data Scientist on the Marketing team runs attribution models</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- SECTION 11 -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <section class="notes-section" id="s11">
+      <div class="section-header">
+        <span class="section-num">11</span>
+        <span class="section-title">Policies vs. Procedures</span>
+      </div>
+
+      <p class="prose">Governance operates through two complementary instruments. Confusing them leads to policies that are impossible to follow and procedures that exist without authority behind them.</p>
+
+      <div class="two-col">
+        <div class="def-card">
+          <div class="def-label">Definition</div>
+          <div class="def-term">Policy</div>
+          <div class="def-text">A formal, high-level statement of intent and rules that expresses <em>what must be true</em> about data. Policies are technology-agnostic and role-agnostic &mdash; they describe the goal, not the method. Approved by governance leadership. <br><br><em>Example: &ldquo;Pricing data shall be accessible only to Finance personnel with an approved business justification. Pricing data shall not be shared externally without Legal approval.&rdquo;</em></div>
+        </div>
+        <div class="def-card">
+          <div class="def-label">Definition</div>
+          <div class="def-term">Procedure</div>
+          <div class="def-text">A step-by-step operational instruction that describes <em>how</em> to comply with a policy. Procedures are specific to tools, roles, and workflows. Written by teams. <br><br><em>Example: &ldquo;To request access to pricing data: (1) Log into the ServiceNow portal. (2) Submit a Data Access Request form. (3) Select &lsquo;pricing_data&rsquo; from the asset catalog. (4) Provide business justification. (5) Request routes to Finance Data Owner for approval within 2 business days.&rdquo;</em></div>
+        </div>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-label">Key Insight</div>
+        <div class="insight-text">A policy without a procedure is aspirational but unenforceable. A procedure without a policy has no authority &mdash; anyone can challenge it. <strong>Every governance policy must have a corresponding procedure</strong> that makes compliance achievable by a real person following real steps in a real system.</div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- SECTION 12 -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <section class="notes-section" id="s12">
+      <div class="section-header">
+        <span class="section-num">12</span>
+        <span class="section-title">The Data Lifecycle</span>
+      </div>
+
+      <p class="prose">Governance must cover data from creation to destruction. Quality standards, access controls, and retention policies all change at different lifecycle stages. Managing only the &ldquo;storage&rdquo; phase while ignoring creation, transformation, or purge is a governance gap that regulators and auditors will find.</p>
+
+      <div class="flow-wrap">
+        <div class="flow">
+          <div class="flow-node blue">Creation<div class="fn-sub">ERP, POS, IoT</div></div>
+          <div class="flow-arrow">&#8594;</div>
+          <div class="flow-node">Storage<div class="fn-sub">DB, data lake</div></div>
+          <div class="flow-arrow">&#8594;</div>
+          <div class="flow-node green">Processing<div class="fn-sub">ETL, cleanse</div></div>
+          <div class="flow-arrow">&#8594;</div>
+          <div class="flow-node yellow">Consumption<div class="fn-sub">Reports, APIs</div></div>
+          <div class="flow-arrow">&#8594;</div>
+          <div class="flow-node purple">Publication<div class="fn-sub">Statements, filings</div></div>
+          <div class="flow-arrow">&#8594;</div>
+          <div class="flow-node">Archival<div class="fn-sub">Compliance store</div></div>
+          <div class="flow-arrow">&#8594;</div>
+          <div class="flow-node red">Purge<div class="fn-sub">Secure deletion</div></div>
+        </div>
+      </div>
+
+      <div class="example-card">
+        <div class="example-label">Example &mdash; Manufacturing</div>
+        <div class="example-title">Data lifecycle for a corrugated box production run</div>
+        <div class="example-text">
+          Follow a single production order through its data lifecycle:
+          <ol>
+            <li><strong>Creation:</strong> Customer places order via ERP portal. Order record created: <em>product SKU, quantity, delivery date, substrate spec (B-flute, 200# ECT)</em>. Data quality check: all required fields populated?</li>
+            <li><strong>Storage:</strong> Order stored in ERP database. Production scheduling system pulls order into queue. Raw material inventory checked &mdash; kraft paper, starch adhesive stock levels updated.</li>
+            <li><strong>Processing:</strong> Production run begins. Sensors on the corrugator capture real-time quality data: board thickness (mm), flute height, ECT strength readings every 15 seconds. ETL pipeline aggregates to hourly QC summaries and flags readings outside spec.</li>
+            <li><strong>Consumption:</strong> Quality dashboard shows operators real-time pass/fail rates. Plant manager sees daily production yield. Finance sees cost-per-unit against standard cost. Each consumer sees only the data relevant to their role.</li>
+            <li><strong>Publication:</strong> Monthly customer quality report generated: defect rate, on-time delivery %, and board specification compliance. Shared with customer.</li>
+            <li><strong>Archival:</strong> After order closes, detailed sensor logs moved from production database to cold storage. Retained for 7 years per ISO quality compliance requirements. Accessible for audit but not in active query path.</li>
+            <li><strong>Purge:</strong> After 7-year retention window, sensor logs are securely deleted. Customer PII (shipping address, contact name) deleted in accordance with GDPR/CCPA right-to-erasure policy. Deletion event logged in audit trail.</li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="sub-label">Data in Different Formats &mdash; Governance Applies to All</div>
+      <div class="concept-card">
+        <div class="concept-title">Not Just Databases</div>
+        <div class="concept-text">
+          Data governance is not limited to structured relational databases. Every format requires its own handling approach:
+          <ul>
+            <li><strong>PDF:</strong> Thomson Reuters and S&amp;P Global ingest tens of thousands of annual reports from stock exchanges worldwide as PDFs, run OCR and extraction pipelines, and convert them into structured financial data. Governance here covers extraction accuracy, versioning of the source document, and auditability of extraction logic changes.</li>
+            <li><strong>Images &amp; Audio:</strong> Medical imaging files, insurance claim photos, and call center recordings must be governed for retention, access control, and HIPAA/GDPR compliance.</li>
+            <li><strong>XML &amp; JSON:</strong> API payloads and event streams must be versioned and schema-governed to prevent silent breaking changes in consuming systems.</li>
+            <li><strong>OLAP Systems:</strong> Analytical cubes and aggregated warehouse tables require additional governance because they represent <em>derived</em> data &mdash; their lineage back to raw source records must be maintained.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="sub-label">ETL Missing Value Governance</div>
+      <div class="concept-card">
+        <div class="concept-title">What to do with NULL values?</div>
+        <div class="concept-text">
+          When transforming data, missing values are a governance decision, not a developer preference:
+          <ul>
+            <li><strong>Replace with 0:</strong> appropriate for numerical metrics where absence means zero (e.g., no sales this month = 0). Dangerous if absence actually means &ldquo;unknown&rdquo; &mdash; a 0 in a credit score field is catastrophically different from NULL.</li>
+            <li><strong>Retain NULL:</strong> preserves the distinction between &ldquo;zero&rdquo; and &ldquo;not recorded&rdquo;. Preferred for analytical systems where consumers need to understand data completeness.</li>
+            <li><strong>Exclude the record:</strong> only acceptable when the NULL field is required for the analysis and cannot be imputed without introducing bias.</li>
+          </ul>
+          The governance policy must specify which approach applies to each field type. The procedure documents how the ETL code implements that choice.
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- SECTION 13 -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <section class="notes-section" id="s13">
+      <div class="section-header">
+        <span class="section-num">13</span>
+        <span class="section-title">Master Data Management (MDM)</span>
+      </div>
+
+      <p class="prose">As organizations grow, the same real-world entity &mdash; a customer, a product, an employee &mdash; accumulates multiple representations across siloed systems, each with slightly different definitions, identifiers, and attribute sets. MDM is the discipline that creates and maintains a single, authoritative version of each core entity.</p>
+
+      <div class="example-card">
+        <div class="example-label">Example &mdash; Terminology Conflict</div>
+        <div class="example-title">&ldquo;Customer&rdquo; means something different in every system</div>
+        <div class="example-text">
+          <table style="width:100%;font-size:.82rem;border-collapse:collapse;">
+            <tr style="border-bottom:1px solid #238636;">
+              <td style="padding:.4rem .7rem;color:#56d364;font-weight:700;">System</td>
+              <td style="padding:.4rem .7rem;color:#56d364;font-weight:700;">Term used</td>
+              <td style="padding:.4rem .7rem;color:#56d364;font-weight:700;">Definition</td>
+            </tr>
+            <tr style="border-bottom:1px solid #1a3a1a;">
+              <td style="padding:.4rem .7rem;">CRM</td><td style="padding:.4rem .7rem;">&ldquo;Customer&rdquo;</td><td style="padding:.4rem .7rem;">Any account with a registered profile, regardless of purchase history</td>
+            </tr>
+            <tr style="border-bottom:1px solid #1a3a1a;">
+              <td style="padding:.4rem .7rem;">Marketing</td><td style="padding:.4rem .7rem;">&ldquo;Consumer&rdquo;</td><td style="padding:.4rem .7rem;">Anyone who has opened a marketing email in the last 90 days</td>
+            </tr>
+            <tr style="border-bottom:1px solid #1a3a1a;">
+              <td style="padding:.4rem .7rem;">Sales</td><td style="padding:.4rem .7rem;">&ldquo;Client&rdquo;</td><td style="padding:.4rem .7rem;">Any account that has completed at least one paid transaction</td>
+            </tr>
+            <tr>
+              <td style="padding:.4rem .7rem;">Finance</td><td style="padding:.4rem .7rem;">&ldquo;Counterparty&rdquo;</td><td style="padding:.4rem .7rem;">Any entity that appears on an invoice</td>
+            </tr>
+          </table>
+          <br>
+          When the CEO asks &ldquo;how many customers do we have?&rdquo;, every department gives a different number &mdash; and they are all correct according to their own definition. MDM resolves this by creating a single <strong>Business Glossary</strong> entry for &ldquo;Customer&rdquo; with one agreed definition, and mapping all system-specific terms to it.
+        </div>
+      </div>
+
+      <div class="sub-label">4 Implementation Styles</div>
+      <div class="num-list">
+        <div class="num-item">
+          <div class="num-badge">1</div>
+          <div class="num-content">
+            <div class="num-title">Consolidation Style</div>
+            <div class="num-text">All records from source systems are pulled into the MDM hub, cleansed, de-duplicated, and merged into a &ldquo;golden record.&rdquo; The hub publishes this record back to consuming systems. <em>Best for:</em> organizations willing to invest heavily in data quality; creates the highest-trust single record. <em>Risk:</em> if the hub goes down, all systems lose their authoritative reference.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge purple">2</div>
+          <div class="num-content">
+            <div class="num-title">Registry Style</div>
+            <div class="num-text">The MDM hub does NOT copy or store data. Instead, it maintains a cross-reference index of identifiers across systems (e.g., CRM ID 1234 = Sales ID A-789 = Finance ID INV-002). Data stays in source systems. <em>Best for:</em> organizations with strong source systems and no appetite for a central data store. <em>Risk:</em> data quality and consistency remain distributed.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge green">3</div>
+          <div class="num-content">
+            <div class="num-title">Centralized Style</div>
+            <div class="num-text">The MDM hub is the <em>system of record</em> &mdash; the authoritative source. All other systems read from and write to it. No system maintains its own copy of master data. <em>Best for:</em> greenfield implementations or organizations with strong governance authority. <em>Risk:</em> highest implementation cost; single point of failure; requires organizational buy-in to deprecate local records.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge yellow">4</div>
+          <div class="num-content">
+            <div class="num-title">Coexistence Style</div>
+            <div class="num-text">Both the MDM hub and source systems maintain copies of master data, synchronized bi-directionally. The hub publishes a golden record, but source systems can still operate independently. <em>Best for:</em> large organizations with diverse, autonomous business units. <em>Risk:</em> synchronization conflicts must be governed; most complex to maintain over time.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- SECTION 14 -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <section class="notes-section" id="s14">
+      <div class="section-header">
+        <span class="section-num">14</span>
+        <span class="section-title">Metadata Types</span>
+      </div>
+
+      <p class="prose"><span class="term">Metadata</span> is data about data. It is the layer that makes data discoverable, understandable, and governable. Without metadata, data is a table of values with no context. There are three distinct types used in enterprise governance.</p>
+
+      <div class="three-col">
+        <div class="concept-card" style="border-top:3px solid #58a6ff;">
+          <div class="concept-title" style="color:#58a6ff;">Business Glossary</div>
+          <div class="concept-text">
+            Human-readable definitions of <strong>business terms</strong> used in an organization. Written in plain language for business stakeholders. Defines <em>what a term means</em> in the context of the business.
+            <br><br>
+            <em>Examples:</em>
+            <ul>
+              <li>&ldquo;Active Customer&rdquo; &mdash; a customer who has made at least one purchase in the last 12 months</li>
+              <li>&ldquo;Churn&rdquo; &mdash; a customer who was Active and has not purchased in 13+ months</li>
+              <li>&ldquo;Revenue&rdquo; &mdash; gross transaction value net of refunds and chargebacks</li>
+            </ul>
+            Owned by: Business Data Owners and Stewards.
+          </div>
+        </div>
+        <div class="concept-card" style="border-top:3px solid #bc8cff;">
+          <div class="concept-title" style="color:#bc8cff;">Enterprise Glossary</div>
+          <div class="concept-text">
+            A <strong>cross-departmental</strong> and cross-system standardization layer. Resolves conflicts between different teams using different terms for the same concept (see the &ldquo;Customer / Consumer / Client&rdquo; example). Enforces one canonical definition across the organization.
+            <br><br>
+            The Enterprise Glossary supersedes individual team Business Glossaries when there is a conflict. It is the governance mechanism that enables data from different teams to be joined and compared meaningfully.
+            <br><br>
+            Owned by: Data Governance Council.
+          </div>
+        </div>
+        <div class="concept-card" style="border-top:3px solid #3fb950;">
+          <div class="concept-title" style="color:#3fb950;">Data Dictionary</div>
+          <div class="concept-text">
+            Technical metadata about the <strong>physical structure</strong> of data: field names, data types, lengths, constraints, valid values, primary/foreign keys, relationships, and nullability rules.
+            <br><br>
+            <em>Example entry:</em><br>
+            <code style="background:#0d1117;font-size:.78em;padding:4px 8px;border-radius:4px;display:block;margin:.5rem 0;color:#a5d6ff;">customer_id: INT(11), NOT NULL, PK<br>email: VARCHAR(255), UNIQUE<br>created_at: TIMESTAMP, DEFAULT NOW()</code>
+            Bridges the business glossary (&ldquo;Customer&rdquo;) to the physical table (<code style="background:#0d1117;font-size:.78em;padding:1px 5px;border-radius:4px;color:#a5d6ff;">customers.customer_id</code>).
+            <br><br>
+            Owned by: Data Custodians (Engineering).
+          </div>
+        </div>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-label">How the Three Layers Work Together</div>
+        <div class="insight-text">
+          The <strong>Business Glossary</strong> defines &ldquo;Active Customer.&rdquo;<br>
+          The <strong>Enterprise Glossary</strong> ensures Marketing, Sales, and Finance all use the same definition.<br>
+          The <strong>Data Dictionary</strong> tells a developer exactly which field in which table (<code style="background:#2a1f00;font-size:.8em;padding:1px 5px;border-radius:4px;color:#ffa657;">customers.last_purchase_date</code>) implements that definition.<br><br>
+          Together, they close the gap between business intent and technical implementation &mdash; the root cause of most reporting discrepancies.
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- SECTION 15 -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <section class="notes-section" id="s15">
+      <div class="section-header">
+        <span class="section-num">15</span>
+        <span class="section-title">Enterprise Architecture &amp; Data Governance</span>
+      </div>
+
+      <p class="prose">Data governance does not exist in isolation &mdash; it operates within the context of the organization&rsquo;s <span class="term">Enterprise Architecture (EA)</span>. The EA diagram shows how all systems connect, how data flows between them, and where transformations occur. It is the map that makes governance decisions meaningful.</p>
+
+      <div class="two-col">
+        <div class="def-card">
+          <div class="def-label">Role</div>
+          <div class="def-term">Enterprise Architect</div>
+          <div class="def-text">Responsible for the <strong>strategic view</strong> of the entire organization&rsquo;s technology landscape. Does not resolve individual data quality issues or build specific solutions. Instead, identifies structural problems in <em>how systems are designed to interact</em>. If a data integrity problem exists, the EA asks: is this a design flaw in how systems are connected, or an operational failure within one system?</div>
+        </div>
+        <div class="def-card">
+          <div class="def-label">Role</div>
+          <div class="def-term">Solutions Architect</div>
+          <div class="def-text">Responsible for the <strong>deep design</strong> of a specific system or domain. Knows the internals of a particular application, its data model, and its integration points. Where the EA sees patterns across the organization, the Solutions Architect solves specific problems within one bounded context.</div>
+        </div>
+      </div>
+
+      <div class="example-card">
+        <div class="example-label">Example &mdash; CityU School of Technology and Computing</div>
+        <div class="example-title">Enterprise Architecture and data flow across academic systems</div>
+        <div class="example-text">
+          Consider the data architecture at a university. An Enterprise Architect reviewing CityU&rsquo;s systems would map the following:
+          <br><br>
+          <strong>Core systems and their data domains:</strong>
+          <ul>
+            <li><strong>Student Information System (SIS):</strong> master record for student identity, enrollment status, program, credits completed</li>
+            <li><strong>Learning Management System (LMS / Blackboard):</strong> course materials, assignment submissions, quiz scores, attendance</li>
+            <li><strong>Grading Module:</strong> final grade computation, GPA calculation, grade change workflow</li>
+            <li><strong>Financial System:</strong> tuition billing linked to enrollment units; financial holds linked to payment status</li>
+            <li><strong>Reporting / Analytics:</strong> academic performance dashboards, retention risk scoring, accreditation reports</li>
+          </ul>
+          <br>
+          <strong>Governance questions an EA would raise:</strong>
+          <ul>
+            <li>Does the same student have the same ID across SIS, LMS, and Finance? Or does each system use a different identifier? (Master Data problem)</li>
+            <li>If a student withdraws mid-semester, which system is updated first? Do all downstream systems reflect the withdrawal simultaneously or with a delay? (Data consistency)</li>
+            <li>Can a faculty member see a student&rsquo;s financial hold status? Should they? (Access classification)</li>
+            <li>If a grade changes after submission, is there an audit trail of who changed it, when, and why? (Auditability / SOX-analogue for academic integrity)</li>
+          </ul>
+          <br>
+          <strong>The EA does not fix the inconsistent student ID formats</strong> &mdash; that is the Solutions Architect&rsquo;s job. The EA identifies that the problem exists at the <em>design level</em> (systems were built independently without a shared identity standard) and recommends an MDM strategy to resolve it.
+        </div>
+      </div>
+
+      <div class="sub-label">Attribution Example: Data Integration in Practice</div>
+      <div class="example-card">
+        <div class="example-label">Example &mdash; Ads Attribution</div>
+        <div class="example-title">Tracing a purchase back to the ad that influenced it</div>
+        <div class="example-text">
+          A user sees a Facebook ad for a product. Two days later, they click a Google search ad. Three days later, they purchase directly on the website. Which marketing channel gets credit for the sale?
+          <br><br>
+          Answering this question requires merging data from four separate systems:
+          <ul>
+            <li><strong>Facebook Ads Manager:</strong> impression timestamp, ad ID, user cookie/device ID</li>
+            <li><strong>Google Ads:</strong> click timestamp, keyword, campaign ID, GCLID</li>
+            <li><strong>Website Analytics:</strong> session events, page views, cart additions, UTM parameters</li>
+            <li><strong>E-commerce Order System:</strong> purchase timestamp, order value, customer ID</li>
+          </ul>
+          Governance challenges in this data integration:
+          <ul>
+            <li><strong>Identity resolution:</strong> the &ldquo;user&rdquo; in Facebook and Google is a cookie; the &ldquo;customer&rdquo; in the order system is an authenticated account. Linking them without violating privacy requires a governed identity graph.</li>
+            <li><strong>Attribution model:</strong> last-click, first-click, and multi-touch models produce different revenue attribution numbers. Governance must define which model is canonical for reporting to avoid each team claiming different credit.</li>
+            <li><strong>Data freshness:</strong> ad platform data is delayed by 24-48 hours; order data is real-time. A time-join across these requires governance rules on how to handle the lag.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- SECTION 16 -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <section class="notes-section" id="s16">
+      <div class="section-header">
+        <span class="section-num">16</span>
+        <span class="section-title">The Three Pillars of Trust in Data</span>
+      </div>
+
+      <p class="prose">The ultimate goal of data governance is to build and sustain <strong>organizational trust in data</strong>. When stakeholders trust the data, they use it to make decisions. When they distrust it, they revert to instinct and politics. Trust is built on three pillars.</p>
+
+      <div class="three-col">
+        <div class="pillar-card" style="border-top:3px solid #58a6ff;">
+          <div class="pillar-icon">&#127919;</div>
+          <div class="pillar-name">Accuracy</div>
+          <div class="pillar-desc">Data correctly represents the real-world entities and events it describes. Consumers can rely on values as true reflections of reality, validated at source and monitored throughout the lifecycle.</div>
+        </div>
+        <div class="pillar-card" style="border-top:3px solid #3fb950;">
+          <div class="pillar-icon">&#9989;</div>
+          <div class="pillar-name">Availability</div>
+          <div class="pillar-desc">The right data is accessible to the right people at the right time. No governance program creates trust if authorized users face friction, delays, or opaque processes to obtain data they have legitimate need for.</div>
+        </div>
+        <div class="pillar-card" style="border-top:3px solid #e3b341;">
+          <div class="pillar-icon">&#128279;</div>
+          <div class="pillar-name">Lineage</div>
+          <div class="pillar-desc">The complete origin, transformation history, and movement of data is traceable. When a number in a report is questioned, lineage allows any user to trace it back to its source record and every transformation in between.</div>
+        </div>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-label">Key Insight</div>
+        <div class="insight-text">Trust is cumulative and fragile. A single high-visibility data quality failure &mdash; a board-level report with wrong revenue numbers &mdash; can erase months of governance progress. <strong>Trust takes time to build and seconds to destroy.</strong> Governance is the continuous investment that makes trust durable rather than accidental.</div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- SECTION 17 -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <section class="notes-section" id="s17">
+      <div class="section-header">
+        <span class="section-num">17</span>
+        <span class="section-title">Why Data Governance Is Urgent Now</span>
+      </div>
+
+      <p class="prose">Data governance has existed as a concept for decades, but the urgency has accelerated dramatically in the last ten years. Four forces have converged to make ungoverned data a critical organizational risk.</p>
+
+      <div class="num-list">
+        <div class="num-item">
+          <div class="num-badge">1</div>
+          <div class="num-content">
+            <div class="num-title">Explosion of Data Volume</div>
+            <div class="num-text">The shift to cloud infrastructure, IoT sensors, clickstream capture, and social data has multiplied the volume of enterprise data by orders of magnitude. More data means more opportunity for inconsistency, duplication, and misuse. Governance that worked at gigabyte scale collapses at petabyte scale without systematic tooling.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge purple">2</div>
+          <div class="num-content">
+            <div class="num-title">More Users Accessing Data</div>
+            <div class="num-text">The democratization of data &mdash; self-service analytics, embedded dashboards, data marketplaces &mdash; means thousands of employees now access data that was previously restricted to a handful of analysts. More consumers means more surface area for misinterpretation, accidental disclosure, and quality erosion.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge green">3</div>
+          <div class="num-content">
+            <div class="num-title">Advanced Data Collection Methods</div>
+            <div class="num-text">Behavioral tracking, biometrics, location data, and machine-generated event streams collect sensitive data at frequencies and granularities that were previously impossible. This data requires not just quality governance but ethical governance: are we collecting what we said we would collect? Are we using it in ways users consented to?</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge yellow">4</div>
+          <div class="num-content">
+            <div class="num-title">Regulatory Requirements</div>
+            <div class="num-text">Global data privacy regulations have introduced legal liability for governance failures. <strong>GDPR</strong> (EU): fines up to 4% of global annual revenue for mishandling personal data. <strong>CCPA</strong> (California): consumers can sue for data breaches of their personal information. <strong>SOX</strong>: financial data governance failures expose executives to personal liability. <strong>HIPAA</strong>: healthcare data governance violations carry criminal penalties. Governance is no longer optional &mdash; it is legally required.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="warn-card">
+        <div class="warn-label">The Cost of No Governance</div>
+        <div class="warn-text">
+          <ul>
+            <li><strong>Regulatory fines:</strong> British Airways, GDPR fine &mdash; &pound;20M for a data breach traceable to inadequate access controls</li>
+            <li><strong>Decision failures:</strong> conflicting reports force executives to choose which dataset to believe, or make decisions without data entirely</li>
+            <li><strong>Integration collapse:</strong> mergers and acquisitions fail to realize synergies because acquired company data cannot be merged with acquiring company data without months of remediation</li>
+            <li><strong>Reputational harm:</strong> a single public data leak of customer PII can permanently erode consumer trust</li>
+          </ul>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- SUMMARY -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <hr class="divider">
+    <div class="sub-label">Module 1 Summary</div>
+    <table class="compare-table">
+      <thead>
+        <tr><th>Concept</th><th>One-Line Summary</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><span class="term">Data Management</span></td><td>All functions that acquire, store, protect, and deliver data across its lifecycle</td></tr>
+        <tr><td><span class="term">Data Governance</span></td><td>The accountability framework within data management: policies, roles, and enforcement</td></tr>
+        <tr><td><span class="term">Data Quality</span></td><td>Accuracy + Completeness + Consistency + Timeliness &mdash; enforced at every lifecycle stage</td></tr>
+        <tr><td><span class="term">Data Catalog</span></td><td>An inventory of metadata that makes data discoverable without exposing the underlying data</td></tr>
+        <tr><td><span class="term">CIA Triad</span></td><td>Confidentiality, Integrity, Availability &mdash; must be preserved during every ETL transformation</td></tr>
+        <tr><td><span class="term">Data Lineage</span></td><td>The traceable origin and transformation history of every data asset</td></tr>
+        <tr><td><span class="term">Classification</span></td><td>Assigning sensitivity levels (Confidential / Internal / Public) to govern access and handling</td></tr>
+        <tr><td><span class="term">MDM</span></td><td>A single authoritative record for core business entities, resolving cross-system naming conflicts</td></tr>
+        <tr><td><span class="term">Metadata Types</span></td><td>Business Glossary (what terms mean) + Enterprise Glossary (cross-team alignment) + Data Dictionary (physical structure)</td></tr>
+        <tr><td><span class="term">3 Pillars of Trust</span></td><td>Accuracy, Availability, Lineage &mdash; the measurable outcomes of a governance program</td></tr>
+      </tbody>
+    </table>
+
+  </main>
+</div>
+
+<footer class="site-footer">
+  Class Notes &mdash; Data Governance &mdash; Module 1 &nbsp;&bull;&nbsp; &copy; Clark Ngo
+</footer>
+
+<script>
+  // Active TOC link on scroll
+  const sections = document.querySelectorAll(".notes-section");
+  const tocLinks = document.querySelectorAll(".toc-link");
+
+  function updateToc() {
+    let current = "";
+    sections.forEach(function(sec) {
+      const top = sec.getBoundingClientRect().top;
+      if (top <= 100) {
+        current = sec.id;
+      }
+    });
+    tocLinks.forEach(function(link) {
+      link.classList.remove("active");
+      if (link.getAttribute("href") === "#" + current) {
+        link.classList.add("active");
+      }
+    });
+  }
+
+  window.addEventListener("scroll", updateToc, { passive: true });
+  updateToc();
+
+  // Smooth scroll
+  tocLinks.forEach(function(link) {
+    link.addEventListener("click", function(e) {
+      e.preventDefault();
+      const target = document.querySelector(link.getAttribute("href"));
+      if (target) {
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    });
+  });
+</script>
+
+</body>
+</html>
