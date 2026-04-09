@@ -7,6 +7,12 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ## 2026-04-09
 
+### [feature] `index.html` — Classroom nav group and content sections
+- Added "Classroom" sidebar nav section with two links: Class Notes and Class Activities (each badged with count)
+- Added `data-section="class-notes"` main section: collection card linking to `class-notes/data-governance/module-01.html` with full search metadata tags
+- Added `data-section="classroom-activities"` main section: collection card linking to `classroom-activities/data-governance/module-01.html`
+- Both sections participate in existing sidebar filter and `/` keyword search
+
 ### [feature] `class-notes/data-governance/module-01.html` — Data Governance Module 1 class notes
 - New top-level section `class-notes/` with subsection `data-governance/`
 - 17-section scrollable class notes page covering: Data Mgmt vs Governance (DMBOK), data quality dimensions, data catalog & discovery, CIA triad in ETL, data lineage & auditability, MDM (4 implementation styles), 3 metadata types, enterprise architecture roles, 3 pillars of trust, and regulatory urgency
