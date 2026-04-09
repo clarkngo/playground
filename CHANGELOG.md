@@ -9,6 +9,12 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ## 2026-04-09
 
+### [feature] `index.html` — Class Notes and Class Activities sidebar + sections
+- Added "Classroom" nav group in sidebar with links for Class Notes (badge 1) and Class Activities (badge 1)
+- Added `data-section="class-notes"` section: card for `class-notes/data-governance/module-01.html`
+- Added `data-section="classroom-activities"` section: card for `classroom-activities/data-governance/module-01.html`
+- Both sections searchable via existing `/` search filter
+
 ### [feature] `class-notes/data-governance/module-01.html` — Data Governance Module 1 class notes
 - 17-section notes page: DMBOK definitions, data quality, catalog/discovery, CIA triad in ETL, lineage, MDM (4 styles), 3 metadata types, EA roles, 3 pillars of trust, regulatory urgency; all raw-note placeholders filled with concrete examples
 
