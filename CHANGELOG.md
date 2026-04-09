@@ -7,7 +7,17 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-04-08
+
+### [feature] `classroom-activities/data-governance/module-01.html` — Module 01 answered case study
+- Full answer key for "RetailCorp: The Data Chaos Challenge": org chart, glossary, catalog, domains, policies, Databricks notebook
+
+---
+
 ## 2026-04-07
+
+### [feature] `primer/industry/enterprise-architecture/` — Enterprise Architecture industry primer
+- 12 tabs: TOGAF/ArchiMate/C4, extended node–edge process flows, governance, data architecture chains; hub card + nav link in `primer/index.html`
 
 ### [feature] `hos/dev-foundations-activities-hos/` — verbatim PDF text in curated HOS pages
 - `_pdf_extracts/hos04b_full.txt` + `hos_verbatim_pdf_append.py`; collapsible full step-by-step extraction under each HOS02–10 handout section
