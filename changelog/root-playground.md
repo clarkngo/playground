@@ -5,6 +5,16 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-04-09
+
+### [feature] `class-notes/data-governance/module-01.html` — Data Governance Module 1 class notes
+- New top-level section `class-notes/` with subsection `data-governance/`
+- 17-section scrollable class notes page covering: Data Mgmt vs Governance (DMBOK), data quality dimensions, data catalog & discovery, CIA triad in ETL, data lineage & auditability, MDM (4 implementation styles), 3 metadata types, enterprise architecture roles, 3 pillars of trust, and regulatory urgency
+- All `<insert example>` placeholders from raw notes filled in: corrugated box manufacturing lifecycle, cross-department cascade (Widget X sales drop), Costco manual entry quality, attribution data integration (Facebook/Google/e-commerce), SOX-compliant audit trail, data splitting integrity risk, CityU EA diagram walkthrough, Thomson Reuters PDF ingestion
+- Dark GitHub-style theme; sticky left-sidebar TOC with active-section highlighting via IntersectionObserver; print-safe styles; responsive collapse on mobile
+
+---
+
 ## 2026-04-08
 
 ### [feature] `classroom-activities/data-governance/module-01.html` — Module 01 answered case study
