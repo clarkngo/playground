@@ -5,6 +5,17 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-04-08
+
+### [feature] `classroom-activities/data-governance/module-01.html` — Module 01 answered case study
+- New section `classroom-activities/` with subsection `data-governance/`
+- `module-01.html`: full answer key for "RetailCorp: The Data Chaos Challenge"
+- Covers all 6 tasks: governance org chart, business glossary (4 terms), metadata catalog (Customers + Orders with PII tags), domain classification (3 domains + cross-domain joins), 3 governance policies, Databricks notebook walkthrough
+- Embeds dataset preview from `Customers.xlsx` and `Orders.xlsx`
+- Accordion expand/collapse per task; dark GitHub-style theme matching existing activities
+
+---
+
 ## 2026-04-07
 
 ### [docs] `lessons-learned/bug-fixes.md` — splice indices after earlier HTML edit
