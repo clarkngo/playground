@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NCyTE Workshop 2025 &rarr; STC &mdash; Applied Insights</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0d1117; color: #c9d1d9; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; min-height: 100vh; }
+    .navbar { background: #161b22; border-bottom: 1px solid #30363d; padding: .75rem 1.5rem; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 200; }
+    .navbar-left { display: flex; align-items: center; gap: .75rem; }
+    .navbar a { color: #e6edf3; text-decoration: none; font-weight: 700; font-size: 1rem; }
+    .navbar a:hover { color: #58a6ff; }
+    .nav-sep { color: #484f58; }
+    .nav-pill { font-size: .78rem; color: #8b949e; background: #21262d; border: 1px solid #30363d; padding: 2px 10px; border-radius: 12px; }
+    .layout { display: flex; max-width: 1280px; margin: 0 auto; padding: 0 1rem; gap: 2rem; }
+    .sidebar { width: 230px; flex-shrink: 0; position: sticky; top: 56px; align-self: flex-start; height: calc(100vh - 64px); overflow-y: auto; padding: 1.5rem 0; }
+    .toc-label { font-size: .67rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #484f58; margin-bottom: .65rem; padding-left: .5rem; }
+    .toc { display: flex; flex-direction: column; gap: 2px; }
+    .toc-link { font-size: .78rem; color: #8b949e; text-decoration: none; padding: .3rem .5rem; border-radius: 5px; border-left: 2px solid transparent; line-height: 1.4; transition: all .15s; }
+    .toc-link:hover { color: #e6edf3; background: #161b22; }
+    .toc-link.active { color: #58a6ff; border-left-color: #58a6ff; background: #0c1e38; font-weight: 600; }
+    .toc-group { font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: #484f58; margin: .85rem 0 .25rem .5rem; }
+    .content { flex: 1; min-width: 0; padding: 2rem 0 4rem; }
+    .breadcrumb { font-size: .78rem; color: #8b949e; display: flex; align-items: center; gap: .4rem; margin-bottom: .85rem; flex-wrap: wrap; }
+    .breadcrumb a { color: #58a6ff; text-decoration: none; font-weight: 600; }
+    .breadcrumb a:hover { text-decoration: underline; }
+    .breadcrumb span { color: #484f58; }
+    .page-badge { display: inline-block; background: #388bfd22; color: #58a6ff; border: 1px solid #388bfd44; font-size: .72rem; font-weight: 700; padding: 3px 12px; border-radius: 12px; text-transform: uppercase; letter-spacing: .07em; margin-bottom: .6rem; }
+    .page-header h1 { color: #e6edf3; font-size: 1.75rem; font-weight: 800; margin-bottom: .3rem; line-height: 1.2; }
+    .page-subtitle { color: #8b949e; font-size: .88rem; margin-bottom: .65rem; }
+    .tag-row { display: flex; gap: .4rem; flex-wrap: wrap; margin-bottom: 2rem; }
+    .tag { display: inline-block; font-size: .68rem; padding: 2px 8px; border-radius: 8px; font-weight: 600; }
+    .tag-blue   { background: #1f3a5c; color: #58a6ff; }
+    .tag-green  { background: #1a2f1a; color: #3fb950; }
+    .tag-yellow { background: #2d2009; color: #e3b341; }
+    .tag-purple { background: #24183a; color: #bc8cff; }
+    .tag-red    { background: #3a1a1a; color: #f85149; }
+    .notes-section { margin-bottom: 3rem; scroll-margin-top: 72px; }
+    .section-header { display: flex; align-items: baseline; gap: .75rem; margin-bottom: 1.35rem; padding-bottom: .75rem; border-bottom: 1px solid #21262d; }
+    .section-num { font-size: .72rem; font-weight: 700; color: #484f58; background: #161b22; border: 1px solid #30363d; padding: 2px 9px; border-radius: 8px; white-space: nowrap; }
+    .section-title { font-size: 1.25rem; font-weight: 800; color: #e6edf3; }
+    .prose { font-size: .875rem; color: #c9d1d9; line-height: 1.8; margin-bottom: 1rem; }
+    .prose strong { color: #e6edf3; }
+    .prose a { color: #58a6ff; text-decoration: none; }
+    .source-link { display: inline-flex; align-items: center; gap: .35rem; font-size: .8rem; color: #58a6ff; text-decoration: none; background: #1f3a5c22; border: 1px solid #1f3a5c; border-radius: 8px; padding: .3rem .75rem; margin-bottom: 1.2rem; }
+    .source-link:hover { background: #1f3a5c44; }
+    .ctx-grid { display: flex; gap: .75rem; flex-wrap: wrap; margin-bottom: 1.2rem; }
+    .ctx-card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: .7rem 1rem; flex: 1; min-width: 150px; }
+    .ctx-label { font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #484f58; margin-bottom: .25rem; }
+    .ctx-value { font-size: .88rem; color: #e6edf3; font-weight: 600; line-height: 1.4; }
+    .ctx-sub { font-size: .75rem; color: #8b949e; margin-top: .15rem; }
+    .status-grid { display: flex; flex-direction: column; gap: .55rem; margin-bottom: 1.4rem; }
+    .status-item { display: flex; align-items: flex-start; gap: .75rem; padding: .6rem .9rem; border-radius: 7px; font-size: .85rem; line-height: 1.65; }
+    .status-item.green  { background: #1a2f1a; border: 1px solid #2a4a2a; }
+    .status-item.yellow { background: #2d200922; border: 1px solid #4a3510; }
+    .status-item.red    { background: #3a1a1a22; border: 1px solid #5a2a2a; }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: .42rem; }
+    .status-dot.green  { background: #3fb950; }
+    .status-dot.yellow { background: #e3b341; }
+    .status-dot.red    { background: #f85149; }
+    .status-body { flex: 1; color: #c9d1d9; }
+    .status-body strong { color: #e6edf3; }
+    .status-body .sub { font-size: .78rem; color: #8b949e; margin-top: .2rem; }
+    .opp-block { margin-bottom: 1.25rem; background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: .9rem 1.1rem; }
+    .opp-header { display: flex; align-items: flex-start; gap: .75rem; margin-bottom: .5rem; }
+    .opp-icon { font-size: 1.2rem; flex-shrink: 0; margin-top: .05rem; }
+    .opp-title { font-size: .95rem; font-weight: 700; color: #e6edf3; line-height: 1.4; }
+    .opp-source { font-size: .72rem; color: #8b949e; margin-top: .15rem; }
+    .opp-body { font-size: .85rem; color: #c9d1d9; line-height: 1.72; padding-left: 1.95rem; }
+    .opp-action { font-size: .82rem; color: #3fb950; margin-top: .45rem; padding-left: 1.95rem; }
+    .opp-action::before { content: "Action: "; font-weight: 700; }
+    .q-block { margin-bottom: .9rem; padding: .7rem 1rem; background: #0c1e38; border: 1px solid #1f3a5c; border-radius: 7px; }
+    .q-text { font-size: .875rem; color: #e6edf3; line-height: 1.65; font-style: italic; margin-bottom: .3rem; }
+    .q-context { font-size: .78rem; color: #8b949e; line-height: 1.55; }
+    .action-table { width: 100%; border-collapse: collapse; font-size: .84rem; margin-bottom: 1.2rem; }
+    .action-table th { text-align: left; padding: .45rem .75rem; color: #8b949e; font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; border-bottom: 1px solid #21262d; white-space: nowrap; }
+    .action-table td { padding: .55rem .75rem; border-bottom: 1px solid #161b22; color: #c9d1d9; vertical-align: top; line-height: 1.55; }
+    .action-table tr:last-child td { border-bottom: none; }
+    .action-table td strong { color: #e6edf3; }
+    .priority { display: inline-block; font-size: .67rem; font-weight: 700; padding: 2px 7px; border-radius: 8px; white-space: nowrap; }
+    .priority.high   { background: #3a1a1a; color: #f85149; }
+    .priority.medium { background: #2d2009; color: #e3b341; }
+    .priority.low    { background: #1a2f1a; color: #3fb950; }
+    .owner-chip { display: inline-block; font-size: .67rem; background: #21262d; border: 1px solid #30363d; border-radius: 8px; padding: 1px 7px; color: #8b949e; white-space: nowrap; }
+    .callout { background: #1c2128; border: 1px solid #388bfd33; border-left: 3px solid #388bfd; border-radius: 6px; padding: .65rem 1rem; margin: .75rem 0 1rem; font-size: .83rem; color: #c9d1d9; line-height: 1.7; }
+    .callout-label { font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #388bfd; margin-bottom: .2rem; }
+    .divider { border: none; border-top: 1px solid #21262d; margin: 2rem 0; }
+    @media (max-width: 900px) { .sidebar { display: none; } .layout { padding: 0 .75rem; } }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="navbar-left">
+    <a href="../../index.html">Playground</a>
+    <span class="nav-sep">/</span>
+    <a href="../index.html">STC Strategy</a>
+    <span class="nav-sep">/</span>
+    <span style="color:#8b949e; font-size:.9rem;">NCyTE Workshop 2025</span>
+  </div>
+  <span class="nav-pill">Sep 2025</span>
+</nav>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="toc-label">On This Page</div>
+    <nav class="toc">
+      <a class="toc-link" href="#context">STC Context</a>
+      <div class="toc-group">Analysis</div>
+      <a class="toc-link" href="#validated">Workshop Validated</a>
+      <a class="toc-link" href="#gaps">Gaps Surfaced</a>
+      <a class="toc-link" href="#opportunities">Mapped Opportunities</a>
+      <div class="toc-group">Action</div>
+      <a class="toc-link" href="#questions">Open Questions for STC</a>
+      <a class="toc-link" href="#next-steps">Proposed Next Steps</a>
+    </nav>
+  </aside>
+
+  <main class="content">
+    <div class="breadcrumb">
+      <a href="../../index.html">Playground</a>
+      <span>/</span>
+      <a href="../index.html">STC Strategy</a>
+      <span>/</span>
+      NCyTE Workshop 2025
+    </div>
+
+    <div class="page-badge">STC Strategy &mdash; Applied Insights</div>
+    <div class="page-header">
+      <h1>NCyTE Workshop 2025 &rarr; STC</h1>
+    </div>
+    <p class="page-subtitle">What the NCyTE AI for Educators workshop validates, surfaces, and implies for CityU STC.</p>
+    <div class="tag-row">
+      <span class="tag tag-green">Validated</span>
+      <span class="tag tag-blue">Gaps</span>
+      <span class="tag tag-purple">Opportunities</span>
+      <span class="tag tag-yellow">Next Steps</span>
+    </div>
+
+    <a class="source-link" href="../../conference-notes/ncyte-workshop-2025/index.html">
+      &#128196; Full workshop notes &rarr;
+    </a>
+
+    <!-- ── 01. Context ── -->
+    <section class="notes-section" id="context">
+      <div class="section-header">
+        <span class="section-num">01</span>
+        <span class="section-title">STC Context</span>
+      </div>
+
+      <p class="prose">The NCyTE workshop was hosted <em>at</em> City University of Seattle &mdash; which means STC already has an active relationship with NCyTE. This is an institutional asset worth naming explicitly. NCyTE&rsquo;s focus on community college and technical college cybersecurity education maps closely to STC&rsquo;s programs, and the workshop content reflects the same audience STC serves.</p>
+
+      <div class="ctx-grid">
+        <div class="ctx-card">
+          <div class="ctx-label">Relevant Programs</div>
+          <div class="ctx-value">BSAI, MSAI</div>
+          <div class="ctx-sub">CS445, CS628; cybersecurity-adjacent courses</div>
+        </div>
+        <div class="ctx-card">
+          <div class="ctx-label">Assessment Direction</div>
+          <div class="ctx-value">Portfolio-based</div>
+          <div class="ctx-sub">Moving away from high-stakes final exams</div>
+        </div>
+        <div class="ctx-card">
+          <div class="ctx-label">AI Policy Status</div>
+          <div class="ctx-value">Committee-level</div>
+          <div class="ctx-sub">No per-course policy yet; faculty setting individually</div>
+        </div>
+        <div class="ctx-card">
+          <div class="ctx-label">NCyTE Relationship</div>
+          <div class="ctx-value">Host Institution</div>
+          <div class="ctx-sub">CityU hosted this workshop; deeper partnership possible</div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <div class="callout-label">Cross-Reference</div>
+        Several ideas from this workshop overlap directly with findings from the <a href="../higher-education-summit-2026/index.html" style="color:#58a6ff;">Higher Education Summit 2026 &rarr; STC</a> document &mdash; particularly dual-AI validation and the three-tier AI policy structure. Where both sources converge, the evidence for action is stronger.
+      </div>
+    </section>
+
+    <!-- ── 02. Validated ── -->
+    <section class="notes-section" id="validated">
+      <div class="section-header">
+        <span class="section-num">02</span>
+        <span class="section-title">Workshop Validated</span>
+      </div>
+
+      <p class="prose">Things STC is already doing or moving toward that this workshop independently confirmed as best practice.</p>
+
+      <div class="status-grid">
+        <div class="status-item green">
+          <div class="status-dot green"></div>
+          <div class="status-body">
+            <strong>Portfolio-based, project-heavy assessment</strong> &mdash; The grade weight flip (project 60%, final exam 10%) is the workshop&rsquo;s central structural recommendation. STC is already moving toward portfolio-based assessment in BSAI. This workshop provides an additional, concrete rationale: the project is AI-resistant by design when it requires visible process, iteration, and judgment.
+          </div>
+        </div>
+        <div class="status-item green">
+          <div class="status-dot green"></div>
+          <div class="status-body">
+            <strong>Interactive, hands-on course materials (HOS labs)</strong> &mdash; Module 5 of the workshop built interactive teaching tools: network simulators, cryptography tools, 3D flashcards. STC&rsquo;s HOS lab infrastructure (ARP, DHCP, AES, RSA tools already in the playground) is exactly this model. The workshop validates the investment.
+          </div>
+        </div>
+        <div class="status-item green">
+          <div class="status-dot green"></div>
+          <div class="status-body">
+            <strong>LLM comparison as a classroom activity</strong> &mdash; Module 2 and Module 3 both built toward hands-on LLM comparison. The workshop ran participants through ChatGPT, Claude, Copilot, Gemini, Grok, and Perplexity side by side. This mirrors the multi-AI comparison lab proposed from the Higher Education Summit. Two independent sources now point to the same exercise.
+          </div>
+        </div>
+        <div class="status-item green">
+          <div class="status-dot green"></div>
+          <div class="status-body">
+            <strong>Claude as a preferred instructional design tool</strong> &mdash; The workshop specifically called out Claude for building interactive syllabi. STC already uses Claude extensively (it is the primary AI in the playground). This is a validation of the tool choice for faculty-facing design work.
+          </div>
+        </div>
+        <div class="status-item green">
+          <div class="status-dot green"></div>
+          <div class="status-body">
+            <strong>Cybersecurity-grounded AI ethics</strong> &mdash; Module 7 treated AI ethics as a technical domain (C2PA, perplexity/burstiness, digital provenance). STC&rsquo;s cybersecurity-adjacent programs are well positioned to deliver this framing &mdash; ethics as engineering, not just philosophy.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── 03. Gaps ── -->
+    <section class="notes-section" id="gaps">
+      <div class="section-header">
+        <span class="section-num">03</span>
+        <span class="section-title">Gaps Surfaced</span>
+      </div>
+
+      <div class="status-grid">
+        <div class="status-item red">
+          <div class="status-dot red"></div>
+          <div class="status-body">
+            <strong>No formal CO-STAR or equivalent prompting framework in curriculum</strong> &mdash; CS445 and CS628 both involve AI-assisted work, but there is no documented, teachable prompting framework built into the course design. Students are left to develop prompting skills ad hoc. The workshop showed that CO-STAR can be taught in a single session and retained as a durable skill.
+            <div class="sub">Workshop reference: Session IV, Module 3</div>
+          </div>
+        </div>
+        <div class="status-item red">
+          <div class="status-dot red"></div>
+          <div class="status-body">
+            <strong>No QTI-based dynamic quiz pipeline</strong> &mdash; The workshop demonstrated AI-generated quizzes exported as QTI for direct Canvas import. STC builds quizzes manually or through Canvas. A QTI generation pipeline using AI would allow instructors to create large, varied question banks quickly &mdash; particularly useful for BSAI certification-prep content (AI-900, CISM-adjacent).
+            <div class="sub">Workshop reference: Module 4, Session V</div>
+          </div>
+        </div>
+        <div class="status-item red">
+          <div class="status-dot red"></div>
+          <div class="status-body">
+            <strong>No interactive syllabus in CS445 or CS628</strong> &mdash; The workshop built interactive syllabi using Claude. STC&rsquo;s course syllabi are static documents. An interactive syllabus &mdash; one students can query, explore, and navigate &mdash; is a low-cost, high-visibility improvement that also models the AI-first instructional design STC promotes.
+            <div class="sub">Workshop reference: Module 4</div>
+          </div>
+        </div>
+        <div class="status-item yellow">
+          <div class="status-dot yellow"></div>
+          <div class="status-body">
+            <strong>Grade weights have not been formally reviewed in light of AI</strong> &mdash; The grade weight flip (project 60%, final exam 10%) is a deliberate structural response to AI. STC is moving toward portfolios, but the current grade distribution in CS445 and CS628 has not been formally reviewed and adjusted with this principle in mind.
+            <div class="sub">Workshop reference: AI Policy session, Day 2</div>
+          </div>
+        </div>
+        <div class="status-item yellow">
+          <div class="status-dot yellow"></div>
+          <div class="status-body">
+            <strong>NotebookLM not yet used as a student support tool</strong> &mdash; The workshop highlighted NotebookLM for creating study guides, audio summaries, and interactive podcast-style review sessions. STC has not formally incorporated it into course support resources, despite it being free and directly usable with existing course materials.
+            <div class="sub">Workshop reference: Day 2 tools demo</div>
+          </div>
+        </div>
+        <div class="status-item yellow">
+          <div class="status-dot yellow"></div>
+          <div class="status-body">
+            <strong>No digital provenance module in BSAI ethics content</strong> &mdash; C2PA and digital provenance are directly relevant to cybersecurity (content authentication, supply chain integrity, AI-generated media detection). BSAI has an ethics component, but it likely does not yet cover the technical standards that underpin content authenticity.
+            <div class="sub">Workshop reference: Module 7</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── 04. Opportunities ── -->
+    <section class="notes-section" id="opportunities">
+      <div class="section-header">
+        <span class="section-num">04</span>
+        <span class="section-title">Mapped Opportunities</span>
+      </div>
+
+      <div class="opp-block">
+        <div class="opp-header">
+          <div class="opp-icon">&#127775;</div>
+          <div>
+            <div class="opp-title">CO-STAR as a Taught Framework &rarr; CS445 and BSAI</div>
+            <div class="opp-source">From: Session IV, Module 3 &mdash; Building Effective Prompts</div>
+          </div>
+        </div>
+        <div class="opp-body">CO-STAR is teachable in a single session, memorable, and transferable across tools. More importantly, it is a pre-thinking discipline: it forces students to clarify Context, Objective, Style, Tone, Audience, and Response format before generating anything. For CS445 students who are already writing code with AI assistance, adding a structured prompting layer would immediately improve output quality. For BSAI, it could become the foundational framework for the entire prompting unit.</div>
+        <div class="opp-action">Add a CO-STAR prompting module to CS445 (as a HOS activity) and BSAI (as a standalone unit). Build a drag-and-drop activity in the playground where students assemble a CO-STAR prompt from components and see how each element changes the output.</div>
+      </div>
+
+      <div class="opp-block">
+        <div class="opp-header">
+          <div class="opp-icon">&#9878;</div>
+          <div>
+            <div class="opp-title">Grade Weight Flip &rarr; Formal Review of CS445 and CS628 Grade Structure</div>
+            <div class="opp-source">From: AI Policy session &mdash; "AI OK / partial / not OK"</div>
+          </div>
+        </div>
+        <div class="opp-body">The workshop made a compelling structural argument: if the final exam is the highest-weighted item, students have a strong incentive to cheat on it. If the project is the highest-weighted item, AI use in the project is a feature (visible process, better output) rather than a threat. STC&rsquo;s portfolio direction is aligned with this logic, but the actual grade weights in existing courses may not yet reflect it.</div>
+        <div class="opp-action">Review grade weight distributions in CS445 and CS628. Wherever a final exam carries more than 30% of the grade, propose a rebalancing toward project and portfolio work. Document the rationale for the AI committee as a policy recommendation.</div>
+      </div>
+
+      <div class="opp-block">
+        <div class="opp-header">
+          <div class="opp-icon">&#128218;</div>
+          <div>
+            <div class="opp-title">Interactive Syllabus Using Claude &rarr; CS445 and CS628</div>
+            <div class="opp-source">From: Module 4 &mdash; Instructional Design Using AI</div>
+          </div>
+        </div>
+        <div class="opp-body">The workshop demonstrated building an interactive syllabus using Claude &mdash; a document students can query conversationally rather than read linearly. Given that STC already builds interactive HTML tools in the playground for educational use, an interactive syllabus is a natural next step. It also models the AI-first design philosophy STC promotes: faculty who build interactive syllabi are demonstrating the very skill they want students to develop.</div>
+        <div class="opp-action">Build an interactive syllabus for CS628 in the playground using the existing dark-theme HTML component style. Students can browse by week, filter by topic, or ask natural-language questions about course expectations. Use Claude to generate initial content from the existing syllabus document.</div>
+      </div>
+
+      <div class="opp-block">
+        <div class="opp-header">
+          <div class="opp-icon">&#9881;</div>
+          <div>
+            <div class="opp-title">QTI Quiz Generation Pipeline &rarr; BSAI Certification Prep</div>
+            <div class="opp-source">From: Module 4 &mdash; QTI Generation Prompt</div>
+          </div>
+        </div>
+        <div class="opp-body">AI can generate quiz questions in QTI XML format, which Canvas imports directly. For BSAI students working toward AI-900 or other certifications, a large, varied question bank is a significant study asset. Currently STC builds questions manually. A QTI pipeline &mdash; prompt Claude with learning objectives, receive a QTI file, import to Canvas &mdash; could produce a full practice quiz bank in minutes. It also makes it easy to update questions when certification exam content changes.</div>
+        <div class="opp-action">Build a QTI generation prompt template for the AI committee. Pilot with 20&ndash;30 AI-900 practice questions for BSAI. Import to Canvas and test the student experience. If successful, extend to CS445 and CS628 assessment banks.</div>
+      </div>
+
+      <div class="opp-block">
+        <div class="opp-header">
+          <div class="opp-icon">&#127911;</div>
+          <div>
+            <div class="opp-title">NotebookLM Study Guides &rarr; All STC Courses</div>
+            <div class="opp-source">From: Day 2 tools demo &mdash; NotebookLM podcast and interactive audio</div>
+          </div>
+        </div>
+        <div class="opp-body">NotebookLM is free, requires no institutional setup, and works with any PDF or document. Faculty upload course materials and it generates a conversational audio summary that students can query interactively. For STC&rsquo;s international students who process information better through audio, or who are intimidated by dense technical reading, this is a low-barrier support tool. It also reduces the load on faculty to produce supplemental explainers for every topic.</div>
+        <div class="opp-action">Pilot NotebookLM in one CS445 or CS628 module: upload the existing PDF cookbook and course slides, generate an Audio Overview, and share the link with students as an optional study resource. Collect feedback on usefulness before expanding.</div>
+      </div>
+
+      <div class="opp-block">
+        <div class="opp-header">
+          <div class="opp-icon">&#128272;</div>
+          <div>
+            <div class="opp-title">Digital Provenance and C2PA &rarr; BSAI Ethics Module</div>
+            <div class="opp-source">From: Module 7 &mdash; Ethical AI Use in the Classroom</div>
+          </div>
+        </div>
+        <div class="opp-body">C2PA (Coalition for Content Provenance and Authenticity) is a cryptographic standard for embedding verifiable origin metadata into digital content. For cybersecurity-oriented students, this is directly relevant: content authentication, supply chain integrity, and AI-generated media detection are all active threat vectors. Adding C2PA and digital provenance to BSAI&rsquo;s ethics module grounds AI ethics in a technical, verifiable standard rather than abstract principles &mdash; which is a more credible and more useful framing for this audience.</div>
+        <div class="opp-action">Add a digital provenance unit to the BSAI ethics module covering C2PA, IPTC metadata standards, and perplexity/burstiness as AI detection signals. Build a short interactive demo in the playground showing how C2PA metadata can be embedded and read.</div>
+      </div>
+
+      <div class="opp-block">
+        <div class="opp-header">
+          <div class="opp-icon">&#128101;</div>
+          <div>
+            <div class="opp-title">NCyTE Partnership &rarr; Curriculum Co-Development and Certification Alignment</div>
+            <div class="opp-source">From: Event context &mdash; CityU as NCyTE host institution</div>
+          </div>
+        </div>
+        <div class="opp-body">CityU hosted this NCyTE workshop. That relationship is an underutilized asset. NCyTE produces curriculum resources, certifications (CISM-aligned content, CMMC frameworks), and professional development specifically for technical college educators. STC could leverage this relationship to co-develop cybersecurity AI content, access NCyTE&rsquo;s curriculum library, and potentially offer NCyTE-affiliated professional development to CityU faculty as part of the AI committee&rsquo;s faculty support work.</div>
+        <div class="opp-action">Contact NCyTE to explore a formal curriculum partnership or co-development agreement. Specifically: access to NCyTE&rsquo;s AI for cybersecurity educators curriculum, co-branding for future workshops hosted at CityU, and alignment between BSAI content and CISM/CMMC credential pathways.</div>
+      </div>
+    </section>
+
+    <!-- ── 05. Questions ── -->
+    <section class="notes-section" id="questions">
+      <div class="section-header">
+        <span class="section-num">05</span>
+        <span class="section-title">Open Questions for STC</span>
+      </div>
+
+      <div class="q-block">
+        <div class="q-text">What are the current grade weight distributions in CS445 and CS628, and have they been reviewed with AI in mind?</div>
+        <div class="q-context">The grade weight flip is the most immediately actionable idea from the workshop. Before implementing it, the current state needs to be documented. If final exams already carry less weight, the work may be partially done. If not, this is a clear gap with a clear fix.</div>
+      </div>
+
+      <div class="q-block">
+        <div class="q-text">Should CO-STAR be the official STC prompting framework, or should we evaluate alternatives (RISEN, RTF, Chain-of-Thought) before standardizing?</div>
+        <div class="q-context">CO-STAR is teachable and memorable, but it is not the only framework. Standardizing too quickly on one approach could limit flexibility. However, having no standard means students in different courses develop incompatible mental models. This is a decision for the AI committee.</div>
+      </div>
+
+      <div class="q-block">
+        <div class="q-text">How do we use the NCyTE relationship proactively, rather than just as a hosting venue?</div>
+        <div class="q-context">CityU hosted the workshop but may not have extracted institutional value from the relationship beyond the event itself. NCyTE has curriculum, certification alignment, and a network of technical college partners. What would a deeper partnership look like, and who at CityU should own it?</div>
+      </div>
+
+      <div class="q-block">
+        <div class="q-text">Is there an existing AI-900 or CISM-adjacent content library STC can draw from, or does it need to be built from scratch?</div>
+        <div class="q-context">The QTI quiz pipeline is only valuable if there is a strong source of learning objectives to generate from. If BSAI already has alignment with AI-900 or CISM content areas, the question bank can be built quickly. If not, the objectives need to be defined first.</div>
+      </div>
+
+      <div class="q-block">
+        <div class="q-text">What is the right entry point for digital provenance in BSAI &mdash; ethics module, security module, or a standalone unit?</div>
+        <div class="q-context">C2PA and digital provenance sit at the intersection of ethics, cybersecurity, and media literacy. Placing it in the wrong module could cause it to feel out of place. The right home depends on how BSAI&rsquo;s curriculum is currently sequenced.</div>
+      </div>
+    </section>
+
+    <!-- ── 06. Next Steps ── -->
+    <section class="notes-section" id="next-steps">
+      <div class="section-header">
+        <span class="section-num">06</span>
+        <span class="section-title">Proposed Next Steps</span>
+      </div>
+
+      <div class="callout">
+        <div class="callout-label">Note on Cross-Document Priorities</div>
+        Several actions here overlap with or reinforce actions from the <a href="../higher-education-summit-2026/index.html" style="color:#58a6ff;">Higher Education Summit 2026 &rarr; STC</a> document. Where both sources point to the same action, priority is elevated. The multi-AI comparison lab and the three-tier AI policy appear in both documents independently.
+      </div>
+
+      <table class="action-table">
+        <thead>
+          <tr><th>Priority</th><th>Action</th><th>Owner</th><th>When</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="priority high">High</span></td>
+            <td><strong>Review grade weights in CS445 and CS628</strong> &mdash; document current distributions; propose rebalancing toward projects where final exam exceeds 30%</td>
+            <td><span class="owner-chip">Clark</span></td>
+            <td>Q2 2026</td>
+          </tr>
+          <tr>
+            <td><span class="priority high">High</span></td>
+            <td><strong>Add CO-STAR module to CS445 as a HOS activity</strong> &mdash; build drag-and-drop prompt builder in the playground; include in BSAI prompting unit</td>
+            <td><span class="owner-chip">Clark</span></td>
+            <td>Q2 2026</td>
+          </tr>
+          <tr>
+            <td><span class="priority high">High</span></td>
+            <td><strong>Multi-AI comparison lab</strong> (elevated from High in summit doc) &mdash; both NCyTE and the Higher Ed Summit independently validated this; build and ship as a HOS activity</td>
+            <td><span class="owner-chip">Clark</span></td>
+            <td>Q2 2026</td>
+          </tr>
+          <tr>
+            <td><span class="priority medium">Medium</span></td>
+            <td><strong>Build interactive syllabus for CS628</strong> &mdash; use Claude to convert existing syllabus into a queryable HTML document; add to the playground</td>
+            <td><span class="owner-chip">Clark</span></td>
+            <td>Q2&ndash;Q3 2026</td>
+          </tr>
+          <tr>
+            <td><span class="priority medium">Medium</span></td>
+            <td><strong>Pilot NotebookLM in one CS445 or CS628 module</strong> &mdash; upload cookbook PDF and slides; share Audio Overview link with students; collect feedback</td>
+            <td><span class="owner-chip">Clark</span></td>
+            <td>Q3 2026</td>
+          </tr>
+          <tr>
+            <td><span class="priority medium">Medium</span></td>
+            <td><strong>Build QTI quiz generation template</strong> &mdash; prompt template for Claude to produce Canvas-importable quiz XML; pilot with AI-900 content for BSAI</td>
+            <td><span class="owner-chip">Clark</span></td>
+            <td>Q3 2026</td>
+          </tr>
+          <tr>
+            <td><span class="priority medium">Medium</span></td>
+            <td><strong>Add digital provenance unit to BSAI ethics module</strong> &mdash; cover C2PA, IPTC, perplexity/burstiness; build a short interactive C2PA demo in the playground</td>
+            <td><span class="owner-chip">Clark + BSAI lead</span></td>
+            <td>Q3 2026</td>
+          </tr>
+          <tr>
+            <td><span class="priority low">Low</span></td>
+            <td><strong>Initiate NCyTE partnership conversation</strong> &mdash; explore curriculum co-development, certification alignment (CISM/CMMC), and future workshop co-hosting</td>
+            <td><span class="owner-chip">Dean + Clark</span></td>
+            <td>Q3&ndash;Q4 2026</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+  </main>
+</div>
+
+<script>
+  (function() {
+    var links = document.querySelectorAll(".toc-link");
+    var sections = [];
+    links.forEach(function(link) {
+      var id = link.getAttribute("href").replace("#", "");
+      var el = document.getElementById(id);
+      if (el) sections.push({ el: el, link: link });
+    });
+    function onScroll() {
+      var scrollY = window.scrollY + 80;
+      var active = sections[0];
+      for (var i = 0; i < sections.length; i++) {
+        if (sections[i].el.offsetTop <= scrollY) active = sections[i];
+      }
+      links.forEach(function(l) { l.classList.remove("active"); });
+      if (active) active.link.classList.add("active");
+    }
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+  })();
+</script>
+</body>
+</html>

@@ -1,5 +1,19 @@
 # Conference Notes Changelog
 
+## 2026-04-09 (update 3)
+
+### [feature] NCyTE AI for Educators Workshop 2025 — full workshop notes
+- New file: `conference-notes/ncyte-workshop-2025/index.html`
+- **7 sections:** Event Overview, Two-Day Agenda, Key Concepts, Canvas Course Overview, Tools Referenced, Synthesis, My Own Thoughts
+- **Key Concepts coverage:** CO-STAR prompting framework (full table with all 6 components), grade weight flip before/after comparison (CS445/CS628 context), perplexity and burstiness (AI detection signals used by Turnitin), digital provenance and C2PA standard, dynamic assessment approaches, three-tier AI policy model, NotebookLM study guides
+- **Canvas Course Overview:** all 7 modules listed verbatim — AI Basics, CO-STAR Prompting, LLM Comparison, Instructional Design, Dynamic Assessment, Digital Provenance, AI Policy
+- **Tools Referenced:** 7 categories — AI Writing Assistants (Claude, ChatGPT, Gemini, Copilot), Presentation & Multimedia (Gamma, Napkin), Audio & Transcription (Wispr Flow), Research & Summarization (Perplexity, NotebookLM, Mapify), Task Simplification (goblin.tools), Visual Timelines (Histography), Data/Knowledge Graphs (connected to NotebookLM)
+- **Synthesis:** 5 cross-cutting themes — CO-STAR as lingua franca, human judgment as the constant, provenance as institutional responsibility, dynamic assessment replacing static tests, AI policy requiring tiered institutional guidance
+- **My Own Thoughts:** 5 observations including QTI pipeline opportunity, NCyTE as CityU partnership asset (CityU hosted), AI detection arms race futility, multi-AI comparison extending NCyTE's LLM comparison module, CO-STAR as prerequisite for CS445/CS628
+- Context fills added for: NCyTE Center (NSF-funded ATE, community college focus), C2PA coalition members, QTI standard, goblin.tools simplification workflow, Wispr Flow voice-to-text
+- `conference-notes/index.html`: NCyTE card added above Higher Ed Summit card
+- Root `index.html`: NCyTE card added to conference-notes section; badge updated from 1 → 2
+
 ## 2026-04-09 (update 2)
 
 ### [feature] Higher Education Summit 2026 — Questions Raised section added
