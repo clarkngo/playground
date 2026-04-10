@@ -9,6 +9,9 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ## 2026-04-09
 
+### [feature] NCyTE AI for Educators Workshop 2025 — conference notes + STC strategy
+- New notes: `conference-notes/ncyte-workshop-2025/index.html` — 7 sections (agenda, CO-STAR, grade weight flip, C2PA, QTI, NotebookLM, tools, synthesis, reflections); new applied doc: `stc-strategy/ncyte-workshop-2025/index.html` — 6 sections mapping workshop to CS445, CS628, BSAI, and NCyTE partnership opportunity; both index pages and root `index.html` updated (badges 1→2)
+
 ### [feature] `stc-strategy/` — new collection applying external insights to CityU STC
 - New hub: `stc-strategy/index.html`; first document: `stc-strategy/higher-education-summit-2026/index.html` — 6 sections mapping summit insights to BSAI, MSAI, CS445, CS628, and the AI committee; includes validated practices, gaps, 8 opportunities, 7 open questions, and 9 prioritized next steps
 
