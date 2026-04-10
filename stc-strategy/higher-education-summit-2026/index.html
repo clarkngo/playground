@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Higher Education Summit 2026 &rarr; STC &mdash; Applied Insights</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0d1117; color: #c9d1d9; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; min-height: 100vh; }
+
+    .navbar { background: #161b22; border-bottom: 1px solid #30363d; padding: .75rem 1.5rem; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 200; }
+    .navbar-left { display: flex; align-items: center; gap: .75rem; }
+    .navbar a { color: #e6edf3; text-decoration: none; font-weight: 700; font-size: 1rem; }
+    .navbar a:hover { color: #58a6ff; }
+    .nav-sep { color: #484f58; }
+    .nav-pill { font-size: .78rem; color: #8b949e; background: #21262d; border: 1px solid #30363d; padding: 2px 10px; border-radius: 12px; }
+
+    .layout { display: flex; max-width: 1280px; margin: 0 auto; padding: 0 1rem; gap: 2rem; }
+
+    .sidebar { width: 230px; flex-shrink: 0; position: sticky; top: 56px; align-self: flex-start; height: calc(100vh - 64px); overflow-y: auto; padding: 1.5rem 0; }
+    .toc-label { font-size: .67rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #484f58; margin-bottom: .65rem; padding-left: .5rem; }
+    .toc { display: flex; flex-direction: column; gap: 2px; }
+    .toc-link { font-size: .78rem; color: #8b949e; text-decoration: none; padding: .3rem .5rem; border-radius: 5px; border-left: 2px solid transparent; line-height: 1.4; transition: all .15s; }
+    .toc-link:hover { color: #e6edf3; background: #161b22; }
+    .toc-link.active { color: #58a6ff; border-left-color: #58a6ff; background: #0c1e38; font-weight: 600; }
+    .toc-group { font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: #484f58; margin: .85rem 0 .25rem .5rem; }
+
+    .content { flex: 1; min-width: 0; padding: 2rem 0 4rem; }
+
+    .breadcrumb { font-size: .78rem; color: #8b949e; display: flex; align-items: center; gap: .4rem; margin-bottom: .85rem; flex-wrap: wrap; }
+    .breadcrumb a { color: #58a6ff; text-decoration: none; font-weight: 600; }
+    .breadcrumb a:hover { text-decoration: underline; }
+    .breadcrumb span { color: #484f58; }
+
+    .page-badge { display: inline-block; background: #388bfd22; color: #58a6ff; border: 1px solid #388bfd44; font-size: .72rem; font-weight: 700; padding: 3px 12px; border-radius: 12px; text-transform: uppercase; letter-spacing: .07em; margin-bottom: .6rem; }
+    .page-header h1 { color: #e6edf3; font-size: 1.75rem; font-weight: 800; margin-bottom: .3rem; line-height: 1.2; }
+    .page-subtitle { color: #8b949e; font-size: .88rem; margin-bottom: .65rem; }
+    .tag-row { display: flex; gap: .4rem; flex-wrap: wrap; margin-bottom: 2rem; }
+    .tag { display: inline-block; font-size: .68rem; padding: 2px 8px; border-radius: 8px; font-weight: 600; }
+    .tag-blue   { background: #1f3a5c; color: #58a6ff; }
+    .tag-green  { background: #1a2f1a; color: #3fb950; }
+    .tag-yellow { background: #2d2009; color: #e3b341; }
+    .tag-purple { background: #24183a; color: #bc8cff; }
+    .tag-red    { background: #3a1a1a; color: #f85149; }
+
+    .notes-section { margin-bottom: 3rem; scroll-margin-top: 72px; }
+    .section-header { display: flex; align-items: baseline; gap: .75rem; margin-bottom: 1.35rem; padding-bottom: .75rem; border-bottom: 1px solid #21262d; }
+    .section-num { font-size: .72rem; font-weight: 700; color: #484f58; background: #161b22; border: 1px solid #30363d; padding: 2px 9px; border-radius: 8px; white-space: nowrap; }
+    .section-title { font-size: 1.25rem; font-weight: 800; color: #e6edf3; }
+
+    .prose { font-size: .875rem; color: #c9d1d9; line-height: 1.8; margin-bottom: 1rem; }
+    .prose strong { color: #e6edf3; }
+    .prose a { color: #58a6ff; text-decoration: none; }
+    .prose a:hover { text-decoration: underline; }
+
+    /* Status rows */
+    .status-grid { display: flex; flex-direction: column; gap: .55rem; margin-bottom: 1.4rem; }
+    .status-item { display: flex; align-items: flex-start; gap: .75rem; padding: .6rem .9rem; border-radius: 7px; font-size: .85rem; line-height: 1.65; }
+    .status-item.green  { background: #1a2f1a; border: 1px solid #2a4a2a; }
+    .status-item.blue   { background: #1f3a5c22; border: 1px solid #1f3a5c; }
+    .status-item.yellow { background: #2d200922; border: 1px solid #4a3510; }
+    .status-item.red    { background: #3a1a1a22; border: 1px solid #5a2a2a; }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: .42rem; }
+    .status-dot.green  { background: #3fb950; }
+    .status-dot.blue   { background: #58a6ff; }
+    .status-dot.yellow { background: #e3b341; }
+    .status-dot.red    { background: #f85149; }
+    .status-body { flex: 1; color: #c9d1d9; }
+    .status-body strong { color: #e6edf3; }
+    .status-body .sub { font-size: .78rem; color: #8b949e; margin-top: .2rem; }
+
+    /* Opportunity cards */
+    .opp-block { margin-bottom: 1.25rem; background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: .9rem 1.1rem; }
+    .opp-header { display: flex; align-items: flex-start; gap: .75rem; margin-bottom: .5rem; }
+    .opp-icon { font-size: 1.2rem; flex-shrink: 0; margin-top: .05rem; }
+    .opp-title { font-size: .95rem; font-weight: 700; color: #e6edf3; line-height: 1.4; }
+    .opp-source { font-size: .72rem; color: #8b949e; margin-top: .15rem; }
+    .opp-body { font-size: .85rem; color: #c9d1d9; line-height: 1.72; padding-left: 1.95rem; }
+    .opp-action { font-size: .82rem; color: #3fb950; margin-top: .45rem; padding-left: 1.95rem; }
+    .opp-action::before { content: "Action: "; font-weight: 700; }
+    .opp-course { display: inline-block; font-size: .68rem; background: #24183a; color: #bc8cff; border-radius: 8px; padding: 1px 7px; font-weight: 600; margin-right: .3rem; }
+
+    /* Question block */
+    .q-block { margin-bottom: .9rem; padding: .7rem 1rem; background: #0c1e38; border: 1px solid #1f3a5c; border-radius: 7px; }
+    .q-text { font-size: .875rem; color: #e6edf3; line-height: 1.65; font-style: italic; margin-bottom: .3rem; }
+    .q-context { font-size: .78rem; color: #8b949e; line-height: 1.55; }
+
+    /* Action items */
+    .action-table { width: 100%; border-collapse: collapse; font-size: .84rem; margin-bottom: 1.2rem; }
+    .action-table th { text-align: left; padding: .45rem .75rem; color: #8b949e; font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; border-bottom: 1px solid #21262d; white-space: nowrap; }
+    .action-table td { padding: .55rem .75rem; border-bottom: 1px solid #161b22; color: #c9d1d9; vertical-align: top; line-height: 1.55; }
+    .action-table tr:last-child td { border-bottom: none; }
+    .action-table td strong { color: #e6edf3; }
+    .priority { display: inline-block; font-size: .67rem; font-weight: 700; padding: 2px 7px; border-radius: 8px; white-space: nowrap; }
+    .priority.high   { background: #3a1a1a; color: #f85149; }
+    .priority.medium { background: #2d2009; color: #e3b341; }
+    .priority.low    { background: #1a2f1a; color: #3fb950; }
+    .owner-chip { display: inline-block; font-size: .67rem; background: #21262d; border: 1px solid #30363d; border-radius: 8px; padding: 1px 7px; color: #8b949e; white-space: nowrap; }
+
+    /* Context snapshot */
+    .ctx-grid { display: flex; gap: .75rem; flex-wrap: wrap; margin-bottom: 1.2rem; }
+    .ctx-card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: .7rem 1rem; flex: 1; min-width: 150px; }
+    .ctx-label { font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #484f58; margin-bottom: .25rem; }
+    .ctx-value { font-size: .88rem; color: #e6edf3; font-weight: 600; line-height: 1.4; }
+    .ctx-sub { font-size: .75rem; color: #8b949e; margin-top: .15rem; }
+
+    .source-link { display: inline-flex; align-items: center; gap: .35rem; font-size: .8rem; color: #58a6ff; text-decoration: none; background: #1f3a5c22; border: 1px solid #1f3a5c; border-radius: 8px; padding: .3rem .75rem; margin-bottom: 1.2rem; }
+    .source-link:hover { background: #1f3a5c44; }
+
+    .divider { border: none; border-top: 1px solid #21262d; margin: 2rem 0; }
+
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .layout { padding: 0 .75rem; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="navbar-left">
+    <a href="../../index.html">Playground</a>
+    <span class="nav-sep">/</span>
+    <a href="../index.html">STC Strategy</a>
+    <span class="nav-sep">/</span>
+    <span style="color:#8b949e; font-size:.9rem;">Higher Education Summit 2026</span>
+  </div>
+  <span class="nav-pill">April 9, 2026</span>
+</nav>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="toc-label">On This Page</div>
+    <nav class="toc">
+      <a class="toc-link" href="#context">STC Context</a>
+      <div class="toc-group">Analysis</div>
+      <a class="toc-link" href="#validated">Summit Validated</a>
+      <a class="toc-link" href="#gaps">Gaps Surfaced</a>
+      <a class="toc-link" href="#opportunities">Mapped Opportunities</a>
+      <div class="toc-group">Action</div>
+      <a class="toc-link" href="#questions">Open Questions for STC</a>
+      <a class="toc-link" href="#next-steps">Proposed Next Steps</a>
+    </nav>
+  </aside>
+
+  <main class="content">
+    <div class="breadcrumb">
+      <a href="../../index.html">Playground</a>
+      <span>/</span>
+      <a href="../index.html">STC Strategy</a>
+      <span>/</span>
+      Higher Education Summit 2026
+    </div>
+
+    <div class="page-badge">STC Strategy &mdash; Applied Insights</div>
+    <div class="page-header">
+      <h1>Higher Education Summit 2026 &rarr; STC</h1>
+    </div>
+    <p class="page-subtitle">What the summit validates, what it surfaces, and what STC should do next.</p>
+    <div class="tag-row">
+      <span class="tag tag-green">Validated</span>
+      <span class="tag tag-blue">Gaps</span>
+      <span class="tag tag-purple">Opportunities</span>
+      <span class="tag tag-yellow">Next Steps</span>
+    </div>
+
+    <a class="source-link" href="../../conference-notes/higher-education-summit-2026/index.html">
+      &#128196; Full conference notes &rarr;
+    </a>
+
+    <!-- ── 1. STC Context ── -->
+    <section class="notes-section" id="context">
+      <div class="section-header">
+        <span class="section-num">01</span>
+        <span class="section-title">STC Context</span>
+      </div>
+
+      <p class="prose">A snapshot of where the School of Technology &amp; Computing stands at the time of the summit. This is the baseline against which the summit insights are applied.</p>
+
+      <div class="ctx-grid">
+        <div class="ctx-card">
+          <div class="ctx-label">Programs</div>
+          <div class="ctx-value">BSAI, MSAI</div>
+          <div class="ctx-sub">CS445, CS628 active; degree pathways in iteration</div>
+        </div>
+        <div class="ctx-card">
+          <div class="ctx-label">AI Strategy</div>
+          <div class="ctx-value">AI Infusion</div>
+          <div class="ctx-sub">"AI in X / X in AI" framing; leadership mandate</div>
+        </div>
+        <div class="ctx-card">
+          <div class="ctx-label">Assessment</div>
+          <div class="ctx-value">Portfolio-based</div>
+          <div class="ctx-sub">AI-resistant design; moving away from rote assessment</div>
+        </div>
+        <div class="ctx-card">
+          <div class="ctx-label">Governance</div>
+          <div class="ctx-value">AI Committee</div>
+          <div class="ctx-sub">Pro and anti-AI voices; active deliberation</div>
+        </div>
+        <div class="ctx-card">
+          <div class="ctx-label">Bottleneck</div>
+          <div class="ctx-value">Course Approval</div>
+          <div class="ctx-sub">New and changed courses move slowly through process</div>
+        </div>
+        <div class="ctx-card">
+          <div class="ctx-label">Tech Stack</div>
+          <div class="ctx-value">Ollama (local LLM)</div>
+          <div class="ctx-sub">Open-source deployment; hardware guidance in place</div>
+        </div>
+      </div>
+
+      <p class="prose">STC is a private institution within the City University of Seattle system, serving a student body that includes a significant international and non-native English-speaking population. This context is important: equity considerations around AI access and AI prompting skills apply directly to STC&rsquo;s students in ways they may not for large public research universities.</p>
+
+      <p class="prose">At the summit, STC was represented by Clark (and Morad, in the closing discussion). In Session 1 and 2, STC&rsquo;s approach was described as one of the more advanced in the room &mdash; employer credits, BSAI/MSAI pathways, AI workshops for faculty, and a functioning AI committee. The summit confirmed this positioning while also surfacing areas where STC&rsquo;s work is incomplete.</p>
+    </section>
+
+    <!-- ── 2. Validated ── -->
+    <section class="notes-section" id="validated">
+      <div class="section-header">
+        <span class="section-num">02</span>
+        <span class="section-title">Summit Validated</span>
+      </div>
+
+      <p class="prose">These are things STC is already doing that multiple summit speakers independently identified as best practice. No action required &mdash; but worth naming explicitly because they justify continued investment.</p>
+
+      <div class="status-grid">
+        <div class="status-item green">
+          <div class="status-dot green"></div>
+          <div class="status-body">
+            <strong>AI infusion across existing programs</strong> &mdash; not just a standalone AI course, but embedding AI across the curriculum. Ingrid, Lauren, and Kristin all described this approach as the right direction. STC&rsquo;s "AI in X / X in AI" framing is exactly this.
+          </div>
+        </div>
+        <div class="status-item green">
+          <div class="status-dot green"></div>
+          <div class="status-body">
+            <strong>Standalone AI degree pathways (BSAI, MSAI)</strong> &mdash; Rovy noted that micro-credentials and specialized programs are the nimble layer. Patrick described AI degree programs as a legitimate leapfrog. STC already has both.
+          </div>
+        </div>
+        <div class="status-item green">
+          <div class="status-dot green"></div>
+          <div class="status-body">
+            <strong>AI committee with diverse voices</strong> &mdash; Kristin said explicitly that AI resistors are important to the conversation and produce better outcomes than top-down mandates. STC&rsquo;s committee structure, including skeptics, is the right model.
+          </div>
+        </div>
+        <div class="status-item green">
+          <div class="status-dot green"></div>
+          <div class="status-body">
+            <strong>Portfolio-based, AI-resistant assessments</strong> &mdash; Liz, Kirk, and Rovy all converged on this: move away from grades-as-proxy, toward documented process and demonstrated understanding. STC is already building this direction into BSAI.
+          </div>
+        </div>
+        <div class="status-item green">
+          <div class="status-dot green"></div>
+          <div class="status-body">
+            <strong>Open-source LLM deployment (Ollama)</strong> &mdash; Patrick&rsquo;s ASU example of an AI agent that simulates a patient for medical students illustrates the principle: build practical AI tools into the learning environment directly. STC&rsquo;s local Ollama deployment is infrastructure for this.
+          </div>
+        </div>
+        <div class="status-item green">
+          <div class="status-dot green"></div>
+          <div class="status-body">
+            <strong>Faculty AI workshops</strong> &mdash; Kristin described a summer institute model for faculty. STC&rsquo;s existing AI workshops for educators are aligned. The summit confirmed these need to be ongoing, not one-time events.
+          </div>
+        </div>
+        <div class="status-item green">
+          <div class="status-dot green"></div>
+          <div class="status-body">
+            <strong>Referencing peer institutions for credibility</strong> &mdash; STC references ASU, UW, and Stanford to make the case internally. The summit included speakers from ASU, UW Continuum, and Bellevue College &mdash; the same peer set. This benchmarking approach is appropriate and effective.
+          </div>
+        </div>
+        <div class="status-item green">
+          <div class="status-dot green"></div>
+          <div class="status-body">
+            <strong>Project-based, hands-on learning (HOS, CS628)</strong> &mdash; Patrick described ASU&rsquo;s AI simulation patient as a high-value project-based learning experience. STC&rsquo;s HOS lab structure (CS445, CS628) already builds practical skills in a structured, hands-on format. The CS628 module that goes from Slack conversation to deployed RAG application is this model at its best.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── 3. Gaps ── -->
+    <section class="notes-section" id="gaps">
+      <div class="section-header">
+        <span class="section-num">03</span>
+        <span class="section-title">Gaps Surfaced</span>
+      </div>
+
+      <p class="prose">These are areas the summit highlighted as critical that STC has not yet fully addressed. These are not failures &mdash; they are the next layer of work.</p>
+
+      <div class="status-grid">
+        <div class="status-item red">
+          <div class="status-dot red"></div>
+          <div class="status-body">
+            <strong>No repeatable employer co-design process</strong> &mdash; Lauren said programs co-designed with employers in the first quarter succeed at higher rates. James confirmed there is no consistent, repeatable template for this anywhere. STC has employer relationships (Boeing, tech companies providing credits) but no formal co-design structure built into the program development cycle.
+            <div class="sub">Summit reference: Panel 1, Session 1 (James, Lauren)</div>
+          </div>
+        </div>
+        <div class="status-item red">
+          <div class="status-dot red"></div>
+          <div class="status-body">
+            <strong>No shared institutional definition of an "AI-ready STC graduate"</strong> &mdash; Shannon asked what AI literacy even means; the summit could not agree. STC has not yet produced a competency framework that answers this for its own programs. Without one, "AI infusion" risks meaning different things in different courses with no through-line.
+            <div class="sub">Summit reference: Session 2 (Clark, Bill), Session 3 (Shannon, Clark), Closing (Lisa Power)</div>
+          </div>
+        </div>
+        <div class="status-item red">
+          <div class="status-dot red"></div>
+          <div class="status-body">
+            <strong>No explicit equity strategy for international and ESL students</strong> &mdash; CityU serves a large international student population. Libby noted that workers whose first language is not English are the least equipped to prompt AI effectively. Rosella described students from countries where education was restricted. STC has no documented approach to scaffolding AI tool use for these students specifically.
+            <div class="sub">Summit reference: Panel 1 (Libby), Session 1 (Rosella)</div>
+          </div>
+        </div>
+        <div class="status-item yellow">
+          <div class="status-dot yellow"></div>
+          <div class="status-body">
+            <strong>Course approval process is the main bottleneck &mdash; and it is not solved</strong> &mdash; Clark named this explicitly in Session 2. The summit did not offer a direct solution, but Kristin&rsquo;s point is relevant: institutions that stall on shared governance are falling behind. The bottleneck needs a workaround or a process fix, not just patience.
+            <div class="sub">Summit reference: Session 2 (Clark), Panel 2 (Kristin)</div>
+          </div>
+        </div>
+        <div class="status-item yellow">
+          <div class="status-dot yellow"></div>
+          <div class="status-body">
+            <strong>No per-course AI use policy (red/yellow/green)</strong> &mdash; Gabrielle noted that colleges are still figuring out AI policies for faculty and students. STC has an AI committee and broad direction, but individual courses may not have explicit, communicated AI use expectations. This creates inconsistency for students across the program.
+            <div class="sub">Summit reference: Panel 2 (Kristin), Session 2 (Gabrielle)</div>
+          </div>
+        </div>
+        <div class="status-item yellow">
+          <div class="status-dot yellow"></div>
+          <div class="status-body">
+            <strong>Faculty change management is under-resourced relative to the pace of change</strong> &mdash; Rovy and Kristin both said this is more a change management challenge than a tool challenge. Faculty are redesigning curricula repeatedly. STC has workshops, but the summit suggests the need is for sustained support structures &mdash; time, space, and voice &mdash; not just training sessions.
+            <div class="sub">Summit reference: Panel 2 (Kristin, Rovy, Liz)</div>
+          </div>
+        </div>
+        <div class="status-item yellow">
+          <div class="status-dot yellow"></div>
+          <div class="status-body">
+            <strong>No K&ndash;12 or feeder pipeline engagement</strong> &mdash; Kirk raised in the closing: are these conversations happening at the K&ndash;12 level? If students arrive at STC without foundational AI fluency, STC absorbs that deficit. CityU&rsquo;s pipeline from high school is not a strength of the current transformation strategy.
+            <div class="sub">Summit reference: Closing (Kirk), Panel 2 (Kristin)</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── 4. Opportunities ── -->
+    <section class="notes-section" id="opportunities">
+      <div class="section-header">
+        <span class="section-num">04</span>
+        <span class="section-title">Mapped Opportunities</span>
+      </div>
+
+      <p class="prose">Specific summit insights mapped to STC programs, courses, and initiatives. Each includes a concrete application and a suggested action.</p>
+
+      <div class="opp-block">
+        <div class="opp-header">
+          <div class="opp-icon">&#127880;</div>
+          <div>
+            <div class="opp-title">Red/Yellow/Green Assignment Tagging &rarr; CS445 &amp; CS628</div>
+            <div class="opp-source">From: Kristin Copeland, Clover Park Technical College (Panel 2)</div>
+          </div>
+        </div>
+        <div class="opp-body">Kristin&rsquo;s three-tier AI tagging system for assignments is immediately adoptable. Green = use AI freely, Yellow = use AI in a specific defined way, Red = do not use AI (it will impede the learning). It gives students clarity, gives faculty control, and keeps the learning goal in view rather than treating AI as categorically good or bad. CS445 and CS628 both have enough assignment variety that all three tiers would apply naturally.</div>
+        <div class="opp-action">Pilot the tagging system in CS445 HOS assignments and CS628 module deliverables. Document which assignments land in each tier and share with the AI committee as a model for other courses.</div>
+      </div>
+
+      <div class="opp-block">
+        <div class="opp-header">
+          <div class="opp-icon">&#129504;</div>
+          <div>
+            <div class="opp-title">Bloom&rsquo;s Taxonomy of AI &rarr; BSAI Competency Framework</div>
+            <div class="opp-source">From: Lisa Power, Saint Martin&rsquo;s University (Closing Discussion)</div>
+          </div>
+        </div>
+        <div class="opp-body">Lisa Power proposed developing a hierarchical AI competency framework modeled on Bloom&rsquo;s Taxonomy &mdash; from basic AI awareness up through applied AI creation. STC is in the best position of any institution in this region to build this, given the BSAI program already under development. A published framework would serve as both an internal curriculum alignment tool and an external signal to employers about what an STC AI graduate can do.</div>
+        <div class="opp-action">Draft a "Bloom&rsquo;s Taxonomy of AI" competency map as part of the BSAI program documentation. Map existing BSAI courses to levels of the framework. Share with the AI committee and, eventually, employer partners for validation.</div>
+      </div>
+
+      <div class="opp-block">
+        <div class="opp-header">
+          <div class="opp-icon">&#128202;</div>
+          <div>
+            <div class="opp-title">Multi-AI Comparison &rarr; AI Literacy Lab (CS445 or BSAI)</div>
+            <div class="opp-source">From: Clark &amp; Shannon, Session 3 discussion</div>
+          </div>
+        </div>
+        <div class="opp-body">Running the same prompt through multiple AI models (Claude, ChatGPT, Perplexity, a local Ollama model) and comparing outputs is a concrete, tool-agnostic AI literacy exercise. It teaches students to notice bias, evaluate outputs critically, and understand that AI is not a neutral oracle. STC&rsquo;s Ollama deployment makes a local-vs-cloud comparison uniquely possible here. This maps directly to the dual-AI cultural simulation idea raised in networking conversations.</div>
+        <div class="opp-action">Build a standalone HOS activity: "Multi-AI Comparison Lab." Students submit the same prompt to three or more models, document differences in tone, accuracy, and framing, and write a brief analysis. Add to the playground as a new HOS module.</div>
+      </div>
+
+      <div class="opp-block">
+        <div class="opp-header">
+          <div class="opp-icon">&#128101;</div>
+          <div>
+            <div class="opp-title">Employer Co-Design in Q1 &rarr; BSAI Curriculum Review</div>
+            <div class="opp-source">From: Lauren Van Koughnett &amp; James Bowen, Panel 1 &amp; Session 1</div>
+          </div>
+        </div>
+        <div class="opp-body">Lauren&rsquo;s finding: programs co-designed with employers in the first quarter of development are consistently more successful. James proposed a concrete method: deconstruct job descriptions into component skills, then reconstruct those skills into curriculum or assessments. STC already has employer relationships (Boeing, tech companies offering free credits). The missing piece is formalizing these relationships into a structured curriculum review process, not just informal conversations.</div>
+        <div class="opp-action">Identify two to three employer partners already engaged with STC. Invite them into a structured Q1 curriculum review session for the BSAI program. Use James&rsquo;s job-description deconstruction method as the working format. Document the process so it is repeatable for future cohorts.</div>
+      </div>
+
+      <div class="opp-block">
+        <div class="opp-header">
+          <div class="opp-icon">&#127919;</div>
+          <div>
+            <div class="opp-title">Passion-Led Assessment &rarr; CS628 Capstone Redesign</div>
+            <div class="opp-source">From: Dr. Liz Hollerman, Bellevue College (Panel 2)</div>
+          </div>
+        </div>
+        <div class="opp-body">Liz described assigning students to research a nonprofit connected to their own background and community. When students have genuine personal stakes in the subject, the learning becomes unmistakable and self-sustaining. CS628&rsquo;s capstone is already project-based, but the project topic is typically instructor-assigned or predetermined. Giving students agency to connect their capstone to a real organization in their own community &mdash; a company, nonprofit, or industry from their background &mdash; could significantly raise engagement and the quality of demonstrated learning.</div>
+        <div class="opp-action">Introduce a "connect to your context" option in the CS628 capstone: students propose a real-world organization (company, nonprofit, or community project) as the basis for their full-stack application. Pair with a brief proposal and reflection component to make the stakes visible.</div>
+      </div>
+
+      <div class="opp-block">
+        <div class="opp-header">
+          <div class="opp-icon">&#9888;</div>
+          <div>
+            <div class="opp-title">Pre-Mortem Exercise &rarr; BSAI Program Review</div>
+            <div class="opp-source">From: Robert (Closing Discussion)</div>
+          </div>
+        </div>
+        <div class="opp-body">Robert proposed a pre-mortem: work backward from a failure scenario to identify how AI might go wrong across employers, higher education, and K&ndash;12 before committing to a direction. Applied to BSAI: imagine it is 2028 and the BSAI program has failed to produce graduates that employers want. What went wrong? What assumptions did we make in 2026 that turned out to be false? This exercise surfaces risks that forward-looking planning tends to miss, and is well suited to an AI committee session.</div>
+        <div class="opp-action">Run a 90-minute pre-mortem session with the AI committee, focused on the BSAI program. Document the failure scenarios identified and use them to stress-test the current curriculum and employer alignment strategy.</div>
+      </div>
+
+      <div class="opp-block">
+        <div class="opp-header">
+          <div class="opp-icon">&#127760;</div>
+          <div>
+            <div class="opp-title">Reciprocal Transparency &rarr; STC AI Use Norm</div>
+            <div class="opp-source">From: Mike Meotti, Keynote</div>
+          </div>
+        </div>
+        <div class="opp-body">Meotti&rsquo;s reciprocal transparency principle &mdash; faculty disclose AI use, students disclose AI use &mdash; is a cultural norm, not a policy. STC&rsquo;s AI committee is the right body to adopt and model this norm first, then cascade it to faculty and students. Paired with the red/yellow/green tagging system, this creates a coherent AI culture: visible, honest, and non-adversarial.</div>
+        <div class="opp-action">Propose a reciprocal transparency norm to the AI committee. Draft a one-page statement for faculty to share at the start of each course: "Here is how I use AI in designing this course. Here is what I expect from you." Encourage students to respond in kind.</div>
+      </div>
+
+      <div class="opp-block">
+        <div class="opp-header">
+          <div class="opp-icon">&#128483;</div>
+          <div>
+            <div class="opp-title">AI as Safe Space for Low-Confidence Learners &rarr; International Student Support</div>
+            <div class="opp-source">From: Mike Nielsen &amp; Shannon, Session 3</div>
+          </div>
+        </div>
+        <div class="opp-body">Mike observed that AI can serve as a safe space for students who lack the confidence to ask a human instructor. This is especially relevant for STC&rsquo;s international students, who may face cultural or language barriers to asking questions in class. Rather than treating AI as a threat to learning, STC can position it explicitly as a first-contact support tool that lowers the barrier to engagement &mdash; with the expectation that students eventually bring those questions back to instructors or peers.</div>
+        <div class="opp-action">In orientation materials and course syllabi, explicitly frame AI tools as a low-stakes first step for asking questions &mdash; not a replacement for instructor engagement, but a bridge to it. Pair with guidance on effective prompting for ESL contexts.</div>
+      </div>
+    </section>
+
+    <!-- ── 5. Open Questions ── -->
+    <section class="notes-section" id="questions">
+      <div class="section-header">
+        <span class="section-num">05</span>
+        <span class="section-title">Open Questions for STC</span>
+      </div>
+
+      <p class="prose">These are the summit&rsquo;s unanswered questions, reframed for STC specifically. They belong in AI committee discussions or program review sessions &mdash; not because there are easy answers, but because STC needs to develop its own answers rather than importing someone else&rsquo;s.</p>
+
+      <div class="q-block">
+        <div class="q-text">What does an AI-ready STC graduate actually look like &mdash; and what is our evidence that our programs are producing one?</div>
+        <div class="q-context">The summit could not agree on a definition. STC is better positioned than most to define this for its own graduates. The BSAI program needs this definition to exist before it can claim to deliver it.</div>
+      </div>
+
+      <div class="q-block">
+        <div class="q-text">What is STC&rsquo;s traffic-light policy for AI use across courses &mdash; and who communicates it to students consistently?</div>
+        <div class="q-context">Individual faculty are setting their own policies without coordination. Students moving from CS445 to CS628 to BSAI capstone may encounter contradictory expectations. A shared framework, even a flexible one, is better than silence.</div>
+      </div>
+
+      <div class="q-block">
+        <div class="q-text">How does STC support students whose first language is not English in developing AI prompting skills &mdash; not just language skills?</div>
+        <div class="q-context">Effective AI use requires being able to articulate what you want. Students who struggle to express themselves in English will get worse AI outputs, reinforcing disadvantage. This is a design problem, not just a language support problem.</div>
+      </div>
+
+      <div class="q-block">
+        <div class="q-text">What is the irreducible human contribution in an STC classroom &mdash; what would we insist on keeping human even if AI could do it?</div>
+        <div class="q-context">This question was never asked directly at the summit. STC should ask it. The answer determines which parts of the curriculum are AI-augmentable and which are not, and shapes what faculty development should actually prioritize.</div>
+      </div>
+
+      <div class="q-block">
+        <div class="q-text">If the BSAI program fails by 2028, what went wrong? What assumptions are we making today that might not hold?</div>
+        <div class="q-context">The pre-mortem question. This is not pessimism &mdash; it is risk management. Employer needs may shift faster than the program can respond. The course approval bottleneck may stall critical updates. AI tool fluency without critical reasoning may produce graduates employers don&rsquo;t want.</div>
+      </div>
+
+      <div class="q-block">
+        <div class="q-text">How do we formalize employer input into program design &mdash; not as a courtesy, but as a structural requirement in the first quarter of any new program?</div>
+        <div class="q-context">STC has employer relationships. The missing piece is making co-design a process, not an event. Lauren&rsquo;s evidence is clear: programs designed with employers in Q1 succeed. Programs designed without employer input are playing catch-up from day one.</div>
+      </div>
+
+      <div class="q-block">
+        <div class="q-text">Are we engaging students upstream &mdash; in high school or community college &mdash; or are we inheriting their AI literacy deficit by default?</div>
+        <div class="q-context">Kirk raised this in the closing. CityU is a private institution without obvious K&ndash;12 partnership structures. But if students arrive without basic AI fluency, STC absorbs that problem. Even lightweight engagement &mdash; a webinar, a short course, a pipeline program &mdash; could shift this.</div>
+      </div>
+    </section>
+
+    <!-- ── 6. Next Steps ── -->
+    <section class="notes-section" id="next-steps">
+      <div class="section-header">
+        <span class="section-num">06</span>
+        <span class="section-title">Proposed Next Steps</span>
+      </div>
+
+      <p class="prose">Concrete, ownable actions derived from the summit analysis. Ordered by priority.</p>
+
+      <table class="action-table">
+        <thead>
+          <tr>
+            <th>Priority</th>
+            <th>Action</th>
+            <th>Owner</th>
+            <th>When</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="priority high">High</span></td>
+            <td><strong>Draft BSAI AI-ready graduate competency framework</strong> &mdash; anchor it to a Bloom&rsquo;s Taxonomy of AI structure; share with AI committee for review</td>
+            <td><span class="owner-chip">Clark + AI Committee</span></td>
+            <td>Q2 2026</td>
+          </tr>
+          <tr>
+            <td><span class="priority high">High</span></td>
+            <td><strong>Adopt red/yellow/green AI tagging in CS445 and CS628</strong> &mdash; classify every major assignment; document and share the taxonomy with other STC faculty</td>
+            <td><span class="owner-chip">Clark</span></td>
+            <td>Next course cycle</td>
+          </tr>
+          <tr>
+            <td><span class="priority high">High</span></td>
+            <td><strong>Propose reciprocal transparency norm to AI committee</strong> &mdash; draft a one-page faculty disclosure template; pilot in at least two courses</td>
+            <td><span class="owner-chip">Clark + AI Committee</span></td>
+            <td>Q2 2026</td>
+          </tr>
+          <tr>
+            <td><span class="priority medium">Medium</span></td>
+            <td><strong>Run BSAI pre-mortem with AI committee</strong> &mdash; 90-minute session; document failure scenarios and use to stress-test current curriculum assumptions</td>
+            <td><span class="owner-chip">AI Committee</span></td>
+            <td>Q2&ndash;Q3 2026</td>
+          </tr>
+          <tr>
+            <td><span class="priority medium">Medium</span></td>
+            <td><strong>Initiate one employer co-design session for BSAI curriculum review</strong> &mdash; use James&rsquo;s job-description deconstruction method; identify two to three employer partners already engaged with STC</td>
+            <td><span class="owner-chip">Clark + Dean</span></td>
+            <td>Q3 2026</td>
+          </tr>
+          <tr>
+            <td><span class="priority medium">Medium</span></td>
+            <td><strong>Build Multi-AI Comparison Lab as a HOS activity</strong> &mdash; students compare Claude, ChatGPT, Perplexity, and local Ollama on the same prompt; add to playground and pilot in CS445 or BSAI</td>
+            <td><span class="owner-chip">Clark</span></td>
+            <td>Q2&ndash;Q3 2026</td>
+          </tr>
+          <tr>
+            <td><span class="priority medium">Medium</span></td>
+            <td><strong>Introduce "connect to your context" option in CS628 capstone</strong> &mdash; students propose a real-world organization as project basis; add proposal and reflection component</td>
+            <td><span class="owner-chip">Clark</span></td>
+            <td>Next CS628 cohort</td>
+          </tr>
+          <tr>
+            <td><span class="priority low">Low</span></td>
+            <td><strong>Add ESL AI prompting guidance to orientation and syllabi</strong> &mdash; frame AI as a low-stakes first-contact support tool; include basic prompting scaffolding for international students</td>
+            <td><span class="owner-chip">Clark + Student Services</span></td>
+            <td>Q3 2026</td>
+          </tr>
+          <tr>
+            <td><span class="priority low">Low</span></td>
+            <td><strong>Explore one upstream engagement opportunity</strong> &mdash; webinar, short course, or pipeline program targeting high school or community college students in the Seattle area</td>
+            <td><span class="owner-chip">Dean + Clark</span></td>
+            <td>Q4 2026</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+  </main>
+</div>
+
+<script>
+  (function() {
+    var links = document.querySelectorAll(".toc-link");
+    var sections = [];
+    links.forEach(function(link) {
+      var id = link.getAttribute("href").replace("#", "");
+      var el = document.getElementById(id);
+      if (el) sections.push({ el: el, link: link });
+    });
+    function onScroll() {
+      var scrollY = window.scrollY + 80;
+      var active = sections[0];
+      for (var i = 0; i < sections.length; i++) {
+        if (sections[i].el.offsetTop <= scrollY) active = sections[i];
+      }
+      links.forEach(function(l) { l.classList.remove("active"); });
+      if (active) active.link.classList.add("active");
+    }
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+  })();
+</script>
+
+</body>
+</html>

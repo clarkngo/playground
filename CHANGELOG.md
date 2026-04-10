@@ -9,6 +9,12 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ## 2026-04-09
 
+### [feature] `stc-strategy/` — new collection applying external insights to CityU STC
+- New hub: `stc-strategy/index.html`; first document: `stc-strategy/higher-education-summit-2026/index.html` — 6 sections mapping summit insights to BSAI, MSAI, CS445, CS628, and the AI committee; includes validated practices, gaps, 8 opportunities, 7 open questions, and 9 prioritized next steps
+
+### [feature] `conference-notes/` — new section with Higher Education Summit 2026 notes
+- New hub: `conference-notes/index.html`; new notes: `conference-notes/higher-education-summit-2026/index.html` — 12 sections covering keynote, 2 panels, 3 breakout sessions, closing discussion, synthesis, and personal reflections; root `index.html` updated with nav link and card
+
 ### [feature] `index.html` — Class Notes and Class Activities sidebar + sections
 - Added "Classroom" nav group in sidebar with links for Class Notes (badge 1) and Class Activities (badge 1)
 - Added `data-section="class-notes"` section: card for `class-notes/data-governance/module-01.html`
