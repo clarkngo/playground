@@ -9,6 +9,10 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ## 2026-04-12
 
+### [refactor] `classroom-activities/data-governance/module-01/` — rename long case study folder
+- Renamed `Module 01 Case Study Enterprise Data Governance Foundation/` → `module-01/` to match kebab-case convention
+- Updated all `src` paths in `module-01-deliverables.html` (9 screenshots + iframe)
+
 ### [refactor] `classroom-activities/data-governance/module-01-deliverables.html` — move and rename deliverables page
 - Moved from `submission/deliverables.html` → `data-governance/module-01-deliverables.html` (sibling of `module-01.html`)
 - Updated all relative paths: nav back-link, breadcrumb Playground link, 9 screenshot srcs, iframe src
