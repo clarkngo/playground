@@ -7,6 +7,14 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-04-12
+
+### [bug] `classroom-activities/data-governance/module-01.html` — fix org chart connector lines
+- Replaced single centered `org-vline` between rows with proper branching connectors: `org-down-3` (CDO → 3 Owners), `org-vline-3` (3 parallel Owner → Steward lines), `org-up-3` (3 Stewards → Data Consumers)
+- All nodes now have visible connecting lines; Customer and Marketing columns no longer appear disconnected
+
+---
+
 ## 2026-04-09
 
 ### [feature] NCyTE AI for Educators Workshop 2025 — conference notes + STC strategy
