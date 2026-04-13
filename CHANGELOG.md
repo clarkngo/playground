@@ -9,6 +9,12 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ## 2026-04-12
 
+### [feature] `classroom-activities/data-governance/.../submission/` — Module 01 deliverables page + renamed screenshots
+- Renamed 9 screenshots with deliverable-prefixed names (`01-databricks-notebook.png`, `02-glossary-three-terms.png`, `03-metadata-*.png`, `04-ownership-roles.png`, `00-setup-*.png`)
+- Created `deliverables.html`: 5-section submission page with progress checklist, screenshots, embedded Databricks notebook iframe, rendered lessons-learned markdown, and 4 setup evidence screenshots
+
+---
+
 ### [bug] `classroom-activities/data-governance/module-01.html` — fix org chart connector lines
 - Replaced single centered `org-vline` between rows with proper branching connectors: `org-down-3` (CDO → 3 Owners), `org-vline-3` (3 parallel Owner → Steward lines), `org-up-3` (3 Stewards → Data Consumers)
 - All nodes now have visible connecting lines; Customer and Marketing columns no longer appear disconnected
