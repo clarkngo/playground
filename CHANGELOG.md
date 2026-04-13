@@ -9,6 +9,10 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ## 2026-04-12
 
+### [refactor] `classroom-activities/data-governance/module-01-deliverables.html` — move and rename deliverables page
+- Moved from `submission/deliverables.html` → `data-governance/module-01-deliverables.html` (sibling of `module-01.html`)
+- Updated all relative paths: nav back-link, breadcrumb Playground link, 9 screenshot srcs, iframe src
+
 ### [feature] `classroom-activities/data-governance/.../submission/deliverables.html` — process flow animation
 - Added animated vertical timeline: 6 phases · 20 steps tracing the full activity workflow (env setup → MySQL/Airflow config → data ingestion → metadata tagging → ownership → reflection)
 - Staggered CSS fade-in with 260ms per step; animated spine fill grows as steps appear; phase headers with per-phase color theming
