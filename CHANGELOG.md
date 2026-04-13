@@ -9,6 +9,12 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ## 2026-04-12
 
+### [feature] `classroom-activities/data-governance/.../submission/deliverables.html` — process flow animation
+- Added animated vertical timeline: 6 phases · 20 steps tracing the full activity workflow (env setup → MySQL/Airflow config → data ingestion → metadata tagging → ownership → reflection)
+- Staggered CSS fade-in with 260ms per step; animated spine fill grows as steps appear; phase headers with per-phase color theming
+- Alternating left/right card layout (CSS 3-col grid); step number badges; blocker/fix/milestone tags; graduation finale node
+- Replay button resets and re-runs the full animation
+
 ### [feature] `classroom-activities/data-governance/.../submission/` — Module 01 deliverables page + renamed screenshots
 - Renamed 9 screenshots with deliverable-prefixed names (`01-databricks-notebook.png`, `02-glossary-three-terms.png`, `03-metadata-*.png`, `04-ownership-roles.png`, `00-setup-*.png`)
 - Created `deliverables.html`: 5-section submission page with progress checklist, screenshots, embedded Databricks notebook iframe, rendered lessons-learned markdown, and 4 setup evidence screenshots
