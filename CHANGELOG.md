@@ -9,6 +9,11 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ## 2026-04-12
 
+### [ux] `classroom-activities/data-governance/module-01-deliverables.html` — collapsible timeline
+- Added collapse toggle to "How I Built This" section: click header to hide/show the full 20-step animation
+- Chevron (▼/▶) rotates on toggle; `max-height` + `opacity` transition for smooth open/close
+- Fixed overflow clipping bug: added `position: relative` to `.tl-body` so absolutely-positioned spine/dot children are properly contained
+
 ### [refactor] `classroom-activities/data-governance/module-01/` — rename long case study folder
 - Renamed `Module 01 Case Study Enterprise Data Governance Foundation/` → `module-01/` to match kebab-case convention
 - Updated all `src` paths in `module-01-deliverables.html` (9 screenshots + iframe)
