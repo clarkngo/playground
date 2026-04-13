@@ -7,6 +7,11 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ## 2026-04-12
 
+### [ux] `classroom-activities/data-governance/module-01-deliverables.html` — timeline collapsed by default with expand affordance
+- Starts collapsed; animation fires only on first expand via `hasPlayed` flag
+- Header now a bordered pill button (`border: 1px solid #30363d`, hover → blue border + tinted bg)
+- Always-visible summary row: three pills (6 phases, 20 steps, 3 blockers resolved) + italic "click to expand" hint that fades on header hover
+
 ### [ux] `classroom-activities/data-governance/module-01-deliverables.html` — collapsible timeline
 - "How I Built This" header is now a click-to-toggle; chevron rotates ▼↔▶; body fades and slides via `max-height` + `opacity` transition
 - Root cause of initial clipping bug: `position: static` on `.tl-body` let absolutely-positioned spine/dot children escape `overflow: hidden`; fixed with `position: relative`
