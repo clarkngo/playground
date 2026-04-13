@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Module 01 Deliverables &mdash; Data Governance</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0d1117; color: #c9d1d9; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; min-height: 100vh; font-size: 14px; line-height: 1.6; }
+
+    /* Navbar */
+    .navbar { background: #161b22; border-bottom: 1px solid #30363d; padding: .75rem 1.5rem; display: flex; align-items: center; justify-content: space-between; }
+    .navbar a { color: #e6edf3; text-decoration: none; font-weight: 700; font-size: 1rem; }
+    .navbar a:hover { color: #58a6ff; }
+    .nav-pill { font-size: .78rem; color: #8b949e; }
+
+    .page-body { max-width: 1020px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+    /* Breadcrumb */
+    .breadcrumb { font-size: .78rem; color: #8b949e; display: flex; align-items: center; gap: .4rem; margin-bottom: .85rem; flex-wrap: wrap; }
+    .breadcrumb a { color: #58a6ff; text-decoration: none; font-weight: 600; }
+    .breadcrumb a:hover { text-decoration: underline; }
+    .breadcrumb span { color: #484f58; }
+
+    /* Page header */
+    .page-badge { display: inline-block; background: #1f6feb; color: #fff; font-size: .72rem; font-weight: 700; padding: 3px 12px; border-radius: 12px; text-transform: uppercase; letter-spacing: .07em; margin-bottom: .55rem; }
+    h1 { color: #e6edf3; font-size: 1.75rem; font-weight: 800; margin-bottom: .25rem; }
+    .page-sub { color: #8b949e; font-size: .88rem; margin-bottom: 1.5rem; }
+
+    /* Progress bar */
+    .progress-wrap { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 1.1rem 1.5rem; margin-bottom: 2.25rem; }
+    .progress-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #8b949e; margin-bottom: .75rem; }
+    .progress-steps { display: flex; gap: .5rem; align-items: stretch; flex-wrap: wrap; }
+    .step-pill { flex: 1; min-width: 120px; background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: .55rem .85rem; display: flex; align-items: center; gap: .55rem; }
+    .step-pill.done { border-color: #238636; background: #0b1f0b; }
+    .step-check { width: 18px; height: 18px; border-radius: 50%; background: #238636; color: #fff; font-size: .7rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .step-check.pending { background: #30363d; color: #8b949e; }
+    .step-text { font-size: .78rem; font-weight: 700; color: #3fb950; line-height: 1.3; }
+    .step-pill.done .step-text { color: #3fb950; }
+    .step-pill:not(.done) .step-text { color: #8b949e; }
+
+    /* Deliverable section */
+    .deliverable { margin-bottom: 3rem; scroll-margin-top: 1rem; }
+    .d-header { display: flex; align-items: center; gap: .85rem; margin-bottom: 1.25rem; padding-bottom: .85rem; border-bottom: 1px solid #21262d; }
+    .d-num { width: 34px; height: 34px; border-radius: 10px; background: #1f6feb; color: #fff; font-size: .85rem; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .d-num.green  { background: #238636; }
+    .d-num.purple { background: #6e40c9; }
+    .d-num.yellow { background: #9e6a03; }
+    .d-num.teal   { background: #0e7490; }
+    .d-title { font-size: 1.15rem; font-weight: 800; color: #e6edf3; }
+    .d-desc  { font-size: .82rem; color: #8b949e; margin-top: .15rem; }
+    .done-badge { margin-left: auto; background: #0b1f0b; border: 1px solid #238636; color: #3fb950; font-size: .68rem; font-weight: 700; padding: 2px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: .07em; white-space: nowrap; }
+
+    /* Sub-label */
+    .sub-label { font-size: .69rem; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: #8b949e; border-left: 3px solid #30363d; padding-left: .55rem; margin: 1.25rem 0 .75rem; }
+
+    /* Screenshot display */
+    .screenshot-wrap { border: 1px solid #30363d; border-radius: 10px; overflow: hidden; margin-bottom: 1rem; background: #000; }
+    .screenshot-wrap img { width: 100%; display: block; }
+    .screenshot-caption { font-size: .75rem; color: #8b949e; padding: .5rem .85rem; background: #161b22; border-top: 1px solid #21262d; display: flex; align-items: center; gap: .4rem; }
+    .cap-file { font-family: "Menlo","Monaco",monospace; font-size: .72rem; color: #58a6ff; }
+
+    /* Two-column screenshots */
+    .two-screenshots { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+
+    /* Setup evidence grid */
+    .evidence-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+
+    /* Notebook iframe */
+    .notebook-embed { border: 1px solid #30363d; border-radius: 10px; overflow: hidden; margin-bottom: 1rem; }
+    .notebook-bar { background: #161b22; border-bottom: 1px solid #30363d; padding: .55rem 1rem; display: flex; align-items: center; gap: .65rem; }
+    .nb-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .nb-dot.red  { background: #f85149; }
+    .nb-dot.yel  { background: #e3b341; }
+    .nb-dot.grn  { background: #3fb950; }
+    .nb-title { font-size: .78rem; color: #8b949e; font-family: "Menlo","Monaco",monospace; margin-left: .25rem; flex: 1; }
+    .nb-link  { font-size: .75rem; color: #58a6ff; text-decoration: none; font-weight: 600; }
+    .nb-link:hover { text-decoration: underline; }
+    .notebook-embed iframe { width: 100%; height: 520px; border: none; display: block; background: #fff; }
+
+    /* Lessons learned card */
+    .lessons-card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1.5rem; margin-bottom: 1.25rem; }
+    .lessons-card h2 { font-size: 1rem; font-weight: 800; color: #e6edf3; margin-bottom: .65rem; border-left: 3px solid #e3b341; padding-left: .65rem; }
+    .lessons-card h3 { font-size: .88rem; font-weight: 700; color: #f0c674; margin: 1.1rem 0 .4rem; }
+    .lessons-card p  { font-size: .84rem; color: #c9d1d9; line-height: 1.75; margin-bottom: .5rem; }
+    .lessons-card ul { padding-left: 1.2rem; margin-bottom: .6rem; }
+    .lessons-card li { font-size: .84rem; color: #c9d1d9; line-height: 1.75; margin-bottom: .2rem; }
+    .lessons-card li strong { color: #e6edf3; }
+    .lessons-card code { font-family: "Menlo","Monaco",monospace; font-size: .8em; background: #0d1117; border: 1px solid #30363d; padding: 1px 5px; border-radius: 4px; color: #a5d6ff; }
+    .lessons-card hr { border: none; border-top: 1px solid #21262d; margin: 1rem 0; }
+
+    /* Insight strip */
+    .insight-strip { background: #1d1600; border: 1px solid #9e6a03; border-radius: 8px; padding: .85rem 1.1rem; margin-bottom: 1.25rem; font-size: .84rem; color: #c9d1d9; line-height: 1.7; }
+    .insight-strip strong { color: #f0c674; }
+
+    /* Footer */
+    .site-footer { text-align: center; padding: 1.25rem; border-top: 1px solid #21262d; margin-top: 2rem; color: #484f58; font-size: .77rem; }
+
+    /* Responsive */
+    @media (max-width: 680px) {
+      .two-screenshots, .evidence-grid { grid-template-columns: 1fr; }
+      .progress-steps { flex-direction: column; }
+      .step-pill { min-width: unset; }
+    }
+
+    /* Print */
+    @media print {
+      @page { size: A4; margin: 1.2cm 1.4cm; }
+      body { background: #fff !important; color: #111 !important; font-size: 9pt; }
+      .navbar { display: none !important; }
+      .page-body { max-width: 100%; padding: 0; }
+      h1 { color: #111 !important; font-size: 16pt; }
+      .page-sub { color: #555 !important; }
+      .progress-wrap { background: #f9f9f9 !important; border-color: #ccc !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .step-pill.done { background: #f0fdf4 !important; border-color: #15803d !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .step-check { background: #15803d !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .step-text { color: #15803d !important; }
+      .d-num { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .done-badge { background: #f0fdf4 !important; border-color: #15803d !important; color: #15803d !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .screenshot-wrap { border-color: #ccc !important; page-break-inside: avoid; }
+      .notebook-embed iframe { display: none; }
+      .nb-link::after { content: " (see load-data-in-databricks.html)"; font-size: 8pt; color: #555; }
+      .lessons-card { background: #fafafa !important; border-color: #ccc !important; page-break-inside: avoid; }
+      .lessons-card h2 { color: #111 !important; border-left-color: #d97706 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .lessons-card h3 { color: #92400e !important; }
+      .lessons-card p, .lessons-card li { color: #222 !important; }
+      .insight-strip { background: #fffbeb !important; border-color: #d97706 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="../../module-01.html">&#8592; Module 01 Case Study</a>
+  <span class="nav-pill">Data Governance &rsaquo; Module 01 &rsaquo; Deliverables</span>
+</nav>
+
+<div class="page-body">
+
+  <!-- Breadcrumb -->
+  <div class="breadcrumb">
+    <a href="../../../../../index.html">Playground</a>
+    <span>/</span><span>Classroom Activities</span>
+    <span>/</span><span>Data Governance</span>
+    <span>/</span><span>Module 01</span>
+    <span>/</span><span>Deliverables</span>
+  </div>
+
+  <!-- Header -->
+  <div class="page-badge">&#127891; Student Submission</div>
+  <h1>Module 01 Deliverables</h1>
+  <p class="page-sub">Enterprise Data Governance Foundation &mdash; RetailCorp Case Study &mdash; Clark Ngo</p>
+
+  <!-- Progress bar -->
+  <div class="progress-wrap">
+    <div class="progress-label">Submission Checklist &mdash; 5 / 5 Complete</div>
+    <div class="progress-steps">
+      <div class="step-pill done">
+        <div class="step-check">&#10003;</div>
+        <div class="step-text">D1 &mdash; Databricks Notebook</div>
+      </div>
+      <div class="step-pill done">
+        <div class="step-check">&#10003;</div>
+        <div class="step-text">D2 &mdash; Glossary</div>
+      </div>
+      <div class="step-pill done">
+        <div class="step-check">&#10003;</div>
+        <div class="step-text">D3 &mdash; Metadata</div>
+      </div>
+      <div class="step-pill done">
+        <div class="step-check">&#10003;</div>
+        <div class="step-text">D4 &mdash; Ownership</div>
+      </div>
+      <div class="step-pill done">
+        <div class="step-check">&#10003;</div>
+        <div class="step-text">D5 &mdash; Reflection</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- D1 DATABRICKS NOTEBOOK -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <div class="deliverable" id="d1">
+    <div class="d-header">
+      <div class="d-num">D1</div>
+      <div>
+        <div class="d-title">Databricks Notebook</div>
+        <div class="d-desc">Data loaded from CSV &middot; Schema explored with printSchema()</div>
+      </div>
+      <div class="done-badge">&#10003; Complete</div>
+    </div>
+
+    <div class="sub-label">Screenshot &mdash; Notebook Output</div>
+    <div class="screenshot-wrap">
+      <img src="01-databricks-notebook.png" alt="Databricks notebook showing Customers and Orders CSVs loaded, .show() and .printSchema() output" />
+      <div class="screenshot-caption">
+        <span>&#128247;</span>
+        <span class="cap-file">01-databricks-notebook.png</span>
+        <span>&mdash; Module1_Data_Exploration notebook: CSVs loaded, schema printed</span>
+      </div>
+    </div>
+
+    <div class="sub-label">Embedded Notebook Export</div>
+    <div class="notebook-embed">
+      <div class="notebook-bar">
+        <div class="nb-dot red"></div>
+        <div class="nb-dot yel"></div>
+        <div class="nb-dot grn"></div>
+        <span class="nb-title">load-data-in-databricks.html</span>
+        <a href="load-data-in-databricks.html" target="_blank" class="nb-link">Open full page &#8599;</a>
+      </div>
+      <iframe src="load-data-in-databricks.html" title="Databricks Notebook Export" loading="lazy"></iframe>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- D2 GLOSSARY -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <div class="deliverable" id="d2">
+    <div class="d-header">
+      <div class="d-num green">D2</div>
+      <div>
+        <div class="d-title">Glossary</div>
+        <div class="d-desc">At least 3 business terms defined and approved in OpenMetadata</div>
+      </div>
+      <div class="done-badge">&#10003; Complete &mdash; 3 terms</div>
+    </div>
+
+    <div class="sub-label">RetailCorp Glossary &mdash; OpenMetadata</div>
+    <div class="screenshot-wrap">
+      <img src="02-glossary-three-terms.png" alt="OpenMetadata RetailCorp Glossary showing Customer, Order, and Revenue terms with Approved status" />
+      <div class="screenshot-caption">
+        <span>&#128247;</span>
+        <span class="cap-file">02-glossary-three-terms.png</span>
+        <span>&mdash; Customer, Order, Revenue &mdash; all Approved, owned by admin</span>
+      </div>
+    </div>
+
+    <div class="insight-strip">
+      <strong>Customer</strong> &mdash; An individual who has purchased a product from RetailCorp &nbsp;&bull;&nbsp;
+      <strong>Order</strong> &mdash; A transaction representing a purchase made by a customer &nbsp;&bull;&nbsp;
+      <strong>Revenue</strong> &mdash; Total monetary value generated from orders
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- D3 METADATA -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <div class="deliverable" id="d3">
+    <div class="d-header">
+      <div class="d-num purple">D3</div>
+      <div>
+        <div class="d-title">Metadata</div>
+        <div class="d-desc">Tables documented with column-level descriptions, tags, and glossary mappings</div>
+      </div>
+      <div class="done-badge">&#10003; Complete &mdash; 2 tables</div>
+    </div>
+
+    <div class="sub-label">Customers &amp; Orders Tables &mdash; OpenMetadata Schema Tab</div>
+    <div class="two-screenshots">
+      <div class="screenshot-wrap">
+        <img src="03-metadata-customers-table.png" alt="OpenMetadata customers table showing customer_id, name (Personal), email (Personal) columns with descriptions" />
+        <div class="screenshot-caption">
+          <span>&#128247;</span>
+          <span class="cap-file">03-metadata-customers-table.png</span>
+          <span>&mdash; customers table: PII tags on name, email</span>
+        </div>
+      </div>
+      <div class="screenshot-wrap">
+        <img src="03-metadata-orders-table.png" alt="OpenMetadata orders table showing order_id, customer_id (FK), order_amount mapped to Revenue glossary term" />
+        <div class="screenshot-caption">
+          <span>&#128247;</span>
+          <span class="cap-file">03-metadata-orders-table.png</span>
+          <span>&mdash; orders table: FK noted, Revenue term linked</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="insight-strip">
+      <strong>customers:</strong> 3 columns &mdash; <code>customer_id</code> (PK), <code>name</code> (Personal tag), <code>email</code> (Personal tag). Owner: crmproductomanager &nbsp;&bull;&nbsp;
+      <strong>orders:</strong> 3 columns &mdash; <code>order_id</code> (PK), <code>customer_id</code> (FK referencing customers), <code>order_amount</code> (mapped to Revenue glossary term). Owner: salesmanger
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- D4 OWNERSHIP -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <div class="deliverable" id="d4">
+    <div class="d-header">
+      <div class="d-num yellow">D4</div>
+      <div>
+        <div class="d-title">Ownership</div>
+        <div class="d-desc">Governance roles defined and assigned to users in OpenMetadata</div>
+      </div>
+      <div class="done-badge">&#10003; Complete &mdash; 5 users</div>
+    </div>
+
+    <div class="sub-label">Users &amp; Roles &mdash; OpenMetadata Admin View</div>
+    <div class="screenshot-wrap">
+      <img src="04-ownership-roles.png" alt="OpenMetadata Users page showing clarkngo, crmproductomanager (Data Owner), dataanalyst (Data Steward), marketinganalyticslead (Data Owner), salesmanger (Data Owner)" />
+      <div class="screenshot-caption">
+        <span>&#128247;</span>
+        <span class="cap-file">04-ownership-roles.png</span>
+        <span>&mdash; 5 users: 3 Data Owners, 1 Data Steward, 1 Admin</span>
+      </div>
+    </div>
+
+    <div class="insight-strip">
+      <strong>clarkngo</strong> &mdash; No Role (Admin) &nbsp;&bull;&nbsp;
+      <strong>crmproductomanager</strong> &mdash; Data Owner &nbsp;&bull;&nbsp;
+      <strong>dataanalyst</strong> &mdash; Data Steward &nbsp;&bull;&nbsp;
+      <strong>marketinganalyticslead</strong> &mdash; Data Owner &nbsp;&bull;&nbsp;
+      <strong>salesmanger</strong> &mdash; Data Owner
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- D5 REFLECTION -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <div class="deliverable" id="d5">
+    <div class="d-header">
+      <div class="d-num teal">D5</div>
+      <div>
+        <div class="d-title">Reflection</div>
+        <div class="d-desc">Why governance matters &mdash; lessons learned from building the full data stack</div>
+      </div>
+      <div class="done-badge">&#10003; Complete</div>
+    </div>
+
+    <div class="lessons-card">
+      <h2>Lessons Learned &amp; Troubleshooting</h2>
+      <p>This session was a masterclass in modern data stack troubleshooting. We navigated the complex "middle layer" where Docker networking, database permissions, and metadata orchestration collide.</p>
+
+      <hr>
+
+      <h3>1. The "Parallel Universe" — Local vs. Docker</h3>
+      <p>The biggest roadblock was the existence of two separate MySQL worlds fighting for the same door (Port 3306).</p>
+      <ul>
+        <li><strong>The Conflict:</strong> Local MySQL (Homebrew) and Docker MySQL (OpenMetadata backend) both wanted to own <code>localhost:3306</code>.</li>
+        <li><strong>The Symptom:</strong> MySQL Workbench showed <code>sakila</code> and <code>world</code> (local), while OpenMetadata was looking for its own system tables (Docker). They were "talking past each other."</li>
+        <li><strong>Lesson Learned:</strong> Always check what is "squatting" on your ports. Using <code>brew services stop mysql</code> or checking <code>lsof -i :3306</code> is essential when working with containerized databases.</li>
+      </ul>
+
+      <h3>2. Airflow Logs: "Who" vs. "What"</h3>
+      <p>We spent time navigating the Airflow UI to find why the crawler was not finding the data.</p>
+      <ul>
+        <li><strong>Audit Logs:</strong> Show only high-level events (e.g., "Manual run started by admin").</li>
+        <li><strong>Task Instance Logs:</strong> Provide the actual "ground truth." This is where we found the critical line: <code>Processed records: 0</code>.</li>
+        <li><strong>Lesson Learned:</strong> To debug ingestion, ignore the Audit Log and drill into the <strong>Logs</strong> tab of the specific Task Instance. Look for schema scan counts and table match patterns.</li>
+      </ul>
+
+      <hr>
+
+      <h3>3. The "Access Denied" Saga</h3>
+      <p>Even after merging the "universes," MySQL security layers provided several final bosses.</p>
+      <ul>
+        <li><strong>Docker Networking:</strong> MySQL inside a container sees the Mac as a remote IP (<code>192.168.65.1</code>). It does not trust <code>root</code> unless specifically told to.</li>
+        <li><strong>The Fix:</strong> Used the wildcard grant: <code>GRANT ALL PRIVILEGES ON *.* TO "root"@"%"</code>.</li>
+        <li><strong>Default Schema Trap:</strong> MySQL Workbench tries to "enter" a database on connection. If that database does not exist in the specific instance being hit, the connection fails even if the password is correct.</li>
+        <li><strong>Lesson Learned:</strong> Keep the Default Schema blank in Workbench until certain which instance you are connected to.</li>
+      </ul>
+
+      <h3>4. Ingestion Filters &amp; Case Sensitivity</h3>
+      <p>The OpenMetadata crawler is precise — and unforgiving.</p>
+      <ul>
+        <li><strong>The Hurdle:</strong> Ingestion filters are case-sensitive. If the table is <code>customers</code> (lowercase) but the filter is <code>Customers</code> (uppercase), the crawler reports "Success" but finds <strong>0 records</strong>.</li>
+        <li><strong>Lesson Learned:</strong> When in doubt, clear all filters and let the crawler scan the entire schema. Once data appears, use Excludes to hide system noise like <code>information_schema</code>.</li>
+      </ul>
+
+      <hr>
+
+      <h3>5. Metadata Governance: Roles vs. Ownership</h3>
+      <p>We distinguished between "what a person can do" and "who is responsible for the data."</p>
+      <ul>
+        <li><strong>Roles (Access Control):</strong> Global permissions (e.g., Data Steward). If a role like "Data Owner" is missing, create a Custom Role in settings.</li>
+        <li><strong>Ownership (Asset Metadata):</strong> A field <em>on the table itself</em>. Assigning an owner defines accountability, regardless of that user's system role.</li>
+        <li><strong>Lesson Learned:</strong> Assigning a <strong>Steward</strong> (technical expert) and an <strong>Owner</strong> (business expert) to the same table is the gold standard for data governance.</li>
+      </ul>
+    </div>
+
+    <div class="sub-label">Supporting Evidence &mdash; Setup &amp; Pipeline</div>
+    <div class="evidence-grid">
+      <div class="screenshot-wrap">
+        <img src="00-setup-connection-test.png" alt="OpenMetadata MySQL connection configuration showing successful connection test" />
+        <div class="screenshot-caption">
+          <span>&#128247;</span>
+          <span class="cap-file">00-setup-connection-test.png</span>
+          <span>&mdash; OpenMetadata: MySQL connection test SUCCESS</span>
+        </div>
+      </div>
+      <div class="screenshot-wrap">
+        <img src="00-setup-airflow-ingestion-log.png" alt="Airflow task instance log for ingestion_task showing workflow completion" />
+        <div class="screenshot-caption">
+          <span>&#128247;</span>
+          <span class="cap-file">00-setup-airflow-ingestion-log.png</span>
+          <span>&mdash; Airflow: ingestion_task log &mdash; Workflow finished</span>
+        </div>
+      </div>
+      <div class="screenshot-wrap">
+        <img src="00-setup-mysql-data.png" alt="MySQL Workbench showing SELECT * FROM msds_lab_data.customers with 4 rows: Alice, Bob, Charlie, Diana" />
+        <div class="screenshot-caption">
+          <span>&#128247;</span>
+          <span class="cap-file">00-setup-mysql-data.png</span>
+          <span>&mdash; MySQL Workbench: msds_lab_data.customers &mdash; 4 rows verified</span>
+        </div>
+      </div>
+      <div class="screenshot-wrap">
+        <img src="00-setup-ingestion-success.png" alt="OpenMetadata pipeline run showing SUCCESS badge with metadata type and schedule" />
+        <div class="screenshot-caption">
+          <span>&#128247;</span>
+          <span class="cap-file">00-setup-ingestion-success.png</span>
+          <span>&mdash; OpenMetadata: pipeline run &mdash; SUCCESS badge</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="insight-strip">
+      <strong>Why governance matters:</strong> This lab made it concrete &mdash; without enforced ownership, clear definitions, and quality checks at every layer (Docker networking, MySQL permissions, Airflow ingestion filters, OpenMetadata field-level tags), data becomes inaccessible, untrustworthy, or silently wrong. Every troubleshooting step in this session was a governance failure made visible: a missing access grant, an undefined schema, a case-sensitivity mismatch. Governance is not paperwork &mdash; it is what keeps the data pipeline honest.
+    </div>
+  </div>
+
+</div>
+
+<footer class="site-footer">
+  Module 01 &mdash; Enterprise Data Governance Foundation &nbsp;&bull;&nbsp; Clark Ngo
+</footer>
+
+</body>
+</html>
