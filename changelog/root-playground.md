@@ -7,6 +7,10 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ## 2026-04-12
 
+### [refactor] `classroom-activities/data-governance/module-01-deliverables.html` — move and rename deliverables page
+- Moved from deep `submission/deliverables.html` to `data-governance/module-01-deliverables.html` alongside `module-01.html`
+- Fixed all relative paths: navbar back-link (`module-01.html`), breadcrumb (`../../index.html`), 9 screenshot `src` and iframe `src` now prefixed with `Module 01 Case Study Enterprise Data Governance Foundation/submission/`
+
 ### [feature] `classroom-activities/data-governance/.../submission/deliverables.html` — process flow animation
 - Added animated vertical timeline (6 phases · 20 steps) showing the full end-to-end activity workflow
 - Phase 1: Env Setup (Docker, port conflict, resolution) · Phase 2: MySQL/Workbench Config (grants, default schema) · Phase 3: Airflow Ingestion (pipeline run, task logs, 0 records, filter fix) · Phase 4: Metadata Tagging (customers + orders, PII labels) · Phase 5: Ownership & Roles (steward + owner assignment) · Phase 6: Reflection (lessons-learned, deliverables html)
