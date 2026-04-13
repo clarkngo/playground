@@ -5,6 +5,16 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-04-12
+
+### [feature] `classroom-activities/data-governance/.../submission/deliverables.html` — process flow animation
+- Added animated vertical timeline (6 phases · 20 steps) showing the full end-to-end activity workflow
+- Phase 1: Env Setup (Docker, port conflict, resolution) · Phase 2: MySQL/Workbench Config (grants, default schema) · Phase 3: Airflow Ingestion (pipeline run, task logs, 0 records, filter fix) · Phase 4: Metadata Tagging (customers + orders, PII labels) · Phase 5: Ownership & Roles (steward + owner assignment) · Phase 6: Reflection (lessons-learned, deliverables html)
+- CSS: `--pc`/`--pcr` custom properties for per-phase color; `tl-spine-fill` animates `height` via JS-set transition duration; alternating `node-r`/`node-l` grid; `::before` connectors; `.tag-badge` variants (err/fix/milestone)
+- JS: IIFE with `PHASES` data array; DOM builder; staggered `setTimeout` at 260ms/step; Replay button resets + re-runs; stat label shows final count on completion
+
+---
+
 ## 2026-04-09
 
 ### [feature] `index.html` — Classroom nav group and content sections
