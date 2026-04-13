@@ -9,6 +9,12 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ## 2026-04-12
 
+### [ux] `classroom-activities/data-governance/module-01-deliverables.html` — timeline collapsed by default with expand affordance
+- Timeline starts collapsed; animation plays only on first expand (not on page load)
+- Header styled as a bordered button (border + background hover) so it reads as interactive
+- Persistent summary row below header (always visible): 🗂 6 phases · 🔢 20 steps · ⚠️ 3 blockers resolved + italic "click to expand" hint
+- `hasPlayed` flag prevents re-running animation if user collapses and re-opens
+
 ### [ux] `classroom-activities/data-governance/module-01-deliverables.html` — collapsible timeline
 - Added collapse toggle to "How I Built This" section: click header to hide/show the full 20-step animation
 - Chevron (▼/▶) rotates on toggle; `max-height` + `opacity` transition for smooth open/close
