@@ -7,6 +7,22 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-04-14
+
+### [feature] Predictive Maintenance primer — Domain Knowledge tab (tab 13)
+- Added 13th tab to `primer/industry/predictive-maintenance/index.html`: CNC physics, all 5 failure modes in depth, feature correlations, product type significance, synthetic vs. real data, and ML intuition for manufacturing PdM
+
+
+
+### [feature] AI4I 2020 dataset guide — domain knowledge section
+- Added 6-part domain knowledge section to `deep-dives/ai4i-2020-dataset-guide.html`: CNC physics, all 5 failure modes in depth, feature correlations, product type significance, synthetic vs. real data caveats, and ML intuition for manufacturing PdM
+
+## 2026-04-13
+
+### [feature] Predictive Maintenance & IIoT — new industry primer + AI4I 2020 dataset guide
+- New 12-tab industry primer: `primer/industry/predictive-maintenance/index.html` — OEE, MTBF, digital twins, IIoT stack, all 5 AI4I failure modes, real incident case studies
+- New deep dive: `deep-dives/ai4i-2020-dataset-guide.html` — feature dictionary, failure mode cards, class imbalance visuals, derived feature Python code, ML modeling considerations
+
 ## 2026-04-12
 
 ### [ux] `classroom-activities/data-governance/module-01-deliverables.html` — timeline collapsed by default with expand affordance
