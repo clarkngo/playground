@@ -62,6 +62,11 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-04-14
+
+### [feature] `stc-strategy/higher-education-summit-2026` — §05 Strategic Mapping section added
+- New section maps 4 summit observations to dean-level strategic consequences (product differentiation, retention risk, structural failure, placement pipeline); includes a 5-row "So What" Ladder table and tactical framing suggestion; Open Questions → §06, Next Steps → §07
+
 ## 2026-04-09
 
 ### [feature] NCyTE AI for Educators Workshop 2025 — conference notes + STC strategy
