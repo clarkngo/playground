@@ -1,5 +1,31 @@
 # Primer Changelog
 
+## 2026-04-14
+
+### [feature] Predictive Maintenance primer — Domain Knowledge tab added (tab 13)
+- New tab `domainknowledge` added to `primer/industry/predictive-maintenance/index.html`; progress bar updated to 13 dots, label "Section 1 of 13"
+- 6 subsections: CNC Milling Fundamentals (sensor-to-physics table), 5 Failure Modes in Depth (physical mechanism, operator observation, trigger rationale, cost per mode), Feature Correlations (5 callout blocks), Product Type significance (L/M/H table + modeling implication), Synthetic vs. Real data (two-column cards + generalization caveat), ML Intuition (asymmetric cost grid, alarm fatigue callout, tree model rationale)
+- Inline `<style>` block added for `.dk-*` classes (prose, table, callout, 2col, fm, pill) and `.cost-grid` / `.cost-card`
+- `primer/index.html`: section meta updated to "13 sections"
+
+## 2026-04-13
+
+### [feature] Predictive Maintenance & IIoT — new industry primer (12 tabs)
+- New file: `primer/industry/predictive-maintenance/index.html` — anchored to the AI4I 2020 milling dataset; 12 tabs following the standard primer format
+- **Tab 1 — Overview:** 6 sub-sector cards (CNC/milling, IIoT, maintenance strategy spectrum, ML for failure prediction, digital twin, XAI); value chain (CNC/PLC → OPC-UA → Edge → Historian → ML → Alert → Technician); 6 market context cards (Siemens, GE Vernova, PTC, market size, downtime cost, AI4I context)
+- **Tab 2 — Key Terminology:** 20 glossary terms covering OEE, MTBF, MTTR, RUL, CBM, TPM, PdM, TWF, HDF, PWF, OSF, RNF, SCADA, PLC, OPC-UA, Digital Twin, CMMS, FMEA, XAI, SMOTE, IIoT/Industry 4.0
+- **Tab 3 — Major Players:** Siemens, GE Vernova/Predix, PTC ThingWorx, AVEVA, Rockwell Automation, Honeywell; CNC OEMs (Fanuc, DMG Mori, Haas); CMMS (IBM Maximo, SAP PM, Aspentech)
+- **Tab 4 — Core Metrics:** Maintenance ops (OEE, MTBF, MTTR, Availability, PM Compliance); ML model (Precision, Recall, F1, AUC-ROC, False Alarm Rate, Detection Lead Time); Business (Cost Avoidance, Maintenance Cost Reduction, AI4I Power formula)
+- **Tab 5 — Technology Stack:** 7 layers — Physical (sensors) → Control (PLCs/CNCs) → Edge → Data/Historian → ML/Analytics → Platform/APM → Visualization/Alert
+- **Tab 6 — Common Workflows:** 3 workflows tied directly to AI4I failure modes — Tool Wear Monitoring (TWF), Thermal Anomaly Response (HDF), Power Anomaly Detection (PWF)
+- **Tab 7 — Trends & Challenges:** Edge AI inference, digital twin maturation, labeled data scarcity, OT/IT convergence, foundation models for time series, sustainability/energy optimization
+- **Tab 8 — Market Dynamics:** 5 pain point cards; monetization table (SaaS PdM, OEM bundled, outcome-based, professional services, data marketplace)
+- **Tab 9 — Evolution:** 6 foundational works table; 8-card timeline (1950s preventive → 1971 TPM → 1980s CBM → 1990s PdM → 2011 Industry 4.0 → 2015 cloud platforms → 2020 AI4I → 2024+ foundation models)
+- **Tab 10 — Data Governance:** Sensor data ownership, AI4I licensing, data quality in manufacturing, OT security, metadata/lineage, legacy historian lock-in, synthetic data governance
+- **Tab 11 — Data Architecture:** 4 data domains; value chain flow diagram; protocols table (OPC-UA, MQTT, Modbus, Kafka); AI4I feature engineering derived features table (Power, Temp Delta, OSF Factor, Tool Wear Rate)
+- **Tab 12 — Failure Modes & Incidents:** 6 real industrial incident cards — spindle fracture (TWF), bearing thermal seizure (HDF), drive inverter damage (PWF), Norsk Hydro ransomware (OT/IT), alarm fatigue shutdown, RNF unpredictability
+- `primer/index.html`: added sidebar nav link + industry card with full `data-search` keywords
+
 ## 2026-04-07
 
 ### [feature] Enterprise Architecture — new industry primer (12 tabs)

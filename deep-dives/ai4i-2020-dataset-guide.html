@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI4I 2020 — Predictive Maintenance Dataset Guide</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:#0b1220;color:#dde5f0;font-family:Inter,system-ui,-apple-system,sans-serif;min-height:100vh;line-height:1.6;font-size:14px}
+a{text-decoration:none;color:#38bdf8}
+a:hover{text-decoration:underline}
+
+/* Nav */
+.navbar{background:#0f1a2e;border-bottom:1px solid rgba(255,255,255,0.06);padding:.75rem 1.5rem;display:flex;align-items:center;gap:.75rem}
+.navbar-brand{font-size:.95rem;font-weight:700;color:#dde5f0}
+.navbar-sep{color:rgba(255,255,255,0.15)}
+.navbar-title{font-size:.85rem;color:#7a8899}
+.navbar a.back{color:#7a8899;font-size:.82rem;margin-left:auto;transition:color .2s}
+.navbar a.back:hover{color:#38bdf8}
+
+/* Layout */
+.page{max-width:1040px;margin:0 auto;padding:2rem 1.5rem 4rem}
+
+/* Hero */
+.hero{padding:2.5rem 0 2rem;border-bottom:1px solid rgba(255,255,255,0.06);margin-bottom:2rem}
+.hero-eyebrow{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.13em;color:#38bdf8;margin-bottom:.6rem}
+.hero-title{font-size:1.9rem;font-weight:800;line-height:1.2;margin-bottom:.75rem;letter-spacing:-.02em}
+.hero-title span{background:linear-gradient(135deg,#38bdf8,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-sub{color:#7a8899;font-size:.9rem;max-width:680px;line-height:1.65;margin-bottom:1.1rem}
+.badge-row{display:flex;flex-wrap:wrap;gap:.45rem}
+.badge{padding:.2rem .65rem;border-radius:10px;font-size:.68rem;font-weight:600;border:1px solid}
+.badge-b{background:rgba(56,189,248,0.08);color:#38bdf8;border-color:rgba(56,189,248,0.2)}
+.badge-p{background:rgba(129,140,248,0.08);color:#818cf8;border-color:rgba(129,140,248,0.2)}
+.badge-g{background:rgba(52,211,153,0.08);color:#34d399;border-color:rgba(52,211,153,0.2)}
+.badge-m{background:rgba(255,255,255,0.04);color:#7a8899;border-color:rgba(255,255,255,0.08)}
+
+/* Section structure */
+.section{margin-bottom:2.5rem}
+.section-label{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#7a8899;margin-bottom:.85rem;padding-bottom:.4rem;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;gap:.5rem}
+.section-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(255,255,255,0.06),transparent)}
+
+/* 2-col grid */
+.grid-2{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1rem}
+.grid-3{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:.85rem}
+
+/* Info card */
+.card{background:#111c30;border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:1.1rem 1.2rem}
+.card h4{font-size:.85rem;font-weight:700;margin-bottom:.35rem;color:#dde5f0}
+.card p{font-size:.78rem;color:#7a8899;line-height:1.55}
+.card .tag{display:inline-block;margin-top:.5rem;font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:.12rem .45rem;border-radius:6px}
+.tag-b{background:rgba(56,189,248,0.1);color:#38bdf8}
+.tag-p{background:rgba(129,140,248,0.1);color:#818cf8}
+.tag-g{background:rgba(52,211,153,0.1);color:#34d399}
+.tag-o{background:rgba(251,146,60,0.1);color:#fb923c}
+.tag-r{background:rgba(248,113,113,0.1);color:#f87171}
+.tag-m{background:rgba(255,255,255,0.05);color:#7a8899}
+
+/* Feature table */
+.feat-table{width:100%;border-collapse:collapse;font-size:.78rem}
+.feat-table th{text-align:left;padding:.55rem .75rem;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#7a8899;border-bottom:1px solid rgba(255,255,255,0.08)}
+.feat-table td{padding:.55rem .75rem;border-bottom:1px solid rgba(255,255,255,0.04);vertical-align:top}
+.feat-table tr:last-child td{border-bottom:none}
+.feat-table tr:hover td{background:rgba(255,255,255,0.02)}
+.feat-name{font-weight:600;color:#dde5f0;white-space:nowrap}
+.feat-type{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:.1rem .35rem;border-radius:5px;display:inline-block}
+.ft-int{background:rgba(52,211,153,0.1);color:#34d399}
+.ft-str{background:rgba(129,140,248,0.1);color:#818cf8}
+.ft-cat{background:rgba(251,146,60,0.1);color:#fb923c}
+.ft-flt{background:rgba(56,189,248,0.1);color:#38bdf8}
+.ft-bool{background:rgba(248,113,113,0.1);color:#f87171}
+
+/* Failure mode cards */
+.failure-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:.9rem}
+.fm-card{background:#111c30;border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:1.1rem 1.2rem;position:relative;overflow:hidden}
+.fm-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.fm-twf::before{background:linear-gradient(90deg,#f87171,#fb923c)}
+.fm-hdf::before{background:linear-gradient(90deg,#fb923c,#fbbf24)}
+.fm-pwf::before{background:linear-gradient(90deg,#38bdf8,#818cf8)}
+.fm-osf::before{background:linear-gradient(90deg,#818cf8,#a78bfa)}
+.fm-rnf::before{background:linear-gradient(90deg,#7a8899,#4a5568)}
+.fm-label{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#7a8899;margin-bottom:.3rem}
+.fm-name{font-size:.95rem;font-weight:800;color:#dde5f0;margin-bottom:.5rem}
+.fm-stat-row{display:flex;gap:1rem;margin-bottom:.7rem}
+.fm-stat{text-align:center}
+.fm-stat-val{font-size:1.3rem;font-weight:800;line-height:1}
+.fm-stat-lbl{font-size:.6rem;color:#7a8899;text-transform:uppercase;letter-spacing:.05em;margin-top:.15rem}
+.fm-trigger{font-size:.75rem;color:#7a8899;line-height:1.5;margin-bottom:.6rem}
+.fm-trigger strong{color:#a8b8cc}
+.fm-insight{font-size:.73rem;color:#6b7c8d;border-top:1px solid rgba(255,255,255,0.05);padding-top:.55rem;margin-top:.55rem;line-height:1.5}
+
+/* Derived features table */
+.derived-table{width:100%;border-collapse:collapse;font-size:.78rem}
+.derived-table th{text-align:left;padding:.55rem .75rem;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#7a8899;border-bottom:1px solid rgba(255,255,255,0.08)}
+.derived-table td{padding:.6rem .75rem;border-bottom:1px solid rgba(255,255,255,0.04);vertical-align:top}
+.derived-table tr:last-child td{border-bottom:none}
+
+/* Imbalance bar */
+.imbalance-visual{background:#111c30;border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:1.25rem 1.4rem}
+.imb-row{display:flex;align-items:center;gap:1rem;margin-bottom:.7rem}
+.imb-row:last-child{margin-bottom:0}
+.imb-label{font-size:.75rem;font-weight:600;min-width:130px;color:#a8b8cc}
+.imb-bar-track{flex:1;background:rgba(255,255,255,0.05);border-radius:3px;height:10px;overflow:hidden}
+.imb-bar-fill{height:100%;border-radius:3px;transition:width .6s ease}
+.imb-count{font-size:.72rem;color:#7a8899;min-width:80px;text-align:right}
+
+/* ML tips */
+.tip-list{list-style:none;display:flex;flex-direction:column;gap:.65rem}
+.tip-list li{display:flex;gap:.75rem;align-items:flex-start;background:#111c30;border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:.75rem 1rem;font-size:.78rem;color:#7a8899;line-height:1.5}
+.tip-list li .tip-icon{font-size:1rem;flex-shrink:0;margin-top:.05rem}
+.tip-list li strong{color:#a8b8cc}
+
+/* Code snippet */
+.code-block{background:#070e1a;border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:1rem 1.2rem;font-family:"SF Mono","Fira Code",monospace;font-size:.72rem;color:#a8b8cc;line-height:1.7;overflow-x:auto;margin-top:.5rem;white-space:pre}
+.code-block .c-green{color:#34d399}
+.code-block .c-blue{color:#38bdf8}
+.code-block .c-purple{color:#a78bfa}
+.code-block .c-muted{color:#4a5568}
+.code-block .c-orange{color:#fb923c}
+
+/* Domain knowledge */
+.dk-prose{font-size:.8rem;color:#7a8899;line-height:1.7;max-width:820px;margin-bottom:1rem}
+.dk-prose strong{color:#a8b8cc}
+.dk-prose code{background:#070e1a;padding:.1rem .32rem;border-radius:4px;font-family:"SF Mono","Fira Code",monospace;font-size:.72rem;color:#38bdf8}
+.dk-subhead{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:#38bdf8;margin:1.4rem 0 .5rem}
+.dk-table{width:100%;border-collapse:collapse;font-size:.78rem;margin-bottom:1rem}
+.dk-table th{text-align:left;padding:.5rem .75rem;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#7a8899;border-bottom:1px solid rgba(255,255,255,0.08)}
+.dk-table td{padding:.55rem .75rem;border-bottom:1px solid rgba(255,255,255,0.04);vertical-align:top;color:#7a8899;font-size:.78rem;line-height:1.5}
+.dk-table td:first-child{color:#dde5f0;font-weight:600;white-space:nowrap}
+.dk-table tr:last-child td{border-bottom:none}
+.dk-fm{background:#111c30;border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:1.1rem 1.2rem;margin-bottom:.75rem}
+.dk-fm-title{font-size:.88rem;font-weight:800;color:#dde5f0;margin-bottom:.55rem;display:flex;align-items:center;gap:.5rem}
+.dk-fm-title .fm-pill{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;padding:.15rem .45rem;border-radius:5px}
+.dk-row{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.75rem}
+.dk-callout{background:#0a1628;border:1px solid rgba(56,189,248,0.15);border-left:3px solid #38bdf8;border-radius:0 8px 8px 0;padding:.85rem 1rem;font-size:.78rem;color:#7a8899;line-height:1.6;margin:.75rem 0}
+.dk-callout strong{color:#a8b8cc}
+.dk-callout.orange{border-left-color:#fb923c;border-color:rgba(251,146,60,0.15)}
+.dk-callout.purple{border-left-color:#818cf8;border-color:rgba(129,140,248,0.15)}
+.dk-callout.green{border-left-color:#34d399;border-color:rgba(52,211,153,0.15)}
+.cost-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-top:.75rem}
+.cost-card{background:#111c30;border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:.9rem 1rem}
+.cost-card h5{font-size:.78rem;font-weight:700;margin-bottom:.35rem}
+.cost-card p{font-size:.74rem;color:#7a8899;line-height:1.5}
+@media(max-width:640px){.dk-row,.cost-grid{grid-template-columns:1fr}}
+
+/* Citation box */
+.cite-box{background:#111c30;border:1px solid rgba(255,255,255,0.06);border-left:3px solid #38bdf8;border-radius:0 8px 8px 0;padding:.9rem 1.1rem;font-size:.76rem;color:#7a8899;line-height:1.6}
+.cite-box strong{color:#a8b8cc}
+
+@media(max-width:640px){
+  .hero-title{font-size:1.4rem}
+  .fm-stat-val{font-size:1.1rem}
+}
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <span class="navbar-brand">🔬 Deep Dives</span>
+  <span class="navbar-sep">/</span>
+  <span class="navbar-title">AI4I 2020 — Predictive Maintenance Dataset</span>
+  <a class="back" href="index.html">← Deep Dives</a>
+</nav>
+
+<div class="page">
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-eyebrow">Dataset Reference Guide · Kaggle · CC BY-NC-SA 4.0</div>
+    <h1 class="hero-title">AI4I 2020 — <span>Predictive Maintenance</span></h1>
+    <p class="hero-sub">A synthetic milling machine dataset designed for classification and explainable AI research. 10,000 observations · 14 features · 5 labeled failure modes · 3.4% positive rate. Published by S. Matzka at the Third International Conference on Artificial Intelligence for Industries (2020).</p>
+    <div class="badge-row">
+      <span class="badge badge-b">10,000 rows</span>
+      <span class="badge badge-b">14 features</span>
+      <span class="badge badge-p">5 failure modes</span>
+      <span class="badge badge-g">3.4% failure rate</span>
+      <span class="badge badge-m">Synthetic</span>
+      <span class="badge badge-m">Classification</span>
+    </div>
+  </div>
+
+  <!-- Feature Dictionary -->
+  <div class="section">
+    <div class="section-label">Feature Dictionary — All 14 Columns</div>
+    <div style="overflow-x:auto">
+    <table class="feat-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Feature Name</th>
+          <th>Type</th>
+          <th>Range / Values</th>
+          <th>Description &amp; Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="color:#7a8899">1</td>
+          <td><span class="feat-name">UID</span></td>
+          <td><span class="feat-type ft-int">integer</span></td>
+          <td style="color:#7a8899">1 – 10,000</td>
+          <td style="color:#7a8899">Unique row identifier. Drop before modeling — no predictive signal, causes data leakage if included.</td>
+        </tr>
+        <tr>
+          <td style="color:#7a8899">2</td>
+          <td><span class="feat-name">Product ID</span></td>
+          <td><span class="feat-type ft-str">string</span></td>
+          <td style="color:#7a8899">L12345, M12345, H12345</td>
+          <td style="color:#7a8899">Letter prefix (L/M/H) + serial number. The letter is useful as a categorical; the serial number carries no signal. Extract the type prefix into its own feature.</td>
+        </tr>
+        <tr>
+          <td style="color:#7a8899">3</td>
+          <td><span class="feat-name">Type</span></td>
+          <td><span class="feat-type ft-cat">categorical</span></td>
+          <td style="color:#7a8899">L (50%), M (30%), H (20%)</td>
+          <td style="color:#7a8899">Product quality variant. L = low, M = medium, H = high. Affects OSF threshold and tool wear increment per minute (H+5, M+3, L+2 min). Must one-hot or ordinal encode. Critical for OSF prediction.</td>
+        </tr>
+        <tr>
+          <td style="color:#7a8899">4</td>
+          <td><span class="feat-name">Air Temperature [K]</span></td>
+          <td><span class="feat-type ft-flt">float</span></td>
+          <td style="color:#7a8899">~295 – 304 K</td>
+          <td style="color:#7a8899">Random walk, sigma=2K, normalized to 300K. Represents ambient shop-floor temperature. Used in HDF trigger via temperature delta. Raw value less useful than delta with process temp.</td>
+        </tr>
+        <tr>
+          <td style="color:#7a8899">5</td>
+          <td><span class="feat-name">Process Temperature [K]</span></td>
+          <td><span class="feat-type ft-flt">float</span></td>
+          <td style="color:#7a8899">~305 – 314 K</td>
+          <td style="color:#7a8899">Random walk, sigma=1K, equals air temp + 10K. Cutting zone temperature. HDF fires when (Process Temp − Air Temp) &lt; 8.6K AND RPM &lt; 1,380. Engineer the delta feature explicitly.</td>
+        </tr>
+        <tr>
+          <td style="color:#7a8899">6</td>
+          <td><span class="feat-name">Rotational Speed [rpm]</span></td>
+          <td><span class="feat-type ft-flt">float</span></td>
+          <td style="color:#7a8899">~1,168 – 2,886 rpm</td>
+          <td style="color:#7a8899">Calculated from 2860W power with normal noise. Used in PWF (power calc), HDF (low RPM trigger), and as input to derived Power feature. High variance — check for outliers.</td>
+        </tr>
+        <tr>
+          <td style="color:#7a8899">7</td>
+          <td><span class="feat-name">Torque [Nm]</span></td>
+          <td><span class="feat-type ft-flt">float</span></td>
+          <td style="color:#7a8899">~3.8 – 76.6 Nm</td>
+          <td style="color:#7a8899">Normal distribution, mu=40Nm, sigma=10Nm. Never negative in dataset. Used in PWF (power calc), OSF (wear × torque interaction). Most important single raw feature for failure prediction.</td>
+        </tr>
+        <tr>
+          <td style="color:#7a8899">8</td>
+          <td><span class="feat-name">Tool Wear [min]</span></td>
+          <td><span class="feat-type ft-flt">float</span></td>
+          <td style="color:#7a8899">0 – 253 min</td>
+          <td style="color:#7a8899">Accumulated wear time. H-type adds 5 min/part, M-type 3 min/part, L-type 2 min/part per cycle. Used directly in TWF trigger (200–240 window) and OSF interaction (wear × torque). Second most important feature.</td>
+        </tr>
+        <tr>
+          <td style="color:#7a8899">9</td>
+          <td><span class="feat-name">Machine Failure</span></td>
+          <td><span class="feat-type ft-bool">binary</span></td>
+          <td style="color:#7a8899">0 / 1</td>
+          <td style="color:#7a8899"><strong style="color:#f87171">Primary target variable.</strong> 1 if any of the 5 failure modes fired. 339 positive cases out of 10,000 (3.39%). Class imbalance requires SMOTE, class weights, or threshold tuning. Do not use as a feature — it IS the label.</td>
+        </tr>
+        <tr>
+          <td style="color:#7a8899">10</td>
+          <td><span class="feat-name">TWF</span></td>
+          <td><span class="feat-type ft-bool">binary</span></td>
+          <td style="color:#7a8899">0 / 1 (120 cases)</td>
+          <td style="color:#7a8899">Tool Wear Failure label. Used for multi-class / multi-label failure mode classification. Leaks into Machine Failure — exclude all 5 failure mode columns when predicting Machine Failure.</td>
+        </tr>
+        <tr>
+          <td style="color:#7a8899">11</td>
+          <td><span class="feat-name">HDF</span></td>
+          <td><span class="feat-type ft-bool">binary</span></td>
+          <td style="color:#7a8899">0 / 1 (115 cases)</td>
+          <td style="color:#7a8899">Heat Dissipation Failure label. Triggered by low temp delta + low RPM. Multi-label target for failure mode classification experiments.</td>
+        </tr>
+        <tr>
+          <td style="color:#7a8899">12</td>
+          <td><span class="feat-name">PWF</span></td>
+          <td><span class="feat-type ft-bool">binary</span></td>
+          <td style="color:#7a8899">0 / 1 (95 cases)</td>
+          <td style="color:#7a8899">Power Failure label. Triggered by power outside 3,500–9,000W. Best predicted by the engineered Power feature — raw torque + RPM alone are weaker predictors.</td>
+        </tr>
+        <tr>
+          <td style="color:#7a8899">13</td>
+          <td><span class="feat-name">OSF</span></td>
+          <td><span class="feat-type ft-bool">binary</span></td>
+          <td style="color:#7a8899">0 / 1 (98 cases)</td>
+          <td style="color:#7a8899">Overstrain Failure label. Best predicted by the OSF factor (Tool Wear × Torque). Thresholds differ by Type — an interaction term between OSF factor and Type encoding is powerful here.</td>
+        </tr>
+        <tr>
+          <td style="color:#7a8899">14</td>
+          <td><span class="feat-name">RNF</span></td>
+          <td><span class="feat-type ft-bool">binary</span></td>
+          <td style="color:#7a8899">0 / 1 (5 cases)</td>
+          <td style="color:#7a8899">Random Failure label. 0.1% base probability regardless of sensor state. Only 5 cases — essentially unpredictable from features. High model recall on RNF signals overfitting or data leakage, not genuine prediction.</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <!-- Failure Mode Cards -->
+  <div class="section">
+    <div class="section-label">Failure Mode Reference — 5 Modes</div>
+    <div class="failure-grid">
+
+      <div class="fm-card fm-twf">
+        <div class="fm-label">Failure Mode 1</div>
+        <div class="fm-name">TWF — Tool Wear Failure</div>
+        <div class="fm-stat-row">
+          <div class="fm-stat"><div class="fm-stat-val" style="color:#f87171">120</div><div class="fm-stat-lbl">Cases</div></div>
+          <div class="fm-stat"><div class="fm-stat-val" style="color:#f87171">1.20%</div><div class="fm-stat-lbl">Rate</div></div>
+          <div class="fm-stat"><div class="fm-stat-val" style="color:#fb923c">69/51</div><div class="fm-stat-lbl">Replace/Fail</div></div>
+        </div>
+        <div class="fm-trigger"><strong>Trigger:</strong> Tool wear reaches 200–240 min replacement window. Randomly assigned: 69 cases the tool was replaced before failure (label=1), 51 the tool actually failed.</div>
+        <div class="fm-insight">Key features: Tool Wear [min] (direct), Torque (rising trend). Engineer tool wear rate (delta/time) for early warning. OSF factor also correlates — worn tools at high torque are doubly at risk.</div>
+      </div>
+
+      <div class="fm-card fm-hdf">
+        <div class="fm-label">Failure Mode 2</div>
+        <div class="fm-name">HDF — Heat Dissipation Failure</div>
+        <div class="fm-stat-row">
+          <div class="fm-stat"><div class="fm-stat-val" style="color:#fbbf24">115</div><div class="fm-stat-lbl">Cases</div></div>
+          <div class="fm-stat"><div class="fm-stat-val" style="color:#fbbf24">1.15%</div><div class="fm-stat-lbl">Rate</div></div>
+          <div class="fm-stat"><div class="fm-stat-val" style="color:#fbbf24">&lt;8.6K</div><div class="fm-stat-lbl">Delta Thresh</div></div>
+        </div>
+        <div class="fm-trigger"><strong>Trigger:</strong> (Process Temp − Air Temp) &lt; 8.6K AND Rotational Speed &lt; 1,380 rpm. Both conditions must be true simultaneously.</div>
+        <div class="fm-insight">Key features: Temp Delta (engineered — must compute), RPM. Neither raw temperature alone predicts HDF well. The AND condition means a decision tree with the delta + RPM split captures HDF almost perfectly. This is the most "rule-learnable" failure mode.</div>
+      </div>
+
+      <div class="fm-card fm-pwf">
+        <div class="fm-label">Failure Mode 3</div>
+        <div class="fm-name">PWF — Power Failure</div>
+        <div class="fm-stat-row">
+          <div class="fm-stat"><div class="fm-stat-val" style="color:#38bdf8">95</div><div class="fm-stat-lbl">Cases</div></div>
+          <div class="fm-stat"><div class="fm-stat-val" style="color:#38bdf8">0.95%</div><div class="fm-stat-lbl">Rate</div></div>
+          <div class="fm-stat"><div class="fm-stat-val" style="color:#38bdf8">±3.5–9kW</div><div class="fm-stat-lbl">Band</div></div>
+        </div>
+        <div class="fm-trigger"><strong>Trigger:</strong> Power = Torque × (2π × RPM / 60) &lt; 3,500W OR &gt; 9,000W. Power is NOT in the dataset — must be engineered from Torque and RPM.</div>
+        <div class="fm-insight">Key features: Power (engineered — critical). Without this feature, PWF classification is significantly weaker. This is the canonical feature engineering test case for the dataset. Normal range: 3,500–9,000W. Verify your power calc against known cases.</div>
+      </div>
+
+      <div class="fm-card fm-osf">
+        <div class="fm-label">Failure Mode 4</div>
+        <div class="fm-name">OSF — Overstrain Failure</div>
+        <div class="fm-stat-row">
+          <div class="fm-stat"><div class="fm-stat-val" style="color:#a78bfa">98</div><div class="fm-stat-lbl">Cases</div></div>
+          <div class="fm-stat"><div class="fm-stat-val" style="color:#a78bfa">0.98%</div><div class="fm-stat-lbl">Rate</div></div>
+          <div class="fm-stat"><div class="fm-stat-val" style="color:#a78bfa">H/M/L</div><div class="fm-stat-lbl">Thresholds</div></div>
+        </div>
+        <div class="fm-trigger"><strong>Trigger:</strong> Tool Wear × Torque &gt; type threshold: H &gt; 11,000, M &gt; 12,000, L &gt; 13,000 min·Nm.</div>
+        <div class="fm-insight">Key features: OSF Factor = Tool Wear × Torque (engineered), Type (categorical). The interaction between wear state and current torque load is the signal. Lighter types (L) tolerate more combined stress before failing — this is captured by the type-conditioned threshold. One-hot Type and include OSF factor for best results.</div>
+      </div>
+
+      <div class="fm-card fm-rnf">
+        <div class="fm-label">Failure Mode 5</div>
+        <div class="fm-name">RNF — Random Failure</div>
+        <div class="fm-stat-row">
+          <div class="fm-stat"><div class="fm-stat-val" style="color:#7a8899">5</div><div class="fm-stat-lbl">Cases</div></div>
+          <div class="fm-stat"><div class="fm-stat-val" style="color:#7a8899">0.05%</div><div class="fm-stat-lbl">Rate</div></div>
+          <div class="fm-stat"><div class="fm-stat-val" style="color:#7a8899">0.1%</div><div class="fm-stat-lbl">Base Prob</div></div>
+        </div>
+        <div class="fm-trigger"><strong>Trigger:</strong> 0.1% independent probability regardless of any sensor state. No feature-based prediction possible by design.</div>
+        <div class="fm-insight">5 cases is too few for meaningful ML classification. Expect all models to perform near-random on RNF in isolation. If your model claims &gt;50% RNF recall, investigate for data leakage. RNF cases do contribute to the Machine Failure label (col 9) — they are not excluded from the overall target.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Class Imbalance -->
+  <div class="section">
+    <div class="section-label">Class Imbalance Summary</div>
+    <div class="grid-2">
+      <div class="imbalance-visual">
+        <p style="font-size:.75rem;color:#7a8899;margin-bottom:1rem">Machine Failure distribution (n=10,000)</p>
+        <div class="imb-row">
+          <div class="imb-label">No Failure (0)</div>
+          <div class="imb-bar-track"><div class="imb-bar-fill" style="width:96.6%;background:rgba(52,211,153,0.4)"></div></div>
+          <div class="imb-count">9,661 (96.6%)</div>
+        </div>
+        <div class="imb-row">
+          <div class="imb-label">Failure (1)</div>
+          <div class="imb-bar-track"><div class="imb-bar-fill" style="width:3.4%;background:#f87171"></div></div>
+          <div class="imb-count">339 (3.4%)</div>
+        </div>
+        <p style="font-size:.72rem;color:#4a5568;margin-top:1rem">Imbalance ratio: ~28.5:1. A model predicting all zeros achieves 96.6% accuracy — meaningless. Use F1, Precision-Recall AUC, or Matthews Correlation Coefficient as primary metrics.</p>
+      </div>
+      <div class="imbalance-visual">
+        <p style="font-size:.75rem;color:#7a8899;margin-bottom:1rem">Per-failure-mode breakdown (can overlap)</p>
+        <div class="imb-row">
+          <div class="imb-label">TWF</div>
+          <div class="imb-bar-track"><div class="imb-bar-fill" style="width:35.4%;background:#f87171"></div></div>
+          <div class="imb-count">120 (1.20%)</div>
+        </div>
+        <div class="imb-row">
+          <div class="imb-label">HDF</div>
+          <div class="imb-bar-track"><div class="imb-bar-fill" style="width:33.9%;background:#fbbf24"></div></div>
+          <div class="imb-count">115 (1.15%)</div>
+        </div>
+        <div class="imb-row">
+          <div class="imb-label">PWF</div>
+          <div class="imb-bar-track"><div class="imb-bar-fill" style="width:28.0%;background:#38bdf8"></div></div>
+          <div class="imb-count">95 (0.95%)</div>
+        </div>
+        <div class="imb-row">
+          <div class="imb-label">OSF</div>
+          <div class="imb-bar-track"><div class="imb-bar-fill" style="width:28.9%;background:#a78bfa"></div></div>
+          <div class="imb-count">98 (0.98%)</div>
+        </div>
+        <div class="imb-row">
+          <div class="imb-label">RNF</div>
+          <div class="imb-bar-track"><div class="imb-bar-fill" style="width:1.5%;background:#7a8899"></div></div>
+          <div class="imb-count">5 (0.05%)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Derived Features -->
+  <div class="section">
+    <div class="section-label">Feature Engineering — Derived Features</div>
+    <table class="derived-table">
+      <thead>
+        <tr>
+          <th>Feature</th>
+          <th>Formula</th>
+          <th>Failure Mode</th>
+          <th>Why It Matters</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong style="color:#38bdf8">Machine Power [W]</strong></td>
+          <td style="color:#7a8899;font-family:monospace">Torque × (2π × RPM / 60)</td>
+          <td><span class="tag tag-b">PWF</span></td>
+          <td style="color:#7a8899">The single most important derived feature. PWF is triggered exclusively by power leaving the 3,500–9,000W band. Without engineering this, PWF classification relies on correlated proxies (torque, RPM individually) that are weaker predictors.</td>
+        </tr>
+        <tr>
+          <td><strong style="color:#fbbf24">Temp Delta [K]</strong></td>
+          <td style="color:#7a8899;font-family:monospace">Process Temp − Air Temp</td>
+          <td><span class="tag tag-b" style="background:rgba(251,191,36,0.1);color:#fbbf24;border:none">HDF</span></td>
+          <td style="color:#7a8899">HDF fires when this delta drops below 8.6K. The delta removes baseline drift from both signals. Raw temperature values alone contain almost no HDF signal because both channels move together. The delta is the HDF signal.</td>
+        </tr>
+        <tr>
+          <td><strong style="color:#a78bfa">OSF Factor</strong></td>
+          <td style="color:#7a8899;font-family:monospace">Tool Wear × Torque</td>
+          <td><span class="tag tag-p">OSF</span></td>
+          <td style="color:#7a8899">Captures the interaction between wear state and current mechanical load. Without this, a linear model misses OSF because the effect requires both features simultaneously exceeding thresholds. Pair with Type-conditioned threshold as a feature or use in tree-based models that capture interactions natively.</td>
+        </tr>
+        <tr>
+          <td><strong style="color:#34d399">Type (extracted)</strong></td>
+          <td style="color:#7a8899;font-family:monospace">Product ID[0] or Type column</td>
+          <td><span class="tag tag-g">OSF, TWF</span></td>
+          <td style="color:#7a8899">Type is already in the dataset but must be encoded (one-hot or ordinal). H/M/L variants carry different tool wear increment rates and OSF thresholds. Models that drop Type lose important conditional behavior — OSF thresholds differ 18% across type variants.</td>
+        </tr>
+        <tr>
+          <td><strong style="color:#fb923c">Tool Wear Rate</strong></td>
+          <td style="color:#7a8899;font-family:monospace">ΔTool Wear / Δtime</td>
+          <td><span class="tag tag-b" style="background:rgba(251,146,60,0.1);color:#fb923c;border:none">TWF</span></td>
+          <td style="color:#7a8899">Requires time-ordered data. Detects abnormal wear acceleration that precedes TWF before the absolute 200-min threshold is reached. Useful for RUL estimation. Not computable in the static Kaggle CSV without row ordering context.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="code-block" style="margin-top:1rem">
+<span class="c-muted"># Python: Engineer the 3 key derived features</span>
+<span class="c-blue">import</span> numpy <span class="c-blue">as</span> np
+<span class="c-blue">import</span> pandas <span class="c-blue">as</span> pd
+
+df = pd.read_csv(<span class="c-green">"ai4i2020.csv"</span>)
+
+<span class="c-muted"># 1. Machine Power [W] — critical for PWF</span>
+df[<span class="c-green">"Power_W"</span>] = df[<span class="c-green">"Torque [Nm]"</span>] * (2 * np.pi * df[<span class="c-green">"Rotational speed [rpm]"</span>] / 60)
+
+<span class="c-muted"># 2. Temperature Delta [K] — critical for HDF</span>
+df[<span class="c-green">"Temp_Delta_K"</span>] = df[<span class="c-green">"Process temperature [K]"</span>] - df[<span class="c-green">"Air temperature [K]"</span>]
+
+<span class="c-muted"># 3. OSF Interaction Factor — critical for OSF</span>
+df[<span class="c-green">"OSF_Factor"</span>] = df[<span class="c-green">"Tool wear [min]"</span>] * df[<span class="c-green">"Torque [Nm]"</span>]
+
+<span class="c-muted"># 4. Type extracted from Product ID (redundant with Type col, but explicit)</span>
+df[<span class="c-green">"Type_Code"</span>] = df[<span class="c-green">"Type"</span>].map({<span class="c-green">"L"</span>: 0, <span class="c-green">"M"</span>: 1, <span class="c-green">"H"</span>: 2})
+
+<span class="c-muted"># 5. Drop leakage columns before modeling</span>
+<span class="c-orange">LEAKAGE_COLS</span> = [<span class="c-green">"UDI"</span>, <span class="c-green">"Product ID"</span>, <span class="c-green">"TWF"</span>, <span class="c-green">"HDF"</span>, <span class="c-green">"PWF"</span>, <span class="c-green">"OSF"</span>, <span class="c-green">"RNF"</span>]
+X = df.drop(columns=<span class="c-orange">LEAKAGE_COLS</span> + [<span class="c-green">"Machine failure"</span>])
+y = df[<span class="c-green">"Machine failure"</span>]
+    </div>
+  </div>
+
+  <!-- ML Considerations -->
+  <div class="section">
+    <div class="section-label">ML Modeling Considerations</div>
+    <ul class="tip-list">
+      <li>
+        <span class="tip-icon">⚖️</span>
+        <span><strong>Address class imbalance first.</strong> 96.6% negative rate means accuracy is a misleading metric. Use <code style="background:#070e1a;padding:.1rem .3rem;border-radius:4px;font-size:.72rem">class_weight="balanced"</code> in sklearn classifiers, SMOTE oversampling via imbalanced-learn, or threshold tuning on predicted probabilities. Always evaluate with F1, PR-AUC, or Matthews Correlation Coefficient — not accuracy.</span>
+      </li>
+      <li>
+        <span class="tip-icon">🚰</span>
+        <span><strong>Prevent data leakage.</strong> The 5 failure mode columns (TWF, HDF, PWF, OSF, RNF) are components of the Machine Failure label. Including them as features causes near-perfect but meaningless classification. Also drop UID and Product ID serial number — they are identifiers with no predictive signal.</span>
+      </li>
+      <li>
+        <span class="tip-icon">🔧</span>
+        <span><strong>Engineer Power, Temp Delta, and OSF Factor before fitting.</strong> These three derived features are explicitly referenced in the failure mode trigger conditions. Tree-based models (Random Forest, XGBoost) can approximate them with enough depth, but explicit features improve both performance and interpretability.</span>
+      </li>
+      <li>
+        <span class="tip-icon">🌲</span>
+        <span><strong>Tree-based models outperform linear models here.</strong> The failure triggers are threshold-based AND conditions — exactly what decision trees and gradient boosting are built for. XGBoost or Random Forest with class weights is a strong baseline. Logistic regression will underperform unless you add polynomial/interaction terms manually.</span>
+      </li>
+      <li>
+        <span class="tip-icon">🔍</span>
+        <span><strong>Use SHAP for explainability.</strong> The original AI4I paper focuses on XAI. After fitting, compute SHAP values to show which features drove each prediction. This is a core deliverable of the paper — and a strong signal that your model has learned the right mechanisms, not spurious correlations.</span>
+      </li>
+      <li>
+        <span class="tip-icon">🎯</span>
+        <span><strong>Multi-label vs binary classification.</strong> You can train a single binary classifier for Machine Failure, OR train 4 separate binary classifiers (one per predictable failure mode: TWF, HDF, PWF, OSF). Multi-label classification per mode enables failure-specific XAI — useful for the maintenance use case where knowing the failure type drives the response.</span>
+      </li>
+      <li>
+        <span class="tip-icon">🎲</span>
+        <span><strong>Ignore RNF as a classification target.</strong> 5 cases are insufficient for reliable model evaluation. RNF is intentionally unpredictable from sensor data. Focus modeling effort on TWF, HDF, PWF, and OSF. RNF cases do count toward the Machine Failure label and should not be excluded from the primary binary task.</span>
+      </li>
+      <li>
+        <span class="tip-icon">📊</span>
+        <span><strong>Calibrate probability thresholds.</strong> Default 0.5 classification threshold is inappropriate for imbalanced data. Use precision-recall curves on the validation set to find the threshold that achieves your target false-alarm rate (e.g., &lt;10% FAR) while maximizing recall. Document the chosen threshold and its operational tradeoffs.</span>
+      </li>
+    </ul>
+  </div>
+
+  <!-- Dataset Stats & Citation -->
+  <div class="section">
+    <div class="section-label">Dataset Quick Stats</div>
+    <div class="grid-3">
+      <div class="card"><h4>Rows / Observations</h4><p>10,000 — each row represents one production cycle observation from a synthetic milling machine.</p><span class="tag tag-b">tabular</span></div>
+      <div class="card"><h4>Features (raw)</h4><p>14 columns — 4 identifiers, 4 sensor readings, 1 primary label, 5 failure mode labels.</p><span class="tag tag-b">14 columns</span></div>
+      <div class="card"><h4>Positive Rate</h4><p>339 / 10,000 = 3.39% failure rate. Realistic for a well-maintained production machine.</p><span class="tag tag-r">imbalanced</span></div>
+      <div class="card"><h4>Data Type</h4><p>Synthetic — statistically modeled after a real milling machine. No real production data, no PII, no IP concerns.</p><span class="tag tag-m">synthetic</span></div>
+      <div class="card"><h4>License</h4><p>CC BY-NC-SA 4.0. Free for academic / research use. Commercial use requires permission. Attribution required.</p><span class="tag tag-g">CC BY-NC-SA 4.0</span></div>
+      <div class="card"><h4>Failure Overlap</h4><p>Failure modes are independent — a row can have multiple failure modes active simultaneously. Check for co-occurrence before multi-label modeling.</p><span class="tag tag-p">multi-label</span></div>
+    </div>
+  </div>
+
+  <!-- Domain Knowledge -->
+  <div class="section">
+    <div class="section-label">Domain Knowledge — Why the Data Looks the Way It Does</div>
+
+    <!-- 1. CNC Fundamentals -->
+    <div class="dk-subhead">1 · CNC Milling Machine Fundamentals</div>
+    <p class="dk-prose">A CNC milling machine removes material by pressing a rotating cutting tool against a workpiece. The spindle spins the tool; axis motors move the tool or table along a programmed path (G-code). Every sensor in AI4I maps to a physical phenomenon in this system.</p>
+    <table class="dk-table">
+      <thead><tr><th>Sensor</th><th>Physical meaning</th><th>Why it matters for PdM</th></tr></thead>
+      <tbody>
+        <tr><td>Air Temp [K]</td><td>Ambient shop-floor temperature — rises slowly with shift time, HVAC load, nearby machines. Baseline for the thermal system.</td><td>Not a failure predictor alone; its value is as the reference for the temperature delta used in HDF.</td></tr>
+        <tr><td>Process Temp [K]</td><td>Temperature at or near the cutting zone — captured on spindle housing or coolant return. Always higher than air temp because friction and chip deformation generate heat. Nominally air + 10K.</td><td>Tracks cutting zone heat. Divergence from the expected delta signals cooling degradation (HDF).</td></tr>
+        <tr><td>Rotational Speed [rpm]</td><td>Spindle speed — how fast the cutting tool rotates. Determines surface cutting speed. Too slow → rubbing instead of cutting → heat buildup. Too fast for the material → tool shatters.</td><td>Used in PWF (via power calc) and HDF (low-RPM cooling collapse). Not a standalone failure signal.</td></tr>
+        <tr><td>Torque [Nm]</td><td>Resistance the workpiece exerts on the tool. Increases with depth of cut, feed rate, material hardness, and — critically — tool wear. A sharp tool slices; a dull tool plows.</td><td>Most important raw feature. Rises with wear (TWF proxy), multiplied with wear for OSF, combined with RPM for power (PWF).</td></tr>
+        <tr><td>Tool Wear [min]</td><td>Accumulated cutting time for the current insert. Not directly measured — computed from machine cycle logs. Wear is progressive: break-in → steady-state → accelerated failure.</td><td>Direct TWF trigger. Also OSF factor component. The dataset adds 5/3/2 min per cycle for H/M/L, simulating type-dependent wear rates.</td></tr>
+      </tbody>
+    </table>
+
+    <!-- 2. Failure Modes -->
+    <div class="dk-subhead">2 · The 5 Failure Modes — Physical Depth</div>
+
+    <div class="dk-fm">
+      <div class="dk-fm-title"><span style="color:#f87171">TWF</span><span class="fm-pill" style="background:rgba(248,113,113,0.1);color:#f87171">Tool Wear Failure</span></div>
+      <div class="dk-row">
+        <div>
+          <p class="dk-prose" style="margin-bottom:.4rem"><strong>What physically happens:</strong> Carbide inserts wear in three stages — break-in (rapid initial), steady-state (gradual, predictable), accelerated (exponential, imminent fracture). At 200–240 min the insert is at end-of-life. Flank wear increases tool-workpiece contact area, raising both friction and heat.</p>
+          <p class="dk-prose"><strong>What operators observe:</strong> Surface finish degrades, parts go out of dimensional spec, torque rises, audible chatter or squealing. Catastrophic failure: insert fractures mid-cut, fragment lodges in workpiece or damages spindle taper.</p>
+        </div>
+        <div>
+          <p class="dk-prose" style="margin-bottom:.4rem"><strong>Why the trigger makes sense:</strong> Tool wear is monotonically increasing — it never decreases in operation. The 200–240 min window reflects real variability; the dataset randomly assigns the failure point within that window for each tool.</p>
+          <p class="dk-prose"><strong>Cost of missing it:</strong> Scrapped workpiece (especially in aerospace/automotive), spindle damage ($20K–$80K repair), unplanned line stoppage. Tool replacement costs ~$5–$50 — the failure cost is 1,000× the prevention cost.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="dk-fm">
+      <div class="dk-fm-title"><span style="color:#fbbf24">HDF</span><span class="fm-pill" style="background:rgba(251,191,36,0.1);color:#fbbf24">Heat Dissipation Failure</span></div>
+      <div class="dk-row">
+        <div>
+          <p class="dk-prose" style="margin-bottom:.4rem"><strong>What physically happens:</strong> The temperature differential between process and air collapses below 8.6K <em>while</em> RPM is below 1,380. This combination means the machine is running slowly and heat is not being removed — the cooling system is failing, not the cutting process.</p>
+          <p class="dk-prose"><strong>Why the delta matters more than raw temp:</strong> Both sensors drift together with ambient conditions. The <em>gap</em> between them is what the coolant system maintains. When coolant flow degrades (clogged nozzle, failing pump, low fluid), the gap collapses toward ambient + friction-only heat.</p>
+        </div>
+        <div>
+          <p class="dk-prose" style="margin-bottom:.4rem"><strong>Why the RPM threshold:</strong> Below ~1,380 rpm, centrifugal coolant distribution in many spindle designs becomes ineffective — coolant does not reach the cutting edge. This is a machine-specific physics constraint encoded into the trigger.</p>
+          <p class="dk-prose"><strong>Cost of missing it:</strong> Spindle bearing seizure (precision bearings are intolerant of thermal expansion beyond design limits), workpiece thermal distortion, accelerated tool wear. Bearing replacement: $10K–$50K plus 2–5 days downtime.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="dk-fm">
+      <div class="dk-fm-title"><span style="color:#38bdf8">PWF</span><span class="fm-pill" style="background:rgba(56,189,248,0.1);color:#38bdf8">Power Failure</span></div>
+      <div class="dk-row">
+        <div>
+          <p class="dk-prose" style="margin-bottom:.4rem"><strong>Under 3,500W:</strong> The machine is doing almost no useful work. Causes: tool broke and is no longer cutting, spindle stalled, drive fault, or tool-path error (air-cutting). Motor draws current but produces no output.</p>
+          <p class="dk-prose"><strong>Over 9,000W:</strong> Machine is overloaded. Causes: aggressive feed rate, wrong tool for material, worn tool running at full programmed speed, or jammed chip causing sudden torque spike.</p>
+        </div>
+        <div>
+          <p class="dk-prose" style="margin-bottom:.4rem"><strong>Why Power = Torque × ω is the right metric:</strong> High torque at low RPM can be normal (heavy cut, slow speed). High RPM at low torque is also normal (light finish pass). The <em>product</em> is what loads the motor drivetrain. Neither raw feature alone predicts PWF — the derived feature is essential.</p>
+          <p class="dk-prose"><strong>Cost of missing it:</strong> Drive inverter failure, spindle motor burnout, broken tool fragments in workpiece. Sustained over-power events destroy bearings through heat cycling.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="dk-fm">
+      <div class="dk-fm-title"><span style="color:#a78bfa">OSF</span><span class="fm-pill" style="background:rgba(167,139,250,0.1);color:#a78bfa">Overstrain Failure</span></div>
+      <div class="dk-row">
+        <div>
+          <p class="dk-prose" style="margin-bottom:.4rem"><strong>What physically happens:</strong> A worn tool at high torque simultaneously — the already-degraded cutting edge is being asked to do maximum work. Edge geometry has deteriorated, heat concentration is higher, and stress cycling accelerates fracture. Thresholds: H &gt; 11,000, M &gt; 12,000, L &gt; 13,000 min·Nm.</p>
+          <p class="dk-prose"><strong>Sharp tool at high torque:</strong> Fine — the edge handles it. Worn tool at low torque: fine — low mechanical stress. Worn tool + high torque: dangerous — the interaction is superlinear.</p>
+        </div>
+        <div>
+          <p class="dk-prose" style="margin-bottom:.4rem"><strong>Why thresholds differ by type:</strong> H-type variants are harder materials or tighter tolerances — configured for aggressive cutting, so the tool/spindle reaches its stress limit sooner. L-type runs softer materials or shallower cuts — accumulates the overstrain interaction more slowly, hence the higher threshold before failure fires.</p>
+          <p class="dk-prose"><strong>Cost of missing it:</strong> Sudden tool fracture under load — more violent than end-of-life wear. Fragment can become a projectile. Workpiece scrapped. Spindle damage likely.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="dk-fm">
+      <div class="dk-fm-title"><span style="color:#7a8899">RNF</span><span class="fm-pill" style="background:rgba(255,255,255,0.05);color:#7a8899">Random Failure</span></div>
+      <p class="dk-prose">0.1% independent probability per observation regardless of sensor state. Represents latent defects and truly stochastic events: hidden crack in a carbide insert from manufacturing, transient electrical spike, hydraulic surge, loose fastener. <strong>These are not unpredictable because we lack sensors</strong> — they are unpredictable because the failure mechanism is either a pre-existing hidden defect or a single-event external perturbation. No additional sensor data changes this. Only 5 cases in the dataset — intentional and realistic. If your model claims high RNF recall, it is pattern-matching noise. The correct model behavior is to assign ~0.1% probability to RNF for all observations.</p>
+    </div>
+
+    <!-- 3. Feature Correlations -->
+    <div class="dk-subhead">3 · Why the Features Are Correlated</div>
+
+    <div class="dk-callout"><strong>Torque ↑ as Tool Wear ↑ (physical law):</strong> A sharp cutting edge has a small contact area and acts as a wedge — it fractures material cleanly ahead of it. A worn tool has a rounded flank that plows through material rather than cutting, dramatically increasing the contact force required. This is why tool wear is the leading predictor of torque rise, and why the OSF interaction term (wear × torque) captures the compounding effect.</div>
+
+    <div class="dk-callout orange"><strong>Temperature ↑ as Tool Wear ↑:</strong> ~80% of cutting energy converts to heat. A worn tool requires more energy (higher torque at same conditions), and its degraded geometry is less efficient at conducting heat away through chip formation. More energy input + less efficient heat removal = process temperature rise that accelerates ahead of the wear curve.</div>
+
+    <div class="dk-callout purple"><strong>Power = Torque × ω — exact physics, not approximation:</strong> The spindle motor converts electrical power to rotational mechanical power. P = τ × ω where ω = 2πN/60. This is exact for steady-state operation. The AI4I dataset generates RPM from a 2,860W baseline with noise, which is why power stays near the middle of the 3,500–9,000W band under normal conditions. Computing this feature is mandatory for PWF classification.</div>
+
+    <div class="dk-callout green"><strong>High Torque + Low RPM → Overheating:</strong> At low RPM, less material is removed per unit time — the tool dwells on each surface element longer, concentrating heat. Chips (which carry most heat away) form more slowly. Coolant distribution is less effective at low spindle speeds. Three effects compound: more heat generated per chip, less heat carried away by chips, less effective coolant distribution. This is the physical basis for the HDF AND condition.</div>
+
+    <div class="dk-callout"><strong>Air Temp and Process Temp move together — normally:</strong> Both are random walks. Air temp fluctuates with environment; process temp tracks air temp + 10K. The delta is controlled by the cutting process and coolant system. When the delta narrows, it means the coolant is failing to maintain the temperature differential — not that cutting conditions changed. This is why the delta is the HDF signal and raw temperatures are not.</div>
+
+    <!-- 4. Product Type -->
+    <div class="dk-subhead">4 · Product Type (L/M/H) — Operational Meaning</div>
+    <p class="dk-prose">Type controls two things in the dataset: tool wear increment per cycle (H+5, M+3, L+2 min) and OSF failure threshold (H: 11,000, M: 12,000, L: 13,000 min·Nm). Both reflect real operational differences between machining product quality variants.</p>
+    <table class="dk-table">
+      <thead><tr><th>Type</th><th>Material / tolerance</th><th>Why higher wear rate</th><th>Why lower OSF threshold</th></tr></thead>
+      <tbody>
+        <tr><td>H (High)</td><td>Harder materials, tighter tolerances (e.g. hardened steel, tight-spec aerospace parts)</td><td>Harder material abrades the cutting edge faster per cycle. Slower feed rates mean more time in cut per part.</td><td>Machine is configured for aggressive cutting parameters. Tool and spindle system reach stress limit sooner under high torque + wear combinations.</td></tr>
+        <tr><td>M (Medium)</td><td>Standard engineering materials (e.g. mild steel, aluminum alloy)</td><td>Moderate abrasion. Standard cutting conditions.</td><td>Moderate stress tolerance. Middle threshold.</td></tr>
+        <tr><td>L (Low)</td><td>Softer materials, wider tolerances (e.g. soft aluminum, rough machining)</td><td>Less abrasive material, faster feed rates, shallower cuts — less tool contact time per part.</td><td>Softer cutting conditions mean the tool and spindle can sustain higher combined wear×torque values before structural failure.</td></tr>
+      </tbody>
+    </table>
+    <div class="dk-callout purple"><strong>Modeling implication:</strong> Type is a conditioning variable — the failure behavior of the machine is fundamentally different across types. A model that drops Type conflates three distinct operating regimes, blurring the OSF decision boundary by up to 18% across threshold values. Always include Type (one-hot or ordinal encoded) and consider including an explicit OSF interaction term conditioned on Type.</div>
+
+    <!-- 5. Synthetic vs Real -->
+    <div class="dk-subhead">5 · Why the Dataset is Synthetic — Implications for Generalization</div>
+    <div class="dk-row">
+      <div class="card" style="border-color:rgba(52,211,153,0.15)">
+        <h4 style="color:#34d399">What real milling data looks like</h4>
+        <p>Sensor readings at 1–100ms intervals — not one row per cycle. Timestamps enabling time-series analysis (trend slopes, wear rate). Noise from sensor drift, calibration decay, electrical interference. Multiple correlated failure modes with ambiguous boundaries. Missing data from planned shutdowns and sensor faults. Label noise from imprecise maintenance log entries written hours after the event.</p>
+      </div>
+      <div class="card" style="border-color:rgba(248,113,113,0.15)">
+        <h4 style="color:#f87171">Matzka's simplifications</h4>
+        <p>Each row is one independent observation — no temporal ordering. Failure triggers are exact threshold rules — real failures have fuzzy onset. Feature distributions are clean (normal, random walk) with no drift or outliers. Labels are exact — in reality TWF vs. OSF can be ambiguous for the same event. No sensor noise beyond modeled distributions.</p>
+      </div>
+    </div>
+    <div class="dk-callout orange"><strong>Generalization caveat:</strong> Models trained on AI4I will be optimistic — the clean threshold boundaries are much easier to learn than real degradation curves. The lack of temporal structure prevents sequence models (LSTM, transformer) that exploit trend information — the most powerful real PdM technique. Transfer to a real production machine requires re-labeling, recalibration, and domain adaptation. Best use: benchmarking classification methods, demonstrating XAI approaches, learning ML methodology — not as a deployment-ready training set.</div>
+
+    <!-- 6. ML Intuition -->
+    <div class="dk-subhead">6 · ML Intuition for Manufacturing PdM</div>
+    <p class="dk-prose"><strong>Why class imbalance is expected and correct:</strong> A well-maintained machine should fail rarely. If the dataset showed 50% failures it would mean the machine is catastrophically unreliable or the labeling is wrong. The 3.4% failure rate is realistic for a maintained production CNC. Imbalance is not a data quality problem — it is the ground truth of the domain. Never resample the test set.</p>
+
+    <p class="dk-prose"><strong>Recall vs. Precision — the asymmetric cost structure:</strong></p>
+    <div class="cost-grid">
+      <div class="cost-card" style="border-color:rgba(248,113,113,0.2)">
+        <h5 style="color:#f87171">False Negative — missed failure</h5>
+        <p>Machine fails unexpectedly: $5K–$500K in downtime, scrap, and repair. Potentially a safety event. Unrecoverable once it happens. In high-value machining (aerospace, medical), a single scrapped part can cost more than an entire month of unnecessary preventive inspections.</p>
+      </div>
+      <div class="cost-card" style="border-color:rgba(56,189,248,0.2)">
+        <h5 style="color:#38bdf8">False Positive — unnecessary work order</h5>
+        <p>Technician spends 30–60 min inspecting a healthy machine. $50–$200 labor cost. Recoverable — the machine keeps running. The cost ratio is often 100:1 to 1,000:1 in favor of maximizing recall over precision.</p>
+      </div>
+    </div>
+    <div class="dk-callout orange" style="margin-top:.75rem"><strong>Alarm fatigue is the ceiling:</strong> If precision drops below ~10–15%, operators start ignoring all alerts and the system fails as a human process. The practical operating point is the highest recall achievable while keeping false alarm rate below the fatigue threshold (~10–20% FAR). This is why precision-recall curve threshold tuning matters more than optimizing F1.</div>
+    <p class="dk-prose" style="margin-top:.75rem"><strong>Why tree-based models dominate here:</strong> The failure triggers are AND-condition thresholds — <code>(temp_delta &lt; 8.6) AND (rpm &lt; 1380)</code> for HDF, <code>wear * torque &gt; threshold</code> for OSF. This is a decision tree split by definition. Logistic regression needs explicit polynomial interaction terms to approximate these boundaries. Random Forest and XGBoost find them automatically and handle class imbalance well with <code>class_weight="balanced"</code> or <code>scale_pos_weight</code>.</p>
+
+  </div>
+
+  <!-- Citation -->
+  <div class="section">
+    <div class="section-label">Citation</div>
+    <div class="cite-box">
+      <strong>Paper:</strong> S. Matzka, "Explainable Artificial Intelligence for Predictive Maintenance Applications," <em>2020 Third International Conference on Artificial Intelligence for Industries (AI4I)</em>, 2020, pp. 69–74, doi: 10.1109/AI4I49448.2020.00023.<br><br>
+      <strong>Dataset:</strong> S. Matzka, AI4I 2020 Predictive Maintenance Dataset, UCI Machine Learning Repository, 2020. Available: <a href="https://www.kaggle.com/datasets/stephanmatzka/predictive-maintenance-dataset-ai4i-2020" target="_blank" rel="noopener">Kaggle</a> · <a href="https://archive.ics.uci.edu/dataset/601/ai4i+2020+predictive+maintenance+dataset" target="_blank" rel="noopener">UCI ML Repository</a><br><br>
+      <strong>Also read:</strong> The <a href="../../primer/industry/predictive-maintenance/index.html">Predictive Maintenance &amp; Industrial IoT Industry Primer</a> for domain context — OEE, MTBF, failure mechanisms, and the technology stack behind real PdM deployments.
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

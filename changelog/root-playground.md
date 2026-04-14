@@ -5,6 +5,26 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-04-14
+
+### [feature] AI4I 2020 dataset guide — domain knowledge section added
+- New section in `deep-dives/ai4i-2020-dataset-guide.html`: **Domain Knowledge — Why the Data Looks the Way It Does**
+- 6 subsections: CNC Milling Fundamentals (sensor-to-physics table), 5 Failure Modes in Depth (physical mechanism, operator observation, trigger rationale, cost of missing), Feature Correlations (4 callout blocks on torque/wear/temp/power relationships), Product Type significance (L/M/H table + modeling implication), Synthetic vs. Real data (side-by-side cards + generalization caveat), ML Intuition (asymmetric cost structure, alarm fatigue, why tree models dominate)
+- New CSS: `.dk-prose`, `.dk-table`, `.dk-fm`, `.dk-callout` (blue/orange/purple/green), `.dk-row`, `.cost-grid`, `.cost-card`, `.dk-subhead`
+
+## 2026-04-13
+
+### [feature] AI4I 2020 Predictive Maintenance Dataset Guide — new deep dive
+- New file: `deep-dives/ai4i-2020-dataset-guide.html` — reference guide for the Kaggle AI4I 2020 milling dataset
+- Feature dictionary: all 14 columns with type, range, description, and modeling notes (leakage warnings, encoding notes)
+- 5 failure mode cards (TWF, HDF, PWF, OSF, RNF) — each with case count, trigger condition, key features, and ML insight; color-coded by mode
+- Class imbalance visual: bar charts for Machine Failure (96.6% / 3.4%) and per-mode breakdown
+- Derived features table + Python code snippet: Power [W], Temp Delta [K], OSF Factor, Tool Wear Rate — with formulas and failure mode mapping
+- 8 ML modeling considerations: class imbalance, data leakage, feature engineering priority, model choice, SHAP/XAI, multi-label vs binary, RNF handling, threshold calibration
+- Dataset quick stats grid + citation box with links to Kaggle, UCI ML Repository, and the companion PdM primer
+- `deep-dives/index.html`: added entry card (03) in Live Entries grid
+- `index.html`: Deep Dives nav badge 1 → 2; section count "1 entry" → "2 entries"; AI4I card added to Deep Dives section; Primer nav badge 4 → 5
+
 ## 2026-04-12
 
 ### [ux] `classroom-activities/data-governance/module-01-deliverables.html` — timeline collapsed by default with expand affordance
