@@ -1,5 +1,15 @@
 # STC Strategy Changelog
 
+## 2026-04-14
+
+### [feature] Higher Education Summit 2026 STC doc — §05 Strategic Mapping added
+- New section inserted between Mapped Opportunities and Open Questions; Open Questions renumbered §06, Proposed Next Steps §07
+- **4 strategic framing blocks** (Product Differentiation, Retention & Equity Risk, Structural Failure Point, Placement & Marketing Engine): each maps a specific summit observation → dean-level strategic consequence with an explicit "Strategic Answer" callout
+- **"So What" Ladder table** (5 rows): Observation → Immediate Effect → Strategic Outcome covering Red/Yellow/Green tagging, Multi-AI Comparison Lab, BSAI Pre-Mortem, Passion-Led Capstone, Bloom's Taxonomy of AI
+- **Tactical suggestion callout**: frames the "The strategic value of this for STC is…" phrase as the recommended lead-in when presenting to the dean
+- New CSS components added: `.strat-block`, `.strat-type` badges (product/retention/structural/placement), `.strat-answer` blue-left-border callout, `.ladder-table`, `.callout-box`
+- Content sourced from Gemini strategic analysis of the same summit notes
+
 ## 2026-04-09 (update 1)
 
 ### [feature] NCyTE Workshop 2025 → STC — applied insights document
