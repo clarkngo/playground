@@ -1,0 +1,1627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Data Governance &mdash; Module 2 Class Notes</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0d1117; color: #c9d1d9; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; min-height: 100vh; }
+
+    /* Navbar */
+    .navbar { background: #161b22; border-bottom: 1px solid #30363d; padding: .75rem 1.5rem; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 200; }
+    .navbar a { color: #e6edf3; text-decoration: none; font-weight: 700; font-size: 1rem; }
+    .navbar a:hover { color: #58a6ff; }
+    .nav-pill { font-size: .78rem; color: #8b949e; }
+
+    /* Layout */
+    .layout { display: flex; max-width: 1280px; margin: 0 auto; padding: 0 1rem; gap: 2rem; }
+
+    /* Sidebar TOC */
+    .sidebar { width: 220px; flex-shrink: 0; position: sticky; top: 56px; align-self: flex-start; height: calc(100vh - 64px); overflow-y: auto; padding: 1.5rem 0; }
+    .toc-label { font-size: .67rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #484f58; margin-bottom: .65rem; padding-left: .5rem; }
+    .toc { display: flex; flex-direction: column; gap: 2px; }
+    .toc-link { font-size: .78rem; color: #8b949e; text-decoration: none; padding: .3rem .5rem; border-radius: 5px; border-left: 2px solid transparent; line-height: 1.4; transition: all .15s; }
+    .toc-link:hover { color: #e6edf3; background: #161b22; }
+    .toc-link.active { color: #58a6ff; border-left-color: #58a6ff; background: #0c1e38; font-weight: 600; }
+    .toc-group { font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: #484f58; margin: .85rem 0 .25rem .5rem; }
+
+    /* Main content */
+    .content { flex: 1; min-width: 0; padding: 2rem 0 4rem; }
+
+    /* Breadcrumb */
+    .breadcrumb { font-size: .78rem; color: #8b949e; display: flex; align-items: center; gap: .4rem; margin-bottom: .85rem; flex-wrap: wrap; }
+    .breadcrumb a { color: #58a6ff; text-decoration: none; font-weight: 600; }
+    .breadcrumb a:hover { text-decoration: underline; }
+    .breadcrumb span { color: #484f58; }
+
+    /* Page header */
+    .page-badge { display: inline-block; background: #1f6feb; color: #fff; font-size: .72rem; font-weight: 700; padding: 3px 12px; border-radius: 12px; text-transform: uppercase; letter-spacing: .07em; margin-bottom: .6rem; }
+    .page-header h1 { color: #e6edf3; font-size: 1.85rem; font-weight: 800; margin-bottom: .3rem; line-height: 1.2; }
+    .page-subtitle { color: #8b949e; font-size: .9rem; margin-bottom: .65rem; }
+    .tag-row { display: flex; gap: .4rem; flex-wrap: wrap; margin-bottom: 2rem; }
+    .tag { display: inline-block; font-size: .68rem; padding: 2px 8px; border-radius: 8px; font-weight: 600; }
+    .tag-blue   { background: #1f3a5c; color: #58a6ff; }
+    .tag-green  { background: #1a2f1a; color: #3fb950; }
+    .tag-yellow { background: #2d2009; color: #e3b341; }
+    .tag-purple { background: #24183a; color: #bc8cff; }
+
+    /* Section */
+    .notes-section { margin-bottom: 3rem; scroll-margin-top: 72px; }
+    .section-header { display: flex; align-items: baseline; gap: .75rem; margin-bottom: 1.35rem; padding-bottom: .75rem; border-bottom: 1px solid #21262d; }
+    .section-num { font-size: .72rem; font-weight: 700; color: #484f58; background: #161b22; border: 1px solid #30363d; padding: 2px 9px; border-radius: 8px; white-space: nowrap; }
+    .section-title { font-size: 1.25rem; font-weight: 800; color: #e6edf3; }
+
+    /* Prose */
+    .prose { font-size: .875rem; color: #c9d1d9; line-height: 1.8; margin-bottom: 1rem; }
+    .prose strong { color: #e6edf3; }
+    .prose em { color: #8b949e; font-style: italic; }
+
+    /* Definition card */
+    .def-card { background: #0c1e38; border: 1px solid #1f6feb; border-left: 4px solid #1f6feb; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+    .def-label { font-size: .67rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #58a6ff; margin-bottom: .4rem; }
+    .def-term { font-size: 1rem; font-weight: 800; color: #a5d6ff; margin-bottom: .35rem; }
+    .def-text { font-size: .85rem; color: #c9d1d9; line-height: 1.75; }
+
+    /* Concept card */
+    .concept-card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: .85rem; }
+    .concept-title { font-size: .85rem; font-weight: 700; color: #e6edf3; margin-bottom: .4rem; }
+    .concept-text { font-size: .84rem; color: #c9d1d9; line-height: 1.75; }
+    .concept-text ul { padding-left: 1.1rem; }
+    .concept-text li { margin-bottom: .3rem; }
+
+    /* Example card */
+    .example-card { background: #0b1f0b; border: 1px solid #238636; border-left: 4px solid #3fb950; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+    .example-label { font-size: .67rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #3fb950; margin-bottom: .4rem; }
+    .example-title { font-size: .9rem; font-weight: 700; color: #56d364; margin-bottom: .35rem; }
+    .example-text { font-size: .84rem; color: #c9d1d9; line-height: 1.75; }
+    .example-text ul, .example-text ol { padding-left: 1.1rem; }
+    .example-text li { margin-bottom: .3rem; }
+    .example-text strong { color: #56d364; }
+
+    /* Insight card */
+    .insight-card { background: #1d1600; border: 1px solid #9e6a03; border-left: 4px solid #e3b341; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+    .insight-label { font-size: .67rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #e3b341; margin-bottom: .4rem; }
+    .insight-text { font-size: .85rem; color: #c9d1d9; line-height: 1.75; }
+    .insight-text strong { color: #f0c674; }
+    .insight-text ul { padding-left: 1.1rem; }
+    .insight-text li { margin-bottom: .3rem; }
+
+    /* Warning / NOT card */
+    .warn-card { background: #2d1a1a; border: 1px solid #f85149; border-left: 4px solid #f85149; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+    .warn-label { font-size: .67rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #f85149; margin-bottom: .4rem; }
+    .warn-text { font-size: .85rem; color: #c9d1d9; line-height: 1.75; }
+    .warn-text ul { padding-left: 1.1rem; }
+    .warn-text li { margin-bottom: .3rem; }
+    .warn-text strong { color: #ff7b72; }
+
+    /* Compare table */
+    .compare-table { width: 100%; border-collapse: collapse; font-size: .84rem; margin-bottom: 1.1rem; }
+    .compare-table th { background: #0d1117; color: #8b949e; font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; padding: .55rem .85rem; text-align: left; border-bottom: 2px solid #30363d; }
+    .compare-table td { padding: .6rem .85rem; border-bottom: 1px solid #21262d; color: #c9d1d9; vertical-align: top; line-height: 1.6; }
+    .compare-table tr:last-child td { border-bottom: none; }
+    .compare-table tr:hover td { background: #161b22; }
+    .compare-table .col-a { color: #58a6ff; font-weight: 700; white-space: nowrap; }
+    .compare-table .col-b { color: #3fb950; font-weight: 700; white-space: nowrap; }
+    .compare-table .col-c { color: #bc8cff; font-weight: 700; white-space: nowrap; }
+
+    /* Flow diagram */
+    .flow-wrap { overflow-x: auto; margin-bottom: 1.25rem; }
+    .flow { display: flex; align-items: stretch; gap: 0; flex-wrap: nowrap; min-width: max-content; padding: .5rem 0; }
+    .flow-node { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: .65rem 1rem; font-size: .78rem; font-weight: 700; color: #e6edf3; text-align: center; min-width: 110px; display: flex; flex-direction: column; align-items: center; gap: .25rem; }
+    .flow-node .fn-sub { font-size: .67rem; font-weight: 400; color: #8b949e; margin-top: .1rem; }
+    .flow-arrow { display: flex; align-items: center; color: #30363d; font-size: 1.1rem; padding: 0 .2rem; }
+    .flow-node.blue   { border-color: #1f6feb; background: #0c1e38; color: #a5d6ff; }
+    .flow-node.green  { border-color: #238636; background: #0b1f0b; color: #56d364; }
+    .flow-node.yellow { border-color: #9e6a03; background: #1d1600; color: #f0c674; }
+    .flow-node.purple { border-color: #6e40c9; background: #18102d; color: #d2a8ff; }
+    .flow-node.red    { border-color: #da3633; background: #2d1a1a; color: #ff7b72; }
+
+    /* Two-column grid */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.1rem; }
+    .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.1rem; }
+    .four-col { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: .75rem; margin-bottom: 1.1rem; }
+
+    /* Pillar card */
+    .pillar-card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1.25rem 1rem; text-align: center; }
+    .pillar-icon { font-size: 1.8rem; margin-bottom: .5rem; }
+    .pillar-name { font-size: .95rem; font-weight: 800; color: #e6edf3; margin-bottom: .4rem; }
+    .pillar-desc { font-size: .78rem; color: #8b949e; line-height: 1.6; }
+
+    /* Numbered list card */
+    .num-list { display: flex; flex-direction: column; gap: .6rem; margin-bottom: 1rem; }
+    .num-item { display: flex; gap: .85rem; align-items: flex-start; }
+    .num-badge { width: 26px; height: 26px; border-radius: 50%; background: #1f6feb; color: #fff; font-size: .75rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: .1rem; }
+    .num-badge.green  { background: #238636; }
+    .num-badge.purple { background: #6e40c9; }
+    .num-badge.yellow { background: #9e6a03; }
+    .num-content { flex: 1; }
+    .num-title { font-size: .88rem; font-weight: 700; color: #e6edf3; margin-bottom: .2rem; }
+    .num-text  { font-size: .82rem; color: #c9d1d9; line-height: 1.65; }
+
+    /* Code snippet */
+    .code-label { font-size: .69rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: #8b949e; margin-bottom: .35rem; margin-top: .85rem; }
+    .code-block { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 1rem 1.25rem; font-family: "Menlo","Monaco","Courier New",monospace; font-size: .8rem; color: #c9d1d9; line-height: 1.7; overflow-x: auto; margin-bottom: .75rem; }
+    .ck { color: #ff7b72; } .cs { color: #a5d6ff; } .cf { color: #d2a8ff; } .cv { color: #ffa657; } .cm { color: #8b949e; }
+
+    /* Divider */
+    .divider { border: none; border-top: 1px solid #21262d; margin: 1.75rem 0; }
+
+    /* Sub-section label */
+    .sub-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: #8b949e; border-left: 3px solid #30363d; padding-left: .6rem; margin: 1.5rem 0 .85rem; }
+
+    /* Inline term */
+    .term { color: #a5d6ff; font-weight: 700; }
+    .term-g { color: #56d364; font-weight: 700; }
+    .term-y { color: #f0c674; font-weight: 700; }
+    .term-p { color: #d2a8ff; font-weight: 700; }
+
+    /* Quality dimension pill */
+    .qdim-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: .75rem; margin-bottom: 1.25rem; }
+    .qdim-card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: .85rem 1rem; }
+    .qdim-title { font-size: .82rem; font-weight: 800; color: #e6edf3; margin-bottom: .3rem; }
+    .qdim-q { font-size: .72rem; color: #58a6ff; margin-bottom: .4rem; font-style: italic; }
+    .qdim-text { font-size: .78rem; color: #8b949e; line-height: 1.6; }
+
+    /* Trust meter */
+    .trust-bar { background: #21262d; border-radius: 6px; height: 8px; margin: .3rem 0 .6rem; overflow: hidden; }
+    .trust-fill { height: 100%; border-radius: 6px; }
+    .trust-fill.high   { background: #3fb950; width: 90%; }
+    .trust-fill.medium { background: #e3b341; width: 55%; }
+    .trust-fill.low    { background: #f85149; width: 20%; }
+
+    /* Footer */
+    .site-footer { text-align: center; padding: 1.5rem; border-top: 1px solid #21262d; color: #484f58; font-size: .77rem; margin-top: 2rem; }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .two-col, .three-col, .four-col, .qdim-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 620px) {
+      .two-col { grid-template-columns: 1fr; }
+    }
+
+    /* Print */
+    @media print {
+      @page { size: A4; margin: 1.4cm 1.6cm; }
+      body { background: #fff !important; color: #111 !important; font-size: 9pt; }
+      .navbar, .sidebar, .site-footer { display: none !important; }
+      .layout { max-width: 100%; padding: 0; gap: 0; }
+      .content { padding: 0; }
+      .notes-section { margin-bottom: 1.5rem; page-break-inside: avoid; }
+      .section-header { border-bottom-color: #ccc !important; }
+      .section-num { background: #eee !important; color: #555 !important; border-color: #ccc !important; }
+      .section-title { color: #111 !important; font-size: 13pt; }
+      .def-card { background: #e8f0fe !important; border-color: #1a4fa0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .def-term { color: #1a4fa0 !important; }
+      .def-text, .concept-text, .example-text, .insight-text, .warn-text, .prose { color: #222 !important; font-size: 8.5pt; }
+      .example-card { background: #f0fdf4 !important; border-color: #15803d !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .example-title { color: #15803d !important; }
+      .insight-card { background: #fffbeb !important; border-color: #d97706 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .warn-card { background: #fef2f2 !important; border-color: #b91c1c !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .concept-card { background: #fafafa !important; border-color: #ccc !important; }
+      .pillar-card { background: #fafafa !important; border-color: #ccc !important; }
+      .qdim-card { background: #fafafa !important; border-color: #ccc !important; }
+      .flow-node { background: #f3f4f6 !important; border-color: #ccc !important; color: #111 !important; }
+      .compare-table th { background: #f3f4f6 !important; color: #555 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .compare-table td { color: #111 !important; border-bottom-color: #eee !important; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="../../index.html">Playground</a>
+  <span class="nav-pill">Class Notes &rsaquo; Data Governance &rsaquo; Module 2</span>
+</nav>
+
+<div class="layout">
+
+  <!-- ── TOC SIDEBAR ─────────────────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="toc-label">Contents</div>
+    <nav class="toc">
+      <div class="toc-group">The Problem</div>
+      <a href="#s1" class="toc-link">1. When Data Quality Fails</a>
+      <a href="#s2" class="toc-link">2. Six Dimensions of Quality</a>
+      <a href="#s3" class="toc-link">3. Source System Landscape</a>
+      <div class="toc-group">Dictionary &amp; Catalog</div>
+      <a href="#s4" class="toc-link">4. Enterprise Data Dictionary</a>
+      <a href="#s5" class="toc-link">5. Building the Dictionary</a>
+      <a href="#s6" class="toc-link">6. Semantic Matching &amp; NLP</a>
+      <a href="#s7" class="toc-link">7. Metadata Management</a>
+      <div class="toc-group">Integration</div>
+      <a href="#s8" class="toc-link">8. OLTP &rarr; OLAP &rarr; Reporting</a>
+      <a href="#s9" class="toc-link">9. Assessment &amp; Profiling</a>
+      <a href="#s10" class="toc-link">10. Data Normalization</a>
+      <a href="#s11" class="toc-link">11. Lineage Tracking</a>
+      <div class="toc-group">Engineering</div>
+      <a href="#s12" class="toc-link">12. Data Transmission &amp; ETL</a>
+      <a href="#s13" class="toc-link">13. Key Mgmt &amp; Encryption</a>
+      <a href="#s14" class="toc-link">14. Identity &amp; Access Mgmt</a>
+      <a href="#s15" class="toc-link">15. Retention &amp; Deletion</a>
+      <a href="#s16" class="toc-link">16. External Data Acquisition</a>
+      <div class="toc-group">Scale</div>
+      <a href="#s17" class="toc-link">17. Governance Tools</a>
+      <a href="#s18" class="toc-link">18. Automation at Scale</a>
+      <a href="#s19" class="toc-link">19. The Bigger Picture</a>
+    </nav>
+  </aside>
+
+  <!-- ── MAIN CONTENT ────────────────────────────────────────── -->
+  <main class="content">
+
+    <!-- Header -->
+    <div class="breadcrumb">
+      <a href="../../index.html">Playground</a>
+      <span>/</span><span>Class Notes</span>
+      <span>/</span><span>Data Governance</span>
+      <span>/</span><span>Module 2</span>
+    </div>
+
+    <div class="page-badge">&#128221; Data Governance &mdash; Module 2</div>
+    <div class="page-header">
+      <h1>Scaling Governance Through Automation &amp; Data Quality</h1>
+    </div>
+    <p class="page-subtitle">How organizations automate data governance activities to scale, how to detect and remediate data quality issues across systems, and how to build an enterprise-wide dictionary, catalog, and integration pipeline that can be trusted.</p>
+    <div class="tag-row">
+      <span class="tag tag-blue">Data Quality</span>
+      <span class="tag tag-blue">Enterprise Dictionary</span>
+      <span class="tag tag-green">ETL / Lineage</span>
+      <span class="tag tag-green">OLTP &rarr; OLAP</span>
+      <span class="tag tag-yellow">Metadata Management</span>
+      <span class="tag tag-yellow">IAM</span>
+      <span class="tag tag-purple">Automation</span>
+      <span class="tag tag-purple">CDO</span>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- SECTION 1 — The Business Problem -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <section class="notes-section" id="s1">
+      <div class="section-header">
+        <span class="section-num">01</span>
+        <span class="section-title">When Data Quality Fails &mdash; The Business Problem</span>
+      </div>
+
+      <p class="prose">Every governance conversation starts with a business question. Before diving into tools and frameworks, it is essential to ground the problem in the operational reality of an organization. Three questions drive most of this module:</p>
+
+      <div class="three-col">
+        <div class="concept-card">
+          <div class="concept-title">&#128181; How many have we sold today?</div>
+          <div class="concept-text">Answered by Point-of-Sale (POS) systems and sales transaction records. This is usually the most real-time data available in a retail or product organization.</div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">&#128203; How many are in the pipeline?</div>
+          <div class="concept-text">Answered by CRM or forecast/demand planning systems. This represents anticipated future activity and is typically updated manually or on a schedule.</div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">&#128230; How many are in the warehouse?</div>
+          <div class="concept-text">Answered by the Inventory Management System (IMS). This tracks on-hand stock and is usually updated by warehouse scans or periodic batch sync.</div>
+        </div>
+      </div>
+
+      <p class="prose">These three questions pull data from <strong>three different source systems</strong>. Each system may have different update frequencies, field naming conventions, and data formats. When those systems are not aligned, the organization starts experiencing data quality failure.</p>
+
+      <div class="sub-label">The Trust Erosion Cycle</div>
+
+      <div class="def-card">
+        <div class="def-label">Core Problem</div>
+        <div class="def-term">Actual vs. Expected Divergence</div>
+        <div class="def-text">When the actual quantity sold consistently differs from what the forecast system predicted, the organization loses trust in its data. If this divergence happens for two consecutive months and no root cause is found, stakeholders stop relying on reports entirely &mdash; which is <strong>worse than having no system at all</strong>, because decisions get made on gut feel instead of imperfect but recoverable data.</div>
+      </div>
+
+      <div class="num-list">
+        <div class="num-item">
+          <div class="num-badge">1</div>
+          <div class="num-content">
+            <div class="num-title">Divergence is noticed in a report</div>
+            <div class="num-text">A manager sees that actual units sold in the POS system do not match the forecast system. The difference is written off as a one-time anomaly.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge">2</div>
+          <div class="num-content">
+            <div class="num-title">Pattern repeats over multiple periods</div>
+            <div class="num-text">The same mismatch appears the following month. Stakeholders begin questioning whether the forecast model is wrong, or whether the sales data itself is wrong.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge yellow">3</div>
+          <div class="num-content">
+            <div class="num-title">Trust in the data erodes</div>
+            <div class="num-text">Teams stop acting on the reports. They revert to spreadsheets, emails, and personal judgement. The governance investment loses its business value entirely.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge" style="background:#da3633;">4</div>
+          <div class="num-content">
+            <div class="num-title">Root cause is usually a data quality failure, not a model failure</div>
+            <div class="num-text">The forecast model may be correct, but the data feeding it was incomplete, stale, or measured differently than the actuals. The fix is governance, not a new model.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="example-card">
+        <div class="example-label">Real-World Impact</div>
+        <div class="example-title">Corrugated Manufacturing: The 2-Day Reporting Lag</div>
+        <div class="example-text">
+          In a corrugated packaging manufacturing environment, the error rate on wrong mold builds was only surfaced in a report that took <strong>2 full days to generate</strong>. By the time the wrong mold percentage appeared in the dashboard, the production line had already produced hundreds of defective units. The organization had the data &mdash; it just was not available at the right time in the right form. This is a <strong>timeliness</strong> and <strong>pipeline latency</strong> failure, not a measurement failure.
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- SECTION 2 — Six Dimensions of Data Quality -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <section class="notes-section" id="s2">
+      <div class="section-header">
+        <span class="section-num">02</span>
+        <span class="section-title">The Six Dimensions of Data Quality</span>
+      </div>
+
+      <p class="prose">Data quality is not a single binary judgment (&ldquo;good&rdquo; or &ldquo;bad&rdquo;). It is measured across six distinct dimensions defined by DAMA International. Each dimension can be measured independently, and an organization can score high on one while failing on another. You must assess all six to determine whether a dataset is trustworthy for a given use case.</p>
+
+      <div class="qdim-grid">
+        <div class="qdim-card">
+          <div class="qdim-title">&#127919; Accuracy</div>
+          <div class="qdim-q">"Does this data reflect the real world?"</div>
+          <div class="qdim-text">Data values must match the actual facts they represent. Manual data entry (sales reps filling out paper forms, door-to-door surveys) is the primary threat to accuracy. Even a high-quality automated system becomes unreliable if it is joined with a manually-entered dataset.</div>
+        </div>
+        <div class="qdim-card">
+          <div class="qdim-title">&#9989; Completeness</div>
+          <div class="qdim-q">"Is all the required data present?"</div>
+          <div class="qdim-text">No missing values, no unexpected nulls, no duplicate records. Automated systems typically score higher on completeness than manual barcoding or data entry workflows, where operators may skip fields.</div>
+        </div>
+        <div class="qdim-card">
+          <div class="qdim-title">&#9201; Timeliness</div>
+          <div class="qdim-q">"Is the data available when it is needed?"</div>
+          <div class="qdim-text">Data must be available within the window required for a business decision. A 1-hour lag between POS and a return system can mean two users querying the same system see different totals. Some decisions require near-real-time freshness; others tolerate 24-hour batch cycles.</div>
+        </div>
+        <div class="qdim-card">
+          <div class="qdim-title">&#128209; Validity</div>
+          <div class="qdim-q">"Does the data conform to defined rules and formats?"</div>
+          <div class="qdim-text">Values must conform to the expected format and business rules. Phone number <code>1+425-000-0000</code> and <code>4250000000</code> represent the same number but only one may be valid against a defined regex pattern. Invalid data passes completeness checks but fails downstream processing.</div>
+        </div>
+        <div class="qdim-card">
+          <div class="qdim-title">&#128275; Uniqueness</div>
+          <div class="qdim-q">"Is each real-world entity represented exactly once?"</div>
+          <div class="qdim-text">The same customer appearing as "Clark N." in one system and "Clark Ngo" in another is a uniqueness problem. Without deduplication and a master record, reporting will double-count entities and inflate metrics.</div>
+        </div>
+        <div class="qdim-card">
+          <div class="qdim-title">&#128260; Consistency</div>
+          <div class="qdim-q">"Do values agree across systems and across time?"</div>
+          <div class="qdim-text">If the inventory system shows 500 units on hand and the POS system shows 600 units sold this week but no replenishment occurred, the data is inconsistent. Consistency failures often reveal integration gaps between systems.</div>
+        </div>
+      </div>
+
+      <div class="warn-card">
+        <div class="warn-label">AI Systems Risk</div>
+        <div class="warn-text">Data quality is <strong>especially critical for machine learning and AI systems</strong>. A model trained on inaccurate, incomplete, or inconsistent data will learn the wrong patterns and produce unreliable predictions &mdash; confidently. Poor data quality in AI is more dangerous than in traditional reporting, because the model hides the problem behind a confidence score.</div>
+      </div>
+
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- SECTION 3 — Source System Landscape -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <section class="notes-section" id="s3">
+      <div class="section-header">
+        <span class="section-num">03</span>
+        <span class="section-title">Source System Landscape &mdash; Where the Problems Begin</span>
+      </div>
+
+      <p class="prose">Most data quality problems originate not in the analytics layer but in the <strong>source systems themselves</strong>. Understanding what types of systems exist and how they interact is the first step to diagnosing quality issues.</p>
+
+      <div class="sub-label">Typical Source Systems in a Product Organization</div>
+      <div class="three-col">
+        <div class="concept-card">
+          <div class="concept-title">Point of Sale (POS)</div>
+          <div class="concept-text">Captures actual sales transactions in (near) real-time. High frequency of writes. Often the most accurate record of what was sold, when, and to whom &mdash; but field definitions vary by vendor.</div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">Inventory Management System (IMS)</div>
+          <div class="concept-text">Tracks stock levels, warehouse locations, and returns. May sync to the POS periodically rather than in real-time, introducing a lag window during which the two systems show different quantities.</div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">Demand / Forecast System</div>
+          <div class="concept-text">Projects future sales based on historical patterns, seasonality, and manual inputs. Often updated weekly or monthly. The least real-time of the three, yet the most influential for purchasing and staffing decisions.</div>
+        </div>
+      </div>
+
+      <div class="sub-label">Key Integration Problems</div>
+
+      <div class="concept-card">
+        <div class="concept-title">The 1-Hour Lag Problem</div>
+        <div class="concept-text">When one system is real-time (POS records a sale immediately) and another is batch-synced (IMS updates inventory every hour), there is a window where querying both systems at the same moment returns inconsistent results. A user checking inventory levels 30 minutes after a sale may see stock that no longer exists. This is a <strong>timeliness and consistency failure</strong> caused by architectural mismatch, not data corruption.</div>
+      </div>
+
+      <div class="concept-card">
+        <div class="concept-title">Field Name and Field Size Mismatches</div>
+        <div class="concept-text">The same real-world entity is often stored differently across systems:
+          <ul>
+            <li>System A calls it <code>customer_id</code> (VARCHAR 10); System B calls it <code>cust_no</code> (INT)</li>
+            <li>System A stores <code>customer_name</code> as &ldquo;First Last&rdquo; in one field; System B splits it into <code>first_name</code> and <code>last_name</code></li>
+            <li>System A uses <code>phone</code> formatted as <code>1+425-000-0000</code>; System B stores it as <code>4250000000</code></li>
+          </ul>
+          Without correlation rules, these records cannot be joined accurately. Without an enterprise dictionary, you may not even know these fields represent the same concept.
+        </div>
+      </div>
+
+      <div class="concept-card">
+        <div class="concept-title">Circular Entity Relationships</div>
+        <div class="concept-text">A vendor can also be a customer (a supplier who occasionally purchases products). Periodically, a check is sent in return for a product, and vice versa. This creates circular relationships that most entity models do not anticipate. If the data model treats <em>vendor</em> and <em>customer</em> as mutually exclusive entity types, these records will be siloed, duplicated, or simply dropped &mdash; creating uniqueness and completeness failures simultaneously.</div>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-label">Practical Question</div>
+        <div class="insight-text">When you have 3 different data sources, <strong>where do you start?</strong> The answer is: start with identification before integration. You cannot build a governance policy on systems you have not yet inventoried. The first deliverable is a system map &mdash; what systems exist, who owns them, what entities they manage, and how frequently they update.</div>
+      </div>
+
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- SECTION 4 — Enterprise Data Dictionary -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <section class="notes-section" id="s4">
+      <div class="section-header">
+        <span class="section-num">04</span>
+        <span class="section-title">Enterprise Data Dictionary</span>
+      </div>
+
+      <div class="def-card">
+        <div class="def-label">Definition</div>
+        <div class="def-term">Enterprise Data Dictionary</div>
+        <div class="def-text">A centralized <strong>metadata repository</strong> that defines what every data element means across the entire organization. It does <em>not</em> store actual data &mdash; it stores descriptions, classifications, ownership, format rules, and sensitivity levels for data elements. Its purpose is to ensure that when two teams refer to &ldquo;customer,&rdquo; they mean the same thing, store it the same way, and protect it to the same standard.</div>
+      </div>
+
+      <div class="sub-label">Core Components of an Enterprise Dictionary Entry</div>
+
+      <div class="two-col">
+        <div class="concept-card">
+          <div class="concept-title">Unique Identifier</div>
+          <div class="concept-text">Every data element must have a globally unique ID. This prevents ambiguity when the same concept appears under different names in different systems. The unique ID is the anchor that links all system-specific field names to one canonical definition.</div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">Infotype</div>
+          <div class="concept-text">A category describing the nature of the information. Examples: <em>Personal Identifiable Information (PII)</em>, <em>Financial Data</em>, <em>Operational Data</em>, <em>Health Information</em>. Infotypes help compliance and security teams quickly identify which regulations apply to a given field without needing to examine the data itself.</div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">Data Class</div>
+          <div class="concept-text">A specific classification within an infotype. Under <em>PII</em>, data classes might include <em>Name</em>, <em>Address</em>, <em>Government ID</em>, <em>Biometric</em>. Data classes enable fine-grained policy assignment. The class determines what encryption standard, retention period, and access policy applies.</div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">Sensitivity Level &amp; Policy Tags</div>
+          <div class="concept-text">Once a data class is assigned, a sensitivity level follows: <em>Public</em>, <em>Internal</em>, <em>Confidential</em>, <em>Restricted</em>. A policy tag is then attached, which instructs IT on specific implementation requirements: encryption standard, who can access, how long to retain, and when to delete. Policy tagging is <strong>not a one-and-done activity</strong> &mdash; sensitivity levels must be reviewed as regulations and business contexts change.</div>
+        </div>
+      </div>
+
+      <div class="example-card">
+        <div class="example-label">Format Conflict Example</div>
+        <div class="example-title">Phone Number: Same Data, Different Representations</div>
+        <div class="example-text">
+          <ul>
+            <li><strong>System A (CRM):</strong> <code>1+425-000-0000</code> &mdash; international format with country code and dashes</li>
+            <li><strong>System B (POS):</strong> <code>4250000000</code> &mdash; 10-digit numeric, no country code, no separators</li>
+          </ul>
+          Both represent the same phone number. Without a dictionary entry that defines the canonical format (e.g., E.164: <code>+14250000000</code>) and a data class of <em>Contact Information</em>, these records cannot be automatically joined. Every join attempt will fail silently &mdash; producing incorrect customer counts. Cleaning the data after the fact multiplies the work. Defining the format before data entry prevents it.
+        </div>
+      </div>
+
+      <div class="sub-label">What an Enterprise Dictionary Is Not</div>
+      <div class="warn-card">
+        <div class="warn-label">Important Distinction</div>
+        <div class="warn-text">An enterprise dictionary does <strong>not store actual data values</strong>. It stores <em>metadata</em> about data: names, descriptions, classifications, formats, owners, and policies. You will not find a customer record in the dictionary. You will find the definition of what a &ldquo;customer record&rdquo; must contain, how it must be formatted, who owns it, and what sensitivity level applies to each field within it.</div>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-label">Insight</div>
+        <div class="insight-text">Different teams, products, and vendors all use <strong>different names for the same concept</strong>. Sales calls them &ldquo;accounts.&rdquo; Customer success calls them &ldquo;clients.&rdquo; Finance calls them &ldquo;billing entities.&rdquo; The enterprise dictionary is the mechanism that resolves these differences into a single shared vocabulary. Without it, every integration project starts from scratch re-negotiating what words mean.</div>
+      </div>
+
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- SECTION 5 — Building the Dictionary -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <section class="notes-section" id="s5">
+      <div class="section-header">
+        <span class="section-num">05</span>
+        <span class="section-title">Building the Dictionary &mdash; Top-Down vs. Bottom-Up</span>
+      </div>
+
+      <p class="prose">There are two strategies for building an enterprise data dictionary. The right choice depends on whether the organization is starting fresh or has legacy systems already in production. Most real organizations need a hybrid of both.</p>
+
+      <div class="sub-label">Top-Down Approach &mdash; Policy First</div>
+
+      <p class="prose">The top-down approach begins with a mandate from the <span class="term-p">Chief Data Officer (CDO)</span> or equivalent executive. Governance policy is defined before the systems are touched. This works best when starting a new data program or when executive support is strong.</p>
+
+      <div class="num-list">
+        <div class="num-item">
+          <div class="num-badge">1</div>
+          <div class="num-content">
+            <div class="num-title">Define sensitivity levels and infotypes</div>
+            <div class="num-text">Establish the classification taxonomy: what sensitivity levels exist, what infotypes are relevant to the business, and what data classes fall under each infotype.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge">2</div>
+          <div class="num-content">
+            <div class="num-title">Select and deploy a governance tool</div>
+            <div class="num-text">Deploy a tool (e.g., Databricks Unity Catalog, OpenMetadata) that serves as the single source of truth for dictionary entries. Grant everyone at minimum read access so the catalog is visible organization-wide.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge green">3</div>
+          <div class="num-content">
+            <div class="num-title">Implement a requester/approver workflow</div>
+            <div class="num-text">Anyone can propose a new entry, modify an existing one, or flag a conflict. A designated data owner approves changes. This crowd-sources the dictionary population while preventing duplication and conflicting definitions.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge green">4</div>
+          <div class="num-content">
+            <div class="num-title">Assign data classes and policy tags</div>
+            <div class="num-text">Once entries are approved, data classes are assigned. Policy tags follow, which instruct IT teams on access control, encryption standard, and retention requirements for that data element.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge purple">5</div>
+          <div class="num-content">
+            <div class="num-title">Implement the policy</div>
+            <div class="num-text">The data owner (or designated IT implementer) applies the policy: configures access controls, enables encryption, sets up retention schedules. The dictionary entry is now &ldquo;governed.&rdquo;</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sub-label">Bottom-Up Approach &mdash; Systems First</div>
+
+      <p class="prose">The bottom-up approach is used when the organization already has significant data in production. You cannot start from a blank policy because there are already thousands of fields in dozens of systems. You need to <strong>discover what exists before you can govern it</strong>.</p>
+
+      <div class="num-list">
+        <div class="num-item">
+          <div class="num-badge">1</div>
+          <div class="num-content">
+            <div class="num-title">Identify all applications and data sources</div>
+            <div class="num-text">In 1&ndash;2 days, meet with application owners and data owners. Get a high-level inventory: how many systems, roughly how many tables/fields, what types of data, who owns each system. This sprint produces the system map.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge">2</div>
+          <div class="num-content">
+            <div class="num-title">Request read-only metadata access on all systems</div>
+            <div class="num-text">You do not need to access actual data records &mdash; only metadata: table definitions, column names, data types, and descriptions. This access level is easy to justify to security teams and causes no performance impact on production systems.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge green">3</div>
+          <div class="num-content">
+            <div class="num-title">Ingest metadata into the governance tool</div>
+            <div class="num-text">Use the governance tool's ingestion connector to pull metadata from each source system automatically. Manually entering 10,000 fields is practically impossible &mdash; automation is mandatory at scale.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge green">4</div>
+          <div class="num-content">
+            <div class="num-title">Flag conflicts and duplicate definitions</div>
+            <div class="num-text">The tool checks ingested metadata against existing dictionary entries. If a field name already exists with a different description, or if two fields appear to describe the same concept under different names, the system flags it for human review. The dashboard surfaces these conflicts to the relevant data owners.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge purple">5</div>
+          <div class="num-content">
+            <div class="num-title">Resolve conflicts with data owners; iterate</div>
+            <div class="num-text">Schedule periodic review sessions (e.g., 100 entries per meeting). Data owners decide the canonical definition. Over time, consistency increases: 0% &rarr; 10% &rarr; 50% &rarr; eventually near 100%. The CDO tracks this progress metric.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="example-card">
+        <div class="example-label">Practical Guidance</div>
+        <div class="example-title">What to do in the first 2 days</div>
+        <div class="example-text">
+          <ol>
+            <li>Talk to application owners. Get their list of systems and a rough count of tables and infotypes.</li>
+            <li>Talk to data owners. Ask what data types they manage, what quality concerns they already know about, and who else uses their data.</li>
+            <li>Gather that feedback into a system inventory spreadsheet &mdash; just enough to choose the right governance tool and know which policies to implement first.</li>
+            <li>With that, you have enough to begin tool procurement, request metadata access, and plan the first ingestion sprint.</li>
+          </ol>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- SECTION 6 — Semantic Matching & NLP -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <section class="notes-section" id="s6">
+      <div class="section-header">
+        <span class="section-num">06</span>
+        <span class="section-title">Semantic Matching &amp; NLP &mdash; When Names and Descriptions Differ</span>
+      </div>
+
+      <p class="prose">A key challenge in the bottom-up dictionary-building process is identifying when two fields represent the same concept even when their names and descriptions are completely different. This is the problem of <span class="term">semantic equivalence</span>, and it is where modern data governance tools apply Natural Language Processing.</p>
+
+      <div class="def-card">
+        <div class="def-label">Student Question Addressed</div>
+        <div class="def-term">Can the system detect semantic similarity when names are totally different?</div>
+        <div class="def-text">Yes &mdash; modern governance tools use <strong>NLP-based semantic similarity matching</strong>. Rather than comparing field names as exact strings, they convert names and descriptions into numerical vector embeddings (dense representations of meaning). Two fields with very different names but similar meaning will have vectors that are close together in high-dimensional space. The system surfaces these as likely duplicates for human review. It cannot make the final decision, but it dramatically reduces the manual search space.</div>
+      </div>
+
+      <div class="example-card">
+        <div class="example-label">Example</div>
+        <div class="example-title">Three Systems, Three Names for the Same Concept</div>
+        <div class="example-text">
+          Consider &ldquo;customer full name&rdquo; stored across three applications:
+          <ul>
+            <li><strong>Application A (CRM):</strong> field name <code>customer_name</code>, description: &ldquo;Full name of the account holder in FirstName LastName MiddleName format&rdquo; &mdash; <em>Rule 1</em></li>
+            <li><strong>Application B (Billing):</strong> field name <code>cust_nm</code>, description: &ldquo;Billing name used for invoice generation&rdquo; &mdash; <em>Rule 2</em></li>
+            <li><strong>Application C (POS):</strong> field name <code>first_name</code> + <code>last_name</code>, description: &ldquo;Customer identity split by first and last&rdquo; &mdash; <em>Rule 3</em></li>
+          </ul>
+          An exact string match finds <em>zero</em> common fields. A semantic similarity search finds all three as likely candidates for the same concept. The data owner then confirms the match and defines a <strong>unified canonical format</strong> (e.g., <code>full_name: "LastName, FirstName MiddleInitial."</code>) that all future integrations must conform to.
+        </div>
+      </div>
+
+      <div class="sub-label">Rule Unification in Data Pipelines</div>
+
+      <p class="prose">Once canonical formats are defined, the ETL pipeline applies transformation rules during data movement:</p>
+
+      <div class="flow-wrap">
+        <div class="flow">
+          <div class="flow-node blue">Source A<div class="fn-sub">Rule 1 format</div></div>
+          <div class="flow-arrow">&#8594;</div>
+          <div class="flow-node yellow">Transform Layer<div class="fn-sub">Apply unification rule</div></div>
+          <div class="flow-arrow">&#8594;</div>
+          <div class="flow-node green">OLAP / Reporting<div class="fn-sub">Unified canonical format</div></div>
+        </div>
+      </div>
+      <div class="flow-wrap">
+        <div class="flow">
+          <div class="flow-node blue">Source B<div class="fn-sub">Rule 2 format</div></div>
+          <div class="flow-arrow">&#8594;</div>
+          <div class="flow-node yellow">Transform Layer<div class="fn-sub">Apply unification rule</div></div>
+          <div class="flow-arrow">&#8594;</div>
+          <div class="flow-node green">OLAP / Reporting<div class="fn-sub">Unified canonical format</div></div>
+        </div>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-label">Important Limitation</div>
+        <div class="insight-text">Semantic matching is a <strong>recommendation system</strong>, not an authoritative decision. It suggests; humans decide. If the source application cannot be changed (legacy system with no available developer, or no known impact analysis), the transformation rule is applied at the pipeline layer &mdash; the source field stays as-is, and the ETL converts it to the canonical format on the way out. <strong>Never assume the recommendation is correct without data owner sign-off.</strong></div>
+      </div>
+
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- SECTION 7 — Metadata Management -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <section class="notes-section" id="s7">
+      <div class="section-header">
+        <span class="section-num">07</span>
+        <span class="section-title">Metadata Management &mdash; Cataloging, Policies &amp; Sensitivity</span>
+      </div>
+
+      <p class="prose"><span class="term">Metadata</span> is data about data. It describes the structure, meaning, ownership, lineage, and sensitivity of data assets without containing the data values themselves. Robust metadata management is what makes a data catalog actionable rather than merely informational.</p>
+
+      <div class="sub-label">Dual-Layer Metadata</div>
+      <div class="two-col">
+        <div class="concept-card">
+          <div class="concept-title">Technical Metadata</div>
+          <div class="concept-text">
+            <ul>
+              <li>Schema definitions (table names, column names, data types)</li>
+              <li>Column descriptions and constraints</li>
+              <li>Storage location (database, schema, partition)</li>
+              <li>Index and partition strategy</li>
+              <li>Data volume and row counts</li>
+            </ul>
+            This layer is typically auto-populated by governance tool connectors that scan source systems.
+          </div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">Business Metadata</div>
+          <div class="concept-text">
+            <ul>
+              <li>Data ownership (who is accountable for this dataset)</li>
+              <li>Data source (internal system vs. purchased external data)</li>
+              <li>Environment designation (Production vs. Staging vs. Test)</li>
+              <li>Governance status (governed, under review, deprecated)</li>
+              <li>Linked business glossary term</li>
+            </ul>
+            This layer requires human input and ongoing maintenance.
+          </div>
+        </div>
+      </div>
+
+      <div class="sub-label">Schematized Governance</div>
+      <p class="prose"><span class="term">Schematized governance</span> means attaching data class, quality score, and sensitivity level directly to catalog entries &mdash; making governance metadata queryable just like technical metadata. This enables advanced discovery through <span class="term">faceted search</span>:</p>
+
+      <div class="code-block">
+<span class="cm">-- Faceted search example (conceptual)</span>
+<span class="ck">FIND</span> tables
+<span class="ck">WHERE</span> environment = <span class="cs">'production'</span>
+  <span class="ck">AND</span> data_class = <span class="cs">'PII'</span>
+  <span class="ck">AND</span> sensitivity = <span class="cs">'Restricted'</span>
+  <span class="ck">AND</span> encryption_status = <span class="cs">'unencrypted'</span>
+<span class="cm">-- Returns: all production PII tables that are not yet encrypted</span>
+      </div>
+
+      <div class="sub-label">Decoupling Policies: Metadata &ne; Underlying Data Controls</div>
+
+      <div class="def-card">
+        <div class="def-label">Key Concept</div>
+        <div class="def-term">Policy Decoupling</div>
+        <div class="def-text">Metadata policies should <em>not</em> automatically mirror the security controls of the underlying data. Individual fields may seem low-sensitivity, but their <strong>combination</strong> can create high-sensitivity risk. This is called <em>data correlation risk</em>, and it requires metadata-level policy controls that exceed what the individual field sensitivity would suggest.</div>
+      </div>
+
+      <div class="example-card">
+        <div class="example-label">Example &mdash; Correlation Risk</div>
+        <div class="example-title">When Individual Fields Are Safe but Combinations Are Not</div>
+        <div class="example-text">
+          In a healthcare analytics system, consider these fields individually:
+          <ul>
+            <li><code>patient_zip_code</code> &mdash; appears non-sensitive; it is just a region</li>
+            <li><code>date_of_birth</code> &mdash; appears moderately sensitive</li>
+            <li><code>biological_sex</code> &mdash; appears moderately sensitive</li>
+          </ul>
+          Research by Latanya Sweeney demonstrated that combining just these three attributes can re-identify <strong>87% of the U.S. population</strong>. None of them is a name, a Social Security number, or a direct identifier &mdash; yet together they constitute a highly sensitive combination. Metadata policies must treat <strong>the combination</strong> as Restricted even when individual fields are classified as Internal. If a user can query all three fields together, the policy should require additional justification and logging.
+        </div>
+      </div>
+
+      <div class="sub-label">Visibility vs. Access</div>
+
+      <div class="concept-card">
+        <div class="concept-title">Two Separate Dimensions of Data Control</div>
+        <div class="concept-text">
+          <strong>Access</strong> is whether a system or user is permitted to retrieve a data record from the database. <strong>Visibility</strong> is whether a user can see the data value in the application interface. These two must be controlled independently:
+          <br><br>
+          <strong>Example &mdash; Delivery Driver:</strong> A logistics app shows a delivery driver the customer delivery address while the order is &ldquo;in transit.&rdquo; Once the driver marks the order as &ldquo;delivered&rdquo;:
+          <ul>
+            <li><strong>Visibility revoked:</strong> The app no longer displays the address in the driver interface. The driver cannot see it in the UI.</li>
+            <li><strong>Access revoked:</strong> The driver account loses database query permission to that record. An API call using the driver credentials now returns a 403 Forbidden response.</li>
+          </ul>
+          The record still exists in the database for the retailer and compliance logs &mdash; the driver simply has no path to it. Also note: the driver should never have had access to the <em>contents</em> of the package, only the address. Visibility and access to the item manifest are granted to warehouse staff, not drivers.
+        </div>
+      </div>
+
+      <div class="sub-label">Data Residency</div>
+      <div class="concept-card">
+        <div class="concept-title">Where Data Must Physically Live</div>
+        <div class="concept-text">
+          <span class="term">Data residency</span> policies specify the geographic, jurisdictional, or organizational constraints on where data may be stored and processed. Key considerations:
+          <ul>
+            <li><strong>National boundaries:</strong> EU GDPR requires personal data of EU residents to remain within the EU or in countries with equivalent protections</li>
+            <li><strong>Encryption requirements:</strong> specific key strengths (AES-256), key management geography, and HSM (Hardware Security Module) requirements</li>
+            <li><strong>Cloud region constraints:</strong> certain regulated industries must specify that cloud-stored data is in a specific region (e.g., us-east-1 only)</li>
+          </ul>
+          Residency is metadata &mdash; it defines <em>rules</em> for where data lives. Compliance enforcement is implemented by IT.
+        </div>
+      </div>
+
+      <div class="sub-label">Sensitivity Shift &mdash; When Metadata Is More Sensitive Than Data</div>
+
+      <div class="insight-card">
+        <div class="insight-label">Advanced Concept</div>
+        <div class="insight-text">
+          Sometimes <strong>metadata is more sensitive than the underlying data it describes</strong>. This is called a sensitivity shift.
+          <br><br>
+          <strong>Example &mdash; Call Log Transaction Metadata:</strong> A telecommunications company stores call content (what was said) and call metadata (who called whom, when, how many times, from what location). In many cases, the call content is encrypted and protected. But the <em>metadata</em> &mdash; the pattern of calls between two devices, frequency, timing, and location data &mdash; can reveal intelligence that is <strong>more actionable and more sensitive</strong> than the content. If two devices have thousands of call log records linking them, this pattern alone may flag an investigation, reveal a protected source, or enable physical tracking. The call logs are "transaction data" but the real risk is in the behavioral pattern encoded in the metadata. Governance policies must account for this inversion.
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- SECTION 8 — Data Integration Architecture -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <section class="notes-section" id="s8">
+      <div class="section-header">
+        <span class="section-num">08</span>
+        <span class="section-title">Data Integration Architecture &mdash; OLTP &rarr; OLAP &rarr; Reporting</span>
+      </div>
+
+      <p class="prose">Understanding how data moves between systems is essential to diagnosing quality and governance gaps. The standard integration pattern in most organizations flows from transactional systems to analytical systems to reporting.</p>
+
+      <div class="two-col">
+        <div class="def-card">
+          <div class="def-label">Definition</div>
+          <div class="def-term">OLTP (Online Transaction Processing)</div>
+          <div class="def-text">Systems optimized for <strong>write-heavy, real-time transactions</strong>. Each operation is small and fast (insert a sale record, update inventory). Examples: POS systems, ERP transaction tables, CRM event logs. Prioritizes write throughput and data integrity over query speed.</div>
+        </div>
+        <div class="def-card">
+          <div class="def-label">Definition</div>
+          <div class="def-term">OLAP (Online Analytical Processing)</div>
+          <div class="def-text">Systems optimized for <strong>read-heavy analytical queries</strong> across large datasets. Aggregates, joins, and time-series analysis run efficiently here. Examples: data warehouses, lakehouses. Data is typically pre-aggregated and denormalized for query performance.</div>
+        </div>
+      </div>
+
+      <div class="flow-wrap">
+        <div class="flow">
+          <div class="flow-node blue">OLTP<div class="fn-sub">POS, CRM, ERP</div></div>
+          <div class="flow-arrow">&#8594;</div>
+          <div class="flow-node yellow">ETL / Pipeline<div class="fn-sub">Extract, Transform, Load</div></div>
+          <div class="flow-arrow">&#8594;</div>
+          <div class="flow-node purple">OLAP<div class="fn-sub">Data Warehouse / Lakehouse</div></div>
+          <div class="flow-arrow">&#8594;</div>
+          <div class="flow-node green">Reporting<div class="fn-sub">BI Tools, Dashboards</div></div>
+        </div>
+      </div>
+
+      <div class="sub-label">Batch vs. Streaming vs. Near-Real-Time</div>
+
+      <div class="compare-table-wrap">
+        <table class="compare-table">
+          <thead>
+            <tr><th>Mode</th><th>How It Works</th><th>Typical Latency</th><th>Use Case</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="col-a">Batch</td>
+              <td>Accumulate records throughout the day; process all at once (typically after business hours)</td>
+              <td>Hours to 24 hours</td>
+              <td>Most OLTP &rarr; OLAP pipelines; end-of-day reporting</td>
+            </tr>
+            <tr>
+              <td class="col-b">Near-Real-Time (NRT)</td>
+              <td>Micro-batches every few seconds or minutes; approximates live data without full streaming infrastructure</td>
+              <td>Seconds to minutes</td>
+              <td>Operational dashboards, hourly inventory sync</td>
+            </tr>
+            <tr>
+              <td class="col-c">Live Streaming</td>
+              <td>Each transaction event is pushed immediately as it occurs; no batch window</td>
+              <td>Milliseconds</td>
+              <td>Financial trading terminals (Bloomberg, Reuters), real-time fraud detection</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-label">Why Most OLTP Systems Use Batch, Not Streaming</div>
+        <div class="insight-text">
+          Live streaming adds significant infrastructure complexity and load on OLTP systems. A POS system is optimized to process sales transactions quickly &mdash; not to simultaneously push a stream of events to an analytics pipeline. If both happen at once, write performance degrades. For most retail, logistics, and manufacturing use cases, <strong>batch processing after business hours</strong> is the right tradeoff. The latency is accepted because decisions are made at day-level granularity. Near-real-time and streaming are reserved for use cases where the business decision is time-sensitive within seconds or minutes.
+        </div>
+      </div>
+
+      <div class="sub-label">Integration Protocols</div>
+      <div class="three-col">
+        <div class="concept-card">
+          <div class="concept-title">HTTP-Based (REST / GraphQL)</div>
+          <div class="concept-text">Standard web APIs. Source system exposes an endpoint; the pipeline pulls data on a schedule or event. Simple to implement but not ideal for high-volume or real-time use cases.</div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">RFC (Remote Function Call)</div>
+          <div class="concept-text">Common in SAP environments. Enables direct function calls across systems as if they were local. Used for structured enterprise integration in ERP-centric architectures.</div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">Event Streaming (Kafka, Kinesis)</div>
+          <div class="concept-text">The source system publishes events to a message broker. Consumers subscribe and process events asynchronously. Enables decoupled, scalable, real-time or near-real-time pipelines.</div>
+        </div>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-label">Key Principle</div>
+        <div class="insight-text">Before connecting data sources to the pipeline, <strong>metadata, naming conventions, and definitions must be resolved first</strong>. Connecting sources with unresolved field conflicts means the ETL pipeline will silently propagate bad data into the analytics layer. Fix the dictionary before building the pipeline &mdash; not after.</div>
+      </div>
+
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- SECTION 9 — Data Assessment & Profiling -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <section class="notes-section" id="s9">
+      <div class="section-header">
+        <span class="section-num">09</span>
+        <span class="section-title">Data Assessment &amp; Profiling</div>
+      </div>
+
+      <div class="def-card">
+        <div class="def-label">Definition</div>
+        <div class="def-term">Data Profiling</div>
+        <div class="def-text">The process of examining a dataset to understand its structure, content, quality, and relationships. Profiling produces statistical summaries (null rates, min/max values, distinct counts, format distributions) that reveal whether the data is fit for a given purpose. It is the diagnostic step that precedes any quality remediation effort.</div>
+      </div>
+
+      <div class="sub-label">What to Profile</div>
+
+      <div class="two-col">
+        <div class="concept-card">
+          <div class="concept-title">Null and Zero Analysis</div>
+          <div class="concept-text">A null value and a zero value are not the same thing. <em>Null</em> means &ldquo;no value was recorded.&rdquo; Zero means &ldquo;the value is zero.&rdquo; In many systems these are confused during data entry. Profiling must determine what <em>null</em> means in this context: data was not collected, data was not applicable, or data entry was skipped. The answer changes the governance policy.</div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">Min / Max Value Checks</div>
+          <div class="concept-text">Are the minimum and maximum values in a field realistic? A product weight of &ndash;5 kg is physically impossible. A transaction amount of $1,000,000 may be real but warrants investigation. Profiling surfaces these boundary conditions for review.</div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">Format Distribution Analysis</div>
+          <div class="concept-text">In a phone number field, what percentage of records use E.164 format? What percentage use local format? What percentage contain letters or special characters? This reveals the scope of a validity problem before remediation begins.</div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">Anomaly Detection</div>
+          <div class="concept-text">Statistical outliers that fall outside expected ranges. These may be data entry errors, system bugs, fraud signals, or genuine business events (a record-breaking sales day). Profiling flags them; human review determines which category applies.</div>
+        </div>
+      </div>
+
+      <div class="sub-label">Profiling Cadence</div>
+
+      <div class="concept-card">
+        <div class="concept-title">How Often Should You Profile?</div>
+        <div class="concept-text">Cadence depends on how quickly data changes and how much the business relies on it:
+          <ul>
+            <li><strong>Daily profiling:</strong> for POS, real-time transaction, and financial systems</li>
+            <li><strong>Weekly profiling:</strong> for CRM, inventory, and demand planning data</li>
+            <li><strong>Monthly profiling:</strong> for survey data, reference data, and external purchased datasets</li>
+          </ul>
+          Any system whose output feeds an automated AI/ML model should be profiled at the same frequency as model retraining. If the model retrains daily, profile the input data daily.
+        </div>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-label">Real-World Application</div>
+        <div class="insight-text">
+          <strong>Staging environment data quality</strong> is a common challenge: how do you create a realistic but safe copy of production data for testing? Extracting a simple sample from production risks pulling unrepresentative distributions (e.g., only recent records, which have no historical patterns). Profiling production data first gives you the statistical signature of the real dataset &mdash; so you can generate synthetic test data that matches those distributions without using actual sensitive records.
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- SECTION 10 — Data Normalization -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <section class="notes-section" id="s10">
+      <div class="section-header">
+        <span class="section-num">10</span>
+        <span class="section-title">Data Normalization &mdash; When to Standardize, When to Preserve</span>
+      </div>
+
+      <p class="prose"><span class="term">Data normalization</span> in the governance context means standardizing values into a consistent canonical format. It is not just a database design concern &mdash; it is a quality decision that must be made in context. The wrong normalization strategy can destroy meaningful signal.</p>
+
+      <div class="sub-label">The Challenge of Outliers</div>
+
+      <div class="concept-card">
+        <div class="concept-title">Outliers Are Not Always Errors</div>
+        <div class="concept-text">An outlier &mdash; a value that falls far outside the statistical norm &mdash; can be one of three things:
+          <ul>
+            <li><strong>A data entry error:</strong> someone typed 10,000 instead of 100 &mdash; normalize it</li>
+            <li><strong>A weak signal of an emerging trend:</strong> an unusual spike in a new product category may be the first sign of a market shift &mdash; preserve it and investigate</li>
+            <li><strong>A critical indicator:</strong> an extreme transaction amount may signal fraud &mdash; preserve it and escalate</li>
+          </ul>
+          Automatically removing or capping all outliers destroys the most valuable signals in your data. Context determines the action.
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="example-card">
+          <div class="example-label">Example &mdash; Marketing View</div>
+          <div class="example-title">Ignore outlier as noise</div>
+          <div class="example-text">A marketing analyst modeling average customer spend may exclude customers who spent $50,000 in a single transaction. That extreme value skews the mean and makes the model less representative of the typical customer. In this context, normalization (trimming or winsorizing the distribution) improves model accuracy.</div>
+        </div>
+        <div class="example-card">
+          <div class="example-label">Example &mdash; Fraud Team View</div>
+          <div class="example-title">Investigate outlier as primary target</div>
+          <div class="example-text">The fraud analyst sees the same $50,000 transaction and flags it immediately. Extreme values in transaction data are the primary signal. Normalizing the data before the fraud analyst sees it would destroy the evidence. Context determines whether you normalize or preserve.</div>
+        </div>
+      </div>
+
+      <div class="sub-label">Field Format Changes Over Time</div>
+
+      <div class="concept-card">
+        <div class="concept-title">When the Schema Evolves Under You</div>
+        <div class="concept-text">
+          A common normalization challenge: a field that previously held <em>zero</em> as a placeholder for &ldquo;no value&rdquo; has been superseded by a new separate field that now captures the actual amount. Historically, a zero in <code>transaction_amount</code> meant &ldquo;not applicable.&rdquo; In the new schema, <code>transaction_amount</code> can be null, and there is now a separate <code>adjustment_amount</code> field.
+          <br><br>
+          Historical data uses the old convention; new data uses the new one. <strong>Any analysis that spans both eras must account for this semantic shift.</strong> Profiling should catch this as a bimodal distribution (many zeros in old records, fewer in new). The governance dictionary must document when and why the schema changed.
+        </div>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-label">When the Source Cannot Be Changed</div>
+        <div class="insight-text">
+          Legacy systems may have no available developer, no change management process, or unknown downstream impact. In those cases:
+          <ul>
+            <li><strong>Option 1 (Batch export):</strong> when the system is idle, export the data to a staging folder. Apply normalization and transformation in the pipeline before loading into OLAP. The source stays as-is.</li>
+            <li><strong>Option 2 (Event-driven export):</strong> configure the legacy system to export a file on record creation. A listener picks up the file and applies transformation. Periodic if event-driven is not possible.</li>
+          </ul>
+          Normalization is always applied at the pipeline layer when the source cannot be modified. The data dictionary documents the transformation rule alongside the source and target field definitions.
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- SECTION 11 — Data Lineage -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <section class="notes-section" id="s11">
+      <div class="section-header">
+        <span class="section-num">11</span>
+        <span class="section-title">Data Lineage Tracking</span>
+      </div>
+
+      <div class="def-card">
+        <div class="def-label">Definition</div>
+        <div class="def-term">Data Lineage</div>
+        <div class="def-text">The documented history of data as it travels from its origin through transformations, storage systems, and ultimately into reports and decisions. Lineage answers: <em>Where did this number come from? What transformations were applied? Which source system is authoritative?</em> It is the chain of custody for data.</div>
+      </div>
+
+      <div class="sub-label">Why Lineage Matters</div>
+
+      <div class="four-col">
+        <div class="pillar-card">
+          <div class="pillar-icon">&#128269;</div>
+          <div class="pillar-name">Traceability</div>
+          <div class="pillar-desc">When a report number is wrong, lineage tells you exactly which upstream source introduced the error.</div>
+        </div>
+        <div class="pillar-card">
+          <div class="pillar-icon">&#9878;</div>
+          <div class="pillar-name">Compliance</div>
+          <div class="pillar-desc">GDPR, HIPAA, and SOX require organizations to demonstrate where regulated data was obtained and how it was used.</div>
+        </div>
+        <div class="pillar-card">
+          <div class="pillar-icon">&#128200;</div>
+          <div class="pillar-name">Impact Analysis</div>
+          <div class="pillar-desc">Before changing a source field, lineage shows every downstream report and system that will be affected.</div>
+        </div>
+        <div class="pillar-card">
+          <div class="pillar-icon">&#128736;</div>
+          <div class="pillar-name">Trust</div>
+          <div class="pillar-desc">Stakeholders trust a number more when they can follow the path it took from raw transaction to dashboard figure.</div>
+        </div>
+      </div>
+
+      <div class="sub-label">Real-World Difficulty</div>
+
+      <div class="concept-card">
+        <div class="concept-title">Lineage Is Hard to Implement Retroactively</div>
+        <div class="concept-text">In practice, full end-to-end lineage is one of the hardest governance capabilities to implement in an organization with existing legacy systems. Every transformation step, every pipeline hop, and every intermediate staging table must be instrumented. Tracing a single request ID across an upstream/downstream call chain in a microservices architecture is notoriously painful &mdash; each service may log with a different correlation ID format, or not log at all. Legacy ETL processes written in procedural SQL scripts have no lineage metadata by default.
+        </div>
+      </div>
+
+      <div class="example-card">
+        <div class="example-label">Industry Milestone</div>
+        <div class="example-title">Databricks Unity Catalog &mdash; End-to-End Lineage</div>
+        <div class="example-text">Databricks Unity Catalog was among the first platforms to provide <strong>automatic, end-to-end column-level lineage</strong> &mdash; tracking not just which tables data flows through, but which columns in which tables were derived from which source columns, through which transformations. For organizations starting fresh on a lakehouse architecture, this dramatically reduces the cost of lineage instrumentation. For organizations migrating legacy systems, lineage must be retrofitted system by system.
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- SECTION 12 — Data Transmission & ETL -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <section class="notes-section" id="s12">
+      <div class="section-header">
+        <span class="section-num">12</span>
+        <span class="section-title">Data Transmission &amp; ETL Pipelines</span>
+      </div>
+
+      <p class="prose">Data transmission is not just moving bytes from one system to another. Every transmission is an opportunity to apply governance: validate formats, enforce business rules, detect anomalies, and maintain an auditable record of what moved where and when. A transmission pipeline is a governance checkpoint.</p>
+
+      <div class="sub-label">The ETL Process with Governance Checkpoints</div>
+
+      <div class="num-list">
+        <div class="num-item">
+          <div class="num-badge">1</div>
+          <div class="num-content">
+            <div class="num-title">Initiate data extraction</div>
+            <div class="num-text">Pull data from the source system using the agreed protocol (REST API, file export, streaming event). Log the extraction timestamp, source system ID, and record count.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge">2</div>
+          <div class="num-content">
+            <div class="num-title">Apply business rules during transformation</div>
+            <div class="num-text">Clean up format inconsistencies (phone number normalization), remove verified duplicates, apply canonical name mappings from the enterprise dictionary. Flag records that cannot be transformed per the business rule.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge green">3</div>
+          <div class="num-content">
+            <div class="num-title">Validate data integrity</div>
+            <div class="num-text">Row count reconciliation (did all extracted records arrive?), checksum validation, referential integrity checks (does every foreign key point to a real parent record?). Log the validation result.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge green">4</div>
+          <div class="num-content">
+            <div class="num-title">Detect anomalies and errors</div>
+            <div class="num-text">Run statistical profile checks against expected ranges. Flag records with null values in required fields, values outside min/max bounds, or duplicate primary keys. Do not silently discard flagged records &mdash; route them to an error log for review.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge purple">5</div>
+          <div class="num-content">
+            <div class="num-title">Notify and review</div>
+            <div class="num-text">Alert the data owner or pipeline operator of anomalies detected. For critical pipelines, block the load step until a human reviews and approves flagged records. For low-criticality pipelines, allow the load to proceed and log the exceptions for later review.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sub-label">Confidence Levels &mdash; Trusting Different Data Sources</div>
+
+      <div class="concept-card">
+        <div class="concept-title">Assign Quality Confidence Levels Per Source</div>
+        <div class="concept-text">Not all data sources are equally reliable. Assign a confidence level to each source system based on its historical data quality scores. When mixing data from a high-confidence source (automated POS system) with a low-confidence source (manual sales rep survey), the combined dataset inherits the reliability floor of the weakest source. The reporting layer should surface the confidence level alongside the metric so decision-makers know how much to trust the number. Zero-trust within the pipeline means validating at every stage boundary, not assuming that data from an internal system is already clean.</div>
+      </div>
+
+      <div class="sub-label">Data Transmission Tools</div>
+
+      <table class="compare-table">
+        <thead>
+          <tr><th>Tool</th><th>Category</th><th>Best For</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="col-a">Apache Kafka</td><td>Event Streaming</td><td>Real-time event streaming; decoupled producer/consumer architectures; high-throughput pipelines</td></tr>
+          <tr><td class="col-a">Apache Spark</td><td>Distributed Processing</td><td>Large-scale batch and micro-batch transformation; ML feature engineering pipelines</td></tr>
+          <tr><td class="col-a">Apache Airflow</td><td>Workflow Orchestration</td><td>Scheduling and managing complex ETL DAGs; dependency management between pipeline steps</td></tr>
+          <tr><td class="col-b">Informatica Data Engineering</td><td>Enterprise ETL Platform</td><td>End-to-end ETL with built-in data quality, lineage, and governance; large enterprise deployments</td></tr>
+          <tr><td class="col-b">SAP Data Services</td><td>Enterprise ETL Platform</td><td>SAP ecosystem integration; batch ETL from SAP OLTP to warehouse</td></tr>
+          <tr><td class="col-b">Oracle Enterprise Data Quality (EDQ)</td><td>Data Quality Engine</td><td>Profile, cleanse, match, and monitor data quality within Oracle pipelines</td></tr>
+          <tr><td class="col-c">Databricks</td><td>Lakehouse Platform</td><td>End-to-end lakehouse; streaming + batch; built-in lineage via Unity Catalog</td></tr>
+          <tr><td class="col-c">Trifacta / Google Cloud Dataprep</td><td>Data Preparation</td><td>Visual data wrangling and profiling; self-service data prep for analysts</td></tr>
+          <tr><td class="col-c">Stitch Data</td><td>Cloud ELT</td><td>Fast SaaS-to-warehouse integrations; 100+ pre-built connectors</td></tr>
+        </tbody>
+      </table>
+
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- SECTION 13 — Key Management & Encryption -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <section class="notes-section" id="s13">
+      <div class="section-header">
+        <span class="section-num">13</span>
+        <span class="section-title">Key Management &amp; Encryption</span>
+      </div>
+
+      <p class="prose">Encryption is the primary technical mechanism for enforcing data confidentiality. Governance defines <em>which</em> data must be encrypted and to <em>what standard</em>. Key management determines <em>who controls the encryption</em> &mdash; and therefore who can ultimately access the data.</p>
+
+      <div class="sub-label">Encryption Standards</div>
+      <div class="concept-card">
+        <div class="concept-title">Implementing Encryption Policies</div>
+        <div class="concept-text">Policy tags in the enterprise dictionary specify the required encryption standard for each data class. Common standards:
+          <ul>
+            <li><strong>AES-256:</strong> the current standard for data at rest; required for most regulated data (PII, financial, health)</li>
+            <li><strong>TLS 1.2+ / TLS 1.3:</strong> for data in transit between systems; older versions (TLS 1.0, 1.1) are prohibited under most compliance frameworks</li>
+            <li><strong>Field-level encryption:</strong> encrypts specific columns (e.g., <code>ssn</code>, <code>credit_card_number</code>) rather than the entire table, allowing partial access to unencrypted fields</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="sub-label">Key Management Services</div>
+
+      <div class="three-col">
+        <div class="concept-card">
+          <div class="concept-title">Cloud KMS<div style="font-size:.7rem;color:#8b949e;font-weight:400;margin-top:.2rem;">AWS KMS / Azure Key Vault / GCP Cloud KMS</div></div>
+          <div class="concept-text">Managed key management services in cloud providers. Keys are stored in hardware security modules (HSMs) managed by the cloud provider. Organizations can control key policies, rotation schedules, and access. Audit logs record every key usage event.</div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">Customer-Managed Keys (CMK)</div>
+          <div class="concept-text">The organization manages its own encryption keys within a cloud KMS, rather than using the cloud provider defaults. This gives the organization the ability to revoke cloud provider access to its data by deleting or disabling the key &mdash; a critical capability for regulated industries.</div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">TPM (Trusted Platform Module)</div>
+          <div class="concept-text">A hardware chip on the device that stores cryptographic keys in a tamper-resistant module. Once a key is written to a TPM, it is extremely difficult to extract. Only the process (or user account) that originally stored the key can retrieve it. Used for device-level key protection in endpoints and servers.</div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- SECTION 14 — Identity & Access Management -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <section class="notes-section" id="s14">
+      <div class="section-header">
+        <span class="section-num">14</span>
+        <span class="section-title">Identity &amp; Access Management &mdash; Beyond Basic IAM</span>
+      </div>
+
+      <p class="prose">Traditional Identity and Access Management (IAM) assigns permissions based on identity (who you are) and role (what role you have). This is <strong>not sufficient</strong> for modern data governance, which requires conditional access policies that consider <em>context</em> &mdash; not just identity.</p>
+
+      <div class="def-card">
+        <div class="def-label">Definition</div>
+        <div class="def-term">Conditional Access Policy</div>
+        <div class="def-text">An access control rule that evaluates multiple attributes at runtime before granting or denying access. Examples of conditions: time of day, device compliance status, geographic location, data classification level, user department, active business justification. Conditional policies implement the principle of least privilege dynamically, not statically.</div>
+      </div>
+
+      <div class="sub-label">Access Models</div>
+
+      <div class="three-col">
+        <div class="concept-card">
+          <div class="concept-title">No Access</div>
+          <div class="concept-text">User or system has no permission to read, write, or query this data element. Applied to highly restricted data classes (e.g., executive compensation, active investigations). Access requires a formal request, justification, and approval.</div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">Partial Access</div>
+          <div class="concept-text">User can see or query some but not all fields or records. Examples: a customer service rep can see the customer account status but not the full credit card number; a regional manager can see their region only. Implemented through column masking and row-level security.</div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">Full Access</div>
+          <div class="concept-text">User has unrestricted access to the data asset. Reserved for data owners, compliance auditors (with logging), and system administrators. Even full access should be logged and periodically reviewed. Access creep over time is a common governance failure.</div>
+        </div>
+      </div>
+
+      <div class="sub-label">Access Governance Covers Four Decisions</div>
+
+      <table class="compare-table">
+        <thead>
+          <tr><th>Decision</th><th>Questions to Answer</th><th>Governed By</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="col-a">Access</td>
+            <td>Who can query this data? Under what conditions? With what approval workflow?</td>
+            <td>IAM policies, data classification, conditional access rules</td>
+          </tr>
+          <tr>
+            <td class="col-b">Visibility</td>
+            <td>What fields does the user actually see in the application? When is visibility revoked?</td>
+            <td>Application-layer field masking, event-driven visibility rules</td>
+          </tr>
+          <tr>
+            <td class="col-c">Retention</td>
+            <td>How long is this data kept accessible? When does it move to archive? When is it purged?</td>
+            <td>Retention policy attached to data class; data lifecycle rules</td>
+          </tr>
+          <tr>
+            <td class="col-a">Protection</td>
+            <td>What encryption standard applies? What DLP controls are in place? What is the incident response plan?</td>
+            <td>Encryption policy, DLP rules, security playbooks</td>
+          </tr>
+        </tbody>
+      </table>
+
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- SECTION 15 — Data Retention & Deletion -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <section class="notes-section" id="s15">
+      <div class="section-header">
+        <span class="section-num">15</span>
+        <span class="section-title">Data Retention &amp; Deletion Policy</span>
+      </div>
+
+      <p class="prose">Data does not live forever &mdash; and it should not. Retaining data longer than necessary increases storage cost, expands the attack surface, and in many jurisdictions creates legal liability. A retention policy defines the lifecycle rules that govern how long each data class is kept, when it is archived, and when it is permanently deleted.</p>
+
+      <div class="sub-label">The Three Storage States</div>
+
+      <div class="three-col">
+        <div class="concept-card">
+          <div class="concept-title">Active Storage</div>
+          <div class="concept-text">Data is readily queryable by authorized users. Stored in primary databases or data warehouses. High cost per GB but lowest latency. Appropriate for data that is queried regularly or required for business operations.</div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">Archive Storage</div>
+          <div class="concept-text">Data is not queried regularly but must be retained for legal or compliance reasons. Moved to cold storage (e.g., AWS Glacier, Azure Archive). Very low cost per GB but high retrieval latency (minutes to hours). Access is infrequent and usually requires a formal request.</div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">Deleted / Purged</div>
+          <div class="concept-text">Data is permanently and irrecoverably destroyed. Deletion must be verified (cryptographic erasure or secure overwrite). GDPR Article 17 grants individuals the &ldquo;right to erasure&rdquo; &mdash; organizations must be able to prove deletion occurred and propagate it to all downstream copies.</div>
+        </div>
+      </div>
+
+      <div class="sub-label">Retention Drivers</div>
+
+      <div class="concept-card">
+        <div class="concept-title">What Determines How Long to Keep Data?</div>
+        <div class="concept-text">
+          <ul>
+            <li><strong>Regulation:</strong> HIPAA requires healthcare records to be retained for at least 6 years. SOX requires financial records for 7 years. GDPR allows retention only as long as the original purpose requires it.</li>
+            <li><strong>Business need:</strong> historical transaction data for trend analysis, warranty claims, or dispute resolution may require retention beyond regulatory minimums.</li>
+            <li><strong>Data class:</strong> different classes have different TTLs. POS transaction data might be kept active for 1 year, archived for 6 more, then deleted. Employee termination records may need to be kept for 7 years for employment law compliance.</li>
+            <li><strong>Contractual obligation:</strong> SLAs with enterprise customers may specify minimum data availability windows.</li>
+          </ul>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- SECTION 16 — External Data Acquisition -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <section class="notes-section" id="s16">
+      <div class="section-header">
+        <span class="section-num">16</span>
+        <span class="section-title">External Data Acquisition &mdash; Governing Purchased Data</span>
+      </div>
+
+      <p class="prose">Organizations frequently purchase or license data from external providers &mdash; market research firms, data brokers, public records aggregators, and industry consortia. This introduces a governance challenge: <strong>you cannot control how the external organization collected or managed the data before you received it.</strong></p>
+
+      <div class="sub-label">Key Governance Questions for External Data</div>
+
+      <div class="two-col">
+        <div class="concept-card">
+          <div class="concept-title">Data Quality Due Diligence</div>
+          <div class="concept-text">Before purchasing, profile a sample of the external dataset against the six quality dimensions. What is the null rate? Are identifiers in a compatible format? What is the staleness of the data? Many purchased datasets are refreshed quarterly or annually &mdash; evaluate whether that cadence meets your timeliness requirement.</div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">Provenance and Consent</div>
+          <div class="concept-text">Where was this data originally collected? Was appropriate consent obtained from the data subjects? For personal data, using it in ways not covered by the original consent violates GDPR and CCPA even if you purchased it legally. The vendor&apos;s data use agreement must be reviewed by legal before integration.</div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">Data Contracts</div>
+          <div class="concept-text">A data contract formalizes the quality, format, schema, and freshness commitments from the external provider. It gives the purchasing organization recourse if the data fails to meet the specified standards. Treat it like a software API contract &mdash; schema changes should be versioned and communicated in advance.</div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">Integration Governance</div>
+          <div class="concept-text">External data entering the pipeline must go through the same quality validation and classification process as internal data. It does not inherit trust by default. Assign a confidence level based on the provider quality assessment, and document the data lineage starting from the external source.</div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- SECTION 17 — Data Governance Tools -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <section class="notes-section" id="s17">
+      <div class="section-header">
+        <span class="section-num">17</span>
+        <span class="section-title">Data Governance Tools Landscape</span>
+      </div>
+
+      <p class="prose">Selecting the right governance tool depends on the organization&apos;s existing infrastructure, scale, budget, and regulatory context. No single tool is the best for every organization. The key capabilities to evaluate are: metadata management, data catalog, data quality, lineage tracking, and access policy enforcement.</p>
+
+      <table class="compare-table">
+        <thead>
+          <tr><th>Tool</th><th>Vendor / Type</th><th>Core Strengths</th><th>Best Fit</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="col-a">Collibra</td>
+            <td>Commercial</td>
+            <td>Enterprise workflow management, policy lifecycle, business glossary, stewardship workflows</td>
+            <td>Large enterprises with complex cross-departmental governance programs and regulatory requirements</td>
+          </tr>
+          <tr>
+            <td class="col-a">Alation</td>
+            <td>Commercial</td>
+            <td>Data catalog and search, collaborative annotation, behavioral analytics on query patterns</td>
+            <td>Organizations prioritizing data discoverability and self-service analytics</td>
+          </tr>
+          <tr>
+            <td class="col-a">Microsoft Purview</td>
+            <td>Commercial (Azure)</td>
+            <td>Native Azure integration, automated data classification, compliance management, sensitivity labels</td>
+            <td>Microsoft-centric organizations on Azure; compliance-heavy regulated industries</td>
+          </tr>
+          <tr>
+            <td class="col-b">Informatica IDMC</td>
+            <td>Commercial</td>
+            <td>Comprehensive data quality, MDM, lineage, catalog in one platform; long history in enterprise ETL</td>
+            <td>Large organizations needing integrated data quality + governance + MDM in one suite</td>
+          </tr>
+          <tr>
+            <td class="col-b">OpenMetadata</td>
+            <td>Open Source</td>
+            <td>Modern, extensible, 75+ native connectors, end-to-end metadata ingestion, collaboration features</td>
+            <td>Organizations wanting open-source flexibility; cloud-native or multi-cloud environments</td>
+          </tr>
+          <tr>
+            <td class="col-b">Apache Atlas</td>
+            <td>Open Source</td>
+            <td>Hadoop ecosystem lineage, classification tagging, policy enforcement for Hive/HBase/Kafka</td>
+            <td>Legacy Hadoop or Cloudera environments; organizations migrating from on-prem big data stacks</td>
+          </tr>
+          <tr>
+            <td class="col-c">Databricks Unity Catalog</td>
+            <td>Commercial (Cloud)</td>
+            <td>End-to-end column-level lineage, fine-grained access control, delta sharing, built-in data quality</td>
+            <td>Organizations building on the Databricks Lakehouse; best-in-class lineage out of the box</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="insight-card">
+        <div class="insight-label">Selection Guidance</div>
+        <div class="insight-text">
+          After your initial system inventory (Section 5), you will know which tool is the right fit. The inventory reveals:
+          <ul>
+            <li>How many source systems need connectors</li>
+            <li>What cloud infrastructure is already in place (Azure &rarr; Purview, Databricks &rarr; Unity Catalog)</li>
+            <li>Whether regulatory compliance (GDPR, HIPAA) is the primary driver or data discoverability is</li>
+            <li>The budget available (open source vs. commercial licensing)</li>
+          </ul>
+          The tool should serve the process &mdash; not dictate it. Define your governance requirements first, then select the tool that implements them most effectively.
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- SECTION 18 — Automation at Scale -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <section class="notes-section" id="s18">
+      <div class="section-header">
+        <span class="section-num">18</span>
+        <span class="section-title">Automation at Scale &mdash; Why Manual Governance Fails</span>
+      </div>
+
+      <p class="prose">The central theme of this module is that governance must be automated to scale. A large organization may have 10,000 data fields across 50 source systems. Manually entering definitions, assigning classifications, and running quality checks on that volume is not feasible. Automation is not an optimization &mdash; it is a prerequisite.</p>
+
+      <div class="sub-label">Three Advantages of Data Governance Automation</div>
+
+      <div class="three-col">
+        <div class="pillar-card">
+          <div class="pillar-icon">&#128119;</div>
+          <div class="pillar-name">Eliminate Manual Tasks</div>
+          <div class="pillar-desc">Metadata ingestion, format validation, duplicate detection, and policy tag assignment can all be automated. Manual entry at 10,000+ field scale would take months and introduce its own errors.</div>
+        </div>
+        <div class="pillar-card">
+          <div class="pillar-icon">&#128200;</div>
+          <div class="pillar-name">Scalability</div>
+          <div class="pillar-desc">Automated pipelines handle growing data volumes without growing headcount. Adding a new source system requires a connector configuration, not a team of data stewards.</div>
+        </div>
+        <div class="pillar-card">
+          <div class="pillar-icon">&#9201;</div>
+          <div class="pillar-name">Timeliness = Quality</div>
+          <div class="pillar-desc">Automated quality checks run at every pipeline step in real time. Manual checks happen periodically. Reducing the time between data entry and quality validation directly improves data quality scores.</div>
+        </div>
+      </div>
+
+      <div class="sub-label">Enforcement at Every Pipeline Stage</div>
+
+      <div class="concept-card">
+        <div class="concept-title">Validation Checkpoints Across the Data Lifecycle</div>
+        <div class="concept-text">
+          <table class="compare-table" style="margin-bottom:0">
+            <thead>
+              <tr><th>Stage</th><th>What to Enforce</th><th>Tool Category</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="col-a">Source System (OLTP)</td><td>Schema constraints, data type enforcement, not-null rules, format validation at input</td><td>Database constraints, application-layer validation</td></tr>
+              <tr><td class="col-b">Ingestion Layer</td><td>Business rule application, format unification, duplicate detection, anomaly flagging</td><td>ETL tools (Spark, Informatica), data quality engines</td></tr>
+              <tr><td class="col-c">OLAP / Warehouse</td><td>Referential integrity, row count reconciliation, completeness checks, quality scoring</td><td>dbt tests, Great Expectations, Unity Catalog quality rules</td></tr>
+              <tr><td class="col-a">Reporting Layer</td><td>Confidence level display, data freshness indicators, lineage visibility for end users</td><td>BI tool metadata, embedded data quality badges</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="sub-label">What Happens Without Automation?</div>
+
+      <div class="warn-card">
+        <div class="warn-label">Consequences of No Automation</div>
+        <div class="warn-text">
+          <ul>
+            <li><strong>Data-driven decisions fail:</strong> decisions made on unvalidated data produce wrong outcomes &mdash; wrong forecasts, wrong inventory orders, wrong staffing</li>
+            <li><strong>Compliance violations:</strong> without automated classification and policy enforcement, sensitive data escapes into environments where it should not exist &mdash; a regulatory and reputational risk</li>
+            <li><strong>Loss of stakeholder trust:</strong> when business users stop trusting reports, they revert to shadow IT solutions (personal spreadsheets, informal data sharing) that completely bypass governance</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-label">Zero Trust Within the Pipeline</div>
+        <div class="insight-text">Do not assume that data from an internal system is already clean because it was validated at source. Apply validation at every stage boundary. Internal systems can have their own bugs, schema drift, or data entry issues. <strong>Confidence levels must be assigned to each source system</strong> based on its historical quality metrics, and those confidence levels must be surfaced in the reporting layer so decision-makers know how much to trust each number they see.</div>
+      </div>
+
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- SECTION 19 — The Bigger Picture -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <section class="notes-section" id="s19">
+      <div class="section-header">
+        <span class="section-num">19</span>
+        <span class="section-title">The Bigger Picture &mdash; Governance as Organizational Capability</span>
+      </div>
+
+      <p class="prose">Data governance is not a project that ends. It is a continuous organizational capability that improves data quality, enforces accountability, and enables the business to make reliable, data-driven decisions at scale. It sits within the broader discipline of data management, which covers the full lifecycle from data creation to destruction.</p>
+
+      <div class="two-col">
+        <div class="def-card">
+          <div class="def-label">Recall</div>
+          <div class="def-term">Data Management vs. Data Governance</div>
+          <div class="def-text"><strong>Data management</strong> covers the entire data lifecycle &mdash; from generation to archival to deletion. <strong>Data governance</strong> is one specific function within data management: the framework of policies, roles, processes, and tools that ensure data is trustworthy, secure, and used appropriately. Governance is the <em>policy layer</em>; data engineering, data quality, and MDM are the <em>implementation layers</em>.</div>
+        </div>
+        <div class="def-card">
+          <div class="def-label">Goal Statement</div>
+          <div class="def-term">What Good Governance Delivers</div>
+          <div class="def-text"><strong>Good quality data, at the right time, with the right answers.</strong> This three-part definition captures the quality, timeliness, and accuracy dimensions simultaneously. When governance succeeds, every decision-maker in the organization can answer &ldquo;Where did this number come from?&rdquo; and trust the answer.</div>
+        </div>
+      </div>
+
+      <div class="sub-label">Three Strategic Pillars</div>
+
+      <div class="three-col">
+        <div class="pillar-card">
+          <div class="pillar-icon">&#128270;</div>
+          <div class="pillar-name">Discoverability</div>
+          <div class="pillar-desc">Every employee can find the data they need. Enabled by: metadata management, data quality scoring, master data management, classification labels, and access control workflows. A new employee should be able to find the relevant catalog, understand what data exists, and know who to ask for access &mdash; without a week of onboarding.</div>
+        </div>
+        <div class="pillar-card">
+          <div class="pillar-icon">&#128274;</div>
+          <div class="pillar-name">Security</div>
+          <div class="pillar-desc">Sensitive data is protected at every stage. Enabled by: data privacy controls, encryption standards, access control enforcement, data residency rules, DLP scanning, and key management. Classification and policy tags translate governance intent into implemented technical controls.</div>
+        </div>
+        <div class="pillar-card">
+          <div class="pillar-icon">&#9878;</div>
+          <div class="pillar-name">Accountability</div>
+          <div class="pillar-desc">Every data asset has a named owner. Domain-based governance assigns accountability at the business domain level (e.g., Sales owns customer data, Finance owns transaction data). The CDO sets the framework; domain data owners implement and enforce it within their area.</div>
+        </div>
+      </div>
+
+      <div class="sub-label">The Role of the Chief Data Officer (CDO)</div>
+
+      <div class="concept-card">
+        <div class="concept-title">What the CDO Owns</div>
+        <div class="concept-text">The CDO is responsible for the governance framework itself: defining the policy taxonomy, selecting the governance tooling, setting quality standards, tracking compliance metrics (what percentage of fields are governed, what is the average data quality score), and establishing escalation paths when policy is violated. The CDO does not individually govern each dataset &mdash; that responsibility is delegated to domain data owners. The CDO creates the system that makes domain ownership possible.
+        </div>
+      </div>
+
+      <div class="sub-label">Quick Reference &mdash; Module 2 Key Terms</div>
+
+      <table class="compare-table">
+        <thead>
+          <tr><th>Term</th><th>Definition</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><span class="term">Data Quality Dimensions</span></td><td>Accuracy, Completeness, Timeliness, Validity, Uniqueness, Consistency &mdash; the six measurable attributes of a trustworthy dataset</td></tr>
+          <tr><td><span class="term">Enterprise Data Dictionary</span></td><td>Centralized metadata repository defining what each data element means, its classification, owner, format, and policy</td></tr>
+          <tr><td><span class="term">Infotype</span></td><td>A category describing the nature of data (PII, Financial, Health, Operational)</td></tr>
+          <tr><td><span class="term">Data Class</span></td><td>A specific classification within an infotype (e.g., Government ID is a data class under the PII infotype)</td></tr>
+          <tr><td><span class="term">Policy Tag</span></td><td>A label attached to a data class that triggers specific implementation requirements: encryption standard, access rules, retention period</td></tr>
+          <tr><td><span class="term">Sensitivity Shift</span></td><td>When metadata about data is more sensitive than the data itself (e.g., call log patterns vs. call content)</td></tr>
+          <tr><td><span class="term">Data Correlation Risk</span></td><td>When individually low-sensitivity fields become high-sensitivity when combined (e.g., zip + DOB + gender)</td></tr>
+          <tr><td><span class="term">Faceted Search</span></td><td>Catalog query using multiple governance attributes as filters (environment + classification + sensitivity)</td></tr>
+          <tr><td><span class="term">Data Lineage</span></td><td>Documented history of data movement from source through transformation to reporting</td></tr>
+          <tr><td><span class="term">OLTP</span></td><td>Transactional systems optimized for write-heavy operations (POS, CRM, ERP)</td></tr>
+          <tr><td><span class="term">OLAP</span></td><td>Analytical systems optimized for read-heavy aggregation queries (data warehouses, lakehouses)</td></tr>
+          <tr><td><span class="term">NRT (Near-Real-Time)</span></td><td>Micro-batch processing mode with seconds-to-minutes latency; between batch and live streaming</td></tr>
+          <tr><td><span class="term">Semantic Matching</span></td><td>NLP-based technique to detect that two fields with different names represent the same concept</td></tr>
+          <tr><td><span class="term">CDO</span></td><td>Chief Data Officer &mdash; executive accountable for the organization-wide data governance framework</td></tr>
+          <tr><td><span class="term">Data Residency</span></td><td>Policy specifying geographic or jurisdictional constraints on where data may be stored and processed</td></tr>
+          <tr><td><span class="term">Confidence Level</span></td><td>A quality trust score assigned to a data source or dataset, surfaced to decision-makers alongside metrics</td></tr>
+        </tbody>
+      </table>
+
+    </section>
+
+  </main>
+</div>
+
+<footer class="site-footer">
+  Class Notes &mdash; Data Governance &mdash; Module 2 &nbsp;&bull;&nbsp; &copy; Clark Ngo
+</footer>
+
+<script>
+  // Active TOC link on scroll
+  var sections = document.querySelectorAll(".notes-section");
+  var tocLinks = document.querySelectorAll(".toc-link");
+
+  function updateToc() {
+    var current = "";
+    sections.forEach(function(sec) {
+      var top = sec.getBoundingClientRect().top;
+      if (top <= 100) {
+        current = sec.id;
+      }
+    });
+    tocLinks.forEach(function(link) {
+      link.classList.remove("active");
+      if (link.getAttribute("href") === "#" + current) {
+        link.classList.add("active");
+      }
+    });
+  }
+
+  window.addEventListener("scroll", updateToc, { passive: true });
+  updateToc();
+
+  // Smooth scroll
+  tocLinks.forEach(function(link) {
+    link.addEventListener("click", function(e) {
+      e.preventDefault();
+      var target = document.querySelector(link.getAttribute("href"));
+      if (target) {
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    });
+  });
+</script>
+
+</body>
+</html>
