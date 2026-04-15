@@ -9,6 +9,11 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ## 2026-04-15
 
+### [feature] Add Module 2 card to homepage
+- Added Module 2 card to the Class Notes section in `index.html`; updated section count from "1 module" to "2 modules"
+
+
+
 ### [feature] Data Governance Module 2 class notes
 - New file `class-notes/data-governance/module-02.html`: 19 sections covering data quality dimensions, enterprise data dictionary, top-down vs bottom-up dictionary building, semantic matching with NLP, OLTP→OLAP→Reporting integration, metadata management, lineage tracking, ETL tools, encryption, IAM, retention, governance tools landscape, and automation at scale
 

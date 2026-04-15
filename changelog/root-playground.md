@@ -7,6 +7,11 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ## 2026-04-15
 
+### [feature] Add Module 2 card to homepage
+- Added Module 2 collection card to the Class Notes section in `index.html`; bumped section count label from "1 module" to "2 modules"
+
+
+
 ### [feature] Data Governance Module 2 class notes
 - New file: `class-notes/data-governance/module-02.html`
 - 19 sections covering the full arc of Module 2: When Data Quality Fails, Six Dimensions of Quality, Source System Landscape, Enterprise Data Dictionary, Top-Down vs Bottom-Up dictionary building, Semantic Matching & NLP (addresses student question on same-concept different-name fields), Data Cataloging & Metadata Management (dual-layer metadata, policy decoupling, sensitivity shift, data residency, visibility vs access), OLTP→OLAP→Reporting integration patterns (batch/NRT/streaming comparison table), Data Assessment & Profiling, Data Normalization, Data Lineage Tracking, Data Transmission & ETL (tools table: Kafka, Spark, Airflow, Informatica, SAP, Oracle EDQ, Databricks), Key Management & Encryption (KMS, TPM), Identity & Access Management (conditional policies, no/partial/full access, four governance decisions table), Data Retention & Deletion, External Data Acquisition, Governance Tools Landscape (Collibra, Alation, Purview, Informatica, OpenMetadata, Apache Atlas, Databricks Unity Catalog), Automation at Scale, and The Bigger Picture (discoverability, security, accountability)
