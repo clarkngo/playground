@@ -331,7 +331,7 @@
     <div class="insight-strip">
       <strong>Source:</strong> bank_customers_raw &nbsp;&bull;&nbsp;
       <strong>Destination:</strong> bank_customers_clean &nbsp;&bull;&nbsp;
-      Both tables under <strong>Databricks_Banking / workspace / default</strong>. Lineage manually documented to establish traceability from the ingested CSV through the PySpark cleansing pipeline.
+      Both tables under <strong>Databricks_Banking / workspace / default</strong>. Lineage manually documented from <code>bank_customers_raw</code> to <code>bank_customers_clean</code>. The CSV &rarr; raw hop could not be established due to Databricks Volume invisibility.
     </div>
   </div>
 
@@ -379,7 +379,7 @@
           <div class="p-icon blue">&#9881;</div>
           <div class="p-content">
             <div class="p-title">Data Engineering &mdash; Databricks</div>
-            <div class="p-desc">Used PySpark to ingest <code>BankCustomers.csv</code>, performed a quality audit (identifying nulls and duplicates), and transformed the data into two distinct tables: <code>bank_customers_raw</code> and <code>bank_customers_clean</code>.</div>
+            <div class="p-desc">Performed a quality audit on the ingested <code>bank_customers_raw</code> table (identifying nulls and duplicates) and produced a cleansed output as <code>bank_customers_clean</code>.</div>
           </div>
         </div>
         <div class="p-step">
@@ -393,7 +393,7 @@
           <div class="p-icon purple">&#128279;</div>
           <div class="p-content">
             <div class="p-title">Traceability &mdash; Lineage</div>
-            <div class="p-desc">Manually documented the data&rsquo;s journey, connecting the raw ingestion to the cleaned output so anyone looking at the data knows its &ldquo;parentage&rdquo; and transformation history.</div>
+            <div class="p-desc">Manually documented the lineage from <code>bank_customers_raw</code> to <code>bank_customers_clean</code> in OpenMetadata. The CSV-to-raw hop could not be linked due to Databricks Volume invisibility to the SQL connector.</div>
           </div>
         </div>
         <div class="p-step">
@@ -417,7 +417,10 @@
       <p>High-quality metadata is not just about technical schemas. It is about documenting <em>why</em> (business descriptions) and <em>how long</em> (retention policies). A table with only a column list is half-documented. A table with ownership, stewardship, lifecycle stages, and a data quality summary is a governed asset.</p>
 
       <h3>Traceability is Visibility</h3>
-      <p>Without lineage, a &ldquo;Clean&rdquo; table is just a black box &mdash; no one knows where it came from or what was done to it. Manually linking the source CSV to the raw table proved how data flows from external storage into the warehouse. Lineage transforms a table into a story.</p>
+      <p>Without lineage, a &ldquo;Clean&rdquo; table is just a black box &mdash; no one knows where it came from or what was done to it. Manually linking <code>bank_customers_raw</code> to <code>bank_customers_clean</code> demonstrated how transformation history is preserved. The CSV-to-raw leg was not linkable due to Volume invisibility, which itself is a key lesson: automated scans have blind spots, and those gaps must be called out explicitly.</p>
+
+      <h3>Custom Properties Extend Governance</h3>
+      <p>OpenMetadata&rsquo;s built-in fields cover ownership and domain, but not every governance need fits a predefined field. Creating a custom property &mdash; <strong>Data Steward</strong> &mdash; and attaching it directly to the <code>bank_customers_raw</code> table proved that metadata schemas can be extended without code changes. This is how organizations embed institutional roles into the catalog itself.</p>
     </div>
 
     <!-- ── ROADBLOCKS ─────────────────────────── -->
@@ -452,7 +455,7 @@
         </li>
         <li>
           <div class="final-check">&#10003;</div>
-          <div><strong>Mapped Lineage</strong> &mdash; Source &rarr; raw &rarr; clean documented in OpenMetadata. Full traceability established from CSV ingestion to curated table.</div>
+          <div><strong>Mapped Lineage</strong> &mdash; <code>bank_customers_raw</code> &rarr; <code>bank_customers_clean</code> documented in OpenMetadata. <em>Note: CSV &rarr; raw hop was not achievable &mdash; Databricks Volumes are invisible to the SQL connector and cannot be resolved in the lineage graph automatically.</em></div>
         </li>
         <li>
           <div class="final-check">&#10003;</div>
