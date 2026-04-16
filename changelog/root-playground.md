@@ -7,6 +7,19 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ## 2026-04-15
 
+### [feature] Module 02 deliverables page with supporting evidence
+- New file: `classroom-activities/data-governance/module-02-deliverables.html` — student submission page with 4 required screenshot deliverables (D1 Business Glossary, D2 Governance Policies, D3 Metadata Catalog, D4 Lineage Diagram) and D5 Reflection (medallion architecture visual, process steps, key learnings, roadblocks, final status checklist)
+- Supporting evidence section with 5 supplementary screenshots: `00-databricks-raw-data.png`, `00-connection-test-success.png`, `00-custom-property-steward.png`, `00-governance-policies-overview.png`, `00-schema-column-level-tags.png`
+- Created `module-02/submission/` directory for screenshot assets
+- Wired deliverables link into `index.html` Module 02 card
+
+### [feature] Data Governance classroom activities section homepage + Module 02 lab
+- New file: `classroom-activities/data-governance/index.html` — section homepage listing Module 01 and Module 02 as navigatable cards with links to case study, deliverables, and lab guide
+- New file: `classroom-activities/data-governance/module-02.html` — full lab guide for "GlobalTrust Bank: The Duplicate Records Crisis"; covers Part 1 (Databricks data quality: upload, profiling, 4 quality checks, 4 cleansing steps, optional Great Expectations validation) and Part 2 (OpenMetadata: metadata ingestion, business glossary, data classification tags, metadata cataloging, governance policies, lineage tracking, retention policies); includes sample dataset with highlighted DQ issues, code blocks with syntax highlighting, expected outputs table, 6 deliverables, and learning outcomes
+- Updated `module-01.html` navbar and breadcrumb to link back to new section homepage
+- Updated `module-01-deliverables.html` breadcrumb to link back to section homepage and Module 01
+- JS syntax checks pass on all new files
+
 ### [feature] Add Module 2 card to homepage
 - Added Module 2 collection card to the Class Notes section in `index.html`; bumped section count label from "1 module" to "2 modules"
 
