@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Module 02 Deliverables &mdash; Data Quality &amp; Metadata Management</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0d1117; color: #c9d1d9; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; min-height: 100vh; font-size: 14px; line-height: 1.6; }
+
+    /* Navbar */
+    .navbar { background: #161b22; border-bottom: 1px solid #30363d; padding: .75rem 1.5rem; display: flex; align-items: center; justify-content: space-between; }
+    .navbar a { color: #e6edf3; text-decoration: none; font-weight: 700; font-size: 1rem; }
+    .navbar a:hover { color: #58a6ff; }
+    .nav-pill { font-size: .78rem; color: #8b949e; }
+
+    .page-body { max-width: 1020px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+    /* Breadcrumb */
+    .breadcrumb { font-size: .78rem; color: #8b949e; display: flex; align-items: center; gap: .4rem; margin-bottom: .85rem; flex-wrap: wrap; }
+    .breadcrumb a { color: #58a6ff; text-decoration: none; font-weight: 600; }
+    .breadcrumb a:hover { text-decoration: underline; }
+    .breadcrumb span { color: #484f58; }
+
+    /* Page header */
+    .page-badge { display: inline-block; background: #238636; color: #fff; font-size: .72rem; font-weight: 700; padding: 3px 12px; border-radius: 12px; text-transform: uppercase; letter-spacing: .07em; margin-bottom: .55rem; }
+    h1 { color: #e6edf3; font-size: 1.75rem; font-weight: 800; margin-bottom: .25rem; }
+    .page-sub { color: #8b949e; font-size: .88rem; margin-bottom: 1.5rem; }
+
+    /* Progress bar */
+    .progress-wrap { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 1.1rem 1.5rem; margin-bottom: 2.25rem; }
+    .progress-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #8b949e; margin-bottom: .75rem; }
+    .progress-steps { display: flex; gap: .5rem; align-items: stretch; flex-wrap: wrap; }
+    .step-pill { flex: 1; min-width: 120px; background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: .55rem .85rem; display: flex; align-items: center; gap: .55rem; }
+    .step-pill.done { border-color: #238636; background: #0b1f0b; }
+    .step-check { width: 18px; height: 18px; border-radius: 50%; background: #238636; color: #fff; font-size: .7rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .step-check.pending { background: #30363d; color: #8b949e; }
+    .step-text { font-size: .78rem; font-weight: 700; line-height: 1.3; }
+    .step-pill.done .step-text { color: #3fb950; }
+    .step-pill:not(.done) .step-text { color: #8b949e; }
+
+    /* Deliverable section */
+    .deliverable { margin-bottom: 3rem; scroll-margin-top: 1rem; }
+    .d-header { display: flex; align-items: center; gap: .85rem; margin-bottom: 1.25rem; padding-bottom: .85rem; border-bottom: 1px solid #21262d; }
+    .d-num { width: 34px; height: 34px; border-radius: 10px; background: #1f6feb; color: #fff; font-size: .85rem; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .d-num.green  { background: #238636; }
+    .d-num.purple { background: #6e40c9; }
+    .d-num.yellow { background: #9e6a03; }
+    .d-num.teal   { background: #0e7490; }
+    .d-title { font-size: 1.15rem; font-weight: 800; color: #e6edf3; }
+    .d-desc  { font-size: .82rem; color: #8b949e; margin-top: .15rem; }
+    .done-badge { margin-left: auto; background: #0b1f0b; border: 1px solid #238636; color: #3fb950; font-size: .68rem; font-weight: 700; padding: 2px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: .07em; white-space: nowrap; }
+
+    /* Sub-label */
+    .sub-label { font-size: .69rem; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: #8b949e; border-left: 3px solid #30363d; padding-left: .55rem; margin: 1.25rem 0 .75rem; }
+
+    /* Screenshots */
+    .screenshot-wrap { border: 1px solid #30363d; border-radius: 10px; overflow: hidden; margin-bottom: 1rem; background: #000; }
+    .screenshot-wrap img { width: 100%; display: block; }
+    .screenshot-caption { font-size: .75rem; color: #8b949e; padding: .5rem .85rem; background: #161b22; border-top: 1px solid #21262d; display: flex; align-items: center; gap: .4rem; }
+    .cap-file { font-family: "Menlo","Monaco",monospace; font-size: .72rem; color: #58a6ff; }
+    .two-screenshots { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+
+    /* Insight strip */
+    .insight-strip { background: #1d1600; border: 1px solid #9e6a03; border-radius: 8px; padding: .85rem 1.1rem; margin-bottom: 1.25rem; font-size: .84rem; color: #c9d1d9; line-height: 1.7; }
+    .insight-strip strong { color: #f0c674; }
+
+    /* Medallion flow */
+    .medallion { display: flex; align-items: center; gap: 0; flex-wrap: nowrap; margin: 1.25rem 0; overflow-x: auto; }
+    .medal-node { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: .85rem 1.1rem; text-align: center; min-width: 150px; }
+    .medal-node.bronze { border-color: #9e6a03; background: #1d1600; }
+    .medal-node.silver { border-color: #1f6feb; background: #0c1e38; }
+    .medal-node.gold   { border-color: #238636; background: #0b1f0b; }
+    .medal-tier { font-size: .62rem; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; margin-bottom: .3rem; }
+    .medal-node.bronze .medal-tier { color: #e3b341; }
+    .medal-node.silver .medal-tier { color: #58a6ff; }
+    .medal-node.gold   .medal-tier { color: #3fb950; }
+    .medal-label { font-size: .82rem; font-weight: 700; color: #e6edf3; margin-bottom: .2rem; }
+    .medal-desc  { font-size: .72rem; color: #8b949e; line-height: 1.45; }
+    .medal-arrow { color: #484f58; font-size: 1.4rem; padding: 0 .5rem; flex-shrink: 0; }
+
+    /* Reflection cards */
+    .reflect-card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1.35rem 1.5rem; margin-bottom: 1.1rem; }
+    .reflect-card h2 { font-size: 1rem; font-weight: 800; color: #e6edf3; margin-bottom: .65rem; padding-left: .65rem; }
+    .reflect-card.process h2 { border-left: 3px solid #58a6ff; }
+    .reflect-card.learnings h2 { border-left: 3px solid #3fb950; }
+    .reflect-card.blockers h2 { border-left: 3px solid #f85149; }
+    .reflect-card.final h2 { border-left: 3px solid #e3b341; }
+    .reflect-card h3 { font-size: .88rem; font-weight: 700; color: #a5d6ff; margin: 1.1rem 0 .4rem; }
+    .reflect-card.learnings h3 { color: #56d364; }
+    .reflect-card.blockers h3 { color: #f85149; }
+    .reflect-card.final h3 { color: #f0c674; }
+    .reflect-card p { font-size: .84rem; color: #c9d1d9; line-height: 1.75; margin-bottom: .5rem; }
+    .reflect-card ul, .reflect-card ol { padding-left: 1.2rem; margin-bottom: .6rem; }
+    .reflect-card li { font-size: .84rem; color: #c9d1d9; line-height: 1.75; margin-bottom: .3rem; }
+    .reflect-card li strong { color: #e6edf3; }
+    .reflect-card code { font-family: "Menlo","Monaco",monospace; font-size: .8em; background: #0d1117; border: 1px solid #30363d; padding: 1px 5px; border-radius: 4px; color: #a5d6ff; }
+    .reflect-card hr { border: none; border-top: 1px solid #21262d; margin: 1rem 0; }
+
+    /* Process step pills */
+    .process-steps { display: flex; flex-direction: column; gap: .55rem; margin: .75rem 0; }
+    .p-step { display: flex; gap: .75rem; align-items: flex-start; }
+    .p-icon { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: .82rem; flex-shrink: 0; }
+    .p-icon.blue   { background: #0c1e38; border: 1px solid #1f6feb; }
+    .p-icon.green  { background: #0b1f0b; border: 1px solid #238636; }
+    .p-icon.purple { background: #18102d; border: 1px solid #6e40c9; }
+    .p-icon.teal   { background: #0a2028; border: 1px solid #0e7490; }
+    .p-content { flex: 1; padding-top: .25rem; }
+    .p-title { font-size: .84rem; font-weight: 700; color: #e6edf3; margin-bottom: .15rem; }
+    .p-desc  { font-size: .8rem; color: #8b949e; line-height: 1.6; }
+
+    /* Blocker cards */
+    .blocker-card { background: #1a0808; border: 1px solid #f85149; border-left: 3px solid #f85149; border-radius: 8px; padding: .85rem 1.1rem; margin-bottom: .75rem; }
+    .blocker-title { font-size: .84rem; font-weight: 700; color: #f85149; margin-bottom: .3rem; }
+    .blocker-body  { font-size: .82rem; color: #c9d1d9; line-height: 1.65; }
+    .blocker-body strong { color: #ffa198; }
+
+    /* Final checklist */
+    .final-list { list-style: none; padding: 0; margin: .75rem 0; }
+    .final-list li { display: flex; align-items: flex-start; gap: .65rem; padding: .55rem 0; border-bottom: 1px solid #21262d; font-size: .85rem; color: #c9d1d9; line-height: 1.6; }
+    .final-list li:last-child { border-bottom: none; }
+    .final-check { width: 20px; height: 20px; border-radius: 50%; background: #238636; color: #fff; font-size: .7rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: .1rem; }
+
+    /* Footer */
+    .site-footer { text-align: center; padding: 1.25rem; border-top: 1px solid #21262d; margin-top: 2rem; color: #484f58; font-size: .77rem; }
+
+    /* Print */
+    @media print {
+      @page { size: A4; margin: 1.2cm 1.4cm; }
+      body { background: #fff !important; color: #111 !important; font-size: 9pt; }
+      .navbar { display: none !important; }
+      .page-body { max-width: 100%; padding: 0; }
+      h1 { color: #111 !important; font-size: 16pt; }
+      .page-sub { color: #555 !important; }
+      .progress-wrap { background: #f9f9f9 !important; border-color: #ccc !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .step-pill.done { background: #f0fdf4 !important; border-color: #15803d !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .step-check { background: #15803d !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .done-badge { background: #f0fdf4 !important; border-color: #15803d !important; color: #15803d !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .screenshot-wrap { border-color: #ccc !important; page-break-inside: avoid; }
+      .reflect-card { background: #fafafa !important; border-color: #ccc !important; page-break-inside: avoid; }
+      .blocker-card { background: #fff8f8 !important; border-color: #dc2626 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .insight-strip { background: #fffbeb !important; border-color: #d97706 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .medal-node.bronze { background: #fffbeb !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .medal-node.silver { background: #eff6ff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .medal-node.gold   { background: #f0fdf4 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+
+    @media (max-width: 680px) {
+      .two-screenshots { grid-template-columns: 1fr; }
+      .progress-steps { flex-direction: column; }
+      .step-pill { min-width: unset; }
+      .medallion { flex-direction: column; align-items: stretch; }
+      .medal-arrow { transform: rotate(90deg); text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="module-02.html">&#8592; Module 02 Lab Guide</a>
+  <span class="nav-pill">Data Governance &rsaquo; Module 02 &rsaquo; Deliverables</span>
+</nav>
+
+<div class="page-body">
+
+  <!-- Breadcrumb -->
+  <div class="breadcrumb">
+    <a href="../../index.html">Playground</a>
+    <span>/</span>
+    <a href="../../index.html">Classroom Activities</a>
+    <span>/</span>
+    <a href="index.html">Data Governance</a>
+    <span>/</span>
+    <a href="module-02.html">Module 02</a>
+    <span>/</span>
+    <span>Deliverables</span>
+  </div>
+
+  <!-- Header -->
+  <div class="page-badge">&#127891; Student Submission</div>
+  <h1>Module 02 Deliverables</h1>
+  <p class="page-sub">Data Quality &amp; Metadata Management &mdash; GlobalTrust Bank Case Study &mdash; Clark Ngo</p>
+
+  <!-- Progress bar -->
+  <div class="progress-wrap">
+    <div class="progress-label">Submission Checklist &mdash; 5 / 5 Complete</div>
+    <div class="progress-steps">
+      <div class="step-pill done">
+        <div class="step-check">&#10003;</div>
+        <div class="step-text">D1 &mdash; Business Glossary</div>
+      </div>
+      <div class="step-pill done">
+        <div class="step-check">&#10003;</div>
+        <div class="step-text">D2 &mdash; Governance Policies</div>
+      </div>
+      <div class="step-pill done">
+        <div class="step-check">&#10003;</div>
+        <div class="step-text">D3 &mdash; Metadata Catalog</div>
+      </div>
+      <div class="step-pill done">
+        <div class="step-check">&#10003;</div>
+        <div class="step-text">D4 &mdash; Lineage Diagram</div>
+      </div>
+      <div class="step-pill done">
+        <div class="step-check">&#10003;</div>
+        <div class="step-text">D5 &mdash; Reflection</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════ -->
+  <!-- D1 BUSINESS GLOSSARY                    -->
+  <!-- ════════════════════════════════════════ -->
+  <div class="deliverable" id="d1">
+    <div class="d-header">
+      <div class="d-num">D1</div>
+      <div>
+        <div class="d-title">Business Glossary</div>
+        <div class="d-desc">Standard definitions for enterprise banking data &mdash; GlobalTrust Bank Glossary in OpenMetadata</div>
+      </div>
+      <div class="done-badge">&#10003; Complete &mdash; 5 terms</div>
+    </div>
+
+    <div class="sub-label">GlobalTrust Bank Glossary &mdash; OpenMetadata</div>
+    <div class="screenshot-wrap">
+      <img src="module-02/submission/01-business-glossary.png" alt="OpenMetadata GlobalTrust Bank glossary showing Account Balance, BankCustomers.csv, Customer, Customer ID, and Transaction terms with Approved status" />
+      <div class="screenshot-caption">
+        <span>&#128247;</span>
+        <span class="cap-file">01-business-glossary.png</span>
+        <span>&mdash; 5 terms: Account Balance, BankCustomers.csv, Customer, Customer ID, Transaction &mdash; all Approved</span>
+      </div>
+    </div>
+
+    <div class="insight-strip">
+      <strong>Account Balance</strong> &mdash; Total funds available in a customer account &nbsp;&bull;&nbsp;
+      <strong>BankCustomers.csv</strong> &mdash; Original source data for the banking customer ingestion pipeline &nbsp;&bull;&nbsp;
+      <strong>Customer</strong> &mdash; An individual holding an account with the bank &nbsp;&bull;&nbsp;
+      <strong>Customer ID</strong> &mdash; Unique identifier for each customer &nbsp;&bull;&nbsp;
+      <strong>Transaction</strong> &mdash; A financial operation affecting an account
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════ -->
+  <!-- D2 GOVERNANCE POLICIES                  -->
+  <!-- ════════════════════════════════════════ -->
+  <div class="deliverable" id="d2">
+    <div class="d-header">
+      <div class="d-num green">D2</div>
+      <div>
+        <div class="d-title">Governance Policies</div>
+        <div class="d-desc">Five data quality policies defined and approved under the Data Quality Policies glossary category</div>
+      </div>
+      <div class="done-badge">&#10003; Complete &mdash; 5 policies</div>
+    </div>
+
+    <div class="sub-label">Data Quality Policies &mdash; OpenMetadata Glossary</div>
+    <div class="screenshot-wrap">
+      <img src="module-02/submission/02-governance-policies.png" alt="OpenMetadata Data Quality Policies glossary showing Data Retention Policy, Mandatory Fields Policy, Positive Balance Policy, Unique Customer ID Policy, and Valid Email Policy all with Approved status" />
+      <div class="screenshot-caption">
+        <span>&#128247;</span>
+        <span class="cap-file">02-governance-policies.png</span>
+        <span>&mdash; 5 policies: Retention, Mandatory Fields, Positive Balance, Unique ID, Valid Email &mdash; all Approved</span>
+      </div>
+    </div>
+
+    <div class="insight-strip">
+      <strong>Data Retention Policy</strong> &mdash; Customer data retained for 7 years &nbsp;&bull;&nbsp;
+      <strong>Mandatory Fields Policy</strong> &mdash; Critical attributes cannot be null &nbsp;&bull;&nbsp;
+      <strong>Positive Balance Policy</strong> &mdash; Account balances must be non-negative &nbsp;&bull;&nbsp;
+      <strong>Unique Customer ID Policy</strong> &mdash; Customer IDs must be unique &nbsp;&bull;&nbsp;
+      <strong>Valid Email Policy</strong> &mdash; Emails must follow a valid format
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════ -->
+  <!-- D3 METADATA CATALOG                     -->
+  <!-- ════════════════════════════════════════ -->
+  <div class="deliverable" id="d3">
+    <div class="d-header">
+      <div class="d-num purple">D3</div>
+      <div>
+        <div class="d-title">Metadata Catalog</div>
+        <div class="d-desc">bank_customers_raw documented with description, data quality summary, lifecycle table, and retention policy</div>
+      </div>
+      <div class="done-badge">&#10003; Complete</div>
+    </div>
+
+    <div class="sub-label">bank_customers_raw &mdash; OpenMetadata Schema Tab</div>
+    <div class="screenshot-wrap">
+      <img src="module-02/submission/03-metadata-catalog-description.png" alt="OpenMetadata bank_customers_raw schema page showing description with initial assessment of data quality issues, Data Lifecycle Retention Policy table (Active, Archived, Deleted stages), and regulatory compliance note about 7-year retention" />
+      <div class="screenshot-caption">
+        <span>&#128247;</span>
+        <span class="cap-file">03-metadata-catalog-description.png</span>
+        <span>&mdash; bank_customers_raw: DQ summary + lifecycle table + 7-year retention note &mdash; Owner: Data Governance Team</span>
+      </div>
+    </div>
+
+    <div class="insight-strip">
+      <strong>Owner:</strong> Data Governance Team &nbsp;&bull;&nbsp;
+      <strong>Steward:</strong> dataqualityanalyst (custom property) &nbsp;&bull;&nbsp;
+      <strong>Retention Period:</strong> 7 years &nbsp;&bull;&nbsp;
+      <strong>Glossary Term:</strong> Customer &nbsp;&bull;&nbsp;
+      <strong>Sample Data:</strong> 103 rows &nbsp;&bull;&nbsp;
+      <strong>DQ issues documented:</strong> 16.7% duplicate records (customer_id 1002), 16.7% null rate in email and phone columns, one negative account_balance record
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════ -->
+  <!-- D4 LINEAGE DIAGRAM                      -->
+  <!-- ════════════════════════════════════════ -->
+  <div class="deliverable" id="d4">
+    <div class="d-header">
+      <div class="d-num yellow">D4</div>
+      <div>
+        <div class="d-title">Lineage Diagram</div>
+        <div class="d-desc">End-to-end traceability from raw ingestion to curated clean table captured in OpenMetadata</div>
+      </div>
+      <div class="done-badge">&#10003; Complete</div>
+    </div>
+
+    <div class="sub-label">bank_customers_raw &rarr; bank_customers_clean &mdash; OpenMetadata Lineage Tab</div>
+    <div class="screenshot-wrap">
+      <img src="module-02/submission/04-lineage-diagram.png" alt="OpenMetadata Lineage tab for bank_customers_raw showing directional arrow to bank_customers_clean, both under the Databricks_Banking workspace" />
+      <div class="screenshot-caption">
+        <span>&#128247;</span>
+        <span class="cap-file">04-lineage-diagram.png</span>
+        <span>&mdash; Databricks_Banking / workspace / default: bank_customers_raw &rarr; bank_customers_clean</span>
+      </div>
+    </div>
+
+    <div class="insight-strip">
+      <strong>Source:</strong> bank_customers_raw &nbsp;&bull;&nbsp;
+      <strong>Destination:</strong> bank_customers_clean &nbsp;&bull;&nbsp;
+      Both tables under <strong>Databricks_Banking / workspace / default</strong>. Lineage manually documented to establish traceability from the ingested CSV through the PySpark cleansing pipeline.
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════ -->
+  <!-- D5 REFLECTION                           -->
+  <!-- ════════════════════════════════════════ -->
+  <div class="deliverable" id="d5">
+    <div class="d-header">
+      <div class="d-num teal">D5</div>
+      <div>
+        <div class="d-title">Reflection</div>
+        <div class="d-desc">Through the metadata maze &mdash; process, key learnings, roadblocks, and hard-won insights</div>
+      </div>
+      <div class="done-badge">&#10003; Complete</div>
+    </div>
+
+    <!-- ── THE PROCESS ────────────────────────── -->
+    <div class="reflect-card process">
+      <h2>&#128736; The Process</h2>
+      <p>We followed a standard <strong>Medallion-style architecture</strong> to move data from a raw state to a curated, governed state:</p>
+
+      <!-- Medallion flow visual -->
+      <div class="medallion">
+        <div class="medal-node bronze">
+          <div class="medal-tier">&#129360; Bronze</div>
+          <div class="medal-label">BankCustomers.csv</div>
+          <div class="medal-desc">Raw source file &mdash; 6 rows with known quality issues</div>
+        </div>
+        <div class="medal-arrow">&rarr;</div>
+        <div class="medal-node silver">
+          <div class="medal-tier">&#129358; Silver</div>
+          <div class="medal-label">bank_customers_raw</div>
+          <div class="medal-desc">Ingested to Databricks; profiled and audited</div>
+        </div>
+        <div class="medal-arrow">&rarr;</div>
+        <div class="medal-node gold">
+          <div class="medal-tier">&#129351; Gold</div>
+          <div class="medal-label">bank_customers_clean</div>
+          <div class="medal-desc">Deduplicated, nulls handled, negatives removed</div>
+        </div>
+      </div>
+
+      <div class="process-steps">
+        <div class="p-step">
+          <div class="p-icon blue">&#9881;</div>
+          <div class="p-content">
+            <div class="p-title">Data Engineering &mdash; Databricks</div>
+            <div class="p-desc">Used PySpark to ingest <code>BankCustomers.csv</code>, performed a quality audit (identifying nulls and duplicates), and transformed the data into two distinct tables: <code>bank_customers_raw</code> and <code>bank_customers_clean</code>.</div>
+          </div>
+        </div>
+        <div class="p-step">
+          <div class="p-icon teal">&#8645;</div>
+          <div class="p-content">
+            <div class="p-title">Metadata Ingestion</div>
+            <div class="p-desc">Synchronized Databricks with OpenMetadata to make those tables visible for governance &mdash; exposing schemas, row counts, and sample data to the catalog layer.</div>
+          </div>
+        </div>
+        <div class="p-step">
+          <div class="p-icon purple">&#128279;</div>
+          <div class="p-content">
+            <div class="p-title">Traceability &mdash; Lineage</div>
+            <div class="p-desc">Manually documented the data&rsquo;s journey, connecting the raw ingestion to the cleaned output so anyone looking at the data knows its &ldquo;parentage&rdquo; and transformation history.</div>
+          </div>
+        </div>
+        <div class="p-step">
+          <div class="p-icon green">&#128737;</div>
+          <div class="p-content">
+            <div class="p-title">Governance &amp; Compliance</div>
+            <div class="p-desc">Enriched the metadata with retention policies (7-year storage) and lifecycle descriptions using Markdown tables, and defined five governance policies across the Data Quality Policies glossary.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── KEY LEARNINGS ──────────────────────── -->
+    <div class="reflect-card learnings">
+      <h2>&#129504; Key Learnings</h2>
+
+      <h3>Profiling is Primary</h3>
+      <p>Automated profiling catches business logic errors that simple schema checks miss &mdash; such as a negative <code>account_balance</code> for a deposit account. A schema can be &ldquo;valid&rdquo; while the data is operationally wrong. Profiling is the step that closes that gap.</p>
+
+      <h3>The &ldquo;Vibe&rdquo; of Metadata</h3>
+      <p>High-quality metadata is not just about technical schemas. It is about documenting <em>why</em> (business descriptions) and <em>how long</em> (retention policies). A table with only a column list is half-documented. A table with ownership, stewardship, lifecycle stages, and a data quality summary is a governed asset.</p>
+
+      <h3>Traceability is Visibility</h3>
+      <p>Without lineage, a &ldquo;Clean&rdquo; table is just a black box &mdash; no one knows where it came from or what was done to it. Manually linking the source CSV to the raw table proved how data flows from external storage into the warehouse. Lineage transforms a table into a story.</p>
+    </div>
+
+    <!-- ── ROADBLOCKS ─────────────────────────── -->
+    <div class="reflect-card blockers">
+      <h2>&#128721; Roadblocks &amp; Pain Points</h2>
+      <p>The technical work in the notebook was the easy part; the &ldquo;people and tools&rdquo; side of governance provided the real friction:</p>
+
+      <div class="blocker-card">
+        <div class="blocker-title">The &ldquo;No Freakin Button&rdquo; Syndrome</div>
+        <div class="blocker-body">A significant roadblock where the OpenMetadata UI hides <strong>Add</strong> buttons depending on whether you are in a <strong>Service</strong> (the connection config) or an <strong>Entity</strong> (the actual data asset). Actions available in one context simply do not exist in the other, with no error or explanation.</div>
+      </div>
+
+      <div class="blocker-card">
+        <div class="blocker-title">Entity Filtering in Lineage Search</div>
+        <div class="blocker-body">The lineage search bar defaults to <strong>Tables</strong> only. This made it nearly impossible to find the CSV source until switching the filter to <strong>Pipeline</strong> or <strong>Glossary Term</strong>. The default filter silently excludes most of the lineage graph.</div>
+      </div>
+
+      <div class="blocker-card">
+        <div class="blocker-title">Volume Invisibility</div>
+        <div class="blocker-body">Internal Databricks Volumes are not <strong>seen</strong> automatically by standard SQL connectors. The automated metadata scan picked up tables from <code>hive_metastore</code> but had no awareness of the file-based volume where the CSV was stored, requiring manual documentation to fill the lineage gap.</div>
+      </div>
+    </div>
+
+    <!-- ── FINAL STATUS ────────────────────────── -->
+    <div class="reflect-card final">
+      <h2>&#127937; Final Status</h2>
+      <p>A messy CSV has been turned into a <strong>Gold-standard Data Asset</strong>:</p>
+      <ul class="final-list">
+        <li>
+          <div class="final-check">&#10003;</div>
+          <div><strong>Cleansed</strong> &mdash; Duplicates removed, nulls handled, invalid balances filtered. <code>bank_customers_clean</code> is operationally correct.</div>
+        </li>
+        <li>
+          <div class="final-check">&#10003;</div>
+          <div><strong>Mapped Lineage</strong> &mdash; Source &rarr; raw &rarr; clean documented in OpenMetadata. Full traceability established from CSV ingestion to curated table.</div>
+        </li>
+        <li>
+          <div class="final-check">&#10003;</div>
+          <div><strong>Documented Lifecycle</strong> &mdash; Active, Archived, and Deleted stages defined in the table description with a data quality summary covering all identified issues.</div>
+        </li>
+        <li>
+          <div class="final-check">&#10003;</div>
+          <div><strong>Assigned Retention Policies</strong> &mdash; 7-year regulatory retention documented and attached via the <code>Data Retention Policy</code> glossary term.</div>
+        </li>
+      </ul>
+
+      <div class="insight-strip" style="margin-top:1.1rem;margin-bottom:0;">
+        It has been quite a journey through the &ldquo;metadata maze.&rdquo; From scrubbing raw data in Databricks to wrestling with the UI in OpenMetadata, what was effectively built is a miniature governed data platform &mdash; with cleansed data, mapped lineage, documented lifecycle, and assigned governance policies.
+      </div>
+    </div>
+
+    <!-- ── SUPPORTING EVIDENCE ────────────────── -->
+    <div class="sub-label">Supporting Evidence &mdash; Setup &amp; Enrichment</div>
+
+    <div class="two-screenshots">
+      <div class="screenshot-wrap">
+        <img src="module-02/submission/00-databricks-raw-data.png" alt="Databricks SQL editor showing SELECT * FROM bank_customers_raw with 6 rows; duplicate 1002, null email row 4, negative balance -250 row 5, null phone row 6 all visible" />
+        <div class="screenshot-caption">
+          <span>&#128247;</span>
+          <span class="cap-file">00-databricks-raw-data.png</span>
+          <span>&mdash; Raw query: 6 rows &mdash; duplicate 1002, null email, &minus;250 balance, null phone visible</span>
+        </div>
+      </div>
+      <div class="screenshot-wrap">
+        <img src="module-02/submission/00-connection-test-success.png" alt="OpenMetadata Databricks_Banking connection status dialog showing 100% progress bar and all six checks (CheckAccess, GetDatabases, GetSchemas, GetTables, GetViews, GetQueries) as Success" />
+        <div class="screenshot-caption">
+          <span>&#128247;</span>
+          <span class="cap-file">00-connection-test-success.png</span>
+          <span>&mdash; Databricks_Banking: connection test 100% &mdash; all 6 checks Success</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="two-screenshots">
+      <div class="screenshot-wrap">
+        <img src="module-02/submission/00-custom-property-steward.png" alt="OpenMetadata Settings / Custom Properties / Tables showing a custom property named steward of type entityReference with config user, description: The individual responsible for the technical maintenance and metadata accuracy of this table" />
+        <div class="screenshot-caption">
+          <span>&#128247;</span>
+          <span class="cap-file">00-custom-property-steward.png</span>
+          <span>&mdash; Settings &rarr; Custom Properties &rarr; Tables: steward entityReference defined</span>
+        </div>
+      </div>
+      <div class="screenshot-wrap">
+        <img src="module-02/submission/00-governance-policies-overview.png" alt="OpenMetadata Glossary sidebar showing Data Quality Policies (selected), GlobalTrust Bank, and RetailCorp Glossary entries; main panel shows the 5 Data Quality Policy terms all Approved" />
+        <div class="screenshot-caption">
+          <span>&#128247;</span>
+          <span class="cap-file">00-governance-policies-overview.png</span>
+          <span>&mdash; Glossary sidebar: 3 glossaries &mdash; Data Quality Policies, GlobalTrust Bank, RetailCorp</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="two-screenshots">
+      <div class="screenshot-wrap">
+        <img src="module-02/submission/00-schema-column-level-tags.png" alt="OpenMetadata bank_customers_raw schema tab showing column-level details: customer_id tagged Confidential with DQ note about PK violations for ID 1002 (Count 2); first_name and last_name tagged PII; email tagged PII with note about null record for Mike Brown requiring unknown@email.com default" />
+        <div class="screenshot-caption">
+          <span>&#128247;</span>
+          <span class="cap-file">00-schema-column-level-tags.png</span>
+          <span>&mdash; customer_id (Confidential), first_name/last_name/email (PII) with DQ notes</span>
+        </div>
+      </div>
+      <div class="screenshot-wrap">
+        <img src="module-02/submission/00-schema-column-level-tags-2.png" alt="OpenMetadata bank_customers_raw schema tab continued: phone tagged PII with null note for Robert Williams set to N/A; account_balance tagged Sensitive with invalid range note for record 1004 Susan Clark negative value -250; country and signup_date tagged Sensitive" />
+        <div class="screenshot-caption">
+          <span>&#128247;</span>
+          <span class="cap-file">00-schema-column-level-tags-2.png</span>
+          <span>&mdash; phone (PII + null note), account_balance (Sensitive + &minus;250 violation note)</span>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /d5 -->
+
+</div><!-- /page-body -->
+
+<footer class="site-footer">&copy; Clark Ngo &mdash; Data Governance Classroom Activities &mdash; Module 02 Deliverables</footer>
+
+</body>
+</html>

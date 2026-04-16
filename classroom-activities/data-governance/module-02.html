@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Module 02 &mdash; Data Quality &amp; Metadata Management</title>
+  <meta name="author" content="Clark Ngo">
+  <meta name="copyright" content="Clark Ngo">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0d1117; color: #c9d1d9; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; min-height: 100vh; }
+
+    /* Navbar */
+    .navbar { background: #161b22; border-bottom: 1px solid #30363d; padding: .75rem 1.5rem; display: flex; align-items: center; justify-content: space-between; }
+    .navbar a { color: #e6edf3; text-decoration: none; font-weight: 700; font-size: 1rem; }
+    .navbar a:hover { color: #58a6ff; }
+    .nav-pill { font-size: .78rem; color: #8b949e; }
+
+    .page-body { max-width: 960px; margin: 0 auto; padding: 2rem; }
+
+    /* Breadcrumb */
+    .breadcrumb { font-size: .78rem; color: #8b949e; display: flex; align-items: center; gap: .4rem; margin-bottom: .85rem; flex-wrap: wrap; }
+    .breadcrumb a { color: #58a6ff; text-decoration: none; font-weight: 600; }
+    .breadcrumb a:hover { text-decoration: underline; }
+    .breadcrumb span { color: #484f58; }
+
+    /* Page header */
+    .page-badge { display: inline-block; background: #238636; color: #fff; font-size: .72rem; font-weight: 700; padding: 3px 12px; border-radius: 12px; text-transform: uppercase; letter-spacing: .07em; margin-bottom: .6rem; }
+    .page-header h1 { color: #e6edf3; font-size: 1.85rem; font-weight: 800; margin-bottom: .3rem; }
+    .case-title { color: #58a6ff; font-size: .95rem; font-weight: 600; margin-bottom: .65rem; font-style: italic; }
+    .page-desc { color: #8b949e; font-size: .88rem; line-height: 1.7; max-width: 720px; margin-bottom: .85rem; }
+    .tag-row { display: flex; gap: .4rem; flex-wrap: wrap; margin-bottom: 2rem; }
+    .tag { display: inline-block; font-size: .68rem; padding: 2px 8px; border-radius: 8px; font-weight: 600; }
+    .tag-blue   { background: #1f3a5c; color: #58a6ff; }
+    .tag-green  { background: #1a2f1a; color: #3fb950; }
+    .tag-yellow { background: #2d2009; color: #e3b341; }
+    .tag-purple { background: #24183a; color: #bc8cff; }
+    .tag-red    { background: #2d1a1a; color: #f85149; }
+    .tag-teal   { background: #0a2028; color: #22d3ee; }
+
+    /* Section label */
+    .section-label { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #8b949e; border-left: 3px solid #30363d; padding-left: .6rem; margin: 2rem 0 1rem; }
+
+    /* Generic card */
+    .card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1.1rem; }
+    .card-title { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: #3fb950; margin-bottom: .85rem; }
+
+    /* Tables */
+    .data-table { width: 100%; border-collapse: collapse; font-size: .83rem; }
+    .data-table th { background: #0d1117; color: #8b949e; font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; padding: .5rem .75rem; text-align: left; border-bottom: 1px solid #30363d; white-space: nowrap; }
+    .data-table td { padding: .55rem .75rem; border-bottom: 1px solid #21262d; color: #c9d1d9; vertical-align: top; line-height: 1.55; }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover td { background: #1c2435; }
+    .data-table code { font-family: "Menlo", "Monaco", monospace; font-size: .8em; background: #21262d; padding: 1px 5px; border-radius: 4px; color: #a5d6ff; }
+
+    /* Problem grid */
+    .problem-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: .85rem; margin-bottom: 1.1rem; }
+    .problem-card { background: #161b22; border: 1px solid #30363d; border-left: 3px solid #f85149; border-radius: 8px; padding: 1rem 1.1rem; }
+    .problem-num   { font-size: .67rem; font-weight: 700; color: #f85149; text-transform: uppercase; letter-spacing: .06em; margin-bottom: .25rem; }
+    .problem-title { font-size: .88rem; font-weight: 700; color: #e6edf3; margin-bottom: .3rem; }
+    .problem-desc  { font-size: .79rem; color: #8b949e; line-height: 1.55; }
+
+    /* Impact strip */
+    .impact-strip { background: #2a1f00; border: 1px solid #9e6a03; border-radius: 8px; padding: .85rem 1.1rem; margin-bottom: 1.5rem; }
+    .impact-label { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #e3b341; margin-bottom: .5rem; }
+    .impact-items { display: flex; gap: 1.5rem; flex-wrap: wrap; }
+    .impact-item  { font-size: .81rem; color: #c9d1d9; display: flex; align-items: center; gap: .35rem; }
+    .impact-dot   { width: 6px; height: 6px; border-radius: 50%; background: #e3b341; flex-shrink: 0; }
+
+    /* Task accordion */
+    .task-card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; margin-bottom: .85rem; overflow: hidden; }
+    .task-header { display: flex; align-items: center; gap: .75rem; padding: .9rem 1.25rem; cursor: pointer; user-select: none; transition: background .15s; }
+    .task-header:hover { background: #1c2435; }
+    .task-num { background: #238636; color: #fff; font-size: .68rem; font-weight: 700; padding: 2px 9px; border-radius: 8px; white-space: nowrap; flex-shrink: 0; }
+    .task-num.blue { background: #1f6feb; }
+    .task-num.opt  { background: #6e40c9; }
+    .task-num.teal { background: #0e7490; }
+    .task-title { color: #e6edf3; font-weight: 700; font-size: .94rem; flex: 1; }
+    .task-deliv { font-size: .7rem; color: #8b949e; white-space: nowrap; }
+    .toggle-btn { color: #58a6ff; font-size: 1.2rem; font-weight: 700; width: 22px; text-align: center; flex-shrink: 0; line-height: 1; }
+    .task-body { display: none; padding: 1.25rem 1.5rem; border-top: 1px solid #30363d; }
+    .task-body.open { display: block; }
+
+    /* Answer label */
+    .answer-label { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #3fb950; margin-bottom: 1rem; display: flex; align-items: center; gap: .5rem; }
+    .answer-label::after { content: ""; flex: 1; height: 1px; background: #21262d; }
+
+    /* Step list */
+    .step-list { list-style: none; padding: 0; margin-bottom: 1.1rem; }
+    .step-list li { display: flex; gap: .75rem; padding: .65rem 0; border-bottom: 1px solid #21262d; font-size: .85rem; color: #c9d1d9; line-height: 1.6; }
+    .step-list li:last-child { border-bottom: none; }
+    .step-num-badge { background: #1f6feb; color: #fff; font-size: .65rem; font-weight: 700; padding: 1px 7px; border-radius: 6px; white-space: nowrap; flex-shrink: 0; margin-top: .15rem; }
+    .step-num-badge.green  { background: #238636; }
+    .step-num-badge.purple { background: #6e40c9; }
+    .step-num-badge.teal   { background: #0e7490; }
+    .step-num-badge.yellow { background: #9e6a03; }
+
+    /* Code blocks */
+    .code-block-label { font-size: .69rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: #8b949e; margin-bottom: .35rem; margin-top: .85rem; }
+    .code-block { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 1rem 1.25rem; font-family: "Menlo","Monaco","Courier New",monospace; font-size: .79rem; color: #c9d1d9; line-height: 1.7; overflow-x: auto; margin-bottom: .85rem; }
+    .ck { color: #ff7b72; }  /* keyword */
+    .cs { color: #a5d6ff; }  /* string */
+    .cf { color: #d2a8ff; }  /* function */
+    .cv { color: #ffa657; }  /* variable */
+    .cm { color: #8b949e; }  /* comment */
+    .cn { color: #79c0ff; }  /* number */
+
+    /* Info strip */
+    .info-strip { background: #0c1e38; border: 1px solid #1f6feb; border-radius: 8px; padding: .85rem 1.1rem; margin-bottom: 1.1rem; font-size: .84rem; color: #c9d1d9; line-height: 1.7; }
+    .info-strip strong { color: #a5d6ff; }
+    .info-strip .info-label { font-size: .67rem; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: #58a6ff; margin-bottom: .35rem; }
+
+    /* Note strip */
+    .note-strip { background: #1d1600; border: 1px solid #9e6a03; border-radius: 8px; padding: .75rem 1rem; margin-bottom: .85rem; font-size: .82rem; color: #c9d1d9; line-height: 1.65; }
+    .note-strip strong { color: #e3b341; }
+
+    /* Outcome card */
+    .outcome-card { background: #0b1f0b; border: 1px solid #238636; border-left: 3px solid #3fb950; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+    .outcome-card ul { padding-left: 1.1rem; }
+    .outcome-card li { font-size: .84rem; color: #c9d1d9; line-height: 1.75; margin-bottom: .3rem; }
+    .outcome-card li strong { color: #56d364; }
+
+    /* Deliverable list */
+    .deliv-list { list-style: none; padding: 0; }
+    .deliv-list li { display: flex; gap: .65rem; align-items: flex-start; padding: .6rem 0; border-bottom: 1px solid #21262d; font-size: .85rem; color: #c9d1d9; line-height: 1.6; }
+    .deliv-list li:last-child { border-bottom: none; }
+    .deliv-num { background: #21262d; color: #8b949e; font-size: .65rem; font-weight: 700; padding: 1px 7px; border-radius: 6px; white-space: nowrap; flex-shrink: 0; margin-top: .15rem; }
+    .deliv-opt { background: #24183a; color: #bc8cff; }
+
+    /* Dataset preview */
+    .dataset-section { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1.25rem; }
+    .dataset-section-title { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: #8b949e; margin-bottom: 1rem; }
+
+    /* Reflection */
+    .reflection-card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1.35rem 1.5rem; margin-bottom: 2rem; }
+    .reflection-q { font-size: .95rem; font-weight: 700; color: #e6edf3; margin-bottom: .8rem; border-left: 3px solid #58a6ff; padding-left: .75rem; }
+    .reflection-a { font-size: .84rem; color: #c9d1d9; line-height: 1.75; }
+    .reflection-a p { margin-bottom: .65rem; }
+    .reflection-a p:last-child { margin-bottom: 0; }
+
+    /* Footer */
+    .site-footer { text-align: center; padding: 1.25rem; border-top: 1px solid #21262d; margin-top: 2rem; color: #484f58; font-size: .77rem; }
+
+    /* Export button */
+    .export-btn { position: fixed; bottom: 1.75rem; right: 1.75rem; display: flex; align-items: center; gap: .5rem; background: #238636; color: #fff; border: none; border-radius: 10px; padding: .65rem 1.1rem; font-size: .82rem; font-weight: 700; cursor: pointer; box-shadow: 0 4px 16px rgba(0,0,0,.4); transition: background .15s, transform .12s; z-index: 100; }
+    .export-btn:hover { background: #2ea043; transform: translateY(-2px); }
+    .export-btn:active { transform: translateY(0); }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      .problem-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Print */
+    @media print {
+      @page { size: A4; margin: 1.4cm 1.6cm; }
+      *, *::before, *::after { box-sizing: border-box; }
+      body { background: #fff !important; color: #111 !important; font-size: 9.5pt; font-family: "Segoe UI", Helvetica, Arial, sans-serif; }
+      .navbar, .breadcrumb, .export-btn, .toggle-btn, .site-footer { display: none !important; }
+      .page-body { max-width: 100%; padding: 0; }
+      .page-badge { background: #166534 !important; color: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      h1 { color: #111 !important; font-size: 16pt; }
+      .case-title { color: #1a4fa0 !important; }
+      .page-desc { color: #444 !important; }
+      .task-body { display: block !important; }
+      .task-card { background: #fff !important; border: 1px solid #ccc !important; page-break-inside: avoid; }
+      .task-header { background: #f7f7f7 !important; }
+      .task-num { background: #166534 !important; color: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .task-num.blue { background: #1a4fa0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .task-num.opt  { background: #5b21b6 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .task-title { color: #111 !important; }
+      .code-block { background: #f8f8f8 !important; border: 1px solid #ccc !important; color: #111 !important; font-size: 7.5pt; }
+      .data-table th { background: #f3f4f6 !important; color: #555 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .data-table td { color: #111 !important; }
+      .card, .dataset-section, .reflection-card { background: #fff !important; border: 1px solid #ccc !important; }
+      .info-strip { background: #eff6ff !important; border-color: #1a4fa0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .note-strip { background: #fffbeb !important; border-color: #d97706 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .outcome-card { background: #f0fdf4 !important; border-color: #15803d !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="index.html">&#8592; Data Governance</a>
+  <span class="nav-pill">Classroom Activities &rsaquo; Data Governance &rsaquo; Module 02</span>
+</nav>
+
+<div class="page-body">
+
+  <!-- Breadcrumb -->
+  <div class="breadcrumb">
+    <a href="../../index.html">Playground</a>
+    <span>/</span>
+    <a href="../../index.html">Classroom Activities</a>
+    <span>/</span>
+    <a href="index.html">Data Governance</a>
+    <span>/</span>
+    <span>Module 02</span>
+  </div>
+
+  <div class="page-badge">&#128218; Data Governance &mdash; Module 02</div>
+  <div class="page-header">
+    <h1>Data Quality &amp; Metadata Management</h1>
+    <div class="case-title">&#127974; Case Study: &ldquo;GlobalTrust Bank: The Duplicate Records Crisis&rdquo;</div>
+    <p class="page-desc">A multinational bank is experiencing operational inefficiencies due to poor data quality &mdash; duplicate records, missing contacts, invalid balances, and inconsistent formats. Students act as Data Governance Analysts to profile, clean, and catalog data using Databricks and OpenMetadata.</p>
+    <div class="tag-row">
+      <span class="tag tag-blue">Databricks</span>
+      <span class="tag tag-teal">Great Expectations</span>
+      <span class="tag tag-blue">OpenMetadata</span>
+      <span class="tag tag-green">Data Quality</span>
+      <span class="tag tag-green">Data Profiling</span>
+      <span class="tag tag-purple">Data Lineage</span>
+      <span class="tag tag-yellow">Data Retention</span>
+      <span class="tag tag-red">PII</span>
+    </div>
+  </div>
+
+  <!-- ── CASE OVERVIEW ───────────────────────────────────── -->
+  <div class="section-label">Case Overview</div>
+
+  <div class="card">
+    <div class="card-title">About GlobalTrust Bank</div>
+    <p style="font-size:.86rem;color:#c9d1d9;line-height:1.7;margin-bottom:1rem;">
+      GlobalTrust Bank is a multinational bank storing customer records across multiple systems. Poor data management has led to compounding quality issues that now threaten regulatory compliance, risk analysis, and customer service.
+    </p>
+    <table class="data-table">
+      <thead>
+        <tr><th>Issue</th><th>Description</th><th>Business Impact</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Duplicate Customer IDs</td><td>Same customer registered more than once across systems</td><td>Incorrect risk scoring &amp; duplicate communications</td></tr>
+        <tr><td>Missing Contact Information</td><td>Email and phone fields frequently null</td><td>Failed outreach, compliance gaps</td></tr>
+        <tr><td>Invalid Account Balances</td><td>Negative balance values present in operational data</td><td>Faulty financial reporting</td></tr>
+        <tr><td>Inconsistent Data Formats</td><td>Dates, emails, and IDs vary by source system</td><td>Integration failures, audit failures</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="impact-strip">
+    <div class="impact-label">&#9888; Business Impact</div>
+    <div class="impact-items">
+      <div class="impact-item"><div class="impact-dot"></div>Regulatory compliance risk</div>
+      <div class="impact-item"><div class="impact-dot"></div>Inaccurate risk analysis</div>
+      <div class="impact-item"><div class="impact-dot"></div>Degraded customer service</div>
+      <div class="impact-item"><div class="impact-dot"></div>Failed audit trails</div>
+    </div>
+  </div>
+
+  <div class="problem-grid">
+    <div class="problem-card">
+      <div class="problem-num">Problem 1</div>
+      <div class="problem-title">Duplicate Records</div>
+      <div class="problem-desc">Customer ID 1002 appears twice with identical data &mdash; both records active in the system, inflating counts and distorting analysis.</div>
+    </div>
+    <div class="problem-card">
+      <div class="problem-num">Problem 2</div>
+      <div class="problem-title">Missing Contact Data</div>
+      <div class="problem-desc">Customer 1003 has no email on file. Customer 1005 has no phone. Mandatory fields are treated as optional across ingestion pipelines.</div>
+    </div>
+    <div class="problem-card">
+      <div class="problem-num">Problem 3</div>
+      <div class="problem-title">Invalid Account Balance</div>
+      <div class="problem-desc">Customer 1004 has a balance of &minus;250. Negative balances pass ingestion without validation, corrupting downstream financial models.</div>
+    </div>
+    <div class="problem-card">
+      <div class="problem-num">Problem 4</div>
+      <div class="problem-title">Invalid Email Format</div>
+      <div class="problem-desc">Customer 1004 email <code>susan.clark@email</code> is missing the TLD. No format validation exists at ingestion.</div>
+    </div>
+  </div>
+
+  <!-- ── DATASET ─────────────────────────────────────────── -->
+  <div class="section-label">Dataset: BankCustomers.csv</div>
+
+  <div class="card">
+    <div class="card-title">Column Definitions</div>
+    <table class="data-table">
+      <thead>
+        <tr><th>Column Name</th><th>Description</th><th>Type</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>customer_id</code></td><td>Unique identifier for each customer</td><td>Integer</td></tr>
+        <tr><td><code>first_name</code></td><td>Customer first name</td><td>String</td></tr>
+        <tr><td><code>last_name</code></td><td>Customer last name</td><td>String</td></tr>
+        <tr><td><code>email</code></td><td>Customer email address</td><td>String</td></tr>
+        <tr><td><code>phone</code></td><td>Contact number</td><td>String</td></tr>
+        <tr><td><code>account_balance</code></td><td>Account balance in USD</td><td>Double</td></tr>
+        <tr><td><code>country</code></td><td>Country of residence</td><td>String</td></tr>
+        <tr><td><code>signup_date</code></td><td>Date the customer registered</td><td>Date</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="dataset-section">
+    <div class="dataset-section-title">Sample Data &mdash; BankCustomers.csv</div>
+    <table class="data-table">
+      <thead>
+        <tr><th>customer_id</th><th>first_name</th><th>last_name</th><th>email</th><th>phone</th><th>account_balance</th><th>country</th><th>signup_date</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1001</td><td>John</td><td>Doe</td><td>john.doe@email.com</td><td>555-1234</td><td>5000</td><td>USA</td><td>2023-01-15</td></tr>
+        <tr><td>1002</td><td>Jane</td><td>Smith</td><td>jane.smith@email.com</td><td>555-5678</td><td>7200</td><td>USA</td><td>2023-02-10</td></tr>
+        <tr><td style="color:#f85149;font-weight:700;">1002</td><td>Jane</td><td>Smith</td><td>jane.smith@email.com</td><td>555-5678</td><td>7200</td><td>USA</td><td>2023-02-10</td></tr>
+        <tr><td>1003</td><td>Mike</td><td>Brown</td><td style="color:#f85149;">&mdash; null &mdash;</td><td>555-9999</td><td>4500</td><td>Canada</td><td>2023-03-05</td></tr>
+        <tr><td>1004</td><td>Susan</td><td>Clark</td><td style="color:#f85149;">susan.clark@email</td><td>555-8888</td><td style="color:#f85149;">-250</td><td>USA</td><td>2023-04-01</td></tr>
+        <tr><td>1005</td><td>Robert</td><td>Williams</td><td>robert@email.com</td><td style="color:#f85149;">&mdash; null &mdash;</td><td>8000</td><td>UK</td><td>2023-05-12</td></tr>
+      </tbody>
+    </table>
+    <p style="font-size:.74rem;color:#8b949e;margin-top:.65rem;">&#128308; Red cells indicate known data quality issues in the raw dataset.</p>
+  </div>
+
+  <!-- ── PART 1: DATA QUALITY IN DATABRICKS ─────────────── -->
+  <div class="section-label">Part 1 &mdash; Data Quality in Databricks</div>
+
+  <!-- Lab Part 1: Setup -->
+  <div class="task-card">
+    <div class="task-header" onclick="toggleTask(this)">
+      <span class="task-num blue">Lab 1</span>
+      <span class="task-title">Upload Dataset &amp; Create Notebook</span>
+      <span class="task-deliv">Steps 1&ndash;4</span>
+      <span class="toggle-btn">+</span>
+    </div>
+    <div class="task-body">
+      <div class="answer-label">&#9654; Lab Steps</div>
+      <ul class="step-list">
+        <li>
+          <span class="step-num-badge">Step 1</span>
+          <div><strong>Upload Dataset</strong> &mdash; Log in to <strong>Databricks Free Edition</strong>. Navigate to <strong>Data &rarr; Add Data &rarr; Upload File</strong>. Upload <code>BankCustomers.csv</code>.</div>
+        </li>
+        <li>
+          <span class="step-num-badge">Step 2</span>
+          <div><strong>Create a Notebook</strong> &mdash; Go to <strong>Workspace &rarr; Create &rarr; Notebook</strong>. Name it <code>Module02_Data_Quality</code>. Select <strong>Python</strong> as the language.</div>
+        </li>
+        <li>
+          <span class="step-num-badge">Step 3</span>
+          <div><strong>Load the Dataset</strong> &mdash; Read the CSV into a Spark DataFrame and display it.</div>
+        </li>
+      </ul>
+
+      <div class="code-block-label">Step 3 &mdash; Load Dataset</div>
+      <div class="code-block"><span class="cv">file_path</span> = <span class="cs">"/FileStore/tables/BankCustomers.csv"</span>
+
+<span class="cv">df</span> = spark.<span class="cf">read</span>.<span class="cf">csv</span>(
+    <span class="cv">file_path</span>,
+    header=<span class="ck">True</span>,
+    inferSchema=<span class="ck">True</span>
+)
+
+<span class="cf">display</span>(<span class="cv">df</span>)</div>
+
+      <ul class="step-list">
+        <li>
+          <span class="step-num-badge">Step 4</span>
+          <div><strong>Create a Table</strong> &mdash; Persist the raw data as a managed table for reuse across notebook cells.</div>
+        </li>
+      </ul>
+
+      <div class="code-block-label">Step 4 &mdash; Save as Table</div>
+      <div class="code-block"><span class="cv">df</span>.<span class="cf">write</span>.<span class="cf">mode</span>(<span class="cs">"overwrite"</span>).<span class="cf">saveAsTable</span>(<span class="cs">"bank_customers_raw"</span>)
+
+<span class="cm"># Verify with SQL</span>
+<span class="cm"># SELECT * FROM bank_customers_raw;</span></div>
+    </div>
+  </div>
+
+  <!-- Lab Part 2: Data Profiling -->
+  <div class="task-card">
+    <div class="task-header" onclick="toggleTask(this)">
+      <span class="task-num blue">Lab 2</span>
+      <span class="task-title">Data Profiling</span>
+      <span class="task-deliv">Steps 5&ndash;7</span>
+      <span class="toggle-btn">+</span>
+    </div>
+    <div class="task-body">
+      <div class="answer-label">&#9654; Lab Steps</div>
+
+      <div class="code-block-label">Step 5 &mdash; Inspect Schema</div>
+      <div class="code-block"><span class="cv">df</span>.<span class="cf">printSchema</span>()</div>
+
+      <div class="code-block-label">Step 6 &mdash; Summary Statistics</div>
+      <div class="code-block"><span class="cf">display</span>(<span class="cv">df</span>.<span class="cf">describe</span>())</div>
+
+      <div class="code-block-label">Step 7 &mdash; Count Total Records</div>
+      <div class="code-block"><span class="cv">df</span>.<span class="cf">count</span>()</div>
+
+      <div class="note-strip">
+        <strong>Expected results:</strong> Schema shows 8 columns. <code>describe()</code> reveals min/max/mean for numeric fields. Row count should be 6 (raw) &mdash; including the duplicate.
+      </div>
+    </div>
+  </div>
+
+  <!-- Lab Part 3: Data Quality Checks -->
+  <div class="task-card">
+    <div class="task-header" onclick="toggleTask(this)">
+      <span class="task-num blue">Lab 3</span>
+      <span class="task-title">Data Quality Checks</span>
+      <span class="task-deliv">4 checks</span>
+      <span class="toggle-btn">+</span>
+    </div>
+    <div class="task-body">
+      <div class="answer-label">&#9654; Lab Steps</div>
+
+      <div class="code-block-label">Check 1 &mdash; Null Values</div>
+      <div class="code-block"><span class="ck">from</span> pyspark.sql.functions <span class="ck">import</span> <span class="cv">col</span>, <span class="cv">sum</span>, <span class="cv">when</span>
+
+<span class="cv">null_counts</span> = <span class="cv">df</span>.<span class="cf">select</span>([
+    <span class="cf">sum</span>(<span class="cf">when</span>(<span class="cf">col</span>(<span class="cv">c</span>).<span class="cf">isNull</span>(), <span class="cn">1</span>).<span class="cf">otherwise</span>(<span class="cn">0</span>)).<span class="cf">alias</span>(<span class="cv">c</span>)
+    <span class="ck">for</span> <span class="cv">c</span> <span class="ck">in</span> <span class="cv">df</span>.columns
+])
+
+<span class="cf">display</span>(<span class="cv">null_counts</span>)</div>
+
+      <div class="code-block-label">Check 2 &mdash; Duplicate Customer IDs</div>
+      <div class="code-block"><span class="ck">from</span> pyspark.sql.functions <span class="ck">import</span> <span class="cv">count</span>
+
+<span class="cv">duplicates</span> = (
+    <span class="cv">df</span>.<span class="cf">groupBy</span>(<span class="cs">"customer_id"</span>)
+    .<span class="cf">count</span>()
+    .<span class="cf">filter</span>(<span class="cs">"count &gt; 1"</span>)
+)
+
+<span class="cf">display</span>(<span class="cv">duplicates</span>)</div>
+
+      <div class="code-block-label">Check 3 &mdash; Invalid Account Balances</div>
+      <div class="code-block"><span class="cv">invalid_balances</span> = <span class="cv">df</span>.<span class="cf">filter</span>(<span class="cf">col</span>(<span class="cs">"account_balance"</span>) &lt; <span class="cn">0</span>)
+<span class="cf">display</span>(<span class="cv">invalid_balances</span>)</div>
+
+      <div class="code-block-label">Check 4 &mdash; Invalid Email Formats</div>
+      <div class="code-block"><span class="cv">invalid_emails</span> = <span class="cv">df</span>.<span class="cf">filter</span>(~<span class="cf">col</span>(<span class="cs">"email"</span>).<span class="cf">contains</span>(<span class="cs">"@"</span>))
+<span class="cf">display</span>(<span class="cv">invalid_emails</span>)</div>
+
+      <div class="card" style="margin-top:1.1rem;">
+        <div class="card-title">Expected Results</div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Check</th><th>Expected Result</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Null Values</td><td>Missing email detected for customer 1003; missing phone for customer 1005</td></tr>
+            <tr><td>Duplicate Records</td><td>Duplicate ID <code>1002</code> found with count 2</td></tr>
+            <tr><td>Invalid Ranges</td><td>Negative balance of <code>-250</code> detected for customer 1004</td></tr>
+            <tr><td>Invalid Emails</td><td>Incorrect format found: <code>susan.clark@email</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lab Part 4: Data Cleansing -->
+  <div class="task-card">
+    <div class="task-header" onclick="toggleTask(this)">
+      <span class="task-num blue">Lab 4</span>
+      <span class="task-title">Data Cleansing</span>
+      <span class="task-deliv">Steps 8&ndash;11</span>
+      <span class="toggle-btn">+</span>
+    </div>
+    <div class="task-body">
+      <div class="answer-label">&#9654; Lab Steps</div>
+
+      <div class="code-block-label">Step 8 &mdash; Remove Duplicate Records</div>
+      <div class="code-block"><span class="cv">df_no_duplicates</span> = <span class="cv">df</span>.<span class="cf">dropDuplicates</span>([<span class="cs">"customer_id"</span>])</div>
+
+      <div class="code-block-label">Step 9 &mdash; Handle Missing Values</div>
+      <div class="code-block"><span class="cv">df_clean</span> = <span class="cv">df_no_duplicates</span>.<span class="cf">fillna</span>({
+    <span class="cs">"email"</span>: <span class="cs">"unknown@email.com"</span>,
+    <span class="cs">"phone"</span>: <span class="cs">"N/A"</span>
+})</div>
+
+      <div class="code-block-label">Step 10 &mdash; Correct Invalid Balances</div>
+      <div class="code-block"><span class="cv">df_clean</span> = <span class="cv">df_clean</span>.<span class="cf">filter</span>(<span class="cf">col</span>(<span class="cs">"account_balance"</span>) &gt;= <span class="cn">0</span>)</div>
+
+      <div class="code-block-label">Step 11 &mdash; Save Cleaned Table</div>
+      <div class="code-block"><span class="cv">df_clean</span>.<span class="cf">write</span>.<span class="cf">mode</span>(<span class="cs">"overwrite"</span>).<span class="cf">saveAsTable</span>(<span class="cs">"bank_customers_clean"</span>)
+<span class="cf">display</span>(<span class="cv">df_clean</span>)</div>
+
+      <div class="note-strip">
+        <strong>Post-cleanse result:</strong> 5 rows remain (duplicate 1002 removed, invalid balance 1004 removed). Nulls replaced with defaults for email and phone.
+      </div>
+    </div>
+  </div>
+
+  <!-- Optional: Great Expectations -->
+  <div class="task-card">
+    <div class="task-header" onclick="toggleTask(this)">
+      <span class="task-num opt">Optional</span>
+      <span class="task-title">Data Validation Using Great Expectations</span>
+      <span class="task-deliv">Steps 12&ndash;14</span>
+      <span class="toggle-btn">+</span>
+    </div>
+    <div class="task-body">
+      <div class="answer-label">&#9654; Lab Steps</div>
+
+      <div class="code-block-label">Step 12 &mdash; Install Great Expectations</div>
+      <div class="code-block">%pip install great-expectations</div>
+
+      <div class="code-block-label">Step 13 &mdash; Initialize Context</div>
+      <div class="code-block"><span class="ck">import</span> great_expectations <span class="ck">as</span> <span class="cv">gx</span>
+
+<span class="cv">context</span> = <span class="cv">gx</span>.<span class="cf">get_context</span>()</div>
+
+      <div class="code-block-label">Step 14 &mdash; Define and Run Expectations</div>
+      <div class="code-block"><span class="cv">validator</span> = <span class="cv">context</span>.sources.pandas_default.<span class="cf">read_csv</span>(<span class="cv">file_path</span>)
+
+<span class="cv">validator</span>.<span class="cf">expect_column_values_to_not_be_null</span>(<span class="cs">"customer_id"</span>)
+<span class="cv">validator</span>.<span class="cf">expect_column_values_to_be_unique</span>(<span class="cs">"customer_id"</span>)
+<span class="cv">validator</span>.<span class="cf">expect_column_values_to_be_between</span>(
+    <span class="cs">"account_balance"</span>, min_value=<span class="cn">0</span>
+)
+
+<span class="cv">validator</span>.<span class="cf">save_expectation_suite</span>()
+<span class="cv">validator</span>.<span class="cf">validate</span>()</div>
+
+      <div class="note-strip">
+        Great Expectations will flag duplicate <code>customer_id</code> and the negative balance row. Review the validation report output to confirm all three rules execute.
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PART 2: OPENMETADATA ────────────────────────────── -->
+  <div class="section-label">Part 2 &mdash; Metadata Management in OpenMetadata</div>
+
+  <!-- Step 1-2: Launch & Databricks Service -->
+  <div class="task-card">
+    <div class="task-header" onclick="toggleTask(this)">
+      <span class="task-num teal">Task 1</span>
+      <span class="task-title">Metadata Ingestion from Databricks</span>
+      <span class="task-deliv">Steps 1&ndash;2</span>
+      <span class="toggle-btn">+</span>
+    </div>
+    <div class="task-body">
+      <div class="answer-label">&#9654; Steps</div>
+
+      <ul class="step-list">
+        <li>
+          <span class="step-num-badge teal">Step 1</span>
+          <div><strong>Launch OpenMetadata</strong> &mdash; Open a browser and navigate to <code>http://localhost:8585</code>. Log in with <strong>Username:</strong> <code>admin</code> / <strong>Password:</strong> <code>admin</code>.</div>
+        </li>
+        <li>
+          <span class="step-num-badge teal">Step 2</span>
+          <div><strong>Create a Databricks Service</strong> &mdash; Navigate to <strong>Settings &rarr; Services &rarr; Databases &rarr; Add Service</strong>. Select <strong>Databricks</strong>.</div>
+        </li>
+      </ul>
+
+      <div class="card">
+        <div class="card-title">Databricks Service Configuration</div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Field</th><th>Value</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Service Name</td><td><code>Databricks_Banking</code></td></tr>
+            <tr><td>Host Port</td><td><code>dbc-xxxx.cloud.databricks.com</code></td></tr>
+            <tr><td>HTTP Path</td><td><code>/sql/1.0/warehouses/xxxxx</code></td></tr>
+            <tr><td>Catalog</td><td><code>hive_metastore</code></td></tr>
+            <tr><td>Username</td><td><code>token</code></td></tr>
+            <tr><td>Password</td><td>Databricks Personal Access Token</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <ul class="step-list">
+        <li>
+          <span class="step-num-badge teal">&#10003;</span>
+          <div>Click <strong>Test Connection</strong> then <strong>Save</strong>. Run the metadata ingestion workflow to pull table schemas from <code>hive_metastore</code> into OpenMetadata.</div>
+        </li>
+      </ul>
+      <div class="note-strip">
+        <strong>Note:</strong> If Databricks Free Edition does not support direct connectivity, use manual metadata entry for the lab exercises below.
+      </div>
+    </div>
+  </div>
+
+  <!-- Task 2: Business Glossary -->
+  <div class="task-card">
+    <div class="task-header" onclick="toggleTask(this)">
+      <span class="task-num teal">Task 2</span>
+      <span class="task-title">Create Enterprise Data Dictionary &amp; Business Glossary</span>
+      <span class="task-deliv">Step 3</span>
+      <span class="toggle-btn">+</span>
+    </div>
+    <div class="task-body">
+      <div class="answer-label">&#9654; Steps</div>
+      <ul class="step-list">
+        <li>
+          <span class="step-num-badge teal">Step 3</span>
+          <div>Navigate to <strong>Govern &rarr; Glossary &rarr; Create Glossary</strong>. Enter Name: <code>GlobalTrust Banking Glossary</code>. Description: <em>Standard definitions for enterprise banking data.</em> Click <strong>Save</strong>.</div>
+        </li>
+      </ul>
+
+      <div class="card">
+        <div class="card-title">Glossary Terms to Add</div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Term</th><th>Definition</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Customer</strong></td><td>An individual holding an account with the bank</td></tr>
+            <tr><td><strong>Account Balance</strong></td><td>Total funds available in a customer account</td></tr>
+            <tr><td><strong>Transaction</strong></td><td>A financial operation affecting an account</td></tr>
+            <tr><td><strong>Customer ID</strong></td><td>Unique identifier for each customer</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note-strip">
+        After adding terms, link each glossary term to the corresponding column in the <code>bank_customers</code> table via the <strong>Assets</strong> tab on each term.
+      </div>
+    </div>
+  </div>
+
+  <!-- Task 3: Data Classification -->
+  <div class="task-card">
+    <div class="task-header" onclick="toggleTask(this)">
+      <span class="task-num teal">Task 3</span>
+      <span class="task-title">Data Classification &amp; Tag Assignment</span>
+      <span class="task-deliv">Step 4</span>
+      <span class="toggle-btn">+</span>
+    </div>
+    <div class="task-body">
+      <div class="answer-label">&#9654; Steps</div>
+      <ul class="step-list">
+        <li>
+          <span class="step-num-badge teal">Step 4</span>
+          <div>Navigate to <strong>Govern &rarr; Tags &rarr; Classifications</strong>. Create a classification named <code>DataClassification</code>.</div>
+        </li>
+      </ul>
+
+      <div class="card">
+        <div class="card-title">Classification Tags to Create</div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Tag</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>PII</code></td><td>Personally Identifiable Information</td></tr>
+            <tr><td><code>Sensitive</code></td><td>Confidential financial data</td></tr>
+            <tr><td><code>Confidential</code></td><td>Restricted organizational data</td></tr>
+            <tr><td><code>Public</code></td><td>Non-sensitive data</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Tag Assignments &mdash; bank_customers Table</div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Column</th><th>Tag</th><th>Rationale</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>customer_id</code></td><td><code>Confidential</code></td><td>Internal identifier, restricted access</td></tr>
+            <tr><td><code>email</code></td><td><code>PII</code></td><td>Directly identifies an individual</td></tr>
+            <tr><td><code>phone</code></td><td><code>PII</code></td><td>Directly identifies an individual</td></tr>
+            <tr><td><code>account_balance</code></td><td><code>Sensitive</code></td><td>Confidential financial information</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Task 4: Metadata & Catalog -->
+  <div class="task-card">
+    <div class="task-header" onclick="toggleTask(this)">
+      <span class="task-num teal">Task 4</span>
+      <span class="task-title">Metadata Management &amp; Data Cataloging</span>
+      <span class="task-deliv">Steps 5&ndash;6</span>
+      <span class="toggle-btn">+</span>
+    </div>
+    <div class="task-body">
+      <div class="answer-label">&#9654; Steps</div>
+      <ul class="step-list">
+        <li>
+          <span class="step-num-badge teal">Step 5</span>
+          <div><strong>Enrich Metadata</strong> &mdash; Navigate to <strong>Explore &rarr; Tables &rarr; bank_customers_raw</strong>. Edit column descriptions, then assign <strong>Owner:</strong> Data Governance Team, <strong>Steward:</strong> Data Quality Analyst, <strong>Domain:</strong> Banking.</div>
+        </li>
+      </ul>
+
+      <div class="card">
+        <div class="card-title">Column Descriptions to Add</div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Column</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>customer_id</code></td><td>Unique identifier for customers</td></tr>
+            <tr><td><code>email</code></td><td>Customer email address</td></tr>
+            <tr><td><code>account_balance</code></td><td>Current account balance</td></tr>
+            <tr><td><code>signup_date</code></td><td>Date the customer registered</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <ul class="step-list">
+        <li>
+          <span class="step-num-badge teal">Step 6</span>
+          <div><strong>Record Data Quality Metrics</strong> &mdash; Add annotations documenting: duplicate records detected, missing values identified, invalid ranges observed. Update the table description to include a <strong>Data Quality Summary</strong>.</div>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Task 5: Governance Policies -->
+  <div class="task-card">
+    <div class="task-header" onclick="toggleTask(this)">
+      <span class="task-num teal">Task 5</span>
+      <span class="task-title">Data Governance Policies</span>
+      <span class="task-deliv">Step 7</span>
+      <span class="toggle-btn">+</span>
+    </div>
+    <div class="task-body">
+      <div class="answer-label">&#9654; Steps</div>
+      <ul class="step-list">
+        <li>
+          <span class="step-num-badge teal">Step 7</span>
+          <div>Navigate to <strong>Govern &rarr; Glossary</strong>. Create a policy category named <code>Data Quality Policies</code>. Define the policies below and attach each to the relevant dataset.</div>
+        </li>
+      </ul>
+
+      <div class="card">
+        <div class="card-title">Governance Policies</div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Policy Name</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Unique Customer ID Policy</strong></td><td>Customer IDs must be unique across all systems</td></tr>
+            <tr><td><strong>Mandatory Fields Policy</strong></td><td>Critical attributes (<code>customer_id</code>, <code>email</code>) cannot be null</td></tr>
+            <tr><td><strong>Valid Email Policy</strong></td><td>Emails must follow a valid format (contains <code>@</code> and a valid TLD)</td></tr>
+            <tr><td><strong>Positive Balance Policy</strong></td><td>Account balances must be non-negative (&ge; 0)</td></tr>
+            <tr><td><strong>Data Retention Policy</strong></td><td>Customer data retained for 7 years per regulatory standards</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Task 6: Data Lineage -->
+  <div class="task-card">
+    <div class="task-header" onclick="toggleTask(this)">
+      <span class="task-num teal">Task 6</span>
+      <span class="task-title">Data Lineage Tracking</span>
+      <span class="task-deliv">Step 8</span>
+      <span class="toggle-btn">+</span>
+    </div>
+    <div class="task-body">
+      <div class="answer-label">&#9654; Steps</div>
+      <ul class="step-list">
+        <li>
+          <span class="step-num-badge teal">Step 8</span>
+          <div>Navigate to <strong>Explore &rarr; Lineage</strong>. Create lineage manually by linking the following pipeline stages. Save and visualize the lineage graph.</div>
+        </li>
+      </ul>
+
+      <div class="info-strip">
+        <div class="info-label">Lineage Flow</div>
+        <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;font-size:.88rem;font-family:'Menlo','Monaco',monospace;">
+          <span style="background:#21262d;border:1px solid #30363d;padding:.3rem .75rem;border-radius:6px;color:#a5d6ff;">BankCustomers.csv</span>
+          <span style="color:#58a6ff;font-weight:700;">&rarr;</span>
+          <span style="background:#21262d;border:1px solid #30363d;padding:.3rem .75rem;border-radius:6px;color:#a5d6ff;">bank_customers_raw</span>
+          <span style="color:#58a6ff;font-weight:700;">&rarr;</span>
+          <span style="background:#21262d;border:1px solid #30363d;padding:.3rem .75rem;border-radius:6px;color:#3fb950;">bank_customers_clean</span>
+        </div>
+        <p style="font-size:.79rem;color:#8b949e;margin-top:.65rem;">This demonstrates full traceability from the source CSV through ingestion to the curated, cleaned dataset.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Task 7: Retention Policies -->
+  <div class="task-card">
+    <div class="task-header" onclick="toggleTask(this)">
+      <span class="task-num teal">Task 7</span>
+      <span class="task-title">Data Retention &amp; Deletion Policies</span>
+      <span class="task-deliv">Step 9</span>
+      <span class="toggle-btn">+</span>
+    </div>
+    <div class="task-body">
+      <div class="answer-label">&#9654; Steps</div>
+      <ul class="step-list">
+        <li>
+          <span class="step-num-badge teal">Step 9</span>
+          <div>Document the data lifecycle by updating the table description in OpenMetadata with the retention stages and the regulatory note below.</div>
+        </li>
+      </ul>
+
+      <div class="card">
+        <div class="card-title">Data Lifecycle Stages</div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Stage</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Active</strong></td><td>Operational data in day-to-day use</td></tr>
+            <tr><td><strong>Archived</strong></td><td>Historical data retained for compliance purposes</td></tr>
+            <tr><td><strong>Deleted</strong></td><td>Records removed after the retention period expires</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note-strip">
+        <strong>Add to table metadata:</strong> &ldquo;Customer records are retained for seven years in compliance with regulatory standards.&rdquo;
+      </div>
+    </div>
+  </div>
+
+  <!-- ── DATA QUALITY RULES ──────────────────────────────── -->
+  <div class="section-label">Data Quality Rules</div>
+
+  <div class="card">
+    <div class="card-title">Governance Rules Reference</div>
+    <table class="data-table">
+      <thead>
+        <tr><th>Rule ID</th><th>Rule Description</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>DQ-01</code></td><td>Customer ID must be unique</td></tr>
+        <tr><td><code>DQ-02</code></td><td>Customer ID cannot be null</td></tr>
+        <tr><td><code>DQ-03</code></td><td>Email must be a valid format (contains <code>@</code>)</td></tr>
+        <tr><td><code>DQ-04</code></td><td>Account balance must be non-negative (&ge; 0)</td></tr>
+        <tr><td><code>DQ-05</code></td><td>Signup date must be a valid date</td></tr>
+        <tr><td><code>DQ-06</code></td><td>Mandatory fields must not be empty</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── INTEGRATE OPENMETADATA ──────────────────────────── -->
+  <div class="section-label">OpenMetadata Integration &mdash; Tags</div>
+
+  <div class="task-card">
+    <div class="task-header" onclick="toggleTask(this)">
+      <span class="task-num opt">Optional</span>
+      <span class="task-title">Apply Data Quality Tags in OpenMetadata</span>
+      <span class="task-deliv">Steps 15&ndash;16</span>
+      <span class="toggle-btn">+</span>
+    </div>
+    <div class="task-body">
+      <div class="answer-label">&#9654; Steps</div>
+      <ul class="step-list">
+        <li>
+          <span class="step-num-badge purple">Step 15</span>
+          <div><strong>Define Data Quality Tags</strong> &mdash; Log into OpenMetadata. Navigate to <strong>Govern &rarr; Glossary &rarr; Data Quality</strong>. Create tags: <code>High Quality</code>, <code>Duplicate Records</code>, <code>Missing Values</code>, <code>Invalid Data</code>.</div>
+        </li>
+        <li>
+          <span class="step-num-badge purple">Step 16</span>
+          <div><strong>Assign Tags</strong> &mdash; Apply the tags to: <code>bank_customers_raw</code> (Duplicate Records, Missing Values, Invalid Data) and <code>bank_customers_clean</code> (High Quality).</div>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ── DELIVERABLES ────────────────────────────────────── -->
+  <div class="section-label">Deliverables</div>
+
+  <div class="card">
+    <div class="card-title">Required Submissions</div>
+    <ul class="deliv-list">
+      <li>
+        <span class="deliv-num">D1</span>
+        <div><strong>Databricks Notebook</strong> &mdash; Must include data profiling steps, all four quality checks, and all cleansing transformations with outputs visible.</div>
+      </li>
+      <li>
+        <span class="deliv-num">D2</span>
+        <div><strong>Data Quality Report</strong> &mdash; Document all identified issues with screenshots of check results from each lab step.</div>
+      </li>
+      <li>
+        <span class="deliv-num">D3</span>
+        <div><strong>List of Data Quality Rules</strong> &mdash; All six DQ rules (DQ-01 through DQ-06) documented with descriptions.</div>
+      </li>
+      <li>
+        <span class="deliv-num">D4</span>
+        <div><strong>Cleaned Dataset Table</strong> &mdash; Screenshot or export of <code>bank_customers_clean</code> showing only valid, deduplicated records.</div>
+      </li>
+      <li>
+        <span class="deliv-num deliv-opt">D5 (Opt)</span>
+        <div><strong>Great Expectations Validation Report</strong> &mdash; Output from the <code>validator.validate()</code> call showing pass/fail status for each expectation.</div>
+      </li>
+      <li>
+        <span class="deliv-num deliv-opt">D6 (Opt)</span>
+        <div><strong>OpenMetadata Tags Screenshot</strong> &mdash; Screenshot showing DQ tags applied to both <code>bank_customers_raw</code> and <code>bank_customers_clean</code>.</div>
+      </li>
+    </ul>
+  </div>
+
+  <!-- ── GOVERNANCE DASHBOARD ───────────────────────────── -->
+  <div class="section-label">Data Governance Dashboard</div>
+
+  <div class="card">
+    <div class="card-title">Required Screenshots for Dashboard Submission</div>
+    <table class="data-table">
+      <thead>
+        <tr><th>Screenshot</th><th>What to Capture</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Business Glossary</td><td>All four terms added under <code>GlobalTrust Banking Glossary</code></td></tr>
+        <tr><td>Data Classifications</td><td>PII, Sensitive, Confidential, Public tags under <code>DataClassification</code></td></tr>
+        <tr><td>Metadata Catalog</td><td><code>bank_customers_raw</code> with column descriptions, owner, steward, and domain assigned</td></tr>
+        <tr><td>Lineage Diagram</td><td>CSV &rarr; raw table &rarr; clean table lineage graph rendered in OpenMetadata</td></tr>
+        <tr><td>Data Quality Annotations</td><td>Table description with data quality summary notes attached</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── LEARNING OUTCOMES ───────────────────────────────── -->
+  <div class="section-label">Learning Outcomes</div>
+
+  <div class="outcome-card">
+    <p style="font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#3fb950;margin-bottom:.75rem;">After completing this module, students will be able to:</p>
+    <ul>
+      <li><strong>Apply</strong> data governance principles to improve data quality in a real banking scenario.</li>
+      <li><strong>Implement</strong> validation frameworks using Databricks PySpark and Great Expectations.</li>
+      <li><strong>Document</strong> and enforce enterprise data quality standards and governance policies.</li>
+      <li><strong>Catalog</strong> datasets and manage metadata using OpenMetadata.</li>
+      <li><strong>Track</strong> data lineage from source CSV to curated consumption table.</li>
+      <li><strong>Establish</strong> data retention and deletion policies aligned with regulatory requirements.</li>
+      <li><strong>Align</strong> technical practices with governance policies and business objectives.</li>
+    </ul>
+  </div>
+
+</div><!-- /page-body -->
+
+<footer class="site-footer">&copy; Clark Ngo &mdash; Data Governance Classroom Activities &mdash; Module 02</footer>
+
+<button class="export-btn" onclick="window.print()">
+  <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M2.5 8a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1z"/><path d="M5 1a2 2 0 0 0-2 2v2H2a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h1v1a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-1h1a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1V3a2 2 0 0 0-2-2H5zM4 3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2H4V3zm1 5a2 2 0 0 0-2 2v1H2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v-1a2 2 0 0 0-2-2H5zm7 2v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1z"/></svg>
+  Print / Export PDF
+</button>
+
+<script>
+  function toggleTask(header) {
+    const body = header.nextElementSibling;
+    const btn  = header.querySelector(".toggle-btn");
+    const isOpen = body.classList.contains("open");
+    body.classList.toggle("open", !isOpen);
+    btn.textContent = isOpen ? "+" : "\u2212";
+  }
+</script>
+
+</body>
+</html>

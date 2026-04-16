@@ -9,6 +9,15 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ## 2026-04-15
 
+### [feature] Module 02 deliverables page with 4 required + 5 supplementary screenshots
+- Created `module-02-deliverables.html` with D1–D5 submission structure and supporting evidence grid
+- Wired deliverables link into `index.html` Module 02 card
+
+### [feature] Data Governance classroom activities — section homepage + Module 02 lab
+- Created `classroom-activities/data-governance/index.html` section homepage with navigatable module cards
+- Created `classroom-activities/data-governance/module-02.html` — GlobalTrust Bank DQ lab (Databricks + OpenMetadata)
+- Updated breadcrumbs in `module-01.html` and `module-01-deliverables.html` to link to new section homepage
+
 ### [feature] Add Module 2 card to homepage
 - Added Module 2 card to the Class Notes section in `index.html`; updated section count from "1 module" to "2 modules"
 
