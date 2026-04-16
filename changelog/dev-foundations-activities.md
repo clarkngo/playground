@@ -1,5 +1,26 @@
 # Changelog — Dev Foundations Activities
 
+## 2026-04-16
+
+### [feature] Light / dark mode toggle for all 10 HOS workflow files
+- Added CSS custom properties (`--bg-base`, `--fg-body`, etc.) for 28 theme tokens in `:root` (dark default) and `[data-theme="light"]` override
+- Replaced all hardcoded hex colors in CSS and inline styles with `var(--variable)` references
+- Added crescent/sun toggle button in navbar; persists preference to `localStorage`
+- Early-init `<script>` in `<head>` applies saved theme before first paint (no flash)
+- Files: `01-github-codespaces-hos-workflow.html` through `10-advanced-microservices-aws-lambda-hos-workflow.html`
+
+## 2026-04-16
+
+### [feature] Add course info, resource links to all 10 activity labs
+- Added course line "CS445 Software Process Management — STC, CityU" below lab header in all 10 files
+- Added 4 links: CS 445 GitHub repo, GitHub Codespace instructions, work submission guide, screenshot submission guide
+- Files updated: `01-container-runtime-architecture.html` through `10-resilient-distributed-system.html`
+
+### [feature] Add resource links + remove "Full cookbook" text from all 10 HOS workflow files
+- Replaced lab-header `<p>` in `hos/dev-foundations-activities-hos/01–10-*-hos-workflow.html`
+- Removed "Full cookbook text from the PDF is below..." and "Structured handout and figures..." prefixes
+- Added 4 resource links and kept course line: CS445 Software Process Management — STC, CityU
+
 ## 2026-04-07
 
 ### [feature] HOS handouts — full PDF step-by-step text preserved (verbatim extract)
