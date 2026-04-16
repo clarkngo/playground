@@ -7,6 +7,29 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-04-16
+
+### [feature] HOS01A — default light mode, screenshot upload UI, PDF screenshots section
+- Swapped `:root` to light theme vars; dark theme now under `[data-theme="dark"]`
+- Theme init script and toggle button default to `light` / sun icon
+- Added screenshot upload CSS (`.ss-upload-btn`, `.ss-preview-img`, `.ss-remove-btn`) and PDF print styles
+- Added upload buttons for all 5 screenshot deliverables (ss-01 through ss-05) with localStorage persistence
+- Added `#pdf-screenshots` section populated at print time by updated `exportPDF()`
+- Step reference panel now open by default (`.ref-body.open`, `.ref-toggle.open`)
+- Added `initScreenshots()` call in `init()` and theme-icon sync on page load
+
+### [feature] HOS workflow files — light/dark mode toggle with CSS variables
+- All 10 HOS files now use CSS custom properties and a navbar toggle button persisted to localStorage
+
+### [feature] Add HOS hub and CS445 activity links to playground homepage
+- Added `hos/index.html` card (HOS Hub — CityU hands-on) to Dev Foundations section in `index.html`
+- Kept existing `hos/dev-foundations-activities-hos/index.html` card alongside it
+
+## 2026-04-16
+
+### [feature] Dev Foundations Activities — course info + resource links across all 10 labs
+- Added CS445 course line and 4 resource links (repo, codespace setup, work submission, screenshot submission) to all 10 activity HTML files
+
 ## 2026-04-15
 
 ### [feature] Module 02 deliverables page with 4 required + 5 supplementary screenshots
