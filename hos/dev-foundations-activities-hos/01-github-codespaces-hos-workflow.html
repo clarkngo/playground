@@ -1061,12 +1061,10 @@ WORKDIR /usr/src</pre>
     </div>
 
     <h2>Section 4: Pushing your work to GitHub</h2>
-    <p>The PDF headings for this section are:</p>
     <ul>
       <li><a href="https://cityuseattle.github.io/docs/git/codespaces_submission/" target="_blank" rel="noopener">How to submit your work in GitHub</a></li>
       <li><a href="https://cityuseattle.github.io/docs/git/github_upload_files/" target="_blank" rel="noopener">How to submit your screenshots in GitHub</a></li>
     </ul>
-    <p>Follow your instructor and GitHub Classroom workflow to add, commit, and push your repository changes (including the screenshots above) to the remote repository.</p>
   </section>
 
   <!-- Why & Purpose -->
@@ -1074,28 +1072,28 @@ WORKDIR /usr/src</pre>
     <div class="why-section-title">Why This Matters</div>
     <div class="why-grid">
       <div class="why-card">
-        <div class="why-card-label green">Cloud development environment</div>
-        <p>GitHub Codespaces gives a full IDE in the browser (or VS Code) with dependencies ready so you spend time on the assignment, not on installing toolchains on a personal machine.</p>
+        <div class="why-card-label green">Codespace = provisioned compute node</div>
+        <p>A GitHub Codespace is an on-demand cloud VM tied directly to a repository. It abstracts the local machine entirely &mdash; the execution environment is provisioned, not installed. Nothing else in the workflow runs until this node exists.</p>
       </div>
       <div class="why-card">
-        <div class="why-card-label blue">Notebooks + containers</div>
-        <p>The lab pairs Jupyter for quick Python validation with Docker so you practice reproducible images: a <code>Dockerfile</code> defines layers; <code>docker build</code> and <code>docker run</code> match what the PDF calls out.</p>
+        <div class="why-card-label blue">Image vs container &mdash; blueprint vs running instance</div>
+        <p>A <code>Dockerfile</code> is infrastructure as code: it defines immutable layers that <code>docker build</code> compiles into an image artifact. <code>docker run</code> instantiates that artifact as an isolated process. You cannot run a container from an image that does not yet exist.</p>
       </div>
       <div class="why-card">
-        <div class="why-card-label yellow">Key concepts (from the handout)</div>
-        <p><strong>Image</strong> = blueprint; <strong>container</strong> = running instance; <strong>Dockerfile</strong> = build recipe. Codespaces integrates with your GitHub repo for version control end-to-end.</p>
+        <div class="why-card-label yellow">System layers &mdash; each depends on the one before</div>
+        <p>Cloud VM &rarr; development tooling &rarr; build recipe &rarr; image artifact &rarr; running process &rarr; remote persistence. Every operation in this workflow promotes the system into the next layer. Skipping a layer breaks the chain.</p>
       </div>
       <div class="why-card">
         <div class="why-card-label purple">Your goal</div>
-        <p>Internalize the <em>order of operations</em>: open the environment, install extensions, prove Python with <code>helloworld.ipynb</code>, add Docker tooling, build and verify the image, get an interactive shell in a container, then push your commits.</p>
+        <p>Sequence the operations that move through those layers: provision the cloud environment, install tooling, author the build recipe, compile the image, verify the artifact, instantiate a container, then replicate your work back to the remote origin.</p>
       </div>
     </div>
   </div>
 
   <!-- Simulator -->
   <div class="sim-section no-pdf">
-    <div class="sim-title">&#128187; Codespaces + Docker path vs missing Dockerfile</div>
-    <div class="sim-sub">Panel A walks the happy path: cloud workspace &rarr; terminal in repo root &rarr; <code>docker build -t lisp .</code> &rarr; running container. Panel B shows what happens if you run <code>docker build</code> without a <code>Dockerfile</code> in the working directory (as in the PDF: stay in the folder that contains the file).</div>
+    <div class="sim-title">&#128187; GitHub Codespaces system design &mdash; provisioned environment to running container</div>
+    <div class="sim-sub">Panel A: a change moves through all system layers &mdash; cloud VM &rarr; Dockerfile (build recipe) &rarr; image (immutable artifact) &rarr; running container (isolated process). Panel B: running <code>docker build</code> without a <code>Dockerfile</code> in the build context fails immediately &mdash; the build layer has no recipe to compile.</div>
     <div class="sim-dual">
       <!-- Scenario A -->
       <div class="sim-panel">
@@ -1150,84 +1148,80 @@ WORKDIR /usr/src</pre>
 
   <!-- Scenario -->
   <div class="scenario-box">
-    <strong>The objective:</strong> Sequence the <strong>seven steps</strong> of the HOS01A cookbook from first opening the cloud environment through submitting your work on GitHub.<br><br>
-    <strong>Think about:</strong> You must have a Codespace before you install editor extensions. You run the Hello World notebook after Python and Jupyter are available. The Dockerfile must exist before <code>docker build -t lisp .</code>. You confirm the image before you start an interactive container. Pushing to the remote repository comes <em>after</em> you have files and screenshots to commit. Some toolbox items are decoys (wrong order or not part of this lab flow).
+    <strong>The objective:</strong> Map the <strong>system design of a GitHub Codespaces workflow</strong> by sequencing the seven operations that move the system through its layers &mdash; from provisioning a cloud compute node to instantiating a running container and persisting work to the remote origin. Not every operation listed belongs in the correct sequence.<br><br>
+    <strong>Think about:</strong> Each operation has a <strong>dependency on the layer established before it</strong>. You cannot install extensions without a running Codespace. You cannot build an image without a Dockerfile. You cannot run a container without an image artifact. You cannot push without local files to commit. What layer does each operation produce, and what does the next operation require?
   </div>
 
   <!-- Component Reference -->
   <div class="ref-section no-pdf">
     <div class="ref-header" onclick="toggleRef(this)">
       <div>
-        <div class="ref-header-title">&#128196; Step reference (HOS01A)</div>
-        <div class="ref-header-sub">Click to collapse</div>
+        <div class="ref-header-title">&#128203; Operations &mdash; GitHub Codespaces system design</div>
+        <div class="ref-header-sub">Click to collapse &mdash; each operation establishes a layer the next depends on</div>
       </div>
       <span class="ref-toggle open">&#9660;</span>
     </div>
     <div class="ref-body open">
       <div class="ref-item">
         <div class="ref-item-name"><span class="ref-icon">&#127760;</span>Open GitHub Codespace</div>
-        <div class="ref-item-desc">Section 1 of the PDF: launch the cloud development environment tied to your GitHub repository so you can edit, run terminals, and use Docker without local installs.
-          <div class="ref-item-hint">&#128161; Nothing else in the lab runs until the workspace exists.</div>
+        <div class="ref-item-desc">Step 1 &mdash; Provisions the cloud compute node tied to your GitHub repository. The Codespace is the execution environment; the working tree, terminal, and Docker daemon all live inside it.
+          <div class="ref-item-hint">&#128203; Layer: Cloud VM &mdash; nothing else in the system can run until this node is live.</div>
         </div>
       </div>
       <div class="ref-item">
         <div class="ref-item-name"><span class="ref-icon">&#128013;</span>Python + Jupyter; Hello World notebook</div>
-        <div class="ref-item-desc">Section 2: install the Python and Jupyter extensions from the marketplace, create <code>helloworld.ipynb</code>, add a code cell with <code>print("Hello World")</code>, pick a Python kernel when prompted, and execute the cell.
-          <div class="ref-item-hint">&#128161; Comes after the Codespace is open; screenshot 01 in the handout.</div>
+        <div class="ref-item-desc">Step 2 &mdash; Installs development tooling (Python and Jupyter extensions) into the provisioned environment, then validates the runtime by executing <code>print("Hello World")</code> in <code>helloworld.ipynb</code>.
+          <div class="ref-item-hint">&#128203; Layer: Development tooling &mdash; installed into the cloud VM; requires the Codespace to already exist.</div>
         </div>
       </div>
       <div class="ref-item">
         <div class="ref-item-name"><span class="ref-icon">&#128230;</span>Docker extension + Dockerfile</div>
-        <div class="ref-item-desc">Section 3: install the Docker extension, then create a new file named exactly <code>Dockerfile</code> (no extension). The PDF builds a custom image (tag <code>lisp</code>) and later opens a shell in the container.
-          <div class="ref-item-hint">&#128161; Install tooling before you author the build recipe.</div>
+        <div class="ref-item-desc">Step 3 &mdash; Adds the Docker extension and authors a <code>Dockerfile</code> &mdash; the build recipe that defines image layers as infrastructure as code. The file must exist on disk before the build step.
+          <div class="ref-item-hint">&#128203; Layer: Build recipe &mdash; the Dockerfile is the input artifact that the build system compiles.</div>
         </div>
       </div>
       <div class="ref-item">
         <div class="ref-item-name"><span class="ref-icon">&#128295;</span>docker build -t lisp .</div>
-        <div class="ref-item-desc">From the integrated terminal (<strong>View &rarr; Terminal</strong>), run in the directory that contains the Dockerfile. <code>-t lisp</code> names the image; <code>.</code> is the build context (current folder).
-          <div class="ref-item-hint">&#128161; Screenshot 02 &mdash; build must succeed before you can list or run the image.</div>
+        <div class="ref-item-desc">Step 4 &mdash; Compiles the Dockerfile into an immutable image artifact tagged <code>lisp</code>. Run from the terminal in the directory containing the Dockerfile; <code>.</code> sets the build context.
+          <div class="ref-item-hint">&#128203; Boundary: Build recipe &rarr; Image artifact &mdash; image does not exist until this succeeds.</div>
         </div>
       </div>
       <div class="ref-item">
         <div class="ref-item-name"><span class="ref-icon">&#128194;</span>docker image ls</div>
-        <div class="ref-item-desc">Lists local images so you can confirm the new tag exists and copy the <strong>image ID</strong> for the next command (screenshot 03).
-          <div class="ref-item-hint">&#128161; Verify the artifact before starting a container from it.</div>
+        <div class="ref-item-desc">Step 5 &mdash; Verifies the image artifact exists in the local registry and retrieves the image ID needed for instantiation. A system design checkpoint: confirm the artifact before creating a process from it.
+          <div class="ref-item-hint">&#128203; Layer: Image artifact verification &mdash; you cannot reference an image ID that does not exist.</div>
         </div>
       </div>
       <div class="ref-item">
         <div class="ref-item-name"><span class="ref-icon">&#128640;</span>docker run -it [image id] /bin/bash</div>
-        <div class="ref-item-desc">The PDF uses <code>docker run --interactive --tty &lt;image id&gt; /bin/bash</code> to get a shell inside the container (screenshot 04). Replace <code>&lt;image id&gt;</code> with the value from <code>docker image ls</code>.
-          <div class="ref-item-hint">&#128161; This creates and starts a running container from the image.</div>
+        <div class="ref-item-desc">Step 6 &mdash; Instantiates the image as a running container process with an interactive shell. The container is isolated from the host, shares the kernel, and exists only while the process runs.
+          <div class="ref-item-hint">&#128203; Boundary: Image artifact &rarr; Running process &mdash; container cannot start without a valid image.</div>
         </div>
       </div>
       <div class="ref-item">
         <div class="ref-item-name"><span class="ref-icon">&#8593;</span>git push (submit to GitHub)</div>
-        <div class="ref-item-desc">Section 4: commit your work and push to the remote so your screenshots and files reach the GitHub Classroom repo (submission steps in the PDF).
-          <div class="ref-item-hint">&#128161; Last step after local files and screenshots exist; not before Docker exercises.</div>
+        <div class="ref-item-desc">Step 7 &mdash; Replicates local commits (files, screenshots, Dockerfile) to the remote origin. The final boundary crossing &mdash; work exists on the cloud VM only until it is pushed to the repository.
+          <div class="ref-item-hint">&#128203; Boundary: Local history &rarr; Remote origin &mdash; run after the Docker exercises have produced local files to commit.</div>
         </div>
       </div>
       <div class="ref-item">
-        <div class="ref-item-name"><span class="ref-icon">&#128065;</span>docker container ls (decoy)</div>
-        <div class="ref-item-desc">The PDF opens a <em>second</em> terminal and runs <code>docker container ls</code> to show running containers (screenshot 05). That happens <em>after</em> you have a running container, but the canonical <strong>seven-step</strong> sequence for this activity ends with <strong>git push</strong>; use this card as a distractor if you are tempted to list containers before you run one.
-          <div class="ref-item-hint">&#128161; Useful in the lab, but not the seventh step in this ordered list.</div>
+        <div class="ref-item-name"><span class="ref-icon">&#128187;</span>docker container ls</div>
+        <div class="ref-item-desc">Lists running containers. Useful for observing the running process layer, but not one of the seven operations in the system design sequence for this workflow.
         </div>
       </div>
       <div class="ref-item">
-        <div class="ref-item-name"><span class="ref-icon">&#128026;</span>Install local Hyper-V / VMware first (decoy)</div>
-        <div class="ref-item-desc">HOS01A is about GitHub Codespaces in the cloud. You do not provision a separate local hypervisor for this assignment.
-          <div class="ref-item-hint">&#128161; Wrong track for this cookbook.</div>
+        <div class="ref-item-name"><span class="ref-icon">&#128187;</span>Install local Hyper-V / VMware first</div>
+        <div class="ref-item-desc">A local hypervisor provisions VMs on physical hardware. GitHub Codespaces is a remote cloud VM &mdash; a different system architecture that requires no local hypervisor.
         </div>
       </div>
       <div class="ref-item">
-        <div class="ref-item-name"><span class="ref-icon">&#128228;</span>docker push lisp to Docker Hub (decoy)</div>
-        <div class="ref-item-desc">The lab tags an image locally (<code>lisp</code>) and runs it; pushing to Docker Hub is not part of the PDF steps.
-          <div class="ref-item-hint">&#128161; Registry push is not the same as <code>git push</code> to your assignment repo.</div>
+        <div class="ref-item-name"><span class="ref-icon">&#128187;</span>docker push lisp to Docker Hub</div>
+        <div class="ref-item-desc">Replicates a local image to a public registry. This is a different boundary crossing from <code>git push</code> and is not part of this workflow's system design sequence.
         </div>
       </div>
       <div class="ref-item">
-        <div class="ref-item-name"><span class="ref-icon">&#9889;</span>pip install packages before cloning (decoy)</div>
-        <div class="ref-item-desc">You work inside the repository in Codespaces; dependency installs belong in the project context, not before you even open the repo.
-          <div class="ref-item-hint">&#128161; Breaks the documented order (Codespace and repo first).</div>
+        <div class="ref-item-name"><span class="ref-icon">&#128187;</span>pip install packages before opening repo</div>
+        <div class="ref-item-desc">Dependency installs belong inside the provisioned Codespace environment, not before the compute node exists. Installing into an unrelated local context has no effect on the cloud VM.
         </div>
       </div>
     </div>
@@ -1239,7 +1233,7 @@ WORKDIR /usr/src</pre>
     <!-- Toolbox -->
     <div id="toolbox-col">
       <div class="col-label toolbox-label">Toolbox</div>
-      <div class="distractor-hint">&#9888; Four items are decoys &mdash; wrong ordering, wrong platform, or commands that belong in the PDF but not in this seven-step spine.</div>
+      <div class="distractor-hint">&#9888; Not all items belong in the correct sequence. Think carefully about whether each operation establishes a required system layer or crosses a valid boundary.</div>
       <div id="toolbox"></div>
       <button class="btn-validate" onclick="checkSystem()">Validate Workflow</button>
       <button class="btn-pdf no-pdf" onclick="exportPDF()">Export PDF</button>
@@ -1247,7 +1241,7 @@ WORKDIR /usr/src</pre>
 
     <!-- Canvas -->
     <div>
-      <div class="col-label canvas-label">Design Canvas &mdash; drag steps in cookbook order (1 &rarr; 7)</div>
+      <div class="col-label canvas-label">Design Canvas &mdash; sequence the operations: cloud VM &rarr; tooling &rarr; build recipe &rarr; image artifact &rarr; running container &rarr; remote origin</div>
       <div id="canvas" class="drop-zone">
         <p class="placeholder-text" id="placeholder">Drag components here in the correct order&hellip;</p>
       </div>
@@ -1259,10 +1253,12 @@ WORKDIR /usr/src</pre>
 
       <!-- AI prompts -->
       <div class="prompt-guide no-pdf">
-        <div class="prompt-guide-title">AI study prompts (HOS01A)</div>
+        <div class="prompt-guide-title">System design study prompts</div>
         <div class="prompt-grid">
-          <div class="prompt-item">"Explain how <strong>GitHub Codespaces</strong> relates to the repository: what runs in the cloud versus what stays in Git history when I push?"</div>
-          <div class="prompt-item">"Walk through <code>docker build -t lisp .</code> vs <code>docker run --interactive --tty</code>: what is an <strong>image</strong> versus a <strong>container</strong> in this lab?"</div>
+          <div class="prompt-item">A GitHub Codespace has multiple system layers. What layer does each operation in this workflow establish, and what does the next operation depend on?</div>
+          <div class="prompt-item">What is the difference between a Docker <strong>image</strong> and a <strong>container</strong> in system design terms &mdash; blueprint vs running instance?</div>
+          <div class="prompt-item">Why does <code>docker build</code> fail if the Dockerfile is not in the build context? Which system layer is missing?</div>
+          <div class="prompt-item">How is <code>git push</code> at the end of this workflow similar to replication in a distributed system?</div>
         </div>
       </div>
     </div>
@@ -1316,15 +1312,15 @@ WORKDIR /usr/src</pre>
       "GitPush"
     ],
     clues: {
-      "OpenCodespace": "Step 1 is opening the GitHub Codespace from your assignment repository (Section 1). No extensions or Docker commands run before the workspace exists.",
-      "PyJuHello":     "Step 2 follows Section 2: install Python and Jupyter extensions, create helloworld.ipynb, run print(\"Hello World\") with a Python kernel.",
-      "DockerExtFile": "Step 3 is Section 3 setup: install the Docker extension, then add a Dockerfile (no extension) in the repo.",
-      "DockerBuild":   "Step 4 runs docker build -t lisp . from the integrated terminal in the folder that contains the Dockerfile.",
-      "DockerImageLs": "Step 5 confirms the image with docker image ls before you start a container from it.",
-      "DockerRunIt":   "Step 6 runs docker run --interactive --tty <image id> /bin/bash to open a shell inside the container.",
-      "GitPush":       "Step 7 is Section 4: commit and push your work and screenshots to GitHub — after the Docker exercises produce local files."
+      "OpenCodespace": "Step 1: provisions the cloud compute node. The Codespace is the execution environment \u2014 no other layer exists until this node is live.",
+      "PyJuHello":     "Step 2: installs development tooling (Python + Jupyter) into the provisioned VM and validates the runtime with helloworld.ipynb.",
+      "DockerExtFile": "Step 3: adds the Docker extension and authors the Dockerfile \u2014 the build recipe that defines image layers as infrastructure as code.",
+      "DockerBuild":   "Step 4: compiles the Dockerfile into an immutable image artifact tagged lisp. Boundary: build recipe \u2192 image artifact.",
+      "DockerImageLs": "Step 5: verifies the image artifact exists in the local registry. A required checkpoint \u2014 you cannot reference an image ID that does not exist.",
+      "DockerRunIt":   "Step 6: instantiates the image as an isolated running container process. Boundary: image artifact \u2192 running process.",
+      "GitPush":       "Step 7: replicates local commits to the remote origin. Boundary: local history \u2192 remote origin \u2014 the final persistence step."
     },
-    passMessage: "HOS01A workflow verified. You ordered the Codespaces cookbook correctly: open the cloud environment, set up Python and Jupyter with a Hello World notebook, add Docker tooling and a Dockerfile, build and verify the lisp image, run an interactive container, then push to GitHub."
+    passMessage: "Codespaces system design verified: cloud VM \u2192 development tooling \u2192 build recipe \u2192 image artifact \u2192 running container \u2192 remote origin. All system layers established in correct dependency order."
   };
 
   function toggleRef(header) {
@@ -1334,7 +1330,7 @@ WORKDIR /usr/src</pre>
     body.classList.toggle("open", !isOpen);
     toggle.classList.toggle("open", !isOpen);
     header.querySelector(".ref-header-sub").textContent = isOpen
-      ? "Click to expand \u2014 every draggable step and decoy explained"
+      ? "Click to expand \u2014 every operation and its system layer explained"
       : "Click to collapse";
   }
 
@@ -1343,46 +1339,45 @@ WORKDIR /usr/src</pre>
 
   var SIM_SCENARIOS = {
     codespace: {
-      phases: ["Codespace", "Dockerfile", "docker build", "Container"],
+      phases: ["Cloud VM", "Build Recipe", "Image Artifact", "Running Process"],
       nodes: [
-        { i: "&#127760;", l: "GitHub Codespace" },
-        { i: "&#128196;", l: "Dockerfile in repo" },
+        { i: "&#127760;", l: "Cloud VM" },
+        { i: "&#128196;", l: "Dockerfile" },
         { i: "&#128230;", l: "Image lisp" },
-        { i: "&#128640;", l: "Running container" }
+        { i: "&#128640;", l: "Container" }
       ],
       steps: [
-        { d: 0,    ph: 0, log: ["info",  "> Opening Codespace: cloning assignment repo into cloud VM..."] },
-        { d: 700,  ph: 0, log: ["blue",  "> VS Code web: Extensions panel ready (Python, Jupyter, Docker)"] },
-        { d: 1400, ph: 1, log: ["info",  "> Terminal cwd = repo root; Dockerfile found on disk"], fc: 0 },
-        { d: 2100, ph: 1, log: ["ok",    "> docker build -t lisp .  |  Sending build context"] },
-        { d: 2800, ph: 2, log: ["info",  "> Step RUN instructions: layers cached per Dockerfile line"], fc: 1 },
-        { d: 3500, ph: 2, log: ["blue",  "> Successfully tagged lisp:latest"] },
+        { d: 0,    ph: 0, log: ["info",  "> Codespace provisioned: cloud VM live, repo cloned into working tree"] },
+        { d: 700,  ph: 0, log: ["blue",  "> Development tooling installed: Python, Jupyter, Docker extensions ready"] },
+        { d: 1400, ph: 1, log: ["info",  "> Dockerfile authored in repo root \u2014 build recipe layer established"], fc: 0 },
+        { d: 2100, ph: 1, log: ["ok",    "> docker build -t lisp .  |  Sending build context to daemon"] },
+        { d: 2800, ph: 2, log: ["info",  "> RUN instructions processed: image layers cached and stacked"], fc: 1 },
+        { d: 3500, ph: 2, log: ["blue",  "> Successfully tagged lisp:latest \u2014 image artifact exists in local registry"] },
         { d: 4200, ph: 3, log: ["info",  "> docker run --interactive --tty <id> /bin/bash"], fc: 2 },
-        { d: 4900, ph: 3, log: ["ok",    "> &#10003; Shell prompt inside container  |  isolate process, shared host kernel"] },
-        { d: 5400, ph: 3, log: ["ok",    "&#9650; Matches HOS01A: build in repo root, then run, then git push when done"], final: true }
+        { d: 4900, ph: 3, log: ["ok",    "> \u2713 Shell inside container \u2014 isolated process, shared host kernel"] },
+        { d: 5400, ph: 3, log: ["ok",    "\u25b2 All system layers crossed: VM \u2192 tooling \u2192 recipe \u2192 image \u2192 container"], final: true }
       ],
-      result: "<strong>Happy path:</strong> The PDF expects the terminal working directory to contain the Dockerfile before <code>docker build -t lisp .</code>. The image is the artifact; <code>docker run</code> starts a container process from that image."
+      result: "<strong>Happy path:</strong> Each layer depends on the one before it &mdash; the Dockerfile cannot be built without the cloud VM; the image cannot be created without the Dockerfile; the container cannot run without the image artifact."
     },
     badbuild: {
-      phases: ["Wrong cwd", "docker build", "Error", "Fix"],
+      phases: ["Wrong Context", "Build Attempt", "Layer Missing", "Fix & Retry"],
       nodes: [
-        { i: "&#128193;", l: "Empty folder" },
+        { i: "&#128193;", l: "Wrong cwd" },
         { i: "&#10060;", l: "No Dockerfile" },
-        { i: "&#9888;", l: "Build failed" },
-        { i: "&#128203;", l: "cd to repo" }
+        { i: "&#128295;", l: "cd to repo" },
+        { i: "&#9989;", l: "Build OK" }
       ],
       steps: [
-        { d: 0,    ph: 0, log: ["warn",  "> Terminal opened in /home/codespace (not the repo folder)..."] },
+        { d: 0,    ph: 0, log: ["warn",  "> Terminal opened in /home/codespace \u2014 build context does not contain Dockerfile"] },
         { d: 700,  ph: 0, log: ["info",  "> docker build -t lisp ."] },
         { d: 1400, ph: 1, log: ["warn",  "> unable to prepare context: no Dockerfile found"], fc: 0 },
-        { d: 2100, ph: 2, log: ["warn",  "> Build exits non-zero -- no image tag created"], fc: 1 },
-        { d: 2800, ph: 2, log: ["info",  "> Fix: cd into the repository directory that contains Dockerfile"] },
-        { d: 3500, ph: 3, log: ["blue",  "> cd assignment-repo && docker build -t lisp ."] },
-        { d: 4200, ph: 3, log: ["ok",    "> Context sent; Dockerfile located"], fc: 2 },
-        { d: 4900, ph: 3, log: ["warn",  "> &#9888; Common Codespaces mistake: build context must include Dockerfile"] },
-        { d: 5400, ph: 3, log: ["warn",  "&#9660; Anti-pattern: running docker build before the file exists or from wrong path"], final: true }
+        { d: 2100, ph: 2, log: ["warn",  "> Build exits non-zero \u2014 image artifact layer not produced"], fc: 1 },
+        { d: 2800, ph: 2, log: ["info",  "> Fix: cd into the repo directory that contains the Dockerfile"] },
+        { d: 3500, ph: 3, log: ["blue",  "> cd assignment-repo && docker build -t lisp ."], fc: 2 },
+        { d: 4200, ph: 3, log: ["ok",    "> Context sent; Dockerfile located; image artifact created"] },
+        { d: 5400, ph: 3, log: ["warn",  "\u25bc Anti-pattern: the build recipe layer must exist in the build context"], final: true }
       ],
-      result: "<strong>Missing Dockerfile / wrong path:</strong> The handout says to run the build from the working directory that contains your new Docker file. If the CLI cannot see <code>Dockerfile</code>, the build fails and no <code>lisp</code> image is produced."
+      result: "<strong>Missing build recipe:</strong> <code>docker build</code> requires the Dockerfile to be present in the build context (<code>.</code>). If the terminal is in the wrong directory, the recipe layer is invisible to the daemon and the image artifact cannot be produced."
     }
   };
 
