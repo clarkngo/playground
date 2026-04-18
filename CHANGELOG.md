@@ -9,6 +9,13 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ## 2026-04-18
 
+### [ux] Collapsible content sections + collapsible sidebar nav
+- All content sections collapse/expand on header click; state persists in `localStorage` (`pg-collapsed-sections`); all collapsed on first visit
+- Sidebar nav sections collapse/expand on label click; state persists in `localStorage` (`pg-nav-collapsed`)
+- Collections nav section has three subgroups: System Design, Security & Crypto, Applied Learning — each independently collapsible
+- Search auto-expands content sections to surface results; restores saved state on clear
+- Sidebar filter auto-expands the targeted content section
+
 ### [feature] New Workshop Planning section — AI Literacy for Seattle City Staff
 - New `workshop-planning/seattle-ai-literacy.html`: 6-tab planning doc extracting audience, themes, formats, and open questions from Seattle's 2025–2026 AI Plan
 - Added Workshop Planning nav section and content block to `index.html`
