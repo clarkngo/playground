@@ -7,6 +7,14 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-04-18
+
+### [bug] Fix Classroom Activities homepage card to link to data-governance index
+- Changed `classroom-activities/data-governance/module-01.html` link to `index.html` in `index.html`
+- Updated card title and description to reflect the full Module 1 &amp; 2 collection
+
+---
+
 ## 2026-04-16
 
 ### [feature] HOS01A — default light mode, screenshot upload UI, PDF screenshots section
