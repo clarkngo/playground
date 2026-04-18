@@ -9,6 +9,10 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ## 2026-04-18
 
+### [feature] New Workshop Planning section — AI Literacy for Seattle City Staff
+- New `workshop-planning/seattle-ai-literacy.html`: 6-tab planning doc extracting audience, themes, formats, and open questions from Seattle's 2025–2026 AI Plan
+- Added Workshop Planning nav section and content block to `index.html`
+
 ### [bug] Fix Classroom Activities homepage card to link to data-governance index
 - Changed `classroom-activities/data-governance/module-01.html` link to `index.html` in `index.html`
 - Updated card title and description to reflect the full Module 1 &amp; 2 collection
