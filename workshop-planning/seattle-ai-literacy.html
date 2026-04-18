@@ -1,0 +1,729 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Seattle AI Literacy Workshop — Planning</title>
+  <style>
+    :root {
+      --bg: #0b1220;
+      --surface: #0f1a2e;
+      --card: #111c30;
+      --border: rgba(255,255,255,0.06);
+      --muted: #7a8899;
+      --text: #dde5f0;
+      --accent: #38bdf8;
+      --accent2: #818cf8;
+      --green: #34d399;
+      --amber: #fbbf24;
+      --red: #f87171;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, system-ui, -apple-system, sans-serif;
+      font-size: 14px;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ── Page shell ── */
+    .page { max-width: 1000px; margin: 0 auto; padding: 32px 24px 80px; }
+
+    /* ── Breadcrumb ── */
+    .breadcrumb {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 12px; color: var(--muted); margin-bottom: 24px;
+    }
+    .breadcrumb a { color: var(--muted); text-decoration: none; }
+    .breadcrumb a:hover { color: var(--accent); }
+    .breadcrumb span { color: rgba(255,255,255,0.15); }
+
+    /* ── Page header ── */
+    .page-header { margin-bottom: 28px; }
+    .status-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .status-badge {
+      font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px;
+      text-transform: uppercase; letter-spacing: 0.06em;
+    }
+    .status-badge.draft { background: rgba(251,191,36,0.12); color: var(--amber); }
+    .status-badge.planning { background: rgba(129,140,248,0.12); color: var(--accent2); }
+    .page-title { font-size: 26px; font-weight: 800; color: var(--text); line-height: 1.2; margin-bottom: 8px; }
+    .page-subtitle { font-size: 14px; color: var(--muted); max-width: 680px; }
+    .tag-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+    .tag {
+      background: rgba(255,255,255,0.05); color: var(--muted);
+      font-size: 11px; padding: 3px 9px; border-radius: 999px;
+    }
+    .tag.blue { background: rgba(56,189,248,0.1); color: var(--accent); }
+    .tag.purple { background: rgba(129,140,248,0.1); color: var(--accent2); }
+    .tag.green { background: rgba(52,211,153,0.1); color: var(--green); }
+
+    /* ── Tabs ── */
+    .tab-nav {
+      display: flex; gap: 2px; border-bottom: 1px solid var(--border);
+      margin-bottom: 28px; overflow-x: auto;
+    }
+    .tab-btn {
+      padding: 8px 16px; border: none; background: transparent;
+      color: var(--muted); font-size: 13px; font-weight: 500;
+      cursor: pointer; border-bottom: 2px solid transparent;
+      white-space: nowrap; transition: color 0.15s, border-color 0.15s;
+    }
+    .tab-btn:hover { color: var(--text); }
+    .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    .tab-section { display: none; }
+    .tab-section.active { display: block; }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 18px 20px; margin-bottom: 12px;
+    }
+    .card-title {
+      font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 6px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .card-body { font-size: 13px; color: var(--muted); line-height: 1.65; }
+
+    .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; margin-bottom: 20px; }
+
+    /* ── Section headers ── */
+    .sec-label {
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.08em; color: var(--muted);
+      margin-bottom: 10px; margin-top: 24px;
+    }
+    .sec-label:first-child { margin-top: 0; }
+
+    /* ── Audience tiers ── */
+    .tier-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 16px 18px;
+    }
+    .tier-icon { font-size: 22px; margin-bottom: 8px; }
+    .tier-name { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+    .tier-role { font-size: 11px; color: var(--muted); margin-bottom: 10px; }
+    .tier-goals { list-style: none; }
+    .tier-goals li {
+      font-size: 12px; color: var(--muted); padding: 4px 0;
+      border-bottom: 1px solid var(--border); display: flex; gap: 8px;
+    }
+    .tier-goals li:last-child { border-bottom: none; }
+    .tier-goals li::before { content: "→"; color: var(--accent); flex-shrink: 0; }
+
+    /* ── Theme chips ── */
+    .theme-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+    .theme-chip {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 8px; padding: 6px 12px;
+      font-size: 12px; color: var(--text);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .theme-chip .dot {
+      width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+    }
+    .dot-blue { background: var(--accent); }
+    .dot-purple { background: var(--accent2); }
+    .dot-green { background: var(--green); }
+    .dot-amber { background: var(--amber); }
+
+    /* ── Format options ── */
+    .format-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 18px 20px; margin-bottom: 12px;
+    }
+    .format-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .format-icon { font-size: 20px; }
+    .format-name { font-size: 14px; font-weight: 700; color: var(--text); }
+    .format-meta { font-size: 11px; color: var(--muted); margin-left: auto; }
+    .format-desc { font-size: 13px; color: var(--muted); margin-bottom: 10px; }
+    .format-steps { list-style: none; }
+    .format-steps li {
+      font-size: 12px; color: var(--muted); padding: 5px 0;
+      border-bottom: 1px solid var(--border); display: flex; gap: 10px;
+    }
+    .format-steps li:last-child { border-bottom: none; }
+    .step-num {
+      font-size: 11px; font-weight: 700; color: var(--accent);
+      background: rgba(56,189,248,0.1); border-radius: 50%;
+      width: 20px; height: 20px; display: flex; align-items: center;
+      justify-content: center; flex-shrink: 0; margin-top: 1px;
+    }
+
+    /* ── Open questions ── */
+    .question-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-left: 3px solid var(--amber);
+      border-radius: 12px; padding: 14px 18px; margin-bottom: 10px;
+    }
+    .question-text { font-size: 13px; color: var(--text); font-weight: 600; margin-bottom: 4px; }
+    .question-note { font-size: 12px; color: var(--muted); }
+
+    /* ── Resource links ── */
+    .resource-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 14px 18px; margin-bottom: 10px;
+      display: flex; align-items: flex-start; gap: 14px;
+      text-decoration: none; transition: border-color 0.2s;
+    }
+    .resource-card:hover { border-color: rgba(56,189,248,0.3); }
+    .resource-icon { font-size: 20px; flex-shrink: 0; margin-top: 2px; }
+    .resource-name { font-size: 13px; font-weight: 600; color: var(--accent); margin-bottom: 3px; }
+    .resource-desc { font-size: 12px; color: var(--muted); }
+    .resource-url { font-size: 11px; color: rgba(56,189,248,0.5); margin-top: 4px; word-break: break-all; }
+
+    /* ── Quote block ── */
+    .quote-block {
+      background: rgba(129,140,248,0.06); border: 1px solid rgba(129,140,248,0.15);
+      border-left: 3px solid var(--accent2);
+      border-radius: 10px; padding: 14px 18px; margin: 14px 0;
+      font-size: 13px; color: #a5b4fc; line-height: 1.7; font-style: italic;
+    }
+    .quote-source { font-size: 11px; color: var(--muted); margin-top: 6px; font-style: normal; }
+
+    /* ── Key extract table ── */
+    .extract-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .extract-table th {
+      text-align: left; padding: 8px 12px;
+      background: rgba(255,255,255,0.03); color: var(--muted);
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.06em; border-bottom: 1px solid var(--border);
+    }
+    .extract-table td {
+      padding: 10px 12px; border-bottom: 1px solid var(--border);
+      color: var(--text); vertical-align: top;
+    }
+    .extract-table tr:last-child td { border-bottom: none; }
+    .extract-table td:first-child { color: var(--accent); font-weight: 600; white-space: nowrap; }
+    .extract-table .sub { font-size: 11px; color: var(--muted); margin-top: 3px; }
+
+    .pill {
+      display: inline-block; font-size: 10px; font-weight: 700;
+      padding: 1px 6px; border-radius: 999px; margin-right: 4px;
+    }
+    .pill-blue { background: rgba(56,189,248,0.12); color: var(--accent); }
+    .pill-purple { background: rgba(129,140,248,0.12); color: var(--accent2); }
+    .pill-green { background: rgba(52,211,153,0.12); color: var(--green); }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Breadcrumb -->
+  <div class="breadcrumb">
+    <a href="../index.html">Playground</a>
+    <span>/</span>
+    <a href="index.html">Workshop Planning</a>
+    <span>/</span>
+    Seattle AI Literacy
+  </div>
+
+  <!-- Header -->
+  <div class="page-header">
+    <div class="status-row">
+      <span class="status-badge draft">Draft</span>
+      <span class="status-badge planning">Planning</span>
+    </div>
+    <div class="page-title">🏙️ AI Literacy for Seattle City Staff</div>
+    <div class="page-subtitle">Planning notes for a future workshop or presentation on AI literacy, implications, and applications — grounded in the City of Seattle's 2025–2026 AI Plan and Responsible AI framework.</div>
+    <div class="tag-row">
+      <span class="tag blue">AI Literacy</span>
+      <span class="tag purple">Public Sector</span>
+      <span class="tag green">Seattle City</span>
+      <span class="tag">Workforce Upskilling</span>
+      <span class="tag">Workshop Planning</span>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tab-nav">
+    <button class="tab-btn active" onclick="showTab('context')">📋 Context</button>
+    <button class="tab-btn" onclick="showTab('audience')">👥 Audience</button>
+    <button class="tab-btn" onclick="showTab('themes')">💡 Key Themes</button>
+    <button class="tab-btn" onclick="showTab('formats')">🗂️ Workshop Formats</button>
+    <button class="tab-btn" onclick="showTab('questions')">❓ Open Questions</button>
+    <button class="tab-btn" onclick="showTab('resources')">🔗 Resources</button>
+  </div>
+
+  <!-- ── TAB: Context ── -->
+  <div class="tab-section active" id="tab-context">
+
+    <div class="sec-label">Why this workshop matters</div>
+    <div class="card">
+      <div class="card-title">🎯 Workshop Goal</div>
+      <div class="card-body">Plan and deliver a workshop or presentation on AI literacy, implications, or applications — tailored for a Seattle City audience navigating the City's own AI policies and workforce skilling effort. This page extracts relevant intelligence to sharpen the workshop design.</div>
+    </div>
+
+    <div class="sec-label">What Seattle has already signaled (from the 2025–2026 AI Plan)</div>
+
+    <div class="quote-block">
+      "With so many AI technologies available and innumerable vendors pushing to sell to the City, we face an urgent need to equip its leaders, managers, and employees with foundational knowledge to navigate this evolving landscape responsibly."
+      <div class="quote-source">— City of Seattle 2025–2026 AI Plan, Pillar 3: Workforce Upskilling and Capacity Building</div>
+    </div>
+
+    <div class="sec-label">Extracted signals — what the City is prioritizing</div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <table class="extract-table">
+        <thead>
+          <tr>
+            <th>Signal</th>
+            <th>Detail from Plan</th>
+            <th>Workshop Implication</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Fact vs. Fiction
+              <div class="sub">AI Fundamentals tier</div>
+            </td>
+            <td>All staff must distinguish fact from fiction and understand core AI concepts before applying them.</td>
+            <td>Open with myth-busting and grounding exercises — don't assume any baseline.</td>
+          </tr>
+          <tr>
+            <td>Human Decision-Making
+              <div class="sub">Required by policy</div>
+            </td>
+            <td>Plan explicitly calls out "required human decision-making" as a competency all staff need.</td>
+            <td>Frame AI as decision-support, not decision-replacement. Include scenarios where human override is mandatory.</td>
+          </tr>
+          <tr>
+            <td>Shared Terminology
+              <div class="sub">Cross-dept alignment</div>
+            </td>
+            <td>The City wants one common language across departments to avoid siloed or conflicting AI efforts.</td>
+            <td>Provide a glossary handout. Anchor all activities to the City's own vocabulary.</td>
+          </tr>
+          <tr>
+            <td>Ethics: Bias & Privacy
+              <div class="sub">Trust and equity</div>
+            </td>
+            <td>"Recognize ethical considerations such as bias and privacy" and "uphold community trust."</td>
+            <td>Include a dedicated segment on bias in public-sector AI — real examples from government use cases.</td>
+          </tr>
+          <tr>
+            <td>Data Safeguarding
+              <div class="sub">Sensitive data</div>
+            </td>
+            <td>Staff must know how to "safeguard sensitive data and ensure equity."</td>
+            <td>Cover data classification, what NOT to put in AI tools, and approved platforms.</td>
+          </tr>
+          <tr>
+            <td>Approved Platforms
+              <div class="sub">Technologist tier</div>
+            </td>
+            <td>Technologists need to know "what technologies and platforms the City has approved."</td>
+            <td>If audience includes tech staff — cover the approved toolchain and where to find contracting standards.</td>
+          </tr>
+          <tr>
+            <td>Community of Practice
+              <div class="sub">Ongoing learning</div>
+            </td>
+            <td>Training connects staff to "communities of practice" for shared learning post-training.</td>
+            <td>End with a call-to-action: point attendees to existing City CoPs or offer to start one.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="sec-label">Three training tiers the City is building toward</div>
+    <div class="card-grid">
+      <div class="card">
+        <div class="card-title"><span>📘</span> AI Fundamentals</div>
+        <div class="card-body">For everyone — officials, managers, front-line staff. Fact vs. fiction, core concepts, human oversight, shared terminology. The "informed caution" baseline.</div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span>⚙️</span> AI Approaches</div>
+        <div class="card-body">For decision-makers and direct users. How to match problems to AI technologies, apply correct models, and engage security/privacy/ethics review teams.</div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span>🔧</span> AI Solutions</div>
+        <div class="card-body">For technologists and operational staff. What platforms are approved, where to find technical and contracting standards, how to participate in expert forums.</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── TAB: Audience ── -->
+  <div class="tab-section" id="tab-audience">
+
+    <div class="sec-label">Audience segments identified in the City's plan</div>
+    <div class="card-grid">
+
+      <div class="tier-card">
+        <div class="tier-icon">🏛️</div>
+        <div class="tier-name">Officials & Leaders</div>
+        <div class="tier-role">Department heads, elected officials, senior directors</div>
+        <ul class="tier-goals">
+          <li>Understand strategic AI landscape without hype</li>
+          <li>Know when to approve vs. pause an AI initiative</li>
+          <li>Ask the right accountability questions</li>
+          <li>Recognize bias and equity risks at a policy level</li>
+        </ul>
+      </div>
+
+      <div class="tier-card">
+        <div class="tier-icon">📋</div>
+        <div class="tier-name">Managers & Supervisors</div>
+        <div class="tier-role">Program managers, team leads, operations supervisors</div>
+        <ul class="tier-goals">
+          <li>Match workflow problems to AI approaches</li>
+          <li>Know which vendor claims to trust — and how to verify</li>
+          <li>Understand privacy and data sensitivity for their team</li>
+          <li>Maintain human oversight in automated workflows</li>
+        </ul>
+      </div>
+
+      <div class="tier-card">
+        <div class="tier-icon">👷</div>
+        <div class="tier-name">Front-line Employees</div>
+        <div class="tier-role">Service staff, analysts, clerks, field workers</div>
+        <ul class="tier-goals">
+          <li>Use AI tools confidently and safely in daily work</li>
+          <li>Know what data they can and cannot put into AI systems</li>
+          <li>Recognize when AI output needs human review</li>
+          <li>Raise concerns through the right channels</li>
+        </ul>
+      </div>
+
+      <div class="tier-card">
+        <div class="tier-icon">💻</div>
+        <div class="tier-name">Technologists & IT Staff</div>
+        <div class="tier-role">Developers, data engineers, IT operations, architects</div>
+        <ul class="tier-goals">
+          <li>Know the approved AI platforms and their constraints</li>
+          <li>Apply City contracting and security standards</li>
+          <li>Participate in expert forums and share lessons learned</li>
+          <li>Run ethical and privacy reviews before deployment</li>
+        </ul>
+      </div>
+
+    </div>
+
+    <div class="sec-label">Who is likely in the room for our workshop?</div>
+    <div class="question-card">
+      <div class="question-text">Which tier(s) will we be presenting to?</div>
+      <div class="question-note">The City plan covers all four, but our workshop probably targets one or two. Knowing this drives everything else — content depth, tone, hands-on vs. lecture, jargon level.</div>
+    </div>
+    <div class="question-card">
+      <div class="question-text">What's the mix of technical vs. non-technical attendees?</div>
+      <div class="question-note">A mixed room needs bridging analogies. A homogeneous room can go deeper on one tier faster.</div>
+    </div>
+    <div class="question-card">
+      <div class="question-text">What departments are represented?</div>
+      <div class="question-note">Seattle City has many departments with very different AI exposure — SPD, SDOT, SPU, Seattle IT, Finance, etc. Relevant examples shift significantly.</div>
+    </div>
+
+  </div>
+
+  <!-- ── TAB: Key Themes ── -->
+  <div class="tab-section" id="tab-themes">
+
+    <div class="sec-label">Core content themes — derived from Seattle AI Plan + Responsible AI policy</div>
+
+    <div class="card-grid">
+      <div class="card">
+        <div class="card-title">🧠 AI Fundamentals</div>
+        <div class="card-body">What AI is and isn't. Generative AI vs. predictive AI vs. automation. Where the hype ends and the reality begins. No jargon required.</div>
+      </div>
+      <div class="card">
+        <div class="card-title">⚖️ Responsible AI</div>
+        <div class="card-body">Bias, fairness, and equity in government algorithms. Privacy by design. When AI output must be reviewed by a human before action is taken.</div>
+      </div>
+      <div class="card">
+        <div class="card-title">🔐 Data Safety</div>
+        <div class="card-body">What counts as sensitive data in a public-sector context. What you can and cannot feed into AI tools. Approved platforms vs. shadow AI.</div>
+      </div>
+      <div class="card">
+        <div class="card-title">🤝 Human + AI Collaboration</div>
+        <div class="card-body">AI as decision support, not decision-making. The human-in-the-loop principle. How to verify AI output before acting on it.</div>
+      </div>
+      <div class="card">
+        <div class="card-title">🏙️ Government AI Use Cases</div>
+        <div class="card-body">Real examples from city governments using AI — permit processing, 311 routing, traffic prediction, public records, translation. What worked, what failed.</div>
+      </div>
+      <div class="card">
+        <div class="card-title">🚦 Procurement & Vendor Risk</div>
+        <div class="card-body">How to evaluate AI vendor claims. Red flags in vendor pitches. Seattle's AI policy requirements that vendors must meet. Avoiding vendor lock-in.</div>
+      </div>
+      <div class="card">
+        <div class="card-title">🌐 Community Impact & Equity</div>
+        <div class="card-body">AI effects on Seattle's diverse communities. Historical examples of algorithmic harm in public services. Designing for equity from the start.</div>
+      </div>
+      <div class="card">
+        <div class="card-title">🔭 What's Coming</div>
+        <div class="card-body">Near-term AI trends relevant to city government. Agentic AI and automation pipelines. What to watch for in the next 12–18 months.</div>
+      </div>
+    </div>
+
+    <div class="sec-label">Theme priority mapping — match themes to audience tier</div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <table class="extract-table">
+        <thead>
+          <tr>
+            <th>Theme</th>
+            <th>Officials</th>
+            <th>Managers</th>
+            <th>Front-line</th>
+            <th>Tech Staff</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>AI Fundamentals</td>
+            <td><span class="pill pill-green">Core</span></td>
+            <td><span class="pill pill-green">Core</span></td>
+            <td><span class="pill pill-green">Core</span></td>
+            <td><span class="pill pill-blue">Intro only</span></td>
+          </tr>
+          <tr>
+            <td>Responsible AI</td>
+            <td><span class="pill pill-green">Core</span></td>
+            <td><span class="pill pill-green">Core</span></td>
+            <td><span class="pill pill-blue">Overview</span></td>
+            <td><span class="pill pill-green">Core</span></td>
+          </tr>
+          <tr>
+            <td>Data Safety</td>
+            <td><span class="pill pill-blue">Overview</span></td>
+            <td><span class="pill pill-green">Core</span></td>
+            <td><span class="pill pill-green">Core</span></td>
+            <td><span class="pill pill-green">Core</span></td>
+          </tr>
+          <tr>
+            <td>Human + AI Collaboration</td>
+            <td><span class="pill pill-green">Core</span></td>
+            <td><span class="pill pill-green">Core</span></td>
+            <td><span class="pill pill-green">Core</span></td>
+            <td><span class="pill pill-blue">Overview</span></td>
+          </tr>
+          <tr>
+            <td>Gov AI Use Cases</td>
+            <td><span class="pill pill-green">Core</span></td>
+            <td><span class="pill pill-green">Core</span></td>
+            <td><span class="pill pill-blue">Overview</span></td>
+            <td><span class="pill pill-blue">Overview</span></td>
+          </tr>
+          <tr>
+            <td>Vendor Risk</td>
+            <td><span class="pill pill-green">Core</span></td>
+            <td><span class="pill pill-green">Core</span></td>
+            <td><span class="pill pill-purple">Skip</span></td>
+            <td><span class="pill pill-green">Core</span></td>
+          </tr>
+          <tr>
+            <td>Community Impact</td>
+            <td><span class="pill pill-green">Core</span></td>
+            <td><span class="pill pill-blue">Overview</span></td>
+            <td><span class="pill pill-blue">Overview</span></td>
+            <td><span class="pill pill-blue">Overview</span></td>
+          </tr>
+          <tr>
+            <td>What's Coming</td>
+            <td><span class="pill pill-green">Core</span></td>
+            <td><span class="pill pill-blue">Overview</span></td>
+            <td><span class="pill pill-purple">Skip</span></td>
+            <td><span class="pill pill-green">Core</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <!-- ── TAB: Workshop Formats ── -->
+  <div class="tab-section" id="tab-formats">
+
+    <div class="sec-label">Format options to evaluate</div>
+
+    <div class="format-card">
+      <div class="format-header">
+        <span class="format-icon">⚡</span>
+        <span class="format-name">Lightning Talk (30–45 min)</span>
+        <span class="format-meta">Low commitment · High reach</span>
+      </div>
+      <div class="format-desc">A fast-paced presentation covering the most essential AI literacy concepts. Works well as a conference session, all-hands segment, or lunch-and-learn. No hands-on component.</div>
+      <ul class="format-steps">
+        <li><span class="step-num">1</span>Hook: surprising AI stat or recent government AI story (5 min)</li>
+        <li><span class="step-num">2</span>What AI is and isn't — myth-busting (10 min)</li>
+        <li><span class="step-num">3</span>Seattle AI policy overview — what the City has committed to (10 min)</li>
+        <li><span class="step-num">4</span>Practical rules: what to do and not do with AI at work (10 min)</li>
+        <li><span class="step-num">5</span>Q&A + resources handout (10 min)</li>
+      </ul>
+    </div>
+
+    <div class="format-card">
+      <div class="format-header">
+        <span class="format-icon">🏫</span>
+        <span class="format-name">Half-Day Workshop (3–4 hrs)</span>
+        <span class="format-meta">Medium commitment · Deep learning</span>
+      </div>
+      <div class="format-desc">Covers fundamentals through hands-on application. Small group exercises, scenario analysis, and role-specific breakouts. Aligned with the City's AI Fundamentals + AI Approaches tiers.</div>
+      <ul class="format-steps">
+        <li><span class="step-num">1</span>Module 1: AI Fundamentals — concepts, terms, myth-busting (45 min)</li>
+        <li><span class="step-num">2</span>Module 2: Responsible AI — bias, privacy, equity, human oversight (45 min)</li>
+        <li><span class="step-num">3</span>Break</li>
+        <li><span class="step-num">4</span>Module 3: Hands-on — evaluate real AI outputs, spot issues (45 min)</li>
+        <li><span class="step-num">5</span>Module 4: Role-specific breakouts — what does this mean for my job? (30 min)</li>
+        <li><span class="step-num">6</span>Module 5: Seattle policy + what's next — CoP, resources, next steps (30 min)</li>
+      </ul>
+    </div>
+
+    <div class="format-card">
+      <div class="format-header">
+        <span class="format-icon">🎮</span>
+        <span class="format-name">Scenario-Based Workshop (2 hrs)</span>
+        <span class="format-meta">Engaging · Decision-focused</span>
+      </div>
+      <div class="format-desc">Participants work through 3–4 realistic government AI scenarios in small teams: evaluate a vendor pitch, review an AI-generated decision, respond to a bias complaint, handle a data leak incident. Discussion-heavy, minimal lecture.</div>
+      <ul class="format-steps">
+        <li><span class="step-num">1</span>Brief framing: key principles participants will need (20 min)</li>
+        <li><span class="step-num">2</span>Scenario 1: Evaluating an AI vendor's pitch for your department (25 min)</li>
+        <li><span class="step-num">3</span>Scenario 2: An AI system flagged a resident's benefits application — what now? (25 min)</li>
+        <li><span class="step-num">4</span>Scenario 3: A staff member used a non-approved AI tool on sensitive data (20 min)</li>
+        <li><span class="step-num">5</span>Debrief + policy alignment + resources (20 min)</li>
+      </ul>
+    </div>
+
+    <div class="format-card">
+      <div class="format-header">
+        <span class="format-icon">🔁</span>
+        <span class="format-name">Learning Series (4–6 sessions × 1 hr)</span>
+        <span class="format-meta">High commitment · Sustained change</span>
+      </div>
+      <div class="format-desc">A modular, recurring series — one topic per session — that builds capability over weeks. Best for a team or department that wants genuine transformation, not just awareness. Aligns with all three City training tiers.</div>
+      <ul class="format-steps">
+        <li><span class="step-num">1</span>Session 1: What is AI? (Fundamentals, myths, terminology)</li>
+        <li><span class="step-num">2</span>Session 2: Responsible AI and equity in government</li>
+        <li><span class="step-num">3</span>Session 3: Data safety and approved tools</li>
+        <li><span class="step-num">4</span>Session 4: AI use cases for your department (hands-on)</li>
+        <li><span class="step-num">5</span>Session 5: Procurement and vendor evaluation</li>
+        <li><span class="step-num">6</span>Session 6: What's next — trends, policy, community of practice</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- ── TAB: Open Questions ── -->
+  <div class="tab-section" id="tab-questions">
+
+    <div class="sec-label">Questions to resolve before finalizing the workshop</div>
+
+    <div class="sec-label" style="margin-top:0">About the audience</div>
+    <div class="question-card">
+      <div class="question-text">Who specifically is in the room — and what departments are they from?</div>
+      <div class="question-note">Seattle City has 30+ departments with very different AI exposure. The right examples for SPD are very different from Finance or SDOT.</div>
+    </div>
+    <div class="question-card">
+      <div class="question-text">What's their current baseline? Have they had any AI training before?</div>
+      <div class="question-note">If they have, we skip the basics and go deeper. If not, we budget more time for fundamentals.</div>
+    </div>
+    <div class="question-card">
+      <div class="question-text">Are attendees volunteers or required to attend?</div>
+      <div class="question-note">Motivation and engagement strategy differ significantly. Mandatory training needs more interactive design to maintain attention.</div>
+    </div>
+
+    <div class="sec-label">About the format</div>
+    <div class="question-card">
+      <div class="question-text">How long do we have — and is it one session or recurring?</div>
+      <div class="question-note">30 min, 2 hrs, and half-day each require very different designs. A recurring series requires different commitment from the organizer.</div>
+    </div>
+    <div class="question-card">
+      <div class="question-text">In-person, virtual, or hybrid?</div>
+      <div class="question-note">Hands-on exercises and small-group work are much harder in hybrid. If hybrid, we need facilitation tools (Miro, Slido, Mentimeter, etc.).</div>
+    </div>
+    <div class="question-card">
+      <div class="question-text">Should we use the City's own AI policy documents as workshop material?</div>
+      <div class="question-note">Using official Seattle AI policy text could increase buy-in and institutional credibility — but needs legal/comms clearance to reproduce in materials.</div>
+    </div>
+
+    <div class="sec-label">About the outcome</div>
+    <div class="question-card">
+      <div class="question-text">What do we want participants to be able to DO after the workshop?</div>
+      <div class="question-note">The answer drives everything else. "Know more about AI" is too vague. "Identify when an AI vendor claim needs scrutiny" is concrete and testable.</div>
+    </div>
+    <div class="question-card">
+      <div class="question-text">Is there a follow-on action — a CoP, a pilot project, a policy process?</div>
+      <div class="question-note">A workshop with a clear next step retains learning much better than a standalone event. What can we plug participants into?</div>
+    </div>
+    <div class="question-card">
+      <div class="question-text">Are we connected to the City's CTAB or the official AI skilling program?</div>
+      <div class="question-note">The Community Technology Advisory Board (CTAB) and the City's own workforce skilling program are already in motion. Coordinating (rather than duplicating) adds more value.</div>
+    </div>
+
+  </div>
+
+  <!-- ── TAB: Resources ── -->
+  <div class="tab-section" id="tab-resources">
+
+    <div class="sec-label">Primary sources</div>
+
+    <a class="resource-card" href="https://www.seattle.gov/tech/data-privacy/the-citys-responsible-use-of-artificial-intelligence" target="_blank" rel="noopener">
+      <span class="resource-icon">🏛️</span>
+      <div>
+        <div class="resource-name">Seattle Responsible AI — Overview Page</div>
+        <div class="resource-desc">The City's top-level responsible AI hub. Links to policy, CTAB, and implementation resources.</div>
+        <div class="resource-url">seattle.gov/tech/data-privacy/the-citys-responsible-use-of-artificial-intelligence</div>
+      </div>
+    </a>
+
+    <a class="resource-card" href="https://www.seattle.gov/documents/Departments/Tech/Privacy/AI/Artificial_Intelligence_Policy-POL211.pdf" target="_blank" rel="noopener">
+      <span class="resource-icon">📄</span>
+      <div>
+        <div class="resource-name">Seattle AI Policy — POL-211 (PDF)</div>
+        <div class="resource-desc">The official policy document governing AI use across City departments. Source for compliance, ethics, and procurement requirements.</div>
+        <div class="resource-url">seattle.gov/documents/.../Artificial_Intelligence_Policy-POL211.pdf</div>
+      </div>
+    </a>
+
+    <a class="resource-card" href="https://seattle.gov/documents/Departments/Tech/Privacy/AI/City%20of%20Seattle%202025-2026%20AI%20Plan.pdf" target="_blank" rel="noopener">
+      <span class="resource-icon">📊</span>
+      <div>
+        <div class="resource-name">City of Seattle 2025–2026 AI Plan (PDF)</div>
+        <div class="resource-desc">The strategic AI plan with 5 pillars. Pillar 3 (Workforce Upskilling) is the primary source for this workshop's framing. Pillars 1–2 provide policy and governance context.</div>
+        <div class="resource-url">seattle.gov/documents/.../City%20of%20Seattle%202025-2026%20AI%20Plan.pdf</div>
+      </div>
+    </a>
+
+    <a class="resource-card" href="https://seattle.gov/community-technology-advisory-board/meeting-agendas-and-minutes" target="_blank" rel="noopener">
+      <span class="resource-icon">🤝</span>
+      <div>
+        <div class="resource-name">Community Technology Advisory Board (CTAB) — Agendas & Minutes</div>
+        <div class="resource-desc">CTAB is the civic body advising on tech policy. Meeting minutes reveal current debates, community concerns, and what questions are actually live at the City level.</div>
+        <div class="resource-url">seattle.gov/community-technology-advisory-board/meeting-agendas-and-minutes</div>
+      </div>
+    </a>
+
+    <div class="sec-label">Possible reference material for workshop content</div>
+    <div class="card">
+      <div class="card-title">📚 Content to research next</div>
+      <div class="card-body" style="margin-top:8px">
+        <div style="margin-bottom:8px">• <strong>Algorithmic Justice League</strong> — case studies on bias in government AI (research needed)</div>
+        <div style="margin-bottom:8px">• <strong>NIST AI Risk Management Framework</strong> — government-grade risk framework that aligns with Seattle policy (nist.gov)</div>
+        <div style="margin-bottom:8px">• <strong>AI Now Institute Reports</strong> — annual reports on AI in public sector, often cite government failures and successes</div>
+        <div style="margin-bottom:8px">• <strong>Other city AI policies</strong> — NYC, Boston, San Jose have published AI governance policies we can compare to Seattle's approach</div>
+        <div>• <strong>CTAB meeting minutes from 2024–2025</strong> — what specific AI concerns is the Seattle community raising? Grounding the workshop in real community feedback builds credibility.</div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+  function showTab(name) {
+    document.querySelectorAll(".tab-section").forEach(function(s) {
+      s.classList.remove("active");
+    });
+    document.querySelectorAll(".tab-btn").forEach(function(b) {
+      b.classList.remove("active");
+    });
+    var section = document.getElementById("tab-" + name);
+    if (section) section.classList.add("active");
+    event.currentTarget.classList.add("active");
+  }
+</script>
+</body>
+</html>

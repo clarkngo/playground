@@ -5,6 +5,20 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-04-18
+
+### [feature] Workshop Planning section — AI Literacy for Seattle City Staff
+- New section `workshop-planning/` added to `index.html` with sidebar nav link
+- New file: `workshop-planning/seattle-ai-literacy.html` — planning document for a future AI literacy workshop targeting Seattle City staff
+- Content: 6 tabs (Context, Audience, Key Themes, Workshop Formats, Open Questions, Resources)
+- Extracts intelligence from City of Seattle 2025–2026 AI Plan (Pillar 3: Workforce Upskilling), AI Policy POL-211, and CTAB resources
+- Audience segments: Officials, Managers, Front-line Employees, Technologists
+- Theme priority matrix mapping 8 content themes to 4 audience tiers
+- 4 workshop format options: Lightning Talk, Half-Day, Scenario-Based, Learning Series
+- 9 open questions covering audience, format, and outcome decisions
+
+---
+
 ## 2026-04-15
 
 ### [feature] Module 02 deliverables page with supporting evidence
