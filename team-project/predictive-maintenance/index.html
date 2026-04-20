@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Predictive Maintenance &mdash; Team Project</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0d1117; color: #c9d1d9; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; min-height: 100vh; }
+
+    /* ── Nav ── */
+    .navbar { background: #161b22; border-bottom: 1px solid #30363d; padding: .75rem 1.5rem; display: flex; align-items: center; justify-content: space-between; }
+    .navbar a { color: #e6edf3; text-decoration: none; font-weight: 700; font-size: 1rem; }
+    .navbar a:hover { color: #58a6ff; }
+    .nav-pill { font-size: .78rem; color: #8b949e; }
+
+    .page-body { max-width: 1060px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+    /* ── Breadcrumb ── */
+    .breadcrumb { font-size: .78rem; color: #8b949e; display: flex; align-items: center; gap: .4rem; margin-bottom: .85rem; flex-wrap: wrap; }
+    .breadcrumb a { color: #58a6ff; text-decoration: none; font-weight: 600; }
+    .breadcrumb a:hover { text-decoration: underline; }
+    .breadcrumb span { color: #484f58; }
+
+    /* ── Page header ── */
+    .page-badge { display: inline-block; background: #6e40c9; color: #fff; font-size: .72rem; font-weight: 700; padding: 3px 12px; border-radius: 12px; text-transform: uppercase; letter-spacing: .07em; margin-bottom: .6rem; }
+    h1 { color: #e6edf3; font-size: 1.85rem; font-weight: 800; margin-bottom: .3rem; line-height: 1.2; }
+    .page-sub { color: #8b949e; font-size: .88rem; line-height: 1.7; max-width: 780px; margin-bottom: 1.2rem; }
+
+    /* ── Meta pills ── */
+    .meta-row { display: flex; gap: .6rem; flex-wrap: wrap; margin-bottom: 1.8rem; }
+    .meta-pill { background: #161b22; border: 1px solid #30363d; border-radius: 20px; padding: .3rem .85rem; font-size: .75rem; color: #8b949e; }
+    .meta-pill strong { color: #e6edf3; }
+
+    /* ── Tab nav ── */
+    .tab-nav { display: flex; gap: .25rem; border-bottom: 1px solid #30363d; margin-bottom: 2rem; flex-wrap: wrap; }
+    .tab-btn { background: none; border: none; border-bottom: 2px solid transparent; padding: .65rem 1rem; font-size: .85rem; font-weight: 600; color: #8b949e; cursor: pointer; transition: color .15s, border-color .15s; white-space: nowrap; }
+    .tab-btn:hover { color: #c9d1d9; }
+    .tab-btn.active { color: #bc8cff; border-bottom-color: #6e40c9; }
+
+    /* ── Tab sections ── */
+    .tab-section { display: none; }
+    .tab-section.active { display: block; }
+
+    /* ── Section label ── */
+    .section-label { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #8b949e; border-left: 3px solid #6e40c9; padding-left: .6rem; margin: 2rem 0 1rem; }
+
+    /* ── Cards ── */
+    .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+    .card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1.2rem; }
+    .card-icon { font-size: 1.5rem; margin-bottom: .5rem; }
+    .card h3 { font-size: .95rem; font-weight: 700; color: #e6edf3; margin-bottom: .4rem; }
+    .card p { font-size: .81rem; color: #8b949e; line-height: 1.65; }
+    .card.highlight { border-color: #6e40c9; }
+    .card.green { border-color: #238636; }
+    .card.blue { border-color: #1f6feb; }
+    .card.red { border-color: #da3633; }
+    .card.yellow { border-color: #9e6a03; }
+    .card.teal { border-color: #1a7f64; }
+
+    /* ── Failure mode table ── */
+    .fm-table { width: 100%; border-collapse: collapse; font-size: .82rem; margin-bottom: 1.5rem; }
+    .fm-table th { background: #21262d; color: #e6edf3; font-weight: 700; padding: .6rem .85rem; text-align: left; border-bottom: 1px solid #30363d; }
+    .fm-table td { padding: .55rem .85rem; border-bottom: 1px solid #21262d; vertical-align: top; }
+    .fm-table tr:hover td { background: #161b22; }
+    .fm-code { font-family: monospace; font-size: .78rem; background: #1c2128; padding: 2px 6px; border-radius: 4px; color: #79c0ff; white-space: nowrap; }
+    .fm-count { display: inline-block; background: #2d1a1a; color: #f85149; font-size: .7rem; font-weight: 700; padding: 1px 7px; border-radius: 8px; }
+    .fm-count.rare { background: #2d2009; color: #e3b341; }
+    .fm-count.med  { background: #1a2f1a; color: #3fb950; }
+
+    /* ── XAI insight box ── */
+    .insight-box { background: #161b22; border: 1px solid #30363d; border-left: 4px solid #6e40c9; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+    .insight-box .ib-label { font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: #bc8cff; margin-bottom: .4rem; }
+    .insight-box p { font-size: .83rem; color: #c9d1d9; line-height: 1.7; }
+    .insight-box code { font-family: monospace; background: #1c2128; padding: 1px 5px; border-radius: 3px; color: #79c0ff; font-size: .8rem; }
+
+    .insight-box.green  { border-left-color: #238636; }
+    .insight-box.green .ib-label { color: #3fb950; }
+    .insight-box.blue   { border-left-color: #1f6feb; }
+    .insight-box.blue .ib-label { color: #58a6ff; }
+    .insight-box.yellow { border-left-color: #9e6a03; }
+    .insight-box.yellow .ib-label { color: #e3b341; }
+    .insight-box.red    { border-left-color: #da3633; }
+    .insight-box.red .ib-label { color: #f85149; }
+
+    /* ── Team member cards ── */
+    .member-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(420px, 100%), 1fr)); gap: 1.2rem; margin-bottom: 2rem; }
+    .member-card { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 1.5rem; }
+    .member-card.m1 { border-top: 3px solid #1f6feb; }
+    .member-card.m2 { border-top: 3px solid #238636; }
+    .member-card.m3 { border-top: 3px solid #6e40c9; }
+    .member-card.m4 { border-top: 3px solid #9e6a03; }
+    .member-header { display: flex; align-items: center; gap: .85rem; margin-bottom: 1rem; }
+    .member-num { width: 40px; height: 40px; border-radius: 10px; font-size: .95rem; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #fff; }
+    .member-num.n1 { background: #1f6feb; }
+    .member-num.n2 { background: #238636; }
+    .member-num.n3 { background: #6e40c9; }
+    .member-num.n4 { background: #9e6a03; }
+    .member-title { font-size: 1rem; font-weight: 800; color: #e6edf3; }
+    .member-role  { font-size: .78rem; color: #8b949e; margin-top: .1rem; }
+    .task-list { list-style: none; margin-bottom: 1rem; }
+    .task-list li { display: flex; align-items: flex-start; gap: .65rem; padding: .45rem 0; border-bottom: 1px solid #21262d; font-size: .82rem; color: #c9d1d9; line-height: 1.5; }
+    .task-list li:last-child { border-bottom: none; }
+    .task-text { min-width: 0; flex: 1; overflow-wrap: break-word; word-break: break-word; }
+    .task-text code { white-space: normal; font-size: .78rem; }
+    .task-num { width: 20px; height: 20px; border-radius: 5px; font-size: .68rem; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+    .task-num.t1 { background: #1f3a5c; color: #58a6ff; }
+    .task-num.t2 { background: #1a2f1a; color: #3fb950; }
+    .task-num.t3 { background: #24183a; color: #bc8cff; }
+    .task-num.t4 { background: #2d2009; color: #e3b341; }
+    .deliverable-box { background: #0d1117; border: 1px solid #30363d; border-radius: 7px; padding: .6rem .9rem; font-size: .78rem; }
+    .deliverable-box .db-label { font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #8b949e; margin-bottom: .25rem; }
+    .deliverable-box code { color: #79c0ff; font-family: monospace; font-size: .8rem; word-break: break-all; }
+
+    /* ── Framework table ── */
+    .fw-table { width: 100%; border-collapse: collapse; font-size: .82rem; margin-bottom: 1.5rem; }
+    .fw-table th { background: #21262d; color: #e6edf3; font-weight: 700; padding: .6rem .85rem; text-align: left; border-bottom: 1px solid #30363d; }
+    .fw-table td { padding: .6rem .85rem; border-bottom: 1px solid #21262d; vertical-align: top; line-height: 1.6; }
+    .fw-table tr:hover td { background: #161b22; }
+    .fw-table .fw-sec { font-weight: 700; color: #e6edf3; white-space: nowrap; }
+    .fw-tag { display: inline-block; font-size: .65rem; padding: 1px 7px; border-radius: 6px; font-weight: 600; margin-right: .3rem; }
+    .fw-tag.blue   { background: #1f3a5c; color: #58a6ff; }
+    .fw-tag.green  { background: #1a2f1a; color: #3fb950; }
+    .fw-tag.purple { background: #24183a; color: #bc8cff; }
+    .fw-tag.yellow { background: #2d2009; color: #e3b341; }
+
+    /* ── Course alignment ── */
+    .ch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: .85rem; margin-bottom: 1.5rem; }
+    .ch-card { background: #161b22; border: 1px solid #30363d; border-radius: 9px; padding: 1rem; }
+    .ch-num { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #8b949e; margin-bottom: .25rem; }
+    .ch-title { font-size: .88rem; font-weight: 700; color: #e6edf3; margin-bottom: .4rem; }
+    .ch-use { font-size: .79rem; color: #8b949e; line-height: 1.55; }
+    .ch-badge { display: inline-block; font-size: .65rem; padding: 1px 7px; border-radius: 6px; font-weight: 700; margin-top: .5rem; }
+    .ch-badge.core { background: #24183a; color: #bc8cff; }
+    .ch-badge.used { background: #1f3a5c; color: #58a6ff; }
+    .ch-badge.ctx  { background: #21262d; color: #8b949e; }
+
+    /* ── Reference ── */
+    .ref-box { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1.25rem; margin-bottom: 1rem; }
+    .ref-title { font-size: .95rem; font-weight: 700; color: #e6edf3; margin-bottom: .3rem; }
+    .ref-meta  { font-size: .78rem; color: #8b949e; margin-bottom: .65rem; }
+    .ref-finding { font-size: .81rem; color: #c9d1d9; line-height: 1.65; margin-bottom: .5rem; }
+    .ref-finding strong { color: #e6edf3; }
+
+    /* ── Pipeline diagram ── */
+    .pipeline { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; margin-bottom: 1.5rem; padding: 1rem; background: #161b22; border: 1px solid #30363d; border-radius: 10px; }
+    .pipe-step { background: #24183a; border: 1px solid #6e40c9; border-radius: 8px; padding: .5rem .85rem; font-size: .78rem; font-weight: 700; color: #bc8cff; white-space: nowrap; }
+    .pipe-step.green { background: #1a2f1a; border-color: #238636; color: #3fb950; }
+    .pipe-step.blue  { background: #1f3a5c; border-color: #1f6feb; color: #58a6ff; }
+    .pipe-step.yellow{ background: #2d2009; border-color: #9e6a03; color: #e3b341; }
+    .pipe-arrow { color: #484f58; font-size: 1.1rem; flex-shrink: 0; }
+
+    /* ── Imbalance bar ── */
+    .imbal-wrap { margin-bottom: 1.5rem; }
+    .imbal-bar { height: 28px; background: #21262d; border-radius: 6px; overflow: hidden; display: flex; margin-bottom: .4rem; }
+    .imbal-fail { background: #da3633; height: 100%; display: flex; align-items: center; padding: 0 .6rem; font-size: .72rem; font-weight: 700; color: #fff; white-space: nowrap; }
+    .imbal-ok   { background: #238636; height: 100%; flex: 1; display: flex; align-items: center; padding: 0 .6rem; font-size: .72rem; font-weight: 700; color: #fff; }
+    .imbal-legend { display: flex; gap: 1rem; font-size: .75rem; }
+    .imbal-legend span { display: flex; align-items: center; gap: .35rem; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+    /* ── Paper guide ── */
+    .paper-section { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1.25rem; margin-bottom: 1rem; }
+    .ps-header { display: flex; align-items: center; gap: .75rem; margin-bottom: .75rem; }
+    .ps-num { width: 28px; height: 28px; border-radius: 7px; background: #24183a; color: #bc8cff; font-size: .8rem; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .ps-title { font-size: .95rem; font-weight: 700; color: #e6edf3; }
+    .ps-page  { margin-left: auto; font-size: .72rem; color: #8b949e; white-space: nowrap; }
+    .ps-body  { font-size: .82rem; color: #8b949e; line-height: 1.7; }
+    .ps-body ul { padding-left: 1.1rem; margin-top: .4rem; }
+    .ps-body li { margin-bottom: .3rem; }
+    .ps-body strong { color: #c9d1d9; }
+
+    /* ── Tags ── */
+    .tag-row { display: flex; gap: .35rem; flex-wrap: wrap; margin-bottom: 1rem; }
+    .tag { display: inline-block; font-size: .7rem; padding: 3px 10px; border-radius: 8px; font-weight: 600; }
+    .tag        { background: #21262d; color: #8b949e; }
+    .tag.blue   { background: #1f3a5c; color: #58a6ff; }
+    .tag.green  { background: #1a2f1a; color: #3fb950; }
+    .tag.purple { background: #24183a; color: #bc8cff; }
+    .tag.yellow { background: #2d2009; color: #e3b341; }
+    .tag.red    { background: #2d1a1a; color: #f85149; }
+    .tag.teal   { background: #0a2028; color: #22d3ee; }
+
+    .site-footer { text-align: center; padding: 1.25rem; border-top: 1px solid #21262d; margin-top: 3rem; color: #484f58; font-size: .77rem; }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="../../index.html">&#8592; Playground</a>
+  <span class="nav-pill">Team Projects &rsaquo; Predictive Maintenance</span>
+</nav>
+
+<div class="page-body">
+
+  <div class="breadcrumb">
+    <a href="../../index.html">Playground</a>
+    <span>/</span>
+    <a href="../index.html">Team Projects</a>
+    <span>/</span>
+    <span>Predictive Maintenance</span>
+  </div>
+
+  <div class="page-badge">&#9881; Team Project</div>
+  <h1>Predictive Maintenance for Industrial Equipment</h1>
+  <p class="page-sub">Apache Spark MLlib multiclass classifier predicting machine failure types from the AI4I 2020 dataset. Full ML pipeline, domain deep-dive, team action items, and EDSIG/CONISAR paper guide.</p>
+  <a href="pm.html" style="display:inline-flex;align-items:center;gap:.5rem;background:#1f3a5c;border:1px solid #1f6feb;color:#58a6ff;text-decoration:none;font-size:.82rem;font-weight:700;padding:.45rem 1rem;border-radius:8px;margin-bottom:1.5rem;transition:background .15s;" onmouseover="this.style.background='#1f6feb';this.style.color='#fff'" onmouseout="this.style.background='#1f3a5c';this.style.color='#58a6ff'">&#128203; PM Dashboard &rarr;</a>
+
+  <div class="meta-row">
+    <div class="meta-pill"><strong>Course:</strong> Big Data &amp; Machine Learning</div>
+    <div class="meta-pill"><strong>Dataset:</strong> AI4I 2020 (Kaggle)</div>
+    <div class="meta-pill"><strong>Team Size:</strong> 4 members</div>
+    <div class="meta-pill"><strong>Tool:</strong> Apache Spark MLlib</div>
+    <div class="meta-pill"><strong>Paper:</strong> EDSIG/CONISAR template, 6&ndash;7 pages</div>
+    <div class="meta-pill"><strong>Reference:</strong> Matzka, IEEE AI4I 2020</div>
+  </div>
+
+  <!-- ── Tab Nav ── -->
+  <div class="tab-nav">
+    <button class="tab-btn active" onclick="showTab('domain',  this)">&#127891; Domain Learning</button>
+    <button class="tab-btn"        onclick="showTab('tasks',   this)">&#9989; Team Action Items</button>
+    <button class="tab-btn"        onclick="showTab('framework',this)">&#128196; Project Framework</button>
+    <button class="tab-btn"        onclick="showTab('course',  this)">&#128218; Course Alignment</button>
+    <button class="tab-btn"        onclick="showTab('paper',   this)">&#128394; Paper Guide</button>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       TAB 1 — DOMAIN LEARNING
+  ══════════════════════════════════════════════ -->
+  <div class="tab-section active" id="tab-domain">
+
+    <div class="section-label">What is Predictive Maintenance?</div>
+    <div class="card-grid">
+      <div class="card">
+        <div class="card-icon">&#128308;</div>
+        <h3>Reactive Maintenance</h3>
+        <p>Fix the equipment after it breaks. Lowest planning cost but highest disruption — unplanned downtime averages $260,000/hour in automotive manufacturing.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">&#128993;</div>
+        <h3>Preventive Maintenance</h3>
+        <p>Scheduled maintenance on a fixed calendar interval regardless of actual equipment condition. Reduces breakdowns but wastes resources on healthy equipment.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">&#128992;</div>
+        <h3>Condition-Based Maintenance</h3>
+        <p>Maintenance triggered by real-time sensor thresholds (e.g., temperature exceeds 80&deg;C). Better than time-based, but still reactive once the threshold is crossed.</p>
+      </div>
+      <div class="card highlight">
+        <div class="card-icon">&#128309;</div>
+        <h3>Predictive Maintenance (PdM)</h3>
+        <p>Machine learning predicts <em>when</em> a failure is likely to occur — before it happens. Enables just-in-time maintenance scheduling, reducing costs 10&ndash;25% and downtime 35&ndash;45% (McKinsey).</p>
+      </div>
+    </div>
+
+    <div class="insight-box blue">
+      <div class="ib-label">Industry Context</div>
+      <p>Manufacturing industry loses over $50 billion annually to unplanned downtime. PdM shifts strategy from "fix it when broken" to "fix it before it breaks," using sensor data and historical failure patterns. This project implements that strategy with Apache Spark at scale.</p>
+    </div>
+
+    <div class="section-label">AI4I 2020 Dataset — From the Source Paper</div>
+    <div class="insight-box">
+      <div class="ib-label">Paper Reference</div>
+      <p>Stephan Matzka. <em>"Explainable Artificial Intelligence for Predictive Maintenance Applications."</em> 2020 Third International Conference on Artificial Intelligence for Industries (AI4I). IEEE. This paper <strong>created and published</strong> the dataset — it is the primary reference for understanding feature semantics and failure mode definitions.</p>
+    </div>
+
+    <div class="card-grid">
+      <div class="card blue">
+        <div class="card-icon">&#128202;</div>
+        <h3>10,000 Data Points</h3>
+        <p>Synthetically generated to reflect real industrial conditions. Each row is one machine-process observation with 6 sensor/parameter features plus labels.</p>
+      </div>
+      <div class="card blue">
+        <div class="card-icon">&#128268;</div>
+        <h3>6 Input Features</h3>
+        <p>Air temperature [K], process temperature [K], rotational speed [rpm], torque [Nm], tool wear [min], and product quality variant (L/M/H &rarr; 50/30/20% split).</p>
+      </div>
+      <div class="card red">
+        <div class="card-icon">&#9888;</div>
+        <h3>Severe Class Imbalance</h3>
+        <p>Only 339 out of 10,000 records are labeled as machine failure — <strong>3.39% failure rate</strong>. A naive "predict no failure always" classifier would achieve 96.6% accuracy. Standard accuracy alone is misleading.</p>
+      </div>
+      <div class="card yellow">
+        <div class="card-icon">&#128200;</div>
+        <h3>Asymmetric Misclassification Cost</h3>
+        <p>The paper explicitly sets: <strong>false negative cost = 30&times; false positive cost.</strong> Missing a real failure is far more costly than a false alarm. This shapes which evaluation metric to prioritize.</p>
+      </div>
+    </div>
+
+    <div class="section-label">Class Imbalance — Visual</div>
+    <div class="imbal-wrap">
+      <div class="imbal-bar">
+        <div class="imbal-fail" style="width:3.39%">3.39%</div>
+        <div class="imbal-ok">96.61% — No Failure</div>
+      </div>
+      <div class="imbal-legend">
+        <span><span class="dot" style="background:#da3633"></span> Machine Failure: 339 records</span>
+        <span><span class="dot" style="background:#238636"></span> Normal Operation: 9,661 records</span>
+      </div>
+    </div>
+
+    <div class="section-label">Five Failure Modes — Exact Definitions from the Paper</div>
+    <table class="fm-table">
+      <thead>
+        <tr>
+          <th>Code</th>
+          <th>Name</th>
+          <th>Trigger Condition</th>
+          <th>Count</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="fm-code">TWF</span></td>
+          <td>Tool Wear Failure</td>
+          <td>Tool wear reaches 200&ndash;240 min threshold (randomly sampled per run). Tool is replaced 74 times; fails 46 times. <em>120 total TWF events.</em></td>
+          <td><span class="fm-count med">120</span></td>
+        </tr>
+        <tr>
+          <td><span class="fm-code">HDF</span></td>
+          <td>Heat Dissipation Failure</td>
+          <td>Air-to-process temperature difference &lt; 8.6 K <strong>AND</strong> rotational speed &lt; 1,380 rpm. Both conditions must be true simultaneously.</td>
+          <td><span class="fm-count med">115</span></td>
+        </tr>
+        <tr>
+          <td><span class="fm-code">PWF</span></td>
+          <td>Power Failure</td>
+          <td>Process power = torque &times; angular velocity (rad/s). Failure if power &lt; 3,500 W or &gt; 9,000 W. Operating outside the nominal power envelope.</td>
+          <td><span class="fm-count med">95</span></td>
+        </tr>
+        <tr>
+          <td><span class="fm-code">OSF</span></td>
+          <td>Overstrain Failure</td>
+          <td>Tool wear &times; torque exceeds: L-variant &gt; 11,000, M-variant &gt; 12,000, H-variant &gt; 13,000 (min&middot;Nm). Product quality affects threshold.</td>
+          <td><span class="fm-count med">98</span></td>
+        </tr>
+        <tr>
+          <td><span class="fm-code">RNF</span></td>
+          <td>Random Failure</td>
+          <td>Each process has a 0.1% random chance of failure regardless of any sensor readings. Inherently unpredictable by ML — represents unknown failure causes.</td>
+          <td><span class="fm-count rare">19</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="insight-box yellow">
+      <div class="ib-label">Key Insight — Failure Overlap</div>
+      <p>Multiple failure modes can be true simultaneously for a single data point. The machine failure label is set to <code>1</code> if <em>any</em> failure mode is active. The ML model must therefore untangle which mode caused the failure — this is the multiclass classification challenge. The RNF class is particularly hard to model because no sensor pattern predicts it.</p>
+    </div>
+
+    <div class="section-label">Feature Importance — From the Paper</div>
+    <div class="card-grid">
+      <div class="card highlight">
+        <div class="card-icon">&#128200;</div>
+        <h3>Torque (~35%) — Most Important</h3>
+        <p>The highest predictor importance. Both very low torque (&lt;13.2 Nm) and very high torque (&gt;65 Nm) are associated with failures (PWF, OSF, HDF).</p>
+      </div>
+      <div class="card highlight">
+        <div class="card-icon">&#128260;</div>
+        <h3>Rotational Speed (~30%) — 2nd Most Important</h3>
+        <p>Low rotational speed combined with high torque is a key failure indicator. Appears in HDF and PWF decision boundaries.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">&#128336;</div>
+        <h3>Tool Wear (~20%)</h3>
+        <p>Critical for TWF and OSF. Cumulative wear accumulates over time — the longer a tool is in use, the higher the failure risk above 141.5 min threshold.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">&#127777;</div>
+        <h3>Temperatures (~10%)</h3>
+        <p>Air and process temperature individually have lower importance. The <em>difference</em> between them (temp delta) is what drives HDF. Absolute temperature values matter less.</p>
+      </div>
+    </div>
+
+    <div class="section-label">XAI Concepts — From the Source Paper</div>
+    <div class="card-grid">
+      <div class="card teal">
+        <div class="card-icon">&#128338;</div>
+        <h3>Explainable Models</h3>
+        <p>Inherently interpretable models like shallow decision trees. The paper shows a 4-node decision tree maintenance personnel can read directly: low torque or high torque + high speed + tool wear = failure.</p>
+      </div>
+      <div class="card teal">
+        <div class="card-icon">&#128269;</div>
+        <h3>Explanatory Interfaces (LIME)</h3>
+        <p>Model-agnostic methods applied post-hoc to black-box classifiers. The paper uses normalized feature deviations (similar to LIME) to explain individual predictions. Provides consistent coverage even when decision trees fail.</p>
+      </div>
+      <div class="card teal">
+        <div class="card-icon">&#9878;</div>
+        <h3>Why XAI Matters for PdM</h3>
+        <p>Maintenance engineers need to <em>trust</em> a model before acting on it. "The machine will fail in 4 hours" is not enough — they need to know <em>why</em> so they can verify and prioritize repair actions.</p>
+      </div>
+      <div class="card teal">
+        <div class="card-icon">&#128203;</div>
+        <h3>Explanation Quality Scoring</h3>
+        <p>The paper scores explanations: very useful / partially useful / limited / none. Decision trees give more "very useful" results; normalized feature deviations provide better coverage with fewer "no explanation" outcomes.</p>
+      </div>
+    </div>
+
+    <div class="insight-box green">
+      <div class="ib-label">Decision Tree Example — From the Paper (Fig. 1)</div>
+      <p>The paper demonstrates this readable decision tree trained on torque, rotational speed, and tool wear:<br><br>
+      &bull; <code>torque &lt; 13.2 Nm</code> &rarr; predict failure<br>
+      &bull; <code>torque &ge; 65 Nm</code> AND <code>rotational speed &ge; 1228 rpm</code> &rarr; predict failure<br>
+      &bull; <code>torque &ge; 65 Nm</code> AND <code>tool wear &ge; 141.5 min</code> &rarr; predict failure<br>
+      &bull; All other combinations &rarr; predict normal operation<br><br>
+      This is the type of human-readable explanation XAI aims to produce even from complex black-box models like Random Forests.</p>
+    </div>
+
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       TAB 2 — TEAM ACTION ITEMS
+  ══════════════════════════════════════════════ -->
+  <div class="tab-section" id="tab-tasks">
+
+    <div class="insight-box blue">
+      <div class="ib-label">Team Structure — 4 Members</div>
+      <p>Each member owns a vertical slice of the project with a distinct deliverable notebook or document. Tasks are designed to run in parallel after the data cleaning step (Member 1) is complete. All members contribute to the final paper.</p>
+    </div>
+
+    <div class="member-grid">
+
+      <!-- Member 1 -->
+      <div class="member-card m1">
+        <div class="member-header">
+          <div class="member-num n1">M1</div>
+          <div>
+            <div class="member-title">Data Engineering Lead</div>
+            <div class="member-role">Environment setup &bull; Data ingestion &bull; Cleaning pipeline</div>
+          </div>
+        </div>
+        <ul class="task-list">
+          <li><span class="task-num t1">1</span>Set up Spark environment: install PySpark locally or configure Databricks notebook. Verify Spark session launches without errors.</li>
+          <li><span class="task-num t1">2</span>Download AI4I 2020 dataset from Kaggle (<code>ai4i2020.csv</code>). Upload to Databricks DBFS or local filesystem.</li>
+          <li><span class="task-num t1">3</span>Load CSV into Spark DataFrame. Confirm schema with <code>.printSchema()</code> and record count with <code>.count()</code>.</li>
+          <li><span class="task-num t1">4</span>Drop irrelevant columns: <code>UDI</code> and <code>Product ID</code> (identifier columns, not sensor readings).</li>
+          <li><span class="task-num t1">5</span>Cast feature columns to <code>DoubleType</code>. Cast <code>Type</code> column to <code>StringType</code>. Verify with <code>.dtypes</code>.</li>
+          <li><span class="task-num t1">6</span>Check for null values using <code>.filter(col.isNull()).count()</code> on each column. Document findings.</li>
+          <li><span class="task-num t1">7</span>Apply <code>StringIndexer</code> to encode the <code>Failure Type</code> target label column. Note the label-to-index mapping.</li>
+          <li><span class="task-num t1">8</span>Apply <code>.cache()</code> to the cleaned DataFrame after all transformations. Demonstrate cache hit speed-up (Chapter 7).</li>
+          <li><span class="task-num t1">9</span>Share the cleaned, cached DataFrame reference with Members 2 and 3 via shared notebook or exported Parquet.</li>
+        </ul>
+        <div class="deliverable-box">
+          <div class="db-label">Deliverable</div>
+          <code>01_data_loading_cleaning.ipynb</code> — includes schema, null check output, StringIndexer mapping, and caching benchmark
+        </div>
+      </div>
+
+      <!-- Member 2 -->
+      <div class="member-card m2">
+        <div class="member-header">
+          <div class="member-num n2">M2</div>
+          <div>
+            <div class="member-title">EDA &amp; Analytics Lead</div>
+            <div class="member-role">Spark SQL queries &bull; Feature profiling &bull; Visualizations</div>
+          </div>
+        </div>
+        <ul class="task-list">
+          <li><span class="task-num t2">1</span>Run Spark SQL <code>GROUP BY</code> on <code>Failure Type</code> to count each failure mode. Confirm counts match paper: TWF=120, HDF=115, PWF=95, OSF=98, RNF=19.</li>
+          <li><span class="task-num t2">2</span>Compute <code>mean</code>, <code>stddev</code>, <code>min</code>, <code>max</code> for all five sensor features per failure type. Use <code>.groupBy().agg()</code>.</li>
+          <li><span class="task-num t2">3</span>Reproduce the paper result: show torque and rotational speed have the highest variance between failure classes vs. no-failure class.</li>
+          <li><span class="task-num t2">4</span>Visualize class imbalance as a bar chart (339 failures vs. 9,661 normal). Highlight the challenge for the paper narrative.</li>
+          <li><span class="task-num t2">5</span>Query: for HDF cases, verify that temp difference (process temp minus air temp) is below 8.6 K. Confirm the domain rule holds in the data.</li>
+          <li><span class="task-num t2">6</span>Query: for PWF cases, compute <code>torque * (rotational_speed * 2 * pi / 60)</code> to verify power values fall outside [3500W, 9000W].</li>
+          <li><span class="task-num t2">7</span>Create a feature correlation heatmap (convert Spark DF to Pandas for plotting). Identify which features most correlate with the failure label.</li>
+          <li><span class="task-num t2">8</span>Write the Data Exploration section of the paper (Section 3) using query results and figures as evidence.</li>
+        </ul>
+        <div class="deliverable-box">
+          <div class="db-label">Deliverable</div>
+          <code>02_eda_spark_sql.ipynb</code> + 3&ndash;4 figures (class distribution, feature stats table, correlation heatmap) for inclusion in the paper
+        </div>
+      </div>
+
+      <!-- Member 3 -->
+      <div class="member-card m3">
+        <div class="member-header">
+          <div class="member-num n3">M3</div>
+          <div>
+            <div class="member-title">ML Pipeline Engineer</div>
+            <div class="member-role">Spark ML Pipeline &bull; Hyperparameter tuning &bull; Model evaluation</div>
+          </div>
+        </div>
+        <ul class="task-list">
+          <li><span class="task-num t3">1</span>Build <code>VectorAssembler</code> stage: assemble all five numeric sensor features (air temp, process temp, rotational speed, torque, tool wear) into a single feature vector.</li>
+          <li><span class="task-num t3">2</span>Add <code>StandardScaler</code> stage: normalize feature vector to zero mean and unit variance. Required before distance-sensitive algorithms.</li>
+          <li><span class="task-num t3">3</span>Configure <code>RandomForestClassifier</code> with <code>labelCol</code> pointing to the StringIndexer output from Member 1.</li>
+          <li><span class="task-num t3">4</span>Assemble the full <code>Pipeline</code> object: <code>[StringIndexer, VectorAssembler, StandardScaler, RandomForestClassifier]</code>.</li>
+          <li><span class="task-num t3">5</span>Build <code>ParamGridBuilder</code>: test <code>numTrees</code> in [50, 100, 200] and <code>maxDepth</code> in [5, 10, 15] &rarr; 9 parameter combinations.</li>
+          <li><span class="task-num t3">6</span>Wrap in <code>CrossValidator</code> with 5-fold CV and <code>MulticlassClassificationEvaluator</code> (metric: <code>f1</code>). Fit on training split (80%).</li>
+          <li><span class="task-num t3">7</span>Evaluate best model on test split: report accuracy, weighted F1, precision, recall. Target: accuracy &gt; 0.90, macro F1 &gt; 0.75.</li>
+          <li><span class="task-num t3">8</span>Generate confusion matrix: convert predictions to Pandas, use <code>sklearn.metrics.confusion_matrix</code> to visualize per-class performance. Discuss RNF class (hardest to predict).</li>
+          <li><span class="task-num t3">9</span>Document the caching strategy: show before/after timing for <code>.cache()</code> on the transformed dataset to demonstrate Chapter 7 optimization.</li>
+        </ul>
+        <div class="deliverable-box">
+          <div class="db-label">Deliverable</div>
+          <code>03_ml_pipeline.ipynb</code> — includes pipeline code, CrossValidator results, best hyperparameters, confusion matrix, and caching benchmark
+        </div>
+      </div>
+
+      <!-- Member 4 -->
+      <div class="member-card m4">
+        <div class="member-header">
+          <div class="member-num n4">M4</div>
+          <div>
+            <div class="member-title">Paper &amp; Presentation Lead</div>
+            <div class="member-role">EDSIG/CONISAR template &bull; Paper writing &bull; Slides</div>
+          </div>
+        </div>
+        <ul class="task-list">
+          <li><span class="task-num t4">1</span>Download the EDSIG/CONISAR Word template. Set up the 6&ndash;7 page document with correct fonts, margins, and section headings.</li>
+          <li><span class="task-num t4">2</span>Write the Abstract (~150 words): state the problem, the approach (Spark ML Pipeline + Random Forest), dataset, and expected outcomes.</li>
+          <li><span class="task-num t4">3</span>Write Section 1 — Introduction + Problem Statement: explain predictive maintenance value, the multiclass classification objective, and define success metrics (&gt;0.90 accuracy, &gt;0.75 macro F1).</li>
+          <li><span class="task-num t4">4</span>Write Section 2 — Dataset Selection: describe AI4I 2020 dataset (Matzka 2020), why it was selected, and its key limitation (synthetic, not from a real production line).</li>
+          <li><span class="task-num t4">5</span>Write Section 2b — Data Cleaning: summarize Member 1 transformations (dropped columns, type casting, StringIndexer, caching). Include a table of schema before/after.</li>
+          <li><span class="task-num t4">6</span>Integrate Member 2 figures and summary into Section 3 — Data Exploration. Write narrative explaining failure distributions and feature correlations.</li>
+          <li><span class="task-num t4">7</span>Write Section 4 — ML Method: describe the Spark ML Pipeline stages, RandomForestClassifier choice rationale, CrossValidator configuration. Reference Chapter 7 for caching.</li>
+          <li><span class="task-num t4">8</span>Write Section 5 — Model Evaluation: insert Member 3 confusion matrix and metrics. Discuss per-class F1, highlight RNF difficulty, and note false-negative cost implications.</li>
+          <li><span class="task-num t4">9</span>Write Conclusion + Future Work: summarize results vs. targets. Suggest extending with SHAP/LIME for XAI (referencing the Matzka paper).</li>
+          <li><span class="task-num t4">10</span>Build 10-slide presentation: title, agenda, problem, dataset, pipeline diagram, EDA highlights, results table, confusion matrix, conclusions, next steps.</li>
+        </ul>
+        <div class="deliverable-box">
+          <div class="db-label">Deliverable</div>
+          <code>team_project_paper.docx</code> (EDSIG/CONISAR format, 6&ndash;7 pages) + <code>presentation.pptx</code> (10 slides)
+        </div>
+      </div>
+
+    </div>
+
+    <div class="section-label">Coordination Checkpoints</div>
+    <table class="fw-table">
+      <thead>
+        <tr><th>Checkpoint</th><th>Who</th><th>Gate Condition</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="fw-sec">Kickoff Sync</td>
+          <td>All 4 members</td>
+          <td>Agree on Spark environment (local vs. Databricks), dataset column names, and shared notebook structure before anyone writes code</td>
+        </tr>
+        <tr>
+          <td class="fw-sec">Data Handoff</td>
+          <td>M1 &rarr; M2, M3</td>
+          <td>M1 shares cleaned DataFrame (as Parquet or shared notebook). M2 and M3 cannot start until M1 cleaning is validated</td>
+        </tr>
+        <tr>
+          <td class="fw-sec">EDA Review</td>
+          <td>M2 &rarr; M4</td>
+          <td>M2 shares figures and Spark SQL output. M4 drafts Sections 3 based on these results</td>
+        </tr>
+        <tr>
+          <td class="fw-sec">Model Results Review</td>
+          <td>M3 &rarr; M4</td>
+          <td>M3 shares final metrics (accuracy, F1 per class) and confusion matrix. M4 completes Sections 4&ndash;5</td>
+        </tr>
+        <tr>
+          <td class="fw-sec">Paper Draft Review</td>
+          <td>All 4 members</td>
+          <td>All members review full draft before submission. Check page count (6&ndash;7), citation format, and figure quality</td>
+        </tr>
+      </tbody>
+    </table>
+
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       TAB 3 — PROJECT FRAMEWORK
+  ══════════════════════════════════════════════ -->
+  <div class="tab-section" id="tab-framework">
+
+    <div class="section-label">Project Overview</div>
+    <div class="insight-box">
+      <div class="ib-label">Abstract</div>
+      <p>Unplanned equipment failures in manufacturing environments lead to costly downtime, safety risks, and production losses. This project applies Apache Spark MLlib to the AI4I 2020 Predictive Maintenance dataset to build a multiclass classification model predicting the type of machine failure (or no failure) from real-time sensor data. The team builds a full Spark ML Pipeline with feature engineering, model training, and evaluation stages, with emphasis on Chapter 7 performance optimization using caching and configuration tuning.</p>
+    </div>
+
+    <div class="section-label">Spark ML Pipeline Architecture</div>
+    <div class="pipeline">
+      <div class="pipe-step blue">StringIndexer</div>
+      <div class="pipe-arrow">&#8594;</div>
+      <div class="pipe-step blue">VectorAssembler</div>
+      <div class="pipe-arrow">&#8594;</div>
+      <div class="pipe-step blue">StandardScaler</div>
+      <div class="pipe-arrow">&#8594;</div>
+      <div class="pipe-step">RandomForestClassifier</div>
+      <div class="pipe-arrow">&#8594;</div>
+      <div class="pipe-step green">CrossValidator</div>
+      <div class="pipe-arrow">&#8594;</div>
+      <div class="pipe-step yellow">MulticlassEvaluator</div>
+    </div>
+
+    <div class="section-label">Five-Section Project Framework</div>
+    <table class="fw-table">
+      <thead>
+        <tr><th>Section</th><th>Objective</th><th>Spark Techniques</th><th>Owner</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="fw-sec">1. Problem Statement</td>
+          <td>Define: predict one of 5 failure modes or no-failure. Success = accuracy &gt; 0.90, macro F1 &gt; 0.75</td>
+          <td>&mdash;</td>
+          <td><span class="fw-tag purple">M4</span></td>
+        </tr>
+        <tr>
+          <td class="fw-sec">2a. Dataset Selection</td>
+          <td>Justify AI4I 2020 choice; document limitations (synthetic data, not real production)</td>
+          <td>&mdash;</td>
+          <td><span class="fw-tag purple">M4</span></td>
+        </tr>
+        <tr>
+          <td class="fw-sec">2b. Data Cleaning</td>
+          <td>Drop identifier columns; cast types; check nulls; encode labels; cache DataFrame</td>
+          <td><code>StringIndexer</code>, <code>.cache()</code>, DataFrame transformations</td>
+          <td><span class="fw-tag blue">M1</span></td>
+        </tr>
+        <tr>
+          <td class="fw-sec">3. Exploration &amp; Analysis</td>
+          <td>Summarize failure frequencies; profile feature distributions; validate domain rules</td>
+          <td>Spark SQL, <code>.groupBy().agg()</code>, <code>.describe()</code></td>
+          <td><span class="fw-tag green">M2</span></td>
+        </tr>
+        <tr>
+          <td class="fw-sec">4. ML Method &amp; Training</td>
+          <td>Build Pipeline; tune hyperparameters with CrossValidator; demonstrate caching benefit</td>
+          <td><code>Pipeline</code>, <code>CrossValidator</code>, <code>ParamGridBuilder</code>, <code>RandomForestClassifier</code></td>
+          <td><span class="fw-tag purple">M3</span></td>
+        </tr>
+        <tr>
+          <td class="fw-sec">5. Model Evaluation</td>
+          <td>Report accuracy, weighted F1, precision, recall; confusion matrix; discuss per-class performance</td>
+          <td><code>MulticlassClassificationEvaluator</code>, confusion matrix via Pandas</td>
+          <td><span class="fw-tag purple">M3</span> <span class="fw-tag yellow">M4</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="section-label">Success Criteria</div>
+    <div class="card-grid">
+      <div class="card green">
+        <div class="card-icon">&#10003;</div>
+        <h3>Accuracy &gt; 0.90</h3>
+        <p>Overall multiclass accuracy across all 6 classes (no-failure + 5 failure modes) on the held-out test set.</p>
+      </div>
+      <div class="card green">
+        <div class="card-icon">&#10003;</div>
+        <h3>Macro F1 &gt; 0.75</h3>
+        <p>Unweighted average F1 across all classes. Harder to achieve than weighted F1 due to the severe class imbalance and rare failure modes.</p>
+      </div>
+      <div class="card green">
+        <div class="card-icon">&#10003;</div>
+        <h3>Full Pipeline in Spark</h3>
+        <p>All processing stages implemented as a <code>Pipeline</code> object — no raw Python/pandas logic in the training path.</p>
+      </div>
+      <div class="card yellow">
+        <div class="card-icon">&#9888;</div>
+        <h3>Dataset Limitation Acknowledged</h3>
+        <p>The paper must explicitly note that AI4I 2020 is synthetic. Results may not generalize to a real production floor without validation on live sensor data.</p>
+      </div>
+    </div>
+
+    <div class="section-label">Known Challenges &amp; Mitigations</div>
+    <div class="insight-box red">
+      <div class="ib-label">Challenge: Class Imbalance</div>
+      <p>With only 3.39% failure records, the model may achieve high accuracy by mostly predicting "no failure." Mitigation: use <strong>macro F1</strong> (not just accuracy) as the primary evaluation metric. Consider class weights in <code>RandomForestClassifier</code> via <code>weightCol</code> if available in your Spark version.</p>
+    </div>
+    <div class="insight-box yellow">
+      <div class="ib-label">Challenge: RNF Class</div>
+      <p>Random Failure (19 cases) has no sensor pattern — it is inherently unpredictable. Expect near-zero F1 for this class. Discuss this in the paper as a fundamental limitation rather than a model failure. This validates the domain knowledge from the Matzka paper.</p>
+    </div>
+    <div class="insight-box blue">
+      <div class="ib-label">Challenge: CrossValidator Runtime</div>
+      <p>9 parameter combinations x 5 folds = 45 model fits. This will take several minutes on a local Spark setup. Cache the DataFrame before CrossValidator to avoid recomputing transformations on every fold (Chapter 7 in action).</p>
+    </div>
+
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       TAB 4 — COURSE ALIGNMENT
+  ══════════════════════════════════════════════ -->
+  <div class="tab-section" id="tab-course">
+
+    <div class="section-label">How Each Course Chapter Maps to the Project</div>
+    <div class="ch-grid">
+      <div class="ch-card">
+        <div class="ch-num">Chapter 1</div>
+        <div class="ch-title">Introduction to Apache Spark</div>
+        <div class="ch-use">Understand the driver-executor architecture, DAG scheduler, and lazy evaluation. Explains why <code>.cache()</code> and <code>.count()</code> trigger computation. Foundation for all project work.</div>
+        <span class="ch-badge ctx">Context</span>
+      </div>
+      <div class="ch-card">
+        <div class="ch-num">Chapter 2</div>
+        <div class="ch-title">Downloading Apache Spark &amp; Getting Started</div>
+        <div class="ch-use">Member 1 setup task: install PySpark, configure SparkSession, test with a simple DataFrame. Verify that <code>spark.version</code> returns correctly before proceeding.</div>
+        <span class="ch-badge used">Used — M1</span>
+      </div>
+      <div class="ch-card">
+        <div class="ch-num">Chapter 3</div>
+        <div class="ch-title">Apache Spark Structured APIs</div>
+        <div class="ch-use">Core DataFrame API used throughout: <code>.select()</code>, <code>.filter()</code>, <code>.withColumn()</code>, <code>.cast()</code>. Member 1 uses this for all cleaning transformations.</div>
+        <span class="ch-badge used">Used — M1</span>
+      </div>
+      <div class="ch-card">
+        <div class="ch-num">Chapter 4</div>
+        <div class="ch-title">Spark SQL &amp; Built-in Data Sources</div>
+        <div class="ch-use">Member 2 uses Spark SQL to query failure distributions: <code>SELECT Failure_Type, COUNT(*) FROM sensor_data GROUP BY Failure_Type</code>. Also used to load CSV via <code>spark.read.csv()</code>.</div>
+        <span class="ch-badge core">Core — M2</span>
+      </div>
+      <div class="ch-card">
+        <div class="ch-num">Chapter 5</div>
+        <div class="ch-title">Spark SQL &amp; External Data Sources</div>
+        <div class="ch-use">Writing cleaned data to Parquet format for sharing between Members 1/2/3: <code>df.write.parquet("clean_data/")</code>. Reading back with <code>spark.read.parquet()</code>.</div>
+        <span class="ch-badge used">Used — M1, M2</span>
+      </div>
+      <div class="ch-card">
+        <div class="ch-num">Chapter 6</div>
+        <div class="ch-title">Spark SQL &amp; Datasets</div>
+        <div class="ch-use">Type-safe Dataset API (Scala) or typed operations in Python. Provides context for why DataFrames use schema enforcement and how the <code>StringIndexer</code> output type is controlled.</div>
+        <span class="ch-badge ctx">Context</span>
+      </div>
+      <div class="ch-card">
+        <div class="ch-num">Chapter 7 &#9733;</div>
+        <div class="ch-title">Optimizing and Tuning Spark Applications</div>
+        <div class="ch-use"><strong>Directly demonstrated in this project.</strong> Cache the transformed DataFrame before CrossValidator to avoid recomputing all pipeline stages on each fold. Measure and report the time difference. Also: partition tuning, executor memory configuration.</div>
+        <span class="ch-badge core">Core — M1, M3</span>
+      </div>
+      <div class="ch-card">
+        <div class="ch-num">Chapter 8</div>
+        <div class="ch-title">Structured Streaming</div>
+        <div class="ch-use">Not used in this project but highly relevant context: in a real PdM deployment, sensor data would stream in real time via Kafka. The batch pipeline built here would become a streaming pipeline with <code>readStream</code>.</div>
+        <span class="ch-badge ctx">Future Extension</span>
+      </div>
+      <div class="ch-card">
+        <div class="ch-num">Chapter 9</div>
+        <div class="ch-title">Building Reliable Data Lakes</div>
+        <div class="ch-use">Parquet output from cleaning (M1) is a mini data lake pattern. Delta Lake concepts apply: schema enforcement prevents bad sensor readings from silently corrupting the training set.</div>
+        <span class="ch-badge ctx">Context</span>
+      </div>
+      <div class="ch-card">
+        <div class="ch-num">Chapter 10 &#9733;</div>
+        <div class="ch-title">Machine Learning with MLlib</div>
+        <div class="ch-use"><strong>Core chapter for this project.</strong> Covers <code>Pipeline</code>, <code>Transformer</code>, <code>Estimator</code>, <code>Evaluator</code>, <code>CrossValidator</code>, <code>ParamGridBuilder</code>, <code>VectorAssembler</code>, <code>StandardScaler</code>, <code>RandomForestClassifier</code> — all used by Member 3.</div>
+        <span class="ch-badge core">Core — M3</span>
+      </div>
+    </div>
+
+    <div class="section-label">Key APIs Quick Reference</div>
+    <table class="fw-table">
+      <thead>
+        <tr><th>API / Class</th><th>Purpose in This Project</th><th>Chapter</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>SparkSession.builder.getOrCreate()</code></td><td>Initialize Spark session for all notebooks</td><td>Ch. 2</td></tr>
+        <tr><td><code>spark.read.csv(path, header=True, inferSchema=True)</code></td><td>Load AI4I 2020 CSV into DataFrame</td><td>Ch. 4</td></tr>
+        <tr><td><code>df.drop("UDI", "Product ID")</code></td><td>Remove non-feature identifier columns</td><td>Ch. 3</td></tr>
+        <tr><td><code>df.cache()</code></td><td>Cache cleaned DataFrame to avoid recomputation during CV</td><td>Ch. 7</td></tr>
+        <tr><td><code>StringIndexer(inputCol="Failure Type", outputCol="label")</code></td><td>Encode string labels to numeric indices</td><td>Ch. 10</td></tr>
+        <tr><td><code>VectorAssembler(inputCols=[...], outputCol="features")</code></td><td>Combine sensor columns into feature vector</td><td>Ch. 10</td></tr>
+        <tr><td><code>StandardScaler(inputCol="features", outputCol="scaledFeatures")</code></td><td>Normalize feature magnitudes</td><td>Ch. 10</td></tr>
+        <tr><td><code>RandomForestClassifier(labelCol="label", featuresCol="scaledFeatures")</code></td><td>Train multiclass classifier</td><td>Ch. 10</td></tr>
+        <tr><td><code>CrossValidator(estimator=pipeline, evaluator=evaluator, numFolds=5)</code></td><td>K-fold hyperparameter search</td><td>Ch. 10</td></tr>
+        <tr><td><code>MulticlassClassificationEvaluator(metricName="f1")</code></td><td>Compute weighted F1 score on test set</td><td>Ch. 10</td></tr>
+      </tbody>
+    </table>
+
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       TAB 5 — PAPER GUIDE
+  ══════════════════════════════════════════════ -->
+  <div class="tab-section" id="tab-paper">
+
+    <div class="insight-box blue">
+      <div class="ib-label">EDSIG/CONISAR Template Requirements</div>
+      <p>Paper length: <strong>6&ndash;7 pages</strong>. Use the EDSIG template (two-column IEEE-style format). Include author names, institution, abstract, keywords, numbered sections, references in IEEE format, and figures with captions. Conference submission is optional and does not affect course grade.</p>
+    </div>
+
+    <div class="section-label">Recommended Paper Structure</div>
+
+    <div class="paper-section">
+      <div class="ps-header">
+        <div class="ps-num">I</div>
+        <div class="ps-title">Abstract + Introduction</div>
+        <div class="ps-page">~0.5 pages</div>
+      </div>
+      <div class="ps-body">
+        <ul>
+          <li><strong>Abstract (~150 words):</strong> State the manufacturing downtime problem, the Spark + Random Forest approach, the AI4I 2020 dataset, and the success metrics.</li>
+          <li><strong>Introduction:</strong> Frame predictive maintenance as a Big Data challenge requiring scalable ML. State why Apache Spark is the right tool at industrial scale.</li>
+          <li><strong>Keywords:</strong> predictive maintenance, Apache Spark, MLlib, Random Forest, multiclass classification, AI4I 2020</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="paper-section">
+      <div class="ps-header">
+        <div class="ps-num">II</div>
+        <div class="ps-title">Problem Statement + Dataset Selection</div>
+        <div class="ps-page">~1 page</div>
+      </div>
+      <div class="ps-body">
+        <ul>
+          <li><strong>Problem:</strong> Predict one of 5 failure modes (TWF, HDF, PWF, OSF, RNF) or no-failure from sensor readings. Define success: accuracy &gt; 0.90, macro F1 &gt; 0.75.</li>
+          <li><strong>Dataset:</strong> AI4I 2020 (Matzka, IEEE AI4I 2020). 10,000 synthetic records. Cite the paper: Matzka, S. (2020). "Explainable Artificial Intelligence for Predictive Maintenance Applications." IEEE AI4I.</li>
+          <li><strong>Limitations:</strong> Synthetic data generated from rules — not collected from a real factory floor. Model performance may not generalize to production environments without real-world validation.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="paper-section">
+      <div class="ps-header">
+        <div class="ps-num">III</div>
+        <div class="ps-title">Data Cleaning</div>
+        <div class="ps-page">~0.5 pages</div>
+      </div>
+      <div class="ps-body">
+        <ul>
+          <li>Describe each transformation: column drops, type casts, null checks, StringIndexer encoding.</li>
+          <li>Include a before/after schema table (column name, original type, transformed type).</li>
+          <li>Mention DataFrame caching here: explain that <code>.cache()</code> stores the cleaned DataFrame in memory, preventing re-execution of all transformations during CrossValidator folds (Chapter 7 reference).</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="paper-section">
+      <div class="ps-header">
+        <div class="ps-num">IV</div>
+        <div class="ps-title">Data Exploration &amp; Analysis</div>
+        <div class="ps-page">~1 page</div>
+      </div>
+      <div class="ps-body">
+        <ul>
+          <li>Show failure type distribution table (counts matching Matzka 2020 paper) — validates your data load is correct.</li>
+          <li>Include feature statistics table (mean/stddev per failure class) and the class imbalance chart.</li>
+          <li>Discuss the key finding: torque and rotational speed are the most discriminative features. This sets up the model choice.</li>
+          <li>Show at least two Spark SQL queries (not just Python code) to demonstrate the Spark SQL requirement.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="paper-section">
+      <div class="ps-header">
+        <div class="ps-num">V</div>
+        <div class="ps-title">ML Method Selection &amp; Model Training</div>
+        <div class="ps-page">~1 page</div>
+      </div>
+      <div class="ps-body">
+        <ul>
+          <li>Explain why Random Forest: handles class imbalance better than logistic regression, provides feature importance, and is an ensemble of decision trees — directly analogous to the bagged trees classifier in Matzka 2020.</li>
+          <li>Describe the Pipeline stages with a flow diagram (StringIndexer &rarr; VectorAssembler &rarr; StandardScaler &rarr; RFC).</li>
+          <li>Describe CrossValidator: 9 param combinations, 5 folds, F1 as primary metric.</li>
+          <li>Report best hyperparameters found: numTrees=X, maxDepth=Y.</li>
+          <li>Include caching benchmark: time to fit pipeline WITH cache vs. WITHOUT cache. This directly demonstrates Chapter 7.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="paper-section">
+      <div class="ps-header">
+        <div class="ps-num">VI</div>
+        <div class="ps-title">Model Evaluation</div>
+        <div class="ps-page">~1 page</div>
+      </div>
+      <div class="ps-body">
+        <ul>
+          <li>Report: overall accuracy, weighted F1, weighted precision, weighted recall on test set.</li>
+          <li>Include confusion matrix as a figure. Label all 6 classes clearly.</li>
+          <li>Discuss per-class F1: expect high F1 for No-Failure and TWF/HDF; expect low F1 for RNF (only 19 cases, no predictive pattern).</li>
+          <li>Connect to domain: a false negative (missed failure) is 30x more costly than a false positive — discuss what your recall for failure classes implies in operational terms.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="paper-section">
+      <div class="ps-header">
+        <div class="ps-num">VII</div>
+        <div class="ps-title">Conclusion &amp; Future Work</div>
+        <div class="ps-page">~0.5 pages</div>
+      </div>
+      <div class="ps-body">
+        <ul>
+          <li>State whether the team met the success criteria (accuracy &gt; 0.90, macro F1 &gt; 0.75).</li>
+          <li>Discuss limitations: synthetic data, RNF class unpredictability, batch-only (not streaming).</li>
+          <li><strong>Future Work (strong suggestion):</strong> Extend with SHAP or LIME (as referenced in Matzka 2020) to explain individual predictions — making the model actionable for maintenance engineers who need to understand <em>why</em> a failure is predicted, not just <em>that</em> it will fail.</li>
+          <li>Mention Structured Streaming (Chapter 8) as a natural extension to process real-time sensor feeds.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="section-label">References to Include</div>
+    <div class="ref-box">
+      <div class="ref-title">[1] Primary Dataset &amp; XAI Paper</div>
+      <div class="ref-meta">Matzka, S. (2020). Explainable Artificial Intelligence for Predictive Maintenance Applications. <em>2020 Third International Conference on Artificial Intelligence for Industries (AI4I)</em>. IEEE. DOI: 10.1109/AI4I49448.2020.00023</div>
+      <div class="ref-finding">This paper creates the AI4I 2020 dataset used in this project. It defines all 5 failure modes with exact thresholds, establishes that torque and rotational speed are the most important features, and introduces the XAI approaches of explainable decision trees and normalized feature deviations for explaining maintenance predictions.</div>
+    </div>
+    <div class="ref-box">
+      <div class="ref-title">[2] Course Textbook</div>
+      <div class="ref-meta">Chambers, B. &amp; Zaharia, M. (2018). <em>Spark: The Definitive Guide.</em> O&#39;Reilly Media.</div>
+      <div class="ref-finding">Reference Chapters 7 (optimization/caching) and 10 (MLlib) specifically. Cite when describing the pipeline architecture and the caching strategy.</div>
+    </div>
+    <div class="ref-box">
+      <div class="ref-title">[3] Interpretable ML (for XAI Future Work)</div>
+      <div class="ref-meta">Molnar, C. (2020). <em>Interpretable Machine Learning.</em> Available: https://christophm.github.io/interpretable-ml-book/</div>
+      <div class="ref-finding">Referenced in the Matzka paper. Cite in future work section when suggesting SHAP/LIME as extensions to add explainability to the Random Forest model.</div>
+    </div>
+
+  </div>
+
+</div>
+
+<footer class="site-footer">&copy; Clark Ngo &mdash; CityU MBA Team Projects</footer>
+
+<script>
+  function showTab(name, btn) {
+    document.querySelectorAll(".tab-section").forEach(function(s) { s.classList.remove("active"); });
+    document.querySelectorAll(".tab-btn").forEach(function(b) { b.classList.remove("active"); });
+    document.getElementById("tab-" + name).classList.add("active");
+    btn.classList.add("active");
+  }
+
+  document.querySelectorAll(".task-list li").forEach(function(li) {
+    var badge = li.querySelector(".task-num");
+    if (!badge) return;
+    var nodes = Array.from(li.childNodes).filter(function(n) { return n !== badge; });
+    var wrap = document.createElement("span");
+    wrap.className = "task-text";
+    nodes.forEach(function(n) { wrap.appendChild(n); });
+    li.appendChild(wrap);
+  });
+</script>
+</body>
+</html>

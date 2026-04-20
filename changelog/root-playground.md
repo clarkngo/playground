@@ -5,6 +5,30 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-04-19
+
+### [feature] PM Dashboard for Predictive Maintenance team project
+- New file: `team-project/predictive-maintenance/pm.html` — 5-tab interactive project management dashboard
+- **Tab 1 — Dashboard:** per-member progress cards with live progress bars (driven by localStorage task state); overall completion bar; next-actions priority list
+- **Tab 2 — Task Board:** interactive Kanban with 36 tasks across M1–M4; click-to-cycle status (To Do → In Progress → Done → To Do); state persists in localStorage; Reset All button
+- **Tab 3 — Timeline:** 6-week Gantt-style table with per-member tasks per week, milestone markers, and key dependency table
+- **Tab 4 — Risks:** 8-row risk register with severity/probability ratings and mitigations (class imbalance, CrossValidator runtime, StringIndexer label order, etc.)
+- **Tab 5 — Meetings:** 4 accordion meeting entries (Kickoff, Data Handoff, Mid-project, Final Review) each with agenda and action item checkboxes persisted in localStorage
+- Added PM Dashboard button link to `team-project/predictive-maintenance/index.html` header
+- Bug fix: task-list text overflow in Team Action Items tab — switched from flex anonymous text node to JS-wrapped `.task-text` span with `min-width:0; flex:1; overflow-wrap:break-word`
+
+### [feature] Team Projects section — Predictive Maintenance
+- New top-level directory `team-project/` added under Classroom in sidebar nav and main `index.html`
+- New file: `team-project/index.html` — collection index listing all team projects
+- New file: `team-project/predictive-maintenance/index.html` — full 5-tab project workspace for the Big Data & ML course team project
+- **Tab 1 — Domain Learning:** PdM maintenance types (reactive → predictive), AI4I 2020 dataset details sourced directly from Matzka IEEE AI4I 2020 paper, all 5 failure modes with exact trigger thresholds (TWF/HDF/PWF/OSF/RNF), feature importance findings, XAI concepts (explainable decision trees, LIME), class imbalance visualization (3.39% failure rate), asymmetric cost insight (false negative = 30× false positive)
+- **Tab 2 — Team Action Items:** 4-member task boards (M1: Data Engineering Lead, M2: EDA & Analytics Lead, M3: ML Pipeline Engineer, M4: Paper & Presentation Lead) with numbered tasks and named deliverable notebooks; coordination checkpoint table
+- **Tab 3 — Project Framework:** abstract, Spark ML pipeline diagram, 5-section framework table with owners, success criteria cards, known challenges with mitigations (class imbalance, RNF unpredictability, CrossValidator runtime)
+- **Tab 4 — Course Alignment:** all 10 course chapters mapped to project tasks; quick-reference API table for every Spark/MLlib class used
+- **Tab 5 — Paper Guide:** EDSIG/CONISAR structure (7 sections with page budgets), 3 required references with citation text
+
+---
+
 ## 2026-04-18
 
 ### [feature] Workshop Planning section — AI Literacy for Seattle City Staff
