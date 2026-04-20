@@ -7,6 +7,15 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-04-19
+
+### [feature] PM Dashboard — interactive Kanban, timeline, risks, meeting log for Predictive Maintenance project
+
+### [feature] Team Projects section — Predictive Maintenance (Spark MLlib)
+- New `team-project/` directory with 5-tab project workspace: domain learning (AI4I 2020 failure modes, XAI), 4-member action items, project framework, course alignment, and EDSIG/CONISAR paper guide
+
+---
+
 ## 2026-04-18
 
 ### [ux] Collapsible content sections + collapsible sidebar nav

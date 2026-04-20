@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PM Dashboard &mdash; Predictive Maintenance</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0d1117; color: #c9d1d9; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; min-height: 100vh; }
+
+    /* ── Nav ── */
+    .navbar { background: #161b22; border-bottom: 1px solid #30363d; padding: .75rem 1.5rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+    .navbar a { color: #e6edf3; text-decoration: none; font-weight: 700; font-size: 1rem; }
+    .navbar a:hover { color: #58a6ff; }
+    .nav-right { display: flex; align-items: center; gap: .75rem; }
+    .nav-pill { font-size: .78rem; color: #8b949e; }
+    .nav-link-sm { font-size: .78rem; color: #58a6ff; text-decoration: none; }
+    .nav-link-sm:hover { text-decoration: underline; }
+
+    .page-body { max-width: 1100px; margin: 0 auto; padding: 1.75rem 1.5rem 4rem; }
+
+    /* ── Breadcrumb ── */
+    .breadcrumb { font-size: .78rem; color: #8b949e; display: flex; align-items: center; gap: .4rem; margin-bottom: .85rem; flex-wrap: wrap; }
+    .breadcrumb a { color: #58a6ff; text-decoration: none; font-weight: 600; }
+    .breadcrumb span { color: #484f58; }
+
+    /* ── Header ── */
+    .page-badge { display: inline-block; background: #1f6feb; color: #fff; font-size: .72rem; font-weight: 700; padding: 3px 12px; border-radius: 12px; text-transform: uppercase; letter-spacing: .07em; margin-bottom: .6rem; }
+    h1 { color: #e6edf3; font-size: 1.65rem; font-weight: 800; margin-bottom: .3rem; }
+    .page-sub { color: #8b949e; font-size: .86rem; margin-bottom: 1.2rem; }
+
+    /* ── Stat strip ── */
+    .stat-strip { display: flex; gap: .75rem; flex-wrap: wrap; margin-bottom: 1.8rem; }
+    .stat { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: .75rem 1.1rem; min-width: 100px; }
+    .stat-val { font-size: 1.6rem; font-weight: 800; color: #e6edf3; line-height: 1; margin-bottom: .2rem; }
+    .stat-val.blue   { color: #58a6ff; }
+    .stat-val.yellow { color: #e3b341; }
+    .stat-val.green  { color: #3fb950; }
+    .stat-val.purple { color: #bc8cff; }
+    .stat-label { font-size: .7rem; color: #8b949e; text-transform: uppercase; letter-spacing: .07em; }
+
+    /* ── Tabs ── */
+    .tab-nav { display: flex; gap: .25rem; border-bottom: 1px solid #30363d; margin-bottom: 1.75rem; flex-wrap: wrap; }
+    .tab-btn { background: none; border: none; border-bottom: 2px solid transparent; padding: .65rem 1rem; font-size: .85rem; font-weight: 600; color: #8b949e; cursor: pointer; transition: color .15s, border-color .15s; white-space: nowrap; }
+    .tab-btn:hover { color: #c9d1d9; }
+    .tab-btn.active { color: #58a6ff; border-bottom-color: #1f6feb; }
+    .tab-section { display: none; }
+    .tab-section.active { display: block; }
+
+    /* ── Section label ── */
+    .section-label { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #8b949e; border-left: 3px solid #1f6feb; padding-left: .6rem; margin: 1.75rem 0 1rem; }
+    .section-label:first-child { margin-top: 0; }
+
+    /* ── Member legend ── */
+    .member-legend { display: flex; gap: .75rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
+    .legend-item { display: flex; align-items: center; gap: .4rem; font-size: .78rem; color: #8b949e; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+
+    /* ── Kanban ── */
+    .kanban { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+    .kanban-col { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1rem; min-height: 200px; }
+    .col-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: .85rem; }
+    .col-title { font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
+    .col-title.todo   { color: #8b949e; }
+    .col-title.doing  { color: #e3b341; }
+    .col-title.done   { color: #3fb950; }
+    .col-count { font-size: .7rem; background: #21262d; color: #8b949e; padding: 1px 7px; border-radius: 10px; font-weight: 700; }
+    .task-card { background: #0d1117; border: 1px solid #30363d; border-radius: 7px; padding: .6rem .75rem; margin-bottom: .5rem; cursor: pointer; transition: border-color .15s, opacity .15s; user-select: none; }
+    .task-card:hover { border-color: #58a6ff; }
+    .task-card.done-card { opacity: .5; }
+    .card-owner { font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; margin-bottom: .25rem; }
+    .card-owner.m1 { color: #58a6ff; }
+    .card-owner.m2 { color: #3fb950; }
+    .card-owner.m3 { color: #bc8cff; }
+    .card-owner.m4 { color: #e3b341; }
+    .card-text { font-size: .8rem; color: #c9d1d9; line-height: 1.45; overflow-wrap: break-word; word-break: break-word; }
+    .card-text code { font-size: .74rem; background: #1c2128; padding: 1px 4px; border-radius: 3px; color: #79c0ff; white-space: normal; word-break: break-word; }
+    .card-hint { font-size: .68rem; color: #484f58; margin-top: .3rem; }
+    .kanban-empty { font-size: .78rem; color: #484f58; text-align: center; padding: 1.5rem 0; font-style: italic; }
+
+    /* ── Timeline ── */
+    .timeline-grid { margin-bottom: 1.5rem; overflow-x: auto; }
+    .tl-table { width: 100%; border-collapse: collapse; font-size: .8rem; min-width: 560px; }
+    .tl-table th { background: #21262d; color: #8b949e; font-size: .68rem; text-transform: uppercase; letter-spacing: .07em; padding: .5rem .6rem; border: 1px solid #30363d; text-align: center; }
+    .tl-table td { padding: .45rem .6rem; border: 1px solid #21262d; vertical-align: top; }
+    .tl-week { font-weight: 700; color: #e6edf3; font-size: .78rem; white-space: nowrap; }
+    .tl-owner { font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; margin-bottom: .15rem; }
+    .tl-owner.m1 { color: #58a6ff; }
+    .tl-owner.m2 { color: #3fb950; }
+    .tl-owner.m3 { color: #bc8cff; }
+    .tl-owner.m4 { color: #e3b341; }
+    .tl-task { font-size: .77rem; color: #c9d1d9; margin-bottom: .2rem; }
+    .tl-milestone { display: inline-block; font-size: .68rem; font-weight: 700; background: #1f3a5c; color: #58a6ff; padding: 1px 8px; border-radius: 8px; margin-top: .3rem; }
+    .tl-milestone.green  { background: #1a2f1a; color: #3fb950; }
+    .tl-milestone.purple { background: #24183a; color: #bc8cff; }
+    .tl-milestone.yellow { background: #2d2009; color: #e3b341; }
+    .tl-milestone.red    { background: #2d1a1a; color: #f85149; }
+
+    /* ── Risk Register ── */
+    .risk-table { width: 100%; border-collapse: collapse; font-size: .81rem; margin-bottom: 1.5rem; }
+    .risk-table th { background: #21262d; color: #e6edf3; font-weight: 700; padding: .6rem .85rem; text-align: left; border-bottom: 1px solid #30363d; font-size: .78rem; }
+    .risk-table td { padding: .6rem .85rem; border-bottom: 1px solid #21262d; vertical-align: top; line-height: 1.55; }
+    .risk-table tr:hover td { background: #161b22; }
+    .sev { display: inline-block; font-size: .65rem; font-weight: 700; padding: 2px 8px; border-radius: 6px; text-transform: uppercase; white-space: nowrap; }
+    .sev.high   { background: #2d1a1a; color: #f85149; border: 1px solid #da3633; }
+    .sev.med    { background: #2d2009; color: #e3b341; border: 1px solid #9e6a03; }
+    .sev.low    { background: #1a2f1a; color: #3fb950; border: 1px solid #238636; }
+    .risk-owner { font-size: .7rem; color: #8b949e; margin-top: .2rem; }
+
+    /* ── Meeting Log ── */
+    .meeting-entry { background: #161b22; border: 1px solid #30363d; border-radius: 10px; margin-bottom: .85rem; overflow: hidden; }
+    .meeting-header { display: flex; align-items: center; gap: .85rem; padding: .9rem 1.1rem; cursor: pointer; user-select: none; }
+    .meeting-header:hover { background: #1c2128; }
+    .meeting-date { font-size: .75rem; font-weight: 700; color: #58a6ff; white-space: nowrap; }
+    .meeting-title { font-size: .88rem; font-weight: 700; color: #e6edf3; flex: 1; }
+    .meeting-chevron { color: #8b949e; font-size: .8rem; transition: transform .2s; flex-shrink: 0; }
+    .meeting-entry.open .meeting-chevron { transform: rotate(180deg); }
+    .meeting-body { display: none; padding: 0 1.1rem 1.1rem; border-top: 1px solid #30363d; }
+    .meeting-entry.open .meeting-body { display: block; }
+    .mb-section { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #8b949e; margin: .85rem 0 .4rem; }
+    .mb-list { list-style: none; }
+    .mb-list li { font-size: .82rem; color: #c9d1d9; padding: .3rem 0; border-bottom: 1px solid #21262d; line-height: 1.5; display: flex; gap: .5rem; }
+    .mb-list li:last-child { border-bottom: none; }
+    .mb-list li::before { content: "•"; color: #484f58; flex-shrink: 0; }
+    .action-item { display: flex; align-items: flex-start; gap: .5rem; padding: .35rem 0; border-bottom: 1px solid #21262d; font-size: .82rem; }
+    .action-item:last-child { border-bottom: none; }
+    .action-cb { width: 15px; height: 15px; border: 1px solid #30363d; border-radius: 3px; background: #0d1117; cursor: pointer; flex-shrink: 0; margin-top: 2px; display: flex; align-items: center; justify-content: center; font-size: .6rem; color: #3fb950; }
+    .action-cb.checked { background: #1a2f1a; border-color: #238636; }
+    .action-text { flex: 1; overflow-wrap: break-word; word-break: break-word; }
+    .action-owner { font-size: .68rem; color: #8b949e; white-space: nowrap; }
+
+    /* ── Dashboard member cards ── */
+    .dash-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr)); gap: .85rem; margin-bottom: 1.5rem; }
+    .dash-card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1rem; }
+    .dash-card.m1 { border-top: 3px solid #1f6feb; }
+    .dash-card.m2 { border-top: 3px solid #238636; }
+    .dash-card.m3 { border-top: 3px solid #6e40c9; }
+    .dash-card.m4 { border-top: 3px solid #9e6a03; }
+    .dash-member { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; margin-bottom: .3rem; }
+    .dash-member.m1 { color: #58a6ff; }
+    .dash-member.m2 { color: #3fb950; }
+    .dash-member.m3 { color: #bc8cff; }
+    .dash-member.m4 { color: #e3b341; }
+    .dash-role { font-size: .88rem; font-weight: 700; color: #e6edf3; margin-bottom: .6rem; }
+    .dash-bar-wrap { background: #0d1117; border-radius: 4px; height: 6px; margin-bottom: .4rem; overflow: hidden; }
+    .dash-bar { height: 100%; border-radius: 4px; transition: width .4s ease; }
+    .dash-bar.m1 { background: #1f6feb; }
+    .dash-bar.m2 { background: #238636; }
+    .dash-bar.m3 { background: #6e40c9; }
+    .dash-bar.m4 { background: #9e6a03; }
+    .dash-pct { font-size: .7rem; color: #8b949e; }
+    .dash-deliverable { font-size: .72rem; color: #8b949e; margin-top: .5rem; border-top: 1px solid #21262d; padding-top: .5rem; overflow-wrap: break-word; word-break: break-word; }
+    .dash-deliverable code { color: #79c0ff; font-size: .72rem; }
+
+    /* ── Next actions ── */
+    .next-actions { background: #161b22; border: 1px solid #30363d; border-left: 4px solid #1f6feb; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; }
+    .na-label { font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: #58a6ff; margin-bottom: .65rem; }
+    .na-item { display: flex; align-items: flex-start; gap: .65rem; padding: .3rem 0; font-size: .82rem; color: #c9d1d9; border-bottom: 1px solid #21262d; }
+    .na-item:last-child { border-bottom: none; }
+    .na-badge { font-size: .65rem; font-weight: 700; padding: 1px 7px; border-radius: 6px; white-space: nowrap; flex-shrink: 0; margin-top: 2px; }
+    .na-badge.m1 { background: #1f3a5c; color: #58a6ff; }
+    .na-badge.m2 { background: #1a2f1a; color: #3fb950; }
+    .na-badge.m3 { background: #24183a; color: #bc8cff; }
+    .na-badge.m4 { background: #2d2009; color: #e3b341; }
+    .na-badge.all { background: #21262d; color: #8b949e; }
+
+    .site-footer { text-align: center; padding: 1.25rem; border-top: 1px solid #21262d; margin-top: 3rem; color: #484f58; font-size: .77rem; }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="../../index.html">&#8592; Playground</a>
+  <div class="nav-right">
+    <a href="index.html" class="nav-link-sm">&#8617; Project Page</a>
+    <span class="nav-pill">PM Dashboard &rsaquo; Predictive Maintenance</span>
+  </div>
+</nav>
+
+<div class="page-body">
+
+  <div class="breadcrumb">
+    <a href="../../index.html">Playground</a>
+    <span>/</span>
+    <a href="../index.html">Team Projects</a>
+    <span>/</span>
+    <a href="index.html">Predictive Maintenance</a>
+    <span>/</span>
+    <span>PM Dashboard</span>
+  </div>
+
+  <div class="page-badge">&#128203; PM Dashboard</div>
+  <h1>Project Management Dashboard</h1>
+  <p class="page-sub">Task board, timeline, risk register, and meeting log for the Predictive Maintenance team project.</p>
+
+  <!-- Stat strip — populated by JS -->
+  <div class="stat-strip">
+    <div class="stat">
+      <div class="stat-val" id="stat-total">—</div>
+      <div class="stat-label">Total Tasks</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val green" id="stat-done">—</div>
+      <div class="stat-label">Done</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val yellow" id="stat-doing">—</div>
+      <div class="stat-label">In Progress</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val blue" id="stat-todo">—</div>
+      <div class="stat-label">To Do</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val purple" id="stat-pct">—</div>
+      <div class="stat-label">% Complete</div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tab-nav">
+    <button class="tab-btn active" onclick="showTab('dashboard', this)">&#128200; Dashboard</button>
+    <button class="tab-btn"        onclick="showTab('board',     this)">&#9776; Task Board</button>
+    <button class="tab-btn"        onclick="showTab('timeline',  this)">&#128197; Timeline</button>
+    <button class="tab-btn"        onclick="showTab('risks',     this)">&#9888; Risks</button>
+    <button class="tab-btn"        onclick="showTab('meetings',  this)">&#128221; Meetings</button>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       TAB 1 — DASHBOARD
+  ════════════════════════════════════════ -->
+  <div class="tab-section active" id="tab-dashboard">
+
+    <div class="section-label">Team Progress</div>
+    <div class="dash-grid" id="dash-member-grid">
+      <!-- rendered by JS -->
+    </div>
+
+    <div class="section-label">Next Actions — Current Priority</div>
+    <div class="next-actions">
+      <div class="na-label">&#9889; Unblock these first</div>
+      <div class="na-item"><span class="na-badge all">ALL</span>Sync on Spark environment choice (local PySpark vs. Databricks) before anyone writes code</div>
+      <div class="na-item"><span class="na-badge m1">M1</span>Complete data loading and cleaning notebook — this unblocks M2 and M3 in parallel</div>
+      <div class="na-item"><span class="na-badge m4">M4</span>Download EDSIG/CONISAR template and draft Abstract + Problem Statement while M1 works on data</div>
+      <div class="na-item"><span class="na-badge m2">M2</span>After M1 handoff: run failure-type distribution query first to validate data loaded correctly</div>
+      <div class="na-item"><span class="na-badge m3">M3</span>After M1 handoff: build Pipeline stages 1&ndash;3 before attempting CrossValidator</div>
+    </div>
+
+    <div class="section-label">Overall Progress</div>
+    <div style="background:#161b22;border:1px solid #30363d;border-radius:10px;padding:1.1rem;">
+      <div style="display:flex;justify-content:space-between;font-size:.75rem;color:#8b949e;margin-bottom:.5rem;">
+        <span>Project completion</span>
+        <span id="dash-overall-pct">0%</span>
+      </div>
+      <div style="background:#0d1117;border-radius:6px;height:12px;overflow:hidden;">
+        <div id="dash-overall-bar" style="height:100%;background:linear-gradient(90deg,#1f6feb,#6e40c9);border-radius:6px;width:0%;transition:width .5s ease;"></div>
+      </div>
+      <div style="display:flex;gap:1.5rem;margin-top:.85rem;flex-wrap:wrap;">
+        <span style="font-size:.75rem;display:flex;align-items:center;gap:.4rem;"><span style="width:10px;height:10px;border-radius:2px;background:#21262d;display:inline-block;"></span>To Do: <strong id="lbl-todo" style="color:#e6edf3;">—</strong></span>
+        <span style="font-size:.75rem;display:flex;align-items:center;gap:.4rem;"><span style="width:10px;height:10px;border-radius:2px;background:#9e6a03;display:inline-block;"></span>In Progress: <strong id="lbl-doing" style="color:#e3b341;">—</strong></span>
+        <span style="font-size:.75rem;display:flex;align-items:center;gap:.4rem;"><span style="width:10px;height:10px;border-radius:2px;background:#238636;display:inline-block;"></span>Done: <strong id="lbl-done" style="color:#3fb950;">—</strong></span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ════════════════════════════════════════
+       TAB 2 — TASK BOARD
+  ════════════════════════════════════════ -->
+  <div class="tab-section" id="tab-board">
+
+    <div class="member-legend">
+      <span class="legend-item"><span class="legend-dot" style="background:#1f6feb;"></span>M1 — Data Engineering</span>
+      <span class="legend-item"><span class="legend-dot" style="background:#238636;"></span>M2 — EDA &amp; Analytics</span>
+      <span class="legend-item"><span class="legend-dot" style="background:#6e40c9;"></span>M3 — ML Pipeline</span>
+      <span class="legend-item"><span class="legend-dot" style="background:#9e6a03;"></span>M4 — Paper &amp; Presentation</span>
+      <span style="font-size:.75rem;color:#484f58;margin-left:auto;">Click a card to advance its status</span>
+    </div>
+
+    <div class="kanban">
+      <div class="kanban-col">
+        <div class="col-header">
+          <span class="col-title todo">To Do</span>
+          <span class="col-count" id="cnt-todo">0</span>
+        </div>
+        <div id="col-todo"></div>
+      </div>
+      <div class="kanban-col">
+        <div class="col-header">
+          <span class="col-title doing">In Progress</span>
+          <span class="col-count" id="cnt-doing">0</span>
+        </div>
+        <div id="col-doing"></div>
+      </div>
+      <div class="kanban-col">
+        <div class="col-header">
+          <span class="col-title done">Done</span>
+          <span class="col-count" id="cnt-done">0</span>
+        </div>
+        <div id="col-done"></div>
+      </div>
+    </div>
+
+    <div style="font-size:.75rem;color:#484f58;text-align:center;margin-top:.5rem;">
+      Click any card to cycle: To Do &rarr; In Progress &rarr; Done &rarr; To Do &nbsp;|&nbsp;
+      <button onclick="resetBoard()" style="background:none;border:1px solid #30363d;color:#8b949e;font-size:.72rem;padding:2px 10px;border-radius:6px;cursor:pointer;">Reset All</button>
+    </div>
+
+  </div>
+
+  <!-- ════════════════════════════════════════
+       TAB 3 — TIMELINE
+  ════════════════════════════════════════ -->
+  <div class="tab-section" id="tab-timeline">
+
+    <div class="section-label">6-Week Project Timeline</div>
+    <div class="timeline-grid">
+      <table class="tl-table">
+        <thead>
+          <tr>
+            <th style="width:90px;">Week</th>
+            <th>M1 — Data Engineering</th>
+            <th>M2 — EDA &amp; Analytics</th>
+            <th>M3 — ML Pipeline</th>
+            <th>M4 — Paper &amp; Presentation</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="tl-week">Week 1<br><span style="font-size:.68rem;color:#8b949e;font-weight:400;">Kickoff</span></td>
+            <td>
+              <div class="tl-owner m1">M1</div>
+              <div class="tl-task">Set up Spark environment</div>
+              <div class="tl-task">Download AI4I 2020 dataset</div>
+              <div class="tl-task">Load CSV into DataFrame</div>
+              <span class="tl-milestone">Setup Complete</span>
+            </td>
+            <td>
+              <div class="tl-owner m2">M2</div>
+              <div class="tl-task">Review dataset structure</div>
+              <div class="tl-task">Plan EDA queries</div>
+            </td>
+            <td>
+              <div class="tl-owner m3">M3</div>
+              <div class="tl-task">Review MLlib Pipeline docs</div>
+              <div class="tl-task">Plan hyperparameter grid</div>
+            </td>
+            <td>
+              <div class="tl-owner m4">M4</div>
+              <div class="tl-task">Download EDSIG template</div>
+              <div class="tl-task">Draft Abstract + Problem Statement</div>
+            </td>
+          </tr>
+          <tr>
+            <td class="tl-week">Week 2<br><span style="font-size:.68rem;color:#8b949e;font-weight:400;">Data Ready</span></td>
+            <td>
+              <div class="tl-owner m1">M1</div>
+              <div class="tl-task">Drop irrelevant columns</div>
+              <div class="tl-task">Cast types, check nulls</div>
+              <div class="tl-task">Apply StringIndexer</div>
+              <div class="tl-task">Cache DataFrame</div>
+              <span class="tl-milestone green">&#9654; Data Handoff to M2, M3</span>
+            </td>
+            <td>
+              <div class="tl-owner m2">M2</div>
+              <div class="tl-task">Failure-type distribution query</div>
+              <div class="tl-task">Feature statistics per class</div>
+            </td>
+            <td>
+              <div class="tl-owner m3">M3</div>
+              <div class="tl-task">VectorAssembler + StandardScaler</div>
+              <div class="tl-task">RandomForestClassifier config</div>
+            </td>
+            <td>
+              <div class="tl-owner m4">M4</div>
+              <div class="tl-task">Write Dataset Selection section</div>
+              <div class="tl-task">Write Data Cleaning section (after M1)</div>
+            </td>
+          </tr>
+          <tr>
+            <td class="tl-week">Week 3<br><span style="font-size:.68rem;color:#8b949e;font-weight:400;">EDA &amp; ML</span></td>
+            <td>
+              <div class="tl-owner m1">M1</div>
+              <div class="tl-task">Support M2/M3 if blocked</div>
+              <div class="tl-task">Write cleaning notebook docs</div>
+            </td>
+            <td>
+              <div class="tl-owner m2">M2</div>
+              <div class="tl-task">Verify HDF + PWF domain rules</div>
+              <div class="tl-task">Correlation heatmap</div>
+              <div class="tl-task">Class imbalance chart</div>
+              <span class="tl-milestone green">&#9654; EDA Figures to M4</span>
+            </td>
+            <td>
+              <div class="tl-owner m3">M3</div>
+              <div class="tl-task">Assemble full Pipeline</div>
+              <div class="tl-task">Build CrossValidator (5-fold)</div>
+              <div class="tl-task">Start training run</div>
+            </td>
+            <td>
+              <div class="tl-owner m4">M4</div>
+              <div class="tl-task">Integrate M2 EDA into Section 3</div>
+              <div class="tl-task">Write ML Method section (Section 4)</div>
+            </td>
+          </tr>
+          <tr>
+            <td class="tl-week">Week 4<br><span style="font-size:.68rem;color:#8b949e;font-weight:400;">Model Results</span></td>
+            <td>
+              <div class="tl-owner m1">M1</div>
+              <div class="tl-task">Caching benchmark documentation</div>
+            </td>
+            <td>
+              <div class="tl-owner m2">M2</div>
+              <div class="tl-task">Finalize EDA notebook</div>
+              <div class="tl-task">Begin paper review / editing</div>
+            </td>
+            <td>
+              <div class="tl-owner m3">M3</div>
+              <div class="tl-task">Evaluate best model (accuracy, F1)</div>
+              <div class="tl-task">Generate confusion matrix</div>
+              <div class="tl-task">Document caching benchmark</div>
+              <span class="tl-milestone purple">&#9654; Model Results to M4</span>
+            </td>
+            <td>
+              <div class="tl-owner m4">M4</div>
+              <div class="tl-task">Write Model Evaluation section</div>
+              <div class="tl-task">Insert confusion matrix figure</div>
+            </td>
+          </tr>
+          <tr>
+            <td class="tl-week">Week 5<br><span style="font-size:.68rem;color:#8b949e;font-weight:400;">Draft Paper</span></td>
+            <td colspan="3" style="text-align:center;color:#8b949e;font-size:.8rem;">All members review full paper draft and provide feedback to M4</td>
+            <td>
+              <div class="tl-owner m4">M4</div>
+              <div class="tl-task">Write Conclusion + Future Work</div>
+              <div class="tl-task">Format references (IEEE style)</div>
+              <div class="tl-task">Check page count (6&ndash;7 pages)</div>
+              <span class="tl-milestone yellow">&#9654; Draft Paper for Review</span>
+            </td>
+          </tr>
+          <tr>
+            <td class="tl-week">Week 6<br><span style="font-size:.68rem;color:#8b949e;font-weight:400;">Final</span></td>
+            <td colspan="3" style="text-align:center;color:#8b949e;font-size:.8rem;">All members review slides and rehearse presentation</td>
+            <td>
+              <div class="tl-owner m4">M4</div>
+              <div class="tl-task">Incorporate feedback, proofread</div>
+              <div class="tl-task">Build 10-slide presentation</div>
+              <span class="tl-milestone red">&#9654; Final Submission</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="section-label">Key Dependencies</div>
+    <table style="width:100%;border-collapse:collapse;font-size:.81rem;">
+      <thead>
+        <tr>
+          <th style="background:#21262d;color:#e6edf3;padding:.55rem .8rem;text-align:left;border-bottom:1px solid #30363d;">Dependency</th>
+          <th style="background:#21262d;color:#e6edf3;padding:.55rem .8rem;text-align:left;border-bottom:1px solid #30363d;">Blocks</th>
+          <th style="background:#21262d;color:#e6edf3;padding:.55rem .8rem;text-align:left;border-bottom:1px solid #30363d;">Risk if Delayed</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td style="padding:.5rem .8rem;border-bottom:1px solid #21262d;">M1 data cleaning complete</td><td style="padding:.5rem .8rem;border-bottom:1px solid #21262d;">M2 EDA, M3 ML pipeline</td><td style="padding:.5rem .8rem;border-bottom:1px solid #21262d;">Weeks 3&ndash;4 compress; testing time shrinks</td></tr>
+        <tr><td style="padding:.5rem .8rem;border-bottom:1px solid #21262d;">M2 EDA figures ready</td><td style="padding:.5rem .8rem;border-bottom:1px solid #21262d;">M4 Section 3 writing</td><td style="padding:.5rem .8rem;border-bottom:1px solid #21262d;">Paper draft incomplete; M4 writes placeholder text</td></tr>
+        <tr><td style="padding:.5rem .8rem;border-bottom:1px solid #21262d;">M3 model evaluation complete</td><td style="padding:.5rem .8rem;border-bottom:1px solid #21262d;">M4 Sections 4&ndash;5 writing</td><td style="padding:.5rem .8rem;border-bottom:1px solid #21262d;">Cannot finalize paper without real metrics</td></tr>
+        <tr><td style="padding:.5rem .8rem;">All team: paper review complete</td><td style="padding:.5rem .8rem;">M4 final submission</td><td style="padding:.5rem .8rem;">Late feedback forces rushed revisions</td></tr>
+      </tbody>
+    </table>
+
+  </div>
+
+  <!-- ════════════════════════════════════════
+       TAB 4 — RISKS
+  ════════════════════════════════════════ -->
+  <div class="tab-section" id="tab-risks">
+
+    <div class="section-label">Risk Register</div>
+    <table class="risk-table">
+      <thead>
+        <tr>
+          <th>Risk</th>
+          <th>Severity</th>
+          <th>Probability</th>
+          <th>Mitigation</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <strong style="color:#e6edf3;">M1 environment setup fails or delays</strong>
+            <div class="risk-owner">Owner: M1 / PM</div>
+          </td>
+          <td><span class="sev high">High</span></td>
+          <td><span class="sev med">Medium</span></td>
+          <td>Agree on environment in kickoff sync. Use Databricks Community Edition as fallback — no local install needed. Timebox setup to 2 days max before escalating.</td>
+        </tr>
+        <tr>
+          <td>
+            <strong style="color:#e6edf3;">Class imbalance makes model appear good but F1 fails target</strong>
+            <div class="risk-owner">Owner: M3</div>
+          </td>
+          <td><span class="sev high">High</span></td>
+          <td><span class="sev high">High</span></td>
+          <td>Use macro F1 (not accuracy) as primary metric from the start. Consider <code>weightCol</code> in RandomForestClassifier. Discuss RNF class inherent unpredictability in the paper rather than treating it as a model failure.</td>
+        </tr>
+        <tr>
+          <td>
+            <strong style="color:#e6edf3;">CrossValidator takes too long to run (45 model fits)</strong>
+            <div class="risk-owner">Owner: M3</div>
+          </td>
+          <td><span class="sev med">Medium</span></td>
+          <td><span class="sev high">High</span></td>
+          <td>Cache the transformed DataFrame before CrossValidator (Chapter 7). Reduce grid: start with 4 combinations (2 numTrees &times; 2 maxDepth), expand if time allows. Run overnight if needed.</td>
+        </tr>
+        <tr>
+          <td>
+            <strong style="color:#e6edf3;">Paper exceeds 7 pages or falls short of 6</strong>
+            <div class="risk-owner">Owner: M4</div>
+          </td>
+          <td><span class="sev med">Medium</span></td>
+          <td><span class="sev med">Medium</span></td>
+          <td>Set up EDSIG template in Week 1 and track page count early. Each section has a target page budget (see Paper Guide tab in the project page). Cut figures before cutting content.</td>
+        </tr>
+        <tr>
+          <td>
+            <strong style="color:#e6edf3;">M2 or M3 stuck waiting for M1 data handoff</strong>
+            <div class="risk-owner">Owner: M1 / PM</div>
+          </td>
+          <td><span class="sev med">Medium</span></td>
+          <td><span class="sev med">Medium</span></td>
+          <td>M2 can begin query planning and figure design using a subset of the raw CSV directly. M3 can scaffold pipeline code using a dummy DataFrame. Both can merge M1 output later.</td>
+        </tr>
+        <tr>
+          <td>
+            <strong style="color:#e6edf3;">StringIndexer label encoding order differs across runs</strong>
+            <div class="risk-owner">Owner: M1, M3</div>
+          </td>
+          <td><span class="sev med">Medium</span></td>
+          <td><span class="sev low">Low</span></td>
+          <td>M1 must document and share the exact label-to-index mapping from StringIndexer output. M3 must use the same fitted StringIndexer (not refit independently) when evaluating the model.</td>
+        </tr>
+        <tr>
+          <td>
+            <strong style="color:#e6edf3;">Team member unavailable during final week</strong>
+            <div class="risk-owner">Owner: PM / All</div>
+          </td>
+          <td><span class="sev high">High</span></td>
+          <td><span class="sev low">Low</span></td>
+          <td>All deliverable notebooks must be committed to a shared repo or Databricks workspace by Week 5. No single member should hold sole access to any artifact.</td>
+        </tr>
+        <tr>
+          <td>
+            <strong style="color:#e6edf3;">AI4I dataset columns named differently than expected</strong>
+            <div class="risk-owner">Owner: M1</div>
+          </td>
+          <td><span class="sev low">Low</span></td>
+          <td><span class="sev med">Medium</span></td>
+          <td>Print schema immediately after loading. The Kaggle version uses spaces in column names (e.g., "Air temperature [K]") — use backtick quoting in Spark SQL or rename columns in M1 cleaning step. Share renamed schema with the team.</td>
+        </tr>
+      </tbody>
+    </table>
+
+  </div>
+
+  <!-- ════════════════════════════════════════
+       TAB 5 — MEETINGS
+  ════════════════════════════════════════ -->
+  <div class="tab-section" id="tab-meetings">
+
+    <div style="font-size:.8rem;color:#8b949e;margin-bottom:1.25rem;">Click a meeting to expand it. Action item checkboxes are saved in your browser.</div>
+
+    <!-- Kickoff -->
+    <div class="meeting-entry" id="mtg-kickoff">
+      <div class="meeting-header" onclick="toggleMeeting('mtg-kickoff')">
+        <span class="meeting-date">Week 1 &mdash; Kickoff</span>
+        <span class="meeting-title">Project Kickoff &amp; Environment Sync</span>
+        <span class="meeting-chevron">&#9660;</span>
+      </div>
+      <div class="meeting-body">
+        <div class="mb-section">Agenda</div>
+        <ul class="mb-list">
+          <li>Introductions and role confirmation (M1&ndash;M4)</li>
+          <li>Agree on Spark environment: local PySpark, Databricks Community, or Databricks workspace</li>
+          <li>Agree on shared storage: GitHub repo, Databricks workspace, or Google Drive</li>
+          <li>Review the 5 failure modes from the Matzka 2020 paper so everyone understands the domain</li>
+          <li>Confirm EDSIG/CONISAR template location and page budget per section</li>
+          <li>Set communication channel (Slack / WhatsApp / email)</li>
+          <li>Agree on next sync date (end of Week 2 — after M1 data handoff)</li>
+        </ul>
+        <div class="mb-section">Action Items</div>
+        <div class="action-item"><div class="action-cb" id="ai-k1" onclick="toggleAI('ai-k1')"></div><span class="action-text">All: join shared repo / workspace</span><span class="action-owner">All</span></div>
+        <div class="action-item"><div class="action-cb" id="ai-k2" onclick="toggleAI('ai-k2')"></div><span class="action-text">M1: confirm Spark setup and share SparkSession screenshot by end of day</span><span class="action-owner">M1</span></div>
+        <div class="action-item"><div class="action-cb" id="ai-k3" onclick="toggleAI('ai-k3')"></div><span class="action-text">M4: download EDSIG template and share with team</span><span class="action-owner">M4</span></div>
+        <div class="action-item"><div class="action-cb" id="ai-k4" onclick="toggleAI('ai-k4')"></div><span class="action-text">PM: create project folder structure in shared workspace</span><span class="action-owner">PM</span></div>
+      </div>
+    </div>
+
+    <!-- Data Handoff -->
+    <div class="meeting-entry" id="mtg-handoff">
+      <div class="meeting-header" onclick="toggleMeeting('mtg-handoff')">
+        <span class="meeting-date">Week 2 &mdash; Checkpoint</span>
+        <span class="meeting-title">Data Handoff &amp; Parallel Start</span>
+        <span class="meeting-chevron">&#9660;</span>
+      </div>
+      <div class="meeting-body">
+        <div class="mb-section">Agenda</div>
+        <ul class="mb-list">
+          <li>M1 demos: clean DataFrame schema, null check results, StringIndexer mapping, cache benchmark</li>
+          <li>Confirm column names match what M2 and M3 will use in their code</li>
+          <li>M2: confirm first EDA query runs against clean data</li>
+          <li>M3: confirm Pipeline stages 1&ndash;2 fit without errors</li>
+          <li>M4: share paper draft outline with section owners</li>
+          <li>Identify any blockers before teams work in parallel this week</li>
+        </ul>
+        <div class="mb-section">Action Items</div>
+        <div class="action-item"><div class="action-cb" id="ai-h1" onclick="toggleAI('ai-h1')"></div><span class="action-text">M1: share Parquet file or notebook link with M2 and M3</span><span class="action-owner">M1</span></div>
+        <div class="action-item"><div class="action-cb" id="ai-h2" onclick="toggleAI('ai-h2')"></div><span class="action-text">M2: run failure-type count query and confirm matches Matzka paper counts</span><span class="action-owner">M2</span></div>
+        <div class="action-item"><div class="action-cb" id="ai-h3" onclick="toggleAI('ai-h3')"></div><span class="action-text">M3: build VectorAssembler + StandardScaler and confirm no schema errors</span><span class="action-owner">M3</span></div>
+        <div class="action-item"><div class="action-cb" id="ai-h4" onclick="toggleAI('ai-h4')"></div><span class="action-text">M4: send paper outline to team for feedback</span><span class="action-owner">M4</span></div>
+      </div>
+    </div>
+
+    <!-- Mid-project -->
+    <div class="meeting-entry" id="mtg-mid">
+      <div class="meeting-header" onclick="toggleMeeting('mtg-mid')">
+        <span class="meeting-date">Week 4 &mdash; Checkpoint</span>
+        <span class="meeting-title">Model Results &amp; Paper Progress Review</span>
+        <span class="meeting-chevron">&#9660;</span>
+      </div>
+      <div class="meeting-body">
+        <div class="mb-section">Agenda</div>
+        <ul class="mb-list">
+          <li>M3 presents: best hyperparameters, accuracy, F1 per class, confusion matrix</li>
+          <li>Discuss RNF class F1 score — agree on how to frame in the paper</li>
+          <li>M2 shares final EDA figures — confirm quality for paper inclusion</li>
+          <li>M4 shares paper draft (Sections 1&ndash;4) — review together</li>
+          <li>Check page count — adjust section lengths if over/under</li>
+          <li>Confirm success criteria met: accuracy &gt; 0.90, macro F1 &gt; 0.75</li>
+        </ul>
+        <div class="mb-section">Action Items</div>
+        <div class="action-item"><div class="action-cb" id="ai-m1" onclick="toggleAI('ai-m1')"></div><span class="action-text">M3: share final metrics table and confusion matrix image with M4</span><span class="action-owner">M3</span></div>
+        <div class="action-item"><div class="action-cb" id="ai-m2" onclick="toggleAI('ai-m2')"></div><span class="action-text">M4: insert M3 results into Sections 4&ndash;5 and share updated draft</span><span class="action-owner">M4</span></div>
+        <div class="action-item"><div class="action-cb" id="ai-m3" onclick="toggleAI('ai-m3')"></div><span class="action-text">M1, M2: review and comment on paper draft by end of week</span><span class="action-owner">M1, M2</span></div>
+        <div class="action-item"><div class="action-cb" id="ai-m4" onclick="toggleAI('ai-m4')"></div><span class="action-text">PM: confirm all notebooks are committed to shared workspace</span><span class="action-owner">PM</span></div>
+      </div>
+    </div>
+
+    <!-- Final review -->
+    <div class="meeting-entry" id="mtg-final">
+      <div class="meeting-header" onclick="toggleMeeting('mtg-final')">
+        <span class="meeting-date">Week 6 &mdash; Final</span>
+        <span class="meeting-title">Final Paper Review &amp; Presentation Rehearsal</span>
+        <span class="meeting-chevron">&#9660;</span>
+      </div>
+      <div class="meeting-body">
+        <div class="mb-section">Agenda</div>
+        <ul class="mb-list">
+          <li>Read through full paper one final time — check flow, grammar, figure captions</li>
+          <li>Verify: 6&ndash;7 pages, IEEE citation format, all figures captioned, abstract &le;150 words</li>
+          <li>Rehearse presentation (10 slides, ~10 minutes) — each member presents their section</li>
+          <li>Q&amp;A practice: instructor may ask about RNF class, caching choice, dataset limitations</li>
+          <li>Confirm submission format and deadline</li>
+        </ul>
+        <div class="mb-section">Action Items</div>
+        <div class="action-item"><div class="action-cb" id="ai-f1" onclick="toggleAI('ai-f1')"></div><span class="action-text">M4: incorporate final feedback and submit paper</span><span class="action-owner">M4</span></div>
+        <div class="action-item"><div class="action-cb" id="ai-f2" onclick="toggleAI('ai-f2')"></div><span class="action-text">All: upload final notebooks to shared workspace before submission</span><span class="action-owner">All</span></div>
+        <div class="action-item"><div class="action-cb" id="ai-f3" onclick="toggleAI('ai-f3')"></div><span class="action-text">PM: confirm all deliverables submitted, send wrap-up email to team</span><span class="action-owner">PM</span></div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<footer class="site-footer">&copy; Clark Ngo &mdash; CityU MBA Team Projects</footer>
+
+<script>
+  var STORE_KEY = "pm-pdm-tasks-v1";
+  var AI_KEY    = "pm-pdm-ai-v1";
+
+  var TASKS = [
+    // M1
+    { id:"m1-1",  m:"m1", text:"Set up Spark environment and verify SparkSession" },
+    { id:"m1-2",  m:"m1", text:"Download AI4I 2020 dataset from Kaggle" },
+    { id:"m1-3",  m:"m1", text:"Load CSV into Spark DataFrame" },
+    { id:"m1-4",  m:"m1", text:"Drop UDI and Product ID columns" },
+    { id:"m1-5",  m:"m1", text:"Cast feature columns to DoubleType" },
+    { id:"m1-6",  m:"m1", text:"Check for null values on each column" },
+    { id:"m1-7",  m:"m1", text:"Apply StringIndexer to encode Failure Type" },
+    { id:"m1-8",  m:"m1", text:"Cache cleaned DataFrame (.cache())" },
+    { id:"m1-9",  m:"m1", text:"Share clean data with M2 and M3 (Parquet)" },
+    // M2
+    { id:"m2-1",  m:"m2", text:"Run GROUP BY on Failure Type — confirm counts" },
+    { id:"m2-2",  m:"m2", text:"Compute mean/stddev per feature per failure class" },
+    { id:"m2-3",  m:"m2", text:"Validate HDF domain rule in data (temp diff < 8.6K)" },
+    { id:"m2-4",  m:"m2", text:"Validate PWF domain rule (power outside 3500–9000W)" },
+    { id:"m2-5",  m:"m2", text:"Visualize class imbalance bar chart" },
+    { id:"m2-6",  m:"m2", text:"Build correlation heatmap" },
+    { id:"m2-7",  m:"m2", text:"Write EDA section of paper (Section 3)" },
+    { id:"m2-8",  m:"m2", text:"Export figures for M4 paper inclusion" },
+    // M3
+    { id:"m3-1",  m:"m3", text:"Build VectorAssembler stage" },
+    { id:"m3-2",  m:"m3", text:"Add StandardScaler stage" },
+    { id:"m3-3",  m:"m3", text:"Configure RandomForestClassifier" },
+    { id:"m3-4",  m:"m3", text:"Assemble full Pipeline object" },
+    { id:"m3-5",  m:"m3", text:"Build ParamGridBuilder (numTrees, maxDepth)" },
+    { id:"m3-6",  m:"m3", text:"Wrap in CrossValidator with 5-fold CV" },
+    { id:"m3-7",  m:"m3", text:"Evaluate best model on test split" },
+    { id:"m3-8",  m:"m3", text:"Generate and visualize confusion matrix" },
+    { id:"m3-9",  m:"m3", text:"Document caching benchmark (before vs after)" },
+    // M4
+    { id:"m4-1",  m:"m4", text:"Download and set up EDSIG/CONISAR template" },
+    { id:"m4-2",  m:"m4", text:"Write Abstract and Introduction" },
+    { id:"m4-3",  m:"m4", text:"Write Problem Statement and success criteria" },
+    { id:"m4-4",  m:"m4", text:"Write Dataset Selection section" },
+    { id:"m4-5",  m:"m4", text:"Write Data Cleaning section (from M1 results)" },
+    { id:"m4-6",  m:"m4", text:"Integrate M2 EDA figures into Section 3" },
+    { id:"m4-7",  m:"m4", text:"Write ML Method section (pipeline + caching)" },
+    { id:"m4-8",  m:"m4", text:"Write Model Evaluation section (from M3 results)" },
+    { id:"m4-9",  m:"m4", text:"Write Conclusion and Future Work" },
+    { id:"m4-10", m:"m4", text:"Build 10-slide presentation deck" }
+  ];
+
+  var OWNER_LABELS = { m1:"M1 — Data Engineering", m2:"M2 — EDA & Analytics", m3:"M3 — ML Pipeline", m4:"M4 — Paper & Slides" };
+  var TASK_COUNTS  = { m1: 9, m2: 8, m3: 9, m4: 10 };
+
+  function loadStatuses() {
+    try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; } catch(e) { return {}; }
+  }
+  function saveStatuses(s) {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(s)); } catch(e) {}
+  }
+
+  function cycleStatus(id) {
+    var s = loadStatuses();
+    var cur = s[id] || "todo";
+    s[id] = cur === "todo" ? "doing" : cur === "doing" ? "done" : "todo";
+    saveStatuses(s);
+    renderBoard();
+    renderDashboard();
+    updateStats();
+  }
+
+  function resetBoard() {
+    try { localStorage.removeItem(STORE_KEY); } catch(e) {}
+    renderBoard();
+    renderDashboard();
+    updateStats();
+  }
+
+  function getMemberDone(m, statuses) {
+    return TASKS.filter(function(t) { return t.m === m && statuses[t.id] === "done"; }).length;
+  }
+
+  function renderBoard() {
+    var s = loadStatuses();
+    var cols = { todo: [], doing: [], done: [] };
+    TASKS.forEach(function(t) {
+      var status = s[t.id] || "todo";
+      cols[status].push(t);
+    });
+
+    ["todo","doing","done"].forEach(function(col) {
+      var el = document.getElementById("col-" + col);
+      var cnt = document.getElementById("cnt-" + col);
+      if (!el) return;
+      cnt.textContent = cols[col].length;
+      if (cols[col].length === 0) {
+        el.innerHTML = "<div class=\"kanban-empty\">Nothing here yet</div>";
+        return;
+      }
+      el.innerHTML = cols[col].map(function(t) {
+        var isDone = col === "done";
+        return "<div class=\"task-card" + (isDone ? " done-card" : "") + "\" onclick=\"cycleStatus('" + t.id + "')\">" +
+          "<div class=\"card-owner " + t.m + "\">" + OWNER_LABELS[t.m] + "</div>" +
+          "<div class=\"card-text\">" + t.text + "</div>" +
+          "<div class=\"card-hint\">Click to advance &rarr;</div>" +
+          "</div>";
+      }).join("");
+    });
+  }
+
+  function renderDashboard() {
+    var s = loadStatuses();
+    var grid = document.getElementById("dash-member-grid");
+    if (!grid) return;
+    var deliverables = {
+      m1: "01_data_loading_cleaning.ipynb",
+      m2: "02_eda_spark_sql.ipynb",
+      m3: "03_ml_pipeline.ipynb",
+      m4: "team_project_paper.docx"
+    };
+    var html = ["m1","m2","m3","m4"].map(function(m) {
+      var done  = getMemberDone(m, s);
+      var total = TASK_COUNTS[m];
+      var pct   = total > 0 ? Math.round((done / total) * 100) : 0;
+      return "<div class=\"dash-card " + m + "\">" +
+        "<div class=\"dash-member " + m + "\">" + m.toUpperCase() + "</div>" +
+        "<div class=\"dash-role\">" + OWNER_LABELS[m].replace(m.toUpperCase() + " \u2014 ","") + "</div>" +
+        "<div class=\"dash-bar-wrap\"><div class=\"dash-bar " + m + "\" style=\"width:" + pct + "%\"></div></div>" +
+        "<div class=\"dash-pct\">" + done + " / " + total + " tasks \u00b7 " + pct + "%</div>" +
+        "<div class=\"dash-deliverable\">Deliverable: <code>" + deliverables[m] + "</code></div>" +
+        "</div>";
+    }).join("");
+    grid.innerHTML = html;
+  }
+
+  function updateStats() {
+    var s = loadStatuses();
+    var done  = 0, doing = 0, todo = 0;
+    TASKS.forEach(function(t) {
+      var st = s[t.id] || "todo";
+      if (st === "done") done++;
+      else if (st === "doing") doing++;
+      else todo++;
+    });
+    var total = TASKS.length;
+    var pct   = total > 0 ? Math.round((done / total) * 100) : 0;
+    document.getElementById("stat-total").textContent = total;
+    document.getElementById("stat-done").textContent  = done;
+    document.getElementById("stat-doing").textContent = doing;
+    document.getElementById("stat-todo").textContent  = todo;
+    document.getElementById("stat-pct").textContent   = pct + "%";
+    var bar = document.getElementById("dash-overall-bar");
+    var lbl = document.getElementById("dash-overall-pct");
+    if (bar) bar.style.width = pct + "%";
+    if (lbl) lbl.textContent = pct + "%";
+    var lblTodo  = document.getElementById("lbl-todo");
+    var lblDoing = document.getElementById("lbl-doing");
+    var lblDone  = document.getElementById("lbl-done");
+    if (lblTodo)  lblTodo.textContent  = todo;
+    if (lblDoing) lblDoing.textContent = doing;
+    if (lblDone)  lblDone.textContent  = done;
+  }
+
+  function showTab(name, btn) {
+    document.querySelectorAll(".tab-section").forEach(function(s) { s.classList.remove("active"); });
+    document.querySelectorAll(".tab-btn").forEach(function(b) { b.classList.remove("active"); });
+    document.getElementById("tab-" + name).classList.add("active");
+    btn.classList.add("active");
+  }
+
+  function toggleMeeting(id) {
+    document.getElementById(id).classList.toggle("open");
+  }
+
+  function loadAI() {
+    try { return JSON.parse(localStorage.getItem(AI_KEY)) || {}; } catch(e) { return {}; }
+  }
+  function saveAI(a) {
+    try { localStorage.setItem(AI_KEY, JSON.stringify(a)); } catch(e) {}
+  }
+  function toggleAI(id) {
+    var a = loadAI();
+    a[id] = !a[id];
+    saveAI(a);
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.classList.toggle("checked", !!a[id]);
+    el.textContent = a[id] ? "\u2713" : "";
+  }
+  function initAI() {
+    var a = loadAI();
+    Object.keys(a).forEach(function(id) {
+      var el = document.getElementById(id);
+      if (!el || !a[id]) return;
+      el.classList.add("checked");
+      el.textContent = "\u2713";
+    });
+  }
+
+  renderBoard();
+  renderDashboard();
+  updateStats();
+  initAI();
+</script>
+</body>
+</html>
