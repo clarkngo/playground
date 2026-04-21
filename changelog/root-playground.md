@@ -5,6 +5,26 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-04-21
+
+### [feature] Seattle AI Literacy workshop page — added Sample Workshop #1 tab
+- Updated `workshop-planning/seattle-ai-literacy.html` to add a new tab button and section: `Sample Workshop #1`
+- Added full "AI on the Front Lines" workshop blueprint for SPD, SFD, and Seattle EMTs, including 4-part agenda (landscape, implications, prompt lab, policy roadmap)
+- Included detailed hands-on activity (`Incident Report Refiner`) and materials checklist (slide deck, prompting cheat sheet, data privacy guide, feedback form)
+- Added SPD compliance visual to the workshop tab (`assets/spd-use-case-diagram-2025-2026.png`) with contextual caption for prohibited vs conditional vs permitted AI use
+- Added Washington AI policy framework visual (`assets/wa-ai-policy-framework.png`) with caption tying statewide priorities to Seattle workshop governance context
+- Added click-to-zoom lightbox behavior for workshop images (open on image click, close via backdrop, close button, or Escape key)
+- Added local source document `assets/Washington_AI_Blueprint.pdf` and linked it in the Resources tab as "Washington AI Blueprint (PDF)"
+- Added university-partner 2-hour workshop variant in `tab-sample-workshop-1`, including Ground Truth context, Traffic Light policy table, Redline exercise flow, strategy module, and university preparation checklist
+- Added EMS/Fire "Hands-on Sandbox" expansion to the sample workshop tab: Radio-to-PCR activity, syndromic deployment scenario, multi-agent dispatcher exercise, Private-RAG lab setup, policy green-light table, and Seattle AI Incident Card checklist
+- Added a high-level overview and in-tab subsection navigation for `Sample Workshop #1` using anchor jump links (visuals, modules, activities, Private-RAG, policy table, incident card)
+- Increased color contrast for the Sample Workshop #1 overview/navigation area (stronger tinted panel, brighter link chips, higher-contrast hover state)
+- Added a new Pillar 3 alignment section in `Sample Workshop #1`: workforce upskilling summary, module-to-objective mapping, implementation gap-mender framing, and participation takeaway
+- Refreshed `Sample Workshop #1` visual design to reduce reading fatigue: themed tab background, higher-contrast section labels, alternating card accent rails, richer table striping, and an at-a-glance meta summary strip
+- Added a dedicated 60-minute NCyTE-style hands-on lab block in `Sample Workshop #1` with 3 tracks (Police Redline, EMS/Fire Structured Triage, Leadership Bias/Equity audit) and defined checkout deliverables
+
+---
+
 ## 2026-04-19
 
 ### [feature] PM Dashboard for Predictive Maintenance team project

@@ -7,6 +7,24 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-04-21
+
+### [feature] Seattle AI Literacy page — added Sample Workshop #1 tab for first responders
+- `workshop-planning/seattle-ai-literacy.html` now includes a dedicated tab with a complete 90-120 minute public safety workshop outline and activity flow
+- Added embedded SPD AI use-case diagram image and caption in the workshop tab to support policy boundary discussion
+- Added embedded Washington AI policy framework infographic and caption to broaden policy context discussion
+- Added click-to-zoom image lightbox interaction for workshop graphics
+- Added downloadable `Washington_AI_Blueprint.pdf` resource link to the workshop Resources tab
+- Added a university-led 2-hour "First Responder AI Lab" module set with traffic-light legal-use matrix and redline exercise details
+- Added an EMS/Fire-focused sandbox module with 3 practical activities, Private-RAG setup guidance, and a green-light policy matrix
+- Added a high-level overview plus subsection jump navigation inside Sample Workshop #1
+- Increased color contrast for the Sample Workshop #1 overview and subsection navigation chips
+- Added a Pillar 3 summary and explicit workshop-to-city-objective mapping section in Sample Workshop #1
+- Updated Sample Workshop #1 styling with stronger visual contrast and varied section/card treatment for better long-form readability
+- Added a new 60-minute First Responder AI Sandbox hands-on lab section with track-specific activities and checkout deliverables
+
+---
+
 ## 2026-04-19
 
 ### [feature] PM Dashboard — interactive Kanban, timeline, risks, meeting log for Predictive Maintenance project
