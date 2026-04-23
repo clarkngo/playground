@@ -9,6 +9,14 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ## 2026-04-23
 
+### [feature] Workshop Proposal v1 + Case Studies tab added
+- `workshop-planning/implications-of-ai-for-police-firefighters-paramedics-proposal-v1.html`: new formal proposal doc (v1)
+- `implications-of-ai-for-police-firefighters-paramedics.html`: Case Studies tab with 4 real deployments (Corti×SFD, Longeye×Redmond PD, Prepared 911, Overland AI×Cal Fire)
+- `index.html`: proposal card added, section count and nav badge updated to 2
+
+### [feature] Case Studies tab — 4 real deployments organized by Seattle / Washington / US
+- `workshop-planning/implications-of-ai-for-police-firefighters-paramedics.html`: New tab with Corti×SFD, Longeye×Redmond PD, Prepared 911, and Overland AI×Cal Fire — each with challenge, AI use, stat callouts, and source link
+
 ### [feature] KPI Impact tab — 22 KPIs across Police, Fire, and EMS with positive/negative AI impact
 - `workshop-planning/implications-of-ai-for-police-firefighters-paramedics.html`: New tab with baseline vs. AI-adjusted KPIs for each department, direction pills, tool attribution, and facilitator takeaway
 
