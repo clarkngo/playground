@@ -7,6 +7,53 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ## 2026-04-23
 
+### [refactor] Workshop file renamed
+- `seattle-ai-literacy.html` → `implications-of-ai-for-police-firefighters-paramedics.html`
+- Updated href, card name, meta path, icon, and search tags in `index.html`
+
+### [feature] KPI Impact tab — 22 KPIs across Police, Fire, and EMS
+- Added new tab `📊 KPI Impact` (`tab-kpis`) to `implications-of-ai-for-police-firefighters-paramedics.html`
+- **Police (8 KPIs):** Positive — report writing time, officer time-in-service, bulk evidence review speed, gunshot detection response. Negative — report accuracy/Brady risk, racial enforcement disparity, CJIS exposure, community trust
+- **Fire (6 KPIs):** Positive — wildfire detection lead time (25 min earlier), hotspot coverage, resource pre-positioning. Negative — false alarm rate, fire-risk neighborhood equity, crew situational awareness dependency
+- **EMS/Paramedics (8 KPIs):** Positive — PCR documentation time (up to 80% reduction), cardiac arrest recognition speed, language access wait time, 911 surge hold time, NEMSIS compliance. Negative — clinical translation accuracy (cyanosis omission example), AI triage error rate (1 in 20), HIPAA exposure
+- Each KPI shows: current baseline, AI-adjusted outlook, ▲/▼ direction pill, key tool(s)
+- Facilitator takeaway card: no tool moves only one direction; negative KPIs compound without governance; unmeasured negatives are highest-risk
+- Added `.pill-red` CSS class
+
+### [feature] AI Tools tab — 15 curated first-responder tools
+- Added new tab `🛠️ AI Tools` (`tab-tools`) to `implications-of-ai-for-police-firefighters-paramedics.html`
+- Source: `clarkngo.github.io/AI-tools/?category=First+Responder` — fetched and embedded all 15 tools
+- Organized into 4 sections: Police & Investigations (Code Four, Axon Draft One, Truleo, Mark43, Axon Fusus, SoundThinking, Longeye), EMS & Paramedics (ImageTrend Elite, ESO, Corti), Fire & Wildfire Detection (Pano AI, OroraTech), Dispatch & 911 (Prepared 911, Carbyne, RapidSOS)
+- Each tool card: emoji, linked name, department track badge(s), description, feature tags
+- Traffic Light placement guide table mapping all tools to Green/Yellow with key caution per tool
+- Added CSS: `.tools-grid`, `.tool-card`, `.tool-name`, `.tool-emoji`, `.tool-desc`, `.tool-tags`, `.tool-tag`
+
+### [feature] Seattle AI Literacy — title change and full content refresh for first-responder audience
+- **Title changed** across all surfaces: `<title>`, breadcrumb, page header, subtitle, tags → "Implications of AI for Police, Firefighters, & Paramedics"
+- **Context tab:** Workshop goal rewritten to name Code Four, Longeye, CJIS, HIPAA, KCPAO, and the specific audience. Signals table "Workshop Implication" column rewritten with first-responder-specific tactics
+- **Audience tab:** Full rewrite — 6 first-responder roles replacing generic city tiers: Police Officers – Patrol, Detectives & Investigators, Firefighters & Station Crews, Paramedics & EMTs, 911 Dispatchers, Command & Leadership. Room composition questions updated to match
+- **Key Themes tab:** All 8 card descriptions rewritten for public safety context. Priority mapping columns changed to Police-Detectives / Fire-Crews / Paramedics-EMS / Command
+- **Workshop Formats tab:** All 4 formats rewritten — lightning talk opens with Code Four frog, scenario workshop uses hallucinated DUI / 911 translation / vendor bias audit, learning series 5 sessions rebuilt for first responders
+- **Sample Workshop #1:** Title card updated to new workshop name
+- **Open Questions tab:** Full rewrite — 10 questions specific to SPD/SFD/EMS rooms, tool deployment status, KCPAO stance, and field hallucination reporting
+
+### [feature] Seattle AI Literacy — Hands-On Activities tab
+- Added new tab `🎮 Hands-On Activities` (`tab-activities`) to `workshop-planning/seattle-ai-literacy.html`
+- 5 facilitator-ready scenarios with setup, source input, sample AI conversation, and reveal-on-demand answer key
+- **S1 — The Hallucinated DUI Report (Police):** Source notes vs. Code Four AI draft; participants find 4 hallucinations including a flipped denial and wrong charge
+- **S2 — The 60-Hour Call Stack (Investigations):** Longeye-style call summary; AI fabricates one of three supporting calls; teaches cross-verification before warrant
+- **S3 — The Language-Barrier 911 Call (EMS/Dispatch):** Prepared translation drops "se está poniendo azul" (turning blue / cyanosis); changes dispatch code from fall to potential cardiac
+- **S4 — The Bias Audit (Leadership):** Vendor predictive patrol tool with 73% training data from 3 historically over-policed districts; feedback loop analysis; recommended reject criteria
+- **S5 — The Safe Prompt Challenge (All):** Unsafe vs. safe prompt side-by-side producing same raw notes; identifies invented weapon, cause, and intent; shows 4 safe-prompt constraint clauses
+- Added CSS: `.scenario-block`, `.track-badge` (police/ems/investigations/leadership/all), `.chat-bubble` (user/ai), `.input-box`, `.scenario-answer` (reveal toggle), `.reveal-btn`
+- Added JS: `toggleAnswer(id)` toggles answer visibility and button label between "Reveal Answer" / "Hide Answer"
+
+### [feature] Seattle AI Literacy — Real-world tools, risks, and safe use guidance
+- `workshop-planning/seattle-ai-literacy.html`: Added three new subsections to the Safe-Vibe Lab Proposal tab
+- **2a. Real-world tools in deployment:** Code Four (Utah/Heber City, $30/officer/month, 1–2 hr manual report time, shape-shifted-to-frog hallucination example, still requires human correction; FOX 13 link), Longeye (Redmond PD, 60 hours of phone calls processed in minutes), Prepared (notes vs. transcription gap detection, real-time AI translation, hold time reduction; YouTube link)
+- **2b. Risks we cannot ignore:** AI reinforces bias (predictive feedback loops), AI-generated reports pose legal risks (Brady exposure, wrongful charges) — cites Fair and Just Prosecution June 2025 report with PDF link
+- **2c. So what now? Using AI safely:** Expands on the "given the risks, how do we proceed?" question with three principles — human-in-the-loop on all evidentiary output, use AI where error is recoverable, build the audit habit before tools arrive — plus university positioning and a workshop takeaway prompt
+
 ### [feature] Data Governance — Module 3: Data Protection
 - Created `class-notes/data-governance/module-03.html` with 22 sections following the Module 1/2 design system (dark theme, sticky TOC, def/concept/insight/warn cards, flow diagrams, compare tables)
 - **Section coverage:** CIA Triad → Data as Strategic Asset → Data Classification (4-tier chart: Public/Internal/Confidential/Restricted) → Planning Data Protection → Network & Perimeter Security → Data Lineage & Transit → Encryption (DEK/KEK/KMS/CMEK hierarchy) → IAM evolution (Kerberos/LDAP/SAML/OAuth/OIDC/Zero Trust) → Cloud Data Protection (shared responsibility, JIT, PIM, CMEK, conditional access) → Physical Security & IoT → Data Exfiltration threats & prevention table → DLP → Agile protection (SIEM, differential privacy, event threat detection) → Best Practices → Culture of Data Privacy (role-based training table) → Leadership & company personas → Transparency & incident response lifecycle (Detect/Respond/Remediate/Learn) → Data Security & Recovery (RTO/RPO, 3-2-1 rule, immutable backups) → Data Privacy & HIPAA (GDPR/HIPAA/CCPA/PCI-DSS table) → Regulations & legal interplay → Data Culture (Intentional/Trustworthy/Scalable) → Beyond Data Literacy / ISACA (CISA/CISM/CRISC/COBIT)
