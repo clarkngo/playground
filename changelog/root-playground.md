@@ -5,6 +5,22 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-04-23
+
+### [feature] Data Governance — Module 3: Data Protection
+- Created `class-notes/data-governance/module-03.html` with 22 sections following the Module 1/2 design system (dark theme, sticky TOC, def/concept/insight/warn cards, flow diagrams, compare tables)
+- **Section coverage:** CIA Triad → Data as Strategic Asset → Data Classification (4-tier chart: Public/Internal/Confidential/Restricted) → Planning Data Protection → Network & Perimeter Security → Data Lineage & Transit → Encryption (DEK/KEK/KMS/CMEK hierarchy) → IAM evolution (Kerberos/LDAP/SAML/OAuth/OIDC/Zero Trust) → Cloud Data Protection (shared responsibility, JIT, PIM, CMEK, conditional access) → Physical Security & IoT → Data Exfiltration threats & prevention table → DLP → Agile protection (SIEM, differential privacy, event threat detection) → Best Practices → Culture of Data Privacy (role-based training table) → Leadership & company personas → Transparency & incident response lifecycle (Detect/Respond/Remediate/Learn) → Data Security & Recovery (RTO/RPO, 3-2-1 rule, immutable backups) → Data Privacy & HIPAA (GDPR/HIPAA/CCPA/PCI-DSS table) → Regulations & legal interplay → Data Culture (Intentional/Trustworthy/Scalable) → Beyond Data Literacy / ISACA (CISA/CISM/CRISC/COBIT)
+
+## 2026-04-22
+
+### [ux] Seattle AI Literacy — modern layout and readability pass
+- `workshop-planning/seattle-ai-literacy.html`: Plus Jakarta Sans, refined color tokens, layered page background, hero-style page header, pill-style tab bar with focus rings, larger body type and line-height, elevated cards with hover, improved tables (striping, wrapping first column), stronger quote block, resource card hover lift, tab enter animation, reduced-motion overrides
+
+### [feature] Seattle AI Literacy — Safe-Vibe Public Safety Lab proposal tab
+- Added new tab `Safe-Vibe Lab Proposal` to `workshop-planning/seattle-ai-literacy.html` (`tab-safe-vibe-proposal`) with university-led initiative framing, competitor landscape, case studies, 2026 day-in-the-life narrative, BWC lab focus, and School President alignment table
+
+---
+
 ## 2026-04-21
 
 ### [feature] Seattle AI Literacy workshop page — added Sample Workshop #1 tab
