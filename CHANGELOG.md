@@ -9,6 +9,21 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ## 2026-04-23
 
+### [feature] KPI Impact tab — 22 KPIs across Police, Fire, and EMS with positive/negative AI impact
+- `workshop-planning/implications-of-ai-for-police-firefighters-paramedics.html`: New tab with baseline vs. AI-adjusted KPIs for each department, direction pills, tool attribution, and facilitator takeaway
+
+### [feature] AI Tools tab — 15 curated first-responder tools with Traffic Light guide
+- `workshop-planning/implications-of-ai-for-police-firefighters-paramedics.html`: New tab with all 15 tools from clarkngo.github.io/AI-tools (Police, EMS, Fire, Dispatch sections) + Traffic Light placement table
+
+### [feature] Seattle AI Literacy — renamed and rebuilt for police, firefighters & paramedics
+- `workshop-planning/seattle-ai-literacy.html`: Title, all tab content (Context/Audience/Themes/Formats/Questions) rewritten for SPD/SFD/EMS audience; 6 first-responder role cards; priority matrix columns updated; workshop formats rewritten with first-responder scenarios
+
+### [feature] Seattle AI Literacy — Hands-On Activities tab with 5 scenarios
+- `workshop-planning/seattle-ai-literacy.html`: New tab with hallucinated DUI report, 60-hr call stack, 911 language barrier, bias audit, and safe prompt challenge — each with source input, AI conversation, and reveal-on-demand answer key
+
+### [feature] Seattle AI Literacy — real-world tools, risks, and safe-use framework
+- `workshop-planning/seattle-ai-literacy.html`: Added sections 2a–2c to Safe-Vibe tab: Code Four/Longeye/Prepared tool case studies, bias/legal risk evidence, and "so what now?" structured safe-use guidance
+
 ### [feature] Data Governance — Module 3: Data Protection
 - `class-notes/data-governance/module-03.html`: 22-section module covering CIA Triad, data classification chart, network/perimeter security, encryption (DEK/KEK/KMS/CMEK), IAM evolution (Kerberos → SAML → OAuth → Zero Trust), cloud shared responsibility model, IoT security, exfiltration threats, DLP, SIEM, incident response lifecycle, HIPAA/GDPR/CCPA, and ISACA/COBIT
 
