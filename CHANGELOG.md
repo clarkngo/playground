@@ -7,6 +7,21 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-04-23
+
+### [feature] Data Governance — Module 3: Data Protection
+- `class-notes/data-governance/module-03.html`: 22-section module covering CIA Triad, data classification chart, network/perimeter security, encryption (DEK/KEK/KMS/CMEK), IAM evolution (Kerberos → SAML → OAuth → Zero Trust), cloud shared responsibility model, IoT security, exfiltration threats, DLP, SIEM, incident response lifecycle, HIPAA/GDPR/CCPA, and ISACA/COBIT
+
+## 2026-04-22
+
+### [ux] Seattle AI Literacy page — typography and visual refresh
+- `workshop-planning/seattle-ai-literacy.html`: modern fonts, tab bar, cards, tables, and motion tuned for long-form reading
+
+### [feature] Seattle AI Literacy — Safe-Vibe Public Safety Lab proposal tab
+- `workshop-planning/seattle-ai-literacy.html`: new tab with university public-safety AI hub proposal, landscape, case studies, narrative, BWC lab scope, and president alignment matrix
+
+---
+
 ## 2026-04-21
 
 ### [feature] Seattle AI Literacy page — added Sample Workshop #1 tab for first responders

@@ -1,0 +1,1577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Data Governance &mdash; Module 3 Class Notes</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0d1117; color: #c9d1d9; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; min-height: 100vh; }
+
+    /* Navbar */
+    .navbar { background: #161b22; border-bottom: 1px solid #30363d; padding: .75rem 1.5rem; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 200; }
+    .navbar a { color: #e6edf3; text-decoration: none; font-weight: 700; font-size: 1rem; }
+    .navbar a:hover { color: #58a6ff; }
+    .nav-pill { font-size: .78rem; color: #8b949e; }
+
+    /* Layout */
+    .layout { display: flex; max-width: 1280px; margin: 0 auto; padding: 0 1rem; gap: 2rem; }
+
+    /* Sidebar TOC */
+    .sidebar { width: 220px; flex-shrink: 0; position: sticky; top: 56px; align-self: flex-start; height: calc(100vh - 64px); overflow-y: auto; padding: 1.5rem 0; }
+    .toc-label { font-size: .67rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #484f58; margin-bottom: .65rem; padding-left: .5rem; }
+    .toc { display: flex; flex-direction: column; gap: 2px; }
+    .toc-link { font-size: .78rem; color: #8b949e; text-decoration: none; padding: .3rem .5rem; border-radius: 5px; border-left: 2px solid transparent; line-height: 1.4; transition: all .15s; }
+    .toc-link:hover { color: #e6edf3; background: #161b22; }
+    .toc-link.active { color: #58a6ff; border-left-color: #58a6ff; background: #0c1e38; font-weight: 600; }
+    .toc-group { font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: #484f58; margin: .85rem 0 .25rem .5rem; }
+
+    /* Main content */
+    .content { flex: 1; min-width: 0; padding: 2rem 0 4rem; }
+
+    /* Breadcrumb */
+    .breadcrumb { font-size: .78rem; color: #8b949e; display: flex; align-items: center; gap: .4rem; margin-bottom: .85rem; flex-wrap: wrap; }
+    .breadcrumb a { color: #58a6ff; text-decoration: none; font-weight: 600; }
+    .breadcrumb a:hover { text-decoration: underline; }
+    .breadcrumb span { color: #484f58; }
+
+    /* Page header */
+    .page-badge { display: inline-block; background: #1f6feb; color: #fff; font-size: .72rem; font-weight: 700; padding: 3px 12px; border-radius: 12px; text-transform: uppercase; letter-spacing: .07em; margin-bottom: .6rem; }
+    .page-header h1 { color: #e6edf3; font-size: 1.85rem; font-weight: 800; margin-bottom: .3rem; line-height: 1.2; }
+    .page-subtitle { color: #8b949e; font-size: .9rem; margin-bottom: .65rem; }
+    .tag-row { display: flex; gap: .4rem; flex-wrap: wrap; margin-bottom: 2rem; }
+    .tag { display: inline-block; font-size: .68rem; padding: 2px 8px; border-radius: 8px; font-weight: 600; }
+    .tag-blue   { background: #1f3a5c; color: #58a6ff; }
+    .tag-green  { background: #1a2f1a; color: #3fb950; }
+    .tag-yellow { background: #2d2009; color: #e3b341; }
+    .tag-purple { background: #24183a; color: #bc8cff; }
+    .tag-red    { background: #2d1a1a; color: #f85149; }
+
+    /* Section */
+    .notes-section { margin-bottom: 3rem; scroll-margin-top: 72px; }
+    .section-header { display: flex; align-items: baseline; gap: .75rem; margin-bottom: 1.35rem; padding-bottom: .75rem; border-bottom: 1px solid #21262d; }
+    .section-num { font-size: .72rem; font-weight: 700; color: #484f58; background: #161b22; border: 1px solid #30363d; padding: 2px 9px; border-radius: 8px; white-space: nowrap; }
+    .section-title { font-size: 1.25rem; font-weight: 800; color: #e6edf3; }
+
+    /* Prose */
+    .prose { font-size: .875rem; color: #c9d1d9; line-height: 1.8; margin-bottom: 1rem; }
+    .prose strong { color: #e6edf3; }
+    .prose em { color: #8b949e; font-style: italic; }
+
+    /* Definition card */
+    .def-card { background: #0c1e38; border: 1px solid #1f6feb; border-left: 4px solid #1f6feb; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+    .def-label { font-size: .67rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #58a6ff; margin-bottom: .4rem; }
+    .def-term { font-size: 1rem; font-weight: 800; color: #a5d6ff; margin-bottom: .35rem; }
+    .def-text { font-size: .85rem; color: #c9d1d9; line-height: 1.75; }
+    .def-text ul { padding-left: 1.1rem; margin-top: .4rem; }
+    .def-text li { margin-bottom: .3rem; }
+
+    /* Concept card */
+    .concept-card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: .85rem; }
+    .concept-title { font-size: .85rem; font-weight: 700; color: #e6edf3; margin-bottom: .4rem; }
+    .concept-text { font-size: .84rem; color: #c9d1d9; line-height: 1.75; }
+    .concept-text ul { padding-left: 1.1rem; }
+    .concept-text li { margin-bottom: .3rem; }
+
+    /* Example card */
+    .example-card { background: #0b1f0b; border: 1px solid #238636; border-left: 4px solid #3fb950; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+    .example-label { font-size: .67rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #3fb950; margin-bottom: .4rem; }
+    .example-title { font-size: .9rem; font-weight: 700; color: #56d364; margin-bottom: .35rem; }
+    .example-text { font-size: .84rem; color: #c9d1d9; line-height: 1.75; }
+    .example-text ul, .example-text ol { padding-left: 1.1rem; }
+    .example-text li { margin-bottom: .3rem; }
+    .example-text strong { color: #56d364; }
+
+    /* Insight card */
+    .insight-card { background: #1d1600; border: 1px solid #9e6a03; border-left: 4px solid #e3b341; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+    .insight-label { font-size: .67rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #e3b341; margin-bottom: .4rem; }
+    .insight-text { font-size: .85rem; color: #c9d1d9; line-height: 1.75; }
+    .insight-text strong { color: #f0c674; }
+    .insight-text ul { padding-left: 1.1rem; }
+    .insight-text li { margin-bottom: .3rem; }
+
+    /* Warning card */
+    .warn-card { background: #2d1a1a; border: 1px solid #f85149; border-left: 4px solid #f85149; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+    .warn-label { font-size: .67rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #f85149; margin-bottom: .4rem; }
+    .warn-text { font-size: .85rem; color: #c9d1d9; line-height: 1.75; }
+    .warn-text ul { padding-left: 1.1rem; }
+    .warn-text li { margin-bottom: .3rem; }
+    .warn-text strong { color: #ff7b72; }
+
+    /* Compare table */
+    .compare-table { width: 100%; border-collapse: collapse; font-size: .84rem; margin-bottom: 1.1rem; }
+    .compare-table th { background: #0d1117; color: #8b949e; font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; padding: .55rem .85rem; text-align: left; border-bottom: 2px solid #30363d; }
+    .compare-table td { padding: .6rem .85rem; border-bottom: 1px solid #21262d; color: #c9d1d9; vertical-align: top; line-height: 1.6; }
+    .compare-table tr:last-child td { border-bottom: none; }
+    .compare-table tr:hover td { background: #161b22; }
+    .compare-table .col-a { font-weight: 700; white-space: nowrap; }
+
+    /* Flow diagram */
+    .flow-wrap { overflow-x: auto; margin-bottom: 1.25rem; }
+    .flow { display: flex; align-items: stretch; gap: 0; flex-wrap: nowrap; min-width: max-content; padding: .5rem 0; }
+    .flow-node { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: .65rem 1rem; font-size: .78rem; font-weight: 700; color: #e6edf3; text-align: center; min-width: 110px; display: flex; flex-direction: column; align-items: center; gap: .25rem; }
+    .flow-node .fn-sub { font-size: .67rem; font-weight: 400; color: #8b949e; margin-top: .1rem; }
+    .flow-arrow { display: flex; align-items: center; color: #30363d; font-size: 1.1rem; padding: 0 .2rem; }
+    .flow-node.blue   { border-color: #1f6feb; background: #0c1e38; color: #a5d6ff; }
+    .flow-node.green  { border-color: #238636; background: #0b1f0b; color: #56d364; }
+    .flow-node.yellow { border-color: #9e6a03; background: #1d1600; color: #f0c674; }
+    .flow-node.purple { border-color: #6e40c9; background: #18102d; color: #d2a8ff; }
+    .flow-node.red    { border-color: #da3633; background: #2d1a1a; color: #ff7b72; }
+
+    /* Two/three/four column grids */
+    .two-col   { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.1rem; }
+    .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.1rem; }
+    .four-col  { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: .75rem; margin-bottom: 1.1rem; }
+
+    /* Pillar card */
+    .pillar-card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1.25rem 1rem; text-align: center; }
+    .pillar-icon { font-size: 1.8rem; margin-bottom: .5rem; }
+    .pillar-name { font-size: .95rem; font-weight: 800; color: #e6edf3; margin-bottom: .4rem; }
+    .pillar-desc { font-size: .78rem; color: #8b949e; line-height: 1.6; }
+
+    /* Numbered list card */
+    .num-list { display: flex; flex-direction: column; gap: .6rem; margin-bottom: 1rem; }
+    .num-item { display: flex; gap: .85rem; align-items: flex-start; }
+    .num-badge { width: 26px; height: 26px; border-radius: 50%; background: #1f6feb; color: #fff; font-size: .75rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: .1rem; }
+    .num-badge.green  { background: #238636; }
+    .num-badge.purple { background: #6e40c9; }
+    .num-badge.yellow { background: #9e6a03; }
+    .num-badge.red    { background: #da3633; }
+    .num-content { flex: 1; }
+    .num-title { font-size: .88rem; font-weight: 700; color: #e6edf3; margin-bottom: .2rem; }
+    .num-text  { font-size: .82rem; color: #c9d1d9; line-height: 1.65; }
+
+    /* Divider */
+    .divider { border: none; border-top: 1px solid #21262d; margin: 1.75rem 0; }
+
+    /* Sub-section label */
+    .sub-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: #8b949e; border-left: 3px solid #30363d; padding-left: .6rem; margin: 1.5rem 0 .85rem; }
+
+    /* Inline term */
+    .term   { color: #a5d6ff; font-weight: 700; }
+    .term-g { color: #56d364; font-weight: 700; }
+    .term-y { color: #f0c674; font-weight: 700; }
+    .term-p { color: #d2a8ff; font-weight: 700; }
+    .term-r { color: #ff7b72; font-weight: 700; }
+
+    /* Data classification chart */
+    .class-chart { width: 100%; border-collapse: collapse; font-size: .84rem; margin-bottom: 1.25rem; border-radius: 10px; overflow: hidden; }
+    .class-chart th { padding: .6rem 1rem; font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; background: #0d1117; color: #8b949e; text-align: left; border-bottom: 2px solid #30363d; }
+    .class-chart td { padding: .7rem 1rem; border-bottom: 1px solid #21262d; vertical-align: top; line-height: 1.6; font-size: .83rem; }
+    .class-chart tr:last-child td { border-bottom: none; }
+    .class-chip { display: inline-block; font-size: .7rem; font-weight: 700; padding: 2px 10px; border-radius: 10px; text-transform: uppercase; letter-spacing: .06em; }
+    .chip-public     { background: #1a2f1a; color: #3fb950; border: 1px solid #238636; }
+    .chip-internal   { background: #1f3a5c; color: #58a6ff; border: 1px solid #1f6feb; }
+    .chip-confidential { background: #2d2009; color: #e3b341; border: 1px solid #9e6a03; }
+    .chip-restricted { background: #2d1a1a; color: #f85149; border: 1px solid #da3633; }
+
+    /* IAM timeline */
+    .iam-timeline { display: flex; flex-direction: column; gap: 0; margin-bottom: 1rem; }
+    .iam-step { display: flex; gap: 1rem; }
+    .iam-line-col { display: flex; flex-direction: column; align-items: center; width: 36px; flex-shrink: 0; }
+    .iam-dot { width: 14px; height: 14px; border-radius: 50%; background: #1f6feb; border: 2px solid #58a6ff; flex-shrink: 0; margin-top: .25rem; }
+    .iam-dot.green  { background: #238636; border-color: #3fb950; }
+    .iam-dot.purple { background: #6e40c9; border-color: #d2a8ff; }
+    .iam-dot.yellow { background: #9e6a03; border-color: #e3b341; }
+    .iam-dot.red    { background: #da3633; border-color: #f85149; }
+    .iam-vline { width: 2px; flex: 1; background: #21262d; min-height: 20px; }
+    .iam-body { flex: 1; padding-bottom: 1.25rem; }
+    .iam-era { font-size: .68rem; font-weight: 700; color: #484f58; text-transform: uppercase; letter-spacing: .08em; margin-bottom: .15rem; }
+    .iam-name { font-size: .9rem; font-weight: 800; color: #e6edf3; margin-bottom: .25rem; }
+    .iam-desc { font-size: .82rem; color: #c9d1d9; line-height: 1.65; }
+
+    /* Incident steps */
+    .incident-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+    .incident-card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1.1rem; }
+    .incident-step { font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #484f58; margin-bottom: .3rem; }
+    .incident-name { font-size: 1rem; font-weight: 800; margin-bottom: .5rem; }
+    .incident-name.detect   { color: #58a6ff; }
+    .incident-name.respond  { color: #e3b341; }
+    .incident-name.remediate { color: #3fb950; }
+    .incident-name.learn    { color: #d2a8ff; }
+    .incident-text { font-size: .82rem; color: #c9d1d9; line-height: 1.65; }
+    .incident-text ul { padding-left: 1rem; }
+    .incident-text li { margin-bottom: .25rem; }
+
+    /* Footer */
+    .site-footer { text-align: center; padding: 1.5rem; border-top: 1px solid #21262d; color: #484f58; font-size: .77rem; margin-top: 2rem; }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .two-col, .three-col, .four-col, .incident-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 620px) {
+      .two-col { grid-template-columns: 1fr; }
+    }
+
+    /* Print */
+    @media print {
+      @page { size: A4; margin: 1.4cm 1.6cm; }
+      body { background: #fff !important; color: #111 !important; font-size: 9pt; }
+      .navbar, .sidebar, .site-footer { display: none !important; }
+      .layout { max-width: 100%; padding: 0; gap: 0; }
+      .content { padding: 0; }
+      .notes-section { margin-bottom: 1.5rem; page-break-inside: avoid; }
+      .section-header { border-bottom-color: #ccc !important; }
+      .section-num { background: #eee !important; color: #555 !important; border-color: #ccc !important; }
+      .section-title { color: #111 !important; font-size: 13pt; }
+      .def-card { background: #e8f0fe !important; border-color: #1a4fa0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .def-term { color: #1a4fa0 !important; }
+      .def-text, .concept-text, .example-text, .insight-text, .warn-text, .prose, .iam-desc, .incident-text, .num-text { color: #222 !important; font-size: 8.5pt; }
+      .example-card { background: #f0fdf4 !important; border-color: #15803d !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .example-title { color: #15803d !important; }
+      .insight-card { background: #fffbeb !important; border-color: #d97706 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .warn-card { background: #fef2f2 !important; border-color: #b91c1c !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .concept-card, .pillar-card, .incident-card { background: #fafafa !important; border-color: #ccc !important; }
+      .flow-node { background: #f3f4f6 !important; border-color: #ccc !important; color: #111 !important; }
+      .compare-table th, .class-chart th { background: #f3f4f6 !important; color: #555 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .compare-table td, .class-chart td { color: #111 !important; border-bottom-color: #eee !important; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="../../index.html">Playground</a>
+  <span class="nav-pill">Class Notes &rsaquo; Data Governance &rsaquo; Module 3</span>
+</nav>
+
+<div class="layout">
+
+  <!-- TOC SIDEBAR -->
+  <aside class="sidebar">
+    <div class="toc-label">Contents</div>
+    <nav class="toc">
+      <div class="toc-group">Foundations</div>
+      <a href="#s1"  class="toc-link">1. The CIA Triad</a>
+      <a href="#s2"  class="toc-link">2. Data as a Strategic Asset</a>
+      <div class="toc-group">Classification</div>
+      <a href="#s3"  class="toc-link">3. Data Classification</a>
+      <a href="#s4"  class="toc-link">4. Planning Data Protection</a>
+      <div class="toc-group">Technical Controls</div>
+      <a href="#s5"  class="toc-link">5. Network &amp; Perimeter Security</a>
+      <a href="#s6"  class="toc-link">6. Data Lineage &amp; Transit</a>
+      <a href="#s7"  class="toc-link">7. Encryption</a>
+      <a href="#s8"  class="toc-link">8. Identity &amp; Access Mgmt</a>
+      <div class="toc-group">Cloud &amp; Physical</div>
+      <a href="#s9"  class="toc-link">9. Cloud Data Protection</a>
+      <a href="#s10" class="toc-link">10. Physical Security &amp; IoT</a>
+      <a href="#s11" class="toc-link">11. Data Exfiltration</a>
+      <div class="toc-group">Operations</div>
+      <a href="#s12" class="toc-link">12. Data Loss Prevention</a>
+      <a href="#s13" class="toc-link">13. Keeping Protection Agile</a>
+      <a href="#s14" class="toc-link">14. Best Practices</a>
+      <div class="toc-group">Culture &amp; Leadership</div>
+      <a href="#s15" class="toc-link">15. Culture of Data Privacy</a>
+      <a href="#s16" class="toc-link">16. Leadership &amp; Training</a>
+      <a href="#s17" class="toc-link">17. Transparency &amp; Incidents</a>
+      <a href="#s18" class="toc-link">18. Data Security &amp; Recovery</a>
+      <div class="toc-group">Legal &amp; Beyond</div>
+      <a href="#s19" class="toc-link">19. Data Privacy &amp; HIPAA</a>
+      <a href="#s20" class="toc-link">20. Regulations &amp; Legal</a>
+      <a href="#s21" class="toc-link">21. Data Culture</a>
+      <a href="#s22" class="toc-link">22. Beyond Data Literacy</a>
+    </nav>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="content">
+
+    <div class="breadcrumb">
+      <a href="../../index.html">Playground</a>
+      <span>/</span><span>Class Notes</span>
+      <span>/</span><span>Data Governance</span>
+      <span>/</span><span>Module 3</span>
+    </div>
+
+    <div class="page-badge">&#128274; Data Governance &mdash; Module 3</div>
+    <div class="page-header">
+      <h1>Data Protection</h1>
+    </div>
+    <p class="page-subtitle">How organizations safeguard data through the CIA Triad, classification, network controls, encryption, IAM, cloud security, and a culture of privacy — making sure the right data reaches the right people at the right time.</p>
+    <div class="tag-row">
+      <span class="tag tag-blue">CIA Triad</span>
+      <span class="tag tag-blue">Encryption</span>
+      <span class="tag tag-green">Data Classification</span>
+      <span class="tag tag-green">IAM</span>
+      <span class="tag tag-yellow">Zero Trust</span>
+      <span class="tag tag-yellow">Cloud Security</span>
+      <span class="tag tag-purple">DLP</span>
+      <span class="tag tag-red">Exfiltration</span>
+    </div>
+
+    <!-- ═══════════════════════════════════════════ S1 ═══ -->
+    <section class="notes-section" id="s1">
+      <div class="section-header">
+        <span class="section-num">01</span>
+        <span class="section-title">The CIA Triad</span>
+      </div>
+
+      <p class="prose">Data protection is not a single technique — it is a continuous commitment to three interlocking properties known as the <strong>CIA Triad</strong>. Every control, policy, and tool you put in place should be traceable back to at least one of these properties. Together they answer the core question: <em>Is the right data available to the right people at the right time — and only them?</em></p>
+
+      <div class="three-col">
+        <div class="pillar-card">
+          <div class="pillar-icon">&#128274;</div>
+          <div class="pillar-name">Confidentiality</div>
+          <div class="pillar-desc">Data is accessible only to those who are authorized. Protect data from being given to the wrong people. Controls: encryption, access controls, authentication, need-to-know policies.</div>
+        </div>
+        <div class="pillar-card">
+          <div class="pillar-icon">&#9989;</div>
+          <div class="pillar-name">Integrity</div>
+          <div class="pillar-desc">Data is accurate, consistent, and free from unauthorized tampering. Everyone who should see the data sees exactly the same data. Controls: checksums, hashing, digital signatures, audit logs, version control.</div>
+        </div>
+        <div class="pillar-card">
+          <div class="pillar-icon">&#9728;</div>
+          <div class="pillar-name">Availability</div>
+          <div class="pillar-desc">Data is accessible to authorized users when they need it. Downtime is a protection failure too. Controls: redundancy, backups, disaster recovery, DDoS mitigation, patching.</div>
+        </div>
+      </div>
+
+      <div class="def-card">
+        <div class="def-label">Definition</div>
+        <div class="def-term">CIA Triad</div>
+        <div class="def-text">A foundational security model that defines three core objectives for any information security program. The triad is a framework for evaluating controls: a firewall primarily serves <em>confidentiality</em>; a hash check primarily serves <em>integrity</em>; a load balancer primarily serves <em>availability</em>. Real-world controls often serve more than one property simultaneously.</div>
+      </div>
+
+      <div class="sub-label">Why breaches matter beyond the technical</div>
+
+      <div class="num-list">
+        <div class="num-item">
+          <div class="num-badge red">1</div>
+          <div class="num-content">
+            <div class="num-title">Competitive harm</div>
+            <div class="num-text">Hackers can sell stolen business data to your competitors — pricing strategies, product roadmaps, customer lists. The breach becomes a market disadvantage.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge red">2</div>
+          <div class="num-content">
+            <div class="num-title">Loss of customer confidence</div>
+            <div class="num-text">Trust is slow to build and fast to lose. A single publicized breach can drive customers to competitors even if the damage to them was minimal.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge red">3</div>
+          <div class="num-content">
+            <div class="num-title">PII misuse</div>
+            <div class="num-text">Personally Identifiable Information in the wrong hands enables identity theft, fraud, and targeted social engineering against your customers.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge">4</div>
+          <div class="num-content">
+            <div class="num-title">Periodic auditing builds trust</div>
+            <div class="num-text">Regular internal and third-party audits demonstrate that protection controls actually work. Audits surface gaps before attackers do, and audit reports build stakeholder confidence.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ S2 ═══ -->
+    <section class="notes-section" id="s2">
+      <div class="section-header">
+        <span class="section-num">02</span>
+        <span class="section-title">Data as a Strategic Asset</span>
+      </div>
+
+      <p class="prose">For most of the 20th century, organizations collected data about people without any systematic understanding of what they had, where it lived, or who could access it. Automation accelerated the volume, but not the accountability. The shift from <strong>Industry 4.0</strong> to <strong>Industry 5.0</strong> marks the moment organizations stopped treating data as exhaust and started treating it as a first-class asset with real business value — and real liability.</p>
+
+      <div class="two-col">
+        <div class="concept-card">
+          <div class="concept-title">&#127981; Industry 4.0 &mdash; Data Produced, Not Managed</div>
+          <div class="concept-text">Sensors, ERP systems, and automation pipelines generated enormous data volumes. But governance was an afterthought. Nobody knew:
+            <ul>
+              <li>Who was accessing the data</li>
+              <li>What the data actually contained</li>
+              <li>Who owned each dataset</li>
+              <li>How long it had been sitting there</li>
+            </ul>
+            Data protection and privacy were bolt-on concerns, often addressed only after a breach.
+          </div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">&#129302; Industry 5.0 &mdash; Data as an Asset</div>
+          <div class="concept-text">Data is now recognized as a business asset that must be inventoried, classified, protected, and leveraged — like any other capital asset. This means:
+            <ul>
+              <li>Data has an owner accountable for its quality and protection</li>
+              <li>Data has a known location and classification</li>
+              <li>Access is logged, audited, and justified</li>
+              <li>Data that provides no value is a liability to be eliminated</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-label">Key Insight</div>
+        <div class="insight-text"><strong>Data can be a business accelerator or a liability.</strong> Knowing customer preferences through data — which features they use, what they buy, when they churn — lets you build better products faster. That same data, if breached, mismanaged, or unnecessarily collected, becomes a regulatory, financial, and reputational liability. Collecting data you do not use means spending money to store and secure it with zero return. If you collect a Social Security Number but your business has no legitimate reason to use it, you have created risk for no reward. <strong>Never gather unnecessary data.</strong></div>
+      </div>
+
+      <div class="def-card">
+        <div class="def-label">Definition</div>
+        <div class="def-term">Data Minimization</div>
+        <div class="def-text">The principle that organizations should only collect, process, and retain the minimum amount of data necessary to fulfill a specific, stated purpose. Data minimization is both a best practice and a legal requirement under GDPR (Article 5) and other modern privacy regulations. It directly reduces your attack surface: data you do not hold cannot be stolen.</div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ S3 ═══ -->
+    <section class="notes-section" id="s3">
+      <div class="section-header">
+        <span class="section-num">03</span>
+        <span class="section-title">Data Classification</span>
+      </div>
+
+      <p class="prose">Before you can protect data, you must know what you have and how sensitive it is. <strong>Data classification</strong> is the process of categorizing data into tiers based on its sensitivity, regulatory requirements, and the potential impact of unauthorized disclosure. Classification drives every downstream protection decision: who can access it, how it must be encrypted, how long it is retained, and where it can travel.</p>
+
+      <div class="def-card">
+        <div class="def-label">Definition</div>
+        <div class="def-term">Data Classification</div>
+        <div class="def-text">A framework that assigns each data asset to a sensitivity tier, which then determines the required security controls. Classification must be applied at the point of creation and re-evaluated when data is transformed or combined. At any given point in time, you should know: <em>where the data is, what it is, who owns it, what tier it belongs to, and who may access it.</em></div>
+      </div>
+
+      <div class="sub-label">The four standard tiers</div>
+
+      <table class="class-chart">
+        <thead>
+          <tr>
+            <th>Level</th>
+            <th>Who Can Access</th>
+            <th>Examples</th>
+            <th>Required Controls</th>
+            <th>Breach Impact</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="class-chip chip-public">Public</span></td>
+            <td style="color:#c9d1d9">Anyone, including the general public</td>
+            <td style="color:#c9d1d9">Marketing materials, published press releases, open product documentation, public pricing</td>
+            <td style="color:#c9d1d9">Basic integrity controls; ensure data is not tampered before publication</td>
+            <td style="color:#3fb950">Low — data is already public</td>
+          </tr>
+          <tr>
+            <td><span class="class-chip chip-internal">Internal</span></td>
+            <td style="color:#c9d1d9">All employees; not for external sharing</td>
+            <td style="color:#c9d1d9">Internal memos, org charts, meeting notes, internal wikis, general HR policies</td>
+            <td style="color:#c9d1d9">Authentication required; basic access logging; do not share externally without approval</td>
+            <td style="color:#58a6ff">Moderate — reputational or operational impact</td>
+          </tr>
+          <tr>
+            <td><span class="class-chip chip-confidential">Confidential</span></td>
+            <td style="color:#c9d1d9">Specific teams or roles only, on need-to-know basis</td>
+            <td style="color:#c9d1d9">Customer PII, financial reports, contracts, intellectual property, employee salaries, source code</td>
+            <td style="color:#c9d1d9">Encryption at rest and in transit; role-based access control; audit logging; MFA required</td>
+            <td style="color:#e3b341">High — regulatory penalties, litigation, customer harm</td>
+          </tr>
+          <tr>
+            <td><span class="class-chip chip-restricted">Restricted</span></td>
+            <td style="color:#c9d1d9">Named individuals only; executive or regulatory access</td>
+            <td style="color:#c9d1d9">Trade secrets, M&amp;A plans, PHI (Protected Health Information), authentication credentials, encryption keys</td>
+            <td style="color:#c9d1d9">Maximum encryption; zero-trust access; just-in-time provisioning; DLP controls; mandatory audit trails</td>
+            <td style="color:#f85149">Critical — existential business or safety risk</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="insight-card">
+        <div class="insight-label">Key Insight &mdash; Classification Can Change</div>
+        <div class="insight-text">As data travels through systems and is transformed, its classification tier can change in either direction. Raw transaction records (Confidential) aggregated into a regional sales summary (Internal) can be published as a press release (Public). Conversely, combining two Internal datasets — employee names with salary bands — may produce a Restricted dataset. <strong>Your classification policy must address data in motion and data at rest, not just data at creation.</strong></div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ S4 ═══ -->
+    <section class="notes-section" id="s4">
+      <div class="section-header">
+        <span class="section-num">04</span>
+        <span class="section-title">Planning Data Protection</span>
+      </div>
+
+      <p class="prose">Protection planning translates your classification tiers into concrete controls. It is not a one-time exercise — it is a living map of how data moves through your organization and what defenses exist at each point. Three pillars anchor the plan: <strong>lineage &amp; quality</strong>, <strong>classification</strong>, and <strong>level of protection</strong>.</p>
+
+      <div class="num-list">
+        <div class="num-item">
+          <div class="num-badge">1</div>
+          <div class="num-content">
+            <div class="num-title">Lineage &amp; Quality</div>
+            <div class="num-text">Know the full journey of every data asset: where it originated, every system it passed through, every transformation applied. Lineage lets you answer "where did this value come from?" and "who touched it?" Quality checkpoints ensure that unauthorized modifications — accidental or malicious — are detected in transit.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge green">2</div>
+          <div class="num-content">
+            <div class="num-title">Classification</div>
+            <div class="num-text">Every system that stores or processes data must understand the highest classification tier of data it holds. A data mart that receives Confidential records from an ERP cannot be treated as an Internal system just because it stores aggregates. Classification travels with the data.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge purple">3</div>
+          <div class="num-content">
+            <div class="num-title">Level of Protection</div>
+            <div class="num-text">Match controls to classification. Restricted data requires encryption, strict IAM, and audit logging. Internal data requires authentication and basic logging. Applying maximum controls everywhere is expensive and creates friction that causes people to bypass controls. <strong>Overly complex protection becomes a liability — nobody uses what nobody understands.</strong></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="warn-card">
+        <div class="warn-label">Anti-Pattern</div>
+        <div class="warn-text"><strong>Don't make things so complicated that nobody will use them.</strong> When security processes are too burdensome, users find workarounds — emailing files instead of using the secure portal, storing data locally instead of in the governed repository, sharing passwords instead of requesting access. Poor usability directly produces security failure. Design for the realistic behavior of real people, not perfect compliance.</div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ S5 ═══ -->
+    <section class="notes-section" id="s5">
+      <div class="section-header">
+        <span class="section-num">05</span>
+        <span class="section-title">Network &amp; Perimeter Security</span>
+      </div>
+
+      <p class="prose">The traditional approach to data protection starts with the network — building a hard boundary around your infrastructure so that unauthorized users cannot reach your data in the first place. This is sometimes called the <strong>security perimeter model</strong>. While modern zero-trust architectures reduce reliance on perimeter alone, network controls remain a critical layer in a defense-in-depth strategy.</p>
+
+      <div class="sub-label">Core network controls</div>
+
+      <div class="two-col">
+        <div class="concept-card">
+          <div class="concept-title">&#128738; Firewall</div>
+          <div class="concept-text">Inspects network traffic against a rule set and blocks unauthorized connections. Firewalls operate at different OSI layers:
+            <ul>
+              <li><strong>Packet filters</strong> — check IP addresses and ports</li>
+              <li><strong>Stateful firewalls</strong> — track connection state</li>
+              <li><strong>Next-gen firewalls (NGFW)</strong> — deep packet inspection, application awareness, intrusion prevention</li>
+            </ul>
+            Firewalls are the first line of defense — unauthorized people are blocked before they reach any service.
+          </div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">&#127981; Demilitarized Zone (DMZ)</div>
+          <div class="concept-text">A network segment that sits between the public internet and the internal network. Public-facing services (web servers, APIs, email gateways) live in the DMZ. Even if a DMZ service is compromised, the attacker still faces an internal firewall to reach sensitive data. The DMZ absorbs exposure so the core network does not have to.</div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">&#127760; Virtual Networks (VLANs / VNets)</div>
+          <div class="concept-text">Segment your internal network so different tiers of infrastructure cannot communicate freely:
+            <ul>
+              <li>Application servers in one virtual network</li>
+              <li>Databases in a separate, restricted network</li>
+              <li>Analytics and reporting systems in another</li>
+            </ul>
+            Even if an attacker reaches the application layer, lateral movement to the database is blocked.
+          </div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">&#128190; Endpoint Device Control</div>
+          <div class="concept-text">Trust only authorized devices. A desktop may access a data server legitimately, but if a user plugs in a USB drive and copies data, the physical medium bypasses every network control. Key endpoint policies:
+            <ul>
+              <li><strong>Disable USB ports</strong> on machines that access sensitive data</li>
+              <li><strong>Endpoint detection &amp; response (EDR)</strong> monitors for unusual file activity</li>
+              <li><strong>Device certificates</strong> ensure only managed devices connect to corporate resources</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ S6 ═══ -->
+    <section class="notes-section" id="s6">
+      <div class="section-header">
+        <span class="section-num">06</span>
+        <span class="section-title">Data Lineage &amp; Protection in Transit</span>
+      </div>
+
+      <p class="prose">Data rarely lives in a single system. It originates in sensors, travels through ERP platforms, lands in data warehouses, gets transformed into data marts, and is finally consumed by analytical dashboards. Every hop is an opportunity for unauthorized access, data corruption, or classification drift. <strong>Data lineage</strong> maps this journey so you can place the right control at the right point.</p>
+
+      <div class="sub-label">A typical enterprise data flow</div>
+
+      <div class="flow-wrap">
+        <div class="flow">
+          <div class="flow-node blue">Sensors / IoT<div class="fn-sub">Raw telemetry</div></div>
+          <div class="flow-arrow">&#8594;</div>
+          <div class="flow-node">ERP System<div class="fn-sub">Operational data</div></div>
+          <div class="flow-arrow">&#8594;</div>
+          <div class="flow-node yellow">Data Warehouse<div class="fn-sub">Integrated store</div></div>
+          <div class="flow-arrow">&#8594;</div>
+          <div class="flow-node green">Data Marts<div class="fn-sub">Aggregated views</div></div>
+          <div class="flow-arrow">&#8594;</div>
+          <div class="flow-node purple">Analytics / BI<div class="fn-sub">Reports &amp; insights</div></div>
+        </div>
+      </div>
+
+      <div class="num-list">
+        <div class="num-item">
+          <div class="num-badge">1</div>
+          <div class="num-content">
+            <div class="num-title">Principle of least privilege at each hop</div>
+            <div class="num-text">Access granted for a specific transaction should be revoked once that transaction is complete. An analyst who queries a data mart should never automatically inherit access to the raw ERP records that fed it. Each system grants the minimum access required for that role at that stage.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge green">2</div>
+          <div class="num-content">
+            <div class="num-title">Analysts see aggregates, not raw data</div>
+            <div class="num-text">At the data mart layer, heavy aggregation happens. An analyst authorized to see regional sales figures should not be able to drill down to individual purchase orders. If a user is not authorized to see data in one system, that authorization must not implicitly appear in another system that consumes from it.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge purple">3</div>
+          <div class="num-content">
+            <div class="num-title">Purpose, person, and time-bound access</div>
+            <div class="num-text">Authorization must specify: <em>who</em> is allowed access, <em>why</em> (the business purpose), and <em>for how long</em>. A finance analyst may access Q1 payroll data for audit purposes for two weeks — not indefinitely. Time-bound access reduces the window of exposure.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge yellow">4</div>
+          <div class="num-content">
+            <div class="num-title">Maintain protection levels across all systems</div>
+            <div class="num-text">A Confidential record that flows from ERP to data mart does not become less sensitive just because it was transformed. The receiving system must apply controls commensurate with the highest sensitivity of data it holds.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ S7 ═══ -->
+    <section class="notes-section" id="s7">
+      <div class="section-header">
+        <span class="section-num">07</span>
+        <span class="section-title">Encryption</span>
+      </div>
+
+      <p class="prose">Encryption converts readable data into an unreadable format that can only be reversed with the correct key. It is the primary control for <em>confidentiality</em> — even if an attacker obtains your data, they cannot read it without the key. Encryption must be applied in two states: <strong>at rest</strong> (stored) and <strong>in transit</strong> (moving over a network).</p>
+
+      <div class="two-col">
+        <div class="def-card">
+          <div class="def-label">Encryption at Rest</div>
+          <div class="def-term">Stored Data Encryption</div>
+          <div class="def-text">Encrypts data on disk, in databases, in backup files, and on removable media. If an attacker steals a hard drive or backup tape, they get ciphertext, not plaintext. Standards: AES-256 for symmetric encryption. All Restricted and Confidential data must be encrypted at rest.</div>
+        </div>
+        <div class="def-card">
+          <div class="def-label">Encryption in Transit</div>
+          <div class="def-term">Data in Motion Encryption</div>
+          <div class="def-text">Encrypts data as it travels across networks using TLS (Transport Layer Security). Applies to API calls, database connections, file transfers, and inter-service communication. Prevents man-in-the-middle attacks where an attacker intercepts network traffic.</div>
+        </div>
+      </div>
+
+      <div class="sub-label">Key management hierarchy: DEK, KEK, KMS, and CMEK</div>
+
+      <p class="prose">Encrypting data is only as strong as your key management. Modern systems use a layered key hierarchy to balance performance and security.</p>
+
+      <div class="num-list">
+        <div class="num-item">
+          <div class="num-badge">DEK</div>
+          <div class="num-content">
+            <div class="num-title">Data Encryption Key</div>
+            <div class="num-text">The key that directly encrypts your data. A unique DEK is typically generated per file, record, or object. Because DEKs are numerous and frequently rotated, they are never stored in plaintext — they are themselves encrypted.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge green">KEK</div>
+          <div class="num-content">
+            <div class="num-title">Key Encryption Key</div>
+            <div class="num-text">A higher-level key that encrypts (wraps) your DEKs. This is the "key to the keys." Storing the KEK separately from the DEK means that even if your data store is breached, the attacker gets encrypted DEKs they cannot use without the KEK.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge purple">KMS</div>
+          <div class="num-content">
+            <div class="num-title">Key Management Service</div>
+            <div class="num-text">A managed service (e.g., AWS KMS, Google Cloud KMS, Azure Key Vault) that generates, stores, rotates, and audits cryptographic keys. KMS provides hardware-backed key storage (HSM) and enforces policy on who can use which keys.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge yellow">CMEK</div>
+          <div class="num-content">
+            <div class="num-title">Customer-Managed Encryption Keys</div>
+            <div class="num-text">With CMEK, the customer owns and controls the KEK — not the cloud provider. You bring your own key to the cloud provider's KMS. Maximum control: if you revoke your key, the cloud provider cannot decrypt your data. Required for highest-sensitivity workloads in regulated industries.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-label">How it fits together</div>
+        <div class="insight-text">Your data is encrypted with a <strong>DEK</strong>. That DEK is encrypted (wrapped) with a <strong>KEK</strong> stored in your <strong>KMS</strong>. If you use <strong>CMEK</strong>, you own the KEK and the cloud provider must request your key to perform operations on your data. You can audit every key usage event. This gives you cryptographic proof of who accessed what data and when.</div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ S8 ═══ -->
+    <section class="notes-section" id="s8">
+      <div class="section-header">
+        <span class="section-num">08</span>
+        <span class="section-title">Identity &amp; Access Management</span>
+      </div>
+
+      <p class="prose"><strong>Identity and Access Management (IAM)</strong> is the discipline of ensuring that only the right identities — people, services, and devices — can access the right resources, at the right time, for the right reasons. It is the enforcement layer that makes your classification tiers real. Without IAM, encryption and network controls can still be bypassed by an authorized user acting outside their role.</p>
+
+      <div class="def-card">
+        <div class="def-label">Definition</div>
+        <div class="def-term">IAM (Identity and Access Management)</div>
+        <div class="def-text">A framework of policies and technologies that ensures users are who they claim to be (authentication) and can only do what they are permitted to do (authorization). Modern IAM covers human users, service accounts, APIs, and machine identities.</div>
+      </div>
+
+      <div class="sub-label">Evolution of IAM technologies</div>
+
+      <div class="iam-timeline">
+        <div class="iam-step">
+          <div class="iam-line-col">
+            <div class="iam-dot"></div>
+            <div class="iam-vline"></div>
+          </div>
+          <div class="iam-body">
+            <div class="iam-era">1980s &mdash; 1990s</div>
+            <div class="iam-name">Directory Services &amp; Kerberos</div>
+            <div class="iam-desc">Early enterprise IAM used centralized directory services — databases of user accounts and group memberships. <strong>Kerberos</strong> (developed at MIT, adopted by Windows Active Directory) introduced ticket-based authentication: a user authenticates once to the Key Distribution Center (KDC), receives a ticket, and presents that ticket to access network services without re-entering a password. This eliminated the need to send passwords over the network repeatedly.</div>
+          </div>
+        </div>
+        <div class="iam-step">
+          <div class="iam-line-col">
+            <div class="iam-dot"></div>
+            <div class="iam-vline"></div>
+          </div>
+          <div class="iam-body">
+            <div class="iam-era">1993 &mdash; Present</div>
+            <div class="iam-name">LDAP (Lightweight Directory Access Protocol)</div>
+            <div class="iam-desc"><strong>LDAP</strong> is an open, vendor-neutral protocol for accessing and maintaining directory information services over a network. It defines a hierarchical tree structure (Distinguished Names, Organizational Units) for organizing user accounts, groups, and attributes. LDAP is the query language used to talk to directories like Microsoft Active Directory. When an app needs to validate "is this user in the Finance group?", it queries LDAP. LDAP itself does not handle authentication tokens — it is an access layer. Used in combination with Kerberos or SAML for full IAM solutions.</div>
+          </div>
+        </div>
+        <div class="iam-step">
+          <div class="iam-line-col">
+            <div class="iam-dot green"></div>
+            <div class="iam-vline"></div>
+          </div>
+          <div class="iam-body">
+            <div class="iam-era">2002</div>
+            <div class="iam-name">SAML (Security Assertion Markup Language)</div>
+            <div class="iam-desc"><strong>SAML</strong> extended IAM to the web, enabling Single Sign-On (SSO) across organizational boundaries. An <em>Identity Provider (IdP)</em> authenticates the user and issues an XML-based assertion. The <em>Service Provider (SP)</em> trusts that assertion without the user re-authenticating. SAML solved federated enterprise identity — your corporate credentials work at a third-party SaaS vendor without that vendor knowing your password.</div>
+          </div>
+        </div>
+        <div class="iam-step">
+          <div class="iam-line-col">
+            <div class="iam-dot purple"></div>
+            <div class="iam-vline"></div>
+          </div>
+          <div class="iam-body">
+            <div class="iam-era">2012 &mdash; Present</div>
+            <div class="iam-name">OAuth 2.0 &amp; OpenID Connect (OIDC)</div>
+            <div class="iam-desc"><strong>OAuth 2.0</strong> is an authorization framework designed for APIs and mobile apps. Rather than sharing passwords, it issues scoped access tokens — a user grants an application limited permission to act on their behalf. <strong>OpenID Connect</strong> (OIDC) adds an identity layer on top of OAuth 2.0, providing a standardized way to verify who the user is (authentication) in addition to what they can do (authorization). Together they power modern cloud and API security.</div>
+          </div>
+        </div>
+        <div class="iam-step">
+          <div class="iam-line-col">
+            <div class="iam-dot yellow"></div>
+          </div>
+          <div class="iam-body">
+            <div class="iam-era">Now</div>
+            <div class="iam-name">Zero Trust &amp; Continuous Authentication</div>
+            <div class="iam-desc">Modern IAM does not trust anyone by default — not even internal users. Every access request is verified continuously via short-lived tokens, behavioral analytics, device posture, and conditional access policies (right person + right device + right location).</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sub-label">Data-level access permissions</div>
+      <p class="prose">IAM applies not just to systems but to operations within those systems. You are responsible for granting appropriate permissions at the data level:</p>
+
+      <div class="four-col">
+        <div class="concept-card">
+          <div class="concept-title">Read</div>
+          <div class="concept-text">View data in its current form. Most users receive read access scoped to their role. Applies to analysts, reporting tools, dashboards.</div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">Write</div>
+          <div class="concept-text">Create or modify data. Granted to data entry roles, application service accounts. Write access carries integrity risk and must be logged.</div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">Redact / Mask</div>
+          <div class="concept-text">Present data with sensitive fields hidden or partially obscured (e.g., showing only the last 4 digits of a SSN). The full value exists in the system but is not visible to this role.</div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">Tokenize</div>
+          <div class="concept-text">Replace a sensitive value with a non-sensitive surrogate token. Unlike masking, the token can be used in processing and later de-tokenized by authorized systems. Common in PCI-DSS environments for payment card numbers.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ S9 ═══ -->
+    <section class="notes-section" id="s9">
+      <div class="section-header">
+        <span class="section-num">09</span>
+        <span class="section-title">Data Protection in the Cloud</span>
+      </div>
+
+      <p class="prose">Cloud adoption introduces a fundamental shift in how security responsibility is distributed. You no longer control the physical hardware, and in some models you do not control the operating system. The <strong>Shared Responsibility Model</strong> makes explicit what the cloud provider secures and what you must secure yourself.</p>
+
+      <div class="def-card">
+        <div class="def-label">Definition</div>
+        <div class="def-term">Shared Responsibility Model</div>
+        <div class="def-text">A framework that divides security obligations between the cloud provider and the customer. The provider secures the infrastructure (physical data centers, hardware, hypervisors, global network). The customer secures what they build on top of it: data, identities, applications, network configuration, and access controls. <em>The boundary shifts depending on the service model: IaaS gives you more control and more responsibility; SaaS gives you less of both.</em></div>
+      </div>
+
+      <div class="sub-label">Cloud-specific security concerns</div>
+
+      <div class="two-col">
+        <div class="concept-card">
+          <div class="concept-title">&#127968; Multi-tenancy &amp; Workload Isolation</div>
+          <div class="concept-text">Cloud infrastructure is shared across many customers. <strong>Multi-tenancy</strong> means your data lives on the same physical hardware as other organizations' data. This requires:
+            <ul>
+              <li>Strict logical isolation — your workloads cannot read another tenant's memory or storage</li>
+              <li>Separate encryption keys per tenant</li>
+              <li>Authentication that verifies tenant identity on every request</li>
+              <li>Network policies that prevent cross-tenant traffic</li>
+            </ul>
+          </div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">&#128273; Managed vs. Customer-Managed Keys</div>
+          <div class="concept-text">Cloud providers offer two encryption key modes:
+            <ul>
+              <li><strong>Provider-managed keys:</strong> the provider generates, stores, and rotates keys. Simple but you trust the provider completely.</li>
+              <li><strong>CMEK (Customer-Managed Encryption Keys):</strong> you own and control the KEK in your KMS. Revoking your key renders data inaccessible even to the provider. Required for highest-sensitivity regulated data.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">&#128274; Private Endpoints &amp; Network Isolation</div>
+          <div class="concept-text">Always attach public-facing services (e.g., a Databricks workspace, an analytics platform) to a private virtual network. Traffic between your application and cloud services should never traverse the public internet. Use <strong>private endpoints</strong> that resolve to internal IP addresses, enforcing encryption and eliminating external exposure.</div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">&#129302; Zero Trust in the Cloud</div>
+          <div class="concept-text">The cloud erases the traditional perimeter — resources are reachable from anywhere. Zero trust replaces "trust the network" with "verify every request":
+            <ul>
+              <li><strong>Continuous authentication</strong> via short-lived tokens — sessions expire and must be re-verified</li>
+              <li><strong>Least privilege access</strong> — grant only what is needed for the specific task</li>
+              <li><strong>Conditional access</strong> — right person + right device + valid location required simultaneously</li>
+            </ul>
+          </div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">&#9203; Just-in-Time (JIT) Access</div>
+          <div class="concept-text">A system is locked by default. A user requests access for a specific purpose, and the firewall or IAM system opens access for a defined window of time. When the window closes, access is automatically revoked. JIT eliminates persistent privileged access — a major attack vector.</div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">&#128081; Privileged Identity Management (PIM)</div>
+          <div class="concept-text">Admin-level access is provisioned for a short, defined period only — not permanently. A DBA needing emergency access to a production database can request elevation, perform the task, and have admin rights automatically expire. PIM dramatically reduces the risk of compromised admin accounts.</div>
+        </div>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-label">Practical Guidance</div>
+        <div class="insight-text"><strong>Understand your cloud provider's security portfolio and identify what is relevant to your workloads.</strong> Every major cloud provider offers dozens of security services — not all are relevant to every organization. Map your data classification tiers to specific provider controls. Identify gaps early. How quickly your team can learn and adopt these controls determines how well you leverage the provider's investment in security infrastructure.</div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ S10 ═══ -->
+    <section class="notes-section" id="s10">
+      <div class="section-header">
+        <span class="section-num">10</span>
+        <span class="section-title">Physical Security &amp; IoT</span>
+      </div>
+
+      <p class="prose">Digital controls protect data from remote attackers, but data centers, server rooms, and IoT edge devices are physical objects in the real world. An attacker with physical access to a server can circumvent almost any software control. Physical security is not a separate concern — it is the foundation on which all other controls rest.</p>
+
+      <div class="four-col">
+        <div class="pillar-card">
+          <div class="pillar-icon">&#128272;</div>
+          <div class="pillar-name">Access Controls</div>
+          <div class="pillar-desc">Badge readers, biometrics, mantraps, and visitor logs restrict who can physically enter server rooms and data centers. Every entry must be logged and attributed.</div>
+        </div>
+        <div class="pillar-card">
+          <div class="pillar-icon">&#128190;</div>
+          <div class="pillar-name">Hardware Encryption</div>
+          <div class="pillar-desc">Self-encrypting drives (SEDs) and hardware security modules (HSMs) protect data at the physical layer. If a drive is removed from the server, it is unreadable without the hardware key.</div>
+        </div>
+        <div class="pillar-card">
+          <div class="pillar-icon">&#127751;</div>
+          <div class="pillar-name">Environment Controls</div>
+          <div class="pillar-desc">Temperature, humidity, fire suppression, and power redundancy protect hardware from environmental failure. A flooded data center is a availability failure that becomes a data protection incident.</div>
+        </div>
+        <div class="pillar-card">
+          <div class="pillar-icon">&#128247;</div>
+          <div class="pillar-name">24/7 Monitoring</div>
+          <div class="pillar-desc">CCTV surveillance of all physical access points, motion sensors in restricted areas, and security personnel on site. Physical monitoring feeds into the same SIEM that monitors network activity.</div>
+        </div>
+      </div>
+
+      <div class="sub-label">Protecting IoT Systems</div>
+
+      <p class="prose">IoT devices present unique protection challenges: they are often deployed in physically accessible locations, run minimal operating systems with limited security features, and are frequently forgotten after deployment — receiving no firmware updates for years.</p>
+
+      <div class="num-list">
+        <div class="num-item">
+          <div class="num-badge red">!</div>
+          <div class="num-content">
+            <div class="num-title">Default credentials are a critical risk</div>
+            <div class="num-text">Most IoT devices ship with default usernames and passwords that many organizations never change. Change all default credentials immediately upon deployment, and enforce unique credentials per device.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge">1</div>
+          <div class="num-content">
+            <div class="num-title">Network segmentation for IoT</div>
+            <div class="num-text">IoT devices should be isolated in a dedicated VLAN that is firewalled from your core business network. A compromised temperature sensor should not be a gateway to your ERP system.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge green">2</div>
+          <div class="num-content">
+            <div class="num-title">Encrypt IoT data in transit</div>
+            <div class="num-text">Data transmitted from sensors to gateways must use TLS. Many lightweight IoT protocols (MQTT, CoAP) support TLS. If a device cannot support encryption, consider whether it belongs on your network at all.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge purple">3</div>
+          <div class="num-content">
+            <div class="num-title">Firmware lifecycle management</div>
+            <div class="num-text">Maintain an inventory of all IoT devices, their firmware versions, and their end-of-life dates. Unpatched firmware is the single most common IoT attack vector. Establish a patching cadence and retire devices that no longer receive vendor security updates.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ S11 ═══ -->
+    <section class="notes-section" id="s11">
+      <div class="section-header">
+        <span class="section-num">11</span>
+        <span class="section-title">Data Exfiltration: Threats &amp; Prevention</span>
+      </div>
+
+      <p class="prose"><strong>Data exfiltration</strong> is the unauthorized transfer of data from an organization. It is the end goal of most data breaches — the moment when data leaves your control and enters the hands of an adversary. Exfiltration can be perpetrated by external attackers or malicious/negligent insiders. Preventing it requires layered technical controls and behavioral monitoring, balanced with a user experience that does not obstruct legitimate work.</p>
+
+      <div class="sub-label">Common exfiltration threats</div>
+
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th>Threat Vector</th>
+            <th>How It Works</th>
+            <th>Prevention</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="col-a" style="color:#f85149">Insider Threat</td>
+            <td>Malicious employee or contractor deliberately copies and removes sensitive data, often before resignation or termination</td>
+            <td>Behavioral analytics (UEBA), offboarding checklists, DLP on bulk file copy, access revocation at departure</td>
+          </tr>
+          <tr>
+            <td class="col-a" style="color:#f85149">Phishing &amp; Social Engineering</td>
+            <td>Attacker tricks a user into revealing credentials or clicking a link that installs malware enabling data theft</td>
+            <td>Security awareness training, phishing simulations, MFA, email filtering, sandboxing attachments</td>
+          </tr>
+          <tr>
+            <td class="col-a" style="color:#f85149">Removable Media (USB)</td>
+            <td>User copies files to a USB drive or external hard drive that leaves the building unmonitored</td>
+            <td>Disable USB ports on sensitive systems via endpoint management, DLP agent blocking unauthorized removable media</td>
+          </tr>
+          <tr>
+            <td class="col-a" style="color:#f85149">Unauthorized Cloud Upload</td>
+            <td>User uploads corporate data to personal cloud storage (Dropbox, Google Drive) from a corporate device</td>
+            <td>Web proxy / CASB (Cloud Access Security Broker) blocking unauthorized cloud destinations, DLP policies for uploads</td>
+          </tr>
+          <tr>
+            <td class="col-a" style="color:#f85149">Screen Capture / Screenshare</td>
+            <td>Sensitive data is photographed or screen-recorded during remote sessions or screen-sharing calls, bypassing DLP</td>
+            <td>Disable screenshare in applications handling sensitive data, watermark displayed data with user identity, restrict copy-paste from secure applications</td>
+          </tr>
+          <tr>
+            <td class="col-a" style="color:#f85149">After-Hours Anomalous Access</td>
+            <td>Large data downloads occurring at 2 AM from an account not normally active at that time — often indicative of compromised credentials or insider activity</td>
+            <td>SIEM alerts on access outside normal operating hours, behavioral baselines per user, automatic session lockout after-hours for high-sensitivity systems</td>
+          </tr>
+          <tr>
+            <td class="col-a" style="color:#f85149">Third-Party Vendor Breach</td>
+            <td>A vendor or contractor with legitimate access is compromised, and their credentials are used to extract your data</td>
+            <td>Vendor risk assessments, least privilege for third-party accounts, JIT access, audit logs reviewing vendor activity, contractual data handling obligations</td>
+          </tr>
+          <tr>
+            <td class="col-a" style="color:#f85149">Ransomware Exfiltration</td>
+            <td>Modern ransomware actors exfiltrate data before encrypting it, enabling double extortion — pay or we publish your data</td>
+            <td>EDR to detect C2 communication, network traffic analysis to detect large outbound transfers, immutable backups</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="insight-card">
+        <div class="insight-label">Balance Security and User Experience</div>
+        <div class="insight-text">Every security control has a usability cost. Too many friction points and users will route around controls — emailing themselves files, using personal phones to photograph screens. <strong>Store data on authorized devices only.</strong> Use cloud provider threat detection tools (e.g., AWS GuardDuty, Google Chronicle, Azure Sentinel) to provide monitoring without imposing workflow-breaking friction on legitimate users. The goal is invisible security that only becomes visible when behavior is anomalous.</div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ S12 ═══ -->
+    <section class="notes-section" id="s12">
+      <div class="section-header">
+        <span class="section-num">12</span>
+        <span class="section-title">Data Loss Prevention (DLP)</span>
+      </div>
+
+      <p class="prose"><strong>Data Loss Prevention</strong> is a set of tools and policies that detect and prevent unauthorized transmission, copying, or deletion of sensitive data. DLP operates at three layers: data at rest (files on disk), data in motion (network transfers), and data in use (actions performed on endpoints like copy-paste, printing, or screen capture).</p>
+
+      <div class="def-card">
+        <div class="def-label">Definition</div>
+        <div class="def-term">DLP (Data Loss Prevention)</div>
+        <div class="def-text">Technology that identifies, monitors, and protects sensitive data across its three states — at rest, in transit, and in use — by enforcing policies that prevent unauthorized disclosure. DLP inspects content (pattern matching for SSNs, credit card numbers, medical codes) and context (who is sending, to where, at what time) to make allow/block/alert decisions.</div>
+      </div>
+
+      <div class="two-col">
+        <div class="concept-card">
+          <div class="concept-title">What DLP Protects Against</div>
+          <div class="concept-text">
+            <ul>
+              <li>Accidental emailing of a file containing PII to the wrong recipient</li>
+              <li>Bulk file downloads to an unauthorized device</li>
+              <li>Uploading a database export to a personal cloud service</li>
+              <li>Printing a confidential contract to an unsecured printer</li>
+              <li>Pasting customer data into a public chatbot or AI tool</li>
+            </ul>
+          </div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">DLP Policy Design</div>
+          <div class="concept-text">
+            Effective DLP policies are:
+            <ul>
+              <li><strong>Content-aware</strong> — recognizes SSNs, PCI data, PHI patterns</li>
+              <li><strong>Context-aware</strong> — considers destination, user role, time of day</li>
+              <li><strong>Graduated</strong> — warn, quarantine, or block based on severity</li>
+              <li><strong>Audited</strong> — every DLP event is logged for review</li>
+            </ul>
+            Overly aggressive DLP that blocks legitimate business workflows generates alert fatigue and workarounds.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ S13 ═══ -->
+    <section class="notes-section" id="s13">
+      <div class="section-header">
+        <span class="section-num">13</span>
+        <span class="section-title">Keeping Data Protection Agile</span>
+      </div>
+
+      <p class="prose">Threats evolve faster than most security policies. Keeping protection agile means building continuous monitoring and feedback loops into your security posture so that you detect new attack patterns, classify new data types, and update controls without waiting for a breach to expose a gap.</p>
+
+      <div class="two-col">
+        <div class="concept-card">
+          <div class="concept-title">&#128202; Security Health Analytics</div>
+          <div class="concept-text">Continuous scoring of your security posture across systems. Tracks unpatched vulnerabilities, misconfigured access controls, overly permissive IAM roles, and encryption gaps. Provides a dashboard that surfaces your highest-risk assets without requiring manual audits.</div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">&#128279; Data Lineage Monitoring</div>
+          <div class="concept-text">Automated tracking of data flows across systems in near real-time. When an unexpected pipeline appears — a new data copy moving to an unauthorized destination — lineage monitoring surfaces it immediately. Lineage monitoring serves both data quality and data protection goals.</div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">&#9888; Event Threat Detection</div>
+          <div class="concept-text">Rule-based and ML-driven detection of known and unknown attack patterns. Correlates events across systems — a failed login followed by a successful one from a new country followed by a large export is a threat pattern that no single log would reveal in isolation.</div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">&#128101; Differential Privacy</div>
+          <div class="concept-text">A mathematical technique that adds carefully calibrated statistical noise to query results so that individuals cannot be re-identified from aggregate data — even by an adversary who knows everything else. Used when sharing data for analytics or research while protecting individual privacy. Apple, Google, and the US Census Bureau all use differential privacy in production.</div>
+        </div>
+        <div class="concept-card" style="grid-column: span 2;">
+          <div class="concept-title">&#128187; SIEM (Security Information and Event Management)</div>
+          <div class="concept-text">SIEM is the central nervous system of your security operations. It aggregates log data from every system — firewalls, IAM, endpoint agents, cloud APIs, DLP, physical access systems — and correlates events across time and source to detect threats that no single system could see alone. Key capabilities:
+            <ul style="margin-top:.4rem">
+              <li><strong>Real-time alerting</strong> — rules fire when suspicious patterns emerge</li>
+              <li><strong>Historical search</strong> — forensic investigation after an incident</li>
+              <li><strong>Compliance reporting</strong> — automated evidence collection for HIPAA, GDPR, SOX audits</li>
+              <li><strong>Threat intelligence integration</strong> — correlates your logs against known bad IPs, malware signatures, and attacker TTPs</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ S14 ═══ -->
+    <section class="notes-section" id="s14">
+      <div class="section-header">
+        <span class="section-num">14</span>
+        <span class="section-title">Data Protection Best Practices</span>
+      </div>
+
+      <p class="prose">No single control is sufficient. Effective data protection is a layered, defense-in-depth approach where each control compensates for the limitations of others. The following practices form the operational baseline for any mature data protection program.</p>
+
+      <div class="num-list">
+        <div class="num-item">
+          <div class="num-badge">1</div>
+          <div class="num-content">
+            <div class="num-title">Encrypt everything, everywhere</div>
+            <div class="num-text">Encryption at rest and in transit is non-negotiable for Confidential and Restricted data. Do not make exceptions for internal systems or "trusted" networks — the majority of breaches originate inside the perimeter.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge green">2</div>
+          <div class="num-content">
+            <div class="num-title">Apply least privilege consistently</div>
+            <div class="num-text">Grant users and services only the permissions they need for their current task. Review permissions quarterly and revoke access that is no longer required. Accumulated excess permissions are one of the most common breach enablers.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge purple">3</div>
+          <div class="num-content">
+            <div class="num-title">Enforce MFA for all privileged access</div>
+            <div class="num-text">Multi-factor authentication (MFA) prevents credential theft from being sufficient to access your systems. Even if a password is compromised, the attacker still needs the second factor. MFA is especially critical for admin accounts and remote access.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge yellow">4</div>
+          <div class="num-content">
+            <div class="num-title">Patch and update continuously</div>
+            <div class="num-text">The majority of successful breaches exploit known vulnerabilities with available patches. Establish a patch management process with defined SLAs for critical (24-72 hours), high (7 days), and medium (30 days) severity vulnerabilities.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge">5</div>
+          <div class="num-content">
+            <div class="num-title">Conduct regular penetration testing</div>
+            <div class="num-text">Hire ethical hackers to attempt to breach your systems under controlled conditions. Penetration tests reveal gaps that automated scanning misses. Test at least annually and after any significant infrastructure change.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge red">6</div>
+          <div class="num-content">
+            <div class="num-title">Manage third-party risk</div>
+            <div class="num-text">Vendors, contractors, and partners with access to your data extend your attack surface. Require vendors to meet your security standards contractually, assess their controls before granting access, and monitor their activity while connected.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge green">7</div>
+          <div class="num-content">
+            <div class="num-title">Classify before you collect</div>
+            <div class="num-text">Know what sensitivity tier a dataset will occupy before you collect it, so you can design the right controls into the system from day one. Retrofitting security onto a system built without it is expensive and never complete.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ S15 ═══ -->
+    <section class="notes-section" id="s15">
+      <div class="section-header">
+        <span class="section-num">15</span>
+        <span class="section-title">Building a Culture of Data Privacy</span>
+      </div>
+
+      <p class="prose">Technology controls are only as effective as the people operating within them. A culture of data privacy means that every member of the organization — from the CEO to a new hire — understands their role in protecting data and actively participates in that protection. Training cannot be one-size-fits-all: different roles carry different risks and need different knowledge.</p>
+
+      <div class="sub-label">Role-based training tracks</div>
+
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th>Role</th>
+            <th>Core Training Topics</th>
+            <th>Cadence</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="col-a" style="color:#58a6ff">All Staff</td>
+            <td>Phishing awareness, data classification basics, incident reporting procedures, acceptable use policy, clean desk / screen lock</td>
+            <td>Annual + simulated phishing quarterly</td>
+          </tr>
+          <tr>
+            <td class="col-a" style="color:#3fb950">Developers &amp; Engineers</td>
+            <td>Secure coding (OWASP Top 10), secrets management, dependency scanning, threat modeling, code review for data handling</td>
+            <td>Annual + per-sprint security checkpoints</td>
+          </tr>
+          <tr>
+            <td class="col-a" style="color:#e3b341">Data Analysts &amp; Scientists</td>
+            <td>Data classification and handling, appropriate use of PII in models, anonymization techniques, DLP tool usage, access request procedures</td>
+            <td>Annual + when accessing new data sources</td>
+          </tr>
+          <tr>
+            <td class="col-a" style="color:#d2a8ff">IT &amp; Security Teams</td>
+            <td>Advanced threat detection, incident response playbooks, forensics, cloud security configuration, vulnerability management</td>
+            <td>Continuous — tied to threat intelligence feeds</td>
+          </tr>
+          <tr>
+            <td class="col-a" style="color:#f85149">Executives &amp; Leadership</td>
+            <td>Regulatory landscape, breach notification obligations, risk appetite, security investment decisions, crisis communication</td>
+            <td>Semi-annual briefings + tabletop exercises</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="example-card">
+        <div class="example-label">Best Practice</div>
+        <div class="example-title">Privacy Champions</div>
+        <div class="example-text">Embed a <strong>Privacy Champion</strong> or <strong>Data Steward</strong> in every team. This person is not a full-time security role — it is a designated team member who receives additional training, serves as the first point of contact for data privacy questions on that team, and escalates incidents to the security team. Champions create a distributed privacy culture without requiring every person to be an expert.</div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ S16 ═══ -->
+    <section class="notes-section" id="s16">
+      <div class="section-header">
+        <span class="section-num">16</span>
+        <span class="section-title">Starting at the Top: Leadership &amp; Training</span>
+      </div>
+
+      <p class="prose">A data protection culture cannot be built from the bottom up alone. When leadership treats security as a compliance checkbox rather than a business value, the entire organization follows that lead. Effective data governance programs connect security to revenue — making it clear that protection is what enables customer trust, regulatory operation, and competitive advantage.</p>
+
+      <div class="insight-card">
+        <div class="insight-label">Connect Governance to Revenue</div>
+        <div class="insight-text"><strong>Frame data protection in the language of business risk, not IT compliance.</strong> A breach costs on average $4.88 million (IBM Cost of a Data Breach Report 2024). Customer churn after a breach, regulatory fines, and litigation can dwarf the direct breach costs. Conversely, a strong, auditable data protection program enables enterprises to win regulated industry contracts, pass customer security reviews, and accelerate deals that would otherwise stall on security due diligence.</div>
+      </div>
+
+      <div class="sub-label">Company personas — different risk profiles require different conversations</div>
+
+      <div class="two-col">
+        <div class="concept-card">
+          <div class="concept-title">&#128101; Executive Sponsor</div>
+          <div class="concept-text">Owns the strategic data protection mandate. Needs to understand regulatory exposure, breach costs, competitive implications, and insurance requirements. Speaks in business risk terms, not technical controls. Champions the security budget and models protective behavior for the organization.</div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">&#128203; Data Steward</div>
+          <div class="concept-text">Accountable for the quality, classification, and protection of a specific data domain. Acts as the business owner for their datasets — approves access requests, ensures classification is current, and reviews audit reports for their domain.</div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">&#128269; Legal &amp; Compliance Officer</div>
+          <div class="concept-text">Translates regulatory requirements (GDPR, HIPAA, CCPA) into data protection obligations. Reviews data processing agreements with vendors, advises on breach notification timelines, and manages regulatory relationships. Bridges legal text to technical implementation.</div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">&#128295; IT / Security Administrator</div>
+          <div class="concept-text">Implements and operates the technical controls. Configures IAM policies, monitors SIEM alerts, manages encryption keys, and responds to incidents. Needs clear policy guidance from leadership and classification inputs from stewards to implement controls correctly.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ S17 ═══ -->
+    <section class="notes-section" id="s17">
+      <div class="section-header">
+        <span class="section-num">17</span>
+        <span class="section-title">Transparency, Agility &amp; Incident Handling</span>
+      </div>
+
+      <p class="prose">When a data incident occurs, the quality of your response is determined by decisions you made long before it happened — who owns the response, what playbooks exist, how quickly you can detect and contain. The most dangerous organizational pattern is diffused accountability: <strong>when everyone is responsible for security, no one is.</strong> Assign explicit ownership before an incident forces you to figure it out under pressure.</p>
+
+      <div class="warn-card">
+        <div class="warn-label">Critical Failure Mode</div>
+        <div class="warn-text"><strong>"All is responsible" means no one is responsible.</strong> Without a named Incident Response Owner, a documented escalation path, and pre-assigned roles in the response team, incidents grow while people wait for someone else to act. Define your RACI (Responsible, Accountable, Consulted, Informed) matrix for data incidents before you need it.</div>
+      </div>
+
+      <div class="sub-label">Incident response lifecycle</div>
+
+      <div class="incident-grid">
+        <div class="incident-card">
+          <div class="incident-step">Phase 1</div>
+          <div class="incident-name detect">Detect</div>
+          <div class="incident-text">
+            Identify that an incident has occurred or is occurring.
+            <ul>
+              <li>SIEM alerts on anomalous access patterns</li>
+              <li>DLP blocks and generates an alert</li>
+              <li>User reports suspicious behavior</li>
+              <li>Third party notifies you of a breach involving your data</li>
+              <li>Automated threat detection surfaces indicators of compromise</li>
+            </ul>
+            Goal: minimize time-to-detect (TTD). The longer an attacker is in your environment undetected, the more data they can exfiltrate.
+          </div>
+        </div>
+        <div class="incident-card">
+          <div class="incident-step">Phase 2</div>
+          <div class="incident-name respond">Respond</div>
+          <div class="incident-text">
+            Contain the incident before it spreads.
+            <ul>
+              <li>Isolate affected systems from the network</li>
+              <li>Revoke compromised credentials immediately</li>
+              <li>Assess the scope: what data, what systems, how many users affected?</li>
+              <li>Preserve forensic evidence (do not reimage before capturing logs)</li>
+              <li>Notify legal and leadership per your escalation plan</li>
+            </ul>
+            Containment comes before remediation. Fix the bleeding before diagnosing the wound.
+          </div>
+        </div>
+        <div class="incident-card">
+          <div class="incident-step">Phase 3</div>
+          <div class="incident-name remediate">Remediate</div>
+          <div class="incident-text">
+            Eliminate the root cause and restore normal operations.
+            <ul>
+              <li>Patch the vulnerability or close the misconfiguration that was exploited</li>
+              <li>Rotate all potentially exposed credentials and keys</li>
+              <li>Restore systems from clean backups</li>
+              <li>Notify affected individuals and regulators within required timeframes (GDPR: 72 hours; HIPAA: 60 days)</li>
+              <li>Verify restoration did not reintroduce the vulnerability</li>
+            </ul>
+          </div>
+        </div>
+        <div class="incident-card">
+          <div class="incident-step">Phase 4</div>
+          <div class="incident-name learn">Learn</div>
+          <div class="incident-text">
+            Convert the incident into a permanent improvement.
+            <ul>
+              <li>Conduct a blameless post-mortem with all stakeholders</li>
+              <li>Document the timeline, root cause, and decision points</li>
+              <li>Update playbooks with lessons learned</li>
+              <li>Close the control gaps that allowed the incident to occur</li>
+              <li>Share sanitized findings with relevant teams to raise awareness</li>
+            </ul>
+            An incident that does not improve your security posture is a missed opportunity.
+          </div>
+        </div>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-label">Transparency as a Value</div>
+        <div class="insight-text">Organizations that communicate breaches clearly and promptly — to customers, regulators, and the public — consistently recover customer trust faster than those that delay, minimize, or obscure. Transparency is not just a legal obligation; it is a cultural signal that the organization takes accountability seriously. <strong>Agility in incident response means your security posture improves with every incident, not just recovers.</strong></div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ S18 ═══ -->
+    <section class="notes-section" id="s18">
+      <div class="section-header">
+        <span class="section-num">18</span>
+        <span class="section-title">Data Security &amp; Recovery</span>
+      </div>
+
+      <p class="prose">No matter how strong your preventive controls are, you must plan for the scenario where data is lost, corrupted, or held hostage. Data security and recovery planning ensures that when the worst happens, the organization can restore operations within an acceptable timeframe with minimal data loss.</p>
+
+      <div class="two-col">
+        <div class="def-card">
+          <div class="def-label">Definition</div>
+          <div class="def-term">RTO &mdash; Recovery Time Objective</div>
+          <div class="def-text">The maximum acceptable time between a disruption and the restoration of service. RTO answers: <em>how long can the business operate without this data or system?</em> A payment processing system might have an RTO of 15 minutes. An archive system might have an RTO of 72 hours.</div>
+        </div>
+        <div class="def-card">
+          <div class="def-label">Definition</div>
+          <div class="def-term">RPO &mdash; Recovery Point Objective</div>
+          <div class="def-text">The maximum acceptable amount of data loss measured in time. RPO answers: <em>how much data can we afford to lose?</em> An RPO of 1 hour means your backups must occur at least every hour so you never lose more than 1 hour of transactions.</div>
+        </div>
+      </div>
+
+      <div class="sub-label">Backup strategy: the 3-2-1 rule</div>
+
+      <div class="three-col">
+        <div class="pillar-card">
+          <div class="pillar-icon">3&#65039;&#8419;</div>
+          <div class="pillar-name">3 Copies</div>
+          <div class="pillar-desc">Keep at least 3 copies of your data: the primary production copy plus two backups. Multiple copies protect against simultaneous failure.</div>
+        </div>
+        <div class="pillar-card">
+          <div class="pillar-icon">2&#65039;&#8419;</div>
+          <div class="pillar-name">2 Different Media</div>
+          <div class="pillar-desc">Store copies on at least 2 different storage media types (e.g., SSD + cloud object storage). Protects against media-specific failures.</div>
+        </div>
+        <div class="pillar-card">
+          <div class="pillar-icon">1&#65039;&#8419;</div>
+          <div class="pillar-name">1 Offsite</div>
+          <div class="pillar-desc">Keep at least 1 copy in a geographically separate location. A fire, flood, or ransomware attack that destroys your primary site should not also destroy your backup.</div>
+        </div>
+      </div>
+
+      <div class="concept-card">
+        <div class="concept-title">&#128274; Immutable Backups for Ransomware Protection</div>
+        <div class="concept-text">Modern ransomware attacks target backup systems before encrypting production data. <strong>Immutable backups</strong> cannot be modified or deleted for a defined retention period — not even by an administrator. Cloud object storage with object lock (WORM — Write Once Read Many) enabled, or air-gapped tape backups stored offline, prevent ransomware from corrupting your recovery option. Regularly test restoration from these backups: a backup you have never tested is a backup you cannot trust.</div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ S19 ═══ -->
+    <section class="notes-section" id="s19">
+      <div class="section-header">
+        <span class="section-num">19</span>
+        <span class="section-title">Data Privacy, HIPAA &amp; PII</span>
+      </div>
+
+      <p class="prose"><strong>Data privacy</strong> governs how data is collected, used, shared, and exposed — not just whether it is secured from attackers, but whether the people whose data it is have meaningful control over it. Privacy and security are complementary: security controls are the mechanism; privacy requirements are the policy that determines what those controls must achieve.</p>
+
+      <div class="def-card">
+        <div class="def-label">Definition</div>
+        <div class="def-term">PII (Personally Identifiable Information)</div>
+        <div class="def-text">Any data that can be used, alone or in combination with other data, to identify, locate, or contact a specific individual. Includes: full name, SSN, email address, phone number, date of birth, biometric data, IP address, device identifiers, and location data. PII is the most common target in data breaches because of its direct value for identity theft and fraud.</div>
+      </div>
+
+      <div class="def-card">
+        <div class="def-label">Definition &mdash; US Healthcare Regulation</div>
+        <div class="def-term">HIPAA (Health Insurance Portability and Accountability Act)</div>
+        <div class="def-text">US federal law that defines standards for protecting <strong>Protected Health Information (PHI)</strong> — any health information that can identify an individual. HIPAA applies to <em>covered entities</em> (healthcare providers, health plans, healthcare clearinghouses) and their <em>business associates</em> (vendors with access to PHI). HIPAA defines 18 specific identifiers that make health data protected. Violations can result in fines of $100 to $50,000 per violation, up to $1.9 million per year per category.</div>
+      </div>
+
+      <div class="sub-label">Key privacy regulations globally</div>
+
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th>Regulation</th>
+            <th>Jurisdiction</th>
+            <th>Key Obligations</th>
+            <th>Max Penalty</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="col-a" style="color:#58a6ff">GDPR</td>
+            <td>European Union (+ extraterritorial reach)</td>
+            <td>Consent for processing, right to erasure, data portability, breach notification within 72 hours, Privacy by Design, DPO appointment for high-risk processing</td>
+            <td style="color:#f85149">4% of global annual revenue or €20M</td>
+          </tr>
+          <tr>
+            <td class="col-a" style="color:#3fb950">HIPAA</td>
+            <td>United States (healthcare)</td>
+            <td>PHI safeguards (technical, physical, administrative), minimum necessary access, breach notification within 60 days, BAAs with vendors</td>
+            <td style="color:#f85149">$1.9M per violation category per year</td>
+          </tr>
+          <tr>
+            <td class="col-a" style="color:#e3b341">CCPA / CPRA</td>
+            <td>California, USA</td>
+            <td>Right to know, right to delete, right to opt-out of sale of personal data, non-discrimination for exercising rights</td>
+            <td style="color:#f85149">$7,500 per intentional violation</td>
+          </tr>
+          <tr>
+            <td class="col-a" style="color:#d2a8ff">PCI-DSS</td>
+            <td>Global (payment card industry)</td>
+            <td>Encryption of cardholder data, network segmentation, access controls, quarterly vulnerability scans, annual penetration tests</td>
+            <td style="color:#f85149">$5,000&ndash;$100,000/month from card brands</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="sub-label">Data Ownership &amp; Access Control</div>
+      <p class="prose">Every dataset must have a designated <strong>data owner</strong> — a business role (not IT) who is accountable for the data's classification, appropriate use, and access decisions. Data ownership answers the governance question of who can approve access to a dataset, who can authorize a use case, and who is accountable if the data is mishandled. Access control operationalizes ownership: the data owner defines who may access the data; the IAM system enforces it.</p>
+
+      <div class="sub-label">Intellectual Property &amp; Data</div>
+      <p class="prose">Proprietary data — customer lists, algorithms, trade secrets, training datasets, product formulas — is intellectual property (IP). IP has legal protections under trade secret law, copyright, and patent, but those protections are only meaningful if the organization can demonstrate it took reasonable steps to protect the information. Classification, access logging, confidentiality agreements, and DLP controls are the operational evidence that IP was treated as protected.</p>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ S20 ═══ -->
+    <section class="notes-section" id="s20">
+      <div class="section-header">
+        <span class="section-num">20</span>
+        <span class="section-title">Regulations, Legal &amp; Security Interplay</span>
+      </div>
+
+      <p class="prose">Data protection does not exist in a legal vacuum. Regulations set minimum standards; legal obligations create liability; security controls implement compliance. The three domains must be coordinated: a control that satisfies GDPR's encryption requirement may not satisfy HIPAA's minimum necessary access standard. Organizations operating across multiple jurisdictions must map each regulation's requirements to their technical controls and identify gaps where a single control cannot serve all obligations simultaneously.</p>
+
+      <div class="two-col">
+        <div class="concept-card">
+          <div class="concept-title">&#128214; Regulations Set the Floor</div>
+          <div class="concept-text">Regulations define the minimum acceptable protection. GDPR requires encryption and breach notification. HIPAA requires access auditing and PHI segmentation. PCI-DSS requires tokenization of cardholder data. These are floors, not ceilings — your business risk may require controls well beyond what the regulation mandates.</div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">&#9878; Legal Agreements Extend Obligations</div>
+          <div class="concept-text">Contracts with enterprise customers frequently include data handling, encryption, audit rights, and breach notification requirements that exceed regulatory minimums. Business Associate Agreements (BAAs) under HIPAA, Data Processing Agreements (DPAs) under GDPR, and security exhibit schedules in SaaS contracts all create enforceable legal obligations specific to that customer relationship.</div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">&#128737; Security Implements the Obligation</div>
+          <div class="concept-text">Security teams must translate legal and regulatory text into specific technical controls. Legal says "encrypt PHI in transit" — security defines the TLS version, cipher suites, certificate management process, and monitoring. The gap between a regulatory obligation and its technical implementation is where compliance failures originate.</div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">&#128203; Evidence &amp; Audit Trails</div>
+          <div class="concept-text">Compliance is not a state — it is a demonstrable practice. During a regulatory audit or a breach investigation, you must produce evidence: access logs showing who accessed what PHI, encryption key rotation records, DLP policy configurations, training completion records. Systems that implement controls but do not log them cannot prove compliance.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ S21 ═══ -->
+    <section class="notes-section" id="s21">
+      <div class="section-header">
+        <span class="section-num">21</span>
+        <span class="section-title">Data Culture</span>
+      </div>
+
+      <p class="prose">Technical controls and legal compliance create a framework for data protection, but the framework only holds if the organization has a genuine <strong>data culture</strong> — a shared set of values and behaviors around how data is handled. A strong data culture is not accidental; it is intentionally designed, continuously reinforced, and made trustworthy through consistent action.</p>
+
+      <div class="three-col">
+        <div class="pillar-card">
+          <div class="pillar-icon">&#127919;</div>
+          <div class="pillar-name">Intentional</div>
+          <div class="pillar-desc">Data collection, classification, and protection decisions are made deliberately — not by accident or default. Every dataset exists because someone made a conscious decision that it provides value worth the protection cost. Data that no longer serves a purpose is deleted, not hoarded.</div>
+        </div>
+        <div class="pillar-card">
+          <div class="pillar-icon">&#128275;</div>
+          <div class="pillar-name">Trustworthy</div>
+          <div class="pillar-desc">Customers, employees, and partners believe that data shared with the organization will be handled with integrity and discretion. Trustworthiness is built through transparency, consistent protection practices, and honest communication when things go wrong.</div>
+        </div>
+        <div class="pillar-card">
+          <div class="pillar-icon">&#128200;</div>
+          <div class="pillar-name">Scalable</div>
+          <div class="pillar-desc">Protection practices that work for 1,000 records must work for 100 million. Scalable data culture means policies are encoded into automated controls, not dependent on individual vigilance. Manual processes do not scale; classification tags and IAM policies do.</div>
+        </div>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-label">Culture is the Last Line of Defense</div>
+        <div class="insight-text">Technology can block 99% of threats, but the remaining 1% — spear phishing targeting a specific executive, an insider with legitimate access acting maliciously, a novel attack with no existing signature — succeeds or fails based on human judgment. A team with strong data culture recognizes something feels wrong and reports it. <strong>Culture is not soft — it is the control that all other controls depend on.</strong></div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ S22 ═══ -->
+    <section class="notes-section" id="s22">
+      <div class="section-header">
+        <span class="section-num">22</span>
+        <span class="section-title">Beyond Data Literacy: ISACA</span>
+      </div>
+
+      <p class="prose">Data literacy — the ability to read, work with, analyze, and argue with data — is necessary but not sufficient for professionals working in data governance and protection. The broader discipline of <strong>information systems audit, control, and security</strong> requires structured professional development, frameworks, and credentials. <strong>ISACA</strong> is the primary professional organization in this space.</p>
+
+      <div class="def-card">
+        <div class="def-label">Organization</div>
+        <div class="def-term">ISACA (Information Systems Audit and Control Association)</div>
+        <div class="def-text">Founded in 1969, ISACA is a global nonprofit that defines standards, develops frameworks, and issues certifications for IT governance, risk management, security, and assurance professionals. It has over 170,000 members in 188 countries. ISACA frameworks are referenced in regulatory guidance worldwide and form the baseline for enterprise IT governance programs.</div>
+      </div>
+
+      <div class="sub-label">Key ISACA certifications</div>
+
+      <div class="two-col">
+        <div class="concept-card">
+          <div class="concept-title">CISA &mdash; Certified Information Systems Auditor</div>
+          <div class="concept-text">The most widely held IT audit certification globally. Validates expertise in auditing, controlling, and assuring information systems. Relevant for data governance professionals who need to assess whether controls are working and provide audit evidence for regulators.</div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">CISM &mdash; Certified Information Security Manager</div>
+          <div class="concept-text">Focuses on information security management, risk management, and incident response. Designed for practitioners who design and manage enterprise security programs, not just implement technical controls. The managerial complement to CISA.</div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">CRISC &mdash; Certified in Risk and Information Systems Control</div>
+          <div class="concept-text">Covers IT risk identification, assessment, response, and monitoring. Relevant for professionals who translate business risk into data protection control requirements and manage risk registers.</div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">COBIT &mdash; Control Objectives for Information Technologies</div>
+          <div class="concept-text">Not a certification but a governance framework that provides a structured approach to aligning IT with business goals. COBIT is widely used to build data governance programs, define control objectives, and demonstrate compliance. It integrates with ISO 27001, ITIL, and regulatory frameworks.</div>
+        </div>
+      </div>
+
+      <div class="example-card">
+        <div class="example-label">Practical Takeaway</div>
+        <div class="example-title">Where to Start</div>
+        <div class="example-text">For data governance practitioners, <strong>COBIT</strong> provides the framework vocabulary and control objectives. <strong>CISA</strong> provides the auditing skill set to verify that those controls actually operate as designed. Together they give you both the playbook and the ability to verify the playbook is being followed. ISACA also publishes free resources — including the <em>Data Governance Framework</em> and risk guidance — at isaca.org, accessible without a membership.</div>
+      </div>
+
+      <hr class="divider">
+
+      <div class="insight-card">
+        <div class="insight-label">Module Summary</div>
+        <div class="insight-text">
+          Data protection is a continuous, layered discipline anchored in the <strong>CIA Triad</strong>. It starts with treating data as an asset worth protecting, classifying it accurately, and planning controls that match sensitivity. Technical layers — network security, encryption (DEK/KEK/KMS/CMEK), IAM (from Kerberos to Zero Trust), DLP, and SIEM — form the operational backbone. Cloud environments introduce shared responsibility and require zero trust, JIT access, and CMEK. Physical security and IoT are not afterthoughts. Culture, leadership accountability, and role-based training determine whether those controls are actually followed. Incident response converts failure into improvement. Privacy regulations (GDPR, HIPAA, CCPA) set mandatory floors. And professional frameworks like COBIT and ISACA certifications help practitioners build and verify programs that stand up to audit.
+          <br><br>
+          <strong>The core principle throughout: the right data, to the right people, at the right time — and never beyond that.</strong>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer class="site-footer">
+  Data Governance &mdash; Module 3 &mdash; Class Notes &bull; 2026
+</footer>
+
+<script>
+  // Active TOC link on scroll
+  (function() {
+    var links = document.querySelectorAll('.toc-link');
+    var sections = Array.from(links).map(function(l) {
+      return document.querySelector(l.getAttribute('href'));
+    });
+    function onScroll() {
+      var scrollY = window.scrollY + 100;
+      var active = 0;
+      for (var i = 0; i < sections.length; i++) {
+        if (sections[i] && sections[i].offsetTop <= scrollY) active = i;
+      }
+      links.forEach(function(l, i) {
+        l.classList.toggle('active', i === active);
+      });
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  })();
+</script>
+
+</body>
+</html>
