@@ -11,6 +11,19 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 - `seattle-ai-literacy.html` → `implications-of-ai-for-police-firefighters-paramedics.html`
 - Updated href, card name, meta path, icon, and search tags in `index.html`
 
+### [feature] Workshop Proposal v1 + Case Studies tab
+- Added `workshop-planning/implications-of-ai-for-police-firefighters-paramedics-proposal-v1.html` — formal stakeholder proposal document (v1)
+- Added `📁 Case Studies` tab to `implications-of-ai-for-police-firefighters-paramedics.html`: Corti×SFD (Seattle), Longeye×Redmond PD + Prepared 911 (Washington), Overland AI×Cal Fire (US)
+- Updated `index.html`: new card for proposal v1, section count 1→2, nav badge 1→2
+
+### [feature] Case Studies tab — 4 real deployments organized by region
+- Added new tab `📁 Case Studies` (`tab-case-studies`) to `implications-of-ai-for-police-firefighters-paramedics.html`
+- Organized into 3 regions with dashed placeholder cards for future additions
+- **Seattle:** Corti × Seattle Fire Dept / Medic One — 149k calls/yr, 0.25% → full review coverage, 13% stroke call reduction, rapid COVID protocol deployment (Aug 2024)
+- **Washington:** Longeye × Redmond PD — 60 hrs of calls processed in minutes; Prepared 911 — language access, notes vs. transcription gap, surge hold time reduction
+- **Rest of US:** Overland AI × Cal Fire — Seattle-founded autonomous ULTRA ground vehicles detecting smoke pre-911 in remote wildfire terrain (GeekWire 2026)
+- Added CSS: `.cs-card`, `.cs-card-header`, `.cs-tool-name`, `.cs-agency`, `.cs-loc-badge` (Seattle/WA/US variants), `.cs-body`, `.cs-section-lbl`, `.cs-stats`, `.cs-stat`, `.cs-add-card`
+
 ### [feature] KPI Impact tab — 22 KPIs across Police, Fire, and EMS
 - Added new tab `📊 KPI Impact` (`tab-kpis`) to `implications-of-ai-for-police-firefighters-paramedics.html`
 - **Police (8 KPIs):** Positive — report writing time, officer time-in-service, bulk evidence review speed, gunshot detection response. Negative — report accuracy/Brady risk, racial enforcement disparity, CJIS exposure, community trust
