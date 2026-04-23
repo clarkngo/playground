@@ -9,6 +9,12 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ## 2026-04-23
 
+### [feature] Workshop Proposal v2 added with cross-navigation
+- `workshop-planning/implications-of-ai-for-police-firefighters-paramedics-proposal-v2.html`: new 1-hour format proposal added
+- `proposal-v1.html` and `proposal-v2.html`: floating nav bar appended linking ← Planning Doc | v1 | v2
+- `implications-of-ai-for-police-firefighters-paramedics.html`: "Workshop proposals" card added at top of Context tab with links to both proposals
+- `index.html`: v2 card added, section count 2→3, nav badge 2→3
+
 ### [feature] Workshop Proposal v1 + Case Studies tab added
 - `workshop-planning/implications-of-ai-for-police-firefighters-paramedics-proposal-v1.html`: new formal proposal doc (v1)
 - `implications-of-ai-for-police-firefighters-paramedics.html`: Case Studies tab with 4 real deployments (Corti×SFD, Longeye×Redmond PD, Prepared 911, Overland AI×Cal Fire)

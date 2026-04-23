@@ -7,6 +7,13 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ## 2026-04-23
 
+### [feature] Workshop Proposal v2 + cross-navigation between all three docs
+- `workshop-planning/implications-of-ai-for-police-firefighters-paramedics-proposal-v2.html`: new 1-hour format proposal (bundled)
+- `proposal-v1.html`: floating `.__workshop-nav` bar appended — links to Planning Doc and v2
+- `proposal-v2.html`: floating `.__workshop-nav` bar appended — links to Planning Doc and v1
+- `implications-of-ai-for-police-firefighters-paramedics.html`: "Workshop proposals" section added at top of Context tab with styled buttons linking to v1 and v2
+- `index.html`: v2 card added to Workshop Planning section; section count 2→3; nav badge 2→3
+
 ### [refactor] Workshop file renamed
 - `seattle-ai-literacy.html` → `implications-of-ai-for-police-firefighters-paramedics.html`
 - Updated href, card name, meta path, icon, and search tags in `index.html`
