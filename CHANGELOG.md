@@ -7,6 +7,13 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-04-27
+
+### [feature] The Pitt — Stryker post-apocalyptic escape room
+- `escape-room/the-pitt/index.html`: 3-chamber escape room for Stryker employees; codes 1941 / MAKO / TOGETHER; live timer, clue log, debrief screen
+
+---
+
 ## 2026-04-26
 
 ### [feature] Data Governance homepage — Module 03 card added

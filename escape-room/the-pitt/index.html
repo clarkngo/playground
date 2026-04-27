@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>THE PITT — A Stryker Escape Room</title>
+  <meta name="author" content="Clark Ngo">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green:      #39ff84;
+      --green-dim:  #1a7a3a;
+      --green-dark: #0d3320;
+      --amber:      #f0a500;
+      --amber-dark: #3d2800;
+      --red:        #ff4444;
+      --red-dark:   #3d0a0a;
+      --bg:         #050a05;
+      --surface:    #0a140a;
+      --border:     #1a3a1a;
+      --text:       #8fc98f;
+      --text-bright:#c8ffc8;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", "Courier New", monospace;
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: repeating-linear-gradient(
+        0deg, transparent, transparent 2px,
+        rgba(0,0,0,.12) 2px, rgba(0,0,0,.12) 4px
+      );
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    @keyframes flicker {
+      0%,94%,100% { opacity:1; }
+      95% { opacity:.82; }
+      96% { opacity:1; }
+      97% { opacity:.75; }
+      98% { opacity:.95; }
+    }
+    @keyframes glow-pulse {
+      0%,100% { text-shadow: 0 0 6px var(--green), 0 0 14px var(--green-dim); }
+      50%      { text-shadow: 0 0 12px var(--green), 0 0 28px var(--green-dim), 0 0 40px #0d3a1a; }
+    }
+    @keyframes blink {
+      0%,100% { opacity:1; }
+      50%      { opacity:0; }
+    }
+    @keyframes shake {
+      0%,100% { transform:translateX(0); }
+      20%     { transform:translateX(-8px); }
+      40%     { transform:translateX(8px); }
+      60%     { transform:translateX(-5px); }
+      80%     { transform:translateX(5px); }
+    }
+    @keyframes fadeIn {
+      from { opacity:0; transform:translateY(8px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+
+    /* ---- HEADER ---- */
+    .header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: .75rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      animation: flicker 9s infinite;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header-brand { font-size: .95rem; font-weight: 700; color: var(--green); text-shadow: 0 0 8px var(--green-dim); letter-spacing: .1em; }
+    .header-status { font-size: .72rem; color: var(--text); letter-spacing: .08em; }
+    .header-timer  { font-size: .9rem; color: var(--amber); letter-spacing: .12em; font-weight: 700; }
+
+    /* ---- CONTAINER ---- */
+    .container { max-width: 860px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+    /* ---- SCREENS ---- */
+    .screen { display: none; animation: fadeIn .45s ease; }
+    .screen.active { display: block; }
+
+    /* ---- BUTTONS ---- */
+    .btn {
+      display: inline-block;
+      padding: .65rem 1.6rem;
+      font-family: inherit;
+      font-size: .82rem;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: all .2s;
+      border: 2px solid;
+    }
+    .btn-green  { color: var(--green);  border-color: var(--green);  background: transparent; }
+    .btn-green:hover  { background: var(--green-dark); box-shadow: 0 0 14px var(--green-dim); }
+    .btn-amber  { color: var(--amber);  border-color: var(--amber);  background: transparent; }
+    .btn-amber:hover  { background: var(--amber-dark); box-shadow: 0 0 14px rgba(240,165,0,.3); }
+    .btn-center { display: block; margin: 1.5rem auto 0; width: fit-content; }
+
+    /* ---- INTRO ---- */
+    .intro-logo { text-align: center; margin: 3rem 0 2rem; }
+    .intro-logo h1 {
+      font-size: 4rem;
+      color: var(--green);
+      letter-spacing: .3em;
+      animation: glow-pulse 3s infinite;
+      margin-bottom: .4rem;
+    }
+    .intro-logo .subtitle { font-size: .75rem; color: var(--text); letter-spacing: .2em; text-transform: uppercase; }
+
+    .warning-box {
+      background: var(--red-dark);
+      border: 1px solid var(--red);
+      border-radius: 6px;
+      padding: 1rem 1.5rem;
+      margin: 1.5rem 0;
+      font-size: .82rem;
+      color: #ff9090;
+      line-height: 1.75;
+    }
+    .warning-box .warn-label { font-size: .68rem; font-weight: 700; color: var(--red); letter-spacing: .1em; text-transform: uppercase; margin-bottom: .5rem; }
+
+    .lore-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--green-dim);
+      border-radius: 6px;
+      padding: 1.25rem 1.5rem;
+      margin: 1.5rem 0;
+      font-size: .84rem;
+      line-height: 1.85;
+      color: var(--text-bright);
+    }
+    .lore-box p { margin-bottom: .75rem; }
+    .lore-box p:last-child { margin-bottom: 0; }
+
+    .stat-row { display: grid; grid-template-columns: repeat(3,1fr); gap: .75rem; margin: 1.5rem 0; }
+    .stat-box { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: .85rem; text-align: center; }
+    .stat-val   { font-size: 1.5rem; font-weight: 700; color: var(--amber); display: block; margin-bottom: .2rem; }
+    .stat-label { font-size: .62rem; color: var(--text); letter-spacing: .08em; text-transform: uppercase; }
+
+    /* ---- PROGRESS ---- */
+    .progress-strip {
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      padding: .7rem 1rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      margin-bottom: 1.5rem;
+    }
+    .prog-node { display: flex; align-items: center; gap: .4rem; font-size: .68rem; letter-spacing: .05em; color: var(--text); white-space: nowrap; }
+    .prog-node.done   { color: var(--green); }
+    .prog-node.active { color: var(--amber); }
+    .prog-dot { width: 9px; height: 9px; border-radius: 50%; border: 1.5px solid currentColor; flex-shrink: 0; }
+    .prog-node.done   .prog-dot { background: var(--green); }
+    .prog-node.active .prog-dot { background: var(--amber); animation: blink 1.4s infinite; }
+    .prog-line { flex: 1; height: 1px; background: var(--border); }
+    .prog-line.done { background: var(--green-dim); }
+
+    /* ---- STAGE HEADER ---- */
+    .stage-badge { font-size: .65rem; letter-spacing: .12em; text-transform: uppercase; color: var(--amber); margin-bottom: .45rem; display: flex; align-items: center; gap: .45rem; }
+    .stage-badge::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--amber); box-shadow: 0 0 5px var(--amber); animation: blink 1.5s infinite; }
+    .stage-title { font-size: 1.65rem; color: var(--green); text-shadow: 0 0 10px var(--green-dim); letter-spacing: .04em; margin-bottom: .35rem; }
+    .stage-desc  { font-size: .83rem; color: var(--text); line-height: 1.75; max-width: 680px; margin-bottom: 1.25rem; }
+
+    /* ---- ROOM VISUAL ---- */
+    .room-visual {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.2rem 1.5rem;
+      margin: 1rem 0 1.25rem;
+      font-size: .82rem;
+      line-height: 1.85;
+      color: var(--text-bright);
+      position: relative;
+    }
+    .room-visual::before {
+      content: attr(data-label);
+      position: absolute;
+      top: -9px; left: 1rem;
+      background: var(--bg);
+      padding: 0 .5rem;
+      font-size: .62rem;
+      color: var(--green-dim);
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+
+    /* ---- EXAMINE GRID ---- */
+    .examine-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: .75rem; margin: 1.1rem 0; }
+    .examine-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: .9rem .85rem;
+      cursor: pointer;
+      transition: all .2s;
+      text-align: center;
+      position: relative;
+    }
+    .examine-item:hover { border-color: var(--amber); background: var(--amber-dark); box-shadow: 0 0 10px rgba(240,165,0,.2); }
+    .examine-item.found { border-color: var(--green-dim); opacity: .65; cursor: default; }
+    .examine-item.found:hover { border-color: var(--green-dim); background: var(--surface); box-shadow: none; }
+    .examine-icon { font-size: 1.4rem; margin-bottom: .35rem; display: block; }
+    .examine-name { font-size: .7rem; color: var(--amber); letter-spacing: .06em; text-transform: uppercase; margin-bottom: .2rem; }
+    .examine-item.found .examine-name { color: var(--green-dim); }
+    .examine-hint { font-size: .63rem; color: var(--text); }
+    .found-badge  { position: absolute; top: .4rem; right: .5rem; font-size: .6rem; color: var(--green); }
+
+    /* ---- CLUE MODAL ---- */
+    .clue-modal { display: none; position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,.88); z-index:1000; align-items:center; justify-content:center; }
+    .clue-modal.open { display: flex; animation: fadeIn .2s ease; }
+    .clue-card { background: var(--surface); border: 1px solid var(--amber); border-radius: 8px; max-width: 500px; width: 92%; padding: 1.5rem; box-shadow: 0 0 30px rgba(240,165,0,.2); animation: fadeIn .25s ease; }
+    .clue-card-label { font-size: .64rem; color: var(--amber); letter-spacing: .12em; text-transform: uppercase; margin-bottom: .85rem; }
+    .clue-card-title { font-size: 1rem; color: var(--text-bright); margin-bottom: .85rem; font-weight: 700; }
+    .clue-card-text  { font-size: .8rem; color: var(--text); line-height: 1.8; white-space: pre-wrap; }
+    .clue-card-actions { margin-top: 1.25rem; display: flex; justify-content: flex-end; }
+
+    /* ---- CLUE LOG ---- */
+    .clue-log {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--green-dim);
+      border-radius: 6px;
+      padding: 1rem 1.25rem;
+      margin: 1.1rem 0;
+    }
+    .clue-log-title { font-size: .65rem; color: var(--green-dim); letter-spacing: .1em; text-transform: uppercase; margin-bottom: .7rem; }
+    .clue-entry { display: flex; align-items: flex-start; gap: .55rem; margin-bottom: .55rem; font-size: .77rem; color: var(--text); line-height: 1.5; animation: fadeIn .3s ease; }
+    .clue-entry:last-child { margin-bottom: 0; }
+    .clue-entry-icon { color: var(--amber); flex-shrink: 0; }
+    .clue-log-empty  { font-size: .74rem; color: #2d4a2d; font-style: italic; }
+
+    /* ---- CODE ENTRY ---- */
+    .code-section { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.2rem 1.5rem; margin: 1.1rem 0; }
+    .code-label { font-size: .65rem; color: var(--text); letter-spacing: .1em; text-transform: uppercase; margin-bottom: .85rem; }
+    .code-input-row { display: flex; gap: .75rem; align-items: center; }
+    .code-input {
+      flex: 1;
+      background: var(--bg);
+      border: 2px solid var(--border);
+      border-radius: 4px;
+      padding: .6rem 1rem;
+      font-family: inherit;
+      font-size: 1.1rem;
+      color: var(--green);
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .code-input:focus   { border-color: var(--green-dim); box-shadow: 0 0 8px rgba(57,255,132,.12); }
+    .code-input.error   { border-color: var(--red); animation: shake .4s ease; }
+    .code-input.success { border-color: var(--green); box-shadow: 0 0 14px rgba(57,255,132,.28); }
+    .code-feedback { font-size: .76rem; margin-top: .6rem; min-height: 1.2em; }
+    .code-feedback.error   { color: var(--red); }
+    .code-feedback.success { color: var(--green); }
+    .attempts-bar { display: flex; gap: .4rem; margin-top: .7rem; }
+    .attempt-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); transition: background .3s; }
+    .attempt-dot.used { background: var(--red); box-shadow: 0 0 4px var(--red); }
+
+    /* ---- VICTORY ---- */
+    .victory-header { text-align: center; padding: 3rem 0 2rem; }
+    .victory-header h1 { font-size: 3rem; color: var(--green); letter-spacing: .2em; animation: glow-pulse 2s infinite; margin-bottom: .5rem; }
+    .victory-sub { font-size: .8rem; color: var(--text); letter-spacing: .12em; }
+    .debrief-box {
+      background: var(--green-dark);
+      border: 1px solid var(--green-dim);
+      border-radius: 6px;
+      padding: 1.25rem 1.5rem;
+      margin: 1.5rem 0;
+      font-size: .82rem;
+      color: var(--text-bright);
+      line-height: 1.8;
+    }
+    .debrief-box .debrief-label { font-size: .65rem; font-weight: 700; color: var(--green); letter-spacing: .1em; text-transform: uppercase; margin-bottom: .75rem; }
+    .debrief-entry { margin-bottom: .85rem; }
+    .debrief-entry:last-child { margin-bottom: 0; }
+    .debrief-code { color: var(--green); font-weight: 700; font-size: .9rem; }
+
+    /* ---- RESPONSIVE ---- */
+    @media (max-width: 600px) {
+      .examine-grid { grid-template-columns: 1fr; }
+      .stat-row { grid-template-columns: 1fr; }
+      .intro-logo h1 { font-size: 2.5rem; }
+      .stage-title { font-size: 1.3rem; }
+      .code-input-row { flex-direction: column; }
+      .code-input { width: 100%; }
+      .progress-strip { flex-wrap: wrap; gap: .4rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-brand">&#9881; THE PITT &middot; STRYKER CLASSIFIED</div>
+  <div class="header-status" id="headerStatus">STANDBY</div>
+  <div class="header-timer"  id="headerTimer">--:--</div>
+</div>
+
+<!-- CLUE MODAL -->
+<div class="clue-modal" id="clueModal">
+  <div class="clue-card">
+    <div class="clue-card-label">&#128269; Evidence Collected</div>
+    <div class="clue-card-title" id="modalTitle"></div>
+    <div class="clue-card-text"  id="modalText"></div>
+    <div class="clue-card-actions">
+      <button class="btn btn-amber" onclick="closeModal()">POCKET CLUE &#9656;</button>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- ============================================================ INTRO -->
+  <div class="screen active" id="screenIntro">
+
+    <div class="intro-logo">
+      <h1>THE PITT</h1>
+      <div class="subtitle">A Stryker Classified Experience &middot; Deep Sector 7</div>
+    </div>
+
+    <div class="warning-box">
+      <div class="warn-label">&#9888; HAZARD BROADCAST &mdash; ALL FREQUENCIES</div>
+      Facility lockdown initiated. Biometric seals engaged. External communications severed.
+      You have penetrated the outer perimeter of STRYKER DEEP SECTOR 7 &mdash; once the most
+      advanced medical research installation on the continent. What you find here may save
+      what remains of civilization. Or bury you with it.
+    </div>
+
+    <div class="lore-box">
+      <p>YEAR: 2147. The Collapse came fast and hard. Nineteen months of cascading grid failures,
+      supply chain collapse, and a pathogen that turned surgeries into gambles. The old
+      world's medical infrastructure crumbled in under a year.</p>
+      <p>But the legends survived. Survivors speak of a pre-Collapse corporation &mdash; STRYKER
+      &mdash; that had been quietly engineering a new era of medicine. Robotics. Precision
+      instruments. Solutions humanity had never seen. When the Collapse hit, their primary
+      R&amp;D bunker &mdash; codenamed THE PITT &mdash; sealed itself and went dark.</p>
+      <p>You are here because three clues led you to this door. The bunker AI, ARIS
+      (Autonomous Research Intelligence System), is still active. It will not open the
+      vaults for just anyone. You must prove you understand what STRYKER built &mdash; and
+      why they built it.</p>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-box">
+        <span class="stat-val">3</span>
+        <span class="stat-label">Security Chambers</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-val">9</span>
+        <span class="stat-label">Clues to Discover</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-val">&#8734;</span>
+        <span class="stat-label">Attempts (no penalty)</span>
+      </div>
+    </div>
+
+    <button class="btn btn-green btn-center" onclick="startGame()">&#9656; BREACH THE AIRLOCK</button>
+  </div><!-- /intro -->
+
+
+  <!-- ============================================================ STAGE 1 -->
+  <div class="screen" id="screen1">
+
+    <div class="progress-strip">
+      <div class="prog-node active" id="p1"><div class="prog-dot"></div>AIRLOCK</div>
+      <div class="prog-line"  id="pl1"></div>
+      <div class="prog-node"  id="p2"><div class="prog-dot"></div>RESEARCH LAB</div>
+      <div class="prog-line"  id="pl2"></div>
+      <div class="prog-node"  id="p3"><div class="prog-dot"></div>THE VAULT</div>
+    </div>
+
+    <div class="stage-badge">CHAMBER 01 &middot; ENTRY SECTOR</div>
+    <div class="stage-title">THE AIRLOCK</div>
+    <div class="stage-desc">The blast door groans but holds. A rusted keypad blinks to life &mdash; it needs a 4-digit access code. The room smells of old metal and institutional cleaning fluid. Dust-covered artifacts from the old world sit undisturbed. Examine what you find. The answer is somewhere in this room.</div>
+
+    <div class="room-visual" data-label="Environment">
+You stand in a decompression chamber roughly 8 meters across. Emergency lighting casts everything in amber. To your left, a corroded brass nameplate is bolted beside an old portrait. Directly ahead, a steel workbench holds a tattered journal, its cover warped from decades of humidity. On the far wall, an ancient terminal screen flickers &mdash; partially booted, partially corrupted. Three items. Three potential answers.
+    </div>
+
+    <div class="examine-grid">
+      <div class="examine-item" id="item1-0" onclick="examineItem(1,0)">
+        <span class="examine-icon">&#127751;</span>
+        <div class="examine-name">Corroded Nameplate</div>
+        <div class="examine-hint">Bolted beside the entry hatch</div>
+      </div>
+      <div class="examine-item" id="item1-1" onclick="examineItem(1,1)">
+        <span class="examine-icon">&#128211;</span>
+        <div class="examine-name">Tattered Journal</div>
+        <div class="examine-hint">Steel workbench, water-damaged</div>
+      </div>
+      <div class="examine-item" id="item1-2" onclick="examineItem(1,2)">
+        <span class="examine-icon">&#128187;</span>
+        <div class="examine-name">Ancient Terminal</div>
+        <div class="examine-hint">Far wall, partially booted</div>
+      </div>
+    </div>
+
+    <div class="clue-log" id="clueLog1">
+      <div class="clue-log-title">&#128203; FIELD NOTES &middot; CHAMBER 01</div>
+      <div class="clue-log-empty" id="clueEmpty1">No clues collected yet. Examine the items above.</div>
+    </div>
+
+    <div class="code-section">
+      <div class="code-label">&#128274; AIRLOCK KEYPAD &middot; ENTER 4-DIGIT ACCESS CODE</div>
+      <div class="code-input-row">
+        <input class="code-input" type="text" id="code1" maxlength="4" placeholder="_ _ _ _"
+               oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+        <button class="btn btn-green" onclick="submitCode(1)">SUBMIT &#9656;</button>
+      </div>
+      <div class="code-feedback" id="feedback1"></div>
+      <div class="attempts-bar" id="attempts1">
+        <div class="attempt-dot"></div>
+        <div class="attempt-dot"></div>
+        <div class="attempt-dot"></div>
+      </div>
+    </div>
+  </div><!-- /screen1 -->
+
+
+  <!-- ============================================================ STAGE 2 -->
+  <div class="screen" id="screen2">
+
+    <div class="progress-strip">
+      <div class="prog-node done"><div class="prog-dot"></div>AIRLOCK &#10003;</div>
+      <div class="prog-line done"></div>
+      <div class="prog-node active"><div class="prog-dot"></div>RESEARCH LAB</div>
+      <div class="prog-line" id="pl2b"></div>
+      <div class="prog-node" id="p3b"><div class="prog-dot"></div>THE VAULT</div>
+    </div>
+
+    <div class="stage-badge">CHAMBER 02 &middot; RESEARCH SECTOR</div>
+    <div class="stage-title">THE RESEARCH LAB</div>
+    <div class="stage-desc">The blast door slides open with a hydraulic hiss. Beyond it: a cavernous laboratory, frozen in time. Whiteboards hold half-finished equations. Specimen jars line chrome shelves. In the center, a holographic emitter projects a ghostly blueprint &mdash; the last project ARIS was tracking before the Collapse. Find the 4-letter project codename to proceed.</div>
+
+    <div class="room-visual" data-label="Environment">
+The lab is vast and cold. A cracked dome viewport looks out onto nothing &mdash; the surface buried under decades of sediment. Research stations ring the perimeter, each dedicated to a different project. One workstation has been deliberately illuminated by ARIS. A blueprint dominates the center screen. Handwritten notes are pinned beside it. On the far shelf, a pre-Collapse marketing brochure sits sealed in protective plastic.
+    </div>
+
+    <div class="examine-grid">
+      <div class="examine-item" id="item2-0" onclick="examineItem(2,0)">
+        <span class="examine-icon">&#128272;</span>
+        <div class="examine-name">Project Blueprint</div>
+        <div class="examine-hint">Center holographic station</div>
+      </div>
+      <div class="examine-item" id="item2-1" onclick="examineItem(2,1)">
+        <span class="examine-icon">&#128221;</span>
+        <div class="examine-name">Research Notes</div>
+        <div class="examine-hint">Pinned beside the blueprint</div>
+      </div>
+      <div class="examine-item" id="item2-2" onclick="examineItem(2,2)">
+        <span class="examine-icon">&#128196;</span>
+        <div class="examine-name">Pre-Collapse Brochure</div>
+        <div class="examine-hint">Sealed in protective plastic</div>
+      </div>
+    </div>
+
+    <div class="clue-log" id="clueLog2">
+      <div class="clue-log-title">&#128203; FIELD NOTES &middot; CHAMBER 02</div>
+      <div class="clue-log-empty" id="clueEmpty2">No clues collected yet. Examine the items above.</div>
+    </div>
+
+    <div class="code-section">
+      <div class="code-label">&#128274; BIOMETRIC LOCK &middot; ENTER 4-LETTER PROJECT CODENAME</div>
+      <div class="code-input-row">
+        <input class="code-input" type="text" id="code2" maxlength="4" placeholder="_ _ _ _"
+               oninput="this.value=this.value.toUpperCase().replace(/[^A-Z]/g,'')">
+        <button class="btn btn-green" onclick="submitCode(2)">SUBMIT &#9656;</button>
+      </div>
+      <div class="code-feedback" id="feedback2"></div>
+      <div class="attempts-bar" id="attempts2">
+        <div class="attempt-dot"></div>
+        <div class="attempt-dot"></div>
+        <div class="attempt-dot"></div>
+      </div>
+    </div>
+  </div><!-- /screen2 -->
+
+
+  <!-- ============================================================ STAGE 3 -->
+  <div class="screen" id="screen3">
+
+    <div class="progress-strip">
+      <div class="prog-node done"><div class="prog-dot"></div>AIRLOCK &#10003;</div>
+      <div class="prog-line done"></div>
+      <div class="prog-node done"><div class="prog-dot"></div>RESEARCH LAB &#10003;</div>
+      <div class="prog-line done"></div>
+      <div class="prog-node active"><div class="prog-dot"></div>THE VAULT</div>
+    </div>
+
+    <div class="stage-badge">CHAMBER 03 &middot; FINAL SECTOR &middot; MAXIMUM SECURITY</div>
+    <div class="stage-title">THE VAULT</div>
+    <div class="stage-desc">The inner vault. The air is pristine &mdash; climate-controlled even now, after a century of silence. This is where STRYKER kept their most sacred document: the mission that drove everything they built. ARIS speaks for the first time: "State the first word of the covenant. The word that defines why we existed." One word. Eight letters. The word that started it all.</div>
+
+    <div class="room-visual" data-label="Environment">
+The vault is smaller than expected. No machines &mdash; just stone walls and meaning. A massive inscription dominates the far wall, carved into polished granite, but the first word has been deliberately chiseled away. To your right, an audio terminal holds a single cassette labeled "HOMER'S BROADCAST - DAY ONE." To your left, a mosaic floor spells out something in tile &mdash; but time has scattered the opening section. ARIS watches through a single blinking sensor overhead.
+    </div>
+
+    <div class="examine-grid">
+      <div class="examine-item" id="item3-0" onclick="examineItem(3,0)">
+        <span class="examine-icon">&#129704;</span>
+        <div class="examine-name">Stone Inscription</div>
+        <div class="examine-hint">Granite wall &mdash; first word missing</div>
+      </div>
+      <div class="examine-item" id="item3-1" onclick="examineItem(3,1)">
+        <span class="examine-icon">&#128252;</span>
+        <div class="examine-name">Audio Cassette</div>
+        <div class="examine-hint">"Homer Broadcast &mdash; Day One"</div>
+      </div>
+      <div class="examine-item" id="item3-2" onclick="examineItem(3,2)">
+        <span class="examine-icon">&#127912;</span>
+        <div class="examine-name">Mosaic Floor</div>
+        <div class="examine-hint">Tile letters, first word scattered</div>
+      </div>
+    </div>
+
+    <div class="clue-log" id="clueLog3">
+      <div class="clue-log-title">&#128203; FIELD NOTES &middot; CHAMBER 03</div>
+      <div class="clue-log-empty" id="clueEmpty3">No clues collected yet. Examine the items above.</div>
+    </div>
+
+    <div class="code-section">
+      <div class="code-label">&#128274; VAULT SEAL &middot; ENTER FIRST WORD OF THE COVENANT (8 LETTERS)</div>
+      <div class="code-input-row">
+        <input class="code-input" type="text" id="code3" maxlength="8" placeholder="_ _ _ _ _ _ _ _"
+               oninput="this.value=this.value.toUpperCase().replace(/[^A-Z]/g,'')">
+        <button class="btn btn-green" onclick="submitCode(3)">SUBMIT &#9656;</button>
+      </div>
+      <div class="code-feedback" id="feedback3"></div>
+      <div class="attempts-bar" id="attempts3">
+        <div class="attempt-dot"></div>
+        <div class="attempt-dot"></div>
+        <div class="attempt-dot"></div>
+      </div>
+    </div>
+  </div><!-- /screen3 -->
+
+
+  <!-- ============================================================ VICTORY -->
+  <div class="screen" id="screenVictory">
+
+    <div class="victory-header">
+      <h1>VAULT OPEN</h1>
+      <div class="victory-sub">THE PITT HAS YIELDED ITS SECRETS &middot; MISSION COMPLETE</div>
+    </div>
+
+    <div class="lore-box">
+      <p>ARIS speaks, its voice crackling through century-old speakers:</p>
+      <p>"Identity confirmed. You carry the knowledge of what STRYKER built &mdash; and more
+      importantly, why. The vaults are open. The archives are yours."</p>
+      <p>Inside the vault: terabytes of pre-Collapse medical research. Robotics designs. Precision
+      surgical systems. Device schematics. All of it intact. All of it waiting for a world
+      that still needs it.</p>
+      <p>You step back into the ruins with more than you came for. Not just technology &mdash; but
+      a reminder that even in the darkest times, someone was driven to make things better.</p>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-box">
+        <span class="stat-val" id="statTime">--:--</span>
+        <span class="stat-label">Time to Escape</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-val" id="statClues">9/9</span>
+        <span class="stat-label">Clues Discovered</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-val" id="statWrong">0</span>
+        <span class="stat-label">Wrong Attempts</span>
+      </div>
+    </div>
+
+    <div class="debrief-box">
+      <div class="debrief-label">&#10003; DEBRIEF &mdash; WHAT YOU JUST PROVED</div>
+      <div class="debrief-entry">
+        <span class="debrief-code">1941</span> &mdash; The year Homer Stryker founded the company
+        that would reshape medicine. The year the mission began.
+      </div>
+      <div class="debrief-entry">
+        <span class="debrief-code">MAKO</span> &mdash; The robotic surgery system named for
+        its precision. Stryker Mako is used in thousands of operating rooms worldwide for
+        total knee and hip arthroplasty.
+      </div>
+      <div class="debrief-entry">
+        <span class="debrief-code">TOGETHER</span> &mdash; The first word of Stryker's mission:
+        "Together with our customers, we are driven to make healthcare better."
+        The word that has always defined how Stryker works.
+      </div>
+    </div>
+
+    <button class="btn btn-green btn-center" onclick="resetGame()" style="margin-top:1.5rem;">&#8634; PLAY AGAIN</button>
+  </div><!-- /victory -->
+
+</div><!-- /container -->
+
+<script>
+  // ---- CLUE CONTENT ----
+  var CLUES = {
+    1: [
+      {
+        title: "Corroded Nameplate",
+        text: "STRYKER RESEARCH DIVISION\nDEEP SECTOR 7 \u00b7 CLASSIFIED INSTALLATION\n\nEST. MCMXLI\n\n\"IN SERVICE OF THOSE WHO CANNOT WAIT\"\n\n[Below the text, a faded Stryker logo. Beneath it, smaller engraving:]\n\"If the numbers fail you, remember what the Romans counted.\""
+      },
+      {
+        title: "Tattered Journal",
+        text: "ENTRY \u2014 DECEMBER 8, 1941\n\n\"The news from Pearl Harbor reached us this morning. The country is at war. But Homer did not stop working. He said: If a soldier comes home broken, we will fix him. If a civilian needs a joint replaced, we will build that joint. Today we filed our first patent. Today we began.\n\nThis year \u2014 this terrible, pivotal year \u2014 will be the one we remember as the start.\"\n\n[The remaining pages are water-damaged beyond reading. The date is unmistakable.]"
+      },
+      {
+        title: "Ancient Terminal",
+        text: "> STRYKER CORP MAINFRAME v0.1\n> EMPLOYEE REGISTRY \u2014 PARTIAL RECOVERY\n\nEMPLOYEE #0001\nNAME: HOMER HARTMAN STRYKER, M.D.\nTITLE: FOUNDER & CHIEF SURGEON\nBADGE ISSUED: [YEAR CORRUPTED]\nSECTOR CLEARANCE: OMEGA\n\n> ERROR: Year field corrupted.\n> HINT SUBROUTINE ACTIVE:\n> \"The year is etched in Roman numerals on the nameplate beside you.\n>  Four digits. The lock awaits.\"\n\n> _"
+      }
+    ],
+    2: [
+      {
+        title: "Project Blueprint",
+        text: "PROJECT [REDACTED] \u2014 TECHNICAL SPECIFICATION\nCLASSIFICATION: APEX TIER\n\nSystem: Robotic Arm Assembly \u2014 Orthopedic Applications\nDegrees of Freedom: 6-axis articulation\nPrimary Use: Total Knee & Hip Arthroplasty\nAccuracy: Sub-millimeter haptic boundary enforcement\n\nCODENAME: [REDACTED \u2014 4 LETTERS]\n\nNote: \"Named for the ocean's apex predator. Fast. Precise. Relentless in accuracy.\nThe name was chosen because this system, like its namesake, does not miss.\"\n\nSub-note: \"See marine biology reference: fastest shark species.\nGenus: Isurus. Blue-water hunter.\""
+      },
+      {
+        title: "Research Notes",
+        text: "Dr. Reeves \u2014 Personal Notes, 2019\n\nWe debated codenames for months. \"Falcon\" was too generic. \"Raptor\" too ominous for a surgical context. Then Chen said it in the cafeteria:\n\n\"What hunts with more precision than any predator alive?\"\n\nThe Mako shark. Sustains 45 mph in open water. It does not circle \u2014 it commits. That is what this system does. It commits to the plan and executes within tolerances no human hand can match.\n\nThe name stuck. Four letters. Feels right.\n\nWhen we ship, the world will know what a [REDACTED] can do in an operating room."
+      },
+      {
+        title: "Pre-Collapse Brochure",
+        text: "[Sealed in industrial plastic. Still legible.]\n\nSTRYKER \u00b7 ROBOTIC SURGERY SYSTEMS\n\n\"Experience total confidence in the OR.\"\n\nOur robotic arm system brings unprecedented precision to total knee and hip replacement. Surgeons report:\n\n\u00b7 Dramatic reduction in implant malpositioning\n\u00b7 Shorter recovery for patients\n\u00b7 Consistent, reproducible outcomes\n\n[Center image: robotic arm in an OR. The model name is printed bold beneath it \u2014 but the plastic has fogged over exactly that word.]\n\n[Bottom corner: NYSE: SYK \u00b7 stryker.com]"
+      }
+    ],
+    3: [
+      {
+        title: "Stone Inscription",
+        text: "[The inscription covers the entire far wall:]\n\n\"________ with our customers, we are driven to make healthcare better.\"\n\n[The first word has been deliberately removed \u2014 only a rectangular void in the granite where it once stood. Chisel marks suggest this was intentional, not erosion.]\n\n[Scratched below by hand, rough and urgent:]\n\"ARIS asks for the FIRST word. The word before 'with.'\nThe word that means: not alone, not apart, but as one.\nEight letters.\""
+      },
+      {
+        title: "Audio Cassette",
+        text: "[TRANSCRIPT \u2014 Homer Broadcast, Day One]\n[Recording quality: poor. Voice: male, older, warm.]\n\n\"...we are not doing this alone. That is the fundamental thing I want every person in this building to understand. Not the patients. Not the surgeons. Not us. We do this \u2014 all of it \u2014 [STATIC] ...with our customers. We are driven [STATIC] ...make healthcare better.\n\nThe word I keep coming back to \u2014 the word I want carved above every door \u2014 is the one at the beginning. The one that says we walk in [STATIC] ...because none of us goes further alone than we go...\"\n\n[Recording ends.]"
+      },
+      {
+        title: "Mosaic Floor",
+        text: "[The floor tiles form a long sentence across the entire vault. Most are intact, but the opening section is scattered.]\n\nStill in place:\n\"...WITH OUR CUSTOMERS, WE ARE DRIVEN TO MAKE HEALTHCARE BETTER.\"\n\nScattered tiles near the entrance (rearranged):\nT \u00b7 O \u00b7 G \u00b7 E \u00b7 T \u00b7 H \u00b7 E \u00b7 R\n\n[Eight tiles. Eight letters. They belong at the front of the sentence.]\n\n[The ARIS sensor blinks twice above you \u2014 as if to confirm.]"
+      }
+    ]
+  };
+
+  var ANSWERS = { 1: "1941", 2: "MAKO", 3: "TOGETHER" };
+
+  var gameState = {
+    stage: 0,
+    cluesFound: { 1: [], 2: [], 3: [] },
+    wrongAttempts: { 1: 0, 2: 0, 3: 0 },
+    startTime: null,
+    endTime: null
+  };
+
+  // ---- TIMER ----
+  var timerInterval = null;
+
+  function startTimer() {
+    gameState.startTime = Date.now();
+    timerInterval = setInterval(tickTimer, 1000);
+    tickTimer();
+  }
+
+  function tickTimer() {
+    if (!gameState.startTime) return;
+    var elapsed = Math.floor((Date.now() - gameState.startTime) / 1000);
+    var m = String(Math.floor(elapsed / 60)).padStart(2, "0");
+    var s = String(elapsed % 60).padStart(2, "0");
+    document.getElementById("headerTimer").textContent = m + ":" + s;
+  }
+
+  function stopTimer() {
+    clearInterval(timerInterval);
+    timerInterval = null;
+    gameState.endTime = Date.now();
+  }
+
+  function formatElapsed() {
+    if (!gameState.startTime || !gameState.endTime) return "--:--";
+    var elapsed = Math.floor((gameState.endTime - gameState.startTime) / 1000);
+    var m = String(Math.floor(elapsed / 60)).padStart(2, "0");
+    var s = String(elapsed % 60).padStart(2, "0");
+    return m + ":" + s;
+  }
+
+  // ---- SCREEN MANAGEMENT ----
+  function showScreen(id) {
+    document.querySelectorAll(".screen").forEach(function(el) { el.classList.remove("active"); });
+    document.getElementById(id).classList.add("active");
+    window.scrollTo(0, 0);
+  }
+
+  // ---- GAME FLOW ----
+  function startGame() {
+    gameState.stage = 1;
+    document.getElementById("headerStatus").textContent = "CHAMBER 01 \u2014 ACTIVE";
+    startTimer();
+    showScreen("screen1");
+  }
+
+  function examineItem(stage, idx) {
+    var itemEl = document.getElementById("item" + stage + "-" + idx);
+    if (itemEl.classList.contains("found")) return;
+
+    var clue = CLUES[stage][idx];
+    document.getElementById("modalTitle").textContent = clue.title;
+    document.getElementById("modalText").textContent  = clue.text;
+    document.getElementById("clueModal").classList.add("open");
+
+    itemEl.classList.add("found");
+    var badge = document.createElement("span");
+    badge.className = "found-badge";
+    badge.textContent = "\u2713";
+    itemEl.appendChild(badge);
+
+    gameState.cluesFound[stage].push(idx);
+
+    var logEl   = document.getElementById("clueLog" + stage);
+    var emptyEl = document.getElementById("clueEmpty" + stage);
+    if (emptyEl) emptyEl.remove();
+
+    var firstLine = clue.text.split("\n")[0].substring(0, 70);
+    var entry = document.createElement("div");
+    entry.className = "clue-entry";
+    entry.innerHTML = "<span class=\"clue-entry-icon\">\u25b8</span><span><strong>" + clue.title + ":</strong> " + firstLine + "...</span>";
+    logEl.appendChild(entry);
+  }
+
+  function closeModal() {
+    document.getElementById("clueModal").classList.remove("open");
+  }
+
+  document.getElementById("clueModal").addEventListener("click", function(e) {
+    if (e.target === this) closeModal();
+  });
+
+  function submitCode(stage) {
+    var input    = document.getElementById("code" + stage);
+    var feedback = document.getElementById("feedback" + stage);
+    var val      = input.value.trim().toUpperCase();
+    var answer   = ANSWERS[stage];
+
+    if (!val) {
+      feedback.className = "code-feedback error";
+      feedback.textContent = "\u25b8 Enter a code first.";
+      return;
+    }
+
+    if (val === answer) {
+      input.className = "code-input success";
+      feedback.className = "code-feedback success";
+      feedback.textContent = "\u2713 ACCESS GRANTED \u2014 CHAMBER UNLOCKED";
+      setTimeout(function() {
+        if (stage < 3) {
+          advanceStage(stage);
+        } else {
+          showVictory();
+        }
+      }, 1200);
+    } else {
+      gameState.wrongAttempts[stage]++;
+      input.className = "code-input error";
+      feedback.className = "code-feedback error";
+      var wrong = gameState.wrongAttempts[stage];
+      var msgs = [
+        "\u25b8 ACCESS DENIED. ARIS: \"That is not what I am looking for.\"",
+        "\u25b8 ACCESS DENIED. ARIS: \"Study the evidence more carefully.\"",
+        "\u25b8 ACCESS DENIED. ARIS: \"The clues are all here. Look again.\""
+      ];
+      feedback.textContent = msgs[Math.min(wrong - 1, 2)];
+
+      var dots = document.querySelectorAll("#attempts" + stage + " .attempt-dot");
+      var dotIdx = Math.min(wrong - 1, dots.length - 1);
+      if (dots[dotIdx]) dots[dotIdx].classList.add("used");
+
+      setTimeout(function() {
+        input.className = "code-input";
+        input.value = "";
+      }, 650);
+    }
+  }
+
+  function advanceStage(from) {
+    var next = from + 1;
+    gameState.stage = next;
+    document.getElementById("headerStatus").textContent = "CHAMBER 0" + next + " \u2014 ACTIVE";
+    showScreen("screen" + next);
+  }
+
+  function showVictory() {
+    stopTimer();
+    document.getElementById("headerStatus").textContent = "VAULT OPEN \u2014 MISSION COMPLETE";
+    document.getElementById("headerTimer").style.color = "var(--green)";
+
+    var totalFound = Object.values(gameState.cluesFound).reduce(function(a, b) { return a + b.length; }, 0);
+    var totalWrong = Object.values(gameState.wrongAttempts).reduce(function(a, b) { return a + b; }, 0);
+
+    document.getElementById("statTime").textContent  = formatElapsed();
+    document.getElementById("statClues").textContent = totalFound + "/9";
+    document.getElementById("statWrong").textContent = totalWrong;
+
+    showScreen("screenVictory");
+  }
+
+  function resetGame() {
+    clearInterval(timerInterval);
+    timerInterval = null;
+    gameState = {
+      stage: 0,
+      cluesFound: { 1: [], 2: [], 3: [] },
+      wrongAttempts: { 1: 0, 2: 0, 3: 0 },
+      startTime: null,
+      endTime: null
+    };
+
+    document.getElementById("headerStatus").textContent = "STANDBY";
+    document.getElementById("headerTimer").textContent  = "--:--";
+    document.getElementById("headerTimer").style.color  = "";
+
+    [1, 2, 3].forEach(function(s) {
+      var inp = document.getElementById("code" + s);
+      if (inp) { inp.value = ""; inp.className = "code-input"; }
+      var fb = document.getElementById("feedback" + s);
+      if (fb) { fb.className = "code-feedback"; fb.textContent = ""; }
+      document.querySelectorAll("#attempts" + s + " .attempt-dot").forEach(function(d) {
+        d.classList.remove("used");
+      });
+    });
+
+    document.querySelectorAll(".examine-item").forEach(function(el) {
+      el.classList.remove("found");
+      var badge = el.querySelector(".found-badge");
+      if (badge) badge.remove();
+    });
+
+    [1, 2, 3].forEach(function(s) {
+      var log = document.getElementById("clueLog" + s);
+      if (!log) return;
+      log.querySelectorAll(".clue-entry").forEach(function(e) { e.remove(); });
+      if (!log.querySelector(".clue-log-empty")) {
+        var empty = document.createElement("div");
+        empty.className = "clue-log-empty";
+        empty.id = "clueEmpty" + s;
+        empty.textContent = "No clues collected yet. Examine the items above.";
+        log.appendChild(empty);
+      }
+    });
+
+    showScreen("screenIntro");
+  }
+
+  // Enter key submits for whichever stage is active
+  [1, 2, 3].forEach(function(s) {
+    var inp = document.getElementById("code" + s);
+    if (inp) {
+      inp.addEventListener("keydown", function(e) {
+        if (e.key === "Enter") submitCode(s);
+      });
+    }
+  });
+</script>
+</body>
+</html>
