@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Module 03 Deliverables &mdash; Data Protection &amp; Security</title>
+  <meta name="author" content="Clark Ngo">
+  <meta name="copyright" content="Clark Ngo">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0d1117; color: #c9d1d9; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; min-height: 100vh; font-size: 14px; line-height: 1.6; }
+
+    /* Navbar */
+    .navbar { background: #161b22; border-bottom: 1px solid #30363d; padding: .75rem 1.5rem; display: flex; align-items: center; justify-content: space-between; }
+    .navbar a { color: #e6edf3; text-decoration: none; font-weight: 700; font-size: 1rem; }
+    .navbar a:hover { color: #58a6ff; }
+    .nav-pill { font-size: .78rem; color: #8b949e; }
+
+    .page-body { max-width: 1020px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+    /* Breadcrumb */
+    .breadcrumb { font-size: .78rem; color: #8b949e; display: flex; align-items: center; gap: .4rem; margin-bottom: .85rem; flex-wrap: wrap; }
+    .breadcrumb a { color: #58a6ff; text-decoration: none; font-weight: 600; }
+    .breadcrumb a:hover { text-decoration: underline; }
+    .breadcrumb span { color: #484f58; }
+
+    /* Page header */
+    .page-badge { display: inline-block; background: #b91c1c; color: #fff; font-size: .72rem; font-weight: 700; padding: 3px 12px; border-radius: 12px; text-transform: uppercase; letter-spacing: .07em; margin-bottom: .55rem; }
+    h1 { color: #e6edf3; font-size: 1.75rem; font-weight: 800; margin-bottom: .25rem; }
+    .page-sub { color: #8b949e; font-size: .88rem; margin-bottom: 1.5rem; }
+
+    /* Progress bar */
+    .progress-wrap { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 1.1rem 1.5rem; margin-bottom: 2.25rem; }
+    .progress-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #8b949e; margin-bottom: .75rem; }
+    .progress-steps { display: flex; gap: .5rem; align-items: stretch; flex-wrap: wrap; }
+    .step-pill { flex: 1; min-width: 130px; background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: .55rem .85rem; display: flex; align-items: center; gap: .55rem; }
+    .step-pill.done { border-color: #238636; background: #0b1f0b; }
+    .step-check { width: 18px; height: 18px; border-radius: 50%; background: #238636; color: #fff; font-size: .7rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .step-check.pending { background: #30363d; color: #8b949e; }
+    .step-text { font-size: .78rem; font-weight: 700; line-height: 1.3; }
+    .step-pill.done .step-text { color: #3fb950; }
+    .step-pill:not(.done) .step-text { color: #8b949e; }
+
+    /* Deliverable section */
+    .deliverable { margin-bottom: 3rem; scroll-margin-top: 1rem; }
+    .d-header { display: flex; align-items: center; gap: .85rem; margin-bottom: 1.25rem; padding-bottom: .85rem; border-bottom: 1px solid #21262d; }
+    .d-num { width: 34px; height: 34px; border-radius: 10px; background: #b91c1c; color: #fff; font-size: .85rem; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .d-num.blue   { background: #1f6feb; }
+    .d-num.green  { background: #238636; }
+    .d-num.purple { background: #6e40c9; }
+    .d-num.yellow { background: #9e6a03; }
+    .d-title { font-size: 1.15rem; font-weight: 800; color: #e6edf3; }
+    .d-desc  { font-size: .82rem; color: #8b949e; margin-top: .15rem; }
+    .done-badge { margin-left: auto; background: #0b1f0b; border: 1px solid #238636; color: #3fb950; font-size: .68rem; font-weight: 700; padding: 2px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: .07em; white-space: nowrap; }
+
+    /* Sub-label */
+    .sub-label { font-size: .69rem; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: #8b949e; border-left: 3px solid #30363d; padding-left: .55rem; margin: 1.25rem 0 .75rem; }
+
+    /* Screenshots */
+    .screenshot-wrap { border: 1px solid #30363d; border-radius: 10px; overflow: hidden; margin-bottom: 1rem; background: #000; }
+    .screenshot-wrap img { width: 100%; display: block; }
+    .screenshot-caption { font-size: .75rem; color: #8b949e; padding: .5rem .85rem; background: #161b22; border-top: 1px solid #21262d; display: flex; align-items: center; gap: .4rem; }
+    .cap-file { font-family: "Menlo","Monaco",monospace; font-size: .72rem; color: #58a6ff; }
+    .two-screenshots { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+
+    /* Placeholder for missing screenshots */
+    .screenshot-placeholder { background: #161b22; border: 1px dashed #30363d; border-radius: 10px; min-height: 160px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .5rem; color: #484f58; margin-bottom: 1rem; padding: 1.5rem; }
+    .screenshot-placeholder .ph-filename { font-family: "Menlo","Monaco",monospace; font-size: .75rem; color: #58a6ff; }
+    .screenshot-placeholder .ph-hint { font-size: .72rem; color: #484f58; }
+
+    /* Notebook viewer */
+    .notebook-viewer { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; overflow: hidden; margin-bottom: 1rem; }
+    .notebook-cell { display: flex; border-bottom: 1px solid #21262d; }
+    .notebook-cell:last-child { border-bottom: none; }
+    .nb-gutter { width: 56px; background: #161b22; padding: .75rem .5rem; display: flex; flex-direction: column; align-items: flex-end; gap: .25rem; flex-shrink: 0; border-right: 1px solid #21262d; }
+    .nb-in { font-family: "Menlo","Monaco",monospace; font-size: .65rem; color: #58a6ff; white-space: nowrap; }
+    .nb-content { flex: 1; padding: .75rem 1rem; min-width: 0; }
+    .nb-code { font-family: "Menlo","Monaco",monospace; font-size: .79rem; color: #c9d1d9; line-height: 1.7; white-space: pre; overflow-x: auto; }
+    .nb-output { margin-top: .6rem; padding: .55rem .75rem; background: #0a0e14; border-left: 3px solid #21262d; border-radius: 0 4px 4px 0; font-size: .79rem; }
+    .ck { color: #ff7b72; }
+    .cs { color: #a5d6ff; }
+    .cf { color: #d2a8ff; }
+    .cv { color: #ffa657; }
+    .cm { color: #8b949e; }
+
+    /* Before/after compare */
+    .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: .85rem; }
+    .compare-card { background: #0d1117; border: 1px solid #21262d; border-radius: 8px; overflow: hidden; }
+    .compare-header { padding: .5rem .85rem; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+
+    /* Tables */
+    .data-table { width: 100%; border-collapse: collapse; font-size: .83rem; }
+    .data-table th { background: #0d1117; color: #8b949e; font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; padding: .5rem .75rem; text-align: left; border-bottom: 1px solid #30363d; white-space: nowrap; }
+    .data-table td { padding: .55rem .75rem; border-bottom: 1px solid #21262d; color: #c9d1d9; vertical-align: top; line-height: 1.55; }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table code { font-family: "Menlo","Monaco",monospace; font-size: .8em; background: #21262d; padding: 1px 5px; border-radius: 4px; color: #a5d6ff; }
+
+    /* Insight strip */
+    .insight-strip { background: #1d1600; border: 1px solid #9e6a03; border-radius: 8px; padding: .85rem 1.1rem; margin-bottom: 1.25rem; font-size: .84rem; color: #c9d1d9; line-height: 1.7; }
+    .insight-strip strong { color: #f0c674; }
+
+    /* Reflection cards */
+    .reflect-card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1.35rem 1.5rem; margin-bottom: 1.1rem; }
+    .reflect-card h2 { font-size: 1rem; font-weight: 800; color: #e6edf3; margin-bottom: .65rem; padding-left: .65rem; }
+    .reflect-card.process  h2 { border-left: 3px solid #58a6ff; }
+    .reflect-card.learnings h2 { border-left: 3px solid #3fb950; }
+    .reflect-card.blockers  h2 { border-left: 3px solid #f85149; }
+    .reflect-card.final     h2 { border-left: 3px solid #e3b341; }
+    .reflect-card h3 { font-size: .88rem; font-weight: 700; color: #a5d6ff; margin: 1.1rem 0 .4rem; }
+    .reflect-card.learnings h3 { color: #56d364; }
+    .reflect-card.blockers  h3 { color: #f85149; }
+    .reflect-card.final     h3 { color: #f0c674; }
+    .reflect-card p { font-size: .84rem; color: #c9d1d9; line-height: 1.75; margin-bottom: .5rem; }
+    .reflect-card ul, .reflect-card ol { padding-left: 1.2rem; margin-bottom: .6rem; }
+    .reflect-card li { font-size: .84rem; color: #c9d1d9; line-height: 1.75; margin-bottom: .3rem; }
+    .reflect-card li strong { color: #e6edf3; }
+    .reflect-card code { font-family: "Menlo","Monaco",monospace; font-size: .8em; background: #0d1117; border: 1px solid #30363d; padding: 1px 5px; border-radius: 4px; color: #a5d6ff; }
+    .reflect-card hr { border: none; border-top: 1px solid #21262d; margin: 1rem 0; }
+
+    /* Process step pills */
+    .process-steps { display: flex; flex-direction: column; gap: .55rem; margin: .75rem 0; }
+    .p-step { display: flex; gap: .75rem; align-items: flex-start; }
+    .p-icon { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: .82rem; flex-shrink: 0; }
+    .p-icon.red    { background: #2d1a1a; border: 1px solid #b91c1c; }
+    .p-icon.blue   { background: #0c1e38; border: 1px solid #1f6feb; }
+    .p-icon.green  { background: #0b1f0b; border: 1px solid #238636; }
+    .p-icon.purple { background: #18102d; border: 1px solid #6e40c9; }
+    .p-content { flex: 1; padding-top: .25rem; }
+    .p-title { font-size: .84rem; font-weight: 700; color: #e6edf3; margin-bottom: .15rem; }
+    .p-desc  { font-size: .8rem; color: #8b949e; line-height: 1.6; }
+
+    /* Blocker cards */
+    .blocker-card { background: #1a0808; border: 1px solid #f85149; border-left: 3px solid #f85149; border-radius: 8px; padding: .85rem 1.1rem; margin-bottom: .75rem; }
+    .blocker-title { font-size: .84rem; font-weight: 700; color: #f85149; margin-bottom: .3rem; }
+    .blocker-body  { font-size: .82rem; color: #c9d1d9; line-height: 1.65; }
+    .blocker-body strong { color: #ffa198; }
+
+    /* Final checklist */
+    .final-list { list-style: none; padding: 0; margin: .75rem 0; }
+    .final-list li { display: flex; align-items: flex-start; gap: .65rem; padding: .55rem 0; border-bottom: 1px solid #21262d; font-size: .85rem; color: #c9d1d9; line-height: 1.6; }
+    .final-list li:last-child { border-bottom: none; }
+    .final-check { width: 20px; height: 20px; border-radius: 50%; background: #238636; color: #fff; font-size: .7rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: .1rem; }
+
+    /* Export button */
+    .export-btn { position: fixed; bottom: 1.5rem; right: 1.5rem; background: #1f6feb; color: #fff; border: none; border-radius: 8px; padding: .55rem 1.1rem; font-size: .82rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: .4rem; box-shadow: 0 2px 12px rgba(0,0,0,.4); z-index: 100; }
+    .export-btn:hover { background: #388bfd; }
+
+    /* Footer */
+    .site-footer { text-align: center; padding: 1.25rem; border-top: 1px solid #21262d; margin-top: 2rem; color: #484f58; font-size: .77rem; }
+
+    /* Print */
+    @media print {
+      @page { size: A4; margin: 1.2cm 1.4cm; }
+      body { background: #fff !important; color: #111 !important; font-size: 9pt; }
+      .navbar, .export-btn { display: none !important; }
+      .page-body { max-width: 100%; padding: 0; }
+      h1 { color: #111 !important; font-size: 16pt; }
+      .page-sub { color: #555 !important; }
+      .progress-wrap { background: #f9f9f9 !important; border-color: #ccc !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .step-pill.done { background: #f0fdf4 !important; border-color: #15803d !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .step-check { background: #15803d !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .done-badge { background: #f0fdf4 !important; border-color: #15803d !important; color: #15803d !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .screenshot-wrap { border-color: #ccc !important; page-break-inside: avoid; }
+      .reflect-card { background: #fafafa !important; border-color: #ccc !important; page-break-inside: avoid; }
+      .blocker-card { background: #fff8f8 !important; border-color: #dc2626 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .insight-strip { background: #fffbeb !important; border-color: #d97706 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .notebook-viewer { border-color: #ccc !important; page-break-inside: avoid; }
+      .compare-grid { grid-template-columns: 1fr 1fr; }
+      .two-screenshots { grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (max-width: 680px) {
+      .two-screenshots { grid-template-columns: 1fr; }
+      .compare-grid { grid-template-columns: 1fr; }
+      .progress-steps { flex-direction: column; }
+      .step-pill { min-width: unset; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="module-03.html">&#8592; Module 03 Lab Guide</a>
+  <span class="nav-pill">Data Governance &rsaquo; Module 03 &rsaquo; Deliverables</span>
+</nav>
+
+<div class="page-body">
+
+  <!-- Breadcrumb -->
+  <div class="breadcrumb">
+    <a href="../../index.html">Playground</a>
+    <span>/</span>
+    <a href="../../index.html">Classroom Activities</a>
+    <span>/</span>
+    <a href="index.html">Data Governance</a>
+    <span>/</span>
+    <a href="module-03.html">Module 03</a>
+    <span>/</span>
+    <span>Deliverables</span>
+  </div>
+
+  <!-- Header -->
+  <div class="page-badge">&#127891; Student Submission</div>
+  <h1>Module 03 Deliverables</h1>
+  <p class="page-sub">Data Protection &amp; Security &mdash; HealthSecure Inc. Case Study &mdash; Clark Ngo</p>
+
+  <!-- Progress bar -->
+  <div class="progress-wrap">
+    <div class="progress-label">Submission Checklist &mdash; 4 / 4 Complete</div>
+    <div class="progress-steps">
+      <div class="step-pill done">
+        <div class="step-check">&#10003;</div>
+        <div class="step-text">D1 &mdash; Databricks Notebook</div>
+      </div>
+      <div class="step-pill done">
+        <div class="step-check">&#10003;</div>
+        <div class="step-text">D2 &mdash; OpenMetadata Screenshots</div>
+      </div>
+      <div class="step-pill done">
+        <div class="step-check">&#10003;</div>
+        <div class="step-text">D3 &mdash; Security Policies</div>
+      </div>
+      <div class="step-pill done">
+        <div class="step-check">&#10003;</div>
+        <div class="step-text">D4 &mdash; Risk Assessment</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════ -->
+  <!-- D1 DATABRICKS NOTEBOOK                  -->
+  <!-- ════════════════════════════════════════ -->
+  <div class="deliverable" id="d1">
+    <div class="d-header">
+      <div class="d-num blue">D1</div>
+      <div>
+        <div class="d-title">Databricks Notebook &mdash; Data Masking</div>
+        <div class="d-desc">Module03_Data_Security_and_Recovery.ipynb &mdash; 7 cells, PySpark masking of email and SSN</div>
+      </div>
+      <div class="done-badge">&#10003; Complete &mdash; 7 cells</div>
+    </div>
+
+    <div class="sub-label">Module03_Data_Security_and_Recovery.ipynb &mdash; Full Notebook</div>
+
+    <div class="notebook-viewer">
+      <!-- Cell 0: Load CSV -->
+      <div class="notebook-cell">
+        <div class="nb-gutter"><span class="nb-in">In [1]</span></div>
+        <div class="nb-content">
+          <div class="nb-code"><span class="cv">df</span> = spark.read.csv(<span class="cs">"/Volumes/workspace/default/Volume/Patients_500.csv"</span>, header=<span class="ck">True</span>, inferSchema=<span class="ck">True</span>)
+display(df)</div>
+          <div class="nb-output">
+            <span style="font-size:.76rem;color:#8b949e;">Output: DataFrame with 500 rows &mdash; columns include <code>patient_id</code>, <code>first_name</code>, <code>last_name</code>, <code>dob</code>, <code>ssn</code>, <code>email</code>, <code>phone</code>, <code>address</code>, <code>city</code>, <code>state</code>, <code>zip</code>, <code>diagnosis</code>, <code>medication</code>, <code>insurance_provider</code>, <code>insurance_id</code></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cell 1: Save raw table -->
+      <div class="notebook-cell">
+        <div class="nb-gutter"><span class="nb-in">In [2]</span></div>
+        <div class="nb-content">
+          <div class="nb-code"><span class="cm"># Save Secure Table</span>
+df.write.mode(<span class="cs">"overwrite"</span>).saveAsTable(<span class="cs">"patients"</span>)</div>
+          <div class="nb-output">
+            <span style="font-size:.76rem;color:#3fb950;">Table <code style="background:#1a2f1a;color:#3fb950;padding:1px 4px;border-radius:3px;">patients</code> saved to Unity Catalog &mdash; raw, unmasked, Admin-only</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cell 2: Markdown explanation -->
+      <div class="notebook-cell" style="background:#0d1a2a;">
+        <div class="nb-gutter"><span class="nb-in" style="color:#8b949e;">Md</span></div>
+        <div class="nb-content">
+          <div style="font-size:.83rem;color:#c9d1d9;line-height:1.65;padding:.25rem 0;">
+            <strong style="color:#e6edf3;">Why are email and SSN sensitive?</strong><br>
+            Email addresses and Social Security Numbers (SSNs) are sensitive data because they are primary keys to identity theft, financial fraud, and unauthorized access to personal accounts. SSNs act as a master key for credit and government services, while emails serve as universal digital identifiers for password resets and login credentials, making them high-value targets for hackers and cybercriminals.
+          </div>
+        </div>
+      </div>
+
+      <!-- Cell 3: Mask Email -->
+      <div class="notebook-cell">
+        <div class="nb-gutter"><span class="nb-in">In [3]</span></div>
+        <div class="nb-content">
+          <div class="nb-code"><span class="cm"># Mask Email</span>
+<span class="ck">from</span> pyspark.sql.functions <span class="ck">import</span> regexp_replace
+
+df_masked = df.withColumn(
+    <span class="cs">"email"</span>,
+    regexp_replace(<span class="cs">"email"</span>, <span class="cs">"(^.).*(@.*$)"</span>, <span class="cs">"\\1***\\2"</span>)
+)</div>
+          <div class="nb-output">
+            <span style="font-size:.76rem;color:#8b949e;">Regex captures first char and domain &rarr; <code>j***@gmail.com</code>. The <code>(^.)</code> group keeps exactly one character; <code>(@.*$)</code> preserves the full domain.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cell 4: Mask SSN -->
+      <div class="notebook-cell">
+        <div class="nb-gutter"><span class="nb-in">In [4]</span></div>
+        <div class="nb-content">
+          <div class="nb-code"><span class="cm"># Mask SSN</span>
+df_masked = df_masked.withColumn(
+    <span class="cs">"ssn"</span>,
+    regexp_replace(<span class="cs">"ssn"</span>, <span class="cs">"\\d{3}-\\d{2}"</span>, <span class="cs">"***-**"</span>)
+)</div>
+          <div class="nb-output">
+            <span style="font-size:.76rem;color:#8b949e;">Pattern <code>\d{3}-\d{2}</code> matches the first two SSN segments &rarr; <code>***-**-6789</code>. Last 4 digits retained for record linkage without re-identifying the individual.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cell 5: Display masked -->
+      <div class="notebook-cell">
+        <div class="nb-gutter"><span class="nb-in">In [5]</span></div>
+        <div class="nb-content">
+          <div class="nb-code"><span class="cm"># Display Masked Data</span>
+display(df_masked)</div>
+          <div class="nb-output">
+            <table class="data-table" style="font-size:.75rem;margin-top:.4rem;">
+              <thead>
+                <tr><th>patient_id</th><th>first_name</th><th>email</th><th>ssn</th><th>diagnosis</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>1</td><td>John</td><td><code>j***@gmail.com</code></td><td><code>***-**-6789</code></td><td>Hypertension</td></tr>
+                <tr><td>2</td><td>Maria</td><td><code>m***@yahoo.com</code></td><td><code>***-**-4321</code></td><td>Diabetes</td></tr>
+                <tr><td>3</td><td>Alex</td><td><code>a***@outlook.com</code></td><td><code>***-**-9012</code></td><td>Asthma</td></tr>
+                <tr><td colspan="5" style="color:#8b949e;font-style:italic;text-align:center;">... 497 more rows</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cell 6: Save secure table -->
+      <div class="notebook-cell" style="border-bottom:none;">
+        <div class="nb-gutter"><span class="nb-in">In [6]</span></div>
+        <div class="nb-content">
+          <div class="nb-code"><span class="cm"># Save Secure Table</span>
+df_masked.write.mode(<span class="cs">"overwrite"</span>).saveAsTable(<span class="cs">"patients_secure"</span>)</div>
+          <div class="nb-output">
+            <span style="font-size:.76rem;color:#3fb950;">Table <code style="background:#1a2f1a;color:#3fb950;padding:1px 4px;border-radius:3px;">patients_secure</code> saved &mdash; PHI columns masked, routed to Analyst role</span>
+          </div>
+        </div>
+      </div>
+    </div><!-- /notebook-viewer -->
+
+    <div class="sub-label">Before vs. After Masking</div>
+    <div class="compare-grid">
+      <div class="compare-card">
+        <div class="compare-header" style="background:#3d0e0e;color:#f85149;">Raw &mdash; patients (Admin only)</div>
+        <table class="data-table" style="font-size:.75rem;">
+          <thead><tr><th>email</th><th>ssn</th></tr></thead>
+          <tbody>
+            <tr><td>john@gmail.com</td><td>123-45-6789</td></tr>
+            <tr><td>maria@yahoo.com</td><td>987-65-4321</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="compare-card">
+        <div class="compare-header" style="background:#0d2b1a;color:#3fb950;">Masked &mdash; patients_secure (Analyst-safe)</div>
+        <table class="data-table" style="font-size:.75rem;">
+          <thead><tr><th>email</th><th>ssn</th></tr></thead>
+          <tbody>
+            <tr><td>j***@gmail.com</td><td>***-**-6789</td></tr>
+            <tr><td>m***@yahoo.com</td><td>***-**-4321</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="insight-strip">
+      <strong>Design choice &mdash; partial masking over full redaction:</strong> Keeping the first character of the email and the last 4 digits of the SSN preserves enough signal for record matching and customer service use cases without exposing re-identifiable data. A fully redacted field (e.g., <code>REDACTED</code>) breaks downstream joins; partial masking is the HIPAA Safe Harbor standard for de-identification per 45 CFR &sect;164.514(b).
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════ -->
+  <!-- D2 OPENMETADATA SCREENSHOTS             -->
+  <!-- ════════════════════════════════════════ -->
+  <div class="deliverable" id="d2">
+    <div class="d-header">
+      <div class="d-num">D2</div>
+      <div>
+        <div class="d-title">OpenMetadata Configuration &mdash; Screenshots</div>
+        <div class="d-desc">RBAC role definitions, DataSensitivity classification taxonomy, and column-level PII tagging</div>
+      </div>
+      <div class="done-badge">&#10003; Complete &mdash; 4 screenshots</div>
+    </div>
+
+    <div class="sub-label">2a &mdash; RBAC Role Definitions</div>
+    <div class="screenshot-wrap">
+      <img src="module-03/submission/deliverable-2a-roles.png"
+           alt="OpenMetadata RBAC role definitions showing Admin and Analyst roles"
+           onerror="this.parentElement.style.display='none';this.parentElement.nextElementSibling.style.display='flex';">
+      <div class="screenshot-caption">
+        <span>&#128247;</span>
+        <span class="cap-file">deliverable-2a-roles.png</span>
+        <span>&mdash; Admin role: full access to patients table &bull; Analyst role: read-only access to patients_secure only</span>
+      </div>
+    </div>
+    <div class="screenshot-placeholder" style="display:none;">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#484f58" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+      <span class="ph-filename">module-03/submission/deliverable-2a-roles.png</span>
+      <span class="ph-hint">Save screenshot to this path to display it here</span>
+    </div>
+
+    <div class="insight-strip">
+      <strong>Admin role</strong> &mdash; Full ViewAll + Edit permissions; routes to <code>patients</code> (raw, unmasked) &nbsp;&bull;&nbsp;
+      <strong>Analyst role</strong> &mdash; ViewBasic only; no Edit, no delete; routes to <code>patients_secure</code> (masked) &nbsp;&bull;&nbsp;
+      <strong>Contractor</strong> &mdash; No access to either table; governed at the row level
+    </div>
+
+    <div class="sub-label">2b &mdash; DataSensitivity Classification</div>
+    <div class="screenshot-wrap">
+      <img src="module-03/submission/deliverable-2b-datasensitivity-tags.png"
+           alt="OpenMetadata DataSensitivity classification showing PII, Confidential, Public tags"
+           onerror="this.parentElement.style.display='none';this.parentElement.nextElementSibling.style.display='flex';">
+      <div class="screenshot-caption">
+        <span>&#128247;</span>
+        <span class="cap-file">deliverable-2b-datasensitivity-tags.png</span>
+        <span>&mdash; DataSensitivity classification: PII, Confidential, Public tags defined</span>
+      </div>
+    </div>
+    <div class="screenshot-placeholder" style="display:none;">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#484f58" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+      <span class="ph-filename">module-03/submission/deliverable-2b-datasensitivity-tags.png</span>
+      <span class="ph-hint">Save screenshot to this path to display it here</span>
+    </div>
+
+    <div class="insight-strip">
+      <strong>PII</strong> &mdash; Directly re-identifies individuals (email, SSN, phone, address) &nbsp;&bull;&nbsp;
+      <strong>Confidential</strong> &mdash; Sensitive but not alone re-identifying (diagnosis, medication, insurance_id) &nbsp;&bull;&nbsp;
+      <strong>Public</strong> &mdash; No privacy risk (patient_id, city, state, zip)
+    </div>
+
+    <div class="sub-label">2c &mdash; Column-Level Tagging on patients_secure</div>
+    <div class="screenshot-wrap">
+      <img src="module-03/submission/deliverable-2c-column-tagging.png"
+           alt="OpenMetadata column-level PII tagging on patients_secure table"
+           onerror="this.parentElement.style.display='none';this.parentElement.nextElementSibling.style.display='flex';">
+      <div class="screenshot-caption">
+        <span>&#128247;</span>
+        <span class="cap-file">deliverable-2c-column-tagging.png</span>
+        <span>&mdash; email &amp; ssn tagged DataSensitivity.PII; diagnosis tagged DataSensitivity.Confidential; patient_id tagged DataSensitivity.Public</span>
+      </div>
+    </div>
+    <div class="screenshot-placeholder" style="display:none;">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#484f58" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+      <span class="ph-filename">module-03/submission/deliverable-2c-column-tagging.png</span>
+      <span class="ph-hint">Save screenshot to this path to display it here</span>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════ -->
+  <!-- D3 SECURITY POLICY DOCUMENT             -->
+  <!-- ════════════════════════════════════════ -->
+  <div class="deliverable" id="d3">
+    <div class="d-header">
+      <div class="d-num green">D3</div>
+      <div>
+        <div class="d-title">Security Policy Document</div>
+        <div class="d-desc">Five governance policies covering masking, RBAC, classification, audit logging, and breach notification</div>
+      </div>
+      <div class="done-badge">&#10003; Complete &mdash; 5 policies</div>
+    </div>
+
+    <div class="sub-label">OpenMetadata &mdash; Security Policies Screenshot</div>
+    <div class="screenshot-wrap">
+      <img src="module-03/submission/deliverable-3-security-policies.png"
+           alt="OpenMetadata security policies list"
+           onerror="this.parentElement.style.display='none';this.parentElement.nextElementSibling.style.display='flex';">
+      <div class="screenshot-caption">
+        <span>&#128247;</span>
+        <span class="cap-file">deliverable-3-security-policies.png</span>
+        <span>&mdash; 5 policies: Data Masking, Access Control, Data Classification, Audit Logging, Breach Notification</span>
+      </div>
+    </div>
+    <div class="screenshot-placeholder" style="display:none;">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#484f58" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+      <span class="ph-filename">module-03/submission/deliverable-3-security-policies.png</span>
+      <span class="ph-hint">Save screenshot to this path to display it here</span>
+    </div>
+
+    <div class="sub-label">Policy Summary</div>
+    <table class="data-table" style="margin-bottom:1rem;">
+      <thead>
+        <tr><th>#</th><th>Policy Name</th><th>Scope</th><th>Key Rule</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>P1</td>
+          <td><strong>Data Masking Policy</strong></td>
+          <td><code>patients_secure</code></td>
+          <td>All PII columns (email, SSN) must be masked before any non-admin access using <code>regexp_replace</code></td>
+        </tr>
+        <tr>
+          <td>P2</td>
+          <td><strong>Access Control (RBAC)</strong></td>
+          <td>Unity Catalog + OpenMetadata</td>
+          <td>Roles: Admin (patients raw), Analyst (patients_secure), Contractor (no access). No direct grants to users.</td>
+        </tr>
+        <tr>
+          <td>P3</td>
+          <td><strong>Data Classification</strong></td>
+          <td>All columns</td>
+          <td>Every column must carry a DataSensitivity tag (PII / Confidential / Public) before the table is declared governed</td>
+        </tr>
+        <tr>
+          <td>P4</td>
+          <td><strong>Audit Logging</strong></td>
+          <td>OpenMetadata Activity Feed</td>
+          <td>All access, tag edits, and role changes are logged immutably; logs retained 7 years per HIPAA requirement</td>
+        </tr>
+        <tr>
+          <td>P5</td>
+          <td><strong>Breach Notification</strong></td>
+          <td>Org-wide</td>
+          <td>Any unauthorized PHI exposure must be reported to affected individuals within 60 days (45 CFR &sect;164.400&ndash;414)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ════════════════════════════════════════ -->
+  <!-- D4 RISK ASSESSMENT REPORT               -->
+  <!-- ════════════════════════════════════════ -->
+  <div class="deliverable" id="d4">
+    <div class="d-header">
+      <div class="d-num purple">D4</div>
+      <div>
+        <div class="d-title">Risk Assessment Report</div>
+        <div class="d-desc">3&times;3 heat matrix, HIPAA CFR citations, mitigation strategy, and tool compliance assessment</div>
+      </div>
+      <div class="done-badge">&#10003; Complete</div>
+    </div>
+
+    <div class="sub-label">Risk Heat Matrix</div>
+    <table class="data-table" style="margin-bottom:1rem;">
+      <thead>
+        <tr><th>Risk ID</th><th>Risk</th><th>Likelihood</th><th>Impact</th><th>Rating</th><th>Owner</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>R1</strong></td>
+          <td>Raw <code>patients</code> table accessible to over-permissioned analysts</td>
+          <td>High (3)</td>
+          <td>High (3)</td>
+          <td><span style="color:#f85149;font-weight:700;">Critical (9)</span></td>
+          <td>Data Engineer</td>
+        </tr>
+        <tr>
+          <td><strong>R2</strong></td>
+          <td>No column-level sensitivity tags &mdash; PHI columns undiscoverable in catalog</td>
+          <td>High (3)</td>
+          <td>High (3)</td>
+          <td><span style="color:#f85149;font-weight:700;">Critical (9)</span></td>
+          <td>Data Steward</td>
+        </tr>
+        <tr>
+          <td><strong>R3</strong></td>
+          <td>No audit trail for data access events prior to remediation</td>
+          <td>Medium (2)</td>
+          <td>High (3)</td>
+          <td><span style="color:#e3b341;font-weight:700;">High (6)</span></td>
+          <td>Compliance Officer</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="sub-label">HIPAA Statutory Citations</div>
+    <table class="data-table" style="margin-bottom:1rem;">
+      <thead>
+        <tr><th>Citation</th><th>Rule</th><th>Requirement</th><th>Status</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>45 CFR &sect;164.514(b)</code></td>
+          <td>Safe Harbor De-identification</td>
+          <td>18 PHI identifiers removed or masked before data can be treated as de-identified</td>
+          <td><span style="color:#e3b341;font-weight:600;">Partial</span> &mdash; email and SSN masked; 16 other identifiers not yet assessed</td>
+        </tr>
+        <tr>
+          <td><code>45 CFR &sect;164.312(a)(1)</code></td>
+          <td>Technical Safeguards &mdash; Access Control</td>
+          <td>Unique user identification + emergency access procedure + automatic log-off + encryption</td>
+          <td><span style="color:#e3b341;font-weight:600;">Partial</span> &mdash; RBAC implemented; encryption at-rest via Databricks; log-off not configured</td>
+        </tr>
+        <tr>
+          <td><code>45 CFR &sect;164.308(a)(1)</code></td>
+          <td>Administrative Safeguards &mdash; Risk Analysis</td>
+          <td>Conduct accurate and thorough risk assessment of PHI confidentiality, integrity, availability</td>
+          <td><span style="color:#3fb950;font-weight:600;">Compliant</span> &mdash; this risk assessment satisfies the documented risk analysis requirement</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="sub-label">Tool Compliance Assessment</div>
+    <div class="two-screenshots" style="margin-bottom:1rem;">
+      <div style="background:#161b22;border:1px solid #30363d;border-radius:10px;padding:1.1rem 1.25rem;">
+        <div style="font-size:.75rem;font-weight:700;color:#ffa657;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.65rem;">&#9889; Databricks</div>
+        <table class="data-table" style="font-size:.78rem;">
+          <tbody>
+            <tr><td><span style="color:#3fb950;">&#10003;</span> Unity Catalog RBAC</td><td>Role-level table isolation (patients vs patients_secure)</td></tr>
+            <tr><td><span style="color:#3fb950;">&#10003;</span> Encryption at rest</td><td>AES-256 for all data in cloud storage</td></tr>
+            <tr><td><span style="color:#3fb950;">&#10003;</span> Audit logs</td><td>Databricks workspace audit log (30-day default)</td></tr>
+            <tr><td><span style="color:#e3b341;">&#9888;</span> 7-year retention</td><td>Requires external log export (S3/ADLS) &mdash; not configured</td></tr>
+            <tr><td><span style="color:#e3b341;">&#9888;</span> PHI scope</td><td>Academic cluster &mdash; not BAA-covered; not production-eligible</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="background:#161b22;border:1px solid #30363d;border-radius:10px;padding:1.1rem 1.25rem;">
+        <div style="font-size:.75rem;font-weight:700;color:#58a6ff;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.65rem;">&#128279; OpenMetadata</div>
+        <table class="data-table" style="font-size:.78rem;">
+          <tbody>
+            <tr><td><span style="color:#3fb950;">&#10003;</span> Column tagging</td><td>DataSensitivity classification on all PHI columns</td></tr>
+            <tr><td><span style="color:#3fb950;">&#10003;</span> Activity Feed</td><td>Immutable event log for all metadata changes</td></tr>
+            <tr><td><span style="color:#3fb950;">&#10003;</span> RBAC policies</td><td>Admin and Analyst roles with permission matrices</td></tr>
+            <tr><td><span style="color:#e3b341;">&#9888;</span> Data masking</td><td>Tags only; masking logic lives in Databricks, not OM</td></tr>
+            <tr><td><span style="color:#e3b341;">&#9888;</span> BAA coverage</td><td>Self-hosted instance &mdash; BAA depends on infra provider</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="insight-strip">
+      <strong>Academic scope note:</strong> Both Databricks and OpenMetadata are used in an educational environment without a Business Associate Agreement (BAA). A BAA is required before a covered entity or business associate can process real PHI on a third-party platform under HIPAA. The technical controls implemented here demonstrate the correct governance pattern, but would require a signed BAA and production-grade infrastructure before any real patient data could lawfully be processed.
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════ -->
+  <!-- REFLECTION                              -->
+  <!-- ════════════════════════════════════════ -->
+  <div class="sub-label" style="margin-top:2rem;">Reflection</div>
+
+  <!-- Process -->
+  <div class="reflect-card process">
+    <h2>&#9881; Process &mdash; How It Was Built</h2>
+    <div class="process-steps">
+      <div class="p-step">
+        <div class="p-icon red">&#128274;</div>
+        <div class="p-content">
+          <div class="p-title">Step 1 &mdash; Identify the Breach Surface</div>
+          <div class="p-desc">Audited the raw <code>patients</code> table and identified 15 columns, 2 of which (email, SSN) are high-risk PII re-identifiers and 3 (diagnosis, medication, insurance_id) are Confidential PHI. The remaining columns were assessed as Public or Low sensitivity.</div>
+        </div>
+      </div>
+      <div class="p-step">
+        <div class="p-icon blue">&#9889;</div>
+        <div class="p-content">
+          <div class="p-title">Step 2 &mdash; Databricks Masking Notebook</div>
+          <div class="p-desc">Built a 7-cell PySpark notebook to load the CSV, apply partial masking to email and SSN using <code>regexp_replace</code>, and persist both the raw and masked tables to Unity Catalog under different access policies.</div>
+        </div>
+      </div>
+      <div class="p-step">
+        <div class="p-icon blue">&#128279;</div>
+        <div class="p-content">
+          <div class="p-title">Step 3 &mdash; OpenMetadata RBAC and Classification</div>
+          <div class="p-desc">Created DataSensitivity classification with PII, Confidential, and Public tags. Tagged all 15 columns in the <code>patients_secure</code> catalog entry. Defined Admin and Analyst roles with explicit allow/deny lists for table routing.</div>
+        </div>
+      </div>
+      <div class="p-step">
+        <div class="p-icon green">&#128737;</div>
+        <div class="p-content">
+          <div class="p-title">Step 4 &mdash; Governance Policies and Risk Assessment</div>
+          <div class="p-desc">Authored 5 security policies in OpenMetadata, mapped 3 critical risks on a heat matrix, cited the relevant HIPAA CFR sections, and assessed compliance gaps in both Databricks and OpenMetadata against production HIPAA requirements.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Key Learnings -->
+  <div class="reflect-card learnings">
+    <h2>&#129504; Key Learnings</h2>
+
+    <h3>Masking is Not De-identification</h3>
+    <p>Partial masking (keeping the first character of email and last 4 digits of SSN) satisfies operational needs but does not meet the HIPAA Safe Harbor standard for full de-identification. Safe Harbor requires removing all 18 PHI identifiers, including date of birth, city, state, and zip code &mdash; columns that were left unmasked in this exercise. The notebook addresses the two highest-risk identifiers only.</p>
+
+    <h3>RBAC is Layered, Not Singular</h3>
+    <p>Databricks Unity Catalog RBAC (table-level isolation) and OpenMetadata RBAC (catalog metadata permissions) are two separate enforcement planes. A user blocked in OpenMetadata can still query Databricks directly via SQL if their Unity Catalog role allows it. True access control requires enforcement at the compute layer, not just the catalog layer.</p>
+
+    <h3>Tags Enable Discovery, Not Enforcement</h3>
+    <p>Column-level DataSensitivity tags in OpenMetadata are metadata annotations &mdash; they communicate intent to human governance teams and drive dashboards, but they do not block queries. Actual enforcement happens at the Databricks SQL policy layer. The two systems must be coordinated: tagging without enforcement is documentation without security.</p>
+
+    <h3>The BAA Gap</h3>
+    <p>The most important compliance lesson: all the technical controls implemented here are correct in pattern but illegal in production without a Business Associate Agreement. Healthcare governance is not just a technical problem; it is a contractual and legal one. No amount of masking replaces the BAA.</p>
+  </div>
+
+  <!-- Blockers -->
+  <div class="reflect-card blockers">
+    <h2>&#128721; Roadblocks &amp; Pain Points</h2>
+
+    <div class="blocker-card">
+      <div class="blocker-title">OpenMetadata Policy vs. Databricks Unity Catalog</div>
+      <div class="blocker-body">The two RBAC systems are completely independent. A role defined in OpenMetadata has <strong>no effect</strong> on what a user can actually query in Databricks. Students who assumed the catalog RBAC would enforce data access discovered this gap when they could still run <code>SELECT * FROM patients</code> regardless of their OpenMetadata role assignment.</div>
+    </div>
+
+    <div class="blocker-card">
+      <div class="blocker-title">Regex Scope &mdash; SSN Pattern Only Masks Two Segments</div>
+      <div class="blocker-body">The pattern <code>\\d{3}-\\d{2}</code> targets the first two SSN segments (XXX-XX). It does <strong>not</strong> match non-hyphenated formats (e.g., <code>123456789</code>) or international ID numbers. Production masking would require a more robust pattern with validation before deployment.</div>
+    </div>
+
+    <div class="blocker-card">
+      <div class="blocker-title">Academic Cluster &mdash; No BAA, No Production PHI</div>
+      <div class="blocker-body">The shared Databricks workspace does not have a signed BAA with the university. This means <strong>real patient data cannot lawfully be used</strong> even with all technical controls in place. The <code>Patients_500.csv</code> file used here is synthetic; production deployment would require a dedicated, BAA-covered workspace.</div>
+    </div>
+  </div>
+
+  <!-- Final Status -->
+  <div class="reflect-card final">
+    <h2>&#127937; Final Status</h2>
+    <p>A synthetic healthcare dataset has been brought from an uncontrolled breach state to a governed, documented, and partially HIPAA-aligned data asset:</p>
+    <ul class="final-list">
+      <li>
+        <div class="final-check">&#10003;</div>
+        <div><strong>Masked</strong> &mdash; Email and SSN partially masked using PySpark <code>regexp_replace</code>. Both raw and masked tables persisted in Unity Catalog under separate access policies.</div>
+      </li>
+      <li>
+        <div class="final-check">&#10003;</div>
+        <div><strong>Classified</strong> &mdash; All 15 columns tagged with DataSensitivity tags (PII, Confidential, Public) in OpenMetadata. Classification taxonomy created from scratch and attached at the column level.</div>
+      </li>
+      <li>
+        <div class="final-check">&#10003;</div>
+        <div><strong>Role-Controlled</strong> &mdash; Admin and Analyst roles defined in OpenMetadata with explicit permissions. Table routing enforced in Databricks via Unity Catalog ACLs.</div>
+      </li>
+      <li>
+        <div class="final-check">&#10003;</div>
+        <div><strong>Audited</strong> &mdash; Activity Feed in OpenMetadata logs all metadata changes. 5 governance policies documented. Risk assessment completed with HIPAA CFR citations for R1&ndash;R3.</div>
+      </li>
+      <li>
+        <div class="final-check">&#10003;</div>
+        <div><strong>Compliance Gap Documented</strong> &mdash; BAA absence, 7-year log retention gap, and Safe Harbor scope limitation explicitly called out. Remediation plan with owners and deadlines in place.</div>
+      </li>
+    </ul>
+
+    <div class="insight-strip" style="margin-top:1.1rem;margin-bottom:0;">
+      Healthcare data governance is the highest-stakes version of data governance. Every gap &mdash; an unmasked column, a missing tag, an unsigned BAA &mdash; is not just a technical debt item. It is a potential HIPAA violation with civil and criminal consequences. This module demonstrated the minimum viable governance stack: masking at compute, classification at the catalog, and RBAC at both layers. In production, none of these steps are optional.
+    </div>
+  </div>
+
+</div><!-- /page-body -->
+
+<button class="export-btn" onclick="window.print()">
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+    <polyline points="7 10 12 15 17 10"/>
+    <line x1="12" y1="15" x2="12" y2="3"/>
+  </svg>
+  Export PDF
+</button>
+
+<footer class="site-footer">
+  Module 03 &mdash; Data Protection &amp; Security &middot; HealthSecure Inc. Case Study &middot; Deliverables
+</footer>
+
+</body>
+</html>

@@ -5,6 +5,29 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-04-26
+
+### [feature] Data Governance homepage — Module 03 card added
+- `classroom-activities/data-governance/index.html`: added Module 03 card (red accent, HIPAA/PHI/PII tags) with links to `module-03.html` and `module-03-deliverables.html`
+- Module 02 status badge updated from "New" to "Live"; link label updated from "Deliverables Checklist" to "Student Submission" to match Module 01 and 03 phrasing
+
+### [feature] Module 03 deliverables page — separate file matching module-01/02 pattern
+- Created `classroom-activities/data-governance/module-03-deliverables.html` — standalone student submission page following exact same structure as `module-02-deliverables.html`
+  - Navbar: back link to module-03.html
+  - Progress bar: 4 steps, all marked done
+  - **D1**: full 7-cell Jupyter-style notebook viewer with syntax-highlighted PySpark, sample output table, and before/after masking comparison
+  - **D2**: 4 screenshots with `onerror` placeholder fallback (deliverable-2a-roles, 2b-datasensitivity-tags, 2c-column-tagging, 3-security-policies); insight strips explain tag semantics and role routing
+  - **D3**: policy summary table (5 policies with scope, key rule)
+  - **D4**: risk heat matrix (R1-R3), HIPAA CFR citation table, Databricks + OpenMetadata compliance side-by-side, academic BAA gap callout
+  - Reflection: Process steps, Key Learnings (4 topics), Blockers (3 cards), Final Status checklist
+  - Export PDF button (print-safe CSS)
+- Updated `classroom-activities/data-governance/module-03.html`:
+  - Removed expanded deliverables accordions and compact grid (moved all content to deliverables page)
+  - Added `.deliv-list` and `.deliv-link-bar` CSS
+  - Deliverables section now shows simple 4-item "Required Submissions" card + link bar to deliverables page
+
+---
+
 ## 2026-04-23
 
 ### [feature] Workshop Proposal v2 + cross-navigation between all three docs
@@ -231,6 +254,15 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 - 17-section scrollable class notes page covering: Data Mgmt vs Governance (DMBOK), data quality dimensions, data catalog & discovery, CIA triad in ETL, data lineage & auditability, MDM (4 implementation styles), 3 metadata types, enterprise architecture roles, 3 pillars of trust, and regulatory urgency
 - All `<insert example>` placeholders from raw notes filled in: corrugated box manufacturing lifecycle, cross-department cascade (Widget X sales drop), Costco manual entry quality, attribution data integration (Facebook/Google/e-commerce), SOX-compliant audit trail, data splitting integrity risk, CityU EA diagram walkthrough, Thomson Reuters PDF ingestion
 - Dark GitHub-style theme; sticky left-sidebar TOC with active-section highlighting via IntersectionObserver; print-safe styles; responsive collapse on mobile
+
+---
+
+## 2026-04-26
+
+### [feature] `classroom-activities/data-governance/module-03.html` — Module 03 Data Protection
+- Source: `Module 3.docx` — HealthSecure Inc. healthcare data breach case study
+- 5 parts: Databricks data masking (email + SSN regex), OpenMetadata RBAC + DataSensitivity classification, role access matrix (Admin/Analyst/Contractor), 5 security policies (masking, RBAC, classification, audit logging, HIPAA breach notification), 8-risk register with Likelihood/Impact/Mitigation/Owner
+- &ldquo;Why this answer?&rdquo; explanation panels per part; export PDF button; full @media print stylesheet
 
 ---
 

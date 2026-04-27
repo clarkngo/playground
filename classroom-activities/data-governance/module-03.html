@@ -1,0 +1,1306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Module 03 &mdash; Data Protection &amp; Security</title>
+  <meta name="author" content="Clark Ngo">
+  <meta name="copyright" content="Clark Ngo">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0d1117; color: #c9d1d9; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; min-height: 100vh; }
+
+    .navbar { background: #161b22; border-bottom: 1px solid #30363d; padding: .75rem 1.5rem; display: flex; align-items: center; justify-content: space-between; }
+    .navbar a { color: #e6edf3; text-decoration: none; font-weight: 700; font-size: 1rem; }
+    .navbar a:hover { color: #58a6ff; }
+    .nav-pill { font-size: .78rem; color: #8b949e; }
+
+    .page-body { max-width: 960px; margin: 0 auto; padding: 2rem; }
+
+    .breadcrumb { font-size: .78rem; color: #8b949e; display: flex; align-items: center; gap: .4rem; margin-bottom: .85rem; flex-wrap: wrap; }
+    .breadcrumb a { color: #58a6ff; text-decoration: none; font-weight: 600; }
+    .breadcrumb a:hover { text-decoration: underline; }
+    .breadcrumb span { color: #484f58; }
+
+    .page-badge { display: inline-block; background: #b91c1c; color: #fff; font-size: .72rem; font-weight: 700; padding: 3px 12px; border-radius: 12px; text-transform: uppercase; letter-spacing: .07em; margin-bottom: .6rem; }
+    .page-header h1 { color: #e6edf3; font-size: 1.85rem; font-weight: 800; margin-bottom: .3rem; }
+    .case-title { color: #f85149; font-size: .95rem; font-weight: 600; margin-bottom: .65rem; font-style: italic; }
+    .page-desc { color: #8b949e; font-size: .88rem; line-height: 1.7; max-width: 720px; margin-bottom: .85rem; }
+    .tag-row { display: flex; gap: .4rem; flex-wrap: wrap; margin-bottom: 2rem; }
+    .tag { display: inline-block; font-size: .68rem; padding: 2px 8px; border-radius: 8px; font-weight: 600; }
+    .tag-blue   { background: #1f3a5c; color: #58a6ff; }
+    .tag-green  { background: #1a2f1a; color: #3fb950; }
+    .tag-yellow { background: #2d2009; color: #e3b341; }
+    .tag-purple { background: #24183a; color: #bc8cff; }
+    .tag-red    { background: #2d1a1a; color: #f85149; }
+
+    .section-label { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #8b949e; border-left: 3px solid #30363d; padding-left: .6rem; margin: 2rem 0 1rem; }
+
+    /* Objectives strip */
+    .obj-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: .65rem; margin-bottom: 1.25rem; }
+    .obj-card { background: #161b22; border: 1px solid #30363d; border-left: 3px solid #1f6feb; border-radius: 8px; padding: .75rem 1rem; display: flex; align-items: flex-start; gap: .6rem; }
+    .obj-num { font-size: .68rem; font-weight: 700; color: #58a6ff; background: #1f3a5c; padding: 2px 7px; border-radius: 5px; flex-shrink: 0; margin-top: .1rem; }
+    .obj-text { font-size: .83rem; color: #c9d1d9; line-height: 1.5; }
+
+    /* Breach scenario */
+    .breach-card { background: #1a0a0a; border: 1px solid #f85149; border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1.1rem; }
+    .breach-title { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: #f85149; margin-bottom: .85rem; display: flex; align-items: center; gap: .5rem; }
+    .breach-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+    .breach-section-title { font-size: .75rem; font-weight: 700; color: #e6edf3; text-transform: uppercase; letter-spacing: .05em; margin-bottom: .6rem; }
+    .breach-list { list-style: none; display: flex; flex-direction: column; gap: .35rem; }
+    .breach-list li { font-size: .83rem; color: #c9d1d9; display: flex; align-items: flex-start; gap: .5rem; line-height: 1.5; }
+    .breach-dot-red    { width: 6px; height: 6px; border-radius: 50%; background: #f85149; flex-shrink: 0; margin-top: .45rem; }
+    .breach-dot-yellow { width: 6px; height: 6px; border-radius: 50%; background: #e3b341; flex-shrink: 0; margin-top: .45rem; }
+
+    /* Mission strip */
+    .mission-strip { background: #0c1e38; border: 1px solid #1f6feb; border-radius: 8px; padding: .85rem 1.1rem; margin-bottom: 1.5rem; }
+    .mission-label { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #58a6ff; margin-bottom: .5rem; }
+    .mission-items { display: flex; gap: 1.25rem; flex-wrap: wrap; }
+    .mission-item { font-size: .82rem; color: #c9d1d9; display: flex; align-items: center; gap: .35rem; }
+    .mission-dot { width: 6px; height: 6px; border-radius: 50%; background: #58a6ff; flex-shrink: 0; }
+
+    /* Generic card */
+    .card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1.1rem; }
+    .card-title { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: #3fb950; margin-bottom: .85rem; }
+
+    /* Tables */
+    .data-table { width: 100%; border-collapse: collapse; font-size: .83rem; }
+    .data-table th { background: #0d1117; color: #8b949e; font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; padding: .5rem .75rem; text-align: left; border-bottom: 1px solid #30363d; white-space: nowrap; }
+    .data-table td { padding: .55rem .75rem; border-bottom: 1px solid #21262d; color: #c9d1d9; vertical-align: top; line-height: 1.55; }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover td { background: #1c2435; }
+    .data-table code { font-family: "Menlo","Monaco",monospace; font-size: .8em; background: #21262d; padding: 1px 5px; border-radius: 4px; color: #a5d6ff; }
+
+    /* Task accordion */
+    .task-card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; margin-bottom: .85rem; overflow: hidden; }
+    .task-header { display: flex; align-items: center; gap: .75rem; padding: .9rem 1.25rem; cursor: pointer; user-select: none; transition: background .15s; }
+    .task-header:hover { background: #1c2435; }
+    .task-num { color: #fff; font-size: .68rem; font-weight: 700; padding: 2px 9px; border-radius: 8px; white-space: nowrap; flex-shrink: 0; }
+    .task-title { color: #e6edf3; font-weight: 700; font-size: .94rem; flex: 1; }
+    .task-deliv { font-size: .7rem; color: #8b949e; white-space: nowrap; }
+    .toggle-btn { color: #58a6ff; font-size: 1.2rem; font-weight: 700; width: 22px; text-align: center; flex-shrink: 0; line-height: 1; }
+    .task-body { display: none; padding: 1.25rem 1.5rem; border-top: 1px solid #30363d; }
+    .task-body.open { display: block; }
+
+    .answer-label { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #3fb950; margin-bottom: 1rem; display: flex; align-items: center; gap: .5rem; }
+    .answer-label::after { content: ""; flex: 1; height: 1px; background: #21262d; }
+
+    /* Code blocks */
+    .code-block-label { font-size: .69rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: #8b949e; margin-bottom: .35rem; margin-top: .85rem; }
+    .code-block { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 1rem 1.25rem; font-family: "Menlo","Monaco","Courier New",monospace; font-size: .79rem; color: #c9d1d9; line-height: 1.7; overflow-x: auto; margin-bottom: .5rem; white-space: pre; }
+    .ck { color: #ff7b72; }
+    .cs { color: #a5d6ff; }
+    .cf { color: #d2a8ff; }
+    .cv { color: #ffa657; }
+    .cm { color: #8b949e; }
+
+    /* Before / after comparison */
+    .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: .85rem; }
+    .compare-card { background: #0d1117; border: 1px solid #21262d; border-radius: 8px; overflow: hidden; }
+    .compare-header { padding: .5rem .85rem; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+    .compare-header.before { background: #2d1a1a; color: #f85149; border-bottom: 1px solid #f85149; }
+    .compare-header.after  { background: #0b1f0b; color: #3fb950; border-bottom: 1px solid #238636; }
+
+    /* PII / sensitivity tags */
+    .pii-tag  { display: inline-block; font-size: .63rem; font-weight: 700; background: #2d1a1a; color: #f85149; border: 1px solid #f85149; padding: 1px 5px; border-radius: 4px; text-transform: uppercase; letter-spacing: .04em; }
+    .conf-tag { display: inline-block; font-size: .63rem; font-weight: 700; background: #2d2009; color: #e3b341; border: 1px solid #9e6a03; padding: 1px 5px; border-radius: 4px; text-transform: uppercase; }
+    .pub-tag  { display: inline-block; font-size: .63rem; font-weight: 700; background: #1a2f1a; color: #3fb950; border: 1px solid #238636; padding: 1px 5px; border-radius: 4px; text-transform: uppercase; }
+    .masked-val { color: #8b949e; font-family: "Menlo",monospace; font-size: .82rem; }
+
+    /* Role cards */
+    .role-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1rem; }
+    .role-card { background: #0d1117; border: 1px solid #21262d; border-radius: 8px; padding: 1rem 1.1rem; }
+    .role-name { font-size: .9rem; font-weight: 700; margin-bottom: .35rem; }
+    .role-access-list { list-style: none; display: flex; flex-direction: column; gap: .25rem; margin-top: .5rem; }
+    .role-access-list li { font-size: .8rem; color: #8b949e; display: flex; align-items: center; gap: .4rem; }
+    .allow { color: #3fb950; }
+    .deny  { color: #f85149; }
+
+    /* Access matrix */
+    .matrix-cell-full    { color: #3fb950; font-weight: 700; font-size: .82rem; }
+    .matrix-cell-masked  { color: #e3b341; font-weight: 700; font-size: .82rem; }
+    .matrix-cell-denied  { color: #f85149; font-weight: 700; font-size: .82rem; }
+
+    /* Policy cards */
+    .policy-card { background: #0d1117; border: 1px solid #21262d; border-left: 3px solid #1f6feb; border-radius: 8px; padding: 1rem 1.1rem; margin-bottom: .85rem; }
+    .policy-name { font-size: .88rem; font-weight: 700; color: #58a6ff; margin-bottom: .6rem; }
+    .policy-rules { font-size: .82rem; color: #c9d1d9; line-height: 1.65; padding-left: 1.1rem; }
+    .policy-rules li { margin-bottom: .3rem; }
+    .policy-rules code { font-family: "Menlo","Monaco",monospace; font-size: .8em; background: #21262d; padding: 1px 5px; border-radius: 4px; color: #a5d6ff; }
+
+    /* Risk matrix */
+    .risk-high   { color: #f85149; font-weight: 700; font-size: .82rem; }
+    .risk-medium { color: #e3b341; font-weight: 700; font-size: .82rem; }
+    .risk-low    { color: #3fb950; font-weight: 700; font-size: .82rem; }
+
+    /* Deliverables */
+    .deliv-list { list-style: none; padding: 0; }
+    .deliv-list li { display: flex; gap: .65rem; align-items: flex-start; padding: .6rem 0; border-bottom: 1px solid #21262d; font-size: .85rem; color: #c9d1d9; line-height: 1.6; }
+    .deliv-list li:last-child { border-bottom: none; }
+    .deliv-num { background: #21262d; color: #8b949e; font-size: .65rem; font-weight: 700; padding: 1px 7px; border-radius: 6px; white-space: nowrap; flex-shrink: 0; margin-top: .15rem; }
+    .deliv-link-bar { background: #0c1e38; border: 1px solid #1f6feb; border-radius: 10px; padding: 1rem 1.25rem; display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.1rem; }
+    .deliv-link-bar a { color: #58a6ff; font-weight: 700; font-size: .88rem; text-decoration: none; display: flex; align-items: center; gap: .4rem; }
+    .deliv-link-bar a:hover { text-decoration: underline; }
+    .deliv-link-desc { font-size: .8rem; color: #8b949e; }
+
+    /* Explanation panel */
+    .explain-toggle { display: flex; align-items: center; gap: .55rem; margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid #21262d; cursor: pointer; user-select: none; width: fit-content; }
+    .explain-toggle:hover .explain-label { color: #e3b341; }
+    .explain-icon { font-size: .85rem; }
+    .explain-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #9e6a03; transition: color .15s; }
+    .explain-chevron { font-size: .7rem; color: #9e6a03; transition: transform .2s; }
+    .explain-chevron.open { transform: rotate(90deg); }
+    .explain-body { display: none; margin-top: .85rem; background: #1d1600; border: 1px solid #9e6a03; border-radius: 8px; padding: 1.1rem 1.25rem; }
+    .explain-body.open { display: block; }
+    .explain-body h4 { font-size: .78rem; font-weight: 700; color: #e3b341; margin: .85rem 0 .3rem; text-transform: uppercase; letter-spacing: .05em; }
+    .explain-body h4:first-child { margin-top: 0; }
+    .explain-body p { font-size: .83rem; color: #c9d1d9; line-height: 1.72; margin-bottom: .5rem; }
+    .explain-body p:last-child { margin-bottom: 0; }
+    .explain-body ul { font-size: .83rem; color: #c9d1d9; line-height: 1.72; padding-left: 1.1rem; margin-bottom: .5rem; }
+    .explain-body ul li { margin-bottom: .25rem; }
+    .explain-body code { font-family: "Menlo","Monaco",monospace; font-size: .8em; background: #2a2000; border: 1px solid #9e6a03; padding: 1px 5px; border-radius: 4px; color: #ffa657; }
+    .explain-body strong { color: #e3b341; font-weight: 700; }
+
+    /* Dataset preview */
+    .dataset-section { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1.25rem; overflow-x: auto; }
+    .dataset-section-title { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: #8b949e; margin-bottom: .85rem; }
+
+    /* Reflection */
+    .reflection-card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1.35rem 1.5rem; margin-bottom: 2rem; }
+    .reflection-q { font-size: .95rem; font-weight: 700; color: #e6edf3; margin-bottom: .8rem; border-left: 3px solid #f85149; padding-left: .75rem; }
+    .reflection-a { font-size: .84rem; color: #c9d1d9; line-height: 1.75; }
+    .reflection-a p { margin-bottom: .65rem; }
+    .reflection-a p:last-child { margin-bottom: 0; }
+
+    /* Notebook viewer */
+    .notebook-viewer { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; overflow: hidden; margin-bottom: 1rem; }
+    .notebook-cell { display: flex; border-bottom: 1px solid #21262d; }
+    .notebook-cell:last-child { border-bottom: none; }
+    .nb-gutter { width: 52px; flex-shrink: 0; background: #161b22; display: flex; flex-direction: column; align-items: flex-end; padding: .75rem .5rem .75rem 0; border-right: 1px solid #21262d; }
+    .nb-num { font-size: .67rem; color: #8b949e; font-family: "Menlo",monospace; white-space: nowrap; }
+    .nb-type { font-size: .58rem; color: #484f58; text-transform: uppercase; letter-spacing: .04em; margin-top: .15rem; }
+    .nb-body { flex: 1; padding: .75rem 1rem; min-width: 0; overflow-x: auto; }
+    .notebook-cell.md { background: #0f1923; }
+    .notebook-cell.md .nb-body { font-size: .83rem; color: #c9d1d9; line-height: 1.7; }
+    .notebook-cell.md .nb-body strong { color: #e3b341; }
+    .notebook-cell.code .nb-body { font-family: "Menlo","Monaco",monospace; font-size: .79rem; color: #c9d1d9; line-height: 1.7; white-space: pre; }
+
+    /* Risk heat map */
+    .heatmap-wrap { margin-bottom: 1.25rem; }
+    .heatmap-title { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: #8b949e; margin-bottom: .75rem; }
+    .heatmap-table { border-collapse: separate; border-spacing: 3px; width: 100%; max-width: 540px; }
+    .heatmap-table td, .heatmap-table th { padding: .55rem .6rem; border-radius: 5px; font-size: .75rem; font-weight: 700; text-align: center; vertical-align: middle; }
+    .heatmap-table .axis-label { background: transparent; color: #8b949e; font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; text-align: center; }
+    .hm-critical { background: #7f1d1d; color: #fca5a5; border: 1px solid #b91c1c; }
+    .hm-high     { background: #7c2d12; color: #fdba74; border: 1px solid #c2410c; }
+    .hm-medium   { background: #713f12; color: #fde68a; border: 1px solid #92400e; }
+    .hm-low      { background: #14532d; color: #86efac; border: 1px solid #15803d; }
+    .hm-risk-dot { display: inline-block; background: #fff; color: #111; font-size: .63rem; font-weight: 700; padding: 1px 5px; border-radius: 10px; margin-top: .2rem; }
+
+    /* CFR citation */
+    .cfr-block { margin-bottom: .85rem; }
+    .cfr-ref { font-size: .7rem; font-weight: 700; color: #58a6ff; text-transform: uppercase; letter-spacing: .06em; margin-bottom: .35rem; }
+    .cfr-cite { background: #0c1e38; border-left: 3px solid #1f6feb; border-radius: 0 6px 6px 0; padding: .7rem 1rem; font-size: .82rem; font-style: italic; color: #a5d6ff; line-height: 1.65; margin-bottom: .4rem; }
+    .cfr-application { font-size: .81rem; color: #c9d1d9; line-height: 1.6; background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: .6rem .85rem; }
+    .cfr-application strong { color: #3fb950; }
+
+    /* HIPAA mitigation table */
+    .hipaa-cat-privacy  { color: #bc8cff; font-weight: 700; font-size: .82rem; }
+    .hipaa-cat-security { color: #58a6ff; font-weight: 700; font-size: .82rem; }
+
+    /* Tool compliance */
+    .tool-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1rem; }
+    .tool-card { background: #0d1117; border: 1px solid #21262d; border-radius: 8px; padding: 1rem 1.1rem; }
+    .tool-name { font-size: .9rem; font-weight: 700; color: #e6edf3; margin-bottom: .4rem; display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+    .badge-partial { font-size: .63rem; font-weight: 700; padding: 2px 7px; border-radius: 5px; background: #2d2009; color: #e3b341; border: 1px solid #9e6a03; }
+    .badge-compliant { font-size: .63rem; font-weight: 700; padding: 2px 7px; border-radius: 5px; background: #1a2f1a; color: #3fb950; border: 1px solid #238636; }
+    .badge-scope { font-size: .63rem; font-weight: 700; padding: 2px 7px; border-radius: 5px; background: #1f3a5c; color: #58a6ff; border: 1px solid #1f6feb; }
+    .tool-feature-list { list-style: none; display: flex; flex-direction: column; gap: .25rem; margin-top: .6rem; }
+    .tool-feature-list li { font-size: .79rem; color: #8b949e; display: flex; align-items: flex-start; gap: .4rem; line-height: 1.45; }
+    .tf-yes  { color: #3fb950; flex-shrink: 0; }
+    .tf-no   { color: #f85149; flex-shrink: 0; }
+    .tf-warn { color: #e3b341; flex-shrink: 0; }
+
+    /* Operational context cards */
+    .ops-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: .75rem; margin-bottom: 1rem; }
+    .ops-card { background: #0d1117; border: 1px solid #21262d; border-radius: 8px; padding: .85rem 1rem; }
+    .ops-label { font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: #8b949e; margin-bottom: .25rem; }
+    .ops-value { font-size: .84rem; font-weight: 700; color: #e6edf3; margin-bottom: .2rem; }
+    .ops-desc { font-size: .77rem; color: #8b949e; line-height: 1.5; }
+
+    /* Screenshot gallery */
+    .screenshot-gallery { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1rem; }
+    .screenshot-item { background: #0d1117; border: 1px solid #21262d; border-radius: 8px; overflow: hidden; }
+    .screenshot-img-wrap { background: #161b22; min-height: 140px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .screenshot-img-wrap img { width: 100%; display: block; object-fit: cover; }
+    .screenshot-img-wrap .no-img { font-size: .78rem; color: #484f58; text-align: center; padding: 1rem; }
+    .screenshot-filename { font-size: .65rem; font-family: "Menlo",monospace; color: #58a6ff; background: #0c1e38; padding: .25rem .65rem; border-bottom: 1px solid #21262d; display: block; }
+    .screenshot-caption { padding: .55rem .85rem .2rem; font-size: .82rem; color: #e6edf3; font-weight: 700; }
+    .screenshot-desc { padding: 0 .85rem .65rem; font-size: .75rem; color: #8b949e; line-height: 1.5; }
+
+    @media (max-width: 680px) {
+      .tool-grid { grid-template-columns: 1fr; }
+      .ops-grid  { grid-template-columns: 1fr; }
+      .screenshot-gallery { grid-template-columns: 1fr; }
+    }
+
+    /* Export button */
+    .export-btn { position: fixed; bottom: 1.75rem; right: 1.75rem; display: flex; align-items: center; gap: .5rem; background: #b91c1c; color: #fff; border: none; border-radius: 10px; padding: .65rem 1.1rem; font-size: .82rem; font-weight: 700; cursor: pointer; box-shadow: 0 4px 16px rgba(0,0,0,.4); transition: background .15s, transform .12s; z-index: 100; }
+    .export-btn:hover { background: #dc2626; transform: translateY(-2px); }
+
+    /* Footer */
+    .site-footer { text-align: center; padding: 1.25rem; border-top: 1px solid #21262d; margin-top: 2rem; color: #484f58; font-size: .77rem; }
+
+    /* ── Print ─────────────────────────── */
+    @media print {
+      @page { size: A4; margin: 1.4cm 1.6cm; }
+      *, *::before, *::after { box-sizing: border-box; }
+      body { background: #fff !important; color: #111 !important; font-size: 9.5pt; font-family: "Segoe UI", Helvetica, Arial, sans-serif; }
+      .navbar, .breadcrumb, .export-btn, .toggle-btn, .explain-toggle, .site-footer { display: none !important; }
+      .page-body { max-width: 100%; padding: 0; margin: 0; }
+      .page-badge { background: #b91c1c !important; color: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      h1 { color: #111 !important; font-size: 16pt; }
+      .case-title { color: #b91c1c !important; font-size: 10pt; }
+      .page-desc { color: #444 !important; font-size: 9pt; }
+      .tag { border: 1px solid #ccc; background: #f5f5f5 !important; color: #333 !important; font-size: 7pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .section-label { color: #555 !important; border-left-color: #999 !important; font-size: 7.5pt; margin: 1rem 0 .6rem; }
+      .card, .dataset-section, .reflection-card, .breach-card { background: #fff !important; border: 1px solid #ccc !important; box-shadow: none !important; }
+      .breach-card { border-color: #b91c1c !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .card-title { color: #1a6b2a !important; font-size: 7.5pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .obj-grid, .deliverable-grid { grid-template-columns: repeat(2, 1fr); }
+      .obj-card { background: #fff !important; border-color: #ccc !important; border-left-color: #1a4fa0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .obj-num { background: #eff6ff !important; color: #1a4fa0 !important; font-size: 7pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .obj-text { color: #222 !important; font-size: 8pt; }
+      .breach-title { color: #b91c1c !important; font-size: 7.5pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .breach-section-title { color: #111 !important; font-size: 8pt; }
+      .breach-list li { color: #222 !important; font-size: 8pt; }
+      .breach-dot-red { background: #b91c1c !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .breach-dot-yellow { background: #d97706 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .mission-strip { background: #eff6ff !important; border-color: #1a4fa0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .mission-label { color: #1a4fa0 !important; font-size: 7pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .mission-item { color: #222 !important; font-size: 8pt; }
+      .mission-dot { background: #1a4fa0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .task-body { display: block !important; border-top: 1px solid #ccc !important; padding: .85rem 1rem !important; }
+      .task-card { background: #fff !important; border: 1px solid #ccc !important; border-radius: 6px; margin-bottom: .75rem; page-break-inside: avoid; box-shadow: none; }
+      .task-header { background: #f7f7f7 !important; padding: .6rem 1rem !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .task-num { color: #fff !important; font-size: 7pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .task-title { color: #111 !important; font-size: 9pt; }
+      .task-deliv { color: #666 !important; font-size: 7.5pt; }
+      .answer-label { color: #1a6b2a !important; font-size: 7pt; }
+      .answer-label::after { background: #ddd !important; }
+      .code-block { background: #f8f9fa !important; border: 1px solid #ddd !important; color: #111 !important; font-size: 7.5pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .code-block-label { color: #555 !important; font-size: 7pt; }
+      .ck { color: #b91c1c !important; }
+      .cs { color: #1a4fa0 !important; }
+      .cf { color: #5b21b6 !important; }
+      .cv { color: #92400e !important; }
+      .cm { color: #6b7280 !important; }
+      .compare-grid { grid-template-columns: 1fr 1fr; }
+      .compare-card { background: #fafafa !important; border: 1px solid #ddd !important; }
+      .compare-header.before { background: #fef2f2 !important; color: #b91c1c !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .compare-header.after  { background: #f0fdf4 !important; color: #1a6b2a !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .pii-tag  { background: #fef2f2 !important; color: #b91c1c !important; border-color: #b91c1c !important; font-size: 6.5pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .conf-tag { background: #fffbeb !important; color: #92400e !important; border-color: #d97706 !important; font-size: 6.5pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .pub-tag  { background: #f0fdf4 !important; color: #1a6b2a !important; border-color: #16a34a !important; font-size: 6.5pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .masked-val { color: #6b7280 !important; font-size: 7.5pt; }
+      .role-grid { grid-template-columns: repeat(2, 1fr); }
+      .role-card { background: #fafafa !important; border: 1px solid #ddd !important; }
+      .role-name { color: #111 !important; font-size: 8.5pt; }
+      .role-access-list li { color: #444 !important; font-size: 8pt; }
+      .matrix-cell-full   { color: #1a6b2a !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .matrix-cell-masked { color: #92400e !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .matrix-cell-denied { color: #b91c1c !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .policy-card { background: #fafafa !important; border: 1px solid #ddd !important; border-left-width: 3px !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .policy-name { color: #1a4fa0 !important; font-size: 8.5pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .policy-rules { color: #222 !important; font-size: 8pt; }
+      .policy-rules code { background: #f3f4f6 !important; color: #1a4fa0 !important; font-size: 7.5pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .risk-high   { color: #b91c1c !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .risk-medium { color: #92400e !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .risk-low    { color: #1a6b2a !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .deliverable-card { background: #fafafa !important; border: 1px solid #ddd !important; }
+      .deliverable-num { color: #1a4fa0 !important; font-size: 7pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .deliverable-title { color: #111 !important; font-size: 8.5pt; }
+      .deliverable-items li { color: #444 !important; font-size: 8pt; }
+      .explain-body { display: block !important; background: #fffbeb !important; border: 1px solid #d97706 !important; padding: .85rem 1rem !important; margin-top: .75rem; page-break-inside: avoid; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .explain-body h4 { color: #92400e !important; font-size: 7.5pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .explain-body p, .explain-body ul { color: #222 !important; font-size: 8pt; }
+      .explain-body code { background: #fef3c7 !important; border-color: #d97706 !important; color: #92400e !important; font-size: 7.5pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .explain-body strong { color: #92400e !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .dataset-section-title { color: #555 !important; font-size: 7.5pt; }
+      .reflection-q { border-left-color: #b91c1c !important; color: #111 !important; font-size: 9pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .reflection-a { color: #222 !important; font-size: 8pt; }
+      .data-table th { background: #f3f4f6 !important; color: #555 !important; font-size: 7pt; border-bottom: 1px solid #ccc !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .data-table td { color: #111 !important; font-size: 8pt; border-bottom: 1px solid #eee !important; }
+      .data-table code { background: #f3f4f6 !important; color: #1a4fa0 !important; font-size: 7.5pt; border: none; }
+      .task-card { page-break-inside: avoid; }
+    }
+
+    @media (max-width: 680px) {
+      .obj-grid         { grid-template-columns: 1fr; }
+      .breach-grid      { grid-template-columns: 1fr; }
+      .role-grid        { grid-template-columns: 1fr; }
+      .compare-grid     { grid-template-columns: 1fr; }
+      .deliverable-grid { grid-template-columns: 1fr; }
+      .mission-items    { flex-direction: column; gap: .4rem; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="../../index.html">Playground</a>
+  <span class="nav-pill">Classroom Activities &rsaquo; Data Governance &rsaquo; Module 03</span>
+</nav>
+
+<div class="page-body">
+
+  <div class="breadcrumb">
+    <a href="../../index.html">Playground</a><span>/</span>
+    <span>Classroom Activities</span><span>/</span>
+    <span>Data Governance</span><span>/</span>
+    <span>Module 03</span>
+  </div>
+
+  <div class="page-badge">&#128274; Data Governance &mdash; Module 03</div>
+  <h1 style="color:#e6edf3;font-size:1.85rem;font-weight:800;margin-bottom:.3rem;">Data Protection &amp; Security</h1>
+  <div class="case-title">&#128196; Case Study: &ldquo;HealthSecure Inc. &mdash; Healthcare Data Breach&rdquo;</div>
+  <p class="page-desc">A healthcare provider storing sensitive patient records suffered a data breach caused by over-permissioned users, absent data masking, and unclassified sensitive fields. Your team is the Data Governance Security Team brought in to remediate and prevent recurrence.</p>
+  <div class="tag-row">
+    <span class="tag tag-red">HIPAA</span>
+    <span class="tag tag-red">PII</span>
+    <span class="tag tag-blue">Databricks</span>
+    <span class="tag tag-blue">OpenMetadata</span>
+    <span class="tag tag-green">RBAC</span>
+    <span class="tag tag-green">Data Masking</span>
+    <span class="tag tag-purple">Data Classification</span>
+    <span class="tag tag-yellow">Risk Assessment</span>
+  </div>
+
+  <!-- ── LEARNING OBJECTIVES ─────────────────────── -->
+  <div class="section-label">Learning Objectives</div>
+  <div class="obj-grid">
+    <div class="obj-card"><span class="obj-num">01</span><span class="obj-text">Understand <strong>data privacy and sensitive data handling</strong> in a regulated industry</span></div>
+    <div class="obj-card"><span class="obj-num">02</span><span class="obj-text">Implement <strong>role-based access control (RBAC)</strong> to enforce least-privilege access</span></div>
+    <div class="obj-card"><span class="obj-num">03</span><span class="obj-text">Apply <strong>data classification and PII tagging</strong> at the column level in OpenMetadata</span></div>
+    <div class="obj-card"><span class="obj-num">04</span><span class="obj-text">Perform <strong>data masking</strong> on sensitive fields using Databricks and PySpark</span></div>
+    <div class="obj-card"><span class="obj-num">05</span><span class="obj-text">Define <strong>security policies</strong> to enforce governance consistently across the organization</span></div>
+  </div>
+
+  <!-- ── BREACH SCENARIO ────────────────────────── -->
+  <div class="section-label">Breach Scenario</div>
+  <div class="breach-card">
+    <div class="breach-title">&#9888; Data Breach &mdash; HealthSecure Inc.</div>
+    <div class="breach-grid">
+      <div>
+        <div class="breach-section-title">What Was Exposed</div>
+        <ul class="breach-list">
+          <li><div class="breach-dot-red"></div>Patient names and email addresses</li>
+          <li><div class="breach-dot-red"></div>Social Security Numbers (SSN) &mdash; direct HIPAA violation</li>
+          <li><div class="breach-dot-red"></div>Medical diagnoses &mdash; Protected Health Information (PHI)</li>
+          <li><div class="breach-dot-red"></div>Patient location data by country</li>
+        </ul>
+      </div>
+      <div>
+        <div class="breach-section-title">Root Causes</div>
+        <ul class="breach-list">
+          <li><div class="breach-dot-yellow"></div>Over-permissioned users &mdash; analysts had full table access</li>
+          <li><div class="breach-dot-yellow"></div>No data masking on PII columns (email, SSN)</li>
+          <li><div class="breach-dot-yellow"></div>No data classification &mdash; no one knew what was sensitive</li>
+          <li><div class="breach-dot-yellow"></div>External contractors shared the same access as internal staff</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="mission-strip">
+    <div class="mission-label">Your Mission as Data Governance Security Team</div>
+    <div class="mission-items">
+      <div class="mission-item"><div class="mission-dot"></div>Identify and classify sensitive data</div>
+      <div class="mission-item"><div class="mission-dot"></div>Implement access control (RBAC)</div>
+      <div class="mission-item"><div class="mission-dot"></div>Apply data masking</div>
+      <div class="mission-item"><div class="mission-dot"></div>Define security policies</div>
+      <div class="mission-item"><div class="mission-dot"></div>Reduce risk exposure</div>
+    </div>
+  </div>
+
+  <!-- ── DATASET PREVIEW ────────────────────────── -->
+  <div class="section-label">Dataset &mdash; Patients.csv</div>
+  <div class="dataset-section">
+    <div class="dataset-section-title">Raw Data (Pre-Masking) &mdash; What was exposed in the breach</div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>patient_id</th>
+          <th>name</th>
+          <th>email</th>
+          <th>ssn</th>
+          <th>diagnosis</th>
+          <th>country</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1</td>
+          <td>Alice Johnson&nbsp;<span class="pii-tag">PII</span></td>
+          <td>alice@health.com&nbsp;<span class="pii-tag">PII</span></td>
+          <td>123-45-6789&nbsp;<span class="pii-tag">PII</span></td>
+          <td>Hypertension&nbsp;<span class="conf-tag">Confidential</span></td>
+          <td>USA&nbsp;<span class="pub-tag">Public</span></td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td>Bob Martinez&nbsp;<span class="pii-tag">PII</span></td>
+          <td>bob@health.com&nbsp;<span class="pii-tag">PII</span></td>
+          <td>234-56-7890&nbsp;<span class="pii-tag">PII</span></td>
+          <td>Diabetes&nbsp;<span class="conf-tag">Confidential</span></td>
+          <td>USA&nbsp;<span class="pub-tag">Public</span></td>
+        </tr>
+        <tr>
+          <td>3</td>
+          <td>Carol Lee&nbsp;<span class="pii-tag">PII</span></td>
+          <td>carol@health.com&nbsp;<span class="pii-tag">PII</span></td>
+          <td>345-67-8901&nbsp;<span class="pii-tag">PII</span></td>
+          <td>Asthma&nbsp;<span class="conf-tag">Confidential</span></td>
+          <td>Canada&nbsp;<span class="pub-tag">Public</span></td>
+        </tr>
+        <tr>
+          <td>4</td>
+          <td>David Kim&nbsp;<span class="pii-tag">PII</span></td>
+          <td>david@health.com&nbsp;<span class="pii-tag">PII</span></td>
+          <td>456-78-9012&nbsp;<span class="pii-tag">PII</span></td>
+          <td>Anxiety&nbsp;<span class="conf-tag">Confidential</span></td>
+          <td>USA&nbsp;<span class="pub-tag">Public</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── TASKS ──────────────────────────────────── -->
+  <div class="section-label">Parts &amp; Answers</div>
+
+  <!-- ── PART 1 ── -->
+  <div class="task-card">
+    <div class="task-header" onclick="toggleTask('t1')">
+      <span class="task-num" style="background:#1f6feb;">Part 1</span>
+      <span class="task-title">Databricks &mdash; Data Masking</span>
+      <span class="task-deliv">Deliverable: Notebook Module03_Data_Security</span>
+      <span class="toggle-btn" id="btn-t1">+</span>
+    </div>
+    <div class="task-body" id="t1">
+      <div class="answer-label">Answer &mdash; Steps 1&ndash;7</div>
+
+      <div class="code-block-label">Step 3 &mdash; Load the raw Patients dataset</div>
+      <div class="code-block"><span class="cm"># Step 3: Load Patients CSV into a Spark DataFrame</span>
+<span class="cv">df</span> = spark.read.csv(
+    <span class="cs">"/FileStore/tables/Patients.csv"</span>,
+    header=<span class="ck">True</span>,
+    inferSchema=<span class="ck">True</span>
+)
+<span class="cf">display</span>(df)</div>
+
+      <div class="code-block-label">Step 4 &mdash; Identify sensitive columns</div>
+      <div class="code-block"><span class="cm"># Step 4: Print schema to identify column types</span>
+df.<span class="cf">printSchema</span>()
+
+<span class="cm"># Sensitive PII columns identified:</span>
+<span class="cm">#   email    - Personal contact information</span>
+<span class="cm">#   ssn      - Social Security Number (direct HIPAA / PII risk)</span>
+<span class="cm"># Confidential column:</span>
+<span class="cm">#   diagnosis - Protected Health Information (PHI) under HIPAA</span></div>
+
+      <div class="code-block-label">Step 5 &mdash; Mask email and SSN</div>
+      <div class="code-block"><span class="ck">from</span> pyspark.sql.functions <span class="ck">import</span> regexp_replace
+
+<span class="cm"># Mask email: keep first character and domain, hide middle</span>
+<span class="cm"># alice@health.com  =>  a***@health.com</span>
+<span class="cv">df_masked</span> = df.<span class="cf">withColumn</span>(
+    <span class="cs">"email"</span>,
+    <span class="cf">regexp_replace</span>(<span class="cs">"email"</span>, <span class="cs">r"(^.).*(@.*$)"</span>, <span class="cs">r"\1***\2"</span>)
+)
+
+<span class="cm"># Mask SSN: hide area and group numbers, keep serial (last 4)</span>
+<span class="cm"># 123-45-6789  =>  ***-**-6789</span>
+<span class="cv">df_masked</span> = df_masked.<span class="cf">withColumn</span>(
+    <span class="cs">"ssn"</span>,
+    <span class="cf">regexp_replace</span>(<span class="cs">"ssn"</span>, <span class="cs">r"\d{3}-\d{2}"</span>, <span class="cs">"***-**"</span>)
+)</div>
+
+      <div class="code-block-label">Step 6 &mdash; Display and verify masked output</div>
+      <div class="code-block"><span class="cm"># Step 6: Confirm masking was applied correctly</span>
+<span class="cf">display</span>(df_masked)
+
+<span class="cm"># Also verify no raw PII leaks remain in the masked columns</span>
+df_masked.<span class="cf">select</span>(<span class="cs">"patient_id"</span>, <span class="cs">"email"</span>, <span class="cs">"ssn"</span>).<span class="cf">show</span>(truncate=<span class="ck">False</span>)</div>
+
+      <div class="code-block-label">Step 7 &mdash; Save as secure table for analysts</div>
+      <div class="code-block"><span class="cm"># Step 7: Persist masked dataset as a separate, analyst-safe table</span>
+df_masked.<span class="cf">write</span>.<span class="cf">mode</span>(<span class="cs">"overwrite"</span>).<span class="cf">saveAsTable</span>(<span class="cs">"patients_secure"</span>)
+
+<span class="cm"># Result:</span>
+<span class="cm">#   patients        => Admin access only (raw PII)</span>
+<span class="cm">#   patients_secure => Analyst access (masked PII)</span></div>
+
+      <p style="font-size:.79rem;color:#8b949e;margin-top:.75rem;line-height:1.65;">&#8505;&nbsp; Two tables now exist: <code>patients</code> (raw, admin-only) and <code>patients_secure</code> (masked, analyst-safe). This separation is the technical foundation of the RBAC policy defined in Part 4.</p>
+
+      <!-- Before / after comparison -->
+      <div style="margin-top:1.1rem;">
+        <div class="code-block-label">Before vs. After Masking</div>
+        <div class="compare-grid">
+          <div class="compare-card">
+            <div class="compare-header before">&#10008; Before &mdash; Raw (breach state)</div>
+            <table class="data-table">
+              <thead><tr><th>email</th><th>ssn</th></tr></thead>
+              <tbody>
+                <tr><td>alice@health.com</td><td>123-45-6789</td></tr>
+                <tr><td>bob@health.com</td><td>234-56-7890</td></tr>
+                <tr><td>carol@health.com</td><td>345-67-8901</td></tr>
+                <tr><td>david@health.com</td><td>456-78-9012</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="compare-card">
+            <div class="compare-header after">&#10004; After &mdash; Masked (patients_secure)</div>
+            <table class="data-table">
+              <thead><tr><th>email</th><th>ssn</th></tr></thead>
+              <tbody>
+                <tr><td><span class="masked-val">a***@health.com</span></td><td><span class="masked-val">***-**-6789</span></td></tr>
+                <tr><td><span class="masked-val">b***@health.com</span></td><td><span class="masked-val">***-**-7890</span></td></tr>
+                <tr><td><span class="masked-val">c***@health.com</span></td><td><span class="masked-val">***-**-8901</span></td></tr>
+                <tr><td><span class="masked-val">d***@health.com</span></td><td><span class="masked-val">***-**-9012</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="explain-toggle" onclick="toggleExplain('ex1')">
+        <span class="explain-icon">&#128218;</span>
+        <span class="explain-label">Why this answer?</span>
+        <span class="explain-chevron" id="chev-ex1">&#9658;</span>
+      </div>
+      <div class="explain-body" id="ex1">
+        <h4>Why use regex masking instead of simply deleting the column?</h4>
+        <p>Deleting the email column entirely would break any analytics that need to count unique users or detect duplicate accounts. Masking preserves the structure and referential value (you can still tell two rows have different emails) while eliminating the personally identifiable content. This is the principle of <strong>data minimization in practice</strong>: keep only what the business function requires, nothing more.</p>
+
+        <h4>Why retain the last 4 digits of the SSN?</h4>
+        <p>The last 4 digits of a US SSN are the serial number and are the most commonly used for identity verification in customer service contexts (&ldquo;last four of your social&rdquo;). Retaining them allows the organization to perform soft identity checks without exposing the full SSN. The first 5 digits (area number + group number) are what enable full identity theft, so masking those is the critical control. This is a deliberate design tradeoff, not an oversight.</p>
+
+        <h4>Why save as a separate table instead of modifying the original?</h4>
+        <p>The original <code>patients</code> table is the system of record. If you overwrite it with masked data, you lose the ability to perform legitimate administrative operations that require the full data (e.g., auditing, responding to a HIPAA data subject request). Separation also makes the access control model explicit and auditable: whoever can query <code>patients</code> has been explicitly granted elevated access, and whoever queries <code>patients_secure</code> has not. This is a cleaner, more defensible architecture than a single table with row-level security filters.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PART 2 ── -->
+  <div class="task-card">
+    <div class="task-header" onclick="toggleTask('t2')">
+      <span class="task-num" style="background:#238636;">Part 2</span>
+      <span class="task-title">OpenMetadata &mdash; RBAC &amp; Data Classification</span>
+      <span class="task-deliv">Deliverable: Roles, Tags, Classified Columns</span>
+      <span class="toggle-btn" id="btn-t2">+</span>
+    </div>
+    <div class="task-body" id="t2">
+      <div class="answer-label">Answer &mdash; Steps 8&ndash;12</div>
+
+      <div style="margin-bottom:1rem;">
+        <div class="code-block-label">Step 9&ndash;10 &mdash; Role Definitions</div>
+        <div class="role-grid">
+          <div class="role-card" style="border-color:#238636;">
+            <div class="role-name" style="color:#3fb950;">&#128737; Admin Role</div>
+            <div style="font-size:.78rem;color:#8b949e;margin-bottom:.5rem;">Full access &mdash; internal staff only</div>
+            <ul class="role-access-list">
+              <li><span class="allow">&#10004;</span> View and edit all tables including <code>patients</code></li>
+              <li><span class="allow">&#10004;</span> Access raw PII columns (email, ssn)</li>
+              <li><span class="allow">&#10004;</span> Create, update, and delete metadata</li>
+              <li><span class="allow">&#10004;</span> Manage roles and permissions</li>
+              <li><span class="allow">&#10004;</span> View audit logs</li>
+            </ul>
+          </div>
+          <div class="role-card" style="border-color:#9e6a03;">
+            <div class="role-name" style="color:#e3b341;">&#128202; Analyst Role</div>
+            <div style="font-size:.78rem;color:#8b949e;margin-bottom:.5rem;">Read-only &mdash; analysts and contractors</div>
+            <ul class="role-access-list">
+              <li><span class="allow">&#10004;</span> View <code>patients_secure</code> table (masked data)</li>
+              <li><span class="allow">&#10004;</span> Read metadata and column descriptions</li>
+              <li><span class="deny">&#10008;</span> Cannot access <code>patients</code> table (raw PII)</li>
+              <li><span class="deny">&#10008;</span> Cannot edit metadata or schema</li>
+              <li><span class="deny">&#10008;</span> Cannot see unmasked email or SSN</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="code-block-label">Step 11 &mdash; DataSensitivity Classification Tags</div>
+      <table class="data-table" style="margin-bottom:1rem;">
+        <thead>
+          <tr><th>Tag</th><th>Meaning</th><th>Regulatory Basis</th><th>Example Columns</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="pii-tag">PII</span></td>
+            <td>Personally Identifiable Information &mdash; data that can identify a specific individual</td>
+            <td>HIPAA, GDPR, CCPA</td>
+            <td><code>name</code>, <code>email</code>, <code>ssn</code></td>
+          </tr>
+          <tr>
+            <td><span class="conf-tag">Confidential</span></td>
+            <td>Sensitive business or health data not for general access; significant harm if disclosed</td>
+            <td>HIPAA (PHI category)</td>
+            <td><code>diagnosis</code></td>
+          </tr>
+          <tr>
+            <td><span class="pub-tag">Public</span></td>
+            <td>Non-sensitive data; no restrictions on access or distribution</td>
+            <td>N/A</td>
+            <td><code>patient_id</code>, <code>country</code></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="code-block-label">Step 12 &mdash; Column-Level Tag Assignment</div>
+      <table class="data-table">
+        <thead>
+          <tr><th>Column</th><th>Data Type</th><th>Description</th><th>Sensitivity Tag</th><th>Accessible to Analyst?</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>patient_id</code></td>
+            <td>INTEGER</td>
+            <td>System-generated unique identifier. Primary key.</td>
+            <td><span class="pub-tag">Public</span></td>
+            <td style="color:#3fb950;font-weight:700;">Yes (full)</td>
+          </tr>
+          <tr>
+            <td><code>name</code></td>
+            <td>VARCHAR</td>
+            <td>Full legal name of the patient. Direct identifier.</td>
+            <td><span class="pii-tag">PII</span></td>
+            <td style="color:#e3b341;font-weight:700;">Yes (visible, not masked)</td>
+          </tr>
+          <tr>
+            <td><code>email</code></td>
+            <td>VARCHAR</td>
+            <td>Patient email used for communications. Must be masked for non-admin roles.</td>
+            <td><span class="pii-tag">PII</span></td>
+            <td style="color:#e3b341;font-weight:700;">Yes (masked: a***@domain.com)</td>
+          </tr>
+          <tr>
+            <td><code>ssn</code></td>
+            <td>VARCHAR</td>
+            <td>US Social Security Number. Highest-risk PII field. Must be masked at all non-admin tiers.</td>
+            <td><span class="pii-tag">PII</span></td>
+            <td style="color:#e3b341;font-weight:700;">Yes (masked: ***-**-XXXX)</td>
+          </tr>
+          <tr>
+            <td><code>diagnosis</code></td>
+            <td>VARCHAR</td>
+            <td>Medical diagnosis. Protected Health Information (PHI) under HIPAA.</td>
+            <td><span class="conf-tag">Confidential</span></td>
+            <td style="color:#f85149;font-weight:700;">No (restricted to Admin)</td>
+          </tr>
+          <tr>
+            <td><code>country</code></td>
+            <td>VARCHAR</td>
+            <td>Country of patient residence. Geographic aggregate, not an individual identifier.</td>
+            <td><span class="pub-tag">Public</span></td>
+            <td style="color:#3fb950;font-weight:700;">Yes (full)</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="explain-toggle" onclick="toggleExplain('ex2')">
+        <span class="explain-icon">&#128218;</span>
+        <span class="explain-label">Why this answer?</span>
+        <span class="explain-chevron" id="chev-ex2">&#9658;</span>
+      </div>
+      <div class="explain-body" id="ex2">
+        <h4>Why tag at the column level, not just the table level?</h4>
+        <p>Tagging only the table as &ldquo;sensitive&rdquo; tells you nothing about which specific fields carry risk. If the <code>country</code> column is public but <code>ssn</code> is PII, a table-level restriction would either over-block (analysts cannot see country) or under-block (everyone sees SSN). Column-level tagging allows precise, field-by-field access control and is the foundation of any compliant data governance catalog under HIPAA and GDPR.</p>
+
+        <h4>Why is <code>diagnosis</code> classified as Confidential rather than PII?</h4>
+        <p>PII refers to data that identifies a specific person &mdash; name, email, SSN. <code>diagnosis</code> is not itself an identifier, but it is <strong>Protected Health Information (PHI)</strong> under HIPAA because it describes a person&rsquo;s health status. Using the &ldquo;Confidential&rdquo; tag separates the <em>identity risk</em> (PII) from the <em>privacy risk</em> (health disclosure). This distinction matters operationally: the mitigation for PII is masking; the mitigation for PHI is access restriction entirely.</p>
+
+        <h4>Why is <code>name</code> tagged PII but left visible in the analyst view?</h4>
+        <p>This is a deliberate design choice in this scenario: analysts need to identify records by name for audit queries. In a production HIPAA environment, <code>name</code> would also be masked or replaced with a pseudonymous ID. This case study uses a simplified model to keep the masking exercise focused on the highest-risk fields (email and SSN). In a real implementation, all PII columns should be subject to masking or access restriction &mdash; not just the subset demonstrated here.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PART 3 ── -->
+  <div class="task-card">
+    <div class="task-header" onclick="toggleTask('t3')">
+      <span class="task-num" style="background:#6e40c9;">Part 3</span>
+      <span class="task-title">Role-Based Access Simulation</span>
+      <span class="task-deliv">Deliverable: Access Matrix</span>
+      <span class="toggle-btn" id="btn-t3">+</span>
+    </div>
+    <div class="task-body" id="t3">
+      <div class="answer-label">Answer &mdash; Step 13</div>
+
+      <table class="data-table" style="margin-bottom:1rem;">
+        <thead>
+          <tr>
+            <th>Column</th>
+            <th>Admin (internal)</th>
+            <th>Analyst (internal)</th>
+            <th>Contractor (external)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>patient_id</code> <span class="pub-tag">Public</span></td>
+            <td><span class="matrix-cell-full">Full access</span></td>
+            <td><span class="matrix-cell-full">Full access</span></td>
+            <td><span class="matrix-cell-full">Full access</span></td>
+          </tr>
+          <tr>
+            <td><code>name</code> <span class="pii-tag">PII</span></td>
+            <td><span class="matrix-cell-full">Full access</span></td>
+            <td><span class="matrix-cell-masked">Visible (audit use)</span></td>
+            <td><span class="matrix-cell-denied">No access</span></td>
+          </tr>
+          <tr>
+            <td><code>email</code> <span class="pii-tag">PII</span></td>
+            <td><span class="matrix-cell-full">Full access</span></td>
+            <td><span class="matrix-cell-masked">Masked &mdash; a***@domain.com</span></td>
+            <td><span class="matrix-cell-denied">No access</span></td>
+          </tr>
+          <tr>
+            <td><code>ssn</code> <span class="pii-tag">PII</span></td>
+            <td><span class="matrix-cell-full">Full access</span></td>
+            <td><span class="matrix-cell-masked">Masked &mdash; ***-**-XXXX</span></td>
+            <td><span class="matrix-cell-denied">No access</span></td>
+          </tr>
+          <tr>
+            <td><code>diagnosis</code> <span class="conf-tag">Confidential</span></td>
+            <td><span class="matrix-cell-full">Full access</span></td>
+            <td><span class="matrix-cell-denied">No access</span></td>
+            <td><span class="matrix-cell-denied">No access</span></td>
+          </tr>
+          <tr>
+            <td><code>country</code> <span class="pub-tag">Public</span></td>
+            <td><span class="matrix-cell-full">Full access</span></td>
+            <td><span class="matrix-cell-full">Full access</span></td>
+            <td><span class="matrix-cell-full">Full access</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="card" style="margin-bottom:0;">
+        <div class="card-title">Databricks Table Routing by Role</div>
+        <table class="data-table">
+          <thead><tr><th>Role</th><th>Queries This Table</th><th>Rationale</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>Admin</strong></td>
+              <td><code>patients</code> (raw)</td>
+              <td>Requires full fidelity for audits, incident response, and HIPAA subject access requests</td>
+            </tr>
+            <tr>
+              <td><strong>Analyst</strong></td>
+              <td><code>patients_secure</code> (masked)</td>
+              <td>Can perform statistical analysis and reporting without accessing identifiable data</td>
+            </tr>
+            <tr>
+              <td><strong>Contractor</strong></td>
+              <td>No direct table access</td>
+              <td>Receives aggregated or pre-processed reports only; no query access to patient-level data</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="explain-toggle" onclick="toggleExplain('ex3')">
+        <span class="explain-icon">&#128218;</span>
+        <span class="explain-label">Why this answer?</span>
+        <span class="explain-chevron" id="chev-ex3">&#9658;</span>
+      </div>
+      <div class="explain-body" id="ex3">
+        <h4>Why is the access matrix the correct deliverable here, not just a roles list?</h4>
+        <p>A roles list tells you what roles exist. An access matrix tells you what <em>each role can actually see for each field</em>. This is the difference between a policy and a testable control. When an auditor asks &ldquo;can an analyst see patient SSNs?&rdquo; the matrix gives a direct, verifiable answer. It also exposes gaps &mdash; in the pre-breach state, the contractor row would have shown &ldquo;Full access&rdquo; for SSN, making the risk immediately visible.</p>
+
+        <h4>Why do contractors get no direct table access?</h4>
+        <p>Contractors represent the highest-risk access category in this breach scenario. They are external to the organization, may not be subject to the same security training, and their access is often time-limited with unclear offboarding procedures. The principle of <strong>least privilege</strong> means their access should be the minimum necessary for their business function. If a contractor needs to analyze patient trends, they receive a pre-aggregated report &mdash; not a query connection to the database.</p>
+
+        <h4>Why does the analyst still see <code>country</code> in full?</h4>
+        <p><code>country</code> is a geographic aggregate, not an individual identifier. Knowing that 3 out of 4 patients are from the USA does not identify any individual. Restricting it would prevent analysts from doing legitimate geographic analysis (e.g., disease prevalence by country) with zero security benefit. Good data governance is not about maximum restriction &mdash; it is about <strong>appropriate restriction</strong>. Over-restricting data makes governance a liability (analysts find workarounds) rather than an asset.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PART 4 ── -->
+  <div class="task-card">
+    <div class="task-header" onclick="toggleTask('t4')">
+      <span class="task-num" style="background:#9e6a03;">Part 4</span>
+      <span class="task-title">Security Policies</span>
+      <span class="task-deliv">Deliverable: 3&ndash;5 Governance Policies</span>
+      <span class="toggle-btn" id="btn-t4">+</span>
+    </div>
+    <div class="task-body" id="t4">
+      <div class="answer-label">Answer &mdash; Step 14 &mdash; HealthSecure Inc. Data Security Policies v1.0</div>
+
+      <div class="policy-card">
+        <div class="policy-name">Policy 1 &mdash; Data Masking</div>
+        <ul class="policy-rules">
+          <li>All PII fields (<code>email</code>, <code>ssn</code>) must be masked before any non-admin user can query or export them.</li>
+          <li>Masking is applied at the table level via the <code>patients_secure</code> view &mdash; not as a per-query filter, which could be bypassed.</li>
+          <li>Masked values must preserve enough structure for legitimate use (e.g., last 4 digits of SSN, domain of email) without exposing re-identifiable content.</li>
+          <li>Any new PII column added to the patients dataset must be masked within 5 business days of creation and before any analyst access is granted.</li>
+          <li>Masking logic must be documented in the data catalog with the masking pattern and date of implementation.</li>
+        </ul>
+      </div>
+
+      <div class="policy-card" style="border-left-color:#238636;">
+        <div class="policy-name" style="color:#3fb950;">Policy 2 &mdash; Access Control (RBAC)</div>
+        <ul class="policy-rules">
+          <li>Access to patient data is governed by role assignment in OpenMetadata and enforced at the Databricks table level.</li>
+          <li>The Admin role is reserved for internal staff with a documented business need for raw patient data; all assignments require written approval from the Data Owner.</li>
+          <li>External contractors and third-party systems must not be granted direct query access to any table containing PII or PHI; access is limited to pre-approved aggregated datasets.</li>
+          <li>All role assignments are reviewed quarterly; inactive users are revoked automatically after 60 days without a login event.</li>
+          <li>Shared credentials (one login used by multiple people) are strictly prohibited; every user must have an individual, auditable identity.</li>
+        </ul>
+      </div>
+
+      <div class="policy-card" style="border-left-color:#6e40c9;">
+        <div class="policy-name" style="color:#bc8cff;">Policy 3 &mdash; Data Classification</div>
+        <ul class="policy-rules">
+          <li>All columns in every patient-related table must carry a DataSensitivity tag (PII, Confidential, or Public) before the table may be shared with any internal or external team.</li>
+          <li>Tagging is performed by the Data Steward and reviewed by the Data Owner within 10 business days of a new table or column being added.</li>
+          <li>Untagged columns are treated as Confidential by default until classified; this conservative default prevents accidental PII exposure during onboarding of new datasets.</li>
+          <li>Classification must be revisited whenever a column&rsquo;s data changes (e.g., a column that previously held country codes now holds city-level GPS coordinates upgrades from Public to PII).</li>
+        </ul>
+      </div>
+
+      <div class="policy-card" style="border-left-color:#f85149;">
+        <div class="policy-name" style="color:#f85149;">Policy 4 &mdash; Audit Logging</div>
+        <ul class="policy-rules">
+          <li>All queries against tables containing PII or PHI columns must be logged with: timestamp, user identity, role, query text, and row count returned.</li>
+          <li>Audit logs are immutable and retained for a minimum of 7 years in compliance with HIPAA record-keeping requirements.</li>
+          <li>Access to audit logs is restricted to the Admin role and Compliance team only.</li>
+          <li>Automated alerts are triggered for: queries outside business hours, bulk exports exceeding 500 rows, and any access attempt by a user with a revoked role.</li>
+        </ul>
+      </div>
+
+      <div class="policy-card" style="border-left-color:#e3b341;">
+        <div class="policy-name" style="color:#e3b341;">Policy 5 &mdash; Breach Notification</div>
+        <ul class="policy-rules">
+          <li>Any confirmed or suspected exposure of PII or PHI must be reported to the Data Owner and Legal team within 24 hours of detection.</li>
+          <li>HIPAA requires formal notification to affected patients within 60 days of discovering a breach; this timeline begins from the date of detection, not the date the breach occurred.</li>
+          <li>A post-incident report documenting root cause, scope, remediation steps, and policy updates must be completed within 30 days of breach resolution.</li>
+          <li>All staff with data access must complete annual HIPAA security training; failure to complete training results in immediate access suspension until the requirement is fulfilled.</li>
+        </ul>
+      </div>
+
+      <div class="explain-toggle" onclick="toggleExplain('ex4')">
+        <span class="explain-icon">&#128218;</span>
+        <span class="explain-label">Why this answer?</span>
+        <span class="explain-chevron" id="chev-ex4">&#9658;</span>
+      </div>
+      <div class="explain-body" id="ex4">
+        <h4>Why are policies necessary if the technical controls already exist?</h4>
+        <p>Technical controls enforce governance <em>in the system</em>. Policies enforce it <em>in the organization</em>. Masking in Databricks prevents an analyst from accidentally seeing an SSN today, but it does not prevent a future engineer from removing the masking when they add a new column. A written policy means that decision has a governance checkpoint, requires approval, and creates an audit trail. Without policy, every technical control is one database migration away from being removed.</p>
+
+        <h4>Why default to Confidential for untagged columns?</h4>
+        <p>The cost asymmetry strongly favors a conservative default. If an untagged column is actually Public and you treat it as Confidential, the only cost is that analysts must submit a classification request before using it &mdash; a minor inconvenience. If an untagged column is actually PII and you treat it as Public, you have a potential HIPAA violation every time an analyst queries it. Defaulting to the more restrictive classification forces a deliberate classification decision rather than assuming safety.</p>
+
+        <h4>Why 60 days for HIPAA breach notification?</h4>
+        <p>This is not an internal best practice &mdash; it is a legal requirement under the HIPAA Breach Notification Rule (45 CFR Part 164, Subpart D). Failure to notify within 60 days exposes the organization to fines up to $1.9 million per violation category per year. Policy 5 exists to ensure the legal timeline is known and operationalized before a breach occurs, not discovered during the chaos of incident response.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PART 5 ── -->
+  <div class="task-card">
+    <div class="task-header" onclick="toggleTask('t5')">
+      <span class="task-num" style="background:#b91c1c;">Part 5</span>
+      <span class="task-title">Risk Assessment</span>
+      <span class="task-deliv">Deliverable: Risk Register + Mitigation Plan</span>
+      <span class="toggle-btn" id="btn-t5">+</span>
+    </div>
+    <div class="task-body" id="t5">
+      <div class="answer-label">Answer &mdash; Step 15 &mdash; HealthSecure Inc. Risk Register</div>
+
+      <table class="data-table" style="margin-bottom:1rem;">
+        <thead>
+          <tr>
+            <th>Risk</th>
+            <th>Likelihood</th>
+            <th>Impact</th>
+            <th>Current Control</th>
+            <th>Mitigation</th>
+            <th>Owner</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>PII data leakage via analyst query</strong></td>
+            <td><span class="risk-high">High</span></td>
+            <td><span class="risk-high">High</span></td>
+            <td>None (pre-remediation)</td>
+            <td>Data masking on <code>patients_secure</code>; analysts cannot query raw <code>patients</code> table</td>
+            <td>Data Engineer</td>
+          </tr>
+          <tr>
+            <td><strong>Unauthorized access by external contractors</strong></td>
+            <td><span class="risk-high">High</span></td>
+            <td><span class="risk-high">High</span></td>
+            <td>None (same access as internal)</td>
+            <td>Contractors removed from all direct table access; receive aggregated exports only via Analyst role</td>
+            <td>Data Owner</td>
+          </tr>
+          <tr>
+            <td><strong>Unclassified sensitive columns</strong></td>
+            <td><span class="risk-high">High</span></td>
+            <td><span class="risk-medium">Medium</span></td>
+            <td>None</td>
+            <td>DataSensitivity tags applied to all columns; untagged columns default to Confidential</td>
+            <td>Data Steward</td>
+          </tr>
+          <tr>
+            <td><strong>HIPAA violation &mdash; PHI accessible to non-clinical staff</strong></td>
+            <td><span class="risk-high">High</span></td>
+            <td><span class="risk-high">High</span></td>
+            <td>None</td>
+            <td><code>diagnosis</code> restricted to Admin role only; excluded from <code>patients_secure</code> view</td>
+            <td>Compliance Officer</td>
+          </tr>
+          <tr>
+            <td><strong>Insider threat &mdash; bulk data export by authorized user</strong></td>
+            <td><span class="risk-medium">Medium</span></td>
+            <td><span class="risk-high">High</span></td>
+            <td>No monitoring</td>
+            <td>Audit logging with automated alerts for bulk exports &gt;500 rows; quarterly role review</td>
+            <td>Security Team</td>
+          </tr>
+          <tr>
+            <td><strong>Stale access &mdash; user role not revoked after departure</strong></td>
+            <td><span class="risk-medium">Medium</span></td>
+            <td><span class="risk-high">High</span></td>
+            <td>Manual, ad hoc</td>
+            <td>Automated 60-day inactivity revocation; HR offboarding process triggers immediate access removal</td>
+            <td>IT / HR</td>
+          </tr>
+          <tr>
+            <td><strong>No breach notification process</strong></td>
+            <td><span class="risk-low">Low</span></td>
+            <td><span class="risk-high">High</span></td>
+            <td>None documented</td>
+            <td>Breach Notification Policy (Policy 5) with 24-hour internal and 60-day patient notification SLA</td>
+            <td>Legal / Compliance</td>
+          </tr>
+          <tr>
+            <td><strong>Schema change introduces new unmasked PII column</strong></td>
+            <td><span class="risk-medium">Medium</span></td>
+            <td><span class="risk-medium">Medium</span></td>
+            <td>No process</td>
+            <td>All schema changes require Data Steward review; new columns default to Confidential and must be classified within 5 days before analyst access is granted</td>
+            <td>Data Steward</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="card" style="margin-bottom:0;">
+        <div class="card-title">Priority Order for Remediation</div>
+        <table class="data-table">
+          <thead><tr><th>Priority</th><th>Action</th><th>Deadline</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td><span class="risk-high">1 &mdash; Critical</span></td><td>Apply data masking to <code>patients_secure</code>; revoke analyst access to raw <code>patients</code></td><td>Immediate (Day 1)</td><td style="color:#3fb950;font-weight:700;">Completed &mdash; Part 1</td></tr>
+            <tr><td><span class="risk-high">2 &mdash; Critical</span></td><td>Remove contractor direct table access; restrict to aggregated exports</td><td>Day 1</td><td style="color:#3fb950;font-weight:700;">Completed &mdash; Part 3</td></tr>
+            <tr><td><span class="risk-high">3 &mdash; Critical</span></td><td>Restrict <code>diagnosis</code> to Admin role; apply HIPAA PHI controls</td><td>Day 2</td><td style="color:#3fb950;font-weight:700;">Completed &mdash; Part 2</td></tr>
+            <tr><td><span class="risk-medium">4 &mdash; High</span></td><td>Apply DataSensitivity tags to all columns in OpenMetadata</td><td>Week 1</td><td style="color:#3fb950;font-weight:700;">Completed &mdash; Part 2</td></tr>
+            <tr><td><span class="risk-medium">5 &mdash; High</span></td><td>Implement audit logging with bulk export alerts</td><td>Week 2</td><td style="color:#e3b341;font-weight:700;">In Progress</td></tr>
+            <tr><td><span class="risk-medium">6 &mdash; Medium</span></td><td>Implement automated 60-day inactivity revocation</td><td>Week 3</td><td style="color:#8b949e;font-weight:700;">Planned</td></tr>
+            <tr><td><span class="risk-low">7 &mdash; Standard</span></td><td>Document Breach Notification Policy; train all staff</td><td>Month 1</td><td style="color:#8b949e;font-weight:700;">Planned</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Risk Heat Map -->
+      <div class="heatmap-wrap" style="margin-top:1.25rem;">
+        <div class="heatmap-title">&#9650; Risk Matrix &mdash; Likelihood vs. Impact</div>
+        <table class="heatmap-table">
+          <thead>
+            <tr>
+              <td class="axis-label"></td>
+              <td class="axis-label">Low Impact</td>
+              <td class="axis-label">Medium Impact</td>
+              <td class="axis-label">High Impact</td>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="axis-label" style="text-align:right;">High<br>Likelihood</td>
+              <td class="hm-medium">Medium</td>
+              <td class="hm-high">High<br><span class="hm-risk-dot">R3</span></td>
+              <td class="hm-critical">Critical<br><span class="hm-risk-dot">R1</span>&nbsp;<span class="hm-risk-dot">R2</span></td>
+            </tr>
+            <tr>
+              <td class="axis-label" style="text-align:right;">Medium<br>Likelihood</td>
+              <td class="hm-low">Low</td>
+              <td class="hm-medium">Medium</td>
+              <td class="hm-high">High</td>
+            </tr>
+            <tr>
+              <td class="axis-label" style="text-align:right;">Low<br>Likelihood</td>
+              <td class="hm-low">Low</td>
+              <td class="hm-low">Low</td>
+              <td class="hm-medium">Medium</td>
+            </tr>
+          </tbody>
+        </table>
+        <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-top:.6rem;font-size:.75rem;color:#8b949e;">
+          <span><strong style="color:#fca5a5;">R1</strong> &mdash; PII data leakage via analyst query</span>
+          <span><strong style="color:#fca5a5;">R2</strong> &mdash; Unauthorized contractor access</span>
+          <span><strong style="color:#fdba74;">R3</strong> &mdash; Unclassified sensitive columns</span>
+        </div>
+      </div>
+
+      <!-- HIPAA CFR Framework -->
+      <div style="margin-top:1.5rem;margin-bottom:.5rem;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#f85149;">&#9878; Statutory Framework &mdash; HIPAA CFR Extracts</div>
+
+      <div class="cfr-block">
+        <div class="cfr-ref">45 CFR &sect; 164.514(b) &mdash; Privacy Rule: De-identification (Safe Harbor Method)</div>
+        <div class="cfr-cite">&ldquo;Health information is not individually identifiable if&hellip; the following identifiers of the individual&hellip; are removed: (F) Email addresses, (G) Social security numbers&hellip;&rdquo;</div>
+        <div class="cfr-application"><strong>Project application:</strong> The Databricks masking logic (<code>regexp_replace</code> on <code>email</code> and <code>ssn</code>) directly targets these Safe Harbor identifiers. The resulting <code>patients_secure</code> table meets the de-identification threshold for non-admin analyst use.</div>
+      </div>
+
+      <div class="cfr-block">
+        <div class="cfr-ref">45 CFR &sect; 164.312(a)(1) &mdash; Technical Safeguards: Access Control</div>
+        <div class="cfr-cite">&ldquo;Implement technical policies and procedures for electronic information systems that maintain electronic protected health information to allow access only to those persons or software programs that have been granted access rights&hellip;&rdquo;</div>
+        <div class="cfr-application"><strong>Project application:</strong> Implemented via OpenMetadata RBAC (Admin and Analyst roles) and Databricks table-level separation. The <code>Analyst</code> role is bound to <code>patients_secure</code> only; a <code>Deny</code> rule explicitly blocks access to the raw <code>patients</code> table.</div>
+      </div>
+
+      <div class="cfr-block">
+        <div class="cfr-ref">45 CFR &sect; 164.308(a)(1) &mdash; Administrative Safeguards: Risk Management</div>
+        <div class="cfr-cite">&ldquo;Implement security measures sufficient to reduce risks and vulnerabilities to a reasonable and appropriate level&hellip;&rdquo;</div>
+        <div class="cfr-application"><strong>Project application:</strong> The DataSensitivity metadata tags in OpenMetadata and the automated column profiler identify unclassified PII. The risk register above documents identified risks, their likelihood and impact, and the mitigations applied &mdash; constituting the required risk analysis documentation.</div>
+      </div>
+
+      <!-- HIPAA Mitigation Strategy Matrix -->
+      <div style="margin-top:1.25rem;margin-bottom:.6rem;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8b949e;">Mitigation Strategy Matrix</div>
+      <table class="data-table" style="margin-bottom:1.25rem;">
+        <thead>
+          <tr><th>HIPAA Category</th><th>Identified Risk</th><th>Mitigation Action</th><th>Project Implementation</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="hipaa-cat-privacy">Privacy Rule</span></td>
+            <td>Data Leakage</td>
+            <td><strong>De-identification</strong></td>
+            <td>PySpark <code>regexp_replace</code> on <code>email</code> and <code>ssn</code> &rarr; <code>patients_secure</code></td>
+          </tr>
+          <tr>
+            <td><span class="hipaa-cat-security">Security Rule</span></td>
+            <td>Unauthorized Access</td>
+            <td><strong>Access Control</strong></td>
+            <td>OpenMetadata policy: Analyst role bound to <code>patients_secure</code>; Deny rule on raw <code>patients</code></td>
+          </tr>
+          <tr>
+            <td><span class="hipaa-cat-security">Security Rule</span></td>
+            <td>Unclassified Data</td>
+            <td><strong>Risk Analysis</strong></td>
+            <td>OpenMetadata Profiler + <code>DataSensitivity.PII</code> and <code>DataSensitivity.Confidential</code> tags on all sensitive columns</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Tool Compliance -->
+      <div style="margin-top:1.25rem;margin-bottom:.6rem;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8b949e;">Platform HIPAA Compliance Assessment</div>
+      <div class="tool-grid" style="margin-bottom:1.25rem;">
+        <div class="tool-card">
+          <div class="tool-name">Databricks <span class="badge-partial">Partial &mdash; Sandbox</span></div>
+          <div style="font-size:.78rem;color:#8b949e;margin-bottom:.5rem;">Production Databricks Enterprise supports HIPAA via BAA. This deployment is a sandboxed academic environment.</div>
+          <ul class="tool-feature-list">
+            <li><span class="tf-yes">&#10004;</span>Encryption at rest (AES-256) and in transit (TLS)</li>
+            <li><span class="tf-yes">&#10004;</span>Unity Catalog: fine-grained column-level access control</li>
+            <li><span class="tf-yes">&#10004;</span>Audit logging available (workspace audit logs)</li>
+            <li><span class="tf-yes">&#10004;</span>Private networking supported (VPC/VNet injection)</li>
+            <li><span class="tf-warn">&#9675;</span>BAA required for HIPAA production &mdash; not in scope here</li>
+            <li><span class="tf-no">&#10007;</span>This sandbox uses a shared workspace &mdash; not HIPAA-ready as deployed</li>
+          </ul>
+        </div>
+        <div class="tool-card">
+          <div class="tool-name">OpenMetadata <span class="badge-scope">Metadata Only</span></div>
+          <div style="font-size:.78rem;color:#8b949e;margin-bottom:.5rem;">Self-hosted metadata catalog. Does not store PHI &mdash; stores schema, tags, and audit events only.</div>
+          <ul class="tool-feature-list">
+            <li><span class="tf-yes">&#10004;</span>RBAC: role-based access to catalog assets</li>
+            <li><span class="tf-yes">&#10004;</span>Activity Feed: audit trail of all metadata changes</li>
+            <li><span class="tf-yes">&#10004;</span>DataSensitivity tags map directly to HIPAA identifier categories</li>
+            <li><span class="tf-yes">&#10004;</span>Self-hosted &mdash; no PHI leaves your network</li>
+            <li><span class="tf-warn">&#9675;</span>No native encryption-at-rest on metadata DB (configure via host)</li>
+            <li><span class="tf-warn">&#9675;</span>HIPAA applicability: supports HIPAA controls but is not itself a covered entity system</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Operational Context -->
+      <div style="margin-top:1.25rem;margin-bottom:.6rem;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8b949e;">Project Operational Context</div>
+      <div class="ops-grid" style="margin-bottom:1.25rem;">
+        <div class="ops-card">
+          <div class="ops-label">Deployment</div>
+          <div class="ops-value">&#127968; Local / Sandbox</div>
+          <div class="ops-desc">Academic research environment. No live patient data. All records are synthetic and de-identified for proof-of-concept purposes.</div>
+        </div>
+        <div class="ops-card">
+          <div class="ops-label">Automation</div>
+          <div class="ops-value">&#9654; Triggered Manually</div>
+          <div class="ops-desc">Masking and ingestion pipelines are initiated by the project lead. Scheduled automation (routine triggers) is planned for the next phase.</div>
+        </div>
+        <div class="ops-card">
+          <div class="ops-label">Workforce</div>
+          <div class="ops-value">&#128100; University Team Only</div>
+          <div class="ops-desc">No third-party contractors handle data, minimizing the &ldquo;Business Associate&rdquo; risk surface under HIPAA.</div>
+        </div>
+        <div class="ops-card">
+          <div class="ops-label">Purpose</div>
+          <div class="ops-value">&#127979; Academic Proof-of-Concept</div>
+          <div class="ops-desc">Demonstrates integration of OpenMetadata and Databricks under HIPAA constraints for university review. Not a production system.</div>
+        </div>
+      </div>
+
+      <!-- Audit -->
+      <div class="card" style="margin-bottom:1.25rem;">
+        <div class="card-title">Verification &amp; Audit &mdash; 45 CFR &sect; 164.312(b)</div>
+        <p style="font-size:.83rem;color:#c9d1d9;line-height:1.65;margin-bottom:.6rem;">To comply with the HIPAA Audit Controls standard, this project uses OpenMetadata&rsquo;s <strong>Activity Feed</strong> to log all metadata changes and access events, providing a clear audit trail for reviewers.</p>
+        <table class="data-table">
+          <thead><tr><th>Audit Event</th><th>Logged By</th><th>Retention</th></tr></thead>
+          <tbody>
+            <tr><td>Column tag applied (PII / Confidential)</td><td>OpenMetadata Activity Feed</td><td>Catalog history</td></tr>
+            <tr><td>Role created or modified</td><td>OpenMetadata Activity Feed</td><td>Catalog history</td></tr>
+            <tr><td>Table schema ingested or updated</td><td>OpenMetadata Activity Feed</td><td>Catalog history</td></tr>
+            <tr><td>Data masking notebook executed</td><td>Databricks workspace audit log</td><td>Workspace retention policy</td></tr>
+            <tr><td>Table write (<code>patients_secure</code> overwrite)</td><td>Databricks cluster event log</td><td>Workspace retention policy</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="explain-toggle" onclick="toggleExplain('ex5')">
+        <span class="explain-icon">&#128218;</span>
+        <span class="explain-label">Why this answer?</span>
+        <span class="explain-chevron" id="chev-ex5">&#9658;</span>
+      </div>
+      <div class="explain-body" id="ex5">
+        <h4>Why include Likelihood as a separate column from Impact?</h4>
+        <p>Impact alone tells you how bad a breach would be if it happened. Likelihood tells you how soon you should expect it to happen. A risk with <strong>High Impact and High Likelihood</strong> (like unmasked PII in an analyst-accessible table) must be addressed immediately. A risk with <strong>High Impact but Low Likelihood</strong> (like no breach notification process) can be addressed on a planned timeline. Without both dimensions, all high-impact risks look equally urgent and the organization has no basis for sequencing remediation work.</p>
+
+        <h4>Why add &ldquo;Stale access&rdquo; as a risk when no breach has occurred from it yet?</h4>
+        <p>The original breach was caused by over-permissioned users. Stale access is the same vulnerability deferred in time &mdash; a user who left three months ago but still has an active admin account is an over-permissioned user waiting to become a breach. Risk registers must anticipate systemic vulnerabilities, not just document what has already gone wrong. The &ldquo;no breach has occurred yet&rdquo; framing is a survivorship bias trap: you only know it has not been exploited; you do not know if someone has already accessed the account.</p>
+
+        <h4>Why is &ldquo;schema change introduces new PII column&rdquo; a risk worth including?</h4>
+        <p>This is a governance continuity risk. Most data breaches involving new PII fields do not happen because someone maliciously added them &mdash; they happen because an engineer added a new column for a legitimate feature (e.g., phone numbers for 2FA) and nobody updated the masking, classification, or access control rules to account for it. Without a process that treats schema changes as governance events, every new feature is a potential regression in your security posture. The risk register forces the organization to design a schema change review process before the gap is exploited.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── DELIVERABLES ───────────────────────────── -->
+  <div class="section-label">Deliverables</div>
+
+  <div class="card">
+    <div class="card-title">Required Submissions</div>
+    <ul class="deliv-list">
+      <li>
+        <span class="deliv-num">D1</span>
+        <div><strong>Databricks Notebook</strong> &mdash; Must include raw data load from <code>Patients_500.csv</code>, email masking via <code>regexp_replace</code>, SSN masking, and both <code>patients</code> and <code>patients_secure</code> tables saved to Unity Catalog.</div>
+      </li>
+      <li>
+        <span class="deliv-num">D2</span>
+        <div><strong>OpenMetadata Screenshots</strong> &mdash; RBAC role definitions (Admin + Analyst), DataSensitivity classification taxonomy (PII / Confidential / Public), and column-level tagging on the <code>patients_secure</code> table.</div>
+      </li>
+      <li>
+        <span class="deliv-num">D3</span>
+        <div><strong>Security Policy Document</strong> &mdash; All five governance policies: Data Masking, Access Control (RBAC), Data Classification, Audit Logging, and Breach Notification (HIPAA 60-day SLA).</div>
+      </li>
+      <li>
+        <span class="deliv-num">D4</span>
+        <div><strong>Risk Assessment Report</strong> &mdash; 3&times;3 risk heat matrix with R1&ndash;R3 mapped, HIPAA CFR citations, mitigation strategy per risk with named owner, and compliance assessment for Databricks and OpenMetadata.</div>
+      </li>
+    </ul>
+  </div>
+
+  <div class="deliv-link-bar">
+    <div>
+      <a href="module-03-deliverables.html">&#128196; View Student Submission &rarr;</a>
+      <div class="deliv-link-desc">Notebook viewer, screenshots, and reflection</div>
+    </div>
+    <span style="font-size:.72rem;color:#484f58;font-weight:600;">module-03-deliverables.html</span>
+  </div>
+
+  <!-- ── REFLECTION ─────────────────────────────── -->
+  <div class="section-label">Reflection</div>
+  <div class="reflection-card">
+    <div class="reflection-q">Why does healthcare data require stricter governance than retail data? What is HIPAA and what happens without it?</div>
+    <div class="reflection-a">
+      <p>Retail data governs what you bought and where you live. Healthcare data governs your body &mdash; your diagnoses, medications, mental health history, and genetic conditions. The harm from healthcare data exposure is irreversible: a patient who has their SSN and diagnosis leaked cannot un-expose their HIV status or their psychiatric history to future employers, insurers, or the public. The potential for discrimination, stigma, and financial harm is categorically more severe than a credit card breach where the card can simply be cancelled.</p>
+      <p>HIPAA (Health Insurance Portability and Accountability Act, 1996) is the US federal law that governs how healthcare organizations must protect Protected Health Information (PHI) &mdash; any information that can identify a patient and relates to their health condition, care, or payment. HIPAA requires access controls, audit logging, encryption, workforce training, and breach notification within 60 days. Violations carry civil penalties up to $1.9 million per violation category per year, and willful neglect with no correction can result in criminal prosecution.</p>
+      <p>Without governance, HealthSecure Inc. is not just operationally at risk &mdash; it is legally exposed. Every day the <code>patients</code> table was accessible to over-permissioned analysts was a day of ongoing HIPAA violation. Data governance in healthcare is not optional best practice; it is the legal floor. The remediation in this case study is the minimum required to return to compliance, not an aspirational target.</p>
+    </div>
+  </div>
+
+</div><!-- /page-body -->
+
+<button class="export-btn" onclick="exportPDF()">
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+    <polyline points="7 10 12 15 17 10"/>
+    <line x1="12" y1="15" x2="12" y2="3"/>
+  </svg>
+  Export PDF
+</button>
+
+<footer class="site-footer">
+  Module 03 &mdash; Data Protection &amp; Security &middot; HealthSecure Inc. Case Study
+</footer>
+
+<script>
+  function toggleTask(id) {
+    var body = document.getElementById(id);
+    var btn = document.getElementById("btn-" + id);
+    var isOpen = body.classList.contains("open");
+    body.classList.toggle("open");
+    btn.textContent = isOpen ? "+" : "\u2212";
+  }
+
+  function toggleExplain(id) {
+    var body = document.getElementById(id);
+    var chevron = document.getElementById("chev-" + id);
+    body.classList.toggle("open");
+    chevron.classList.toggle("open");
+  }
+
+  function exportPDF() {
+    var taskBodies    = document.querySelectorAll(".task-body");
+    var taskBtns      = document.querySelectorAll(".toggle-btn");
+    var explainBodies = document.querySelectorAll(".explain-body");
+    var explainChevs  = document.querySelectorAll(".explain-chevron");
+    var taskWasOpen    = [];
+    var explainWasOpen = [];
+
+    taskBodies.forEach(function(b, i) {
+      taskWasOpen[i] = b.classList.contains("open");
+      b.classList.add("open");
+      if (taskBtns[i]) { taskBtns[i].textContent = "\u2212"; }
+    });
+    explainBodies.forEach(function(b, i) {
+      explainWasOpen[i] = b.classList.contains("open");
+      b.classList.add("open");
+      if (explainChevs[i]) { explainChevs[i].classList.add("open"); }
+    });
+
+    window.print();
+
+    taskBodies.forEach(function(b, i) {
+      if (!taskWasOpen[i]) {
+        b.classList.remove("open");
+        if (taskBtns[i]) { taskBtns[i].textContent = "+"; }
+      }
+    });
+    explainBodies.forEach(function(b, i) {
+      if (!explainWasOpen[i]) {
+        b.classList.remove("open");
+        if (explainChevs[i]) { explainChevs[i].classList.remove("open"); }
+      }
+    });
+  }
+</script>
+</body>
+</html>

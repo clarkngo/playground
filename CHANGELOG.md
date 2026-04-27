@@ -7,6 +7,17 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-04-26
+
+### [feature] Data Governance homepage — Module 03 card added
+- `classroom-activities/data-governance/index.html`: Module 03 card with red accent, HIPAA/PHI/PII tags, links to lab guide and deliverables; Module 02 badge promoted to Live
+
+### [feature] Module 03 deliverables page created, matching module-01/02 pattern
+- `classroom-activities/data-governance/module-03-deliverables.html`: new standalone student submission page with notebook viewer, 4-screenshot gallery, policy table, risk matrix, and reflection
+- `classroom-activities/data-governance/module-03.html`: deliverables section stripped back to simple "Required Submissions" list + link to deliverables page
+
+---
+
 ## 2026-04-23
 
 ### [feature] Workshop Proposal v2 added with cross-navigation
@@ -218,6 +229,13 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ### [feature] `class-notes/data-governance/module-01.html` — Data Governance Module 1 class notes
 - 17-section notes page: DMBOK definitions, data quality, catalog/discovery, CIA triad in ETL, lineage, MDM (4 styles), 3 metadata types, EA roles, 3 pillars of trust, regulatory urgency; all raw-note placeholders filled with concrete examples
+
+---
+
+## 2026-04-26
+
+### [feature] `classroom-activities/data-governance/module-03.html` — Module 03 Data Protection case study
+- HealthSecure Inc. healthcare data breach scenario; 5 parts: data masking, RBAC, access simulation, security policies, risk assessment
 
 ---
 
