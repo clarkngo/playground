@@ -5,6 +5,13 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-04-28
+
+### [feature] `class-notes/data-governance/module-04.html` — Module 4: Data Sustainment class notes
+- 17-section class notes page covering: Data Sustainment definition, Governance Roles & Hats (8-role matrix), People Layers (Strategic/Tactical/Operational), Controls & Data Flow (preventive/detective/corrective), Data Completeness, Validation Rules (6 rule types with scenarios), Governance Capability Model (5 levels incl. MDM golden records), Quality Assessment (7 dimensions), Data Availability (5 failure types), Knowing & Finding Data (catalog, data dictionary, terminology conflict), Redundancy/Hierarchy/Aggregation, Relationships & Data Repurposing, Security & Authorization (RBAC/ABAC/DAC/MAC + direct vs indirect), Organizational Contexts (legacy/cloud-native/regulated), Challenges & Strategies, Data Administration, Lifecycle Risk Points
+- New card components: `.cap-row` / `.cap-level` capability maturity bars; `.risk-row` 4-column lifecycle risk cards
+- Sticky TOC with 5 groups; JS scroll-based active highlighting; smooth scroll on click
+
 ## 2026-04-26
 
 ### [feature] Data Governance homepage — Module 03 card added
