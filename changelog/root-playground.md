@@ -5,6 +5,40 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-04-29
+
+### [bug] Lessons learned — Module 04 guide missing `expired_data` saveAsTable step
+- `lessons-learned/bug-fixes.md`: Part 3 of the guide jumped from identifying expired rows directly to saving `retained_data`, skipping the `saveAsTable("expired_data")` step; without a catalog entry, students cannot tag the table "Expired" in OpenMetadata and cannot complete D2; root cause: guide was written from policy logic without tracing the full notebook execution
+
+### [feature] Lessons learned — PySpark saveAsTable format anti-pattern
+- `lessons-learned/bug-fixes.md`: added entry "Do Not Specify `.format()` When Saving a Plain DataFrame to a Table" — covers `.format("parquet")` breaking Delta DML, redundant `.format("delta")`, the correct pattern (omit format for plain saves, explicit Delta only when using Delta features), with code examples showing BAD / UNNECESSARY / GOOD cases
+
+### [feature] Module 04 deliverables — notebook viewer updated to actual ipynb content
+- `classroom-activities/data-governance/module-04-deliverables.html`: D1 notebook viewer rebuilt from `Module04_Data_Lifecycle.ipynb` — 16 cells (11 code + 5 markdown section headers); path corrected to `/Volumes/workspace/default/Volume/`; cells 10–11 include live execution output (`Archive completed: 2026-04-29 17:46:17.023459`); markdown section headers (Archive Process, Verify Archive Movement, Deletion Workflow, Delta Version Tracking, Lifecycle Automation Script) rendered with dark blue background
+- D2 screenshots expanded from 2 slots to 4 (2a lifecycle classification, 2b transactions_active, 2c transactions_archive, 2d expired_data); screenshots renamed from macOS timestamp format using Python to handle narrow no-break space in filenames
+
+### [feature] Module 04 — Data Lifecycle Management (FinBank case study) created
+- Created `classroom-activities/data-governance/module-04.html` — full lab guide with 6 task accordions (Parts 1–6), dataset preview table, lifecycle status badges, SQL blocks with teal left border, deliverables list, link bar, and reflection
+  - Part 1 (teal): Dataset Setup & Active/Historical Partitioning (Steps 1–5)
+  - Part 2 (blue): Archive Process — Save & Verify Tables (Steps 6–8)
+  - Part 3 (red): Deletion Workflow — 7-Year Retention Rule (Steps 9–11)
+  - Part 4 (purple): Delta Version Tracking — History & Rollback (Steps 12–14)
+  - Part 5 (green): Lifecycle Automation Script & Audit Logging (Steps 15–16)
+  - Part 6 (amber): OpenMetadata Lifecycle Tags & Recovery Planning (Steps 17–19)
+  - Teal color scheme: `.page-badge { background: #0e7490 }`, `.case-title { color: #22d3ee }`
+  - JS syntax check: passed (no errors)
+- Created `classroom-activities/data-governance/module-04-deliverables.html` — standalone student submission page
+  - Teal color scheme matching lab guide
+  - Progress bar: 4 steps, all marked done
+  - **D1**: 8-cell notebook viewer (CSV load, active/historical split, table save, SQL verification, expired data identification, retained table save, Delta UPDATE + DESCRIBE HISTORY, automation script + structured log)
+  - **D2**: 2 screenshot slots with `onerror` placeholder fallback; LifecycleStage tag reference table (Active/Archived/Expired/Deleted); table tagging summary
+  - **D3**: Retention policy table (Archive boundary, Deletion rule, Version Tracking, Automation) with regulatory citations (SOX, Dodd-Frank, GDPR Article 5); proof-of-deletion log entry block
+  - **D4**: Recovery strategy table — 3 scenarios (accidental deletion, system failure, compliance audit) with specific SQL commands and RTO commitments
+  - Reflection: 5-step process, 4 key learnings, 3 blocker cards, Final Status checklist (6 items)
+- Updated `classroom-activities/data-governance/index.html`: added Module 04 card (teal accent, Delta Lake/Lifecycle/Retention Policy/Compliance Audit tags) with links to both files
+
+---
+
 ## 2026-04-28
 
 ### [feature] `class-notes/data-governance/module-04.html` — Module 4: Data Sustainment class notes
