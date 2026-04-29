@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Module 04 &mdash; Data Lifecycle Management</title>
+  <meta name="author" content="Clark Ngo">
+  <meta name="copyright" content="Clark Ngo">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0d1117; color: #c9d1d9; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; min-height: 100vh; }
+
+    .navbar { background: #161b22; border-bottom: 1px solid #30363d; padding: .75rem 1.5rem; display: flex; align-items: center; justify-content: space-between; }
+    .navbar a { color: #e6edf3; text-decoration: none; font-weight: 700; font-size: 1rem; }
+    .navbar a:hover { color: #58a6ff; }
+    .nav-pill { font-size: .78rem; color: #8b949e; }
+
+    .page-body { max-width: 960px; margin: 0 auto; padding: 2rem; }
+
+    .breadcrumb { font-size: .78rem; color: #8b949e; display: flex; align-items: center; gap: .4rem; margin-bottom: .85rem; flex-wrap: wrap; }
+    .breadcrumb a { color: #58a6ff; text-decoration: none; font-weight: 600; }
+    .breadcrumb a:hover { text-decoration: underline; }
+    .breadcrumb span { color: #484f58; }
+
+    .page-badge { display: inline-block; background: #0e7490; color: #fff; font-size: .72rem; font-weight: 700; padding: 3px 12px; border-radius: 12px; text-transform: uppercase; letter-spacing: .07em; margin-bottom: .6rem; }
+    .page-header h1 { color: #e6edf3; font-size: 1.85rem; font-weight: 800; margin-bottom: .3rem; }
+    .case-title { color: #22d3ee; font-size: .95rem; font-weight: 600; margin-bottom: .65rem; font-style: italic; }
+    .page-desc { color: #8b949e; font-size: .88rem; line-height: 1.7; max-width: 720px; margin-bottom: .85rem; }
+    .tag-row { display: flex; gap: .4rem; flex-wrap: wrap; margin-bottom: 2rem; }
+    .tag { display: inline-block; font-size: .68rem; padding: 2px 8px; border-radius: 8px; font-weight: 600; }
+    .tag-blue   { background: #1f3a5c; color: #58a6ff; }
+    .tag-green  { background: #1a2f1a; color: #3fb950; }
+    .tag-yellow { background: #2d2009; color: #e3b341; }
+    .tag-purple { background: #24183a; color: #bc8cff; }
+    .tag-red    { background: #2d1a1a; color: #f85149; }
+    .tag-teal   { background: #0a2028; color: #22d3ee; }
+
+    .section-label { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #8b949e; border-left: 3px solid #30363d; padding-left: .6rem; margin: 2rem 0 1rem; }
+
+    /* Objectives strip */
+    .obj-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: .65rem; margin-bottom: 1.25rem; }
+    .obj-card { background: #161b22; border: 1px solid #30363d; border-left: 3px solid #0e7490; border-radius: 8px; padding: .75rem 1rem; display: flex; align-items: flex-start; gap: .6rem; }
+    .obj-num { font-size: .68rem; font-weight: 700; color: #22d3ee; background: #0a2028; padding: 2px 7px; border-radius: 5px; flex-shrink: 0; margin-top: .1rem; }
+    .obj-text { font-size: .83rem; color: #c9d1d9; line-height: 1.5; }
+
+    /* Audit failure scenario card */
+    .breach-card { background: #1a1400; border: 1px solid #9e6a03; border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1.1rem; }
+    .breach-title { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: #e3b341; margin-bottom: .85rem; display: flex; align-items: center; gap: .5rem; }
+    .breach-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+    .breach-section-title { font-size: .75rem; font-weight: 700; color: #e6edf3; text-transform: uppercase; letter-spacing: .05em; margin-bottom: .6rem; }
+    .breach-list { list-style: none; display: flex; flex-direction: column; gap: .35rem; }
+    .breach-list li { font-size: .83rem; color: #c9d1d9; display: flex; align-items: flex-start; gap: .5rem; line-height: 1.5; }
+    .breach-dot-red    { width: 6px; height: 6px; border-radius: 50%; background: #f85149; flex-shrink: 0; margin-top: .45rem; }
+    .breach-dot-yellow { width: 6px; height: 6px; border-radius: 50%; background: #e3b341; flex-shrink: 0; margin-top: .45rem; }
+
+    /* Mission strip */
+    .mission-strip { background: #0a2028; border: 1px solid #0e7490; border-radius: 8px; padding: .85rem 1.1rem; margin-bottom: 1.5rem; }
+    .mission-label { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #22d3ee; margin-bottom: .5rem; }
+    .mission-items { display: flex; gap: 1.25rem; flex-wrap: wrap; }
+    .mission-item { font-size: .82rem; color: #c9d1d9; display: flex; align-items: center; gap: .35rem; }
+    .mission-dot { width: 6px; height: 6px; border-radius: 50%; background: #22d3ee; flex-shrink: 0; }
+
+    /* Generic card */
+    .card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1.1rem; }
+    .card-title { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: #3fb950; margin-bottom: .85rem; }
+
+    /* Tables */
+    .data-table { width: 100%; border-collapse: collapse; font-size: .83rem; }
+    .data-table th { background: #0d1117; color: #8b949e; font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; padding: .5rem .75rem; text-align: left; border-bottom: 1px solid #30363d; white-space: nowrap; }
+    .data-table td { padding: .55rem .75rem; border-bottom: 1px solid #21262d; color: #c9d1d9; vertical-align: top; line-height: 1.55; }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover td { background: #1c2435; }
+    .data-table code { font-family: "Menlo","Monaco",monospace; font-size: .8em; background: #21262d; padding: 1px 5px; border-radius: 4px; color: #a5d6ff; }
+
+    /* Task accordion */
+    .task-card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; margin-bottom: .85rem; overflow: hidden; }
+    .task-header { display: flex; align-items: center; gap: .75rem; padding: .9rem 1.25rem; cursor: pointer; user-select: none; transition: background .15s; }
+    .task-header:hover { background: #1c2435; }
+    .task-num { color: #fff; font-size: .68rem; font-weight: 700; padding: 2px 9px; border-radius: 8px; white-space: nowrap; flex-shrink: 0; }
+    .task-title { color: #e6edf3; font-weight: 700; font-size: .94rem; flex: 1; }
+    .task-deliv { font-size: .7rem; color: #8b949e; white-space: nowrap; }
+    .toggle-btn { color: #58a6ff; font-size: 1.2rem; font-weight: 700; width: 22px; text-align: center; flex-shrink: 0; line-height: 1; }
+    .task-body { display: none; padding: 1.25rem 1.5rem; border-top: 1px solid #30363d; }
+    .task-body.open { display: block; }
+
+    .answer-label { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #3fb950; margin-bottom: 1rem; display: flex; align-items: center; gap: .5rem; }
+    .answer-label::after { content: ""; flex: 1; height: 1px; background: #21262d; }
+
+    /* Code blocks */
+    .code-block-label { font-size: .69rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: #8b949e; margin-bottom: .35rem; margin-top: .85rem; }
+    .code-block { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 1rem 1.25rem; font-family: "Menlo","Monaco","Courier New",monospace; font-size: .79rem; color: #c9d1d9; line-height: 1.7; overflow-x: auto; margin-bottom: .5rem; white-space: pre; }
+    .ck { color: #ff7b72; }
+    .cs { color: #a5d6ff; }
+    .cf { color: #d2a8ff; }
+    .cv { color: #ffa657; }
+    .cm { color: #8b949e; }
+
+    /* SQL block */
+    .sql-block { background: #0d1117; border: 1px solid #30363d; border-left: 3px solid #0e7490; border-radius: 8px; padding: 1rem 1.25rem; font-family: "Menlo","Monaco","Courier New",monospace; font-size: .79rem; color: #c9d1d9; line-height: 1.7; overflow-x: auto; margin-bottom: .5rem; white-space: pre; }
+    .sk { color: #22d3ee; }
+    .sv { color: #ffa657; }
+
+    /* Lifecycle status badges */
+    .lc-active   { display: inline-block; font-size: .63rem; font-weight: 700; background: #1a2f1a; color: #3fb950; border: 1px solid #238636; padding: 1px 6px; border-radius: 4px; text-transform: uppercase; }
+    .lc-archive  { display: inline-block; font-size: .63rem; font-weight: 700; background: #1f3a5c; color: #58a6ff; border: 1px solid #1f6feb; padding: 1px 6px; border-radius: 4px; text-transform: uppercase; }
+    .lc-expired  { display: inline-block; font-size: .63rem; font-weight: 700; background: #2d2009; color: #e3b341; border: 1px solid #9e6a03; padding: 1px 6px; border-radius: 4px; text-transform: uppercase; }
+    .lc-deleted  { display: inline-block; font-size: .63rem; font-weight: 700; background: #2d1a1a; color: #f85149; border: 1px solid #b91c1c; padding: 1px 6px; border-radius: 4px; text-transform: uppercase; }
+
+    /* Deliverables */
+    .deliv-list { list-style: none; padding: 0; }
+    .deliv-list li { display: flex; gap: .65rem; align-items: flex-start; padding: .6rem 0; border-bottom: 1px solid #21262d; font-size: .85rem; color: #c9d1d9; line-height: 1.6; }
+    .deliv-list li:last-child { border-bottom: none; }
+    .deliv-num { background: #21262d; color: #8b949e; font-size: .65rem; font-weight: 700; padding: 1px 7px; border-radius: 6px; white-space: nowrap; flex-shrink: 0; margin-top: .15rem; }
+    .deliv-link-bar { background: #0a2028; border: 1px solid #0e7490; border-radius: 10px; padding: 1rem 1.25rem; display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.1rem; }
+    .deliv-link-bar a { color: #22d3ee; font-weight: 700; font-size: .88rem; text-decoration: none; display: flex; align-items: center; gap: .4rem; }
+    .deliv-link-bar a:hover { text-decoration: underline; }
+    .deliv-link-desc { font-size: .8rem; color: #8b949e; }
+
+    /* Explanation panel */
+    .explain-toggle { display: flex; align-items: center; gap: .55rem; margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid #21262d; cursor: pointer; user-select: none; width: fit-content; }
+    .explain-toggle:hover .explain-label { color: #e3b341; }
+    .explain-icon { font-size: .85rem; }
+    .explain-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #9e6a03; transition: color .15s; }
+    .explain-chevron { font-size: .7rem; color: #9e6a03; transition: transform .2s; }
+    .explain-chevron.open { transform: rotate(90deg); }
+    .explain-body { display: none; margin-top: .85rem; background: #1d1600; border: 1px solid #9e6a03; border-radius: 8px; padding: 1.1rem 1.25rem; }
+    .explain-body.open { display: block; }
+    .explain-body h4 { font-size: .78rem; font-weight: 700; color: #e3b341; margin: .85rem 0 .3rem; text-transform: uppercase; letter-spacing: .05em; }
+    .explain-body h4:first-child { margin-top: 0; }
+    .explain-body p { font-size: .83rem; color: #c9d1d9; line-height: 1.72; margin-bottom: .5rem; }
+    .explain-body p:last-child { margin-bottom: 0; }
+    .explain-body ul { font-size: .83rem; color: #c9d1d9; line-height: 1.72; padding-left: 1.1rem; margin-bottom: .5rem; }
+    .explain-body ul li { margin-bottom: .25rem; }
+    .explain-body code { font-family: "Menlo","Monaco",monospace; font-size: .8em; background: #2a2000; border: 1px solid #9e6a03; padding: 1px 5px; border-radius: 4px; color: #ffa657; }
+    .explain-body strong { color: #e3b341; font-weight: 700; }
+
+    /* Dataset preview */
+    .dataset-section { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1.25rem; overflow-x: auto; }
+    .dataset-section-title { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: #8b949e; margin-bottom: .85rem; }
+
+    /* Reflection */
+    .reflection-card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1.35rem 1.5rem; margin-bottom: 2rem; }
+    .reflection-q { font-size: .95rem; font-weight: 700; color: #e6edf3; margin-bottom: .8rem; border-left: 3px solid #0e7490; padding-left: .75rem; }
+    .reflection-a { font-size: .84rem; color: #c9d1d9; line-height: 1.75; }
+    .reflection-a p { margin-bottom: .65rem; }
+    .reflection-a p:last-child { margin-bottom: 0; }
+
+    /* Export button */
+    .export-btn { position: fixed; bottom: 1.75rem; right: 1.75rem; display: flex; align-items: center; gap: .5rem; background: #0e7490; color: #fff; border: none; border-radius: 10px; padding: .65rem 1.1rem; font-size: .82rem; font-weight: 700; cursor: pointer; box-shadow: 0 4px 16px rgba(0,0,0,.4); transition: background .15s, transform .12s; z-index: 100; }
+    .export-btn:hover { background: #0891b2; transform: translateY(-2px); }
+
+    /* Footer */
+    .site-footer { text-align: center; padding: 1.25rem; border-top: 1px solid #21262d; margin-top: 2rem; color: #484f58; font-size: .77rem; }
+
+    /* ── Print ─────────────────────────── */
+    @media print {
+      @page { size: A4; margin: 1.4cm 1.6cm; }
+      *, *::before, *::after { box-sizing: border-box; }
+      body { background: #fff !important; color: #111 !important; font-size: 9.5pt; font-family: "Segoe UI", Helvetica, Arial, sans-serif; }
+      .navbar, .breadcrumb, .export-btn, .toggle-btn, .explain-toggle, .site-footer { display: none !important; }
+      .page-body { max-width: 100%; padding: 0; margin: 0; }
+      .page-badge { background: #0e7490 !important; color: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      h1 { color: #111 !important; font-size: 16pt; }
+      .case-title { color: #0e7490 !important; font-size: 10pt; }
+      .page-desc { color: #444 !important; font-size: 9pt; }
+      .tag { border: 1px solid #ccc; background: #f5f5f5 !important; color: #333 !important; font-size: 7pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .section-label { color: #555 !important; border-left-color: #999 !important; font-size: 7.5pt; margin: 1rem 0 .6rem; }
+      .card, .dataset-section, .reflection-card { background: #fff !important; border: 1px solid #ccc !important; }
+      .breach-card { background: #fffbeb !important; border-color: #d97706 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .breach-title { color: #92400e !important; font-size: 7.5pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .breach-section-title { color: #111 !important; font-size: 8pt; }
+      .breach-list li { color: #222 !important; font-size: 8pt; }
+      .breach-dot-red { background: #b91c1c !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .breach-dot-yellow { background: #d97706 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .mission-strip { background: #f0fdff !important; border-color: #0e7490 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .mission-label { color: #0e7490 !important; font-size: 7pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .task-body { display: block !important; border-top: 1px solid #ccc !important; padding: .85rem 1rem !important; }
+      .task-card { background: #fff !important; border: 1px solid #ccc !important; border-radius: 6px; margin-bottom: .75rem; page-break-inside: avoid; }
+      .task-header { background: #f7f7f7 !important; padding: .6rem 1rem !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .task-num { color: #fff !important; font-size: 7pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .task-title { color: #111 !important; font-size: 9pt; }
+      .task-deliv { color: #666 !important; font-size: 7.5pt; }
+      .answer-label { color: #1a6b2a !important; font-size: 7pt; }
+      .code-block, .sql-block { background: #f8f9fa !important; border: 1px solid #ddd !important; color: #111 !important; font-size: 7.5pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .ck { color: #b91c1c !important; } .cs { color: #1a4fa0 !important; }
+      .cf { color: #5b21b6 !important; } .cv { color: #92400e !important; }
+      .cm { color: #6b7280 !important; } .sk { color: #0e7490 !important; }
+      .explain-body { display: block !important; background: #fffbeb !important; border: 1px solid #d97706 !important; padding: .85rem 1rem !important; margin-top: .75rem; page-break-inside: avoid; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .explain-body h4 { color: #92400e !important; font-size: 7.5pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .explain-body p, .explain-body ul { color: #222 !important; font-size: 8pt; }
+      .explain-body strong { color: #92400e !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .data-table th { background: #f3f4f6 !important; color: #555 !important; font-size: 7pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .data-table td { color: #111 !important; font-size: 8pt; border-bottom: 1px solid #eee !important; }
+      .reflection-q { border-left-color: #0e7490 !important; color: #111 !important; font-size: 9pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .reflection-a { color: #222 !important; font-size: 8pt; }
+      .lc-active, .lc-archive, .lc-expired, .lc-deleted { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+
+    @media (max-width: 680px) {
+      .obj-grid    { grid-template-columns: 1fr; }
+      .breach-grid { grid-template-columns: 1fr; }
+      .mission-items { flex-direction: column; gap: .4rem; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="index.html">&#8592; Data Governance</a>
+  <span class="nav-pill">Module 04 &mdash; Data Lifecycle Management</span>
+</nav>
+
+<div class="page-body">
+
+  <div class="breadcrumb">
+    <a href="../../index.html">Playground</a>
+    <span>/</span>
+    <a href="index.html">Data Governance</a>
+    <span>/</span>
+    <span>Module 04</span>
+  </div>
+
+  <div class="page-header">
+    <div class="page-badge">&#128197; Module 04</div>
+    <h1>Data Lifecycle Management</h1>
+    <div class="case-title">&#127981; Case Study: &ldquo;FinBank &mdash; The Compliance Audit Failure&rdquo;</div>
+    <p class="page-desc">FinBank, a financial services company, failed a regulatory compliance audit because historical customer records were missing, expired data was never deleted, and no retention proof existed. Students act as the Data Governance Sustainment Team to design and implement a full lifecycle management system: active/archive partitioning, deletion workflow, Delta version tracking, automation scripts, and OpenMetadata lifecycle tags.</p>
+    <div class="tag-row">
+      <span class="tag tag-teal">Databricks</span>
+      <span class="tag tag-teal">Delta Lake</span>
+      <span class="tag tag-blue">OpenMetadata</span>
+      <span class="tag tag-green">Data Lifecycle</span>
+      <span class="tag tag-yellow">Retention Policy</span>
+      <span class="tag tag-purple">Version Tracking</span>
+      <span class="tag tag-red">Compliance Audit</span>
+    </div>
+  </div>
+
+  <!-- ── OBJECTIVES ──────────────────────────── -->
+  <div class="section-label">Learning Objectives</div>
+  <div class="obj-grid">
+    <div class="obj-card">
+      <span class="obj-num">01</span>
+      <span class="obj-text">Understand enterprise data lifecycle stages: Active, Archive, Expired, Deleted</span>
+    </div>
+    <div class="obj-card">
+      <span class="obj-num">02</span>
+      <span class="obj-text">Implement lifecycle movement: Active &rarr; Archive &rarr; Delete using PySpark date filters</span>
+    </div>
+    <div class="obj-card">
+      <span class="obj-num">03</span>
+      <span class="obj-text">Define retention policies and apply a 7-year deletion rule with compliance justification</span>
+    </div>
+    <div class="obj-card">
+      <span class="obj-num">04</span>
+      <span class="obj-text">Track table versions using Delta Lake history and simulate a status update workflow</span>
+    </div>
+    <div class="obj-card">
+      <span class="obj-num">05</span>
+      <span class="obj-text">Create lifecycle automation logic using Python scripts with timestamped audit logs</span>
+    </div>
+    <div class="obj-card">
+      <span class="obj-num">06</span>
+      <span class="obj-text">Apply governance visibility using OpenMetadata LifecycleStage classification tags</span>
+    </div>
+  </div>
+
+  <!-- ── SCENARIO ────────────────────────────── -->
+  <div class="section-label">Case Scenario</div>
+  <div class="breach-card">
+    <div class="breach-title">&#9888; Compliance Audit Failure &mdash; FinBank Financial Services</div>
+    <div class="breach-grid">
+      <div>
+        <div class="breach-section-title">Current State &mdash; What Went Wrong</div>
+        <ul class="breach-list">
+          <li><span class="breach-dot-red"></span>Historical customer records were missing during the audit &mdash; no archive strategy existed</li>
+          <li><span class="breach-dot-red"></span>Expired data was never deleted &mdash; no deletion standards or retention schedules</li>
+          <li><span class="breach-dot-red"></span>No retention proof &mdash; auditors could not verify how long records were kept</li>
+          <li><span class="breach-dot-red"></span>No formal lifecycle policy &mdash; all data sat in a single undifferentiated table</li>
+          <li><span class="breach-dot-red"></span>No version tracking &mdash; data changes were made without history or rollback capability</li>
+        </ul>
+      </div>
+      <div>
+        <div class="breach-section-title">Business Impact</div>
+        <ul class="breach-list">
+          <li><span class="breach-dot-yellow"></span>Regulatory penalties issued for non-compliance with data retention mandates</li>
+          <li><span class="breach-dot-yellow"></span>Audit failure &mdash; FinBank must remediate before next review cycle</li>
+          <li><span class="breach-dot-yellow"></span>Increased storage costs from accumulating all historical and expired data together</li>
+          <li><span class="breach-dot-yellow"></span>No ability to prove deletion &mdash; GDPR and financial regulations require deletion records</li>
+          <li><span class="breach-dot-yellow"></span>Operational risk: analysts query stale, outdated records alongside live transactions</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── DATASET ─────────────────────────────── -->
+  <div class="section-label">Dataset &mdash; Transactions_500.csv</div>
+  <div class="dataset-section">
+    <div class="dataset-section-title">Schema &mdash; 6 Columns &middot; 500 Rows</div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Column</th><th>Type</th><th>Description</th><th>Lifecycle Relevance</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td><code>transaction_id</code></td><td>Integer</td><td>Unique transaction identifier (100001&ndash;100500)</td><td>Primary key; used for version tracking</td></tr>
+        <tr><td><code>customer_id</code></td><td>Integer</td><td>Customer reference number</td><td>Linkage to customer records for retention rules</td></tr>
+        <tr><td><code>transaction_date</code></td><td>Date</td><td>Date the transaction was processed (2017&ndash;2026)</td><td><strong>Core lifecycle field</strong> &mdash; drives Active/Archive/Expired classification</td></tr>
+        <tr><td><code>amount</code></td><td>Decimal</td><td>Transaction value in USD (from $51 to $14,959)</td><td>Used in Delta update demo (status change for low-value rows)</td></tr>
+        <tr><td><code>status</code></td><td>String</td><td>Active / Completed / Pending / Closed</td><td>Updated via Delta Lake to reflect lifecycle stage</td></tr>
+        <tr><td><code>country</code></td><td>String</td><td>Customer country (USA, Canada, UK, India, Australia)</td><td>Jurisdiction affects retention requirements (GDPR for UK)</td></tr>
+      </tbody>
+    </table>
+
+    <div style="margin-top:1rem;">
+      <div class="dataset-section-title">Sample Rows</div>
+      <table class="data-table">
+        <thead>
+          <tr><th>transaction_id</th><th>customer_id</th><th>transaction_date</th><th>amount</th><th>status</th><th>country</th><th>Lifecycle Stage</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>100001</td><td>6050</td><td>2020-12-03</td><td>$11,882.92</td><td>Completed</td><td>Canada</td><td><span class="lc-archive">Archive</span></td></tr>
+          <tr><td>100008</td><td>8377</td><td>2026-01-05</td><td>$6,719.36</td><td>Active</td><td>USA</td><td><span class="lc-active">Active</span></td></tr>
+          <tr><td>100029</td><td>4456</td><td>2017-02-26</td><td>$14,408.29</td><td>Active</td><td>UK</td><td><span class="lc-expired">Expired</span></td></tr>
+          <tr><td>100041</td><td>6527</td><td>2017-12-20</td><td>$154.87</td><td>Pending</td><td>UK</td><td><span class="lc-expired">Expired</span></td></tr>
+          <tr><td>100124</td><td>1241</td><td>2026-02-07</td><td>$7,979.03</td><td>Completed</td><td>Canada</td><td><span class="lc-active">Active</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── MISSION STRIP ───────────────────────── -->
+  <div class="mission-strip">
+    <div class="mission-label">&#127919; Your Mission &mdash; Data Governance Sustainment Team</div>
+    <div class="mission-items">
+      <div class="mission-item"><span class="mission-dot"></span>Design retention policy</div>
+      <div class="mission-item"><span class="mission-dot"></span>Build archive strategy</div>
+      <div class="mission-item"><span class="mission-dot"></span>Implement deletion workflow</div>
+      <div class="mission-item"><span class="mission-dot"></span>Create recovery logic</div>
+      <div class="mission-item"><span class="mission-dot"></span>Track lifecycle governance</div>
+    </div>
+  </div>
+
+  <!-- ── PARTS ───────────────────────────────── -->
+  <div class="section-label">Lab Parts &mdash; Answer Key</div>
+
+  <!-- ─────────────────────────────────────────
+       PART 1 — Dataset Setup & Partitioning
+  ───────────────────────────────────────────── -->
+  <div class="task-card">
+    <div class="task-header" onclick="toggleTask('p1')">
+      <span class="task-num" style="background:#0e7490;">Part 1</span>
+      <span class="task-title">Dataset Setup &amp; Active / Historical Partitioning</span>
+      <span class="task-deliv">Steps 1&ndash;5 &middot; D1</span>
+      <span class="toggle-btn" id="btn-p1">+</span>
+    </div>
+    <div class="task-body" id="p1">
+      <div class="answer-label">&#10003; Complete Answer &mdash; Parts 1&ndash;5</div>
+
+      <p style="font-size:.83rem;color:#8b949e;margin-bottom:1rem;">Steps 1&ndash;2 are environment setup (upload CSV, create notebook). Step 3 loads the dataset. Steps 4&ndash;5 apply the core lifecycle split: active data is transactions from the last 12 months; everything older is historical.</p>
+
+      <div class="code-block-label">Step 3 &mdash; Load Dataset</div>
+      <div class="code-block"><span class="cv">df</span> = spark.read.csv(
+    <span class="cs">"/FileStore/tables/Transactions.csv"</span>,
+    header=<span class="ck">True</span>,
+    inferSchema=<span class="ck">True</span>
+)
+display(df)</div>
+
+      <div class="code-block-label">Step 4 &mdash; Create Active Dataset (&le;365 days old)</div>
+      <div class="code-block"><span class="ck">from</span> pyspark.sql.functions <span class="ck">import</span> col, current_date, datediff
+
+<span class="cv">active_data</span> = df.filter(
+    datediff(current_date(), col(<span class="cs">"transaction_date"</span>)) &lt;= <span class="cs">365</span>
+)
+display(active_data)</div>
+
+      <div class="code-block-label">Step 5 &mdash; Create Historical Dataset (&gt;365 days old)</div>
+      <div class="code-block"><span class="cv">historical_data</span> = df.filter(
+    datediff(current_date(), col(<span class="cs">"transaction_date"</span>)) &gt; <span class="cs">365</span>
+)
+display(historical_data)</div>
+
+      <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.85rem 1.1rem;margin:.85rem 0;font-size:.82rem;">
+        <div style="font-size:.69rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8b949e;margin-bottom:.55rem;">Expected Output &mdash; Approximate Row Counts (as of 2026)</div>
+        <table class="data-table" style="font-size:.8rem;">
+          <thead><tr><th>Dataset</th><th>Date Range</th><th>Approx. Rows</th><th>Table Name</th></tr></thead>
+          <tbody>
+            <tr><td><span class="lc-active">Active</span></td><td>2025-04-28 &rarr; 2026-04-28</td><td>~60&ndash;80 rows</td><td><code>transactions_active</code></td></tr>
+            <tr><td><span class="lc-archive">Archive</span></td><td>Before 2025-04-28</td><td>~420&ndash;440 rows</td><td><code>transactions_archive</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="explain-toggle" onclick="toggleExplain('exp-p1')">
+        <span class="explain-icon">&#128161;</span>
+        <span class="explain-label">Why This Answer?</span>
+        <span class="explain-chevron" id="chev-exp-p1">&#9654;</span>
+      </div>
+      <div class="explain-body" id="exp-p1">
+        <h4>Why 365 days as the active/archive boundary?</h4>
+        <p>The 12-month rule is the most common financial services lifecycle threshold. Transactions within the last year are needed for operational queries, customer service lookups, fraud detection, and regulatory reporting. Beyond 12 months, transactions are still legally required but are rarely queried operationally &mdash; making them ideal candidates for archive storage, which is cheaper and has lower IOPS requirements.</p>
+        <h4>Why use datediff(current_date(), col(...)) rather than a hardcoded date?</h4>
+        <p><strong>Dynamic filtering</strong> means the query produces the correct result on any day it runs. A hardcoded date like <code>WHERE transaction_date &lt; '2025-04-28'</code> becomes stale immediately. Using <code>current_date()</code> ensures the lifecycle boundary automatically advances with each execution &mdash; critical for scheduled automation scripts that run daily or weekly.</p>
+        <h4>Why inferSchema=True?</h4>
+        <p>Without <code>inferSchema</code>, all columns default to StringType. The <code>transaction_date</code> column must be parsed as DateType for <code>datediff()</code> to work correctly. If the date is a string, Spark will throw a type mismatch error. Always verify the schema with <code>df.printSchema()</code> after loading.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────
+       PART 2 — Archive Process
+  ───────────────────────────────────────────── -->
+  <div class="task-card">
+    <div class="task-header" onclick="toggleTask('p2')">
+      <span class="task-num" style="background:#1f6feb;">Part 2</span>
+      <span class="task-title">Archive Process &mdash; Save &amp; Verify Tables</span>
+      <span class="task-deliv">Steps 6&ndash;8 &middot; D1</span>
+      <span class="toggle-btn" id="btn-p2">+</span>
+    </div>
+    <div class="task-body" id="p2">
+      <div class="answer-label">&#10003; Complete Answer &mdash; Steps 6&ndash;8</div>
+
+      <div class="code-block-label">Step 6 &mdash; Save Active Table</div>
+      <div class="code-block">active_data.write.mode(<span class="cs">"overwrite"</span>).saveAsTable(
+    <span class="cs">"transactions_active"</span>
+)</div>
+
+      <div class="code-block-label">Step 7 &mdash; Save Archive Table</div>
+      <div class="code-block">historical_data.write.mode(<span class="cs">"overwrite"</span>).saveAsTable(
+    <span class="cs">"transactions_archive"</span>
+)</div>
+
+      <div class="code-block-label">Step 8 &mdash; Verify Archive Movement (SQL)</div>
+      <div class="sql-block"><span class="sk">SELECT</span> <span class="sk">COUNT</span>(*) <span class="sk">AS</span> <span class="sv">active_count</span>   <span class="cm">-- Should be ~60-80</span>
+<span class="sk">FROM</span> transactions_active;
+
+<span class="sk">SELECT</span> <span class="sk">COUNT</span>(*) <span class="sk">AS</span> <span class="sv">archive_count</span>  <span class="cm">-- Should be ~420-440</span>
+<span class="sk">FROM</span> transactions_archive;
+
+<span class="cm">-- Sanity check: totals must equal 500</span>
+<span class="sk">SELECT</span>
+  (<span class="sk">SELECT</span> <span class="sk">COUNT</span>(*) <span class="sk">FROM</span> transactions_active) +
+  (<span class="sk">SELECT</span> <span class="sk">COUNT</span>(*) <span class="sk">FROM</span> transactions_archive)
+  <span class="sk">AS</span> <span class="sv">total_rows</span>;</div>
+
+      <div class="explain-toggle" onclick="toggleExplain('exp-p2')">
+        <span class="explain-icon">&#128161;</span>
+        <span class="explain-label">Why This Answer?</span>
+        <span class="explain-chevron" id="chev-exp-p2">&#9654;</span>
+      </div>
+      <div class="explain-body" id="exp-p2">
+        <h4>Why mode("overwrite")?</h4>
+        <p>The lifecycle pipeline is designed to be re-run on a schedule (daily, weekly). <code>overwrite</code> ensures the table reflects the most current partition &mdash; as new transactions become historical with time, they automatically migrate from active to archive on the next run. Using <code>append</code> would cause duplicates on every execution.</p>
+        <h4>Why verify with COUNT(*) after saving?</h4>
+        <p>The verification query is the compliance proof. Auditors need evidence that the archive was created and that all rows were accounted for. The sanity check (active + archive = 500) confirms no rows were lost or duplicated during the partitioning. This count becomes part of the audit trail alongside the timestamp of execution.</p>
+        <h4>Two separate tables vs. one table with a lifecycle column?</h4>
+        <p><strong>Two tables</strong> is the correct enterprise pattern for lifecycle management. A single table with a <code>lifecycle_stage</code> column still stores everything together &mdash; it does not reduce storage costs or query overhead. Separate tables allow: (1) different storage tiers in cloud providers, (2) different access policies via RBAC, (3) different retention rules per table, and (4) simpler compliance audits.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────
+       PART 3 — Deletion Workflow
+  ───────────────────────────────────────────── -->
+  <div class="task-card">
+    <div class="task-header" onclick="toggleTask('p3')">
+      <span class="task-num" style="background:#b91c1c;">Part 3</span>
+      <span class="task-title">Deletion Workflow &mdash; 7-Year Retention Rule</span>
+      <span class="task-deliv">Steps 9&ndash;11 &middot; D3</span>
+      <span class="toggle-btn" id="btn-p3">+</span>
+    </div>
+    <div class="task-body" id="p3">
+      <div class="answer-label">&#10003; Complete Answer &mdash; Steps 9&ndash;11</div>
+
+      <div style="background:#1a0a0a;border:1px solid #f85149;border-radius:8px;padding:.85rem 1.1rem;margin-bottom:1rem;font-size:.82rem;color:#c9d1d9;line-height:1.65;">
+        <strong style="color:#f85149;">Retention Policy &mdash; Step 9:</strong> Delete data older than <strong>7 years (2,555 days)</strong>. Financial services regulations (including Dodd-Frank, SOX, and various banking acts) require transaction records to be retained for a minimum of 7 years from the date of the transaction. After this period, data must be deleted to comply with data minimization principles under GDPR and equivalent regulations.
+      </div>
+
+      <div class="code-block-label">Step 10 &mdash; Identify Expired Data (&gt;7 years = 2,555 days)</div>
+      <div class="code-block"><span class="cv">expired_data</span> = df.filter(
+    datediff(current_date(), col(<span class="cs">"transaction_date"</span>)) &gt; <span class="cs">2555</span>
+)
+display(expired_data)
+<span class="cm"># As of 2026-04-28: transactions before ~2019-05-11 are expired</span>
+<span class="cm"># This captures all 2017 and 2018 records in the dataset</span></div>
+
+      <div class="code-block-label">Step 11 &mdash; Simulate Delete (retain everything else)</div>
+      <div class="code-block"><span class="cm"># Retained = all data that is NOT expired</span>
+<span class="cv">retained_data</span> = df.filter(
+    datediff(current_date(), col(<span class="cs">"transaction_date"</span>)) &lt;= <span class="cs">2555</span>
+)
+display(retained_data)
+
+<span class="cm"># Save retained data back (simulated deletion)</span>
+retained_data.write.mode(<span class="cs">"overwrite"</span>).saveAsTable(
+    <span class="cs">"transactions_retained"</span>
+)
+
+<span class="cm"># Log the deletion event</span>
+expired_count = expired_data.count()
+print(<span class="cf">f</span><span class="cs">"Expired rows identified for deletion: {expired_count}"</span>)
+print(<span class="cf">f</span><span class="cs">"Retained rows: {retained_data.count()}"</span>)
+print(<span class="cf">f</span><span class="cs">"Deletion policy: 7 years (2555 days)"</span>)</div>
+
+      <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.85rem 1.1rem;margin:.85rem 0;font-size:.82rem;">
+        <div style="font-size:.69rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8b949e;margin-bottom:.55rem;">Expected Output (as of 2026-04-28)</div>
+        <table class="data-table" style="font-size:.8rem;">
+          <thead><tr><th>Category</th><th>Date Range</th><th>Approx. Rows</th><th>Action</th></tr></thead>
+          <tbody>
+            <tr><td><span class="lc-expired">Expired</span></td><td>Before 2019-05-11 (2017&ndash;early 2019)</td><td>~60&ndash;80 rows</td><td>Mark for deletion</td></tr>
+            <tr><td><span class="lc-active">Retained</span></td><td>2019-05-11 onwards</td><td>~420&ndash;440 rows</td><td>Keep in <code>transactions_retained</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="explain-toggle" onclick="toggleExplain('exp-p3')">
+        <span class="explain-icon">&#128161;</span>
+        <span class="explain-label">Why This Answer?</span>
+        <span class="explain-chevron" id="chev-exp-p3">&#9654;</span>
+      </div>
+      <div class="explain-body" id="exp-p3">
+        <h4>Why 2,555 days (not 7 &times; 365 = 2,555)?</h4>
+        <p>2,555 = 7 &times; 365. This does not account for leap years &mdash; a more precise value would be 2,557 days (7 years with 2 leap years). In production, the recommended approach is to use date arithmetic directly: <code>transaction_date &lt; date_sub(current_date(), 365 * 7)</code> or equivalent month-based functions. For this lab, 2,555 is the accepted approximation.</p>
+        <h4>Why is this a simulation and not an actual DELETE?</h4>
+        <p>In Databricks, the safest deletion pattern for compliance purposes is: (1) identify the expired rows, (2) save the retained subset to a new table, (3) log the count and timestamp, and (4) only then drop or overwrite the original. This two-step approach ensures there is always a recoverable state. Direct <code>DELETE FROM</code> statements on large tables also hold locks and can fail partway through without a transactional rollback.</p>
+        <h4>Why must you log the deletion event?</h4>
+        <p>Regulators do not just require that data is deleted &mdash; they require <strong>proof of deletion</strong>. The log output (count of expired rows, timestamp, policy name) forms the deletion record. Without it, FinBank would face the same audit failure in the next review cycle. In production, this log should be written to an immutable audit store such as an S3 bucket with Object Lock or Azure Blob Storage with Immutability Policies.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────
+       PART 4 — Delta Version Tracking
+  ───────────────────────────────────────────── -->
+  <div class="task-card">
+    <div class="task-header" onclick="toggleTask('p4')">
+      <span class="task-num" style="background:#6e40c9;">Part 4</span>
+      <span class="task-title">Delta Version Tracking &mdash; History &amp; Rollback</span>
+      <span class="task-deliv">Steps 12&ndash;14 &middot; D1</span>
+      <span class="toggle-btn" id="btn-p4">+</span>
+    </div>
+    <div class="task-body" id="p4">
+      <div class="answer-label">&#10003; Complete Answer &mdash; Steps 12&ndash;14</div>
+
+      <div class="code-block-label">Step 12 &mdash; Save as Delta Table</div>
+      <div class="code-block">active_data.write.format(<span class="cs">"delta"</span>)\
+    .mode(<span class="cs">"overwrite"</span>)\
+    .saveAsTable(<span class="cs">"transactions_delta"</span>)</div>
+
+      <div class="code-block-label">Step 13 &mdash; Update Status for Low-Value Transactions (SQL)</div>
+      <div class="sql-block"><span class="sk">UPDATE</span> transactions_delta
+<span class="sk">SET</span> status = <span class="sv">'Archived'</span>
+<span class="sk">WHERE</span> amount &lt; <span class="sv">100</span>;
+
+<span class="cm">-- Verify the update</span>
+<span class="sk">SELECT</span> transaction_id, amount, status
+<span class="sk">FROM</span>   transactions_delta
+<span class="sk">WHERE</span>  status = <span class="sv">'Archived'</span>
+<span class="sk">ORDER</span>  <span class="sk">BY</span> amount <span class="sk">ASC</span>;</div>
+
+      <div class="code-block-label">Step 14 &mdash; View Delta History</div>
+      <div class="sql-block"><span class="sk">DESCRIBE</span> <span class="sk">HISTORY</span> transactions_delta;</div>
+
+      <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.85rem 1.1rem;margin:.85rem 0;font-size:.82rem;">
+        <div style="font-size:.69rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8b949e;margin-bottom:.55rem;">DESCRIBE HISTORY Output &mdash; Example</div>
+        <table class="data-table" style="font-size:.78rem;">
+          <thead><tr><th>version</th><th>timestamp</th><th>operation</th><th>operationParameters</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>2026-04-28 10:15:32</td><td>UPDATE</td><td><code>{"predicate": "amount &lt; 100"}</code></td></tr>
+            <tr><td>0</td><td>2026-04-28 10:12:05</td><td>CREATE OR REPLACE TABLE AS SELECT</td><td><code>{"mode": "Overwrite"}</code></td></tr>
+          </tbody>
+        </table>
+        <div style="margin-top:.65rem;font-size:.78rem;color:#8b949e;">Rollback to version 0: <code style="background:#0d1117;color:#a5d6ff;padding:2px 5px;border-radius:3px;">RESTORE TABLE transactions_delta TO VERSION AS OF 0</code></div>
+      </div>
+
+      <div class="explain-toggle" onclick="toggleExplain('exp-p4')">
+        <span class="explain-icon">&#128161;</span>
+        <span class="explain-label">Why This Answer?</span>
+        <span class="explain-chevron" id="chev-exp-p4">&#9654;</span>
+      </div>
+      <div class="explain-body" id="exp-p4">
+        <h4>Why Delta format instead of Parquet or CSV?</h4>
+        <p>Delta Lake adds ACID transactions and versioned history on top of Parquet storage. Standard Parquet files do not support UPDATE or DELETE operations natively &mdash; you would have to rewrite the entire file. Delta allows row-level modifications with full transaction isolation. More importantly, <code>DESCRIBE HISTORY</code> creates the audit trail that FinBank needs to demonstrate to regulators that every data change was logged with a timestamp and operation type.</p>
+        <h4>Why update status to "Archived" for amount &lt; 100?</h4>
+        <p>Low-value micro-transactions (below $100) are frequently the first candidates for lifecycle stage changes in financial services &mdash; they are rarely disputed, rarely audited, and their operational value decays quickly. This step demonstrates that <strong>Delta updates are selective</strong>: you can change a column value for a subset of rows while leaving the rest untouched, and the history captures exactly which rows were affected and when.</p>
+        <h4>What is the business value of DESCRIBE HISTORY?</h4>
+        <p>Version history answers the auditor question: &ldquo;When was this data modified, by whom, and what changed?&rdquo; Without it, FinBank cannot demonstrate data integrity. With it, they can: (1) roll back accidental updates with <code>RESTORE TABLE</code>, (2) run time-travel queries with <code>SELECT * FROM transactions_delta VERSION AS OF 0</code>, and (3) provide the regulator with a tamper-evident change log for any table in the data platform.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────
+       PART 5 — Lifecycle Automation Script
+  ───────────────────────────────────────────── -->
+  <div class="task-card">
+    <div class="task-header" onclick="toggleTask('p5')">
+      <span class="task-num" style="background:#238636;">Part 5</span>
+      <span class="task-title">Lifecycle Automation Script &amp; Audit Logging</span>
+      <span class="task-deliv">Steps 15&ndash;16 &middot; D1</span>
+      <span class="toggle-btn" id="btn-p5">+</span>
+    </div>
+    <div class="task-body" id="p5">
+      <div class="answer-label">&#10003; Complete Answer &mdash; Steps 15&ndash;16</div>
+
+      <div class="code-block-label">Step 15 &mdash; Archive Automation Script</div>
+      <div class="code-block"><span class="ck">import</span> shutil
+<span class="ck">import</span> os
+<span class="ck">from</span> datetime <span class="ck">import</span> datetime
+
+<span class="cv">source</span>  = <span class="cs">"/dbfs/FileStore/tables/Transactions.csv"</span>
+<span class="cv">archive</span> = <span class="cs">"/dbfs/FileStore/archive/Transactions.csv"</span>
+
+<span class="cm"># Ensure the archive directory exists</span>
+os.makedirs(<span class="cs">"/dbfs/FileStore/archive/"</span>, exist_ok=<span class="ck">True</span>)
+
+<span class="cm"># Copy source file to archive location</span>
+shutil.copy(source, archive)
+print(<span class="cs">"Archive completed:"</span>, datetime.now())</div>
+
+      <div class="code-block-label">Step 16 &mdash; Structured Audit Log</div>
+      <div class="code-block"><span class="cv">log</span> = {
+    <span class="cs">"action"</span>    : <span class="cs">"archive"</span>,
+    <span class="cs">"file"</span>      : <span class="cs">"Transactions.csv"</span>,
+    <span class="cs">"source"</span>    : <span class="cs">"/dbfs/FileStore/tables/Transactions.csv"</span>,
+    <span class="cs">"destination"</span>: <span class="cs">"/dbfs/FileStore/archive/Transactions.csv"</span>,
+    <span class="cs">"timestamp"</span> : str(datetime.now()),
+    <span class="cs">"policy"</span>    : <span class="cs">"7-year retention"</span>,
+    <span class="cs">"executed_by"</span>: <span class="cs">"Data Governance Sustainment Team"</span>
+}
+print(log)</div>
+
+      <div style="background:#0b1f0b;border:1px solid #238636;border-radius:8px;padding:.75rem 1rem;margin:.85rem 0;font-size:.78rem;color:#3fb950;font-family:Menlo,Monaco,monospace;">
+        Archive completed: 2026-04-28 10:15:32.441023<br>
+        {&apos;action&apos;: &apos;archive&apos;, &apos;file&apos;: &apos;Transactions.csv&apos;, &apos;timestamp&apos;: &apos;2026-04-28 10:15:32.441023&apos;, &apos;policy&apos;: &apos;7-year retention&apos;, &apos;executed_by&apos;: &apos;Data Governance Sustainment Team&apos;}
+      </div>
+
+      <div class="explain-toggle" onclick="toggleExplain('exp-p5')">
+        <span class="explain-icon">&#128161;</span>
+        <span class="explain-label">Why This Answer?</span>
+        <span class="explain-chevron" id="chev-exp-p5">&#9654;</span>
+      </div>
+      <div class="explain-body" id="exp-p5">
+        <h4>Why use shutil.copy instead of moving the file?</h4>
+        <p><strong>Copy, then verify, then delete</strong> is the safest lifecycle automation pattern. <code>shutil.move()</code> removes the source immediately &mdash; if the copy fails midway, the file is gone. Copying first preserves the source until you have verified the archive is intact. Only after the copy succeeds (and the count checks pass) should the original be removed in a follow-up step.</p>
+        <h4>Why include policy and executed_by in the log?</h4>
+        <p>The structured log dictionary is not just debugging output &mdash; it is <strong>governance metadata</strong>. In production, this dictionary would be written to a permanent audit store (Delta table, S3 JSON, or a compliance database). The <code>policy</code> field links the action to the specific retention rule that authorized the deletion. The <code>executed_by</code> field identifies accountability. Auditors reviewing the log can trace exactly: what was archived, when, by whom, and under which policy authority.</p>
+        <h4>How would you schedule this in production?</h4>
+        <p>Databricks Jobs (formerly Databricks Workflows) can schedule this notebook to run automatically on a cron schedule &mdash; e.g., daily at 2:00 AM. The scheduler handles retries on failure, sends alerts on success/failure, and logs each run. Combined with Delta Lake history, this creates a fully automated, auditable lifecycle pipeline with no manual intervention required.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────
+       PART 6 — OpenMetadata & Recovery
+  ───────────────────────────────────────────── -->
+  <div class="task-card">
+    <div class="task-header" onclick="toggleTask('p6')">
+      <span class="task-num" style="background:#9e6a03;">Part 6</span>
+      <span class="task-title">OpenMetadata Lifecycle Tags &amp; Recovery Planning</span>
+      <span class="task-deliv">Steps 17&ndash;19 &middot; D2, D4</span>
+      <span class="toggle-btn" id="btn-p6">+</span>
+    </div>
+    <div class="task-body" id="p6">
+      <div class="answer-label">&#10003; Complete Answer &mdash; Steps 17&ndash;19</div>
+
+      <p style="font-size:.83rem;color:#8b949e;margin-bottom:1rem;">Step 17 creates the <code>LifecycleStage</code> classification in OpenMetadata. Step 18 applies tags to the three tables. Step 19 documents the recovery strategy for three failure scenarios.</p>
+
+      <div style="font-size:.69rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8b949e;margin-bottom:.55rem;">Step 17 &mdash; LifecycleStage Classification Tags</div>
+      <table class="data-table" style="margin-bottom:1rem;">
+        <thead><tr><th>Tag</th><th>Meaning</th><th>Color Convention</th></tr></thead>
+        <tbody>
+          <tr><td><span class="lc-active">Active</span></td><td>Operational data &mdash; within 12-month window, queried regularly</td><td>Green &mdash; safe to read/write</td></tr>
+          <tr><td><span class="lc-archive">Archived</span></td><td>Historical retained data &mdash; older than 12 months, within 7-year window</td><td>Blue &mdash; read-only, cold storage</td></tr>
+          <tr><td><span class="lc-expired">Expired</span></td><td>Past 7-year retention limit &mdash; approved for deletion</td><td>Amber &mdash; pending deletion review</td></tr>
+          <tr><td><span class="lc-deleted">Deleted</span></td><td>Removed from all systems &mdash; deletion certificate issued</td><td>Red &mdash; audit record only</td></tr>
+        </tbody>
+      </table>
+
+      <div style="font-size:.69rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8b949e;margin-bottom:.55rem;">Step 18 &mdash; Apply Tags to Tables</div>
+      <table class="data-table" style="margin-bottom:1rem;">
+        <thead><tr><th>Table</th><th>LifecycleStage Tag</th><th>Justification</th></tr></thead>
+        <tbody>
+          <tr><td><code>transactions_active</code></td><td><span class="lc-active">Active</span></td><td>Contains transactions from last 12 months &mdash; operationally live</td></tr>
+          <tr><td><code>transactions_archive</code></td><td><span class="lc-archive">Archived</span></td><td>Transactions older than 12 months, within 7-year retention window</td></tr>
+          <tr><td><code>transactions_delta</code></td><td><span class="lc-active">Active</span></td><td>Delta version-tracked subset of active data; supports audit queries</td></tr>
+          <tr><td><code>expired_data</code> (logical)</td><td><span class="lc-expired">Expired</span></td><td>Rows older than 7 years &mdash; identified for deletion, pending approval</td></tr>
+        </tbody>
+      </table>
+
+      <div style="font-size:.69rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8b949e;margin-bottom:.55rem;">Step 19 &mdash; Recovery Strategy</div>
+      <table class="data-table" style="margin-bottom:1rem;">
+        <thead><tr><th>Scenario</th><th>Recovery Method</th><th>Tool / Command</th><th>RTO</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>Accidental deletion</strong> of a live transaction</td>
+            <td>Restore from archive table; if within Delta window, use time-travel query</td>
+            <td><code>RESTORE TABLE transactions_delta TO VERSION AS OF 0</code></td>
+            <td>&lt;1 hour</td>
+          </tr>
+          <tr>
+            <td><strong>System failure</strong> &mdash; cluster crash mid-pipeline</td>
+            <td>Restore Delta version from last successful checkpoint; re-run idempotent notebook</td>
+            <td><code>SELECT * FROM transactions_delta VERSION AS OF N</code></td>
+            <td>&lt;2 hours</td>
+          </tr>
+          <tr>
+            <td><strong>Compliance audit</strong> &mdash; regulator requests data lineage</td>
+            <td>Provide Delta history + OpenMetadata Activity Feed + lifecycle tag timestamps</td>
+            <td><code>DESCRIBE HISTORY transactions_delta</code> + OpenMetadata export</td>
+            <td>Same day</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="explain-toggle" onclick="toggleExplain('exp-p6')">
+        <span class="explain-icon">&#128161;</span>
+        <span class="explain-label">Why This Answer?</span>
+        <span class="explain-chevron" id="chev-exp-p6">&#9654;</span>
+      </div>
+      <div class="explain-body" id="exp-p6">
+        <h4>Why does OpenMetadata tagging matter if the data already lives in separate tables?</h4>
+        <p>The Databricks tables enforce the physical separation of data. OpenMetadata tags provide <strong>governance visibility</strong> &mdash; they make the lifecycle stage discoverable to any data consumer who finds the table in the catalog without reading the documentation. A data analyst querying <code>transactions_archive</code> who sees the <code>Archived</code> tag immediately knows: this is read-only, it is not the live dataset, and they should not use it for real-time reporting. Tags reduce miscommunication between data engineers and business consumers.</p>
+        <h4>Why does the recovery strategy specify RTO (Recovery Time Objective)?</h4>
+        <p>An RTO without a number is not a recovery strategy &mdash; it is a wishlist. Regulators and internal SLAs require specific time commitments. The RTO values above (&lt;1 hour for accidental deletion, &lt;2 hours for system failure) are derived from the simplicity of Delta time-travel recovery. These should be tested in a DR drill before they are committed to in a policy document. If the actual recovery takes 4 hours, the policy must be updated.</p>
+        <h4>Why is &ldquo;lineage + history&rdquo; the answer for compliance audits?</h4>
+        <p>A compliance audit is fundamentally a <strong>provenance question</strong>: where did this data come from, what happened to it, and can you prove it? Delta Lake answers the &ldquo;what happened&rdquo; question (every operation logged with timestamp). OpenMetadata lineage answers the &ldquo;where did it come from&rdquo; question (CSV &rarr; raw table &rarr; active/archive tables). Together they create the complete chain of custody that regulators require. Neither tool alone is sufficient.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── DELIVERABLES ───────────────────────────── -->
+  <div class="section-label">Deliverables</div>
+
+  <div class="card">
+    <div class="card-title">Required Submissions</div>
+    <ul class="deliv-list">
+      <li>
+        <span class="deliv-num">D1</span>
+        <div><strong>Databricks Notebook</strong> &mdash; Must include: active/historical split logic, archive table creation, expired data identification, retained data save, Delta table with UPDATE and DESCRIBE HISTORY, and automation script with structured log output.</div>
+      </li>
+      <li>
+        <span class="deliv-num">D2</span>
+        <div><strong>OpenMetadata Screenshots</strong> &mdash; LifecycleStage classification with all four tags (Active, Archived, Expired, Deleted) visible; tags applied to <code>transactions_active</code>, <code>transactions_archive</code>, and <code>expired_data</code> tables.</div>
+      </li>
+      <li>
+        <span class="deliv-num">D3</span>
+        <div><strong>Retention Policy Document</strong> &mdash; Archive rule (12-month boundary), deletion rule (7-year / 2,555-day cutoff), compliance justification referencing the specific regulatory requirement, and proof-of-deletion log entry.</div>
+      </li>
+      <li>
+        <span class="deliv-num">D4</span>
+        <div><strong>Recovery Strategy</strong> &mdash; Three failure scenarios (accidental deletion, system failure, compliance audit) each with recovery method, specific tool or SQL command, and Recovery Time Objective (RTO).</div>
+      </li>
+    </ul>
+  </div>
+
+  <div class="deliv-link-bar">
+    <div>
+      <a href="module-04-deliverables.html">&#128196; View Student Submission &rarr;</a>
+      <div class="deliv-link-desc">Notebook, screenshots, retention policy, and recovery strategy</div>
+    </div>
+    <span style="font-size:.72rem;color:#484f58;font-weight:600;">module-04-deliverables.html</span>
+  </div>
+
+  <!-- ── REFLECTION ─────────────────────────────── -->
+  <div class="section-label">Reflection</div>
+  <div class="reflection-card">
+    <div class="reflection-q">Why is data lifecycle management a compliance requirement and not just a storage optimization?</div>
+    <div class="reflection-a">
+      <p>Storage optimization is a side effect. Compliance is the primary driver. Financial regulations &mdash; SOX, Dodd-Frank, PCI DSS, GDPR, and country-level banking acts &mdash; specify exactly how long transaction records must be retained and require proof that expired records were deleted. FinBank failed its audit not because it was storing too much data, but because it could not prove what it had, where it was, and what happened to it. That is a governance failure, not a storage failure.</p>
+      <p>Data without a lifecycle policy degrades in three ways simultaneously: it accumulates (storage costs rise), it becomes unreliable (active and stale data are indistinguishable), and it creates legal exposure (inability to prove deletion under GDPR right-to-erasure requests). Each of these is a separate risk category with separate penalties. The lifecycle pipeline built in this module addresses all three: separate tables enforce reliability, the deletion workflow controls accumulation, and the audit log proves compliance.</p>
+      <p>The deeper lesson is that data governance is the enforcement layer between policy (the 7-year retention rule exists in law) and practice (nobody implemented it in the system). Without Databricks lifecycle filters, OpenMetadata tags, and Delta audit history, the policy exists only on paper. A governance framework that lives only in a document has no operational effect &mdash; and provides no protection when the auditor walks in.</p>
+    </div>
+  </div>
+
+</div><!-- /page-body -->
+
+<button class="export-btn" onclick="exportPDF()">
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+    <polyline points="7 10 12 15 17 10"/>
+    <line x1="12" y1="15" x2="12" y2="3"/>
+  </svg>
+  Export PDF
+</button>
+
+<footer class="site-footer">
+  Module 04 &mdash; Data Lifecycle Management &middot; FinBank Case Study
+</footer>
+
+<script>
+  function toggleTask(id) {
+    var body = document.getElementById(id);
+    var btn  = document.getElementById("btn-" + id);
+    var isOpen = body.classList.contains("open");
+    body.classList.toggle("open");
+    btn.textContent = isOpen ? "+" : "\u2212";
+  }
+
+  function toggleExplain(id) {
+    var body    = document.getElementById(id);
+    var chevron = document.getElementById("chev-" + id);
+    body.classList.toggle("open");
+    chevron.classList.toggle("open");
+  }
+
+  function exportPDF() {
+    var taskBodies    = document.querySelectorAll(".task-body");
+    var taskBtns      = document.querySelectorAll(".toggle-btn");
+    var explainBodies = document.querySelectorAll(".explain-body");
+    var explainChevs  = document.querySelectorAll(".explain-chevron");
+    var taskWasOpen   = [];
+    var explainWasOpen = [];
+
+    taskBodies.forEach(function(b, i) {
+      taskWasOpen[i] = b.classList.contains("open");
+      b.classList.add("open");
+      if (taskBtns[i]) { taskBtns[i].textContent = "\u2212"; }
+    });
+    explainBodies.forEach(function(b, i) {
+      explainWasOpen[i] = b.classList.contains("open");
+      b.classList.add("open");
+      if (explainChevs[i]) { explainChevs[i].classList.add("open"); }
+    });
+
+    window.print();
+
+    taskBodies.forEach(function(b, i) {
+      if (!taskWasOpen[i]) {
+        b.classList.remove("open");
+        if (taskBtns[i]) { taskBtns[i].textContent = "+"; }
+      }
+    });
+    explainBodies.forEach(function(b, i) {
+      if (!explainWasOpen[i]) {
+        b.classList.remove("open");
+        if (explainChevs[i]) { explainChevs[i].classList.remove("open"); }
+      }
+    });
+  }
+</script>
+
+</body>
+</html>

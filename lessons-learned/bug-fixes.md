@@ -4,6 +4,56 @@ Root causes and patterns for bugs found across the cryptography labs.
 
 ---
 
+## Lab Guide Missing Step: Save `expired_data` as a Table Before the Deletion Simulation
+
+**Symptom:** In the Module 04 lab guide (Part 3 — Deletion Workflow), students are instructed to identify expired rows and then immediately save `retained_data`. However, the actual student notebook also saves `expired_data` as its own table (`expired_data.write.saveAsTable("expired_data")`). Without this step, students have no catalog entry to tag "Expired" in OpenMetadata (D2), and the OpenMetadata screenshot deliverable cannot be completed.
+
+**Root cause:** The guide was written top-down from the policy logic (identify → delete → retain) without tracing the full notebook execution. The intermediate table — `expired_data` as a persisted Databricks table — is a required artifact for D2 (OpenMetadata lifecycle tagging) and was silently skipped.
+
+**The missing step** (should appear between "Identify Expired Data" and "Simulate Delete"):
+
+```python
+# Save as Deleted Table
+expired_data.write \
+    .mode("overwrite")   \
+    .saveAsTable("expired_data")
+```
+
+**Why it matters:** OpenMetadata can only tag tables that exist in the catalog. If `expired_data` is only a Spark DataFrame in memory, it has no catalog entry and cannot be tagged with the `Expired` LifecycleStage. The saved table is the governance artifact — the tag on it is the proof that the data was identified and staged for deletion.
+
+**Rule:** When a lab deliverable requires tagging or cataloging a dataset in OpenMetadata, there must be a corresponding `saveAsTable()` step in the notebook. A DataFrame in memory is invisible to the catalog.
+
+**Affected:** `classroom-activities/data-governance/module-04.html` — Part 3, Step 10/11 gap.
+
+---
+
+## Do Not Specify `.format()` When Saving a Plain DataFrame to a Table (Databricks / PySpark)
+
+**Symptom:** Using `.format("parquet")` saves the table without Delta support — `UPDATE`, `DELETE`, `MERGE`, `DESCRIBE HISTORY`, and time-travel queries all fail with `AnalysisException`. Using `.format("delta")` unnecessarily adds confusion about intent and is redundant on modern Databricks where Delta is the default.
+
+**Root cause:** In Databricks, `saveAsTable()` already defaults to Delta format. Explicitly passing `.format("parquet")` overrides that default and creates a non-Delta table. Explicitly passing `.format("delta")` is harmless but misleading when you don't actually need Delta features — it implies you're using Delta intentionally, making the code harder to read.
+
+```python
+# BAD — parquet table, no ACID, no version history, DML fails
+df.write.format("parquet").mode("overwrite").saveAsTable("my_table")
+
+# UNNECESSARY — Delta is already the default in Databricks
+df.write.format("delta").mode("overwrite").saveAsTable("my_table")
+
+# GOOD — clean, uses Databricks default (Delta)
+df.write.mode("overwrite").saveAsTable("my_table")
+
+# GOOD — explicit Delta only when you're intentionally using Delta features
+active_data.write.format("delta").mode("overwrite").saveAsTable("transactions_delta")
+# ... followed by: UPDATE, DESCRIBE HISTORY, time-travel queries
+```
+
+**Rule:** Only add `.format("delta")` when the next step uses a Delta-specific feature (DML, `DESCRIBE HISTORY`, `RESTORE TABLE`, time-travel). For plain saves, omit `.format()` entirely.
+
+**Affected:** `classroom-activities/data-governance/module-04.html` — Parts 1–3 (plain saves) vs Part 4 (explicit Delta for version tracking).
+
+---
+
 ## String splice indices after earlier edit (HTML generators)
 
 **Symptom:** Replacement content appears to splice into the middle of an unrelated tag (e.g. `class="pd  <!-- …`), deleting the lab header and breaking the DOM.

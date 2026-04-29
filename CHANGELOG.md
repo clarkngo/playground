@@ -7,6 +7,21 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-04-29
+
+### [bug] Lessons learned — Module 04 guide missing `expired_data` saveAsTable step
+- `lessons-learned/bug-fixes.md`: added entry — lab guide Part 3 skipped saving `expired_data` as a Databricks table; without it, students have no catalog entry to tag "Expired" in OpenMetadata and cannot complete D2
+
+### [feature] Lessons learned — PySpark saveAsTable format anti-pattern documented
+- `lessons-learned/bug-fixes.md`: do not use `.format("parquet")` or redundant `.format("delta")` when saving a plain DataFrame; omit format for standard saves, use explicit delta only when Delta features follow
+
+### [feature] Data Governance Module 04 — FinBank Data Lifecycle Management
+- `classroom-activities/data-governance/module-04.html`: full lab guide with 6-part answer key, lifecycle status badges, Delta SQL blocks, dataset preview, teal color scheme
+- `classroom-activities/data-governance/module-04-deliverables.html`: student submission page with 8-cell notebook viewer, OpenMetadata screenshots, retention policy table, recovery strategy table, and reflection
+- `classroom-activities/data-governance/index.html`: Module 04 card added (teal accent, Delta Lake/Lifecycle/Retention Policy tags)
+
+---
+
 ## 2026-04-28
 
 ### [feature] `class-notes/data-governance/module-04.html` — Module 4: Data Sustainment
