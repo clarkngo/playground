@@ -7,6 +7,11 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-04-28
+
+### [feature] `class-notes/data-governance/module-04.html` — Module 4: Data Sustainment
+- New 17-section class notes page: roles & hats matrix, people layers, controls & data flow, completeness, validation rules, capability model (MDM golden records), quality assessment, availability, data discovery, redundancy/aggregation, security & authorization (RBAC/ABAC), org contexts, lifecycle risk points
+
 ## 2026-04-27
 
 ### [feature] The Pitt — Stryker post-apocalyptic escape room
