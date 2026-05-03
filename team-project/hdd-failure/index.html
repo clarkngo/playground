@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HDD Failure Prediction &mdash; Team Project</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0d1117; color: #c9d1d9; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; min-height: 100vh; }
+
+    .navbar { background: #161b22; border-bottom: 1px solid #30363d; padding: .75rem 1.5rem; display: flex; align-items: center; justify-content: space-between; }
+    .navbar a { color: #e6edf3; text-decoration: none; font-weight: 700; font-size: 1rem; }
+    .navbar a:hover { color: #58a6ff; }
+    .nav-pill { font-size: .78rem; color: #8b949e; }
+
+    .page-body { max-width: 1060px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+    .breadcrumb { font-size: .78rem; color: #8b949e; display: flex; align-items: center; gap: .4rem; margin-bottom: .85rem; flex-wrap: wrap; }
+    .breadcrumb a { color: #58a6ff; text-decoration: none; font-weight: 600; }
+    .breadcrumb a:hover { text-decoration: underline; }
+    .breadcrumb span { color: #484f58; }
+
+    .page-badge { display: inline-block; background: #9e6a03; color: #fff; font-size: .72rem; font-weight: 700; padding: 3px 12px; border-radius: 12px; text-transform: uppercase; letter-spacing: .07em; margin-bottom: .6rem; }
+    h1 { color: #e6edf3; font-size: 1.85rem; font-weight: 800; margin-bottom: .3rem; line-height: 1.2; }
+    .page-sub { color: #8b949e; font-size: .88rem; line-height: 1.7; max-width: 780px; margin-bottom: 1.2rem; }
+
+    .meta-row { display: flex; gap: .6rem; flex-wrap: wrap; margin-bottom: 1.8rem; }
+    .meta-pill { background: #161b22; border: 1px solid #30363d; border-radius: 20px; padding: .3rem .85rem; font-size: .75rem; color: #8b949e; }
+    .meta-pill strong { color: #e6edf3; }
+
+    .tab-nav { display: flex; gap: .25rem; border-bottom: 1px solid #30363d; margin-bottom: 2rem; flex-wrap: wrap; }
+    .tab-btn { background: none; border: none; border-bottom: 2px solid transparent; padding: .65rem 1rem; font-size: .85rem; font-weight: 600; color: #8b949e; cursor: pointer; transition: color .15s, border-color .15s; white-space: nowrap; }
+    .tab-btn:hover { color: #c9d1d9; }
+    .tab-btn.active { color: #e3b341; border-bottom-color: #9e6a03; }
+    .tab-section { display: none; }
+    .tab-section.active { display: block; }
+
+    .section-label { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #8b949e; border-left: 3px solid #9e6a03; padding-left: .6rem; margin: 2rem 0 1rem; }
+
+    /* Cards */
+    .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+    .card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1.2rem; }
+    .card-icon { font-size: 1.5rem; margin-bottom: .5rem; }
+    .card h3 { font-size: .95rem; font-weight: 700; color: #e6edf3; margin-bottom: .4rem; }
+    .card p { font-size: .81rem; color: #8b949e; line-height: 1.65; }
+    .card.highlight { border-color: #9e6a03; }
+    .card.green  { border-color: #238636; }
+    .card.blue   { border-color: #1f6feb; }
+    .card.red    { border-color: #da3633; }
+    .card.teal   { border-color: #1a7f64; }
+    .card.purple { border-color: #6e40c9; }
+
+    /* Insight boxes */
+    .insight-box { background: #161b22; border: 1px solid #30363d; border-left: 4px solid #9e6a03; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+    .insight-box .ib-label { font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: #e3b341; margin-bottom: .4rem; }
+    .insight-box p { font-size: .83rem; color: #c9d1d9; line-height: 1.7; }
+    .insight-box code { font-family: monospace; background: #1c2128; padding: 1px 5px; border-radius: 3px; color: #79c0ff; font-size: .79rem; }
+    .insight-box.blue   { border-left-color: #1f6feb; }
+    .insight-box.blue .ib-label { color: #58a6ff; }
+    .insight-box.green  { border-left-color: #238636; }
+    .insight-box.green .ib-label { color: #3fb950; }
+    .insight-box.red    { border-left-color: #da3633; }
+    .insight-box.red .ib-label { color: #f85149; }
+    .insight-box.purple { border-left-color: #6e40c9; }
+    .insight-box.purple .ib-label { color: #bc8cff; }
+    .insight-box.teal   { border-left-color: #1a7f64; }
+    .insight-box.teal .ib-label { color: #22d3ee; }
+
+    /* SMART table */
+    .smart-table { width: 100%; border-collapse: collapse; font-size: .82rem; margin-bottom: 1.5rem; }
+    .smart-table th { background: #21262d; color: #e6edf3; font-weight: 700; padding: .6rem .85rem; text-align: left; border-bottom: 1px solid #30363d; }
+    .smart-table td { padding: .55rem .85rem; border-bottom: 1px solid #21262d; vertical-align: top; line-height: 1.55; }
+    .smart-table tr:hover td { background: #161b22; }
+    .smart-code { font-family: monospace; font-size: .78rem; background: #1c2128; padding: 2px 6px; border-radius: 4px; color: #79c0ff; white-space: nowrap; }
+    .pred-badge { display: inline-block; font-size: .65rem; font-weight: 700; padding: 1px 7px; border-radius: 8px; }
+    .pred-high   { background: #2d1a1a; color: #f85149; border: 1px solid #da3633; }
+    .pred-med    { background: #2d2009; color: #e3b341; border: 1px solid #9e6a03; }
+    .pred-low    { background: #21262d; color: #8b949e; }
+
+    /* Member task cards */
+    .member-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(420px,100%), 1fr)); gap: 1.2rem; margin-bottom: 2rem; }
+    .member-card { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 1.5rem; }
+    .member-card.m1 { border-top: 3px solid #1f6feb; }
+    .member-card.m2 { border-top: 3px solid #238636; }
+    .member-card.m3 { border-top: 3px solid #6e40c9; }
+    .member-card.m4 { border-top: 3px solid #9e6a03; }
+    .member-header { display: flex; align-items: center; gap: .85rem; margin-bottom: 1rem; }
+    .member-num { width: 40px; height: 40px; border-radius: 10px; font-size: .95rem; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #fff; }
+    .member-num.n1 { background: #1f6feb; }
+    .member-num.n2 { background: #238636; }
+    .member-num.n3 { background: #6e40c9; }
+    .member-num.n4 { background: #9e6a03; }
+    .member-title { font-size: 1rem; font-weight: 800; color: #e6edf3; }
+    .member-role  { font-size: .78rem; color: #8b949e; margin-top: .1rem; }
+    .task-list { list-style: none; margin-bottom: 1rem; }
+    .task-list li { display: flex; align-items: flex-start; gap: .65rem; padding: .45rem 0; border-bottom: 1px solid #21262d; font-size: .82rem; color: #c9d1d9; line-height: 1.5; }
+    .task-list li:last-child { border-bottom: none; }
+    .task-text { min-width: 0; flex: 1; overflow-wrap: break-word; word-break: break-word; }
+    .task-text code { white-space: normal; font-size: .78rem; background: #1c2128; padding: 1px 4px; border-radius: 3px; color: #79c0ff; }
+    .task-num { width: 20px; height: 20px; border-radius: 5px; font-size: .68rem; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+    .task-num.t1 { background: #1f3a5c; color: #58a6ff; }
+    .task-num.t2 { background: #1a2f1a; color: #3fb950; }
+    .task-num.t3 { background: #24183a; color: #bc8cff; }
+    .task-num.t4 { background: #2d2009; color: #e3b341; }
+    .deliverable-box { background: #0d1117; border: 1px solid #30363d; border-radius: 7px; padding: .6rem .9rem; font-size: .78rem; }
+    .deliverable-box .db-label { font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #8b949e; margin-bottom: .25rem; }
+    .deliverable-box code { color: #79c0ff; font-family: monospace; font-size: .8rem; word-break: break-all; }
+
+    /* Pipeline */
+    .pipeline { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; margin-bottom: 1.5rem; padding: 1rem; background: #161b22; border: 1px solid #30363d; border-radius: 10px; }
+    .pipe-step { background: #2d2009; border: 1px solid #9e6a03; border-radius: 8px; padding: .5rem .85rem; font-size: .78rem; font-weight: 700; color: #e3b341; white-space: nowrap; }
+    .pipe-step.blue   { background: #1f3a5c; border-color: #1f6feb; color: #58a6ff; }
+    .pipe-step.green  { background: #1a2f1a; border-color: #238636; color: #3fb950; }
+    .pipe-step.purple { background: #24183a; border-color: #6e40c9; color: #bc8cff; }
+    .pipe-arrow { color: #484f58; font-size: 1.1rem; flex-shrink: 0; }
+
+    /* Framework table */
+    .fw-table { width: 100%; border-collapse: collapse; font-size: .82rem; margin-bottom: 1.5rem; }
+    .fw-table th { background: #21262d; color: #e6edf3; font-weight: 700; padding: .6rem .85rem; text-align: left; border-bottom: 1px solid #30363d; }
+    .fw-table td { padding: .6rem .85rem; border-bottom: 1px solid #21262d; vertical-align: top; line-height: 1.6; overflow-wrap: break-word; }
+    .fw-table tr:hover td { background: #161b22; }
+    .fw-sec { font-weight: 700; color: #e6edf3; white-space: nowrap; }
+    .fw-tag { display: inline-block; font-size: .65rem; padding: 1px 7px; border-radius: 6px; font-weight: 600; margin-right: .3rem; }
+    .fw-tag.blue   { background: #1f3a5c; color: #58a6ff; }
+    .fw-tag.green  { background: #1a2f1a; color: #3fb950; }
+    .fw-tag.purple { background: #24183a; color: #bc8cff; }
+    .fw-tag.yellow { background: #2d2009; color: #e3b341; }
+
+    /* Course cards */
+    .ch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: .85rem; margin-bottom: 1.5rem; }
+    .ch-card { background: #161b22; border: 1px solid #30363d; border-radius: 9px; padding: 1rem; }
+    .ch-num { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #8b949e; margin-bottom: .25rem; }
+    .ch-title { font-size: .88rem; font-weight: 700; color: #e6edf3; margin-bottom: .4rem; }
+    .ch-use { font-size: .79rem; color: #8b949e; line-height: 1.55; }
+    .ch-badge { display: inline-block; font-size: .65rem; padding: 1px 7px; border-radius: 6px; font-weight: 700; margin-top: .5rem; }
+    .ch-badge.core { background: #2d2009; color: #e3b341; }
+    .ch-badge.used { background: #1f3a5c; color: #58a6ff; }
+    .ch-badge.ctx  { background: #21262d; color: #8b949e; }
+
+    /* Imbalance bar */
+    .imbal-wrap { margin-bottom: 1.5rem; }
+    .imbal-bar { height: 28px; background: #21262d; border-radius: 6px; overflow: hidden; display: flex; margin-bottom: .4rem; }
+    .imbal-fail { background: #da3633; height: 100%; display: flex; align-items: center; padding: 0 .6rem; font-size: .72rem; font-weight: 700; color: #fff; white-space: nowrap; }
+    .imbal-ok   { background: #238636; height: 100%; flex: 1; display: flex; align-items: center; padding: 0 .6rem; font-size: .72rem; font-weight: 700; color: #fff; }
+    .imbal-legend { display: flex; gap: 1rem; font-size: .75rem; flex-wrap: wrap; }
+    .imbal-legend span { display: flex; align-items: center; gap: .35rem; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+    /* Paper guide */
+    .paper-section { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1.25rem; margin-bottom: 1rem; }
+    .ps-header { display: flex; align-items: center; gap: .75rem; margin-bottom: .75rem; }
+    .ps-num { width: 28px; height: 28px; border-radius: 7px; background: #2d2009; color: #e3b341; font-size: .8rem; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .ps-title { font-size: .95rem; font-weight: 700; color: #e6edf3; }
+    .ps-page { margin-left: auto; font-size: .72rem; color: #8b949e; white-space: nowrap; }
+    .ps-body { font-size: .82rem; color: #8b949e; line-height: 1.7; }
+    .ps-body ul { padding-left: 1.1rem; margin-top: .4rem; }
+    .ps-body li { margin-bottom: .3rem; }
+    .ps-body strong { color: #c9d1d9; }
+
+    .ref-box { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1.25rem; margin-bottom: 1rem; }
+    .ref-title { font-size: .95rem; font-weight: 700; color: #e6edf3; margin-bottom: .3rem; }
+    .ref-meta  { font-size: .78rem; color: #8b949e; margin-bottom: .65rem; }
+    .ref-body  { font-size: .81rem; color: #c9d1d9; line-height: 1.65; }
+
+    .tag-row { display: flex; gap: .35rem; flex-wrap: wrap; margin-bottom: 1rem; }
+    .tag { display: inline-block; font-size: .7rem; padding: 3px 10px; border-radius: 8px; font-weight: 600; background: #21262d; color: #8b949e; }
+    .tag.yellow { background: #2d2009; color: #e3b341; }
+    .tag.blue   { background: #1f3a5c; color: #58a6ff; }
+    .tag.green  { background: #1a2f1a; color: #3fb950; }
+    .tag.red    { background: #2d1a1a; color: #f85149; }
+    .tag.teal   { background: #0a2028; color: #22d3ee; }
+
+    .site-footer { text-align: center; padding: 1.25rem; border-top: 1px solid #21262d; margin-top: 3rem; color: #484f58; font-size: .77rem; }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="../../index.html">&#8592; Playground</a>
+  <span class="nav-pill">Team Projects &rsaquo; HDD Failure Prediction</span>
+</nav>
+
+<div class="page-body">
+
+  <div class="breadcrumb">
+    <a href="../../index.html">Playground</a>
+    <span>/</span>
+    <a href="../index.html">Team Projects</a>
+    <span>/</span>
+    <span>HDD Failure Prediction</span>
+  </div>
+
+  <div class="page-badge">&#128190; Team Project</div>
+  <h1>Hard Drive Failure Prediction</h1>
+  <p class="page-sub">Binary classification model using Apache Spark MLlib on the Backblaze Drive Stats dataset — predicting hard drive failure from daily S.M.A.R.T. sensor snapshots across millions of drive-days of real production data.</p>
+
+  <a href="pm.html" style="display:inline-flex;align-items:center;gap:.5rem;background:#2d2009;border:1px solid #9e6a03;color:#e3b341;text-decoration:none;font-size:.82rem;font-weight:700;padding:.45rem 1rem;border-radius:8px;margin-bottom:1.5rem;transition:background .15s;" onmouseover="this.style.background='#9e6a03';this.style.color='#fff'" onmouseout="this.style.background='#2d2009';this.style.color='#e3b341'">&#128203; PM Dashboard &rarr;</a>
+
+  <div class="meta-row">
+    <div class="meta-pill"><strong>Course:</strong> Big Data &amp; Machine Learning</div>
+    <div class="meta-pill"><strong>Dataset:</strong> Backblaze Drive Stats (open source)</div>
+    <div class="meta-pill"><strong>Team Size:</strong> 4 members</div>
+    <div class="meta-pill"><strong>Tool:</strong> Apache Spark MLlib</div>
+    <div class="meta-pill"><strong>Paper:</strong> EDSIG/CONISAR template, 6&ndash;7 pages</div>
+    <div class="meta-pill"><strong>Scale:</strong> 30M+ drive-days, 12+ GB/quarter</div>
+  </div>
+
+  <!-- Tab Nav -->
+  <div class="tab-nav">
+    <button class="tab-btn active" onclick="showTab('domain',    this)">&#128190; Domain Learning</button>
+    <button class="tab-btn"        onclick="showTab('tasks',     this)">&#9989; Team Action Items</button>
+    <button class="tab-btn"        onclick="showTab('framework', this)">&#128196; Project Framework</button>
+    <button class="tab-btn"        onclick="showTab('course',    this)">&#128218; Course Alignment</button>
+    <button class="tab-btn"        onclick="showTab('paper',     this)">&#128394; Paper Guide</button>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       TAB 1 — DOMAIN LEARNING
+  ══════════════════════════════════════════════ -->
+  <div class="tab-section active" id="tab-domain">
+
+    <div class="section-label">What is S.M.A.R.T.?</div>
+    <div class="card-grid">
+      <div class="card highlight">
+        <div class="card-icon">&#128268;</div>
+        <h3>Self-Monitoring, Analysis &amp; Reporting Technology</h3>
+        <p>Built into every modern HDD and SSD. The drive's onboard firmware tracks dozens of internal health counters — spin-up time, reallocated sectors, read error rate — and exposes them to the OS daily.</p>
+      </div>
+      <div class="card highlight">
+        <div class="card-icon">&#128202;</div>
+        <h3>Raw vs. Normalized Values</h3>
+        <p>Each SMART attribute has a <strong>raw</strong> value (the actual count) and a <strong>normalized</strong> value (0&ndash;253 where 253 = best). Backblaze found raw values are more predictive than normalized for failure detection.</p>
+      </div>
+      <div class="card highlight">
+        <div class="card-icon">&#128337;</div>
+        <h3>Daily Snapshot Model</h3>
+        <p>Backblaze records one row per active drive per day. Each row = one "drive-day" observation. A drive that ran for 3 years without failing contributed ~1,095 rows; its final day has <code>failure = 1</code>.</p>
+      </div>
+      <div class="card highlight">
+        <div class="card-icon">&#128176;</div>
+        <h3>Why It Matters</h3>
+        <p>Unplanned HDD failure in a data center costs thousands in emergency replacement, data recovery, and SLA violations. Predicting failure 7&ndash;30 days ahead enables proactive replacement during scheduled windows.</p>
+      </div>
+    </div>
+
+    <div class="section-label">The Backblaze Dataset</div>
+    <div class="insight-box blue">
+      <div class="ib-label">Source</div>
+      <p>Backblaze has published real production drive data from their data centers since 2013 — over <strong>557 million drive-days</strong> and <strong>19,890 recorded failures</strong> through 2025. Data is freely downloadable by quarter. Download URL pattern: <code>https://f001.backblazeb2.com/file/Backblaze-Hard-Drive-Data/data_Q[1-4]_[YEAR].zip</code></p>
+    </div>
+
+    <div class="card-grid">
+      <div class="card blue">
+        <div class="card-icon">&#128197;</div>
+        <h3>Coverage: 2013&ndash;Present</h3>
+        <p>12+ years of quarterly releases. For a team project, use <strong>1&ndash;2 years</strong> (e.g., 2024, all 4 quarters) to keep file sizes manageable while still having millions of drive-day records.</p>
+      </div>
+      <div class="card blue">
+        <div class="card-icon">&#127981;</div>
+        <h3>4 Manufacturers</h3>
+        <p>HGST (8%), Seagate (34%), Toshiba (33%), WDC/Western Digital (25%). Failure rates vary significantly by model and manufacturer — a key EDA finding.</p>
+      </div>
+      <div class="card blue">
+        <div class="card-icon">&#128209;</div>
+        <h3>Schema Evolves Quarterly</h3>
+        <p>Backblaze adds or removes SMART columns as drives change. Columns present in Q1 may be absent in Q4. The data cleaning step <strong>must normalize the schema</strong> before unioning quarters.</p>
+      </div>
+      <div class="card red">
+        <div class="card-icon">&#128200;</div>
+        <h3>~1% Annualized Failure Rate</h3>
+        <p>Q4 2025 AFR = 1.13%. Across 30M drive-days, only 943 failures. This is an even more severe imbalance than the AI4I dataset — model accuracy is meaningless; use AUC-ROC and recall.</p>
+      </div>
+    </div>
+
+    <div class="section-label">Class Imbalance — Visual (Q4 2025)</div>
+    <div class="imbal-wrap">
+      <div class="imbal-bar">
+        <div class="imbal-fail" style="width:1.13%">1.1%</div>
+        <div class="imbal-ok">98.87% — Healthy Drive-Days</div>
+      </div>
+      <div class="imbal-legend">
+        <span><span class="dot" style="background:#da3633;"></span>Failures: 943 in Q4 2025 (19,890 lifetime)</span>
+        <span><span class="dot" style="background:#238636;"></span>Healthy: 30,533,082 drive-days in Q4 2025</span>
+        <span style="color:#484f58;">AFR = (failures &divide; drive-days) &times; 365</span>
+      </div>
+    </div>
+
+    <div class="section-label">The Bathtub Curve — HDD Failure Lifecycle</div>
+    <div class="card-grid">
+      <div class="card red">
+        <div class="card-icon">&#128308;</div>
+        <h3>Early Life (0&ndash;6 months)</h3>
+        <p>Elevated failure rate from manufacturing defects. Drives that survive this period typically perform well for years. Known as "infant mortality" in reliability engineering.</p>
+      </div>
+      <div class="card green">
+        <div class="card-icon">&#128309;</div>
+        <h3>Steady State (6 months&ndash;4 years)</h3>
+        <p>Lowest and relatively constant failure rate. Random, unpredictable failures. SMART attributes may not show clear warning signals during this phase.</p>
+      </div>
+      <div class="card red">
+        <div class="card-icon">&#128993;</div>
+        <h3>Wear-Out (4+ years)</h3>
+        <p>Failure rate rises again as mechanical components fatigue. SMART attributes — especially reallocated sectors and pending sectors — become highly predictive here. Power-On Hours (SMART 9) is the key age indicator.</p>
+      </div>
+    </div>
+
+    <div class="section-label">Key S.M.A.R.T. Attributes — Predictive Power</div>
+    <table class="smart-table">
+      <thead>
+        <tr>
+          <th>SMART #</th>
+          <th>Name</th>
+          <th>What It Counts</th>
+          <th>Predictive Power</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="smart-code">smart_5_raw</span></td>
+          <td>Reallocated Sectors Count</td>
+          <td>Bad sectors the drive remapped to spare area. Any nonzero value is a warning sign; rapid growth = imminent failure.</td>
+          <td><span class="pred-badge pred-high">High</span></td>
+        </tr>
+        <tr>
+          <td><span class="smart-code">smart_9_raw</span></td>
+          <td>Power-On Hours</td>
+          <td>Total hours the drive has been powered on. Used as a proxy for drive age. Critical for bathtub curve analysis.</td>
+          <td><span class="pred-badge pred-high">High</span></td>
+        </tr>
+        <tr>
+          <td><span class="smart-code">smart_187_raw</span></td>
+          <td>Reported Uncorrectable Errors</td>
+          <td>Read errors the drive could not correct with ECC. Sharp increases strongly predict failure.</td>
+          <td><span class="pred-badge pred-high">High</span></td>
+        </tr>
+        <tr>
+          <td><span class="smart-code">smart_188_raw</span></td>
+          <td>Command Timeout</td>
+          <td>Number of commands that timed out. Indicates mechanical sluggishness or intermittent connection problems.</td>
+          <td><span class="pred-badge pred-high">High</span></td>
+        </tr>
+        <tr>
+          <td><span class="smart-code">smart_197_raw</span></td>
+          <td>Current Pending Sector Count</td>
+          <td>Unstable sectors waiting to be reallocated on next write. Nonzero = sectors the drive suspects are bad but has not yet confirmed.</td>
+          <td><span class="pred-badge pred-high">High</span></td>
+        </tr>
+        <tr>
+          <td><span class="smart-code">smart_198_raw</span></td>
+          <td>Uncorrectable Sector Count</td>
+          <td>Sectors that could not be read or written during a surface scan. Often zero until very close to failure.</td>
+          <td><span class="pred-badge pred-high">High</span></td>
+        </tr>
+        <tr>
+          <td><span class="smart-code">smart_1_raw</span></td>
+          <td>Read Error Rate</td>
+          <td>Hardware read error rate. Interpretation differs by manufacturer — Seagate uses a large composite value; others use raw counts.</td>
+          <td><span class="pred-badge pred-med">Medium</span></td>
+        </tr>
+        <tr>
+          <td><span class="smart-code">smart_241_raw</span></td>
+          <td>Total LBAs Written</td>
+          <td>Lifetime write volume. Useful for SSDs (wear indicator); less critical for HDDs but helps identify heavily-written drives.</td>
+          <td><span class="pred-badge pred-low">Context</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="insight-box green">
+      <div class="ib-label">Backblaze Research Finding</div>
+      <p>Backblaze has published research showing that <strong>SMART 5, 187, 197, and 198</strong> together identify the vast majority of failing drives. A simple rule — "if any of these four attributes is nonzero, flag the drive for replacement" — achieves high recall at the cost of some false positives. Your ML model should aim to beat this simple baseline.</p>
+    </div>
+
+    <div class="section-label">Critical Challenge: Label Engineering</div>
+    <div class="insight-box red">
+      <div class="ib-label">The Labeling Problem</div>
+      <p>The raw dataset's <code>failure</code> column is <code>1</code> only on the day the drive actually failed — a single row out of hundreds or thousands. A model trained this way predicts "will it fail <em>today</em>?" which is not actionable. <strong>For a useful predictive model</strong>, engineer a forward-looking label: set <code>label = 1</code> for any drive-day that is within N days of a recorded failure (e.g., N=30). This requires a window function over each drive's history — a perfect use case for Spark SQL window functions with <code>LEAD()</code> or a reverse sort approach.</p>
+    </div>
+
+    <div class="insight-box">
+      <div class="ib-label">Temporal Split — Prevent Data Leakage</div>
+      <p>Do <strong>not</strong> use a random train/test split on this dataset. Because drives appear on many consecutive days, a random split would allow future drive data to leak into training. Instead, use a <strong>temporal split</strong>: train on 2022&ndash;2023, test on 2024. This mirrors how the model would operate in production.</p>
+    </div>
+
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       TAB 2 — TEAM ACTION ITEMS
+  ══════════════════════════════════════════════ -->
+  <div class="tab-section" id="tab-tasks">
+
+    <div class="insight-box blue">
+      <div class="ib-label">Team Structure — 4 Members</div>
+      <p>M1 handles the large-scale data ingestion and schema normalization — the biggest bottleneck. M2 and M3 can begin planning in parallel. The forward-looking label engineering (window function) is M1 &amp; M3 shared responsibility and must be agreed upon before M3 starts training.</p>
+    </div>
+
+    <div class="member-grid">
+
+      <!-- M1 -->
+      <div class="member-card m1">
+        <div class="member-header">
+          <div class="member-num n1">M1</div>
+          <div>
+            <div class="member-title">Data Engineering Lead</div>
+            <div class="member-role">Data ingestion &bull; Schema normalization &bull; Label engineering</div>
+          </div>
+        </div>
+        <ul class="task-list">
+          <li><span class="task-num t1">1</span><span class="task-text">Download Backblaze Drive Stats ZIP files for the chosen year (e.g., all 4 quarters of 2024) from <code>f001.backblazeb2.com/file/Backblaze-Hard-Drive-Data/</code>.</span></li>
+          <li><span class="task-num t1">2</span><span class="task-text">Unzip and load each quarter into a Spark DataFrame. Print schema for each and identify SMART columns that appear or disappear across quarters.</span></li>
+          <li><span class="task-num t1">3</span><span class="task-text">Select the 6 core SMART attributes present in all quarters: <code>smart_5_raw</code>, <code>smart_9_raw</code>, <code>smart_187_raw</code>, <code>smart_188_raw</code>, <code>smart_197_raw</code>, <code>smart_198_raw</code>.</span></li>
+          <li><span class="task-num t1">4</span><span class="task-text">Keep core columns: <code>date</code>, <code>serial_number</code>, <code>model</code>, <code>capacity_bytes</code>, <code>failure</code>, plus the 6 SMART attributes. Drop all other columns.</span></li>
+          <li><span class="task-num t1">5</span><span class="task-text">Cast all SMART columns to <code>LongType</code>. Fill null SMART values with 0 (absent attribute = no reported error).</span></li>
+          <li><span class="task-num t1">6</span><span class="task-text">Union all four quarterly DataFrames into one. Verify row count and confirm the <code>failure</code> column sums to the expected failure count for the year.</span></li>
+          <li><span class="task-num t1">7</span><span class="task-text">Engineer the forward-looking label: using a Spark window partitioned by <code>serial_number</code> and ordered by <code>date</code>, look ahead 30 days and set <code>label = 1</code> if any row in the window has <code>failure = 1</code>.</span></li>
+          <li><span class="task-num t1">8</span><span class="task-text">Cache the final labeled DataFrame. Write to Parquet partitioned by manufacturer (extracted from <code>model</code> prefix) for M2 and M3 to load.</span></li>
+          <li><span class="task-num t1">9</span><span class="task-text">Document the label engineering logic clearly — M3 must use this exact labeled dataset to avoid leakage.</span></li>
+        </ul>
+        <div class="deliverable-box">
+          <div class="db-label">Deliverable</div>
+          <code>01_data_ingestion_labeling.ipynb</code> — schema comparison across quarters, union, null handling, window-function label logic, Parquet output
+        </div>
+      </div>
+
+      <!-- M2 -->
+      <div class="member-card m2">
+        <div class="member-header">
+          <div class="member-num n2">M2</div>
+          <div>
+            <div class="member-title">EDA &amp; Analytics Lead</div>
+            <div class="member-role">Failure analysis &bull; SMART distributions &bull; Visualizations</div>
+          </div>
+        </div>
+        <ul class="task-list">
+          <li><span class="task-num t2">1</span><span class="task-text">Compute AFR by manufacturer: <code>SELECT model, COUNT(CASE WHEN failure=1 THEN 1 END) / COUNT(*) * 365 AS afr FROM drives GROUP BY model ORDER BY afr DESC</code>. Identify top 5 most and least reliable models.</span></li>
+          <li><span class="task-num t2">2</span><span class="task-text">Analyze drive age at failure: use <code>smart_9_raw</code> (Power-On Hours) to build a distribution of age at time of failure vs. age at snapshot for healthy drives.</span></li>
+          <li><span class="task-num t2">3</span><span class="task-text">Compare SMART 5, 187, 197, 198 distributions between failed drives (in the 30-day window before failure) vs. healthy drives. Show that nonzero values cluster near failures.</span></li>
+          <li><span class="task-num t2">4</span><span class="task-text">Validate the bathtub curve: compute failure rate by age cohort (bucket <code>smart_9_raw</code> by 1,000-hour intervals). Plot early-life spike, steady state, and wear-out phase.</span></li>
+          <li><span class="task-num t2">5</span><span class="task-text">Run the Backblaze baseline rule: flag any drive with nonzero SMART 5, 187, 197, or 198. Compute precision and recall of this rule vs. the 30-day label. This is the baseline the ML model must beat.</span></li>
+          <li><span class="task-num t2">6</span><span class="task-text">Compute correlation matrix of the 6 SMART features. Identify which are most correlated with each other (potential redundancy for feature selection).</span></li>
+          <li><span class="task-num t2">7</span><span class="task-text">Visualize class imbalance: count label=1 vs. label=0 across the full dataset. Express as a percentage and compute what "predict everything healthy" would score on accuracy and recall.</span></li>
+          <li><span class="task-num t2">8</span><span class="task-text">Write the Data Exploration section of the paper (Section 3) using the above query results. Export all figures as PNG for M4 inclusion.</span></li>
+        </ul>
+        <div class="deliverable-box">
+          <div class="db-label">Deliverable</div>
+          <code>02_eda_backblaze.ipynb</code> — AFR table, age-at-failure distribution, SMART distributions, bathtub curve, baseline rule benchmark, figures for paper
+        </div>
+      </div>
+
+      <!-- M3 -->
+      <div class="member-card m3">
+        <div class="member-header">
+          <div class="member-num n3">M3</div>
+          <div>
+            <div class="member-title">ML Pipeline Engineer</div>
+            <div class="member-role">Spark ML Pipeline &bull; GBT classifier &bull; Temporal evaluation</div>
+          </div>
+        </div>
+        <ul class="task-list">
+          <li><span class="task-num t3">1</span><span class="task-text">Load the labeled Parquet from M1. Apply a <strong>temporal train/test split</strong>: filter <code>date &lt; '2024-10-01'</code> for training, <code>date &ge; '2024-10-01'</code> for testing. Do not use random split.</span></li>
+          <li><span class="task-num t3">2</span><span class="task-text">Build <code>VectorAssembler</code> combining all 6 SMART raw attributes into a single feature vector.</span></li>
+          <li><span class="task-num t3">3</span><span class="task-text">Add <code>StandardScaler</code> stage to normalize feature magnitudes across SMART attributes.</span></li>
+          <li><span class="task-num t3">4</span><span class="task-text">Configure <code>GBTClassifier</code> (Gradient Boosted Trees) with <code>labelCol="label"</code>. GBT handles imbalance better than logistic regression and produces feature importances natively.</span></li>
+          <li><span class="task-num t3">5</span><span class="task-text">Set class weights: compute weight for class 1 as <code>count(label=0) / count(label=1)</code>. Add <code>weightCol</code> to the training DataFrame to compensate for the ~99:1 imbalance.</span></li>
+          <li><span class="task-num t3">6</span><span class="task-text">Build <code>ParamGridBuilder</code> with <code>maxIter</code> in [10, 20] and <code>maxDepth</code> in [3, 5]. Wrap in <code>CrossValidator</code> with 3-fold CV (large dataset — 5 folds may be too slow).</span></li>
+          <li><span class="task-num t3">7</span><span class="task-text">Cache the training DataFrame before CrossValidator. Document time savings vs. uncached run (Chapter 7 reference).</span></li>
+          <li><span class="task-num t3">8</span><span class="task-text">Evaluate on test set: report AUC-ROC (<code>BinaryClassificationEvaluator</code>), precision, recall, and F1 at the 0.5 threshold. Also report recall at a 0.3 threshold (catching more failures at cost of more false alarms).</span></li>
+          <li><span class="task-num t3">9</span><span class="task-text">Extract and rank feature importances from the best GBT model. Confirm SMART 5, 187, 197, 198 rank highest — validating Backblaze research findings.</span></li>
+        </ul>
+        <div class="deliverable-box">
+          <div class="db-label">Deliverable</div>
+          <code>03_ml_pipeline_gbt.ipynb</code> — temporal split rationale, Pipeline code, class weighting, CrossValidator results, AUC-ROC + recall metrics, feature importance chart
+        </div>
+      </div>
+
+      <!-- M4 -->
+      <div class="member-card m4">
+        <div class="member-header">
+          <div class="member-num n4">M4</div>
+          <div>
+            <div class="member-title">Paper &amp; Presentation Lead</div>
+            <div class="member-role">EDSIG/CONISAR template &bull; Paper writing &bull; Slides</div>
+          </div>
+        </div>
+        <ul class="task-list">
+          <li><span class="task-num t4">1</span><span class="task-text">Set up EDSIG/CONISAR Word template (6&ndash;7 pages, two-column IEEE style). Create section placeholders for all 7 sections.</span></li>
+          <li><span class="task-num t4">2</span><span class="task-text">Write Abstract (~150 words): data center HDD failure costs, Spark-based approach, Backblaze dataset, forward-looking label engineering, GBT model, AUC-ROC as primary metric.</span></li>
+          <li><span class="task-num t4">3</span><span class="task-text">Write Introduction + Problem Statement: define the business problem (proactive replacement vs. reactive repair), the 30-day prediction horizon, and success criteria (AUC-ROC &gt; 0.85, recall &gt; 0.70 at 0.5 threshold).</span></li>
+          <li><span class="task-num t4">4</span><span class="task-text">Write Dataset Selection section: describe Backblaze Drive Stats (2013&ndash;present, open source, real production data). Cite Backblaze. State limitations: data is from a single operator (Backblaze) in controlled data center conditions — may not generalize to other environments or consumer drives.</span></li>
+          <li><span class="task-num t4">5</span><span class="task-text">Write Data Cleaning section (from M1 results): schema normalization across quarters, SMART column selection, null imputation, forward-looking label window function. Include before/after schema table.</span></li>
+          <li><span class="task-num t4">6</span><span class="task-text">Integrate M2 EDA figures into Section 3 (Data Exploration). Write narrative: AFR by model, SMART distributions at failure, bathtub curve, and baseline rule benchmark.</span></li>
+          <li><span class="task-num t4">7</span><span class="task-text">Write ML Method section: GBT choice rationale (handles imbalance, produces feature importances, ensemble of trees), Pipeline stages, class weighting strategy, temporal split rationale, CrossValidator config, caching reference (Chapter 7).</span></li>
+          <li><span class="task-num t4">8</span><span class="task-text">Write Model Evaluation section: AUC-ROC curve, precision/recall at multiple thresholds, feature importance ranking. Compare ML model recall vs. Backblaze simple rule (M2 baseline).</span></li>
+          <li><span class="task-num t4">9</span><span class="task-text">Write Conclusion + Future Work: summarize results, note limitations (single operator, SMART not reported by all models). Suggest survival analysis (Weibull) or LSTM time-series model as extensions. Reference Structured Streaming (Chapter 8) for real-time deployment.</span></li>
+          <li><span class="task-num t4">10</span><span class="task-text">Build 10-slide presentation deck: title, problem, dataset scale, SMART primer, bathtub curve, pipeline, results vs. baseline, feature importances, conclusion, next steps.</span></li>
+        </ul>
+        <div class="deliverable-box">
+          <div class="db-label">Deliverable</div>
+          <code>team_paper_hdd.docx</code> (EDSIG/CONISAR, 6&ndash;7 pages) + <code>presentation_hdd.pptx</code> (10 slides)
+        </div>
+      </div>
+
+    </div>
+
+    <div class="section-label">Coordination Checkpoints</div>
+    <table class="fw-table">
+      <thead>
+        <tr><th>Checkpoint</th><th>Who</th><th>Gate Condition</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="fw-sec">Kickoff Sync</td><td>All 4</td><td>Agree on year scope (recommend 2024), Spark environment, shared storage, and the exact 30-day label window definition before any code is written</td></tr>
+        <tr><td class="fw-sec">Label Agreement</td><td>M1 + M3</td><td>M1 and M3 must agree on label window logic and column names before M1 writes the labeled Parquet and before M3 writes any pipeline code</td></tr>
+        <tr><td class="fw-sec">Data Handoff</td><td>M1 &rarr; M2, M3</td><td>M1 shares Parquet path and schema. M2 and M3 verify they can load it and run a basic <code>.count()</code> before proceeding</td></tr>
+        <tr><td class="fw-sec">Baseline vs. ML</td><td>M2 + M3</td><td>M2 shares baseline rule recall score. M3 uses this as the target to beat — not just any positive AUC-ROC but specifically better recall than the simple SMART threshold rule</td></tr>
+        <tr><td class="fw-sec">Paper Draft Review</td><td>All 4</td><td>Full draft shared in Week 5. All members review before M4 submits final version</td></tr>
+      </tbody>
+    </table>
+
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       TAB 3 — PROJECT FRAMEWORK
+  ══════════════════════════════════════════════ -->
+  <div class="tab-section" id="tab-framework">
+
+    <div class="section-label">Project Abstract</div>
+    <div class="insight-box">
+      <div class="ib-label">Abstract</div>
+      <p>Hard drive failures in data center environments cause costly unplanned downtime and data recovery operations. This project applies Apache Spark MLlib to the Backblaze Drive Stats dataset — over 30 million drive-days of real production data — to build a binary classifier predicting HDD failure within a 30-day horizon using daily S.M.A.R.T. sensor snapshots. A Spark ML Pipeline incorporates VectorAssembler, StandardScaler, and a Gradient Boosted Trees classifier with class-weighted training to address severe label imbalance (~1% failure rate). A temporal train/test split prevents data leakage. Results are evaluated using AUC-ROC and recall, and compared against Backblaze published baseline rules. Chapter 7 caching strategies are demonstrated to manage the dataset at scale.</p>
+    </div>
+
+    <div class="section-label">Spark ML Pipeline Architecture</div>
+    <div class="pipeline">
+      <div class="pipe-step blue">Load Parquet</div>
+      <div class="pipe-arrow">&#8594;</div>
+      <div class="pipe-step blue">Temporal Split</div>
+      <div class="pipe-arrow">&#8594;</div>
+      <div class="pipe-step blue">Class Weighting</div>
+      <div class="pipe-arrow">&#8594;</div>
+      <div class="pipe-step blue">VectorAssembler</div>
+      <div class="pipe-arrow">&#8594;</div>
+      <div class="pipe-step blue">StandardScaler</div>
+      <div class="pipe-arrow">&#8594;</div>
+      <div class="pipe-step">GBTClassifier</div>
+      <div class="pipe-arrow">&#8594;</div>
+      <div class="pipe-step green">CrossValidator</div>
+      <div class="pipe-arrow">&#8594;</div>
+      <div class="pipe-step yellow">BinaryEvaluator</div>
+    </div>
+
+    <div class="section-label">Five-Section Project Framework</div>
+    <table class="fw-table">
+      <thead>
+        <tr><th>Section</th><th>Objective</th><th>Spark Techniques</th><th>Owner</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="fw-sec">1. Problem Statement</td>
+          <td>Predict drive failure within 30 days. Success = AUC-ROC &gt; 0.85, recall &gt; 0.70 at 0.5 threshold, beats Backblaze simple rule</td>
+          <td>&mdash;</td>
+          <td><span class="fw-tag yellow">M4</span></td>
+        </tr>
+        <tr>
+          <td class="fw-sec">2a. Dataset Selection</td>
+          <td>Justify Backblaze dataset; document limitations (single operator, controlled environment)</td>
+          <td>&mdash;</td>
+          <td><span class="fw-tag yellow">M4</span></td>
+        </tr>
+        <tr>
+          <td class="fw-sec">2b. Data Cleaning</td>
+          <td>Normalize quarterly schemas; select 6 SMART columns; impute nulls; engineer 30-day forward label</td>
+          <td>Window functions (<code>LEAD</code>), <code>.fillna()</code>, <code>.union()</code>, <code>.cache()</code>, Parquet write</td>
+          <td><span class="fw-tag blue">M1</span></td>
+        </tr>
+        <tr>
+          <td class="fw-sec">3. Exploration &amp; Analysis</td>
+          <td>AFR by model, SMART distributions at failure, bathtub curve, baseline rule benchmark</td>
+          <td>Spark SQL <code>GROUP BY</code>, window functions, <code>.describe()</code>, <code>.crosstab()</code></td>
+          <td><span class="fw-tag green">M2</span></td>
+        </tr>
+        <tr>
+          <td class="fw-sec">4. ML Method &amp; Training</td>
+          <td>GBT Pipeline; class weighting; temporal split; CrossValidator; caching benchmark</td>
+          <td><code>GBTClassifier</code>, <code>Pipeline</code>, <code>CrossValidator</code>, <code>ParamGridBuilder</code>, <code>.cache()</code></td>
+          <td><span class="fw-tag purple">M3</span></td>
+        </tr>
+        <tr>
+          <td class="fw-sec">5. Model Evaluation</td>
+          <td>AUC-ROC, precision/recall at multiple thresholds, feature importances, comparison to baseline</td>
+          <td><code>BinaryClassificationEvaluator</code>, <code>MulticlassClassificationEvaluator</code></td>
+          <td><span class="fw-tag purple">M3</span> <span class="fw-tag yellow">M4</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="section-label">Success Criteria</div>
+    <div class="card-grid">
+      <div class="card green">
+        <div class="card-icon">&#10003;</div>
+        <h3>AUC-ROC &gt; 0.85</h3>
+        <p>Area under the ROC curve on the held-out temporal test set. Insensitive to class imbalance — more meaningful than accuracy for a 1% failure rate dataset.</p>
+      </div>
+      <div class="card green">
+        <div class="card-icon">&#10003;</div>
+        <h3>Recall &gt; 0.70</h3>
+        <p>At the 0.5 probability threshold: catch at least 70% of drives that will fail within 30 days. Missing a failure (false negative) is far more costly than a false alarm.</p>
+      </div>
+      <div class="card green">
+        <div class="card-icon">&#10003;</div>
+        <h3>Beat the Baseline Rule</h3>
+        <p>ML model recall must exceed the Backblaze simple rule (flag any drive with nonzero SMART 5/187/197/198) at comparable precision. Demonstrating ML adds value over domain rules is the key finding.</p>
+      </div>
+      <div class="card yellow">
+        <div class="card-icon">&#9888;</div>
+        <h3>Scale Demonstrated</h3>
+        <p>The paper must reference specific row counts and file sizes to justify Spark (vs. pandas). A single year of data at ~3 GB/quarter compressed = real Big Data justification for the course.</p>
+      </div>
+    </div>
+
+    <div class="section-label">Known Challenges &amp; Mitigations</div>
+    <div class="insight-box red">
+      <div class="ib-label">Challenge: Extreme Class Imbalance (~1%)</div>
+      <p>With only ~1% positive labels after the 30-day window expansion (raw failure rate is even lower), the model will converge to "predict 0 always." Mitigation: compute class weights from training data and pass via <code>weightCol</code>; use AUC-ROC as the CrossValidator metric, not accuracy; tune the decision threshold after training.</p>
+    </div>
+    <div class="insight-box">
+      <div class="ib-label">Challenge: Schema Changes Across Quarters</div>
+      <p>Backblaze adds or removes SMART columns quarterly. Mitigation: M1 must load each quarter separately, print schema, and select only the intersection of columns present in all quarters. The 6 core SMART attributes listed above are stable across most years.</p>
+    </div>
+    <div class="insight-box blue">
+      <div class="ib-label">Challenge: Dataset Size (12+ GB/year uncompressed)</div>
+      <p>A full year is large for a local Spark setup. Mitigation: use Databricks Community Edition for free cluster compute; OR work with a representative sample (e.g., Seagate drives only, which are the largest manufacturer group). Cache aggressively and repartition by <code>model</code> to minimize shuffle.</p>
+    </div>
+    <div class="insight-box purple">
+      <div class="ib-label">Challenge: Label Engineering Complexity</div>
+      <p>The 30-day forward label requires a Spark window function sorted in reverse: for each serial_number, look N rows ahead for a failure=1. This is the hardest technical step. M1 should test the logic on a single drive before applying to all drives.</p>
+    </div>
+
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       TAB 4 — COURSE ALIGNMENT
+  ══════════════════════════════════════════════ -->
+  <div class="tab-section" id="tab-course">
+
+    <div class="section-label">How Each Chapter Maps to This Project</div>
+    <div class="ch-grid">
+      <div class="ch-card">
+        <div class="ch-num">Chapter 1</div>
+        <div class="ch-title">Introduction to Apache Spark</div>
+        <div class="ch-use">Spark architecture justification: at 12 GB/quarter and multiple quarters, this dataset genuinely exceeds single-machine pandas capacity. The lazy evaluation model is critical — transformations on a 30M-row DataFrame are planned, not executed, until an action is called.</div>
+        <span class="ch-badge used">Context</span>
+      </div>
+      <div class="ch-card">
+        <div class="ch-num">Chapter 2</div>
+        <div class="ch-title">Getting Started with Spark</div>
+        <div class="ch-use">M1 setup: SparkSession configuration for a large dataset. Set <code>spark.sql.shuffle.partitions</code> to match the cluster size. Recommend Databricks Community Edition for the compute required by this dataset.</div>
+        <span class="ch-badge used">Used — M1</span>
+      </div>
+      <div class="ch-card">
+        <div class="ch-num">Chapters 3–4</div>
+        <div class="ch-title">Structured APIs + Spark SQL</div>
+        <div class="ch-use">M1 uses DataFrame API for column selection, type casting, null filling, and union. M2 uses Spark SQL for AFR computations, failure distribution queries, and SMART attribute analysis across millions of rows.</div>
+        <span class="ch-badge used">Used — M1, M2</span>
+      </div>
+      <div class="ch-card">
+        <div class="ch-num">Chapter 5</div>
+        <div class="ch-title">External Data Sources</div>
+        <div class="ch-use">M1 reads quarterly CSV files with <code>spark.read.csv()</code> and writes the cleaned, labeled dataset to Parquet with <code>df.write.parquet()</code> partitioned by manufacturer. M2 and M3 read from Parquet — much faster than re-reading raw CSVs.</div>
+        <span class="ch-badge used">Used — M1</span>
+      </div>
+      <div class="ch-card">
+        <div class="ch-num">Chapter 6</div>
+        <div class="ch-title">Spark SQL &amp; Datasets</div>
+        <div class="ch-use">The forward-looking label window function uses Spark SQL window specification: <code>Window.partitionBy("serial_number").orderBy("date")</code>. This is a key Chapter 6 concept applied to a real engineering problem.</div>
+        <span class="ch-badge used">Used — M1</span>
+      </div>
+      <div class="ch-card">
+        <div class="ch-num">Chapter 7 &#9733;</div>
+        <div class="ch-title">Optimizing and Tuning Spark</div>
+        <div class="ch-use"><strong>Most critical chapter for this project.</strong> At 12 GB/year, every optimization matters: cache the labeled DataFrame before CrossValidator to avoid re-reading Parquet on each fold; repartition by model to reduce cross-partition joins in EDA; set executor memory and cores appropriately for the cluster.</div>
+        <span class="ch-badge core">Core — M1, M3</span>
+      </div>
+      <div class="ch-card">
+        <div class="ch-num">Chapter 8 &#9733;</div>
+        <div class="ch-title">Structured Streaming</div>
+        <div class="ch-use"><strong>Directly relevant to this domain.</strong> In production, new daily snapshots arrive every 24 hours — a perfect streaming use case. The paper should mention that the batch pipeline can be extended to a Spark Streaming job that processes each day&apos;s new snapshot file and scores all active drives automatically.</div>
+        <span class="ch-badge core">Future Extension — Paper</span>
+      </div>
+      <div class="ch-card">
+        <div class="ch-num">Chapter 9</div>
+        <div class="ch-title">Reliable Data Lakes</div>
+        <div class="ch-use">The Backblaze dataset has quarterly schema changes — exactly the schema evolution problem Delta Lake solves. Reference Delta Lake or Parquet with schema merge as the storage layer. Backblaze even offers the dataset in Apache Iceberg format (read-only via AWS credentials).</div>
+        <span class="ch-badge used">Context — Paper</span>
+      </div>
+      <div class="ch-card">
+        <div class="ch-num">Chapter 10 &#9733;</div>
+        <div class="ch-title">Machine Learning with MLlib</div>
+        <div class="ch-use"><strong>Core chapter.</strong> <code>GBTClassifier</code>, <code>VectorAssembler</code>, <code>StandardScaler</code>, <code>Pipeline</code>, <code>CrossValidator</code>, <code>ParamGridBuilder</code>, <code>BinaryClassificationEvaluator</code> — all used by M3. GBT is the most appropriate algorithm for this imbalanced tabular dataset.</div>
+        <span class="ch-badge core">Core — M3</span>
+      </div>
+    </div>
+
+    <div class="section-label">Key APIs Quick Reference</div>
+    <table class="fw-table">
+      <thead>
+        <tr><th>API / Class</th><th>Purpose in This Project</th><th>Chapter</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>spark.read.csv(path, header=True, inferSchema=True)</code></td><td>Load each quarterly CSV file into a DataFrame</td><td>Ch. 5</td></tr>
+        <tr><td><code>df.select([col list]).fillna(0)</code></td><td>Select 6 SMART columns + core fields; fill nulls with 0</td><td>Ch. 3</td></tr>
+        <tr><td><code>Window.partitionBy("serial_number").orderBy("date")</code></td><td>Window spec for forward-looking label engineering</td><td>Ch. 6</td></tr>
+        <tr><td><code>df.write.parquet(path, partitionBy="mfr")</code></td><td>Write labeled dataset partitioned by manufacturer</td><td>Ch. 5</td></tr>
+        <tr><td><code>df.cache()</code></td><td>Cache labeled DataFrame before CrossValidator and EDA queries</td><td>Ch. 7</td></tr>
+        <tr><td><code>VectorAssembler(inputCols=[smart_cols], outputCol="features")</code></td><td>Combine 6 SMART attributes into feature vector</td><td>Ch. 10</td></tr>
+        <tr><td><code>GBTClassifier(labelCol="label", weightCol="weight")</code></td><td>Train binary classifier with class weighting</td><td>Ch. 10</td></tr>
+        <tr><td><code>BinaryClassificationEvaluator(metricName="areaUnderROC")</code></td><td>AUC-ROC metric for CrossValidator and final evaluation</td><td>Ch. 10</td></tr>
+        <tr><td><code>model.featureImportances</code></td><td>Extract SMART attribute importance ranking from GBT model</td><td>Ch. 10</td></tr>
+      </tbody>
+    </table>
+
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       TAB 5 — PAPER GUIDE
+  ══════════════════════════════════════════════ -->
+  <div class="tab-section" id="tab-paper">
+
+    <div class="insight-box blue">
+      <div class="ib-label">EDSIG/CONISAR Template Requirements</div>
+      <p>Paper length: <strong>6&ndash;7 pages</strong>, two-column IEEE-style format. Include: author names, institution, abstract, keywords, numbered sections, figures with captions, references in IEEE format. Conference submission optional.</p>
+    </div>
+
+    <div class="section-label">Recommended Paper Structure</div>
+
+    <div class="paper-section">
+      <div class="ps-header"><div class="ps-num">I</div><div class="ps-title">Abstract + Introduction</div><div class="ps-page">~0.5 pages</div></div>
+      <div class="ps-body"><ul>
+        <li><strong>Abstract:</strong> State the data center HDD problem, 30-day prediction window, Backblaze dataset scale (30M+ drive-days), GBT pipeline approach, AUC-ROC primary metric.</li>
+        <li><strong>Introduction:</strong> Frame HDD failure as a big data reliability problem. Justify Spark as the right tool at this scale. State why 30-day prediction horizon is operationally valuable.</li>
+        <li><strong>Keywords:</strong> hard drive failure, predictive maintenance, Apache Spark, S.M.A.R.T. attributes, Backblaze, GBTClassifier, AUC-ROC, class imbalance</li>
+      </ul></div>
+    </div>
+
+    <div class="paper-section">
+      <div class="ps-header"><div class="ps-num">II</div><div class="ps-title">Problem Statement + Dataset Selection</div><div class="ps-page">~1 page</div></div>
+      <div class="ps-body"><ul>
+        <li><strong>Problem:</strong> Predict binary outcome (drive will fail within 30 days: yes/no). Success = AUC-ROC &gt; 0.85, recall &gt; 0.70 at 0.5 threshold, beating Backblaze simple rule.</li>
+        <li><strong>Dataset:</strong> Backblaze Drive Stats, open source, real production data from 2013&ndash;present. Cite Backblaze directly. Selected subset: one full year (e.g., 2024) across all manufacturers.</li>
+        <li><strong>Limitations:</strong> (1) Single operator data — Backblaze uses uniform hardware in climate-controlled facilities; may not generalize to consumer or enterprise environments. (2) Not all drive models report all SMART attributes, requiring null imputation. (3) Label engineering introduces a design choice (30-day window) that affects results.</li>
+      </ul></div>
+    </div>
+
+    <div class="paper-section">
+      <div class="ps-header"><div class="ps-num">III</div><div class="ps-title">Data Cleaning &amp; Label Engineering</div><div class="ps-page">~0.75 pages</div></div>
+      <div class="ps-body"><ul>
+        <li>Describe quarterly ZIP download, per-quarter schema inspection, column intersection approach.</li>
+        <li>List the 6 selected SMART attributes and justify their selection (Backblaze research, predictive power).</li>
+        <li><strong>Label engineering is the key contribution of this section:</strong> explain the window function approach to create the 30-day forward-looking label. Include a small diagram or table showing before/after label assignment for a sample drive.</li>
+        <li>Describe null imputation (fill 0) and type casting. Reference <code>.cache()</code> and Parquet write as Chapter 7/5 elements.</li>
+      </ul></div>
+    </div>
+
+    <div class="paper-section">
+      <div class="ps-header"><div class="ps-num">IV</div><div class="ps-title">Data Exploration &amp; Analysis</div><div class="ps-page">~1 page</div></div>
+      <div class="ps-body"><ul>
+        <li>Include the AFR-by-model table (top 5 most and least reliable). Show the class imbalance chart.</li>
+        <li>Include the bathtub curve figure — this is a strong visual that demonstrates domain understanding.</li>
+        <li>Show SMART 5/187/197/198 distributions for failing vs. healthy drives — the clearest evidence of SMART predictive value.</li>
+        <li>Report the Backblaze simple rule performance (precision/recall) as the baseline. This sets up the ML model comparison in Section 5.</li>
+      </ul></div>
+    </div>
+
+    <div class="paper-section">
+      <div class="ps-header"><div class="ps-num">V</div><div class="ps-title">ML Method &amp; Model Training</div><div class="ps-page">~1 page</div></div>
+      <div class="ps-body"><ul>
+        <li>Explain <strong>temporal train/test split</strong> — why random split would cause data leakage in time-series drive data. This is a sophisticated point that demonstrates understanding beyond basic ML.</li>
+        <li>Justify GBT over Random Forest: better handling of imbalanced data, built-in feature importance, fewer hyperparameters to tune. Reference the ensemble-of-trees connection to Matzka 2020 if citing cross-project.</li>
+        <li>Describe class weighting strategy: compute weight from training label distribution and pass as <code>weightCol</code>.</li>
+        <li>Report CrossValidator configuration (4 combinations, 3-fold CV) and best hyperparameters found.</li>
+        <li>Include caching benchmark as Chapter 7 demonstration.</li>
+      </ul></div>
+    </div>
+
+    <div class="paper-section">
+      <div class="ps-header"><div class="ps-num">VI</div><div class="ps-title">Model Evaluation</div><div class="ps-page">~0.75 pages</div></div>
+      <div class="ps-body"><ul>
+        <li>Report AUC-ROC as primary metric. Include the ROC curve figure.</li>
+        <li>Report precision and recall at threshold 0.5 and at a lower threshold (e.g., 0.3) to show the tradeoff. In this domain, higher recall at lower precision is operationally preferable.</li>
+        <li><strong>Compare ML recall vs. Backblaze simple rule recall</strong> — this is the headline result. Does the model identify more failures at the same or lower false positive rate?</li>
+        <li>Show feature importance bar chart. Confirm SMART 5, 187, 197, 198 are top-ranked (validates domain knowledge).</li>
+      </ul></div>
+    </div>
+
+    <div class="paper-section">
+      <div class="ps-header"><div class="ps-num">VII</div><div class="ps-title">Conclusion &amp; Future Work</div><div class="ps-page">~0.5 pages</div></div>
+      <div class="ps-body"><ul>
+        <li>State whether success criteria were met (AUC-ROC &gt; 0.85, recall &gt; 0.70, beats baseline).</li>
+        <li>Limitations: single operator, SMART columns vary by drive model, 30-day window is a design choice.</li>
+        <li><strong>Future Work (high-impact suggestions):</strong> (1) Survival analysis (Weibull model) to estimate time-to-failure rather than a binary threshold. (2) LSTM / time-series model to capture trajectory of SMART values over time, not just point-in-time. (3) Spark Structured Streaming deployment to score new daily snapshots in near-real-time (Chapter 8).</li>
+      </ul></div>
+    </div>
+
+    <div class="section-label">References to Include</div>
+
+    <div class="ref-box">
+      <div class="ref-title">[1] Primary Dataset</div>
+      <div class="ref-meta">Backblaze, Inc. (2025). <em>Backblaze Drive Stats Dataset.</em> Retrieved from https://www.backblaze.com/cloud-storage/resources/hard-drive-test-data</div>
+      <div class="ref-body">The source of all drive data used in this project. Backblaze publishes quarterly reports and the full dataset publicly. Cite all quarterly reports used (e.g., Q1&ndash;Q4 2024).</div>
+    </div>
+    <div class="ref-box">
+      <div class="ref-title">[2] Course Textbook</div>
+      <div class="ref-meta">Chambers, B. &amp; Zaharia, M. (2018). <em>Spark: The Definitive Guide.</em> O&apos;Reilly Media.</div>
+      <div class="ref-body">Reference Chapters 5 (Parquet), 6 (window functions), 7 (caching, optimization), 8 (Structured Streaming future work), and 10 (MLlib GBTClassifier pipeline).</div>
+    </div>
+    <div class="ref-box">
+      <div class="ref-title">[3] Backblaze Quarterly Report (example)</div>
+      <div class="ref-meta">Backblaze, Inc. (2025). <em>Hard Drive Stats for Q4 2025.</em> Backblaze Blog. Retrieved from https://www.backblaze.com/blog/</div>
+      <div class="ref-body">Backblaze publishes quarterly analysis articles explaining AFR trends, SMART attribute findings, and reliability comparisons by model. Cite the relevant quarter(s) to support domain claims in the introduction and EDA sections.</div>
+    </div>
+
+  </div>
+
+</div>
+
+<footer class="site-footer">&copy; Clark Ngo &mdash; CityU MBA Team Projects</footer>
+
+<script>
+  function showTab(name, btn) {
+    document.querySelectorAll(".tab-section").forEach(function(s) { s.classList.remove("active"); });
+    document.querySelectorAll(".tab-btn").forEach(function(b) { b.classList.remove("active"); });
+    document.getElementById("tab-" + name).classList.add("active");
+    btn.classList.add("active");
+  }
+</script>
+</body>
+</html>

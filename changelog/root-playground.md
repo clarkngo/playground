@@ -172,6 +172,27 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-05-03
+
+### [feature] Team Project — HDD Failure Prediction (Backblaze Drive Stats)
+- New directory: `team-project/hdd-failure/`
+- New file: `team-project/hdd-failure/index.html` — full 5-tab project workspace for the Big Data & ML course, gold/yellow accent theme
+  - **Tab 1 — Domain Learning:** S.M.A.R.T. attribute explanation, bathtub curve (early-life/steady-state/wear-out), Backblaze Drive Stats facts (30M+ drive-days, ~1.13% AFR), predictive SMART attributes table (smart_5, 9, 187, 188, 197, 198), label engineering challenge (30-day window function), temporal split warning
+  - **Tab 2 — Team Action Items:** 4-member task boards (M1: Data Ingestion & Label Engineering, M2: EDA & Baseline, M3: ML Pipeline, M4: Paper Lead) with deliverables: `01_data_ingestion_labeling.ipynb`, `02_eda_backblaze.ipynb`, `03_ml_pipeline_gbt.ipynb`, `team_paper_hdd.docx`
+  - **Tab 3 — Project Framework:** GBTClassifier pipeline diagram, success criteria (AUC-ROC > 0.85, recall > 0.70, beat Backblaze baseline rule), known challenges (extreme class imbalance, dataset size, quarterly schema changes, label window logic)
+  - **Tab 4 — Course Alignment:** all 10 course chapters mapped with emphasis on Ch. 7 (optimization), Ch. 8 (Streaming — highly relevant for daily snapshots), Ch. 9 (Data Lakes for schema evolution)
+  - **Tab 5 — Paper Guide:** EDSIG/CONISAR structure with page budgets, Backblaze-specific citation guidance
+- New file: `team-project/hdd-failure/pm.html` — 5-tab interactive PM dashboard (gold theme, localStorage keys `pm-hdd-tasks-v1` / `pm-hdd-ai-v1`)
+  - 36 tasks across M1–M4 with Kanban click-to-cycle (To Do → In Progress → Done)
+  - 8-row risk register (extreme class imbalance, dataset size, schema changes, label window error, temporal leakage, CrossValidator runtime, SMART nulls, Spark justification)
+  - Special "Label Engineering Review" meeting between M1 and M3
+  - Same dashboard/timeline/meeting accordion structure as PdM PM dashboard
+- Updated `team-project/index.html`: added HDD project card; Active Projects count: 1 → 2
+- Updated main `index.html`: added HDD collection card to Team Projects section; nav badge 1 → 2; section count 1 project → 2 projects
+- JS syntax checks: both files pass `node --check`
+
+---
+
 ## 2026-04-19
 
 ### [feature] PM Dashboard for Predictive Maintenance team project
