@@ -7,6 +7,16 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-05-03
+
+### [feature] Team Project — HDD Failure Prediction using Backblaze Drive Stats
+- `team-project/hdd-failure/index.html`: 5-tab project workspace with gold theme — S.M.A.R.T. domain learning, 4-member task boards, GBTClassifier pipeline, temporal split guidance, and paper structure
+- `team-project/hdd-failure/pm.html`: interactive PM dashboard — 36-task Kanban, 8-risk register, 5-meeting accordions; localStorage persistence; gold accent
+- `team-project/index.html`: HDD project card added; active count 1 → 2
+- `index.html`: HDD collection card added to Team Projects section; nav badge 1 → 2
+
+---
+
 ## 2026-04-29
 
 ### [bug] Lessons learned — Module 04 guide missing `expired_data` saveAsTable step
