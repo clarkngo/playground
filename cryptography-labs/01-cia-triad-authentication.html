@@ -773,13 +773,15 @@ function saveState() {
     passwordLevelsAchieved,
     passwordEntries,
     screenshotUploaded,
-    screenshotDataUrl,
     simulatorUsed,
     studentName: (document.getElementById('student-name') || {}).value || '',
     reflection: (document.getElementById('learning-reflection') || {}).value || '',
     labFeedback: (document.getElementById('lab-feedback') || {}).value || ''
   };
-  localStorage.setItem('lab01-state', JSON.stringify(state));
+  try { localStorage.setItem('lab01-state', JSON.stringify(state)); } catch(e) {}
+  if (screenshotDataUrl) {
+    try { localStorage.setItem('lab01-screenshot', screenshotDataUrl); } catch(e) {}
+  }
 }
 
 function loadState() {
@@ -796,7 +798,7 @@ function loadState() {
   passwordLevelsAchieved = state.passwordLevelsAchieved || {weak: false, medium: false, strong: false};
   passwordEntries = state.passwordEntries || {weak: '', medium: '', strong: ''};
   screenshotUploaded = state.screenshotUploaded || false;
-  screenshotDataUrl = state.screenshotDataUrl || '';
+  screenshotDataUrl = localStorage.getItem('lab01-screenshot') || '';
   simulatorUsed = state.simulatorUsed || false;
 
   // Restore text inputs
@@ -855,6 +857,8 @@ function loadState() {
 function resetLab() {
   if (!confirm('Reset all progress for this lab?')) return;
   localStorage.removeItem('lab01-state');
+  localStorage.removeItem('lab01-screenshot');
+  localStorage.removeItem('week1-lab-submission');
   location.reload();
 }
 
@@ -890,8 +894,8 @@ function handleScreenshotUpload(input) {
     document.getElementById('screenshot-upload-text').textContent = `✓ ${file.name}`;
     document.getElementById('screenshot-upload-label').style.borderColor = '#3fb950';
     document.getElementById('screenshot-upload-label').style.borderStyle = 'solid';
-    saveState();
     checkReflectionLock();
+    saveState();
   };
   reader.readAsDataURL(file);
 }
@@ -1402,12 +1406,11 @@ function submitReflection() {
     allPwLevels,
     passwordEntries,
     screenshotUploaded,
-    screenshotDataUrl,
     reflection,
     labFeedback,
     labCompleted: 'Module 1 Lab'
   };
-  localStorage.setItem('week1-lab-submission', JSON.stringify(submission));
+  try { localStorage.setItem('week1-lab-submission', JSON.stringify(submission)); } catch(e) {}
   saveState();
 
   const _fb = document.getElementById('submission-feedback');
@@ -1446,10 +1449,11 @@ function exportPDF() {
       <tr><td>Key Screenshot:</td><td>${data.screenshotUploaded ? '✅ Uploaded' : '❌ Not uploaded'}</td></tr>
     </table>`;
 
-  // Screenshot
+  // Screenshot — use in-memory value (not stored in submission to avoid quota errors)
   const psScreenshot = document.getElementById('ps-screenshot');
-  if (data.screenshotDataUrl) {
-    psScreenshot.innerHTML = `<img src="${data.screenshotDataUrl}" style="max-width:100%;border:1px solid #ccc;border-radius:4px;margin-top:.25rem" alt="Key pair terminal screenshot">`;
+  const _ssUrl = screenshotDataUrl || localStorage.getItem('lab01-screenshot') || '';
+  if (_ssUrl) {
+    psScreenshot.innerHTML = `<img src="${_ssUrl}" style="max-width:100%;border:1px solid #ccc;border-radius:4px;margin-top:.25rem" alt="Key pair terminal screenshot">`;
   } else {
     psScreenshot.textContent = 'No screenshot uploaded.';
   }
