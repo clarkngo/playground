@@ -7,6 +7,13 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-05-05
+
+- [bug] `cryptography-labs/01-cia-triad-authentication.html` — screenshot upload objective now triggers correctly; fixed call order and added try/catch around localStorage quota errors
+- [bug] `cryptography-labs/01-cia-triad-authentication.html` — state now persists on refresh (quiz, password, screenshot); Export PDF button now appears after Save Reflection; root cause was screenshotDataUrl bloating localStorage and causing silent quota failures across all saves
+
+---
+
 ## 2026-05-03
 
 ### [feature] Team Project — HDD Failure Prediction using Backblaze Drive Stats

@@ -5,6 +5,21 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-05-05
+
+### [bug] Lab 01 — State not persisting on refresh; Export PDF not appearing
+
+- **Symptom:** After refresh, "Upload key pair", "Complete the password", and "Answer the quiz" objectives reset; clicking "Save Reflection" did not reveal the Export PDF button
+- **Root cause:** `screenshotDataUrl` (large base64 image) was embedded in both the main state object and the submission object; `localStorage.setItem` threw `QuotaExceededError`, aborting execution before the Export PDF button display code ran, and silently preventing all subsequent `saveState()` calls from writing
+- **Fix:** Moved `screenshotDataUrl` to its own `localStorage` key (`lab01-screenshot`) so the main state stays small and quota-safe; wrapped submission `setItem` in try/catch; `exportPDF()` now reads the screenshot from in-memory variable with fallback to `lab01-screenshot`; `resetLab()` clears all three keys
+
+### [bug] Lab 01 — "Upload key pair screenshot" objective not triggering
+- **Symptom:** After uploading a terminal screenshot, the objective stayed unchecked even though the preview showed success
+- **Root cause:** `saveState()` was called before `checkReflectionLock()` in `handleScreenshotUpload`; a `QuotaExceededError` from `localStorage` (large base64 image) halted execution before `checkReflectionLock()` could run
+- **Fix:** Swapped call order so `checkReflectionLock()` runs first; wrapped `localStorage.setItem` in `saveState()` with try/catch so quota errors never abort the UI update
+
+---
+
 ## 2026-03-31 (2)
 
 ### [ux] Lab 10 — Demo 4 renamed to Assessment
