@@ -5,6 +5,32 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-05-06
+
+### [feature] Class notes — Module 5 Collection
+- Created `class-notes/data-governance/module-05.html` — 17-section notes on "Collection" with GitHub dark theme
+- Section 1: What We Want from Data — collect→store→transform→analyze→act pipeline, noise-to-signal framing
+- Section 2: Collection, Transformation & Business Rules — ETL vs ELT distinction, business rule examples
+- Section 3: Designing & Managing Data Processes — 5-step process creation lifecycle (identify → design → implement → operate → retire)
+- Section 4: Data Management Metrics & the CDO — 8-metric table, CDO charter and responsibilities
+- Section 5: Digital Disruption — 6-wave `.evo-strip` timeline (e-commerce, mobile, AI, IoT, cloud, sharing economy)
+- Section 6: Fragmentation of Data — siloed systems, manual management, language fragmentation
+- Section 7: Reasons for Data Disruption — 9-row table with reason, description, and symptom columns
+- Section 8: Architecture Evolution — Point-to-Point → Hub-and-Spoke (ESB) with visual `.arch-box` diagrams and Big Ball of Mud warning
+- Section 9: Data Warehouses & Limitations — advantages vs limitations, data mart workaround
+- Section 10: Data Lakes — 3-zone model (raw/cleansed/curated), warehouse vs lake comparison table, data swamp warning
+- Section 11: Lakehouse — Delta Lake, OneLake/Microsoft Fabric, Fabric vs Databricks comparison table
+- Section 12: Enterprise Architecture & Data Architecture — EA definition, data as side effect of application transactions
+- Section 13: Collections & Golden Data Sources — definitions, 4 challenges of heterogeneous data
+- Section 14: Heterogeneous Data & DDD — domain, subdomain, bounded context, ubiquitous language with examples
+- Section 15: Business vs Technology Architecture — capability-to-system mapping table
+- Section 16: Business Architecture Patterns & Golden Source Rules — 3 patterns, 5 golden source rules (R1–R5)
+- Section 17: Data Delivery Contracts, Silo Elimination & Data Staging — contract elements table, data mesh, staging when/when-not
+- New CSS components: `.evo-strip`/`.evo-item`/`.evo-dot`/`.evo-body` (vertical evolution timeline), `.arch-box`/`.arch-app`/`.arch-hub`/`.arch-line` (architecture diagrams), `.pill` variants (green/red/yellow/blue/purple)
+- JS syntax check: passed; no console errors on load
+
+---
+
 ## 2026-04-29
 
 ### [bug] Lessons learned — Module 04 guide missing `expired_data` saveAsTable step
