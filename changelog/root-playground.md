@@ -7,6 +7,11 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ## 2026-05-06
 
+### [feature] Class notes — index pages and breadcrumb navigation
+- Created `class-notes/index.html` — top-level course browser showing "Data Governance" as a clickable card (Active · 5 Modules badge)
+- Created `class-notes/data-governance/index.html` — module list with numbered cards (01–05), descriptions, topic tags, progress bar ("5 of 5 modules"), and breadcrumb: Playground → Class Notes → Data Governance
+- Updated breadcrumbs in all 5 module files: "Class Notes" now links to `../index.html` and "Data Governance" links to `index.html`; previously both were plain text
+
 ### [feature] Class notes — Module 5 Collection
 - Created `class-notes/data-governance/module-05.html` — 17-section notes on "Collection" with GitHub dark theme
 - Section 1: What We Want from Data — collect→store→transform→analyze→act pipeline, noise-to-signal framing
