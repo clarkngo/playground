@@ -7,6 +7,12 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-05-06
+
+- [feature] `class-notes/data-governance/module-05.html` — 17-section class notes on "Collection": architecture evolution (P2P → ESB → Warehouse → Lake → Lakehouse), DDD, golden source rules, data delivery contracts, and data staging
+
+---
+
 ## 2026-05-05
 
 - [bug] `cryptography-labs/01-cia-triad-authentication.html` — screenshot upload objective now triggers correctly; fixed call order and added try/catch around localStorage quota errors

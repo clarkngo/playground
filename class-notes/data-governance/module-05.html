@@ -1,0 +1,1341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Data Governance &mdash; Module 5 Class Notes</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0d1117; color: #c9d1d9; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; min-height: 100vh; }
+
+    /* Navbar */
+    .navbar { background: #161b22; border-bottom: 1px solid #30363d; padding: .75rem 1.5rem; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 200; }
+    .navbar a { color: #e6edf3; text-decoration: none; font-weight: 700; font-size: 1rem; }
+    .navbar a:hover { color: #58a6ff; }
+    .nav-pill { font-size: .78rem; color: #8b949e; }
+
+    /* Layout */
+    .layout { display: flex; max-width: 1280px; margin: 0 auto; padding: 0 1rem; gap: 2rem; }
+
+    /* Sidebar TOC */
+    .sidebar { width: 220px; flex-shrink: 0; position: sticky; top: 56px; align-self: flex-start; height: calc(100vh - 64px); overflow-y: auto; padding: 1.5rem 0; }
+    .toc-label { font-size: .67rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #484f58; margin-bottom: .65rem; padding-left: .5rem; }
+    .toc { display: flex; flex-direction: column; gap: 2px; }
+    .toc-link { font-size: .78rem; color: #8b949e; text-decoration: none; padding: .3rem .5rem; border-radius: 5px; border-left: 2px solid transparent; line-height: 1.4; transition: all .15s; }
+    .toc-link:hover { color: #e6edf3; background: #161b22; }
+    .toc-link.active { color: #58a6ff; border-left-color: #58a6ff; background: #0c1e38; font-weight: 600; }
+    .toc-group { font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: #484f58; margin: .85rem 0 .25rem .5rem; }
+
+    /* Main content */
+    .content { flex: 1; min-width: 0; padding: 2rem 0 4rem; }
+
+    /* Breadcrumb */
+    .breadcrumb { font-size: .78rem; color: #8b949e; display: flex; align-items: center; gap: .4rem; margin-bottom: .85rem; flex-wrap: wrap; }
+    .breadcrumb a { color: #58a6ff; text-decoration: none; font-weight: 600; }
+    .breadcrumb a:hover { text-decoration: underline; }
+    .breadcrumb span { color: #484f58; }
+
+    /* Page header */
+    .page-badge { display: inline-block; background: #1f6feb; color: #fff; font-size: .72rem; font-weight: 700; padding: 3px 12px; border-radius: 12px; text-transform: uppercase; letter-spacing: .07em; margin-bottom: .6rem; }
+    .page-header h1 { color: #e6edf3; font-size: 1.85rem; font-weight: 800; margin-bottom: .3rem; line-height: 1.2; }
+    .page-subtitle { color: #8b949e; font-size: .9rem; margin-bottom: .65rem; }
+    .tag-row { display: flex; gap: .4rem; flex-wrap: wrap; margin-bottom: 2rem; }
+    .tag { display: inline-block; font-size: .68rem; padding: 2px 8px; border-radius: 8px; font-weight: 600; }
+    .tag-blue   { background: #1f3a5c; color: #58a6ff; }
+    .tag-green  { background: #1a2f1a; color: #3fb950; }
+    .tag-yellow { background: #2d2009; color: #e3b341; }
+    .tag-purple { background: #24183a; color: #bc8cff; }
+
+    /* Section */
+    .notes-section { margin-bottom: 3rem; scroll-margin-top: 72px; }
+    .section-header { display: flex; align-items: baseline; gap: .75rem; margin-bottom: 1.35rem; padding-bottom: .75rem; border-bottom: 1px solid #21262d; }
+    .section-num { font-size: .72rem; font-weight: 700; color: #484f58; background: #161b22; border: 1px solid #30363d; padding: 2px 9px; border-radius: 8px; white-space: nowrap; }
+    .section-title { font-size: 1.25rem; font-weight: 800; color: #e6edf3; }
+
+    /* Prose */
+    .prose { font-size: .875rem; color: #c9d1d9; line-height: 1.8; margin-bottom: 1rem; }
+    .prose strong { color: #e6edf3; }
+    .prose em { color: #8b949e; font-style: italic; }
+
+    /* Definition card */
+    .def-card { background: #0c1e38; border: 1px solid #1f6feb; border-left: 4px solid #1f6feb; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+    .def-label { font-size: .67rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #58a6ff; margin-bottom: .4rem; }
+    .def-term { font-size: 1rem; font-weight: 800; color: #a5d6ff; margin-bottom: .35rem; }
+    .def-text { font-size: .85rem; color: #c9d1d9; line-height: 1.75; }
+
+    /* Concept card */
+    .concept-card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: .85rem; }
+    .concept-title { font-size: .85rem; font-weight: 700; color: #e6edf3; margin-bottom: .4rem; }
+    .concept-text { font-size: .84rem; color: #c9d1d9; line-height: 1.75; }
+    .concept-text ul { padding-left: 1.1rem; }
+    .concept-text li { margin-bottom: .3rem; }
+
+    /* Example card */
+    .example-card { background: #0b1f0b; border: 1px solid #238636; border-left: 4px solid #3fb950; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+    .example-label { font-size: .67rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #3fb950; margin-bottom: .4rem; }
+    .example-title { font-size: .9rem; font-weight: 700; color: #56d364; margin-bottom: .35rem; }
+    .example-text { font-size: .84rem; color: #c9d1d9; line-height: 1.75; }
+    .example-text ul, .example-text ol { padding-left: 1.1rem; }
+    .example-text li { margin-bottom: .3rem; }
+    .example-text strong { color: #56d364; }
+
+    /* Insight card */
+    .insight-card { background: #1d1600; border: 1px solid #9e6a03; border-left: 4px solid #e3b341; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+    .insight-label { font-size: .67rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #e3b341; margin-bottom: .4rem; }
+    .insight-text { font-size: .85rem; color: #c9d1d9; line-height: 1.75; }
+    .insight-text strong { color: #f0c674; }
+    .insight-text ul { padding-left: 1.1rem; }
+    .insight-text li { margin-bottom: .3rem; }
+
+    /* Warning card */
+    .warn-card { background: #2d1a1a; border: 1px solid #f85149; border-left: 4px solid #f85149; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+    .warn-label { font-size: .67rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #f85149; margin-bottom: .4rem; }
+    .warn-text { font-size: .85rem; color: #c9d1d9; line-height: 1.75; }
+    .warn-text ul { padding-left: 1.1rem; }
+    .warn-text li { margin-bottom: .3rem; }
+    .warn-text strong { color: #ff7b72; }
+
+    /* Compare table */
+    .compare-table { width: 100%; border-collapse: collapse; font-size: .84rem; margin-bottom: 1.1rem; }
+    .compare-table th { background: #0d1117; color: #8b949e; font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; padding: .55rem .85rem; text-align: left; border-bottom: 2px solid #30363d; }
+    .compare-table td { padding: .6rem .85rem; border-bottom: 1px solid #21262d; color: #c9d1d9; vertical-align: top; line-height: 1.6; }
+    .compare-table tr:last-child td { border-bottom: none; }
+    .compare-table tr:hover td { background: #161b22; }
+    .compare-table .col-a { color: #58a6ff; font-weight: 700; }
+    .compare-table .col-b { color: #3fb950; font-weight: 700; }
+    .compare-table .col-c { color: #bc8cff; font-weight: 700; }
+    .compare-table .col-d { color: #e3b341; font-weight: 700; }
+    .compare-table .col-r { color: #ff7b72; font-weight: 700; }
+    .pill { display: inline-block; font-size: .67rem; font-weight: 700; padding: 2px 8px; border-radius: 10px; white-space: nowrap; }
+    .pill-green  { background: #1a3a1a; color: #3fb950; border: 1px solid #238636; }
+    .pill-red    { background: #2d1a1a; color: #f85149; border: 1px solid #da3633; }
+    .pill-yellow { background: #2d2009; color: #e3b341; border: 1px solid #9e6a03; }
+    .pill-blue   { background: #1f3a5c; color: #58a6ff; border: 1px solid #1f6feb; }
+    .pill-purple { background: #24183a; color: #bc8cff; border: 1px solid #6e40c9; }
+
+    /* Flow diagram */
+    .flow-wrap { overflow-x: auto; margin-bottom: 1.25rem; }
+    .flow { display: flex; align-items: stretch; gap: 0; flex-wrap: nowrap; min-width: max-content; padding: .5rem 0; }
+    .flow-node { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: .65rem 1rem; font-size: .78rem; font-weight: 700; color: #e6edf3; text-align: center; min-width: 110px; display: flex; flex-direction: column; align-items: center; gap: .25rem; }
+    .flow-node .fn-sub { font-size: .67rem; font-weight: 400; color: #8b949e; margin-top: .1rem; }
+    .flow-arrow { display: flex; align-items: center; color: #30363d; font-size: 1.1rem; padding: 0 .2rem; }
+    .flow-node.blue   { border-color: #1f6feb; background: #0c1e38; color: #a5d6ff; }
+    .flow-node.green  { border-color: #238636; background: #0b1f0b; color: #56d364; }
+    .flow-node.yellow { border-color: #9e6a03; background: #1d1600; color: #f0c674; }
+    .flow-node.purple { border-color: #6e40c9; background: #18102d; color: #d2a8ff; }
+    .flow-node.red    { border-color: #da3633; background: #2d1a1a; color: #ff7b72; }
+
+    /* Two / three / four column */
+    .two-col   { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.1rem; }
+    .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.1rem; }
+    .four-col  { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: .75rem; margin-bottom: 1.1rem; }
+
+    /* Pillar card */
+    .pillar-card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1.25rem 1rem; text-align: center; }
+    .pillar-icon { font-size: 1.8rem; margin-bottom: .5rem; }
+    .pillar-name { font-size: .95rem; font-weight: 800; color: #e6edf3; margin-bottom: .4rem; }
+    .pillar-desc { font-size: .78rem; color: #8b949e; line-height: 1.6; }
+
+    /* Numbered list */
+    .num-list { display: flex; flex-direction: column; gap: .6rem; margin-bottom: 1rem; }
+    .num-item { display: flex; gap: .85rem; align-items: flex-start; }
+    .num-badge { width: 26px; height: 26px; border-radius: 50%; background: #1f6feb; color: #fff; font-size: .75rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: .1rem; }
+    .num-badge.green  { background: #238636; }
+    .num-badge.purple { background: #6e40c9; }
+    .num-badge.yellow { background: #9e6a03; }
+    .num-badge.red    { background: #b91c1c; }
+    .num-content { flex: 1; }
+    .num-title { font-size: .88rem; font-weight: 700; color: #e6edf3; margin-bottom: .2rem; }
+    .num-text  { font-size: .82rem; color: #c9d1d9; line-height: 1.65; }
+
+    /* Timeline / evolution strip */
+    .evo-strip { display: flex; flex-direction: column; gap: 0; margin-bottom: 1.25rem; }
+    .evo-item { display: flex; gap: 1rem; align-items: flex-start; position: relative; padding-bottom: 1.25rem; }
+    .evo-item:last-child { padding-bottom: 0; }
+    .evo-item::before { content: ""; position: absolute; left: 14px; top: 28px; bottom: 0; width: 2px; background: #21262d; }
+    .evo-item:last-child::before { display: none; }
+    .evo-dot { width: 28px; height: 28px; border-radius: 50%; border: 2px solid #30363d; background: #161b22; display: flex; align-items: center; justify-content: center; font-size: .75rem; flex-shrink: 0; z-index: 1; }
+    .evo-dot.blue   { border-color: #1f6feb; background: #0c1e38; }
+    .evo-dot.green  { border-color: #238636; background: #0b1f0b; }
+    .evo-dot.yellow { border-color: #9e6a03; background: #1d1600; }
+    .evo-dot.purple { border-color: #6e40c9; background: #18102d; }
+    .evo-dot.red    { border-color: #da3633; background: #2d1a1a; }
+    .evo-body { flex: 1; padding-top: .2rem; }
+    .evo-era { font-size: .67rem; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: #484f58; margin-bottom: .15rem; }
+    .evo-title { font-size: .92rem; font-weight: 800; color: #e6edf3; margin-bottom: .3rem; }
+    .evo-text { font-size: .82rem; color: #c9d1d9; line-height: 1.65; }
+    .evo-text ul { padding-left: 1rem; }
+    .evo-text li { margin-bottom: .2rem; }
+
+    /* Architecture diagram */
+    .arch-box { border: 1px solid #30363d; border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+    .arch-title { font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #8b949e; margin-bottom: .75rem; }
+    .arch-row { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; margin-bottom: .5rem; }
+    .arch-app { background: #1f3a5c; border: 1px solid #1f6feb; border-radius: 6px; padding: .35rem .75rem; font-size: .75rem; font-weight: 700; color: #a5d6ff; }
+    .arch-app.green  { background: #1a3a1a; border-color: #238636; color: #56d364; }
+    .arch-app.yellow { background: #2d2009; border-color: #9e6a03; color: #f0c674; }
+    .arch-app.purple { background: #24183a; border-color: #6e40c9; color: #d2a8ff; }
+    .arch-app.red    { background: #2d1a1a; border-color: #da3633; color: #ff7b72; }
+    .arch-hub { background: #1d1600; border: 2px solid #e3b341; border-radius: 8px; padding: .5rem 1rem; font-size: .82rem; font-weight: 800; color: #f0c674; text-align: center; min-width: 100px; }
+    .arch-line { color: #484f58; font-size: .9rem; }
+
+    /* Divider */
+    .divider { border: none; border-top: 1px solid #21262d; margin: 1.75rem 0; }
+
+    /* Sub-section label */
+    .sub-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: #8b949e; border-left: 3px solid #30363d; padding-left: .6rem; margin: 1.5rem 0 .85rem; }
+
+    /* Inline term */
+    .term   { color: #a5d6ff; font-weight: 700; }
+    .term-g { color: #56d364; font-weight: 700; }
+    .term-y { color: #f0c674; font-weight: 700; }
+    .term-p { color: #d2a8ff; font-weight: 700; }
+    .term-r { color: #ff7b72; font-weight: 700; }
+
+    /* Footer */
+    .site-footer { text-align: center; padding: 1.5rem; border-top: 1px solid #21262d; color: #484f58; font-size: .77rem; margin-top: 2rem; }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .two-col, .three-col, .four-col { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 620px) {
+      .two-col { grid-template-columns: 1fr; }
+    }
+
+    /* Print */
+    @media print {
+      @page { size: A4; margin: 1.4cm 1.6cm; }
+      body { background: #fff !important; color: #111 !important; font-size: 9pt; }
+      .navbar, .sidebar, .site-footer { display: none !important; }
+      .layout { max-width: 100%; padding: 0; gap: 0; }
+      .content { padding: 0; }
+      .notes-section { margin-bottom: 1.5rem; page-break-inside: avoid; }
+      .section-header { border-bottom-color: #ccc !important; }
+      .section-num { background: #eee !important; color: #555 !important; border-color: #ccc !important; }
+      .section-title { color: #111 !important; font-size: 13pt; }
+      .def-card { background: #e8f0fe !important; border-color: #1a4fa0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .def-term { color: #1a4fa0 !important; }
+      .def-text, .concept-text, .example-text, .insight-text, .warn-text, .prose { color: #222 !important; font-size: 8.5pt; }
+      .example-card { background: #f0fdf4 !important; border-color: #15803d !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .insight-card { background: #fffbeb !important; border-color: #d97706 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .warn-card { background: #fef2f2 !important; border-color: #b91c1c !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .concept-card { background: #fafafa !important; border-color: #ccc !important; }
+      .pillar-card { background: #fafafa !important; border-color: #ccc !important; }
+      .compare-table th { background: #f3f4f6 !important; color: #555 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .compare-table td { color: #111 !important; border-bottom-color: #eee !important; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="../../index.html">Playground</a>
+  <span class="nav-pill">Class Notes &rsaquo; Data Governance &rsaquo; Module 5</span>
+</nav>
+
+<div class="layout">
+
+  <!-- ── TOC SIDEBAR ─────────────────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="toc-label">Contents</div>
+    <nav class="toc">
+      <div class="toc-group">Purpose</div>
+      <a href="#s1" class="toc-link">1. What We Want from Data</a>
+      <a href="#s2" class="toc-link">2. Collection, Transform &amp; Rules</a>
+      <div class="toc-group">Process</div>
+      <a href="#s3" class="toc-link">3. Designing Data Processes</a>
+      <a href="#s4" class="toc-link">4. Metrics &amp; the CDO</a>
+      <div class="toc-group">Evolution</div>
+      <a href="#s5" class="toc-link">5. Digital Disruption</a>
+      <a href="#s6" class="toc-link">6. Fragmentation of Data</a>
+      <a href="#s7" class="toc-link">7. Reasons for Disruption</a>
+      <a href="#s8" class="toc-link">8. Point-to-Point → Hub-Spoke</a>
+      <a href="#s9" class="toc-link">9. Data Warehouses</a>
+      <a href="#s10" class="toc-link">10. Data Lakes</a>
+      <a href="#s11" class="toc-link">11. Lakehouse &amp; Platforms</a>
+      <div class="toc-group">Enterprise Arch</div>
+      <a href="#s12" class="toc-link">12. EA &amp; Data Architecture</a>
+      <a href="#s13" class="toc-link">13. Collections &amp; Golden Sources</a>
+      <a href="#s14" class="toc-link">14. Heterogeneous Data &amp; DDD</a>
+      <a href="#s15" class="toc-link">15. Business vs Tech Architecture</a>
+      <a href="#s16" class="toc-link">16. Arch Patterns &amp; Golden Rules</a>
+      <a href="#s17" class="toc-link">17. Contracts &amp; Data Staging</a>
+    </nav>
+  </aside>
+
+  <!-- ── MAIN CONTENT ────────────────────────────────────────── -->
+  <main class="content">
+
+    <div class="breadcrumb">
+      <a href="../../index.html">Playground</a>
+      <span>/</span><span>Class Notes</span>
+      <span>/</span><span>Data Governance</span>
+      <span>/</span><span>Module 5</span>
+    </div>
+    <div class="page-header">
+      <div class="page-badge">Module 5</div>
+      <h1>Collection</h1>
+      <div class="page-subtitle">From raw data to meaning &mdash; collection, architecture evolution, enterprise design, and domain patterns</div>
+      <div class="tag-row">
+        <span class="tag tag-blue">Data Collection</span>
+        <span class="tag tag-green">Architecture Evolution</span>
+        <span class="tag tag-yellow">Enterprise Architecture</span>
+        <span class="tag tag-purple">Domain-Driven Design</span>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════ S1 -->
+    <section class="notes-section" id="s1">
+      <div class="section-header">
+        <span class="section-num">01</span>
+        <span class="section-title">What We Want from Data</span>
+      </div>
+
+      <div class="def-card">
+        <div class="def-label">Core Principle</div>
+        <div class="def-term">Data exists to produce meaning</div>
+        <div class="def-text">Raw data &mdash; numbers, strings, timestamps &mdash; has no inherent business value. Value emerges only when data is collected, organized, transformed, and interpreted. The goal of every data management activity is to move data from <em>noise</em> toward <em>actionable insight</em>.</div>
+      </div>
+
+      <p class="prose">Every time an organization invests in data infrastructure, it is ultimately trying to answer better questions faster &mdash; about customers, operations, risk, or opportunity. The pipeline from raw data to meaning runs through four stages:</p>
+
+      <div class="flow-wrap">
+        <div class="flow">
+          <div class="flow-node blue">Collect<div class="fn-sub">Gather from sources</div></div>
+          <div class="flow-arrow">&#8594;</div>
+          <div class="flow-node yellow">Store &amp; Move<div class="fn-sub">Persist, transport, secure</div></div>
+          <div class="flow-arrow">&#8594;</div>
+          <div class="flow-node purple">Transform<div class="fn-sub">Apply business rules</div></div>
+          <div class="flow-arrow">&#8594;</div>
+          <div class="flow-node green">Analyze<div class="fn-sub">Extract insight</div></div>
+          <div class="flow-arrow">&#8594;</div>
+          <div class="flow-node">Act<div class="fn-sub">Make decisions</div></div>
+        </div>
+      </div>
+
+      <div class="three-col">
+        <div class="pillar-card">
+          <div class="pillar-icon">📡</div>
+          <div class="pillar-name">Collect</div>
+          <div class="pillar-desc">Ingesting data from every source &mdash; forms, sensors, APIs, events, files, streams &mdash; without losing fidelity or context.</div>
+        </div>
+        <div class="pillar-card">
+          <div class="pillar-icon">🔄</div>
+          <div class="pillar-name">Transform</div>
+          <div class="pillar-desc">Applying business rules to reshape raw data into formats and structures that answer business questions accurately and consistently.</div>
+        </div>
+        <div class="pillar-card">
+          <div class="pillar-icon">💡</div>
+          <div class="pillar-name">Insight</div>
+          <div class="pillar-desc">Surfacing patterns, anomalies, and trends that support human decisions or drive automated actions across the organization.</div>
+        </div>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-label">Key Insight</div>
+        <div class="insight-text">Analytics is the <em>destination</em>. Collection, storage, transformation, and security are the <em>infrastructure</em> that makes it possible. Skipping any layer results in analytics built on unstable ground &mdash; fast dashboards, wrong answers.</div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ S2 -->
+    <section class="notes-section" id="s2">
+      <div class="section-header">
+        <span class="section-num">02</span>
+        <span class="section-title">Collection, Transformation &amp; Business Rules</span>
+      </div>
+
+      <div class="sub-label">Data Collection</div>
+      <p class="prose">Collection is the first act of making data governable. Before data can be stored, validated, or analyzed, it must be gathered from its source &mdash; in full, on time, and without corruption. Collection sources fall into four categories:</p>
+
+      <table class="compare-table">
+        <thead>
+          <tr><th>Source Type</th><th>Examples</th><th>Governance Consideration</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="col-a">Operational Systems</td><td>CRM, ERP, e-commerce platforms, POS</td><td>Schema changes break pipelines; agree on change notification periods</td></tr>
+          <tr><td class="col-b">Human Input</td><td>Forms, manual data entry, survey tools</td><td>Highest error rate; enforce validation at point of entry</td></tr>
+          <tr><td class="col-c">Sensors &amp; IoT</td><td>Temperature probes, RFID scanners, GPS trackers, wearables</td><td>High volume; define acceptable data loss rate and gap-fill strategy</td></tr>
+          <tr><td class="col-d">Third-Party Feeds</td><td>Market data vendors, social platforms, government open data</td><td>You do not control quality; document trust level; validate on ingest</td></tr>
+          <tr><td class="col-a">Event Streams</td><td>Kafka topics, clickstream logs, application events</td><td>Ordering and at-least-once vs exactly-once delivery semantics matter</td></tr>
+        </tbody>
+      </table>
+
+      <div class="sub-label">Extracting Value &mdash; ETL and ELT</div>
+      <div class="two-col">
+        <div class="def-card" style="margin-bottom:0;">
+          <div class="def-label">Definition</div>
+          <div class="def-term">ETL (Extract, Transform, Load)</div>
+          <div class="def-text">Data is extracted from the source, transformed into the target schema <em>before</em> loading. Common in data warehouse architectures where the target is structured and enforced.</div>
+        </div>
+        <div class="def-card" style="margin-bottom:0;">
+          <div class="def-label">Definition</div>
+          <div class="def-term">ELT (Extract, Load, Transform)</div>
+          <div class="def-text">Data is loaded raw into the target first, then transformed inside it. Common in data lake and lakehouse architectures where storage is cheap and schema flexibility is valued.</div>
+        </div>
+      </div>
+      <br>
+
+      <div class="sub-label">Business Rules in Transformation</div>
+      <p class="prose"><span class="term">Business rules</span> are the logic that converts raw facts into business-meaningful values. They must be <strong>explicitly documented, versioned, and owned</strong> &mdash; not buried in undocumented SQL scripts or notebook cells that only one analyst understands.</p>
+
+      <div class="example-card">
+        <div class="example-label">Examples &mdash; Business Rules in Transformation</div>
+        <div class="example-title">RetailCorp transformation rules</div>
+        <div class="example-text">
+          <ul>
+            <li><strong>Revenue recognition:</strong> IF <code>order_status = "returned"</code> THEN subtract <code>order_amount</code> from <code>net_revenue</code> for that month</li>
+            <li><strong>Customer classification:</strong> IF <code>lifetime_value &gt; 5000</code> AND <code>orders_count &gt; 10</code> THEN <code>customer_tier = "VIP"</code></li>
+            <li><strong>Inventory alert:</strong> IF <code>stock_quantity &lt; reorder_point</code> THEN set <code>reorder_flag = TRUE</code></li>
+            <li><strong>Data enrichment:</strong> JOIN <code>orders.customer_id</code> with <code>customers.region</code> to enable regional reporting</li>
+          </ul>
+          Each rule must be: named, owned by a business stakeholder, version-controlled, and tested with known inputs.
+        </div>
+      </div>
+
+      <div class="warn-card">
+        <div class="warn-label">The Hidden Risk</div>
+        <div class="warn-text">Business rules embedded in transformation scripts without documentation become <strong>institutional knowledge traps</strong>. When the person who wrote the script leaves, nobody knows why revenue is calculated the way it is. Every business rule should live in a documented register, not just in code.</div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ S3 -->
+    <section class="notes-section" id="s3">
+      <div class="section-header">
+        <span class="section-num">03</span>
+        <span class="section-title">Designing &amp; Managing Data Processes</span>
+      </div>
+
+      <p class="prose">Data management requires <strong>repeatable, observable, and maintainable processes</strong>. A process that runs once is a script. A process that runs reliably under governance is an asset. The lifecycle of any data process moves through five questions:</p>
+
+      <div class="sub-label">How to Create a New Data Process</div>
+      <div class="num-list">
+        <div class="num-item">
+          <div class="num-badge">1</div>
+          <div class="num-content">
+            <div class="num-title">Identify the business need &amp; trigger</div>
+            <div class="num-text">What question does this process answer? What event triggers it (schedule, event, request)? Who owns the outcome? <em>Example: finance needs daily revenue reconciliation by 6am.</em></div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge">2</div>
+          <div class="num-content">
+            <div class="num-title">Define inputs, outputs &amp; SLAs</div>
+            <div class="num-text">Document source systems, expected schema, output location and format. Define the SLA: must complete within 60 minutes of trigger; alert if it does not.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge yellow">3</div>
+          <div class="num-content">
+            <div class="num-title">Document business rules explicitly</div>
+            <div class="num-text">Every transformation decision must be named, owned by a business stakeholder, and recorded in the data catalog. Rules that cannot be articulated in plain language should not be coded.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge green">4</div>
+          <div class="num-content">
+            <div class="num-title">Implement with testing</div>
+            <div class="num-text">Unit tests on business rule logic; integration tests with realistic data volumes; data quality assertions on output (row counts, null rates, referential integrity). Test against known good outputs before deploying.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge purple">5</div>
+          <div class="num-content">
+            <div class="num-title">Deploy with observability</div>
+            <div class="num-text">Emit structured logs. Expose duration, row counts processed, error rates as metrics. Set alerts for failures and SLA breaches. On-call rotation or steward assignment for alerts.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sub-label">How to Observe, Maintain &amp; Know When to Update</div>
+      <div class="two-col">
+        <div class="concept-card">
+          <div class="concept-title">👁️ Observing a Process</div>
+          <div class="concept-text">
+            <ul>
+              <li><strong>Structured logging:</strong> every run logs start time, end time, rows in / rows out, errors</li>
+              <li><strong>Metrics dashboards:</strong> duration trends, failure rate, SLA compliance rate over time</li>
+              <li><strong>Alerting:</strong> page when a run fails or exceeds duration threshold</li>
+              <li><strong>Lineage tracking:</strong> know which downstream consumers are affected if this process fails</li>
+            </ul>
+          </div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">🔧 Maintaining &amp; Evolving</div>
+          <div class="concept-text">
+            <ul>
+              <li><strong>Scheduled review cadence:</strong> quarterly audit of all active pipelines</li>
+              <li><strong>Schema change protocol:</strong> upstream changes trigger impact analysis before deployment</li>
+              <li><strong>Version control:</strong> all pipeline code lives in git with meaningful commit messages</li>
+              <li><strong>Create a new process when:</strong> existing process cannot meet the requirement without breaking another use case, or when requirements are mutually exclusive (two rules that contradict each other)</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-label">When to Create a New Process</div>
+        <div class="insight-text">
+          Create a new process (rather than modifying an existing one) when:
+          <ul>
+            <li>The new requirement <strong>contradicts an existing business rule</strong> in the current process</li>
+            <li>A new consumer needs data in a <strong>different shape or latency</strong> than existing consumers</li>
+            <li>The existing process is already <strong>at capacity</strong> and adding logic would breach SLAs</li>
+            <li>A new domain team needs <strong>ownership</strong> of a separate pipeline with its own governance</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ S4 -->
+    <section class="notes-section" id="s4">
+      <div class="section-header">
+        <span class="section-num">04</span>
+        <span class="section-title">Data Management Metrics &amp; the CDO</span>
+      </div>
+
+      <div class="def-card">
+        <div class="def-label">Role</div>
+        <div class="def-term">Chief Data Officer (CDO)</div>
+        <div class="def-text">The executive accountable for the organization's data strategy, data quality, data governance, and the business value derived from data assets. The CDO sits at the intersection of technology and business &mdash; translating data capability into competitive advantage, and ensuring compliance and trust.</div>
+      </div>
+
+      <div class="sub-label">What Metrics to Show &mdash; and When</div>
+      <p class="prose">The right metrics differ by audience and frequency. The CDO needs a layered view: operational health daily, quality trends weekly, strategic outcomes monthly.</p>
+
+      <table class="compare-table">
+        <thead>
+          <tr><th>Metric</th><th>What It Measures</th><th>Frequency</th><th>Audience</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="col-a">Pipeline SLA compliance rate</td><td>% of pipeline runs that completed within SLA</td><td>Daily</td><td>Data Engineering</td></tr>
+          <tr><td class="col-b">Data quality score</td><td>Composite score across completeness, accuracy, validity per domain</td><td>Weekly</td><td>Stewards, CDO</td></tr>
+          <tr><td class="col-c">Data availability uptime</td><td>% time key datasets were accessible when needed</td><td>Weekly</td><td>CDO, Business Leaders</td></tr>
+          <tr><td class="col-d">Incident count &amp; MTTR</td><td>Number of data incidents; Mean Time to Resolve</td><td>Weekly</td><td>Stewards, CDO</td></tr>
+          <tr><td class="col-a">Access request resolution time</td><td>Avg. time from access request to provisioning</td><td>Monthly</td><td>IT, CDO</td></tr>
+          <tr><td class="col-b">Policy compliance rate</td><td>% of datasets with documented owner, classification, and quality SLA</td><td>Monthly</td><td>Governance Council, CDO</td></tr>
+          <tr><td class="col-c">Storage growth rate</td><td>Month-over-month growth in managed data volume</td><td>Monthly</td><td>Infrastructure, Finance</td></tr>
+          <tr><td class="col-d">Business value delivered</td><td>Analytics use cases enabled, decisions accelerated, cost savings from data quality</td><td>Quarterly</td><td>Board, C-suite</td></tr>
+        </tbody>
+      </table>
+
+      <div class="insight-card">
+        <div class="insight-label">CDO Responsibilities &mdash; Data Management Activities</div>
+        <div class="insight-text">
+          <ul>
+            <li><strong>Set data strategy</strong> aligned with business goals &mdash; 3-year roadmap reviewed annually</li>
+            <li><strong>Own data governance framework</strong> &mdash; policies, stewardship program, compliance posture</li>
+            <li><strong>Champion data quality</strong> &mdash; hold domain owners accountable to quality SLAs</li>
+            <li><strong>Enable analytics</strong> &mdash; ensure the right data is available to the right people at the right time</li>
+            <li><strong>Manage data risk</strong> &mdash; privacy, security, regulatory compliance</li>
+            <li><strong>Report to C-suite and board</strong> on data value, risk, and maturity</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ S5 -->
+    <section class="notes-section" id="s5">
+      <div class="section-header">
+        <span class="section-num">05</span>
+        <span class="section-title">Digital Disruption &amp; Growing Data Demand</span>
+      </div>
+
+      <p class="prose">The explosion in data volume, variety, and velocity was not accidental &mdash; it was driven by a series of technological and social shifts that each created massive new streams of data. Understanding the <em>why</em> behind data demand helps explain why every data architecture discussed in this module was invented.</p>
+
+      <div class="evo-strip">
+        <div class="evo-item">
+          <div class="evo-dot blue">🛒</div>
+          <div class="evo-body">
+            <div class="evo-era">Wave 1 &mdash; 1990s&ndash;2000s</div>
+            <div class="evo-title">E-Commerce Boom</div>
+            <div class="evo-text">Online retail created massive transaction volumes &mdash; millions of orders, clicks, and cart events per day. Databases that worked for 10,000 in-store transactions per day could not handle 10 million web events. New data architectures were urgently needed.</div>
+          </div>
+        </div>
+        <div class="evo-item">
+          <div class="evo-dot yellow">📱</div>
+          <div class="evo-body">
+            <div class="evo-era">Wave 2 &mdash; 2007&ndash;2015</div>
+            <div class="evo-title">Mobile Dominance</div>
+            <div class="evo-text">Smartphones put apps in every pocket. Users were always connected, generating behavioral data 24/7. Apps became global &mdash; a single app could have users in 100 countries simultaneously, each generating events. Geographic reach expanded data complexity.</div>
+          </div>
+        </div>
+        <div class="evo-item">
+          <div class="evo-dot purple">🤖</div>
+          <div class="evo-body">
+            <div class="evo-era">Wave 3 &mdash; 2012&ndash;present</div>
+            <div class="evo-title">AI &amp; Machine Learning</div>
+            <div class="evo-text">ML models need vast quantities of labeled, clean, historical data. A model to predict customer churn needs years of customer behavior data. AI created an insatiable appetite for data at scale &mdash; not just for reporting but for training, validation, and inference.</div>
+          </div>
+        </div>
+        <div class="evo-item">
+          <div class="evo-dot green">📡</div>
+          <div class="evo-body">
+            <div class="evo-era">Wave 4 &mdash; 2015&ndash;present</div>
+            <div class="evo-title">IoT &amp; Sensor Data</div>
+            <div class="evo-text">Sensors now predict activities before they happen. A factory floor sensor detects a motor temperature spike and predicts a bearing failure 48 hours before it occurs. A logistics sensor tracks every pallet in real time. IoT generates high-frequency, high-volume time-series data that dwarfs traditional transactional volumes.</div>
+          </div>
+        </div>
+        <div class="evo-item">
+          <div class="evo-dot blue">☁️</div>
+          <div class="evo-body">
+            <div class="evo-era">Wave 5 &mdash; 2010&ndash;present</div>
+            <div class="evo-title">Cloud Computing</div>
+            <div class="evo-text">Cloud gave organizations on-demand compute and memory at petabyte scale &mdash; without capital investment. What once required a data center now requires a credit card. Cloud removed the hardware ceiling and made large-scale data management accessible to organizations of all sizes.</div>
+          </div>
+        </div>
+        <div class="evo-item">
+          <div class="evo-dot yellow">🏠</div>
+          <div class="evo-body">
+            <div class="evo-era">Wave 6 &mdash; 2010&ndash;present</div>
+            <div class="evo-title">Sharing Economy &amp; Remote Work</div>
+            <div class="evo-text">Airbnb, Uber, and gig platforms capture behavioral and transactional data at unprecedented scale. Remote work (especially post-2020) moved work onto digital platforms &mdash; every meeting, document, and decision became a data event in SaaS tools like Slack, Zoom, and Notion.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ S6 -->
+    <section class="notes-section" id="s6">
+      <div class="section-header">
+        <span class="section-num">06</span>
+        <span class="section-title">Fragmentation of Data</span>
+      </div>
+
+      <p class="prose">As organizations grew across waves of digital disruption, data did not consolidate &mdash; it fragmented. Each new system, team, or acquisition added another data island. The result is an organization where data exists everywhere but <strong>reliable, trustworthy data exists nowhere</strong>.</p>
+
+      <div class="three-col">
+        <div class="concept-card" style="border-color:#1f6feb;">
+          <div class="concept-title">🗃️ Siloed Systems</div>
+          <div class="concept-text">ERP holds financial data. CRM holds customer data. Third-party vendors hold market and behavioral data. Each system was bought or built independently, with no shared data model. No system knows what the other holds.</div>
+        </div>
+        <div class="concept-card" style="border-color:#9e6a03;">
+          <div class="concept-title">📋 Manual Management</div>
+          <div class="concept-text">Without automated pipelines, teams manage data in spreadsheets &mdash; emailed, versioned with filenames like <em>Q3_final_FINAL_v3.xlsx</em>. Static monthly reports replace real-time insight. Decisions lag data by weeks.</div>
+        </div>
+        <div class="concept-card" style="border-color:#da3633;">
+          <div class="concept-title">🗣️ Language Fragmentation</div>
+          <div class="concept-text">Sales calls it "revenue." Finance calls it "net receipts." Marketing calls it "attributed spend." Same underlying money; three definitions; three different numbers. Teams cannot collaborate because they speak different data languages.</div>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="concept-card">
+          <div class="concept-title">🔍 Unknown Data Existence</div>
+          <div class="concept-text">Teams build new pipelines for data that already exists somewhere else in the organization &mdash; because they could not find it. Nobody maintains an inventory. The fastest way to get data is to ask the one engineer who has been there 10 years.</div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">🧩 Nobody Understands It</div>
+          <div class="concept-text">Even when data is found, field names are cryptic (<code>cust_flg_b</code>), documentation is absent, and the original designer has left. Analysts spend 70% of their time finding and cleaning data, not analyzing it.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ S7 -->
+    <section class="notes-section" id="s7">
+      <div class="section-header">
+        <span class="section-num">07</span>
+        <span class="section-title">Reasons for Data Disruption</span>
+      </div>
+
+      <p class="prose">Data disruption &mdash; the breakdown of reliable, accessible, trusted data within an organization &mdash; does not happen from a single cause. It accumulates from multiple compounding pressures. Understanding the root cause is the first step toward addressing it.</p>
+
+      <table class="compare-table">
+        <thead>
+          <tr><th>Reason</th><th>Description</th><th>Common Symptom</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="col-a">Organizational Silos</td>
+            <td>Departments own their data and treat it as a competitive asset internally. Data sharing requires executive escalation rather than self-service access.</td>
+            <td>Five teams build five versions of the same report with five different answers</td>
+          </tr>
+          <tr>
+            <td class="col-b">Legacy Systems</td>
+            <td>Old systems store data in formats that cannot be easily read by modern tools. APIs do not exist; extraction requires custom scripts maintained by one person.</td>
+            <td>Monthly batch exports from a mainframe are the only way to get critical financial data</td>
+          </tr>
+          <tr>
+            <td class="col-c">Inconsistent Definitions</td>
+            <td>The same business term means different things in different systems or departments. No authoritative glossary exists.</td>
+            <td>"Active customer" means 6 different things across 6 teams</td>
+          </tr>
+          <tr>
+            <td class="col-d">Rapid Growth</td>
+            <td>New products, markets, and acquisitions outpace governance. Data models designed for one region break when the company goes global.</td>
+            <td>Post-acquisition, neither company can produce a combined customer report for 18 months</td>
+          </tr>
+          <tr>
+            <td class="col-a">Shadow IT</td>
+            <td>Teams build their own data tools outside IT governance. Unauthorized data copies proliferate. Security and quality controls are bypassed.</td>
+            <td>Marketing has a "personal" Google BigQuery instance with a copy of the customer database</td>
+          </tr>
+          <tr>
+            <td class="col-b">Mergers &amp; Acquisitions</td>
+            <td>Two organizations with incompatible data architectures, schemas, and definitions are forced to coexist. Integration is underestimated.</td>
+            <td>Two years after merger, duplicate customer records still exist in both CRM systems</td>
+          </tr>
+          <tr>
+            <td class="col-c">Regulation Changes</td>
+            <td>New laws (GDPR, CCPA, HIPAA) require data to be handled, stored, or deleted differently. Existing architecture was not designed for compliance.</td>
+            <td>A GDPR erasure request cannot be fulfilled because the customer data is in 14 systems</td>
+          </tr>
+          <tr>
+            <td class="col-d">Technology Churn</td>
+            <td>Frequent tool changes break pipelines, lineage, and documentation. New platforms are adopted before old ones are decommissioned, creating overlap and confusion.</td>
+            <td>Data flows through three analytics platforms simultaneously, with no clear system of record</td>
+          </tr>
+          <tr>
+            <td class="col-a">Talent &amp; Knowledge Concentration</td>
+            <td>Critical data knowledge lives in the heads of 1&ndash;2 people. When they leave, the organization loses visibility into how its own data works.</td>
+            <td>"Only Dave knows how the revenue pipeline works" &mdash; Dave quit last month</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ S8 -->
+    <section class="notes-section" id="s8">
+      <div class="section-header">
+        <span class="section-num">08</span>
+        <span class="section-title">Architecture Evolution: Point-to-Point &rarr; Hub-and-Spoke &rarr; Warehouse</span>
+      </div>
+
+      <p class="prose">Every architecture in this section was invented to solve the problems created by the one before it. Understanding the lineage explains why modern platforms are designed the way they are.</p>
+
+      <div class="sub-label">Era 1 &mdash; Point-to-Point (The Spaghetti Problem)</div>
+      <p class="prose">The first approach was simple: when App A needed data from App B, build a direct connection. This worked for two or three applications. It broke catastrophically at scale.</p>
+
+      <div class="arch-box">
+        <div class="arch-title">Point-to-Point: N applications = N&sup2; integration paths</div>
+        <div class="arch-row">
+          <span class="arch-app">CRM</span>
+          <span class="arch-line">&#8596;</span>
+          <span class="arch-app green">ERP</span>
+          <span class="arch-line">&#8596;</span>
+          <span class="arch-app yellow">Billing</span>
+          <span class="arch-line">&#8596;</span>
+          <span class="arch-app purple">Warehouse</span>
+          <span class="arch-line">&#8596;</span>
+          <span class="arch-app red">Analytics</span>
+        </div>
+        <div style="font-size:.78rem; color:#8b949e; margin-top:.75rem;">Every app talks to every other app directly. 5 apps = up to 10 connections. 20 apps = up to 190 connections. Each connection is a custom integration maintained by a different team.</div>
+      </div>
+
+      <div class="sub-label">Era 2 &mdash; Hub-and-Spoke (Middleware / ESB)</div>
+      <p class="prose">The solution was to introduce a <span class="term">central hub</span> &mdash; an Enterprise Service Bus (ESB) or middleware layer. All applications connect to the hub instead of to each other. N applications now need only N connections, not N&sup2;.</p>
+
+      <div class="arch-box">
+        <div class="arch-title">Hub-and-Spoke: all traffic passes through the hub</div>
+        <div class="arch-row" style="justify-content: center; gap: 1rem;">
+          <div style="display:flex; flex-direction:column; gap:.5rem; align-items:flex-end;">
+            <span class="arch-app">CRM</span>
+            <span class="arch-app green">ERP</span>
+            <span class="arch-app yellow">Billing</span>
+          </div>
+          <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:.25rem; color:#484f58; font-size:.85rem;">
+            <span>&#8594;</span><span>&#8594;</span><span>&#8594;</span>
+          </div>
+          <div class="arch-hub">🔄 HUB<br><small style="font-weight:400; font-size:.7rem;">ESB / Middleware</small></div>
+          <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:.25rem; color:#484f58; font-size:.85rem;">
+            <span>&#8594;</span><span>&#8594;</span>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:.5rem;">
+            <span class="arch-app purple">Analytics</span>
+            <span class="arch-app red">Reports</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="warn-card">
+        <div class="warn-label">Hub-and-Spoke Problems</div>
+        <div class="warn-text">
+          <ul>
+            <li><strong>Single point of failure:</strong> if the hub is down, every application loses connectivity. Nothing works.</li>
+            <li><strong>Change amplification:</strong> one change to the hub schema or routing logic potentially breaks every application simultaneously.</li>
+            <li><strong>Not scalable:</strong> as the organization grows, the hub becomes a bottleneck &mdash; all data flows must be routed and managed centrally by a single team.</li>
+            <li><strong>Tight coupling:</strong> applications become dependent on the hub&rsquo;s data model. Known as the "Big Ball of Mud" &mdash; a tightly coupled, hard-to-change system that accretes complexity over time.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ S9 -->
+    <section class="notes-section" id="s9">
+      <div class="section-header">
+        <span class="section-num">09</span>
+        <span class="section-title">Data Warehouses &amp; Their Limitations</span>
+      </div>
+
+      <div class="def-card">
+        <div class="def-label">Definition</div>
+        <div class="def-term">Data Warehouse</div>
+        <div class="def-text">A centralized repository that integrates data from multiple source systems, transforms it into a consistent structure, and stores it for analytical querying. The warehouse acts as both an integrator and a store &mdash; it is the single source of truth for business intelligence and reporting.</div>
+      </div>
+
+      <p class="prose">The data warehouse was a major advance over hub-and-spoke: it separated <em>integration</em> concerns (getting data in) from <em>consumption</em> concerns (querying data out), and it stored the results persistently for repeated queries. But it introduced its own category of problems.</p>
+
+      <div class="two-col">
+        <div class="concept-card">
+          <div class="concept-title">✅ What Warehouses Solved</div>
+          <div class="concept-text">
+            <ul>
+              <li>Single source of truth for reporting and BI</li>
+              <li>Consistent, enforced schema (schema-on-write)</li>
+              <li>High-quality, structured, queryable data</li>
+              <li>Separation of OLAP (analytics) from OLTP (operations)</li>
+              <li>Historical data retained for trend analysis</li>
+            </ul>
+          </div>
+        </div>
+        <div class="concept-card" style="border-color:#f85149;">
+          <div class="concept-title" style="color:#ff7b72;">❌ Warehouse Limitations</div>
+          <div class="concept-text">
+            <ul>
+              <li><strong>Slow to adapt:</strong> adding a new data source or field requires ETL redesign that can take months</li>
+              <li><strong>Central bottleneck:</strong> all ingestion goes through one central engineering team &mdash; every business request is queued</li>
+              <li><strong>One model fits all:</strong> data modeled for one use case breaks another; new requirements compete with existing ones</li>
+              <li><strong>Mutually exclusive rules:</strong> Finance and Marketing may need conflicting revenue calculations; one model cannot satisfy both</li>
+              <li><strong>Handles only structured data:</strong> images, documents, sensor streams cannot be stored</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-label">The Data Mart Workaround</div>
+        <div class="insight-text">Because the central warehouse could not satisfy all business units simultaneously, teams built <span class="term-y">data marts</span> &mdash; smaller, department-specific copies of warehouse data shaped for a specific use case. Finance gets a finance mart; Sales gets a sales mart. This solved the &ldquo;one model for all&rdquo; problem but re-introduced data silos and redundancy at a smaller scale. The Big Ball of Mud problem moved one layer down.</div>
+      </div>
+
+      <p class="prose">The warehouse architecture also assumes that data fits neatly into rows and columns &mdash; structured data with a known schema defined before ingestion. As unstructured data (logs, images, documents, sensor telemetry) grew to dominate organizational data volumes, warehouses could not keep up. A new architecture was needed.</p>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ S10 -->
+    <section class="notes-section" id="s10">
+      <div class="section-header">
+        <span class="section-num">10</span>
+        <span class="section-title">Data Lakes &mdash; Structure, Examples &amp; Trade-offs</span>
+      </div>
+
+      <div class="def-card">
+        <div class="def-label">Definition</div>
+        <div class="def-term">Data Lake</div>
+        <div class="def-text">A large-scale storage repository that holds raw data in its native format until it is needed. Unlike a warehouse, a data lake applies schema at read time (<em>schema-on-read</em>), not at write time. It can store structured, semi-structured, and unstructured data at petabyte scale, typically using cheap object storage.</div>
+      </div>
+
+      <div class="sub-label">The Three Zones in a Mature Data Lake</div>
+      <div class="flow-wrap">
+        <div class="flow">
+          <div class="flow-node red">Raw Zone<div class="fn-sub">Exact copy from source. Immutable. Never transformed in place.</div></div>
+          <div class="flow-arrow">&#8594;</div>
+          <div class="flow-node yellow">Cleansed Zone<div class="fn-sub">Validated, deduplicated, standardized. Governance rules applied.</div></div>
+          <div class="flow-arrow">&#8594;</div>
+          <div class="flow-node green">Curated Zone<div class="fn-sub">Transformed, enriched, business-ready. Consumed by analytics and ML.</div></div>
+        </div>
+      </div>
+
+      <div class="sub-label">Real-World Examples</div>
+      <div class="three-col">
+        <div class="concept-card">
+          <div class="concept-title">☁️ Amazon S3 (AWS)</div>
+          <div class="concept-text">Multiple S3 buckets organized by zone act as one logical lake. Raw bucket is write-once; cleansed and curated buckets have controlled write access. Queried with Athena (serverless SQL on S3) or consumed by EMR (Spark).</div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">🔷 Azure Blob Storage / ADLS</div>
+          <div class="concept-text">Azure Data Lake Storage Gen2 (ADLS) adds hierarchical namespace to Blob Storage, enabling folder-level access control. Integrates natively with Azure Databricks, Synapse Analytics, and Microsoft Fabric.</div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">☁️ Google Cloud Storage</div>
+          <div class="concept-text">GCS buckets form the storage layer for BigQuery&rsquo;s external tables and Dataproc (managed Spark). Supports petabyte-scale with lifecycle rules for automatic archival.</div>
+        </div>
+      </div>
+
+      <div class="sub-label">Advantages vs. Disadvantages</div>
+      <table class="compare-table">
+        <thead>
+          <tr><th></th><th>Data Warehouse</th><th>Data Lake</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="col-a">Schema</td><td>Schema-on-write (defined before load)</td><td>Schema-on-read (defined at query time)</td></tr>
+          <tr><td class="col-a">Data types</td><td>Structured only</td><td>Structured, semi-structured, unstructured</td></tr>
+          <tr><td class="col-a">Storage cost</td><td>Higher (optimized column stores)</td><td>Lower (cheap object storage)</td></tr>
+          <tr><td class="col-a">Data quality</td><td>High &mdash; enforced at ingest</td><td>Variable &mdash; quality depends on pipeline discipline</td></tr>
+          <tr><td class="col-a">Agility</td><td>Low &mdash; schema changes require ETL rework</td><td>High &mdash; raw data can be re-processed as needs change</td></tr>
+          <tr><td class="col-a">Governance</td><td>Easier &mdash; structure enforces standards</td><td>Harder &mdash; requires discipline to avoid a "data swamp"</td></tr>
+          <tr><td class="col-a">Query performance</td><td>Excellent for structured queries</td><td>Slower without proper partitioning and file formats</td></tr>
+        </tbody>
+      </table>
+
+      <div class="example-card">
+        <div class="example-label">Scenario &mdash; Where Each Architecture Fails</div>
+        <div class="example-title">Real problems in the wild</div>
+        <div class="example-text">
+          <ul>
+            <li><strong>Warehouse failure:</strong> Product team needs to analyze raw clickstream data to understand user behavior. The clickstream is unstructured JSON. Loading it into the warehouse requires 3 months of ETL work to define a schema. By then the product decision is stale.</li>
+            <li><strong>Data lake failure:</strong> Five analytics teams each independently build a "customer lifetime value" pipeline in the raw lake. Each uses a slightly different definition of customer and a different date range. Finance reports four different CLV numbers in the same board meeting. The lake became a data swamp &mdash; just like the original silo problem, but at larger scale.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="warn-card">
+        <div class="warn-label">The Data Swamp Anti-Pattern</div>
+        <div class="warn-text">A data lake without governance, metadata, and clear ownership becomes a <strong>data swamp</strong>: data is there but nobody can find it, nobody trusts it, and nobody knows who to ask. Agility in ingestion without discipline in curation creates the same fragmentation problem the lake was meant to solve &mdash; just at petabyte scale.</div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ S11 -->
+    <section class="notes-section" id="s11">
+      <div class="section-header">
+        <span class="section-num">11</span>
+        <span class="section-title">Lakehouse, DeltaLake &amp; Modern Platforms</span>
+      </div>
+
+      <div class="def-card">
+        <div class="def-label">Definition</div>
+        <div class="def-term">Lakehouse</div>
+        <div class="def-text">An architecture that combines the flexible, low-cost storage of a data lake with the data management and query performance features of a data warehouse. Lakehouses provide ACID transactions, schema enforcement, and BI-grade query performance directly on top of open file formats in object storage &mdash; without requiring a separate warehouse.</div>
+      </div>
+
+      <div class="sub-label">Key Technologies</div>
+
+      <div class="num-list">
+        <div class="num-item">
+          <div class="num-badge purple">&#916;</div>
+          <div class="num-content">
+            <div class="num-title">Delta Lake (Databricks)</div>
+            <div class="num-text">An open-source storage layer that sits on top of object storage (S3, ADLS, GCS) and adds ACID transactions, versioning, and schema enforcement to Parquet files. A <strong>Delta table</strong> looks like a warehouse table but lives in the lake. DeltaLake sits between raw lake storage and warehouse-grade querying &mdash; it is the bridge that makes the lakehouse pattern possible. Enables time-travel (query data as it was at any past point) and change data feed.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge blue">🔷</div>
+          <div class="num-content">
+            <div class="num-title">OneLake (Microsoft Fabric)</div>
+            <div class="num-text">Microsoft Fabric&rsquo;s unified data lake &mdash; a single logical lake that spans an entire organization. <strong>One copy of data, many experiences:</strong> the same data can be accessed via SQL (Synapse), notebooks (Spark), BI (Power BI), and pipelines (Data Factory) without copying it. OneLake includes automatic data governance, built-in metadata discovery, and unified access control. Every Fabric workspace gets a OneLake automatically.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge yellow">🌊</div>
+          <div class="num-content">
+            <div class="num-title">AWS Lake Formation</div>
+            <div class="num-text">AWS&rsquo;s equivalent of OneLake &mdash; a service that makes it easy to set up a secure data lake in days. Lake Formation centralizes access control across S3, Glue (catalog), Athena (SQL), Redshift, and EMR. It provides column- and row-level security across all these services from a single policy definition. The Glue Data Catalog serves as the metadata and discovery layer.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sub-label">Microsoft Fabric vs. Databricks</div>
+      <table class="compare-table">
+        <thead>
+          <tr><th>Dimension</th><th>Microsoft Fabric</th><th>Databricks</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="col-a">Foundation</td><td>OneLake (Microsoft-managed unified lake)</td><td>Delta Lake (open-source, multi-cloud)</td></tr>
+          <tr><td class="col-b">Strengths</td><td>Deep Microsoft 365 and Azure integration; end-to-end platform from ingestion to Power BI; low-friction for existing Microsoft shops</td><td>Open-source first; platform-agnostic; strongest for ML and data science workloads; Spark-native</td></tr>
+          <tr><td class="col-c">Governance</td><td>Microsoft Purview integration; OneLake auto-governance; tenant-wide policies</td><td>Unity Catalog &mdash; centralized metadata, lineage, and access control across Databricks workspaces</td></tr>
+          <tr><td class="col-d">Best for</td><td>Organizations already invested in Azure/Microsoft 365 stack; BI-heavy workloads; low-code/no-code users</td><td>Organizations with heavy Spark/ML workloads; multi-cloud strategy; engineering-first data teams</td></tr>
+          <tr><td class="col-a">Philosophy</td><td>Integrated, opinionated platform &mdash; everything works together out of the box</td><td>Open, composable stack &mdash; bring your own tools, connect what you need</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ S12 -->
+    <section class="notes-section" id="s12">
+      <div class="section-header">
+        <span class="section-num">12</span>
+        <span class="section-title">Enterprise Architecture &amp; Data Architecture</span>
+      </div>
+
+      <div class="two-col">
+        <div class="def-card" style="margin-bottom:0;">
+          <div class="def-label">Definition</div>
+          <div class="def-term">Enterprise Architecture (EA)</div>
+          <div class="def-text">The master blueprint of an organization&rsquo;s technology landscape &mdash; all systems, applications, interfaces, dependencies, and the desired future state. EA is the collaboration of architectural structures across business, data, application, and technology layers. It connects CRM, ERP, analytics platforms, and every integration between them.</div>
+        </div>
+        <div class="def-card" style="margin-bottom:0;">
+          <div class="def-label">Definition</div>
+          <div class="def-term">Data Architecture</div>
+          <div class="def-text">The subset of enterprise architecture focused specifically on data &mdash; how it is collected, stored, moved, transformed, and used. Data architecture is the <strong>primary roadmap</strong> that offers a vision of data&rsquo;s role within the broader enterprise strategy. It governs all data-related activities across the enterprise.</div>
+        </div>
+      </div>
+      <br>
+
+      <p class="prose">Running a business requires applications: a CRM to manage customers, an ERP to manage finance and operations, specialized tools for logistics, HR, and support. These applications are the primary reason they exist &mdash; but a critical <strong>side effect is data</strong>. Every transaction, every record, every click in those applications generates data. Data architecture governs what happens to that data after it is created.</p>
+
+      <div class="insight-card">
+        <div class="insight-label">EA as a Connection Layer</div>
+        <div class="insight-text">Enterprise architecture connects all systems and data through a collaboration of:
+          <ul>
+            <li><strong>Architectural structures:</strong> how systems are organized and layered</li>
+            <li><strong>Interfaces:</strong> how systems communicate (APIs, events, file transfers)</li>
+            <li><strong>Dependencies:</strong> which systems depend on which others; what breaks if one fails</li>
+            <li><strong>Future state solutions:</strong> where the architecture is headed &mdash; what is being built, deprecated, or replaced</li>
+          </ul>
+          Data architecture is not separate from EA &mdash; it is the data dimension of it.
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ S13 -->
+    <section class="notes-section" id="s13">
+      <div class="section-header">
+        <span class="section-num">13</span>
+        <span class="section-title">Collections &amp; Golden Data Sources</span>
+      </div>
+
+      <div class="def-card">
+        <div class="def-label">Definition</div>
+        <div class="def-term">Collection (in Data Architecture)</div>
+        <div class="def-text">A logical grouping of related data sources that together represent a coherent business domain or subject area. A collection might contain all data related to "Customers" &mdash; from the CRM, the billing system, the support platform &mdash; organized under a common governance structure with a single owner.</div>
+      </div>
+
+      <div class="two-col">
+        <div class="def-card" style="margin-bottom:0;">
+          <div class="def-label">Definition</div>
+          <div class="def-term">Golden Data Source</div>
+          <div class="def-text">The single authoritative, officially recognized source of truth for a specific data entity or dataset within an organization. All downstream systems should consume from the golden source rather than maintaining their own copy.</div>
+        </div>
+        <div class="def-card" style="margin-bottom:0;">
+          <div class="def-label">Definition</div>
+          <div class="def-term">Golden Dataset</div>
+          <div class="def-text">A curated, validated, and approved dataset derived from golden sources &mdash; ready for downstream consumption. Golden datasets pass quality gates, have documented business definitions, and are published through official channels.</div>
+        </div>
+      </div>
+      <br>
+
+      <div class="sub-label">Challenges of Organizing Heterogeneous Data Sources</div>
+      <div class="num-list">
+        <div class="num-item">
+          <div class="num-badge">1</div>
+          <div class="num-content">
+            <div class="num-title">Format Diversity</div>
+            <div class="num-text">Sources produce data in incompatible formats: JSON from APIs, CSV from spreadsheets, Parquet from data platforms, XML from legacy systems, binary from sensors. A collection strategy must define a canonical format for each domain.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge yellow">2</div>
+          <div class="num-content">
+            <div class="num-title">Schema Inconsistency</div>
+            <div class="num-text">The same concept is represented differently across systems. CRM uses <code>customer_name</code>, ERP uses <code>account_name</code>, billing uses <code>client_label</code>. Mapping these to a canonical schema requires documented field-level transformation rules.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge green">3</div>
+          <div class="num-content">
+            <div class="num-title">Update Frequency Mismatch</div>
+            <div class="num-text">CRM updates in real-time; the ERP batch-exports nightly; a vendor sends a monthly file. A collection must handle different data freshness levels and communicate clearly to consumers which source is current.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge purple">4</div>
+          <div class="num-content">
+            <div class="num-title">Trust Level Variance</div>
+            <div class="num-text">Internal transactional systems are generally trustworthy; third-party data vendors may have quality issues. A collection must document the trust level of each source and apply appropriate validation before including it in a golden dataset.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ S14 -->
+    <section class="notes-section" id="s14">
+      <div class="section-header">
+        <span class="section-num">14</span>
+        <span class="section-title">Heterogeneous Data &amp; Domain-Driven Design</span>
+      </div>
+
+      <div class="def-card">
+        <div class="def-label">Definition</div>
+        <div class="def-term">Domain-Driven Design (DDD)</div>
+        <div class="def-text">A software and data design philosophy that organizes systems around business domains rather than technology layers. In DDD, each business domain (Orders, Customers, Inventory) owns its data, defines its own models, and communicates with other domains through explicit interfaces. The goal is to align software structure with business structure.</div>
+      </div>
+
+      <div class="sub-label">Core DDD Concepts Applied to Data</div>
+
+      <div class="three-col">
+        <div class="concept-card">
+          <div class="concept-title">🏠 Domain &amp; Subdomain</div>
+          <div class="concept-text">A <span class="term">domain</span> is a sphere of business knowledge and responsibility. <em>Example: Orders</em>.<br><br>
+          A <span class="term">subdomain</span> is a focused area within a domain. <em>Example: Fulfillment, Returns, and Pricing are subdomains of Orders</em>.<br><br>
+          Each domain owns the data it produces and is accountable for its quality.</div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">🔲 Bounded Context</div>
+          <div class="concept-text">The explicit boundary within which a domain model applies. <em>Inside the Sales bounded context,</em> "Customer" means any account with a signed contract. <em>Inside the Marketing bounded context,</em> "Customer" means any email subscriber.<br><br>
+          The same word, different meaning. Bounded contexts make this explicit rather than implicit.</div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">🗣️ Ubiquitous Language</div>
+          <div class="concept-text">Within a bounded context, everyone &mdash; engineers, analysts, business users &mdash; uses the same vocabulary. The same term means the same thing everywhere within that context.<br><br>
+          This is enforced in the data catalog: each domain&rsquo;s glossary defines terms within its bounded context. Cross-domain terms are translated at the integration boundary.</div>
+        </div>
+      </div>
+
+      <div class="example-card">
+        <div class="example-label">Example &mdash; Bounded Contexts in Practice</div>
+        <div class="example-title">RetailCorp: three definitions of "Product"</div>
+        <div class="example-text">
+          <ul>
+            <li><strong>Inventory domain:</strong> "Product" = a physical SKU with a location, quantity, and reorder point</li>
+            <li><strong>Marketing domain:</strong> "Product" = a catalog item with a description, images, and promotional eligibility</li>
+            <li><strong>Finance domain:</strong> "Product" = a revenue line item with a cost basis, margin, and tax classification</li>
+          </ul>
+          Each definition is correct <em>within its context</em>. The integration boundary between domains requires a translation layer (context map) that converts the Finance representation of "Product" into the Inventory representation when stock valuation is calculated.
+        </div>
+      </div>
+
+      <div class="sub-label">Data &amp; Software Integration Overlaps</div>
+      <p class="prose">When two systems share data, their integration often creates ambiguity about <strong>who owns what</strong>. A CRM and a marketing automation tool might both hold customer email addresses &mdash; but which is the golden source? This overlap must be resolved explicitly in the data architecture, not left to individual teams to discover at query time.</p>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ S15 -->
+    <section class="notes-section" id="s15">
+      <div class="section-header">
+        <span class="section-num">15</span>
+        <span class="section-title">Business vs. Technology Architecture</span>
+      </div>
+
+      <p class="prose">Enterprise architecture has two primary lenses. <span class="term">Business architecture</span> describes what the business does; <span class="term">technology architecture</span> describes the systems that enable it. Data sits at the intersection &mdash; it is both a business asset and a technology artifact.</p>
+
+      <div class="two-col">
+        <div class="concept-card">
+          <div class="concept-title">Business Architecture</div>
+          <div class="concept-text">Defines business capabilities, processes, roles, and the relationships between them. It answers: <em>what does this organization do, and how is it structured to do it?</em>
+            <ul>
+              <li>Business capabilities: "Manage Customer Relationships," "Process Orders," "Forecast Demand"</li>
+              <li>Business processes: the steps within each capability</li>
+              <li>Organizational structure: which teams own which capabilities</li>
+              <li>Value streams: how value flows from supplier to customer</li>
+            </ul>
+          </div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">Technology Architecture</div>
+          <div class="concept-text">Defines the systems, platforms, and integrations that enable business capabilities. It answers: <em>what technology makes the business run?</em>
+            <ul>
+              <li>Application portfolio: which apps support which capabilities</li>
+              <li>Integration landscape: how apps communicate</li>
+              <li>Infrastructure: cloud providers, compute, storage</li>
+              <li>Data systems: warehouse, lake, catalog, pipelines</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="sub-label">Mapping Business Capabilities to Technology Systems</div>
+      <table class="compare-table">
+        <thead>
+          <tr><th>Business Capability</th><th>Typical Application</th><th>Data It Produces</th><th>Golden Source For</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="col-a">Customer Relationship Mgmt</td><td>Salesforce CRM, HubSpot</td><td>Contacts, leads, opportunities, activities</td><td>Customer master data</td></tr>
+          <tr><td class="col-b">Finance &amp; Accounting</td><td>SAP, Oracle ERP, NetSuite</td><td>Invoices, payments, GL entries, budgets</td><td>Financial transactions, chart of accounts</td></tr>
+          <tr><td class="col-c">Human Resources</td><td>Workday, BambooHR</td><td>Employee records, org hierarchy, payroll</td><td>Employee master data</td></tr>
+          <tr><td class="col-d">Supply Chain &amp; Inventory</td><td>SAP SCM, Oracle SCM, Manhattan</td><td>POs, shipments, stock levels, suppliers</td><td>Inventory and supplier data</td></tr>
+          <tr><td class="col-a">Customer Support</td><td>Zendesk, ServiceNow, Freshdesk</td><td>Tickets, resolutions, SLA compliance</td><td>Support interaction history</td></tr>
+          <tr><td class="col-b">Analytics &amp; Reporting</td><td>Snowflake, BigQuery, Databricks</td><td>Aggregated and curated analytical datasets</td><td>Metrics, KPIs (derived, not source)</td></tr>
+          <tr><td class="col-c">Marketing Automation</td><td>Marketo, Pardot, Klaviyo</td><td>Campaign events, email engagement, attribution</td><td>Marketing interaction history</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ S16 -->
+    <section class="notes-section" id="s16">
+      <div class="section-header">
+        <span class="section-num">16</span>
+        <span class="section-title">Business Architecture Patterns &amp; Golden Source Rules</span>
+      </div>
+
+      <div class="sub-label">Business Architecture Communication Patterns</div>
+      <div class="three-col">
+        <div class="concept-card">
+          <div class="concept-title">Internal Service-to-Service</div>
+          <div class="concept-text">Applications within the <em>same domain</em> communicate directly via APIs or shared event streams. <em>Example:</em> the Order Service calls the Inventory Service to check stock before confirming an order. Both live in the "Fulfillment" domain with shared ownership and a common data model.
+            <br><br><span class="pill pill-green">Low governance overhead</span>
+          </div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">Cross-Domain Communication</div>
+          <div class="concept-text">Applications in <em>different domains</em> exchange data through formal contracts and shared data products. <em>Example:</em> the Sales domain needs revenue data from the Finance domain &mdash; they consume a published "Monthly Revenue" data product via an agreed schema, not a direct DB query.
+            <br><br><span class="pill pill-yellow">Requires explicit contract</span>
+          </div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">External Communication</div>
+          <div class="concept-text">The organization exchanges data with third parties &mdash; partners, vendors, regulators, or customers. <em>Example:</em> a logistics partner receives shipment manifests in a defined format; a regulator receives compliance reports on a schedule. Requires data use agreements and security controls.
+            <br><br><span class="pill pill-red">Highest governance rigor</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="sub-label">Rules for Golden Sources</div>
+      <p class="prose">A golden source is only trustworthy if it is governed by clear rules. Without enforcement, any system can claim to be the golden source &mdash; and teams end up with competing authorities.</p>
+
+      <div class="num-list">
+        <div class="num-item">
+          <div class="num-badge">R1</div>
+          <div class="num-content">
+            <div class="num-title">One system of record per data entity</div>
+            <div class="num-text">For every business entity (Customer, Product, Employee, Order), exactly one system is designated the golden source. All others are consumers or derivatives. No exceptions without governance council approval.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge yellow">R2</div>
+          <div class="num-content">
+            <div class="num-title">All consumers read from the golden source</div>
+            <div class="num-text">Downstream systems must not maintain independent copies that diverge. If a system needs a local cache for performance, it must be invalidated and refreshed from the golden source on a defined schedule.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge green">R3</div>
+          <div class="num-content">
+            <div class="num-title">Golden sources are explicitly owned and documented</div>
+            <div class="num-text">Every golden source has a named Data Owner, a published schema, a data dictionary entry, and a documented quality SLA. If it cannot be found in the catalog, it is not officially golden.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge purple">R4</div>
+          <div class="num-content">
+            <div class="num-title">Quality must be validated before publishing</div>
+            <div class="num-text">A golden source that has not passed quality validation is not golden &mdash; it is just a labeled silo. Quality gates (completeness, validity, consistency checks) must pass before a dataset is promoted to golden status.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge red">R5</div>
+          <div class="num-content">
+            <div class="num-title">Changes follow a versioned contract</div>
+            <div class="num-text">Any breaking change to a golden source schema must go through a versioned deprecation cycle. The source owner publishes v2.0 alongside v1.0, with a migration period and explicit sunset date for v1.0. Consumers must acknowledge changes before the old version is retired.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ S17 -->
+    <section class="notes-section" id="s17">
+      <div class="section-header">
+        <span class="section-num">17</span>
+        <span class="section-title">Data Delivery Contracts, Silo Elimination &amp; Data Staging</span>
+      </div>
+
+      <div class="sub-label">Data Delivery Contracts</div>
+      <div class="def-card">
+        <div class="def-label">Definition</div>
+        <div class="def-term">Data Delivery Contract</div>
+        <div class="def-text">A formal agreement between a data provider (the team that produces a dataset) and data consumers (the teams that depend on it). The contract defines the schema, version, freshness SLA, format, quality guarantees, and the process for handling breaking changes. It is the mechanism that makes cross-domain data sharing reliable and governable.</div>
+      </div>
+
+      <table class="compare-table">
+        <thead>
+          <tr><th>Contract Element</th><th>What It Defines</th><th>Example</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="col-a">Schema &amp; Version</td><td>Field names, data types, required vs. optional fields; semantic version number</td><td><code>orders_v2.1</code> &mdash; 14 fields, <code>order_id</code> is required UUID</td></tr>
+          <tr><td class="col-b">Freshness SLA</td><td>How current the data will be when delivered</td><td>Data updated within 15 minutes of source transaction</td></tr>
+          <tr><td class="col-c">Format</td><td>File format, encoding, compression</td><td>Parquet, UTF-8, Snappy compression</td></tr>
+          <tr><td class="col-d">Quality Guarantee</td><td>Minimum quality thresholds the provider commits to</td><td>&lt;0.1% null rate on <code>order_amount</code>; no duplicate <code>order_id</code></td></tr>
+          <tr><td class="col-a">Breaking Change Policy</td><td>Notice period before removing or renaming fields; versioning strategy</td><td>90-day notice before v1.x is deprecated; v2.0 runs in parallel during migration</td></tr>
+          <tr><td class="col-b">Incident SLA</td><td>How quickly the provider will respond to and resolve data incidents</td><td>P1 incident acknowledged in 30 min; resolved in 4 hours</td></tr>
+        </tbody>
+      </table>
+
+      <div class="sub-label">Domain-Driven Design at Enterprise Scale &mdash; Eliminating Silos</div>
+      <p class="prose">Applying DDD at enterprise scale means <strong>every domain team owns its data as a product</strong>. This is the <span class="term">Data Mesh</span> pattern: instead of a central data team that owns all data, domain teams publish data products that other domains consume via contracts. Silos are eliminated not by centralizing control but by making data sharing explicit, discoverable, and contractually governed.</p>
+
+      <div class="three-col">
+        <div class="concept-card">
+          <div class="concept-title">Without Data Mesh</div>
+          <div class="concept-text">Central data team owns all pipelines. Every new need requires a ticket to the central team. Teams go around the central team and build shadow pipelines. Silos persist despite centralization.</div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">With Data Mesh</div>
+          <div class="concept-text">Each domain team owns, governs, and publishes its data as a product. Other teams discover and consume via the catalog. Cross-domain data flows through published contracts, not ad-hoc queries. Governance is federated, not centralized.</div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">Silo Elimination Requires</div>
+          <div class="concept-text">
+            <ul>
+              <li>A discoverable data catalog</li>
+              <li>Shared data contracts between domains</li>
+              <li>Clear domain ownership (no unclaimed data)</li>
+              <li>Self-service access provisioning</li>
+              <li>Platform infrastructure that makes publishing easy</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <div class="sub-label">Data Staging</div>
+      <div class="def-card">
+        <div class="def-label">Definition</div>
+        <div class="def-term">Data Staging</div>
+        <div class="def-text">A temporary holding area where data is landed from source systems before it is validated, transformed, and loaded into its final destination. Staging preserves the exact state of data at the moment of extraction &mdash; it is a checkpoint that allows re-processing without re-extracting from the source.</div>
+      </div>
+
+      <div class="two-col">
+        <div class="concept-card">
+          <div class="concept-title">When Staging Is Used</div>
+          <div class="concept-text">
+            <ul>
+              <li><strong>Batch &amp; warehouse scenarios:</strong> nightly ETL jobs stage raw extracts before transforming them into warehouse tables</li>
+              <li><strong>Multi-step pipelines:</strong> staging between steps allows auditing, re-processing, and debugging at each transition</li>
+              <li><strong>Cross-system reconciliation:</strong> staging allows row counts to be compared between source and destination before committing the load</li>
+              <li><strong>Error quarantine:</strong> records that fail validation land in staging for manual review rather than being silently dropped</li>
+            </ul>
+          </div>
+        </div>
+        <div class="concept-card" style="border-color:#f85149;">
+          <div class="concept-title" style="color:#ff7b72;">When Staging Is NOT Used</div>
+          <div class="concept-text">
+            <ul>
+              <li><strong>Real-time / streaming scenarios:</strong> event streams (Kafka) are processed in-flight. Staging would introduce unacceptable latency for use cases that require sub-second response.</li>
+              <li><strong>Micro-batch streaming:</strong> Spark Structured Streaming processes in small windows without traditional staging areas</li>
+              <li><strong>API-to-API integration:</strong> synchronous service calls do not stage data &mdash; they pass it directly in the request/response</li>
+            </ul>
+            <em>Staging is a batch-era pattern. Streaming architectures replace it with checkpointing and offset management in the message broker.</em>
+          </div>
+        </div>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-label">Closing Thought &mdash; Collection as a Strategic Discipline</div>
+        <div class="insight-text">Every architecture in this module &mdash; from point-to-point to hub-and-spoke to warehouse to lake to lakehouse &mdash; was an attempt to solve the same fundamental problem: <strong>how do we collect data from many places and make it reliably useful?</strong> The answer has never been purely technical. It requires governance (who owns what), contracts (how we share), standards (what format, what definition), and culture (data as a shared organizational asset). Architecture without governance produces data swamps. Governance without architecture produces policies nobody can enforce. The discipline of data collection is the combination of both.
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer class="site-footer">
+  Data Governance &mdash; Module 5: Collection &bull; Clark Ngo &bull; 2026
+</footer>
+
+<script>
+  // TOC active-section highlighting on scroll
+  var sections = document.querySelectorAll(".notes-section");
+  var links    = document.querySelectorAll(".toc-link");
+
+  function updateToc() {
+    var scrollY = window.scrollY + 80;
+    var active  = 0;
+    sections.forEach(function(sec, i) {
+      if (sec.offsetTop <= scrollY) { active = i; }
+    });
+    links.forEach(function(l, i) {
+      l.classList.toggle("active", i === active);
+    });
+  }
+
+  window.addEventListener("scroll", updateToc, { passive: true });
+  updateToc();
+
+  links.forEach(function(link) {
+    link.addEventListener("click", function(e) {
+      e.preventDefault();
+      var target = document.querySelector(this.getAttribute("href"));
+      if (target) { target.scrollIntoView({ behavior: "smooth", block: "start" }); }
+    });
+  });
+</script>
+</body>
+</html>
