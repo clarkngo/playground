@@ -5,6 +5,33 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-05-07 (2)
+
+### [feature] Move List guide panel — T-Hex Mecha
+- Added slide-in guide panel to `wild-rift/thex-mecha.html`, open by default
+- Sections: Movement, Mounting, Abilities (Mecha Only), Tips
+- Color-coded key badges: cyan (movement/dismount), gold (mount/Q), green (W), red (R)
+- Each ability row shows name, description, and cooldown time
+- Three strategy tips at the bottom (W+Q combo, E+R follow-up, pilot fragility)
+- Toggle via `?` button in HUD or `H` key; `✕` button or `H` to close
+- Panel width uses `min(320px, 100%)` for narrow-viewport compatibility
+
+## 2026-05-07 (2)
+
+### [feature] T-Hex Mecha mini-game
+- Added `wild-rift/thex-mecha.html` — single-file HTML5 Canvas game simulating the T-Hex Mecha mechanic from Wild Rift
+- Hextech dark blue/gold aesthetic with grid arena, top-down perspective
+- Pilot mode: WASD movement, walk to T-Hex and press F to mount
+- Mecha mode: slower movement, 500 HP, 4 abilities on Q/W/E/R, G to dismount
+- [Q] Missile Barrage — 5 projectiles toward mouse cursor with AoE explosions
+- [W] Amplifying Field — golden pulse animation + BUFFED status (increases missile damage)
+- [E] Iron Tail — 360° sweep ring animation pushing nearby enemy cubes away
+- [R] Laser Beam — 3-second channeled beam following mouse cursor with continuous damage
+- Enemy cubes spawn and move toward player; increase in numbers as kills accumulate
+- Skill bar with per-ability cooldown overlays and timers
+- HUD with pilot/mecha HP bars, kill counter, mode label, mount hint
+- Added Wild Rift section to `index.html` sidebar nav and main content grid
+
 ## 2026-02-19
 
 ### [ux] Bug fixes to baron smite timing logic
