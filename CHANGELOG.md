@@ -7,6 +7,14 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-05-07
+
+- [feature] `wild-rift/thex-mecha.html` — Move List guide panel added (open by default); color-coded key badges, ability descriptions, cooldowns, strategy tips; toggle with `?` button or `H` key
+
+## 2026-05-07
+
+- [feature] `wild-rift/thex-mecha.html` — T-Hex Mecha mini-game (WASD pilot, F mount, G dismount, Q/W/E/R abilities, enemy cubes, skill bar with cooldowns); Wild Rift section added to homepage
+
 ## 2026-05-06
 
 - [feature] `class-notes/index.html` + `class-notes/data-governance/index.html` — class notes index pages; Data Governance course card links to module list; all 5 module breadcrumbs updated with clickable "Class Notes" and "Data Governance" links

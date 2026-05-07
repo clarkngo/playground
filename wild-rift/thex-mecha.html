@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>T-Hex Mecha — Wild Rift Mini-Game</title>
+<style>
+  :root {
+    --bg: #050d1a;
+    --gold: #c8a84b;
+    --gold2: #f0d080;
+    --blue: #1a3a6e;
+    --blue2: #2a5aaa;
+    --cyan: #38bdf8;
+    --panel: #0a1628;
+    --border: rgba(200,168,75,0.3);
+    --text: #dde5f0;
+    --muted: #6a7a99;
+    --red: #e05050;
+    --green: #50d090;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: Inter, system-ui, sans-serif; overflow: hidden; }
+
+  #wrapper {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+  }
+
+  /* ── Top HUD ── */
+  #hud {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 8px 16px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    height: 54px;
+  }
+  .hud-logo {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--gold);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+  }
+  .hud-sep { width: 1px; height: 24px; background: var(--border); }
+  .hud-stat { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
+  .hud-label { font-size: 9px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+  .hud-bar-wrap { display: flex; align-items: center; gap: 6px; }
+  .hud-bar { width: 120px; height: 8px; background: rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden; }
+  .hud-bar-fill { height: 100%; border-radius: 4px; transition: width .1s; }
+  .hp-fill { background: linear-gradient(90deg, #e05050, #f08080); }
+  .mecha-hp-fill { background: linear-gradient(90deg, var(--gold), var(--gold2)); }
+  .hud-val { font-size: 11px; font-weight: 700; color: var(--text); min-width: 36px; }
+  .hud-mode {
+    margin-left: auto;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    border: 1px solid var(--border);
+  }
+  .mode-pilot { background: rgba(56,189,248,0.12); color: var(--cyan); border-color: rgba(56,189,248,0.3); }
+  .mode-mecha { background: rgba(200,168,75,0.15); color: var(--gold); border-color: rgba(200,168,75,0.4); }
+  .hud-kills { font-size: 13px; font-weight: 700; color: var(--gold2); }
+  .hud-hint { font-size: 10px; color: var(--muted); }
+
+  /* ── Canvas ── */
+  #gameCanvas {
+    flex: 1;
+    display: block;
+    width: 100%;
+  }
+
+  /* ── Skill Bar ── */
+  #skillbar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 10px 16px;
+    background: var(--panel);
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+    height: 80px;
+  }
+  .skill-slot {
+    position: relative;
+    width: 56px;
+    height: 56px;
+    border-radius: 8px;
+    border: 2px solid var(--border);
+    background: rgba(255,255,255,0.04);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: default;
+    transition: border-color .15s;
+    overflow: hidden;
+  }
+  .skill-slot.active { border-color: var(--gold); box-shadow: 0 0 12px rgba(200,168,75,0.4); }
+  .skill-slot.ready { border-color: rgba(200,168,75,0.5); }
+  .skill-key {
+    position: absolute;
+    top: 3px; left: 5px;
+    font-size: 9px;
+    font-weight: 800;
+    color: var(--gold2);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+  }
+  .skill-icon { font-size: 20px; line-height: 1; }
+  .skill-name { font-size: 8px; color: var(--muted); margin-top: 2px; text-align: center; line-height: 1.2; }
+  .skill-cd-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(5,13,26,0.75);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    pointer-events: none;
+  }
+  .skill-cd-text { font-size: 14px; font-weight: 800; color: #fff; }
+  .skill-slot.disabled { opacity: .4; }
+
+  .skillbar-center { display: flex; gap: 12px; align-items: center; }
+  .skillbar-hint {
+    font-size: 10px;
+    color: var(--muted);
+    text-align: center;
+    min-width: 80px;
+    line-height: 1.6;
+  }
+
+  /* ── Floating Status Messages ── */
+  #floatMsgs {
+    position: fixed;
+    top: 64px;
+    left: 50%;
+    transform: translateX(-50%);
+    pointer-events: none;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .float-msg {
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .05em;
+    animation: floatUp .4s ease-out forwards;
+    white-space: nowrap;
+  }
+  @keyframes floatUp {
+    0%   { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-30px); }
+  }
+  .float-mount { background: rgba(200,168,75,0.25); color: var(--gold2); border: 1px solid rgba(200,168,75,0.4); }
+  .float-dismount { background: rgba(56,189,248,0.15); color: var(--cyan); border: 1px solid rgba(56,189,248,0.3); }
+  .float-buff { background: rgba(80,208,144,0.15); color: var(--green); border: 1px solid rgba(80,208,144,0.4); }
+  .float-laser { background: rgba(224,80,80,0.15); color: var(--red); border: 1px solid rgba(224,80,80,0.4); }
+
+  /* ── Help Button ── */
+  #helpBtn {
+    margin-left: 8px;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: rgba(200,168,75,0.12);
+    border: 1px solid rgba(200,168,75,0.4);
+    color: var(--gold2);
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: background .15s;
+    user-select: none;
+  }
+  #helpBtn:hover { background: rgba(200,168,75,0.25); }
+
+  /* ── Move List Guide Panel ── */
+  #guidePanel {
+    position: fixed;
+    top: 54px;
+    right: 0;
+    width: min(320px, 100%);
+    height: calc(100vh - 54px - 80px);
+    background: rgba(8,16,32,0.97);
+    border-left: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    overflow-y: auto;
+    z-index: 200;
+    transform: translateX(100%);
+    transition: transform .22s cubic-bezier(.4,0,.2,1);
+    padding: 0 0 16px;
+  }
+  #guidePanel.open { transform: translateX(0); }
+  .guide-header {
+    position: sticky;
+    top: 0;
+    background: rgba(8,16,32,0.98);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 16px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 1;
+  }
+  .guide-title {
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--gold);
+  }
+  .guide-close {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 13px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .guide-close:hover { background: rgba(255,255,255,0.12); color: var(--text); }
+  .guide-section {
+    padding: 12px 16px 4px;
+  }
+  .guide-section-label {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--gold);
+    margin-bottom: 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid rgba(200,168,75,0.15);
+  }
+  .guide-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .guide-row:last-child { border-bottom: none; }
+  .guide-key {
+    flex-shrink: 0;
+    min-width: 36px;
+    padding: 2px 6px;
+    border-radius: 5px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--text);
+    text-align: center;
+    letter-spacing: .04em;
+    font-family: monospace;
+  }
+  .guide-key.gold {
+    background: rgba(200,168,75,0.15);
+    border-color: rgba(200,168,75,0.4);
+    color: var(--gold2);
+  }
+  .guide-key.cyan {
+    background: rgba(56,189,248,0.12);
+    border-color: rgba(56,189,248,0.3);
+    color: var(--cyan);
+  }
+  .guide-key.red {
+    background: rgba(224,80,80,0.12);
+    border-color: rgba(224,80,80,0.3);
+    color: #f08080;
+  }
+  .guide-key.green {
+    background: rgba(80,208,144,0.12);
+    border-color: rgba(80,208,144,0.3);
+    color: var(--green);
+  }
+  .guide-desc {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+  }
+  .guide-desc-name {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.3;
+  }
+  .guide-desc-detail {
+    font-size: 10px;
+    color: var(--muted);
+    line-height: 1.4;
+  }
+  .guide-cd {
+    flex-shrink: 0;
+    margin-left: auto;
+    font-size: 9px;
+    color: var(--muted);
+    text-align: right;
+    padding-top: 2px;
+    white-space: nowrap;
+  }
+  .guide-tip {
+    margin: 8px 16px 0;
+    padding: 8px 10px;
+    background: rgba(200,168,75,0.07);
+    border: 1px solid rgba(200,168,75,0.18);
+    border-radius: 6px;
+    font-size: 10px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+  .guide-tip b { color: var(--gold2); }
+</style>
+</head>
+<body>
+<div id="wrapper">
+  <!-- HUD -->
+  <div id="hud">
+    <div class="hud-logo">T-Hex Mecha</div>
+    <div class="hud-sep"></div>
+    <div class="hud-stat" id="pilotHPWrap">
+      <div class="hud-label">Pilot HP</div>
+      <div class="hud-bar-wrap">
+        <div class="hud-bar"><div class="hud-bar-fill hp-fill" id="pilotHPBar" style="width:100%"></div></div>
+        <div class="hud-val" id="pilotHPVal">100/100</div>
+      </div>
+    </div>
+    <div class="hud-stat" id="mechaHPWrap" style="display:none">
+      <div class="hud-label">Mecha HP</div>
+      <div class="hud-bar-wrap">
+        <div class="hud-bar" style="width:180px"><div class="hud-bar-fill mecha-hp-fill" id="mechaHPBar" style="width:100%"></div></div>
+        <div class="hud-val" id="mechaHPVal">500/500</div>
+      </div>
+    </div>
+    <div class="hud-sep"></div>
+    <div class="hud-stat">
+      <div class="hud-label">Kills</div>
+      <div class="hud-kills" id="killCount">0</div>
+    </div>
+    <div class="hud-sep"></div>
+    <div class="hud-hint" id="mountHint">Walk near the T-Hex &amp; press <b>F</b> to mount</div>
+    <div class="hud-mode mode-pilot" id="modeLabel">Pilot</div>
+    <div id="helpBtn" onclick="toggleGuide()" title="Move List (H)">?</div>
+  </div>
+
+  <!-- Canvas -->
+  <canvas id="gameCanvas"></canvas>
+
+  <!-- Skill Bar -->
+  <div id="skillbar">
+    <div class="skillbar-hint">WASD Move<br/>F Mount · G Dismount</div>
+    <div class="skillbar-center">
+      <div class="skill-slot disabled" id="sk-q">
+        <div class="skill-key">Q</div>
+        <div class="skill-icon">🚀</div>
+        <div class="skill-name">Missile<br/>Barrage</div>
+        <div class="skill-cd-overlay" id="cd-q" style="display:none"><div class="skill-cd-text" id="cdt-q"></div></div>
+      </div>
+      <div class="skill-slot disabled" id="sk-w">
+        <div class="skill-key">W</div>
+        <div class="skill-icon">⚡</div>
+        <div class="skill-name">Amplifying<br/>Field</div>
+        <div class="skill-cd-overlay" id="cd-w" style="display:none"><div class="skill-cd-text" id="cdt-w"></div></div>
+      </div>
+      <div class="skill-slot disabled" id="sk-e">
+        <div class="skill-key">E</div>
+        <div class="skill-icon">🌀</div>
+        <div class="skill-name">Iron<br/>Tail</div>
+        <div class="skill-cd-overlay" id="cd-e" style="display:none"><div class="skill-cd-text" id="cdt-e"></div></div>
+      </div>
+      <div class="skill-slot disabled" id="sk-r">
+        <div class="skill-key">R</div>
+        <div class="skill-icon">🔴</div>
+        <div class="skill-name">Laser<br/>Beam</div>
+        <div class="skill-cd-overlay" id="cd-r" style="display:none"><div class="skill-cd-text" id="cdt-r"></div></div>
+      </div>
+    </div>
+    <div class="skillbar-hint">Q Missiles · W Pulse<br/>E Sweep · R Laser</div>
+  </div>
+</div>
+
+<!-- Move List Guide Panel -->
+<div id="guidePanel" class="open">
+  <div class="guide-header">
+    <div class="guide-title">⚙ Move List</div>
+    <div class="guide-close" onclick="toggleGuide()">✕</div>
+  </div>
+
+  <!-- Movement -->
+  <div class="guide-section">
+    <div class="guide-section-label">Movement</div>
+    <div class="guide-row">
+      <div class="guide-key cyan">W A S D</div>
+      <div class="guide-desc">
+        <div class="guide-desc-name">Move</div>
+        <div class="guide-desc-detail">Pilot: 220 px/s · Mecha: 110 px/s</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mounting -->
+  <div class="guide-section">
+    <div class="guide-section-label">Mounting</div>
+    <div class="guide-row">
+      <div class="guide-key gold">F</div>
+      <div class="guide-desc">
+        <div class="guide-desc-name">Mount T-Hex</div>
+        <div class="guide-desc-detail">Walk within the dashed ring, then press F to pilot the mecha</div>
+      </div>
+    </div>
+    <div class="guide-row">
+      <div class="guide-key cyan">G</div>
+      <div class="guide-desc">
+        <div class="guide-desc-name">Dismount</div>
+        <div class="guide-desc-detail">Ejects the pilot beside the mecha</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Abilities -->
+  <div class="guide-section">
+    <div class="guide-section-label">Abilities — Mecha Only</div>
+    <div class="guide-row">
+      <div class="guide-key gold">Q</div>
+      <div class="guide-desc">
+        <div class="guide-desc-name">🚀 Missile Barrage</div>
+        <div class="guide-desc-detail">Fires 5 projectiles in a spread toward the cursor. Each explodes on impact (AoE). Damage boosted while Amplified.</div>
+      </div>
+      <div class="guide-cd">6 s CD</div>
+    </div>
+    <div class="guide-row">
+      <div class="guide-key green">W</div>
+      <div class="guide-desc">
+        <div class="guide-desc-name">⚡ Amplifying Field</div>
+        <div class="guide-desc-detail">Radiates a golden pulse from the mecha. Grants BUFFED status for 4 s — boosts missile damage and changes core color.</div>
+      </div>
+      <div class="guide-cd">8 s CD</div>
+    </div>
+    <div class="guide-row">
+      <div class="guide-key cyan">E</div>
+      <div class="guide-desc">
+        <div class="guide-desc-name">🌀 Iron Tail</div>
+        <div class="guide-desc-detail">360° sweep ring animation. Pushes all enemy cubes within 200 px away with knockback velocity.</div>
+      </div>
+      <div class="guide-cd">5 s CD</div>
+    </div>
+    <div class="guide-row">
+      <div class="guide-key red">R</div>
+      <div class="guide-desc">
+        <div class="guide-desc-name">🔴 Laser Beam</div>
+        <div class="guide-desc-detail">Channels a beam toward the cursor for 3 s. Deals continuous damage to any enemy in the line. Visor turns red while active.</div>
+      </div>
+      <div class="guide-cd">15 s CD</div>
+    </div>
+  </div>
+
+  <!-- Tips -->
+  <div class="guide-tip">
+    <b>Tip:</b> Cast <b>W</b> before <b>Q</b> to deal bonus missile damage while Amplified.
+  </div>
+  <div class="guide-tip">
+    <b>Tip:</b> Use <b>E</b> to create distance when enemies surround you, then follow up with <b>R</b> while they are bunched together.
+  </div>
+  <div class="guide-tip">
+    <b>Tip:</b> The pilot is fragile — stay mounted. Only dismount to reposition if the mecha HP is critically low.
+  </div>
+  <div class="guide-tip" style="margin-top:4px">
+    Press <b style="color:var(--gold2)">H</b> or click <b style="color:var(--gold2)">?</b> to toggle this panel.
+  </div>
+</div>
+
+<!-- Float Messages -->
+<div id="floatMsgs"></div>
+
+<script>
+// ── Canvas Setup ──
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+function resizeCanvas() {
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width;
+  canvas.height = rect.height;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+// ── State ──
+let kills = 0;
+let mounted = false;
+let gameOver = false;
+
+const PILOT_SPEED = 220;
+const MECHA_SPEED = 110;
+const MOUNT_RADIUS = 70;
+
+const pilot = {
+  x: 0, y: 0,
+  r: 14,
+  hp: 100, maxHp: 100,
+  speed: PILOT_SPEED
+};
+
+const mecha = {
+  x: 0, y: 0,
+  r: 34,
+  hp: 500, maxHp: 500,
+  speed: MECHA_SPEED,
+  buffed: false,
+  buffTimer: 0,
+  laserActive: false,
+  laserTimer: 0,
+  ironSweepAnim: 0,
+  ironSweepActive: false,
+  pulseAnim: 0,
+  pulseActive: false
+};
+
+const mouse = { x: 0, y: 0 };
+const keys = {};
+const projectiles = [];
+const explosions = [];
+const enemies = [];
+const floatMsgs = [];
+
+// Cooldowns in ms
+const CD = { q: 6000, w: 8000, e: 5000, r: 15000 };
+const cdLeft = { q: 0, w: 0, e: 0, r: 0 };
+
+let lastTime = 0;
+let spawnTimer = 0;
+const SPAWN_INTERVAL = 2500;
+
+// ── Input ──
+function toggleGuide() {
+  document.getElementById('guidePanel').classList.toggle('open');
+}
+
+window.addEventListener('keydown', function(e) {
+  const k = e.key.toLowerCase();
+  keys[k] = true;
+  if (k === 'h') { toggleGuide(); return; }
+  if (k === 'f' && !mounted) tryMount();
+  if (k === 'g' && mounted) dismount();
+  if (mounted) {
+    if (k === 'q') castQ();
+    if (k === 'w') castW();
+    if (k === 'e') castE();
+    if (k === 'r') castR();
+  }
+  if (['arrowup','arrowdown','arrowleft','arrowright',' '].indexOf(k) !== -1) {
+    e.preventDefault();
+  }
+});
+window.addEventListener('keyup', function(e) { keys[e.key.toLowerCase()] = false; });
+
+canvas.addEventListener('mousemove', function(e) {
+  const rect = canvas.getBoundingClientRect();
+  mouse.x = e.clientX - rect.left;
+  mouse.y = e.clientY - rect.top;
+});
+
+// ── Init ──
+function init() {
+  const cx = canvas.width / 2;
+  const cy = canvas.height / 2;
+  mecha.x = cx;
+  mecha.y = cy;
+  pilot.x = cx - 120;
+  pilot.y = cy;
+  spawnEnemies(4);
+}
+
+// ── Float messages ──
+function showFloat(text, cls) {
+  const el = document.createElement('div');
+  el.className = 'float-msg ' + cls;
+  el.textContent = text;
+  document.getElementById('floatMsgs').appendChild(el);
+  setTimeout(function() { el.remove(); }, 1200);
+}
+
+// ── Mount / Dismount ──
+function tryMount() {
+  const dx = pilot.x - mecha.x;
+  const dy = pilot.y - mecha.y;
+  const dist = Math.sqrt(dx * dx + dy * dy);
+  if (dist < MOUNT_RADIUS) {
+    mounted = true;
+    updateModeUI();
+    showFloat('MOUNTED — T-HEX ONLINE', 'float-mount');
+  }
+}
+
+function dismount() {
+  mounted = false;
+  pilot.x = mecha.x + MOUNT_RADIUS * 0.8;
+  pilot.y = mecha.y;
+  updateModeUI();
+  showFloat('DISMOUNTED', 'float-dismount');
+}
+
+function updateModeUI() {
+  const lbl = document.getElementById('modeLabel');
+  const hint = document.getElementById('mountHint');
+  const mechaWrap = document.getElementById('mechaHPWrap');
+  const pilotWrap = document.getElementById('pilotHPWrap');
+  const slots = ['q','w','e','r'];
+
+  if (mounted) {
+    lbl.textContent = 'Mecha';
+    lbl.className = 'hud-mode mode-mecha';
+    hint.innerHTML = 'Press <b>G</b> to dismount';
+    mechaWrap.style.display = '';
+    pilotWrap.style.display = 'none';
+    slots.forEach(function(s) {
+      document.getElementById('sk-' + s).classList.remove('disabled');
+      document.getElementById('sk-' + s).classList.add('ready');
+    });
+  } else {
+    lbl.textContent = 'Pilot';
+    lbl.className = 'hud-mode mode-pilot';
+    hint.innerHTML = 'Walk near the T-Hex &amp; press <b>F</b> to mount';
+    mechaWrap.style.display = 'none';
+    pilotWrap.style.display = '';
+    slots.forEach(function(s) {
+      document.getElementById('sk-' + s).classList.add('disabled');
+      document.getElementById('sk-' + s).classList.remove('ready','active');
+    });
+  }
+}
+
+// ── Abilities ──
+function castQ() {
+  if (cdLeft.q > 0) return;
+  cdLeft.q = CD.q;
+  const dx = mouse.x - mecha.x;
+  const dy = mouse.y - mecha.y;
+  const angle = Math.atan2(dy, dx);
+  for (let i = -2; i <= 2; i++) {
+    const a = angle + i * 0.12;
+    projectiles.push({
+      x: mecha.x, y: mecha.y,
+      vx: Math.cos(a) * 480,
+      vy: Math.sin(a) * 480,
+      r: 7, life: 1.8,
+      type: 'missile'
+    });
+  }
+  flashSkill('q');
+}
+
+function castW() {
+  if (cdLeft.w > 0) return;
+  cdLeft.w = CD.w;
+  mecha.buffed = true;
+  mecha.buffTimer = 4000;
+  mecha.pulseActive = true;
+  mecha.pulseAnim = 0;
+  showFloat('AMPLIFIED!', 'float-buff');
+  flashSkill('w');
+}
+
+function castE() {
+  if (cdLeft.e > 0) return;
+  cdLeft.e = CD.e;
+  mecha.ironSweepActive = true;
+  mecha.ironSweepAnim = 0;
+  // push enemies
+  enemies.forEach(function(en) {
+    const dx = en.x - mecha.x;
+    const dy = en.y - mecha.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist < 200) {
+      const push = 320;
+      en.vx = (dx / dist) * push;
+      en.vy = (dy / dist) * push;
+      en.pushTimer = 0.35;
+    }
+  });
+  flashSkill('e');
+}
+
+function castR() {
+  if (cdLeft.r > 0 || mecha.laserActive) return;
+  cdLeft.r = CD.r;
+  mecha.laserActive = true;
+  mecha.laserTimer = 3000;
+  showFloat('LASER BEAM!', 'float-laser');
+  flashSkill('r');
+}
+
+function flashSkill(key) {
+  const el = document.getElementById('sk-' + key);
+  el.classList.add('active');
+  setTimeout(function() { el.classList.remove('active'); }, 250);
+}
+
+// ── Enemies ──
+function spawnEnemies(count) {
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const dist = Math.max(canvas.width, canvas.height) * 0.55 + Math.random() * 80;
+    const cx = canvas.width / 2;
+    const cy = canvas.height / 2;
+    enemies.push({
+      x: cx + Math.cos(angle) * dist,
+      y: cy + Math.sin(angle) * dist,
+      vx: 0, vy: 0,
+      size: 18 + Math.random() * 14,
+      hp: 3,
+      maxHp: 3,
+      pushTimer: 0,
+      hue: Math.random() * 40 + 340
+    });
+  }
+}
+
+// ── Update ──
+function update(dt) {
+  if (gameOver) return;
+
+  const dtS = dt / 1000;
+
+  // Movement
+  const entity = mounted ? mecha : pilot;
+  const speed = mounted ? MECHA_SPEED : PILOT_SPEED;
+  let mx = 0, my = 0;
+  if (keys['a'] || keys['arrowleft'])  mx -= 1;
+  if (keys['d'] || keys['arrowright']) mx += 1;
+  if (keys['w'] || keys['arrowup'])    my -= 1;
+  if (keys['s'] || keys['arrowdown'])  my += 1;
+  if (mx !== 0 || my !== 0) {
+    const len = Math.sqrt(mx * mx + my * my);
+    entity.x += (mx / len) * speed * dtS;
+    entity.y += (my / len) * speed * dtS;
+  }
+
+  // Clamp to canvas
+  entity.x = Math.max(entity.r, Math.min(canvas.width  - entity.r, entity.x));
+  entity.y = Math.max(entity.r, Math.min(canvas.height - entity.r, entity.y));
+
+  // Buff timer
+  if (mecha.buffed) {
+    mecha.buffTimer -= dt;
+    if (mecha.buffTimer <= 0) mecha.buffed = false;
+  }
+
+  // Pulse anim
+  if (mecha.pulseActive) {
+    mecha.pulseAnim += dtS * 1.8;
+    if (mecha.pulseAnim >= 1) mecha.pulseActive = false;
+  }
+
+  // Iron sweep anim
+  if (mecha.ironSweepActive) {
+    mecha.ironSweepAnim += dtS * 3.5;
+    if (mecha.ironSweepAnim >= 1) mecha.ironSweepActive = false;
+  }
+
+  // Laser
+  if (mecha.laserActive) {
+    mecha.laserTimer -= dt;
+    if (mecha.laserTimer <= 0) mecha.laserActive = false;
+    else {
+      // damage enemies in laser path
+      const lx = Math.cos(Math.atan2(mouse.y - mecha.y, mouse.x - mecha.x));
+      const ly = Math.sin(Math.atan2(mouse.y - mecha.y, mouse.x - mecha.x));
+      enemies.forEach(function(en) {
+        // project enemy onto laser line
+        const ex = en.x - mecha.x;
+        const ey = en.y - mecha.y;
+        const proj = ex * lx + ey * ly;
+        const perpX = ex - proj * lx;
+        const perpY = ey - proj * ly;
+        if (proj > 0 && Math.sqrt(perpX * perpX + perpY * perpY) < 22) {
+          en.hp -= dtS * 6;
+        }
+      });
+    }
+  }
+
+  // Cooldowns
+  ['q','w','e','r'].forEach(function(k) {
+    if (cdLeft[k] > 0) {
+      cdLeft[k] = Math.max(0, cdLeft[k] - dt);
+      const secs = Math.ceil(cdLeft[k] / 1000);
+      document.getElementById('cd-' + k).style.display = cdLeft[k] > 0 ? '' : 'none';
+      document.getElementById('cdt-' + k).textContent = secs > 0 ? secs : '';
+    }
+  });
+
+  // Projectiles
+  for (let i = projectiles.length - 1; i >= 0; i--) {
+    const p = projectiles[i];
+    p.x += p.vx * dtS;
+    p.y += p.vy * dtS;
+    p.life -= dtS;
+
+    let hit = false;
+    for (let j = enemies.length - 1; j >= 0; j--) {
+      const en = enemies[j];
+      const dx = p.x - en.x;
+      const dy = p.y - en.y;
+      if (Math.sqrt(dx * dx + dy * dy) < en.size + p.r) {
+        // explosion
+        explosions.push({ x: p.x, y: p.y, r: 0, maxR: 55, life: 0.55, t: 0 });
+        en.hp -= (mecha.buffed ? 2.5 : 1.5);
+        hit = true;
+        break;
+      }
+    }
+
+    if (hit || p.life <= 0 ||
+        p.x < -20 || p.x > canvas.width + 20 ||
+        p.y < -20 || p.y > canvas.height + 20) {
+      if (!hit) explosions.push({ x: p.x, y: p.y, r: 0, maxR: 35, life: 0.4, t: 0 });
+      projectiles.splice(i, 1);
+    }
+  }
+
+  // Explosions
+  for (let i = explosions.length - 1; i >= 0; i--) {
+    const ex = explosions[i];
+    ex.t += dtS;
+    ex.r = ex.maxR * (ex.t / ex.life);
+    if (ex.t >= ex.life) explosions.splice(i, 1);
+  }
+
+  // Enemies move toward player
+  for (let i = enemies.length - 1; i >= 0; i--) {
+    const en = enemies[i];
+
+    if (en.hp <= 0) {
+      explosions.push({ x: en.x, y: en.y, r: 0, maxR: 70, life: 0.6, t: 0 });
+      enemies.splice(i, 1);
+      kills++;
+      document.getElementById('killCount').textContent = kills;
+      continue;
+    }
+
+    if (en.pushTimer > 0) {
+      en.pushTimer -= dtS;
+      en.x += en.vx * dtS;
+      en.y += en.vy * dtS;
+      en.vx *= 0.85;
+      en.vy *= 0.85;
+      continue;
+    }
+
+    const target = mounted ? mecha : pilot;
+    const dx = target.x - en.x;
+    const dy = target.y - en.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    const spd = 70;
+    if (dist > en.size + target.r) {
+      en.x += (dx / dist) * spd * dtS;
+      en.y += (dy / dist) * spd * dtS;
+    } else {
+      // deal damage
+      if (mounted) {
+        mecha.hp = Math.max(0, mecha.hp - 12 * dtS);
+      } else {
+        pilot.hp = Math.max(0, pilot.hp - 18 * dtS);
+      }
+    }
+  }
+
+  // Spawn
+  spawnTimer += dt;
+  if (spawnTimer > SPAWN_INTERVAL) {
+    spawnTimer = 0;
+    spawnEnemies(2 + Math.floor(kills / 10));
+  }
+
+  // Update HUD bars
+  document.getElementById('pilotHPBar').style.width = (pilot.hp / pilot.maxHp * 100) + '%';
+  document.getElementById('pilotHPVal').textContent = Math.ceil(pilot.hp) + '/100';
+  document.getElementById('mechaHPBar').style.width = (mecha.hp / mecha.maxHp * 100) + '%';
+  document.getElementById('mechaHPVal').textContent = Math.ceil(mecha.hp) + '/500';
+
+  if (pilot.hp <= 0 || (mounted && mecha.hp <= 0)) {
+    gameOver = true;
+  }
+}
+
+// ── Draw ──
+function draw() {
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  // Background gradient
+  const bg = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, Math.max(W,H)*0.7);
+  bg.addColorStop(0, '#0a1628');
+  bg.addColorStop(1, '#050d1a');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+
+  // Grid
+  drawGrid(W, H);
+
+  // Explosions (behind everything)
+  explosions.forEach(function(ex) {
+    const alpha = 1 - ex.t / ex.life;
+    ctx.save();
+    ctx.globalAlpha = alpha * 0.7;
+    const g = ctx.createRadialGradient(ex.x, ex.y, 0, ex.x, ex.y, ex.r);
+    g.addColorStop(0, '#f0d080');
+    g.addColorStop(0.4, '#e08040');
+    g.addColorStop(1, 'rgba(200,80,20,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(ex.x, ex.y, ex.r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  });
+
+  // Iron sweep ring
+  if (mecha.ironSweepActive) {
+    const t = mecha.ironSweepAnim;
+    const alpha = 1 - t;
+    const r = 60 + t * 160;
+    ctx.save();
+    ctx.globalAlpha = alpha * 0.5;
+    ctx.strokeStyle = '#f0d080';
+    ctx.lineWidth = 12 * (1 - t);
+    ctx.beginPath();
+    ctx.arc(mecha.x, mecha.y, r, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  }
+
+  // Amplifying pulse
+  if (mecha.pulseActive) {
+    const t = mecha.pulseAnim;
+    const alpha = (1 - t) * 0.6;
+    const r = 40 + t * 200;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.strokeStyle = '#50d090';
+    ctx.lineWidth = 6 * (1 - t);
+    ctx.beginPath();
+    ctx.arc(mecha.x, mecha.y, r, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  }
+
+  // Laser beam
+  if (mecha.laserActive) {
+    const angle = Math.atan2(mouse.y - mecha.y, mouse.x - mecha.x);
+    const endX = mecha.x + Math.cos(angle) * Math.max(W, H);
+    const endY = mecha.y + Math.sin(angle) * Math.max(W, H);
+    const pulse = 0.7 + 0.3 * Math.sin(Date.now() * 0.02);
+
+    ctx.save();
+    ctx.globalAlpha = pulse;
+    // outer glow
+    ctx.strokeStyle = 'rgba(200,100,100,0.25)';
+    ctx.lineWidth = 28;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(mecha.x, mecha.y);
+    ctx.lineTo(endX, endY);
+    ctx.stroke();
+    // core
+    ctx.strokeStyle = '#ff6060';
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.moveTo(mecha.x, mecha.y);
+    ctx.lineTo(endX, endY);
+    ctx.stroke();
+    // bright center
+    ctx.strokeStyle = '#ffd0d0';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(mecha.x, mecha.y);
+    ctx.lineTo(endX, endY);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  }
+
+  // Enemies
+  enemies.forEach(function(en) {
+    const hpRatio = en.hp / en.maxHp;
+    ctx.save();
+    // shadow
+    ctx.shadowColor = `hsl(${en.hue},80%,50%)`;
+    ctx.shadowBlur = 12;
+    ctx.fillStyle = `hsl(${en.hue},70%,35%)`;
+    const s = en.size;
+    ctx.fillRect(en.x - s, en.y - s, s*2, s*2);
+    ctx.shadowBlur = 0;
+    // border
+    ctx.strokeStyle = `hsl(${en.hue},90%,60%)`;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(en.x - s, en.y - s, s*2, s*2);
+    // HP bar
+    ctx.fillStyle = '#1a1a2a';
+    ctx.fillRect(en.x - s, en.y - s - 8, s*2, 4);
+    ctx.fillStyle = hpRatio > 0.5 ? '#50d090' : hpRatio > 0.25 ? '#f0a040' : '#e05050';
+    ctx.fillRect(en.x - s, en.y - s - 8, s*2*hpRatio, 4);
+    ctx.restore();
+  });
+
+  // Mount proximity indicator
+  if (!mounted) {
+    const dx = pilot.x - mecha.x;
+    const dy = pilot.y - mecha.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist < MOUNT_RADIUS * 1.5) {
+      ctx.save();
+      ctx.globalAlpha = 0.3 + 0.2 * Math.sin(Date.now() * 0.005);
+      ctx.strokeStyle = '#c8a84b';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([6, 4]);
+      ctx.beginPath();
+      ctx.arc(mecha.x, mecha.y, MOUNT_RADIUS, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.globalAlpha = 1;
+      ctx.restore();
+    }
+  }
+
+  // T-Hex Mecha
+  drawMecha(mecha.x, mecha.y, mecha.r);
+
+  // Buff text over mecha
+  if (mecha.buffed) {
+    ctx.save();
+    ctx.font = 'bold 11px Inter, sans-serif';
+    ctx.fillStyle = '#50d090';
+    ctx.textAlign = 'center';
+    ctx.fillText('BUFFED', mecha.x, mecha.y - mecha.r - 14);
+    ctx.restore();
+  }
+
+  // Pilot (only if not mounted)
+  if (!mounted) {
+    drawPilot(pilot.x, pilot.y, pilot.r);
+  }
+
+  // Projectiles
+  projectiles.forEach(function(p) {
+    ctx.save();
+    ctx.shadowColor = '#f0d080';
+    ctx.shadowBlur = 16;
+    ctx.fillStyle = '#f0d080';
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 0.5;
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r * 0.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  });
+
+  // Game Over overlay
+  if (gameOver) {
+    ctx.save();
+    ctx.fillStyle = 'rgba(5,13,26,0.8)';
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#f0d080';
+    ctx.font = 'bold 48px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('GAME OVER', W/2, H/2 - 24);
+    ctx.fillStyle = '#dde5f0';
+    ctx.font = '22px Inter, sans-serif';
+    ctx.fillText('Kills: ' + kills, W/2, H/2 + 20);
+    ctx.fillStyle = '#6a7a99';
+    ctx.font = '14px Inter, sans-serif';
+    ctx.fillText('Refresh to play again', W/2, H/2 + 56);
+    ctx.restore();
+  }
+}
+
+function drawGrid(W, H) {
+  const CELL = 60;
+  ctx.save();
+  ctx.strokeStyle = 'rgba(42,90,170,0.18)';
+  ctx.lineWidth = 1;
+  for (let x = 0; x < W; x += CELL) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, H);
+    ctx.stroke();
+  }
+  for (let y = 0; y < H; y += CELL) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(W, y);
+    ctx.stroke();
+  }
+  // Subtle hex-like accent dots at intersections
+  ctx.fillStyle = 'rgba(200,168,75,0.06)';
+  for (let x = 0; x <= W; x += CELL) {
+    for (let y = 0; y <= H; y += CELL) {
+      ctx.beginPath();
+      ctx.arc(x, y, 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+
+function drawMecha(x, y, r) {
+  ctx.save();
+  const glow = mecha.buffed ? '#50d090' : (mecha.laserActive ? '#ff8080' : '#c8a84b');
+  ctx.shadowColor = glow;
+  ctx.shadowBlur = 28;
+
+  // Body hexagon
+  ctx.beginPath();
+  for (let i = 0; i < 6; i++) {
+    const angle = (Math.PI / 6) + i * (Math.PI / 3);
+    const px = x + Math.cos(angle) * r;
+    const py = y + Math.sin(angle) * r;
+    if (i === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  }
+  ctx.closePath();
+  const bodyGrad = ctx.createRadialGradient(x, y - r * 0.2, 0, x, y, r * 1.2);
+  bodyGrad.addColorStop(0, '#2a4070');
+  bodyGrad.addColorStop(1, '#0f1e3a');
+  ctx.fillStyle = bodyGrad;
+  ctx.fill();
+  ctx.strokeStyle = mecha.buffed ? '#50d090' : '#c8a84b';
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+
+  // Core glowing circle
+  const coreColor = mecha.buffed ? '#50d090' : '#38bdf8';
+  const coreGrad = ctx.createRadialGradient(x, y, 0, x, y, r * 0.45);
+  coreGrad.addColorStop(0, '#ffffff');
+  coreGrad.addColorStop(0.3, coreColor);
+  coreGrad.addColorStop(1, 'rgba(56,189,248,0)');
+  ctx.fillStyle = coreGrad;
+  ctx.beginPath();
+  ctx.arc(x, y, r * 0.45, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Shoulder cannons
+  [-1, 1].forEach(function(side) {
+    const sx = x + side * r * 0.85;
+    const sy = y - r * 0.3;
+    ctx.fillStyle = '#1a2e50';
+    ctx.strokeStyle = '#c8a84b';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(sx, sy, r * 0.25, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    // barrel pointing toward mouse
+    const barAngle = Math.atan2(mouse.y - sy, mouse.x - sx);
+    ctx.strokeStyle = '#f0d080';
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(sx, sy);
+    ctx.lineTo(sx + Math.cos(barAngle) * r * 0.35, sy + Math.sin(barAngle) * r * 0.35);
+    ctx.stroke();
+  });
+
+  // Eye / visor
+  ctx.fillStyle = mecha.laserActive ? '#ff4040' : '#38bdf8';
+  ctx.shadowColor = mecha.laserActive ? '#ff6060' : '#38bdf8';
+  ctx.shadowBlur = 14;
+  ctx.fillRect(x - r * 0.3, y - r * 0.55, r * 0.6, r * 0.14);
+
+  ctx.shadowBlur = 0;
+  ctx.restore();
+
+  // Label
+  ctx.save();
+  ctx.font = 'bold 10px Inter, sans-serif';
+  ctx.fillStyle = '#c8a84b';
+  ctx.textAlign = 'center';
+  ctx.fillText('T-HEX', x, y + r + 14);
+  ctx.restore();
+}
+
+function drawPilot(x, y, r) {
+  ctx.save();
+  ctx.shadowColor = '#38bdf8';
+  ctx.shadowBlur = 18;
+  const grad = ctx.createRadialGradient(x, y - 2, 0, x, y, r);
+  grad.addColorStop(0, '#80d0ff');
+  grad.addColorStop(1, '#1a5090');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#38bdf8';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  // Direction indicator toward mecha when close
+  const dx = mecha.x - x;
+  const dy = mecha.y - y;
+  const dist = Math.sqrt(dx * dx + dy * dy);
+  if (dist < 200) {
+    ctx.globalAlpha = 0.5;
+    ctx.strokeStyle = '#c8a84b';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    ctx.moveTo(x + (dx/dist) * r, y + (dy/dist) * r);
+    ctx.lineTo(x + (dx/dist) * 36, y + (dy/dist) * 36);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.globalAlpha = 1;
+  }
+  ctx.restore();
+}
+
+// ── Game Loop ──
+function loop(ts) {
+  const dt = ts - lastTime;
+  lastTime = ts;
+  if (!gameOver) update(Math.min(dt, 80));
+  draw();
+  requestAnimationFrame(loop);
+}
+
+// Init after layout settles
+requestAnimationFrame(function() {
+  resizeCanvas();
+  init();
+  requestAnimationFrame(function(ts) {
+    lastTime = ts;
+    requestAnimationFrame(loop);
+  });
+});
+</script>
+</body>
+</html>
