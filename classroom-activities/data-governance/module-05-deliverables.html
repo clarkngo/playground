@@ -77,6 +77,16 @@
     .nb-code { font-family: "Menlo","Monaco",monospace; font-size: .79rem; color: #c9d1d9; line-height: 1.7; white-space: pre; overflow-x: auto; }
     .nb-output { margin-top: .6rem; padding: .55rem .75rem; background: #0a0e14; border-left: 3px solid #21262d; border-radius: 0 4px 4px 0; font-size: .79rem; }
     .nb-output-live { margin-top: .6rem; padding: .55rem .75rem; background: #0b1f0b; border-left: 3px solid #238636; border-radius: 0 4px 4px 0; font-family: "Menlo","Monaco",monospace; font-size: .79rem; color: #3fb950; }
+    .nb-display { margin-top: .6rem; border: 1px solid #30363d; border-radius: 6px; overflow: hidden; }
+    .nb-display-scroll { overflow-x: auto; }
+    .nb-display table { border-collapse: collapse; font-size: .75rem; font-family: "Menlo","Monaco",monospace; white-space: nowrap; }
+    .nb-display th { background: #1c2435; color: #8b949e; font-weight: 700; padding: .35rem .65rem; text-align: left; border-bottom: 1px solid #30363d; border-right: 1px solid #21262d; }
+    .nb-display th:last-child { border-right: none; }
+    .nb-display td { padding: .3rem .65rem; border-bottom: 1px solid #21262d; border-right: 1px solid #21262d; color: #c9d1d9; vertical-align: top; max-width: 220px; overflow: hidden; text-overflow: ellipsis; }
+    .nb-display td:last-child { border-right: none; }
+    .nb-display tr:last-child td { border-bottom: none; }
+    .nb-display tr:hover td { background: #1c2435; }
+    .nb-display-footer { background: #161b22; border-top: 1px solid #21262d; padding: .3rem .65rem; font-size: .68rem; color: #484f58; font-style: italic; }
     .ck { color: #ff7b72; }
     .cs { color: #a5d6ff; }
     .cf { color: #d2a8ff; }
@@ -279,13 +289,12 @@
           <div class="nb-code"><span class="ck">import</span> requests
 <span class="ck">import</span> json
 
-<span class="cv">API_KEY</span> = <span class="cs">"••••••••••••••••••••••••••••••••"</span>  <span class="cm"># OpenWeatherMap API key (redacted)</span>
+<span class="cv">API_KEY</span> = <span class="cs">"••••••••••••••••••••••••••••••••"</span>  <span class="cm"># redacted</span>
 <span class="cv">city</span> = <span class="cs">"Seattle"</span>
 
 <span class="cv">url</span> = <span class="cs">f"http://api.openweathermap.org/data/2.5/weather?q={city}&amp;appid={API_KEY}"</span>
 
 <span class="cv">response</span> = requests.get(url)
-
 <span class="cv">data</span> = response.json()
 
 print(data)</div>
@@ -302,12 +311,37 @@ print(data)</div>
         </div>
       </div>
 
-      <!-- In [3]: Read JSON into Spark DataFrame (Bronze) -->
+      <!-- In [3]: Read JSON → raw_df (display) -->
       <div class="notebook-cell">
         <div class="nb-gutter"><span class="nb-in">In [3]</span></div>
         <div class="nb-content">
           <div class="nb-code"><span class="cv">raw_df</span> = spark.read.json(<span class="cs">"/Volumes/workspace/default/Volume/weather_raw.json"</span>)
 display(raw_df)</div>
+          <div class="nb-display">
+            <div class="nb-display-scroll">
+              <table>
+                <thead><tr>
+                  <th>base</th><th>clouds</th><th>cod</th><th>coord</th><th>dt</th><th>id</th><th>main</th><th>name</th><th>sys</th><th>timezone</th><th>visibility</th><th>weather</th><th>wind</th>
+                </tr></thead>
+                <tbody><tr>
+                  <td>stations</td>
+                  <td>{all: 100}</td>
+                  <td>200</td>
+                  <td>{lat: 47.6062, lon: -122.3321}</td>
+                  <td>1778434380</td>
+                  <td>5809844</td>
+                  <td>{feels_like: 286.96, grnd_level: 1008, humidity: 78, pressure: 1018, sea_level: 1018, temp: 287.44, temp_max: 288.55, temp_min: 286.21}</td>
+                  <td>Seattle</td>
+                  <td>{country: US, id: 2009669, sunrise: 1778416705, sunset: 1778470386, type: 2}</td>
+                  <td>-25200</td>
+                  <td>10000</td>
+                  <td>[{description: overcast clouds, icon: 04d, id: 804, main: Clouds}]</td>
+                  <td>{deg: 210, speed: 2.06}</td>
+                </tr></tbody>
+              </table>
+            </div>
+            <div class="nb-display-footer">Showing 1 of 1 row &mdash; 13 columns</div>
+          </div>
         </div>
       </div>
 
@@ -319,7 +353,7 @@ display(raw_df)</div>
         </div>
       </div>
 
-      <!-- In [5]: Silver transformation — select & rename fields -->
+      <!-- In [5]: Silver transformation — select & rename -->
       <div class="notebook-cell">
         <div class="nb-gutter"><span class="nb-in">In [5]</span></div>
         <div class="nb-content">
@@ -333,6 +367,19 @@ display(raw_df)</div>
 )
 
 display(silver_df)</div>
+          <div class="nb-display">
+            <div class="nb-display-scroll">
+              <table>
+                <thead><tr>
+                  <th>city</th><th>temperature</th><th>humidity</th><th>weather_condition</th>
+                </tr></thead>
+                <tbody><tr>
+                  <td>Seattle</td><td>287.44</td><td>78</td><td>overcast clouds</td>
+                </tr></tbody>
+              </table>
+            </div>
+            <div class="nb-display-footer">Showing 1 of 1 row &mdash; 4 columns</div>
+          </div>
         </div>
       </div>
 
@@ -344,7 +391,7 @@ display(silver_df)</div>
         </div>
       </div>
 
-      <!-- In [7]: Load IoT sensor CSV -->
+      <!-- In [7]: Load IoT sensor CSV (display) -->
       <div class="notebook-cell">
         <div class="nb-gutter"><span class="nb-in">In [7]</span></div>
         <div class="nb-content">
@@ -354,6 +401,28 @@ display(silver_df)</div>
     inferSchema=<span class="ck">True</span>
 )
 display(sensor_df)</div>
+          <div class="nb-display">
+            <div class="nb-display-scroll">
+              <table>
+                <thead><tr>
+                  <th>timestamp</th><th>sensor_id</th><th>sensor_type</th><th>location</th><th>value</th><th>unit</th>
+                </tr></thead>
+                <tbody>
+                  <tr><td>2024-01-01T10:00:00.000Z</td><td>SENS-003</td><td>Pressure</td><td>Basement</td><td>1020.38</td><td>hPa</td></tr>
+                  <tr><td>2024-01-01T10:05:00.000Z</td><td>SENS-004</td><td>Light</td><td>Living_Room</td><td>508.57</td><td>Lux</td></tr>
+                  <tr><td>2024-01-01T10:10:00.000Z</td><td>SENS-001</td><td>Temperature</td><td>Room_A</td><td>21.77</td><td>Celsius</td></tr>
+                  <tr><td>2024-01-01T10:15:00.000Z</td><td>SENS-003</td><td>Pressure</td><td>Basement</td><td>1009.99</td><td>hPa</td></tr>
+                  <tr><td>2024-01-01T10:20:00.000Z</td><td>SENS-003</td><td>Pressure</td><td>Basement</td><td>998.21</td><td>hPa</td></tr>
+                  <tr><td>2024-01-01T10:25:00.000Z</td><td>SENS-004</td><td>Light</td><td>Living_Room</td><td>464.01</td><td>Lux</td></tr>
+                  <tr><td>2024-01-01T10:30:00.000Z</td><td>SENS-001</td><td>Temperature</td><td>Room_A</td><td>21.08</td><td>Celsius</td></tr>
+                  <tr><td>2024-01-01T10:35:00.000Z</td><td>SENS-001</td><td>Temperature</td><td>Room_A</td><td>24.11</td><td>Celsius</td></tr>
+                  <tr><td>2024-01-01T10:40:00.000Z</td><td>SENS-003</td><td>Pressure</td><td>Basement</td><td>1016.44</td><td>hPa</td></tr>
+                  <tr><td>2024-01-01T10:45:00.000Z</td><td>SENS-002</td><td>Humidity</td><td>Room_A</td><td>36.18</td><td>Percent</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="nb-display-footer">Showing 10 of 100 rows &mdash; 6 columns</div>
+          </div>
         </div>
       </div>
 
@@ -365,12 +434,34 @@ display(sensor_df)</div>
         </div>
       </div>
 
-      <!-- In [9]: Silver transformation — dropna() -->
+      <!-- In [9]: dropna() → clean_sensor_df (display) -->
       <div class="notebook-cell">
         <div class="nb-gutter"><span class="nb-in">In [9]</span></div>
         <div class="nb-content">
           <div class="nb-code"><span class="cv">clean_sensor_df</span> = sensor_df.dropna()
 display(clean_sensor_df)</div>
+          <div class="nb-display">
+            <div class="nb-display-scroll">
+              <table>
+                <thead><tr>
+                  <th>timestamp</th><th>sensor_id</th><th>sensor_type</th><th>location</th><th>value</th><th>unit</th>
+                </tr></thead>
+                <tbody>
+                  <tr><td>2024-01-01T10:00:00.000Z</td><td>SENS-003</td><td>Pressure</td><td>Basement</td><td>1020.38</td><td>hPa</td></tr>
+                  <tr><td>2024-01-01T10:05:00.000Z</td><td>SENS-004</td><td>Light</td><td>Living_Room</td><td>508.57</td><td>Lux</td></tr>
+                  <tr><td>2024-01-01T10:10:00.000Z</td><td>SENS-001</td><td>Temperature</td><td>Room_A</td><td>21.77</td><td>Celsius</td></tr>
+                  <tr><td>2024-01-01T10:15:00.000Z</td><td>SENS-003</td><td>Pressure</td><td>Basement</td><td>1009.99</td><td>hPa</td></tr>
+                  <tr><td>2024-01-01T10:20:00.000Z</td><td>SENS-003</td><td>Pressure</td><td>Basement</td><td>998.21</td><td>hPa</td></tr>
+                  <tr><td>2024-01-01T10:25:00.000Z</td><td>SENS-004</td><td>Light</td><td>Living_Room</td><td>464.01</td><td>Lux</td></tr>
+                  <tr><td>2024-01-01T10:30:00.000Z</td><td>SENS-001</td><td>Temperature</td><td>Room_A</td><td>21.08</td><td>Celsius</td></tr>
+                  <tr><td>2024-01-01T10:35:00.000Z</td><td>SENS-001</td><td>Temperature</td><td>Room_A</td><td>24.11</td><td>Celsius</td></tr>
+                  <tr><td>2024-01-01T10:40:00.000Z</td><td>SENS-003</td><td>Pressure</td><td>Basement</td><td>1016.44</td><td>hPa</td></tr>
+                  <tr><td>2024-01-01T10:45:00.000Z</td><td>SENS-002</td><td>Humidity</td><td>Room_A</td><td>36.18</td><td>Percent</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="nb-display-footer">Showing 10 of 100 rows &mdash; 6 columns</div>
+          </div>
         </div>
       </div>
 
