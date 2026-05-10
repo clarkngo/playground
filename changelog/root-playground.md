@@ -5,6 +5,30 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-05-10
+
+### [feature] `classroom-activities/data-governance/module-05.html` — Module 05 Lab Guide
+- Created full lab guide: "SmartFactory — The IoT Data Chaos" (Data Ingestion & Medallion Architecture)
+- Purple theme (`#6e40c9`), 6 task accordion parts: API Ingestion, Databricks Setup, Bronze Layer, Silver Layer, CSV Sensor Ingestion, Architecture + OpenMetadata
+- Two dataset schemas: OpenWeather API JSON (7 fields) and IoT Sensor CSV (5 sample rows including null fault row S005)
+- Medallion badge CSS classes: `.lc-bronze` (amber), `.lc-silver` (gray), `.lc-gold` (yellow), `.lc-raw` (muted)
+- SQL block border `#6e40c9` (purple), SQL keyword color `.sk` set to `#bc8cff`
+- 4 deliverables: D1 Notebook, D2 OpenMetadata screenshots (4 tables), D3 Data Lake vs Warehouse comparison, D4 IoT Architecture Design
+- Reflection on Bronze/Silver separation as governance requirement vs. software engineering practice
+
+### [feature] `classroom-activities/data-governance/module-05-deliverables.html` — Module 05 Student Submission
+- Created student submission page with purple theme matching module-05
+- D1: Notebook viewer with 10 cells (In [1]–[10]) — API simulation, weather Bronze/Silver, sensor CSV Bronze/Silver, live output cells for save confirmations and row counts
+- D2: 4 OpenMetadata placeholder slots — `weather_bronze` Bronze, `weather_silver` Silver, `sensor_bronze` Bronze, `sensor_silver` Silver
+- D3: 6-feature Data Lake vs Warehouse comparison table (data type, schema approach, storage cost, use case, data quality, governance role) with lab-specific examples in every row
+- D4: SmartFactory IoT architecture table — 7 layers (Sensors → Ingestion → Bronze → Silver → Gold → Catalog → Dashboard) with technology choices and governance roles
+- Process notes card documenting Bronze intentional null retention, no .format() anti-pattern, OpenMetadata saveAsTable() requirement
+
+### [feature] `classroom-activities/data-governance/index.html` — Module 05 card added
+- Added Module 05 card with purple `#6e40c9` accent
+- Tags: Medallion Architecture, OpenWeather API, Databricks, PySpark, IoT Sensors, OpenMetadata
+- Links to `module-05.html` and `module-05-deliverables.html`
+
 ## 2026-05-06
 
 ### [feature] Class notes — index pages and breadcrumb navigation

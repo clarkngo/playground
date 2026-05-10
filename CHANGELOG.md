@@ -7,8 +7,15 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-05-10
+
+- [feature] `classroom-activities/data-governance/module-05.html` — Module 05 lab guide (Data Ingestion & Medallion Architecture, SmartFactory IoT case study, purple theme, 6 parts, Bronze/Silver/Gold badges)
+- [feature] `classroom-activities/data-governance/module-05-deliverables.html` — Module 05 student submission page (D1 notebook viewer 10 cells, D2 OpenMetadata placeholders x4, D3 Data Lake vs Warehouse 6-feature table, D4 IoT architecture pipeline table)
+- [feature] `classroom-activities/data-governance/index.html` — Module 05 card added (purple #6e40c9 theme)
+
 ## 2026-05-07
 
+- [feature] `digital-twin/01-intro.html` — "Types of Digital Twins" interactive section (Levels 1–5) with animated capability bars and click-to-select level strip
 - [feature] `wild-rift/thex-mecha.html` — Move List guide panel added (open by default); color-coded key badges, ability descriptions, cooldowns, strategy tips; toggle with `?` button or `H` key
 
 ## 2026-05-07

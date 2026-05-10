@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Module 05 &mdash; Data Ingestion &amp; Medallion Architecture</title>
+  <meta name="author" content="Clark Ngo">
+  <meta name="copyright" content="Clark Ngo">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0d1117; color: #c9d1d9; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; min-height: 100vh; }
+
+    .navbar { background: #161b22; border-bottom: 1px solid #30363d; padding: .75rem 1.5rem; display: flex; align-items: center; justify-content: space-between; }
+    .navbar a { color: #e6edf3; text-decoration: none; font-weight: 700; font-size: 1rem; }
+    .navbar a:hover { color: #58a6ff; }
+    .nav-pill { font-size: .78rem; color: #8b949e; }
+
+    .page-body { max-width: 960px; margin: 0 auto; padding: 2rem; }
+
+    .breadcrumb { font-size: .78rem; color: #8b949e; display: flex; align-items: center; gap: .4rem; margin-bottom: .85rem; flex-wrap: wrap; }
+    .breadcrumb a { color: #58a6ff; text-decoration: none; font-weight: 600; }
+    .breadcrumb a:hover { text-decoration: underline; }
+    .breadcrumb span { color: #484f58; }
+
+    .page-badge { display: inline-block; background: #6e40c9; color: #fff; font-size: .72rem; font-weight: 700; padding: 3px 12px; border-radius: 12px; text-transform: uppercase; letter-spacing: .07em; margin-bottom: .6rem; }
+    .page-header h1 { color: #e6edf3; font-size: 1.85rem; font-weight: 800; margin-bottom: .3rem; }
+    .case-title { color: #bc8cff; font-size: .95rem; font-weight: 600; margin-bottom: .65rem; font-style: italic; }
+    .page-desc { color: #8b949e; font-size: .88rem; line-height: 1.7; max-width: 720px; margin-bottom: .85rem; }
+    .tag-row { display: flex; gap: .4rem; flex-wrap: wrap; margin-bottom: 2rem; }
+    .tag { display: inline-block; font-size: .68rem; padding: 2px 8px; border-radius: 8px; font-weight: 600; }
+    .tag-blue   { background: #1f3a5c; color: #58a6ff; }
+    .tag-green  { background: #1a2f1a; color: #3fb950; }
+    .tag-yellow { background: #2d2009; color: #e3b341; }
+    .tag-purple { background: #24183a; color: #bc8cff; }
+    .tag-red    { background: #2d1a1a; color: #f85149; }
+    .tag-teal   { background: #0a2028; color: #22d3ee; }
+
+    .section-label { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #8b949e; border-left: 3px solid #30363d; padding-left: .6rem; margin: 2rem 0 1rem; }
+
+    .obj-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: .65rem; margin-bottom: 1.25rem; }
+    .obj-card { background: #161b22; border: 1px solid #30363d; border-left: 3px solid #6e40c9; border-radius: 8px; padding: .75rem 1rem; display: flex; align-items: flex-start; gap: .6rem; }
+    .obj-num { font-size: .68rem; font-weight: 700; color: #bc8cff; background: #24183a; padding: 2px 7px; border-radius: 5px; flex-shrink: 0; margin-top: .1rem; }
+    .obj-text { font-size: .83rem; color: #c9d1d9; line-height: 1.5; }
+
+    .breach-card { background: #1a1400; border: 1px solid #9e6a03; border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1.1rem; }
+    .breach-title { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: #e3b341; margin-bottom: .85rem; display: flex; align-items: center; gap: .5rem; }
+    .breach-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+    .breach-section-title { font-size: .75rem; font-weight: 700; color: #e6edf3; text-transform: uppercase; letter-spacing: .05em; margin-bottom: .6rem; }
+    .breach-list { list-style: none; display: flex; flex-direction: column; gap: .35rem; }
+    .breach-list li { font-size: .83rem; color: #c9d1d9; display: flex; align-items: flex-start; gap: .5rem; line-height: 1.5; }
+    .breach-dot-red    { width: 6px; height: 6px; border-radius: 50%; background: #f85149; flex-shrink: 0; margin-top: .45rem; }
+    .breach-dot-yellow { width: 6px; height: 6px; border-radius: 50%; background: #e3b341; flex-shrink: 0; margin-top: .45rem; }
+
+    .mission-strip { background: #1c1030; border: 1px solid #6e40c9; border-radius: 8px; padding: .85rem 1.1rem; margin-bottom: 1.5rem; }
+    .mission-label { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #bc8cff; margin-bottom: .5rem; }
+    .mission-items { display: flex; gap: 1.25rem; flex-wrap: wrap; }
+    .mission-item { font-size: .82rem; color: #c9d1d9; display: flex; align-items: center; gap: .35rem; }
+    .mission-dot { width: 6px; height: 6px; border-radius: 50%; background: #bc8cff; flex-shrink: 0; }
+
+    .card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1.1rem; }
+    .card-title { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: #3fb950; margin-bottom: .85rem; }
+
+    .data-table { width: 100%; border-collapse: collapse; font-size: .83rem; }
+    .data-table th { background: #0d1117; color: #8b949e; font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; padding: .5rem .75rem; text-align: left; border-bottom: 1px solid #30363d; white-space: nowrap; }
+    .data-table td { padding: .55rem .75rem; border-bottom: 1px solid #21262d; color: #c9d1d9; vertical-align: top; line-height: 1.55; }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover td { background: #1c2435; }
+    .data-table code { font-family: "Menlo","Monaco",monospace; font-size: .8em; background: #21262d; padding: 1px 5px; border-radius: 4px; color: #a5d6ff; }
+
+    .task-card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; margin-bottom: .85rem; overflow: hidden; }
+    .task-header { display: flex; align-items: center; gap: .75rem; padding: .9rem 1.25rem; cursor: pointer; user-select: none; transition: background .15s; }
+    .task-header:hover { background: #1c2435; }
+    .task-num { color: #fff; font-size: .68rem; font-weight: 700; padding: 2px 9px; border-radius: 8px; white-space: nowrap; flex-shrink: 0; }
+    .task-title { color: #e6edf3; font-weight: 700; font-size: .94rem; flex: 1; }
+    .task-deliv { font-size: .7rem; color: #8b949e; white-space: nowrap; }
+    .toggle-btn { color: #58a6ff; font-size: 1.2rem; font-weight: 700; width: 22px; text-align: center; flex-shrink: 0; line-height: 1; }
+    .task-body { display: none; padding: 1.25rem 1.5rem; border-top: 1px solid #30363d; }
+    .task-body.open { display: block; }
+
+    .answer-label { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #3fb950; margin-bottom: 1rem; display: flex; align-items: center; gap: .5rem; }
+    .answer-label::after { content: ""; flex: 1; height: 1px; background: #21262d; }
+
+    .code-block-label { font-size: .69rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: #8b949e; margin-bottom: .35rem; margin-top: .85rem; }
+    .code-block { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 1rem 1.25rem; font-family: "Menlo","Monaco","Courier New",monospace; font-size: .79rem; color: #c9d1d9; line-height: 1.7; overflow-x: auto; margin-bottom: .5rem; white-space: pre; }
+    .ck { color: #ff7b72; }
+    .cs { color: #a5d6ff; }
+    .cf { color: #d2a8ff; }
+    .cv { color: #ffa657; }
+    .cm { color: #8b949e; }
+
+    .sql-block { background: #0d1117; border: 1px solid #30363d; border-left: 3px solid #6e40c9; border-radius: 8px; padding: 1rem 1.25rem; font-family: "Menlo","Monaco","Courier New",monospace; font-size: .79rem; color: #c9d1d9; line-height: 1.7; overflow-x: auto; margin-bottom: .5rem; white-space: pre; }
+    .sk { color: #bc8cff; }
+    .sv { color: #ffa657; }
+
+    /* Medallion layer badges */
+    .lc-bronze { display: inline-block; font-size: .63rem; font-weight: 700; background: #2d1a00; color: #cd7f32; border: 1px solid #92400e; padding: 1px 6px; border-radius: 4px; text-transform: uppercase; }
+    .lc-silver { display: inline-block; font-size: .63rem; font-weight: 700; background: #1e1e2d; color: #c0c0c0; border: 1px solid #6b7280; padding: 1px 6px; border-radius: 4px; text-transform: uppercase; }
+    .lc-gold   { display: inline-block; font-size: .63rem; font-weight: 700; background: #2d2200; color: #fbbf24; border: 1px solid #d97706; padding: 1px 6px; border-radius: 4px; text-transform: uppercase; }
+    .lc-raw    { display: inline-block; font-size: .63rem; font-weight: 700; background: #1a1a1a; color: #8b949e; border: 1px solid #484f58; padding: 1px 6px; border-radius: 4px; text-transform: uppercase; }
+
+    .deliv-list { list-style: none; padding: 0; }
+    .deliv-list li { display: flex; gap: .65rem; align-items: flex-start; padding: .6rem 0; border-bottom: 1px solid #21262d; font-size: .85rem; color: #c9d1d9; line-height: 1.6; }
+    .deliv-list li:last-child { border-bottom: none; }
+    .deliv-num { background: #21262d; color: #8b949e; font-size: .65rem; font-weight: 700; padding: 1px 7px; border-radius: 6px; white-space: nowrap; flex-shrink: 0; margin-top: .15rem; }
+    .deliv-link-bar { background: #1c1030; border: 1px solid #6e40c9; border-radius: 10px; padding: 1rem 1.25rem; display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.1rem; }
+    .deliv-link-bar a { color: #bc8cff; font-weight: 700; font-size: .88rem; text-decoration: none; display: flex; align-items: center; gap: .4rem; }
+    .deliv-link-bar a:hover { text-decoration: underline; }
+    .deliv-link-desc { font-size: .8rem; color: #8b949e; }
+
+    .explain-toggle { display: flex; align-items: center; gap: .55rem; margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid #21262d; cursor: pointer; user-select: none; width: fit-content; }
+    .explain-toggle:hover .explain-label { color: #e3b341; }
+    .explain-icon { font-size: .85rem; }
+    .explain-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #9e6a03; transition: color .15s; }
+    .explain-chevron { font-size: .7rem; color: #9e6a03; transition: transform .2s; }
+    .explain-chevron.open { transform: rotate(90deg); }
+    .explain-body { display: none; margin-top: .85rem; background: #1d1600; border: 1px solid #9e6a03; border-radius: 8px; padding: 1.1rem 1.25rem; }
+    .explain-body.open { display: block; }
+    .explain-body h4 { font-size: .78rem; font-weight: 700; color: #e3b341; margin: .85rem 0 .3rem; text-transform: uppercase; letter-spacing: .05em; }
+    .explain-body h4:first-child { margin-top: 0; }
+    .explain-body p { font-size: .83rem; color: #c9d1d9; line-height: 1.72; margin-bottom: .5rem; }
+    .explain-body p:last-child { margin-bottom: 0; }
+    .explain-body ul { font-size: .83rem; color: #c9d1d9; line-height: 1.72; padding-left: 1.1rem; margin-bottom: .5rem; }
+    .explain-body ul li { margin-bottom: .25rem; }
+    .explain-body code { font-family: "Menlo","Monaco",monospace; font-size: .8em; background: #2a2000; border: 1px solid #9e6a03; padding: 1px 5px; border-radius: 4px; color: #ffa657; }
+    .explain-body strong { color: #e3b341; font-weight: 700; }
+
+    .dataset-section { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1.25rem; overflow-x: auto; }
+    .dataset-section-title { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: #8b949e; margin-bottom: .85rem; }
+
+    .reflection-card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1.35rem 1.5rem; margin-bottom: 2rem; }
+    .reflection-q { font-size: .95rem; font-weight: 700; color: #e6edf3; margin-bottom: .8rem; border-left: 3px solid #6e40c9; padding-left: .75rem; }
+    .reflection-a { font-size: .84rem; color: #c9d1d9; line-height: 1.75; }
+    .reflection-a p { margin-bottom: .65rem; }
+    .reflection-a p:last-child { margin-bottom: 0; }
+
+    .export-btn { position: fixed; bottom: 1.75rem; right: 1.75rem; display: flex; align-items: center; gap: .5rem; background: #6e40c9; color: #fff; border: none; border-radius: 10px; padding: .65rem 1.1rem; font-size: .82rem; font-weight: 700; cursor: pointer; box-shadow: 0 4px 16px rgba(0,0,0,.4); transition: background .15s, transform .12s; z-index: 100; }
+    .export-btn:hover { background: #7c3aed; transform: translateY(-2px); }
+
+    .site-footer { text-align: center; padding: 1.25rem; border-top: 1px solid #21262d; margin-top: 2rem; color: #484f58; font-size: .77rem; }
+
+    @media print {
+      @page { size: A4; margin: 1.4cm 1.6cm; }
+      *, *::before, *::after { box-sizing: border-box; }
+      body { background: #fff !important; color: #111 !important; font-size: 9.5pt; font-family: "Segoe UI", Helvetica, Arial, sans-serif; }
+      .navbar, .breadcrumb, .export-btn, .toggle-btn, .explain-toggle, .site-footer { display: none !important; }
+      .page-body { max-width: 100%; padding: 0; margin: 0; }
+      .page-badge { background: #6e40c9 !important; color: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      h1 { color: #111 !important; font-size: 16pt; }
+      .case-title { color: #6e40c9 !important; font-size: 10pt; }
+      .page-desc { color: #444 !important; font-size: 9pt; }
+      .tag { border: 1px solid #ccc; background: #f5f5f5 !important; color: #333 !important; font-size: 7pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .section-label { color: #555 !important; border-left-color: #999 !important; font-size: 7.5pt; margin: 1rem 0 .6rem; }
+      .card, .dataset-section, .reflection-card { background: #fff !important; border: 1px solid #ccc !important; }
+      .breach-card { background: #fffbeb !important; border-color: #d97706 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .breach-title { color: #92400e !important; font-size: 7.5pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .breach-section-title { color: #111 !important; font-size: 8pt; }
+      .breach-list li { color: #222 !important; font-size: 8pt; }
+      .breach-dot-red { background: #b91c1c !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .breach-dot-yellow { background: #d97706 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .mission-strip { background: #f5f0ff !important; border-color: #6e40c9 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .mission-label { color: #6e40c9 !important; font-size: 7pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .task-body { display: block !important; border-top: 1px solid #ccc !important; padding: .85rem 1rem !important; }
+      .task-card { background: #fff !important; border: 1px solid #ccc !important; border-radius: 6px; margin-bottom: .75rem; page-break-inside: avoid; }
+      .task-header { background: #f7f7f7 !important; padding: .6rem 1rem !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .task-num { color: #fff !important; font-size: 7pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .task-title { color: #111 !important; font-size: 9pt; }
+      .task-deliv { color: #666 !important; font-size: 7.5pt; }
+      .answer-label { color: #1a6b2a !important; font-size: 7pt; }
+      .code-block, .sql-block { background: #f8f9fa !important; border: 1px solid #ddd !important; color: #111 !important; font-size: 7.5pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .ck { color: #b91c1c !important; } .cs { color: #1a4fa0 !important; }
+      .cf { color: #5b21b6 !important; } .cv { color: #92400e !important; }
+      .cm { color: #6b7280 !important; } .sk { color: #6e40c9 !important; }
+      .explain-body { display: block !important; background: #fffbeb !important; border: 1px solid #d97706 !important; padding: .85rem 1rem !important; margin-top: .75rem; page-break-inside: avoid; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .explain-body h4 { color: #92400e !important; font-size: 7.5pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .explain-body p, .explain-body ul { color: #222 !important; font-size: 8pt; }
+      .explain-body strong { color: #92400e !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .data-table th { background: #f3f4f6 !important; color: #555 !important; font-size: 7pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .data-table td { color: #111 !important; font-size: 8pt; border-bottom: 1px solid #eee !important; }
+      .reflection-q { border-left-color: #6e40c9 !important; color: #111 !important; font-size: 9pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .reflection-a { color: #222 !important; font-size: 8pt; }
+      .lc-bronze, .lc-silver, .lc-gold, .lc-raw { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+
+    @media (max-width: 680px) {
+      .obj-grid    { grid-template-columns: 1fr; }
+      .breach-grid { grid-template-columns: 1fr; }
+      .mission-items { flex-direction: column; gap: .4rem; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="index.html">&#8592; Data Governance</a>
+  <span class="nav-pill">Module 05 &mdash; Data Ingestion &amp; Medallion Architecture</span>
+</nav>
+
+<div class="page-body">
+
+  <div class="breadcrumb">
+    <a href="../../index.html">Playground</a>
+    <span>/</span>
+    <a href="index.html">Data Governance</a>
+    <span>/</span>
+    <span>Module 05</span>
+  </div>
+
+  <div class="page-header">
+    <div class="page-badge">&#127981; Module 05</div>
+    <h1>Data Ingestion &amp; Medallion Architecture</h1>
+    <div class="case-title">&#129302; Case Study: &ldquo;SmartFactory &mdash; The IoT Data Chaos&rdquo;</div>
+    <p class="page-desc">SmartFactory, a manufacturing company using IoT sensors to monitor temperature, pressure, and machine status, stores data in inconsistent formats with no ingestion pipeline and no separation between raw and processed data. Students act as Data Engineers to build a multi-source ingestion pipeline: extract data from APIs and CSV files, organize it into Bronze (raw) and Silver (processed) layers using Medallion Architecture, compare Data Lakes and Warehouses, and design a scalable IoT ingestion system.</p>
+    <div class="tag-row">
+      <span class="tag tag-purple">Python</span>
+      <span class="tag tag-blue">Databricks</span>
+      <span class="tag tag-teal">OpenMetadata</span>
+      <span class="tag tag-yellow">Medallion Architecture</span>
+      <span class="tag tag-green">Data Ingestion</span>
+      <span class="tag tag-red">IoT / Streaming</span>
+      <span class="tag tag-purple">Data Lake vs Warehouse</span>
+    </div>
+  </div>
+
+  <!-- ── OBJECTIVES ─────────────────────────── -->
+  <div class="section-label">Learning Objectives</div>
+  <div class="obj-grid">
+    <div class="obj-card">
+      <span class="obj-num">01</span>
+      <span class="obj-text">Build a data ingestion pipeline that extracts data from API responses and CSV files</span>
+    </div>
+    <div class="obj-card">
+      <span class="obj-num">02</span>
+      <span class="obj-text">Apply Medallion Architecture: store raw data in Bronze, transform to Silver for analysis-ready data</span>
+    </div>
+    <div class="obj-card">
+      <span class="obj-num">03</span>
+      <span class="obj-text">Load and persist JSON and CSV data as Databricks tables using PySpark</span>
+    </div>
+    <div class="obj-card">
+      <span class="obj-num">04</span>
+      <span class="obj-text">Extract and clean required fields to produce query-ready Silver datasets from Bronze sources</span>
+    </div>
+    <div class="obj-card">
+      <span class="obj-num">05</span>
+      <span class="obj-text">Compare Data Lakes and Data Warehouses: schema-on-read vs schema-on-write, use cases, trade-offs</span>
+    </div>
+    <div class="obj-card">
+      <span class="obj-num">06</span>
+      <span class="obj-text">Design a scalable IoT ingestion architecture and register tables in OpenMetadata with layer tags</span>
+    </div>
+  </div>
+
+  <!-- ── SCENARIO ───────────────────────────── -->
+  <div class="section-label">Case Scenario</div>
+  <div class="breach-card">
+    <div class="breach-title">&#9888; IoT Data Chaos &mdash; SmartFactory Manufacturing</div>
+    <div class="breach-grid">
+      <div>
+        <div class="breach-section-title">Current State &mdash; What Went Wrong</div>
+        <ul class="breach-list">
+          <li><span class="breach-dot-red"></span>Sensor data stored in inconsistent formats &mdash; CSV, JSON, and raw text mixed with no schema enforcement</li>
+          <li><span class="breach-dot-red"></span>No ingestion pipeline &mdash; engineers manually download and process files on an ad hoc basis</li>
+          <li><span class="breach-dot-red"></span>Raw and processed data are indistinguishable &mdash; analysts cannot determine which version is clean</li>
+          <li><span class="breach-dot-red"></span>No layer separation &mdash; all data sits in one flat directory with no Bronze / Silver organization</li>
+          <li><span class="breach-dot-red"></span>Analytics blocked &mdash; data science team cannot build dashboards without a reliable data foundation</li>
+        </ul>
+      </div>
+      <div>
+        <div class="breach-section-title">Business Impact</div>
+        <ul class="breach-list">
+          <li><span class="breach-dot-yellow"></span>Delayed maintenance decisions &mdash; machine fault detection relies on manual file inspection</li>
+          <li><span class="breach-dot-yellow"></span>Sensor data quality unknown &mdash; null readings from faulty sensors corrupt downstream analysis</li>
+          <li><span class="breach-dot-yellow"></span>No historical trend analysis &mdash; unstructured storage prevents time-series queries</li>
+          <li><span class="breach-dot-yellow"></span>Engineering time wasted &mdash; 40% of analyst hours spent on data wrangling instead of insights</li>
+          <li><span class="breach-dot-yellow"></span>Scalability limit reached &mdash; current approach cannot handle new sensors or higher data frequency</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── DATASETS ────────────────────────────── -->
+  <div class="section-label">Datasets &mdash; Two Sources</div>
+  <div class="dataset-section">
+    <div class="dataset-section-title">Source A &mdash; Weather API (JSON) &middot; OpenWeather or Simulated</div>
+    <table class="data-table">
+      <thead>
+        <tr><th>Field</th><th>Type</th><th>Description</th><th>Medallion Layer</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>city</code></td><td>String</td><td>City name from API request</td><td><span class="lc-bronze">Bronze</span> + <span class="lc-silver">Silver</span></td></tr>
+        <tr><td><code>temperature</code></td><td>Double</td><td>Current temperature in Celsius</td><td><span class="lc-bronze">Bronze</span> + <span class="lc-silver">Silver</span></td></tr>
+        <tr><td><code>humidity</code></td><td>Integer</td><td>Relative humidity percentage (0&ndash;100)</td><td><span class="lc-bronze">Bronze</span> + <span class="lc-silver">Silver</span></td></tr>
+        <tr><td><code>weather_condition</code></td><td>String</td><td>Sky condition (Clear, Cloudy, Rain)</td><td><span class="lc-bronze">Bronze</span> + <span class="lc-silver">Silver</span></td></tr>
+        <tr><td><code>timestamp</code></td><td>String</td><td>ISO 8601 API response timestamp</td><td><span class="lc-bronze">Bronze</span> only &mdash; dropped in Silver</td></tr>
+      </tbody>
+    </table>
+
+    <div style="margin-top:1rem;">
+      <div class="dataset-section-title">Source B &mdash; IoT Sensor Data (CSV) &middot; Continuous Stream Simulation</div>
+      <table class="data-table">
+        <thead>
+          <tr><th>sensor_id</th><th>machine_id</th><th>timestamp</th><th>temperature_c</th><th>pressure_psi</th><th>machine_status</th><th>Layer</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>S001</td><td>M003</td><td>2026-04-29 08:00:00</td><td>87.3</td><td>142.1</td><td>Running</td><td><span class="lc-bronze">Bronze</span> + <span class="lc-silver">Silver</span></td></tr>
+          <tr><td>S002</td><td>M007</td><td>2026-04-29 08:00:05</td><td>92.1</td><td>148.7</td><td>Running</td><td><span class="lc-bronze">Bronze</span> + <span class="lc-silver">Silver</span></td></tr>
+          <tr><td>S005</td><td>M002</td><td>2026-04-29 08:00:15</td><td><em style="color:#f85149;">null</em></td><td><em style="color:#f85149;">null</em></td><td>Fault</td><td><span class="lc-bronze">Bronze</span> only &mdash; <span class="lc-raw">Dropped</span> in Silver</td></tr>
+          <tr><td>S011</td><td>M009</td><td>2026-04-29 08:00:30</td><td>78.9</td><td>135.2</td><td>Idle</td><td><span class="lc-bronze">Bronze</span> + <span class="lc-silver">Silver</span></td></tr>
+          <tr><td>S015</td><td>M004</td><td>2026-04-29 08:00:45</td><td>95.6</td><td>151.3</td><td>Running</td><td><span class="lc-bronze">Bronze</span> + <span class="lc-silver">Silver</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── MISSION STRIP ──────────────────────── -->
+  <div class="mission-strip">
+    <div class="mission-label">&#127919; Your Mission &mdash; Data Engineering Team</div>
+    <div class="mission-items">
+      <div class="mission-item"><span class="mission-dot"></span>Ingest API + CSV data</div>
+      <div class="mission-item"><span class="mission-dot"></span>Build Bronze layer</div>
+      <div class="mission-item"><span class="mission-dot"></span>Transform to Silver</div>
+      <div class="mission-item"><span class="mission-dot"></span>Compare storage architectures</div>
+      <div class="mission-item"><span class="mission-dot"></span>Design IoT pipeline</div>
+    </div>
+  </div>
+
+  <!-- ── PARTS ──────────────────────────────── -->
+  <div class="section-label">Lab Parts &mdash; Answer Key</div>
+
+  <!-- ─────────────────────────────────────────
+       PART 1 — API Data Ingestion
+  ───────────────────────────────────────────── -->
+  <div class="task-card">
+    <div class="task-header" onclick="toggleTask('p1')">
+      <span class="task-num" style="background:#6e40c9;">Part 1</span>
+      <span class="task-title">API Data Ingestion &mdash; Python</span>
+      <span class="task-deliv">Steps 1&ndash;2 &middot; D1</span>
+      <span class="toggle-btn" id="btn-p1">+</span>
+    </div>
+    <div class="task-body" id="p1">
+      <div class="answer-label">&#10003; Complete Answer &mdash; Steps 1&ndash;2</div>
+
+      <p style="font-size:.83rem;color:#8b949e;margin-bottom:1rem;">Step 1 extracts weather data from the OpenWeather API or a simulated response. Step 2 saves the raw JSON before any transformation &mdash; this is the Bronze ingestion step performed in Python before data enters Databricks.</p>
+
+      <div class="code-block-label">Step 1 &mdash; Option A: Real OpenWeather API Call</div>
+      <div class="code-block"><span class="ck">import</span> requests
+<span class="ck">import</span> json
+
+<span class="cv">API_KEY</span> = <span class="cs">"your_openweather_api_key"</span>
+<span class="cv">CITY</span>    = <span class="cs">"New York"</span>
+<span class="cv">url</span>     = <span class="cs">"http://api.openweathermap.org/data/2.5/weather?q="</span> + CITY + <span class="cs">"&amp;appid="</span> + API_KEY + <span class="cs">"&amp;units=metric"</span>
+
+<span class="cv">response</span>     = requests.get(url)
+<span class="cv">weather_data</span> = response.json()
+print(weather_data)</div>
+
+      <div class="code-block-label">Step 1 &mdash; Option B: Simulated Response (no API key required)</div>
+      <div class="code-block"><span class="ck">import</span> json
+
+<span class="cm"># Simulated OpenWeather API response</span>
+<span class="cv">weather_data</span> = {
+    <span class="cs">"city"</span>             : <span class="cs">"New York"</span>,
+    <span class="cs">"temperature"</span>      : <span class="cs">22.5</span>,
+    <span class="cs">"humidity"</span>         : <span class="cs">65</span>,
+    <span class="cs">"weather_condition"</span>: <span class="cs">"Clear"</span>,
+    <span class="cs">"timestamp"</span>        : <span class="cs">"2026-04-29T10:00:00Z"</span>
+}
+print(weather_data)</div>
+
+      <div class="code-block-label">Step 2 &mdash; Save Raw JSON (Bronze &mdash; no transformation applied)</div>
+      <div class="code-block"><span class="ck">with</span> open(<span class="cs">"/tmp/weather_raw.json"</span>, <span class="cs">"w"</span>) <span class="ck">as</span> f:
+    json.dump(weather_data, f, indent=2)
+
+print(<span class="cs">"Raw JSON saved: /tmp/weather_raw.json"</span>)</div>
+
+      <div class="explain-toggle" onclick="toggleExplain('exp-p1')">
+        <span class="explain-icon">&#128161;</span>
+        <span class="explain-label">Why This Answer?</span>
+        <span class="explain-chevron" id="chev-exp-p1">&#9654;</span>
+      </div>
+      <div class="explain-body" id="exp-p1">
+        <h4>Why save the raw JSON before any transformation?</h4>
+        <p>The Bronze layer rule is: <strong>never modify data at ingestion time</strong>. Saving the raw API response as-is means you always have the original source record to reprocess if your transformation logic changes. If you only save the transformed version and later realize you needed a field you dropped, you must call the API again &mdash; which may return different data. Raw storage is the insurance policy for your pipeline.</p>
+        <h4>Why provide a simulated option?</h4>
+        <p>API rate limits, authentication requirements, and network restrictions make live API calls unreliable for classroom labs. The simulated response produces the same JSON structure the real API returns for the fields this lab uses, allowing students to complete the full pipeline without an API key. In production, the real API would be used with proper secrets management (Databricks Secrets, not hardcoded keys).</p>
+        <h4>Why use the requests library for API ingestion?</h4>
+        <p><code>requests</code> is the standard Python HTTP client for REST API calls. For production pipelines, add: error handling (<code>response.raise_for_status()</code>), retry logic for transient failures, and authentication headers. For streaming APIs that push data continuously, replace <code>requests.get()</code> with a WebSocket listener or a Kafka consumer.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────
+       PART 2 — Databricks Setup
+  ───────────────────────────────────────────── -->
+  <div class="task-card">
+    <div class="task-header" onclick="toggleTask('p2')">
+      <span class="task-num" style="background:#1f6feb;">Part 2</span>
+      <span class="task-title">Databricks Setup &mdash; Upload &amp; Notebook</span>
+      <span class="task-deliv">Steps 3&ndash;4 &middot; D1</span>
+      <span class="toggle-btn" id="btn-p2">+</span>
+    </div>
+    <div class="task-body" id="p2">
+      <div class="answer-label">&#10003; Complete Answer &mdash; Steps 3&ndash;4</div>
+
+      <p style="font-size:.83rem;color:#8b949e;margin-bottom:1rem;">Step 3 uploads both source files to Databricks Volumes. Step 4 creates the ingestion notebook. The upload path determines all file references in subsequent cells.</p>
+
+      <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.85rem 1.1rem;margin-bottom:.85rem;font-size:.82rem;">
+        <div style="font-size:.69rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8b949e;margin-bottom:.55rem;">Step 3 &mdash; Upload Files to Databricks Volumes</div>
+        <table class="data-table" style="font-size:.8rem;">
+          <thead><tr><th>File</th><th>Upload Path</th><th>Used in Part</th></tr></thead>
+          <tbody>
+            <tr><td><code>weather_raw.json</code></td><td><code>/Volumes/workspace/default/Volume/weather_raw.json</code></td><td>Part 3 (Bronze)</td></tr>
+            <tr><td><code>sensor_data.csv</code></td><td><code>/Volumes/workspace/default/Volume/sensor_data.csv</code></td><td>Part 5 (CSV Ingestion)</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="code-block-label">Step 4 &mdash; Verify Files Are Accessible Before Running Pipeline</div>
+      <div class="code-block"><span class="ck">import</span> os
+
+<span class="cv">files</span> = [
+    <span class="cs">"/Volumes/workspace/default/Volume/weather_raw.json"</span>,
+    <span class="cs">"/Volumes/workspace/default/Volume/sensor_data.csv"</span>
+]
+
+<span class="ck">for</span> f <span class="ck">in</span> files:
+    status = <span class="cs">"OK"</span> <span class="ck">if</span> os.path.exists(f) <span class="ck">else</span> <span class="cs">"NOT FOUND"</span>
+    print(<span class="cf">f</span><span class="cs">"{status}: {f}"</span>)</div>
+
+      <div class="explain-toggle" onclick="toggleExplain('exp-p2')">
+        <span class="explain-icon">&#128161;</span>
+        <span class="explain-label">Why This Answer?</span>
+        <span class="explain-chevron" id="chev-exp-p2">&#9654;</span>
+      </div>
+      <div class="explain-body" id="exp-p2">
+        <h4>Why use Databricks Volumes instead of FileStore?</h4>
+        <p>Databricks Volumes (Unity Catalog) are the modern replacement for <code>/FileStore/</code>. Volumes support fine-grained access control, audit logging, and Delta Sharing integration. <code>/FileStore/</code> is a legacy path without row-level or column-level governance. For new projects, always upload to a Volume: <code>/Volumes/catalog/schema/volume_name/</code>.</p>
+        <h4>Why verify file existence before running the pipeline?</h4>
+        <p>A pipeline that fails silently on a missing file is harder to debug than one that fails explicitly at the start. The verification cell acts as a pre-flight check &mdash; if either file is missing, you know immediately before running cells of transformation code. In production, this is extended with schema validation: confirming not just that the file exists but that it contains the expected columns and data types.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────
+       PART 3 — Bronze Layer
+  ───────────────────────────────────────────── -->
+  <div class="task-card">
+    <div class="task-header" onclick="toggleTask('p3')">
+      <span class="task-num" style="background:#b45309;">Part 3</span>
+      <span class="task-title">Bronze Layer &mdash; Raw Data Ingestion</span>
+      <span class="task-deliv">Steps 5&ndash;6 &middot; D1</span>
+      <span class="toggle-btn" id="btn-p3">+</span>
+    </div>
+    <div class="task-body" id="p3">
+      <div class="answer-label">&#10003; Complete Answer &mdash; Steps 5&ndash;6</div>
+
+      <div style="background:#2d1a00;border:1px solid #92400e;border-radius:8px;padding:.85rem 1.1rem;margin-bottom:1rem;font-size:.82rem;color:#c9d1d9;line-height:1.65;">
+        <strong style="color:#cd7f32;">Bronze Layer Rule:</strong> Load data exactly as received from the source. No column renaming, no type casting, no filtering, no transformation. The Bronze table is the immutable source of truth &mdash; every Silver table must be derivable from it.
+      </div>
+
+      <div class="code-block-label">Step 5 &mdash; Load JSON into Spark (Raw Layer)</div>
+      <div class="code-block"><span class="cm"># Load raw JSON exactly as received from API</span>
+<span class="cv">weather_raw</span> = spark.read.json(
+    <span class="cs">"/Volumes/workspace/default/Volume/weather_raw.json"</span>
+)
+display(weather_raw)
+print(<span class="cf">f</span><span class="cs">"Schema: {weather_raw.dtypes}"</span>)
+print(<span class="cf">f</span><span class="cs">"Row count: {weather_raw.count()}"</span>)</div>
+
+      <div class="code-block-label">Step 6 &mdash; Save Bronze Table</div>
+      <div class="code-block"><span class="cm"># Persist raw data as-is: no transformation before this point</span>
+weather_raw.write.mode(<span class="cs">"overwrite"</span>).saveAsTable(<span class="cs">"weather_bronze"</span>)
+print(<span class="cs">"Bronze table created: weather_bronze"</span>)</div>
+
+      <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.85rem 1.1rem;margin:.85rem 0;font-size:.82rem;">
+        <div style="font-size:.69rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8b949e;margin-bottom:.55rem;">Expected Schema &mdash; weather_bronze</div>
+        <table class="data-table" style="font-size:.8rem;">
+          <thead><tr><th>Column</th><th>Inferred Type</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td><code>city</code></td><td>string</td><td>Kept as-is</td></tr>
+            <tr><td><code>temperature</code></td><td>double</td><td>Kept as-is</td></tr>
+            <tr><td><code>humidity</code></td><td>long</td><td>Kept as-is</td></tr>
+            <tr><td><code>weather_condition</code></td><td>string</td><td>Kept as-is</td></tr>
+            <tr><td><code>timestamp</code></td><td>string</td><td>Kept as-is &mdash; will be dropped in Silver</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="explain-toggle" onclick="toggleExplain('exp-p3')">
+        <span class="explain-icon">&#128161;</span>
+        <span class="explain-label">Why This Answer?</span>
+        <span class="explain-chevron" id="chev-exp-p3">&#9654;</span>
+      </div>
+      <div class="explain-body" id="exp-p3">
+        <h4>Why does Bronze store everything, including the timestamp that gets dropped later?</h4>
+        <p>The Bronze table is a <strong>replayable source</strong>. If your Silver transformation logic changes &mdash; maybe the timestamp is needed for time-series analysis &mdash; you can re-run Silver from Bronze without going back to the API. If you dropped the timestamp at ingestion time, that information is gone. Bronze is not about what you need today; it is about preserving optionality for tomorrow.</p>
+        <h4>Why use spark.read.json() instead of Python json.load()?</h4>
+        <p>Spark distributes the read across the cluster, handles schema inference automatically, and returns a DataFrame that integrates directly with <code>saveAsTable()</code>. Reading with Python <code>json.load()</code> gives a Python dict that must be manually converted to a DataFrame. For a single-record JSON this difference is trivial; for files with millions of records, the distributed read is essential.</p>
+        <h4>Why is Bronze the foundation of Medallion Architecture?</h4>
+        <p>Medallion Architecture builds each layer from the previous: Silver is derived from Bronze; Gold is derived from Silver. If Silver is corrupted or transformation logic is wrong, you truncate Silver and re-derive it from Bronze. Without Bronze, corruption in Silver means your data is irreversibly lost. The Bronze layer costs very little storage but provides very high recovery value.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────
+       PART 4 — Silver Layer
+  ───────────────────────────────────────────── -->
+  <div class="task-card">
+    <div class="task-header" onclick="toggleTask('p4')">
+      <span class="task-num" style="background:#238636;">Part 4</span>
+      <span class="task-title">Silver Layer &mdash; Processed &amp; Query-Ready Data</span>
+      <span class="task-deliv">Steps 7&ndash;8 &middot; D1</span>
+      <span class="toggle-btn" id="btn-p4">+</span>
+    </div>
+    <div class="task-body" id="p4">
+      <div class="answer-label">&#10003; Complete Answer &mdash; Steps 7&ndash;8</div>
+
+      <div class="code-block-label">Step 7 &mdash; Extract Required Fields from Bronze</div>
+      <div class="code-block"><span class="ck">from</span> pyspark.sql.functions <span class="ck">import</span> col
+
+<span class="cm"># Read from Bronze, select only analysis-ready fields</span>
+<span class="cv">weather_silver</span> = weather_raw.select(
+    col(<span class="cs">"city"</span>),
+    col(<span class="cs">"temperature"</span>),
+    col(<span class="cs">"humidity"</span>),
+    col(<span class="cs">"weather_condition"</span>)
+    <span class="cm"># timestamp deliberately excluded: not needed for current analytics</span>
+)
+display(weather_silver)</div>
+
+      <div class="code-block-label">Step 8 &mdash; Save Silver Table</div>
+      <div class="code-block">weather_silver.write.mode(<span class="cs">"overwrite"</span>).saveAsTable(<span class="cs">"weather_silver"</span>)
+print(<span class="cs">"Silver table created: weather_silver"</span>)
+print(<span class="cs">"Columns: city, temperature, humidity, weather_condition"</span>)</div>
+
+      <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.85rem 1.1rem;margin:.85rem 0;font-size:.82rem;">
+        <div style="font-size:.69rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8b949e;margin-bottom:.55rem;">Bronze &rarr; Silver Transformation Summary</div>
+        <table class="data-table" style="font-size:.8rem;">
+          <thead><tr><th>Field</th><th>Bronze</th><th>Silver</th><th>Reason</th></tr></thead>
+          <tbody>
+            <tr><td><code>city</code></td><td>&#10003; Kept</td><td>&#10003; Kept</td><td>Required for location-based analytics</td></tr>
+            <tr><td><code>temperature</code></td><td>&#10003; Kept</td><td>&#10003; Kept</td><td>Core sensor metric</td></tr>
+            <tr><td><code>humidity</code></td><td>&#10003; Kept</td><td>&#10003; Kept</td><td>Core sensor metric</td></tr>
+            <tr><td><code>weather_condition</code></td><td>&#10003; Kept</td><td>&#10003; Kept</td><td>Required for condition filtering</td></tr>
+            <tr><td><code>timestamp</code></td><td>&#10003; Kept</td><td>&#10007; Dropped</td><td>Not needed for current analytics; preserved in Bronze</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="explain-toggle" onclick="toggleExplain('exp-p4')">
+        <span class="explain-icon">&#128161;</span>
+        <span class="explain-label">Why This Answer?</span>
+        <span class="explain-chevron" id="chev-exp-p4">&#9654;</span>
+      </div>
+      <div class="explain-body" id="exp-p4">
+        <h4>Why is Silver "analysis-ready" rather than just "clean"?</h4>
+        <p>Cleanliness is context-dependent. A Silver table for the dashboard team drops the raw timestamp. A Silver table for the data science team might keep it for feature engineering. <strong>Analysis-ready</strong> means the data is structured, validated, and free of obvious errors for a specific consumer group. A single Bronze table can feed multiple Silver tables, each optimized for a different downstream use case.</p>
+        <h4>What transformations belong in Silver vs Gold?</h4>
+        <ul>
+          <li><strong>Silver</strong>: drop unnecessary columns, cast types, rename columns, deduplication (<code>dropDuplicates()</code>), null handling (<code>dropna()</code>, <code>fillna()</code>)</li>
+          <li><strong>Gold</strong>: aggregations, joins, business logic, KPI calculations &mdash; never in Silver</li>
+        </ul>
+        <h4>Why use col() instead of string column names?</h4>
+        <p>Using <code>col("name")</code> allows chaining transformations: <code>col("temperature").cast("double").alias("temp_c")</code>. It also makes column references explicit when joining tables with overlapping names. While <code>weather_raw.select("city", "temperature")</code> works here, <code>col()</code> builds the habit of explicit, chainable references that scale to complex multi-table pipelines.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────
+       PART 5 — CSV Sensor Ingestion
+  ───────────────────────────────────────────── -->
+  <div class="task-card">
+    <div class="task-header" onclick="toggleTask('p5')">
+      <span class="task-num" style="background:#b91c1c;">Part 5</span>
+      <span class="task-title">CSV Ingestion &mdash; IoT Sensor Data</span>
+      <span class="task-deliv">Steps 9&ndash;12 &middot; D1</span>
+      <span class="toggle-btn" id="btn-p5">+</span>
+    </div>
+    <div class="task-body" id="p5">
+      <div class="answer-label">&#10003; Complete Answer &mdash; Steps 9&ndash;12</div>
+
+      <div class="code-block-label">Step 9 &mdash; Load Sensor CSV (Raw)</div>
+      <div class="code-block"><span class="cv">sensor_df</span> = spark.read.csv(
+    <span class="cs">"/Volumes/workspace/default/Volume/sensor_data.csv"</span>,
+    header=<span class="ck">True</span>,
+    inferSchema=<span class="ck">True</span>
+)
+display(sensor_df)
+print(<span class="cf">f</span><span class="cs">"Total sensor rows (including nulls): {sensor_df.count()}"</span>)</div>
+
+      <div class="code-block-label">Step 10 &mdash; Save Sensor Bronze Table</div>
+      <div class="code-block"><span class="cm"># Raw sensor data, no cleaning applied</span>
+sensor_df.write.mode(<span class="cs">"overwrite"</span>).saveAsTable(<span class="cs">"sensor_bronze"</span>)
+print(<span class="cs">"Bronze table created: sensor_bronze"</span>)</div>
+
+      <div class="code-block-label">Step 11 &mdash; Clean Data &mdash; Remove Null Readings</div>
+      <div class="code-block"><span class="cm"># dropna() removes any row where ANY column contains null</span>
+<span class="cv">sensor_clean</span> = sensor_df.dropna()
+
+print(<span class="cf">f</span><span class="cs">"Rows before cleaning (Bronze): {sensor_df.count()}"</span>)
+print(<span class="cf">f</span><span class="cs">"Rows after dropna (Silver):    {sensor_clean.count()}"</span>)
+print(<span class="cf">f</span><span class="cs">"Faulty sensor readings removed: {sensor_df.count() - sensor_clean.count()}"</span>)
+display(sensor_clean)</div>
+
+      <div class="code-block-label">Step 12 &mdash; Save Sensor Silver Table</div>
+      <div class="code-block"><span class="cm"># Clean, complete sensor readings only</span>
+sensor_clean.write.mode(<span class="cs">"overwrite"</span>).saveAsTable(<span class="cs">"sensor_silver"</span>)
+print(<span class="cs">"Silver table created: sensor_silver"</span>)</div>
+
+      <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.85rem 1.1rem;margin:.85rem 0;font-size:.82rem;">
+        <div style="font-size:.69rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8b949e;margin-bottom:.55rem;">Four Tables Created &mdash; Medallion Layers</div>
+        <table class="data-table" style="font-size:.8rem;">
+          <thead><tr><th>Table</th><th>Source</th><th>Layer</th><th>Transformation</th></tr></thead>
+          <tbody>
+            <tr><td><code>weather_bronze</code></td><td>weather_raw.json</td><td><span class="lc-bronze">Bronze</span></td><td>None &mdash; raw JSON as-is</td></tr>
+            <tr><td><code>weather_silver</code></td><td>weather_bronze</td><td><span class="lc-silver">Silver</span></td><td>4 fields selected, timestamp dropped</td></tr>
+            <tr><td><code>sensor_bronze</code></td><td>sensor_data.csv</td><td><span class="lc-bronze">Bronze</span></td><td>None &mdash; raw CSV including null rows</td></tr>
+            <tr><td><code>sensor_silver</code></td><td>sensor_bronze</td><td><span class="lc-silver">Silver</span></td><td>dropna() applied, fault rows removed</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="explain-toggle" onclick="toggleExplain('exp-p5')">
+        <span class="explain-icon">&#128161;</span>
+        <span class="explain-label">Why This Answer?</span>
+        <span class="explain-chevron" id="chev-exp-p5">&#9654;</span>
+      </div>
+      <div class="explain-body" id="exp-p5">
+        <h4>Why use dropna() instead of fillna() for faulty sensor readings?</h4>
+        <p><strong>Sensor null = sensor failure</strong>, not missing data. If a temperature sensor returns null, the sensor itself malfunctioned &mdash; there is no meaningful value to impute. Filling null readings with a mean would corrupt the data: a failed sensor has no temperature to report, and imputing one could falsely indicate a normal machine state when it is in a Fault condition. <code>fillna()</code> is appropriate when null means "not collected" (an optional survey field) &mdash; not when it means hardware failure.</p>
+        <h4>Why keep null rows in Bronze if they will be dropped in Silver?</h4>
+        <p>The Bronze sensor table including fault rows has governance value: it records that sensor S005 reported a Fault at 08:00:15. Even though temperature and pressure were null, the machine_status was "Fault" &mdash; that event happened and must be preserved for maintenance logs. A future pipeline might create a separate Silver table specifically for fault events, reading from the same Bronze source. Never drop data at the Bronze stage because you cannot anticipate every future use case.</p>
+        <h4>Why do both weather and sensor data follow the same Bronze/Silver pattern?</h4>
+        <p>Medallion Architecture is source-agnostic. Whether data comes from a REST API, CSV, database, or stream, the same principle applies: ingest raw into Bronze, derive clean into Silver. This consistency means any data consumer immediately knows: tables ending in <code>_bronze</code> are raw and may have quality issues; tables ending in <code>_silver</code> are cleaned and query-safe. The naming convention is part of the governance contract.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────
+       PART 6 — Architecture & OpenMetadata
+  ───────────────────────────────────────────── -->
+  <div class="task-card">
+    <div class="task-header" onclick="toggleTask('p6')">
+      <span class="task-num" style="background:#0e7490;">Part 6</span>
+      <span class="task-title">Data Lake vs Warehouse &bull; IoT Design &bull; OpenMetadata</span>
+      <span class="task-deliv">Steps 13&ndash;14 &middot; D2, D3, D4</span>
+      <span class="toggle-btn" id="btn-p6">+</span>
+    </div>
+    <div class="task-body" id="p6">
+      <div class="answer-label">&#10003; Complete Answer &mdash; Architecture Sections</div>
+
+      <div style="font-size:.69rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8b949e;margin-bottom:.55rem;">Data Lake vs Data Warehouse &mdash; Comparison (D3)</div>
+      <table class="data-table" style="margin-bottom:1.25rem;">
+        <thead><tr><th>Feature</th><th>Data Lake</th><th>Data Warehouse</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Data Type</strong></td><td>Raw, unstructured, semi-structured (JSON, CSV, images, logs)</td><td>Structured, processed, schema-enforced</td></tr>
+          <tr><td><strong>Schema</strong></td><td>Schema-on-read &mdash; schema applied at query time</td><td>Schema-on-write &mdash; schema enforced at ingestion</td></tr>
+          <tr><td><strong>Storage Cost</strong></td><td>Low &mdash; object storage (S3, ADLS, GCS)</td><td>Higher &mdash; optimized columnar storage with indexes</td></tr>
+          <tr><td><strong>Primary Users</strong></td><td>Data engineers, data scientists, ML teams</td><td>Business analysts, BI tools, executive dashboards</td></tr>
+          <tr><td><strong>Use Case</strong></td><td>Exploratory analysis, ML training data, raw archive</td><td>BI reporting, KPI dashboards, regulated financial data</td></tr>
+          <tr><td><strong>Query Speed</strong></td><td>Slower &mdash; requires schema inference per query</td><td>Faster &mdash; pre-optimized indexes and partitions</td></tr>
+          <tr><td><strong>Lab Example</strong></td><td>Bronze + Silver layers (Delta Lake with schema-on-read)</td><td>Gold layer: pre-aggregated KPIs for factory dashboards</td></tr>
+        </tbody>
+      </table>
+
+      <div style="font-size:.69rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8b949e;margin-bottom:.55rem;margin-top:1.25rem;">IoT Ingestion Architecture Design (D4)</div>
+      <div style="background:#0a1520;border:1px solid #1f6feb;border-radius:8px;padding:1rem 1.25rem;margin-bottom:1rem;">
+        <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-bottom:.85rem;">
+          <span style="background:#24183a;color:#bc8cff;padding:3px 10px;border-radius:6px;font-size:.76rem;font-weight:700;">IoT Sensors</span>
+          <span style="color:#484f58;">&rarr;</span>
+          <span style="background:#1f3a5c;color:#58a6ff;padding:3px 10px;border-radius:6px;font-size:.76rem;font-weight:700;">API / Stream</span>
+          <span style="color:#484f58;">&rarr;</span>
+          <span style="background:#1f3a5c;color:#58a6ff;padding:3px 10px;border-radius:6px;font-size:.76rem;font-weight:700;">Ingestion Layer</span>
+          <span style="color:#484f58;">&rarr;</span>
+          <span style="background:#2d1a00;color:#cd7f32;padding:3px 10px;border-radius:6px;font-size:.76rem;font-weight:700;">Bronze (Raw)</span>
+          <span style="color:#484f58;">&rarr;</span>
+          <span style="background:#1e1e2d;color:#c0c0c0;padding:3px 10px;border-radius:6px;font-size:.76rem;font-weight:700;">Silver (Clean)</span>
+          <span style="color:#484f58;">&rarr;</span>
+          <span style="background:#2d2200;color:#fbbf24;padding:3px 10px;border-radius:6px;font-size:.76rem;font-weight:700;">Gold (Analytics)</span>
+          <span style="color:#484f58;">&rarr;</span>
+          <span style="background:#1a2f1a;color:#3fb950;padding:3px 10px;border-radius:6px;font-size:.76rem;font-weight:700;">Dashboard</span>
+        </div>
+        <table class="data-table" style="font-size:.8rem;">
+          <thead><tr><th>Layer</th><th>Technology</th><th>Role</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Sensors</strong></td><td>IoT hardware (temperature, pressure, status)</td><td>Continuous data generation at machine level</td></tr>
+            <tr><td><strong>API / Stream</strong></td><td>REST API (batch) or Kafka / Event Hubs (real-time)</td><td>Transport raw readings to the ingestion layer</td></tr>
+            <tr><td><strong>Ingestion</strong></td><td>Python <code>requests</code>, PySpark Structured Streaming</td><td>Pull or receive data; write to Bronze without transformation</td></tr>
+            <tr><td><strong>Bronze</strong></td><td>Databricks Delta Lake</td><td>Raw, immutable landing zone; full fidelity with source</td></tr>
+            <tr><td><strong>Silver</strong></td><td>Databricks Delta Lake + PySpark</td><td>Cleaned, validated; ready for analysis and ML features</td></tr>
+            <tr><td><strong>Gold</strong></td><td>Databricks SQL + aggregations</td><td>Business KPIs: avg temp per zone, fault rate, uptime</td></tr>
+            <tr><td><strong>Dashboard</strong></td><td>Power BI, Tableau, Databricks SQL</td><td>Real-time and historical visibility for operations team</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div style="font-size:.69rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8b949e;margin-bottom:.55rem;margin-top:1.25rem;">Step 13 &mdash; Register Tables in OpenMetadata (D2)</div>
+      <p style="font-size:.83rem;color:#8b949e;margin-bottom:.85rem;">Connect OpenMetadata to the Databricks workspace. All four tables will be auto-discovered via the Databricks connector. Verify schema, row counts, and column descriptions appear correctly.</p>
+
+      <div style="font-size:.69rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8b949e;margin-bottom:.55rem;">Step 14 &mdash; Apply Medallion Layer Tags</div>
+      <table class="data-table" style="margin-bottom:1rem;">
+        <thead><tr><th>Table</th><th>Tag</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>weather_bronze</code></td><td><span class="lc-bronze">Bronze</span></td><td>Raw = Unprocessed data from OpenWeather API; includes all original fields</td></tr>
+          <tr><td><code>weather_silver</code></td><td><span class="lc-silver">Silver</span></td><td>Processed = Cleaned weather fields; timestamp removed; query-safe</td></tr>
+          <tr><td><code>sensor_bronze</code></td><td><span class="lc-bronze">Bronze</span></td><td>Raw = Unprocessed IoT sensor data; includes null fault readings</td></tr>
+          <tr><td><code>sensor_silver</code></td><td><span class="lc-silver">Silver</span></td><td>Processed = Cleaned sensor data; null rows removed via dropna()</td></tr>
+        </tbody>
+      </table>
+
+      <div class="explain-toggle" onclick="toggleExplain('exp-p6')">
+        <span class="explain-icon">&#128161;</span>
+        <span class="explain-label">Why This Answer?</span>
+        <span class="explain-chevron" id="chev-exp-p6">&#9654;</span>
+      </div>
+      <div class="explain-body" id="exp-p6">
+        <h4>Why does a Data Lake use schema-on-read while a Data Warehouse uses schema-on-write?</h4>
+        <p>Schema-on-write requires you to define the table structure before data enters it &mdash; the database enforces that every row matches. This produces clean, fast-to-query data but requires knowing the schema upfront. Schema-on-read stores raw data without enforcement; the schema is applied at query time. Data Lakes use schema-on-read because IoT systems and APIs produce heterogeneous data that evolves over time &mdash; a rigid ingestion schema would cause pipeline failures every time the API adds a new field.</p>
+        <h4>Why is there a Gold layer if Silver is already clean?</h4>
+        <p>Silver tables are cleaned source data &mdash; they still look like original records, just without quality issues. Gold tables are <strong>business-ready aggregates</strong>: average machine temperature per zone, fault rate per shift, daily uptime percentages. A dashboard querying raw Silver rows to compute these metrics on every page load would be slow and resource-intensive. Gold pre-computes aggregations so dashboards render in milliseconds &mdash; the same principle behind materialized views, applied at lakehouse scale.</p>
+        <h4>Why does SmartFactory need OpenMetadata if the tables are already in Databricks?</h4>
+        <p>Databricks knows where tables are and what columns they contain. OpenMetadata adds the layer the business cares about: <strong>what the data means</strong>. A new analyst seeing <code>sensor_bronze</code> in Databricks has no way to know it contains null fault readings from malfunctioning sensors. The Bronze tag combined with a description and lineage showing derivation from <code>sensor_data.csv</code> communicates immediately: this is raw data, check Silver for clean records. Governance metadata makes the catalog self-documenting.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── DELIVERABLES ──────────────────────────── -->
+  <div class="section-label">Deliverables</div>
+
+  <div class="card">
+    <div class="card-title">Required Submissions</div>
+    <ul class="deliv-list">
+      <li>
+        <span class="deliv-num">D1</span>
+        <div><strong>Databricks Notebook</strong> (Module05_Data_Ingestion) &mdash; Must include: API ingestion (simulated or real), weather Bronze + Silver table creation, sensor CSV Bronze + Silver table creation with dropna(), and all four tables successfully saved and verified.</div>
+      </li>
+      <li>
+        <span class="deliv-num">D2</span>
+        <div><strong>OpenMetadata Screenshots</strong> &mdash; All four tables visible with schema and Medallion layer tags applied: <code>weather_bronze</code> <span class="lc-bronze">Bronze</span>, <code>weather_silver</code> <span class="lc-silver">Silver</span>, <code>sensor_bronze</code> <span class="lc-bronze">Bronze</span>, <code>sensor_silver</code> <span class="lc-silver">Silver</span>.</div>
+      </li>
+      <li>
+        <span class="deliv-num">D3</span>
+        <div><strong>Data Lake vs Warehouse Comparison</strong> &mdash; Completed table with at least 5 feature rows: data type, schema approach, storage cost, use case, and a concrete example from this lab mapped to each architecture.</div>
+      </li>
+      <li>
+        <span class="deliv-num">D4</span>
+        <div><strong>IoT Architecture Design</strong> &mdash; Diagram or written description of the SmartFactory pipeline: Sensors &rarr; API/Stream &rarr; Ingestion &rarr; Bronze &rarr; Silver &rarr; Gold &rarr; Dashboard, with technology choice and role for each layer.</div>
+      </li>
+    </ul>
+  </div>
+
+  <div class="deliv-link-bar">
+    <div>
+      <a href="module-05-deliverables.html">&#128196; View Student Submission &rarr;</a>
+      <div class="deliv-link-desc">Notebook, screenshots, comparison table, and architecture design</div>
+    </div>
+    <span style="font-size:.72rem;color:#484f58;font-weight:600;">module-05-deliverables.html</span>
+  </div>
+
+  <!-- ── REFLECTION ─────────────────────────────── -->
+  <div class="section-label">Reflection</div>
+  <div class="reflection-card">
+    <div class="reflection-q">Why is separating raw data (Bronze) from processed data (Silver) a governance requirement and not just a software engineering best practice?</div>
+    <div class="reflection-a">
+      <p>Software engineering best practices are recommendations that teams can choose based on their circumstances. Governance requirements are obligations that protect the organization from data loss, audit failure, and regulatory exposure. The Bronze layer is not just a clean architecture pattern &mdash; it is the immutable record of what the system received. When an IoT sensor reports a fault and that reading is cleaned away in the transformation step, the Silver table provides no evidence the fault event occurred. If a machine fails and the maintenance team needs to know when the first anomalous reading appeared, only the Bronze layer can answer that question.</p>
+      <p>From a compliance perspective, organizations under data retention regulations cannot afford to lose source records. A pipeline that ingests API data directly into Silver with field selection applied at ingestion time has no Bronze &mdash; the original API response is gone the moment the pipeline runs. If the API later changes its field names or transformation logic is found to be incorrect, there is no source to replay from. Bronze solves this: it is the single point of truth that all derived tables trace back to, and its existence is what makes a data platform auditable and reproducible.</p>
+      <p>The deeper principle is that Bronze and Silver are not just technical layers &mdash; they represent a <strong>chain of custody</strong> for data. Just as forensic evidence requires every handoff to be documented, a governed data pipeline requires every transformation to be traceable to an unmodified source. When SmartFactory can show an auditor the Bronze sensor reading, the Silver transformation that cleaned it, and the Gold aggregate that informed the maintenance decision, they have a complete and defensible data lineage. Without Bronze, the chain breaks at the first step.</p>
+    </div>
+  </div>
+
+</div><!-- /page-body -->
+
+<button class="export-btn" onclick="exportPDF()">
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+    <polyline points="7 10 12 15 17 10"/>
+    <line x1="12" y1="15" x2="12" y2="3"/>
+  </svg>
+  Export PDF
+</button>
+
+<footer class="site-footer">
+  Module 05 &mdash; Data Ingestion &amp; Medallion Architecture &middot; SmartFactory Case Study
+</footer>
+
+<script>
+  function toggleTask(id) {
+    var body = document.getElementById(id);
+    var btn  = document.getElementById("btn-" + id);
+    var isOpen = body.classList.contains("open");
+    body.classList.toggle("open");
+    btn.textContent = isOpen ? "+" : "−";
+  }
+
+  function toggleExplain(id) {
+    var body    = document.getElementById(id);
+    var chevron = document.getElementById("chev-" + id);
+    body.classList.toggle("open");
+    chevron.classList.toggle("open");
+  }
+
+  function exportPDF() {
+    var taskBodies    = document.querySelectorAll(".task-body");
+    var taskBtns      = document.querySelectorAll(".toggle-btn");
+    var explainBodies = document.querySelectorAll(".explain-body");
+    var explainChevs  = document.querySelectorAll(".explain-chevron");
+    var taskWasOpen   = [];
+    var explainWasOpen = [];
+
+    taskBodies.forEach(function(b, i) {
+      taskWasOpen[i] = b.classList.contains("open");
+      b.classList.add("open");
+      if (taskBtns[i]) { taskBtns[i].textContent = "−"; }
+    });
+    explainBodies.forEach(function(b, i) {
+      explainWasOpen[i] = b.classList.contains("open");
+      b.classList.add("open");
+      if (explainChevs[i]) { explainChevs[i].classList.add("open"); }
+    });
+
+    window.print();
+
+    taskBodies.forEach(function(b, i) {
+      if (!taskWasOpen[i]) {
+        b.classList.remove("open");
+        if (taskBtns[i]) { taskBtns[i].textContent = "+"; }
+      }
+    });
+    explainBodies.forEach(function(b, i) {
+      if (!explainWasOpen[i]) {
+        b.classList.remove("open");
+        if (explainChevs[i]) { explainChevs[i].classList.remove("open"); }
+      }
+    });
+  }
+</script>
+
+</body>
+</html>
