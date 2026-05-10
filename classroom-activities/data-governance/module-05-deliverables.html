@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Module 05 Deliverables &mdash; Data Ingestion &amp; Medallion Architecture</title>
+  <meta name="author" content="Clark Ngo">
+  <meta name="copyright" content="Clark Ngo">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0d1117; color: #c9d1d9; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; min-height: 100vh; font-size: 14px; line-height: 1.6; }
+
+    /* Navbar */
+    .navbar { background: #161b22; border-bottom: 1px solid #30363d; padding: .75rem 1.5rem; display: flex; align-items: center; justify-content: space-between; }
+    .navbar a { color: #e6edf3; text-decoration: none; font-weight: 700; font-size: 1rem; }
+    .navbar a:hover { color: #bc8cff; }
+    .nav-pill { font-size: .78rem; color: #8b949e; }
+
+    .page-body { max-width: 1020px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+    /* Breadcrumb */
+    .breadcrumb { font-size: .78rem; color: #8b949e; display: flex; align-items: center; gap: .4rem; margin-bottom: .85rem; flex-wrap: wrap; }
+    .breadcrumb a { color: #58a6ff; text-decoration: none; font-weight: 600; }
+    .breadcrumb a:hover { text-decoration: underline; }
+    .breadcrumb span { color: #484f58; }
+
+    /* Page header */
+    .page-badge { display: inline-block; background: #6e40c9; color: #fff; font-size: .72rem; font-weight: 700; padding: 3px 12px; border-radius: 12px; text-transform: uppercase; letter-spacing: .07em; margin-bottom: .55rem; }
+    h1 { color: #e6edf3; font-size: 1.75rem; font-weight: 800; margin-bottom: .25rem; }
+    .page-sub { color: #8b949e; font-size: .88rem; margin-bottom: 1.5rem; }
+
+    /* Progress bar */
+    .progress-wrap { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 1.1rem 1.5rem; margin-bottom: 2.25rem; }
+    .progress-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #8b949e; margin-bottom: .75rem; }
+    .progress-steps { display: flex; gap: .5rem; align-items: stretch; flex-wrap: wrap; }
+    .step-pill { flex: 1; min-width: 130px; background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: .55rem .85rem; display: flex; align-items: center; gap: .55rem; }
+    .step-pill.done { border-color: #238636; background: #0b1f0b; }
+    .step-check { width: 18px; height: 18px; border-radius: 50%; background: #238636; color: #fff; font-size: .7rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .step-check.pending { background: #30363d; color: #8b949e; }
+    .step-text { font-size: .78rem; font-weight: 700; line-height: 1.3; }
+    .step-pill.done .step-text { color: #3fb950; }
+    .step-pill:not(.done) .step-text { color: #8b949e; }
+
+    /* Deliverable section */
+    .deliverable { margin-bottom: 3rem; scroll-margin-top: 1rem; }
+    .d-header { display: flex; align-items: center; gap: .85rem; margin-bottom: 1.25rem; padding-bottom: .85rem; border-bottom: 1px solid #21262d; }
+    .d-num { width: 34px; height: 34px; border-radius: 10px; background: #6e40c9; color: #fff; font-size: .85rem; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .d-num.blue   { background: #1f6feb; }
+    .d-num.green  { background: #238636; }
+    .d-num.purple { background: #6e40c9; }
+    .d-num.yellow { background: #9e6a03; }
+    .d-title { font-size: 1.15rem; font-weight: 800; color: #e6edf3; }
+    .d-desc  { font-size: .82rem; color: #8b949e; margin-top: .15rem; }
+    .done-badge { margin-left: auto; background: #0b1f0b; border: 1px solid #238636; color: #3fb950; font-size: .68rem; font-weight: 700; padding: 2px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: .07em; white-space: nowrap; }
+
+    /* Sub-label */
+    .sub-label { font-size: .69rem; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: #8b949e; border-left: 3px solid #30363d; padding-left: .55rem; margin: 1.25rem 0 .75rem; }
+
+    /* Screenshots */
+    .screenshot-wrap { border: 1px solid #30363d; border-radius: 10px; overflow: hidden; margin-bottom: 1rem; background: #000; }
+    .screenshot-wrap img { width: 100%; display: block; }
+    .screenshot-caption { font-size: .75rem; color: #8b949e; padding: .5rem .85rem; background: #161b22; border-top: 1px solid #21262d; display: flex; align-items: center; gap: .4rem; }
+    .cap-file { font-family: "Menlo","Monaco",monospace; font-size: .72rem; color: #bc8cff; }
+
+    /* Placeholder for missing screenshots */
+    .screenshot-placeholder { background: #161b22; border: 1px dashed #30363d; border-radius: 10px; min-height: 160px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .5rem; color: #484f58; margin-bottom: 1rem; padding: 1.5rem; }
+    .screenshot-placeholder .ph-filename { font-family: "Menlo","Monaco",monospace; font-size: .75rem; color: #bc8cff; }
+    .screenshot-placeholder .ph-hint { font-size: .72rem; color: #484f58; }
+
+    /* Notebook viewer */
+    .notebook-viewer { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; overflow: hidden; margin-bottom: 1rem; }
+    .notebook-cell { display: flex; border-bottom: 1px solid #21262d; }
+    .notebook-cell:last-child { border-bottom: none; }
+    .nb-gutter { width: 56px; background: #161b22; padding: .75rem .5rem; display: flex; flex-direction: column; align-items: flex-end; gap: .25rem; flex-shrink: 0; border-right: 1px solid #21262d; }
+    .nb-in { font-family: "Menlo","Monaco",monospace; font-size: .65rem; color: #bc8cff; white-space: nowrap; }
+    .nb-content { flex: 1; padding: .75rem 1rem; min-width: 0; }
+    .nb-code { font-family: "Menlo","Monaco",monospace; font-size: .79rem; color: #c9d1d9; line-height: 1.7; white-space: pre; overflow-x: auto; }
+    .nb-output { margin-top: .6rem; padding: .55rem .75rem; background: #0a0e14; border-left: 3px solid #21262d; border-radius: 0 4px 4px 0; font-size: .79rem; }
+    .nb-output-live { margin-top: .6rem; padding: .55rem .75rem; background: #0b1f0b; border-left: 3px solid #238636; border-radius: 0 4px 4px 0; font-family: "Menlo","Monaco",monospace; font-size: .79rem; color: #3fb950; }
+    .ck { color: #ff7b72; }
+    .cs { color: #a5d6ff; }
+    .cf { color: #d2a8ff; }
+    .cv { color: #ffa657; }
+    .cm { color: #8b949e; }
+    .sk { color: #bc8cff; }
+    .sv { color: #ffa657; }
+
+    /* Medallion layer badges */
+    .lc-bronze { display: inline-block; font-size: .63rem; font-weight: 700; background: #2d1a00; color: #cd7f32; border: 1px solid #92400e; padding: 1px 6px; border-radius: 4px; text-transform: uppercase; }
+    .lc-silver { display: inline-block; font-size: .63rem; font-weight: 700; background: #1e1e2d; color: #c0c0c0; border: 1px solid #6b7280; padding: 1px 6px; border-radius: 4px; text-transform: uppercase; }
+    .lc-gold   { display: inline-block; font-size: .63rem; font-weight: 700; background: #2d2200; color: #fbbf24; border: 1px solid #d97706; padding: 1px 6px; border-radius: 4px; text-transform: uppercase; }
+    .lc-raw    { display: inline-block; font-size: .63rem; font-weight: 700; background: #1a1a1a; color: #8b949e; border: 1px solid #484f58; padding: 1px 6px; border-radius: 4px; text-transform: uppercase; }
+
+    /* Tables */
+    .data-table { width: 100%; border-collapse: collapse; font-size: .83rem; }
+    .data-table th { background: #0d1117; color: #8b949e; font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; padding: .5rem .75rem; text-align: left; border-bottom: 1px solid #30363d; white-space: nowrap; }
+    .data-table td { padding: .55rem .75rem; border-bottom: 1px solid #21262d; color: #c9d1d9; vertical-align: top; line-height: 1.55; }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table code { font-family: "Menlo","Monaco",monospace; font-size: .8em; background: #21262d; padding: 1px 5px; border-radius: 4px; color: #a5d6ff; }
+
+    /* Insight strip */
+    .insight-strip { background: #1c1030; border: 1px solid #6e40c9; border-radius: 8px; padding: .85rem 1.1rem; margin-bottom: 1.25rem; font-size: .84rem; color: #c9d1d9; line-height: 1.7; }
+    .insight-strip strong { color: #bc8cff; }
+
+    /* Architecture design card */
+    .arch-card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1.35rem 1.5rem; margin-bottom: 1.1rem; }
+    .arch-pipeline { display: flex; align-items: center; gap: .4rem; flex-wrap: wrap; margin: 1rem 0; }
+    .arch-node { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: .4rem .85rem; font-size: .78rem; font-weight: 700; color: #e6edf3; white-space: nowrap; }
+    .arch-node.bronze-n { border-color: #92400e; color: #cd7f32; background: #2d1a00; }
+    .arch-node.silver-n { border-color: #6b7280; color: #c0c0c0; background: #1e1e2d; }
+    .arch-node.gold-n   { border-color: #d97706; color: #fbbf24; background: #2d2200; }
+    .arch-node.purple-n { border-color: #6e40c9; color: #bc8cff; background: #24183a; }
+    .arch-arrow { color: #484f58; font-size: 1.1rem; flex-shrink: 0; }
+    .arch-row { margin-bottom: .75rem; }
+    .arch-row-label { font-size: .69rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: #8b949e; margin-bottom: .35rem; }
+
+    /* Reflection cards */
+    .reflect-card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1.35rem 1.5rem; margin-bottom: 1.1rem; }
+    .reflect-card h2 { font-size: 1rem; font-weight: 800; color: #e6edf3; margin-bottom: .65rem; padding-left: .65rem; }
+    .reflect-card.process   h2 { border-left: 3px solid #6e40c9; }
+    .reflect-card.learnings h2 { border-left: 3px solid #3fb950; }
+    .reflect-card.blockers  h2 { border-left: 3px solid #f85149; }
+    .reflect-card.final     h2 { border-left: 3px solid #e3b341; }
+    .reflect-card h3 { font-size: .88rem; font-weight: 700; color: #bc8cff; margin: 1.1rem 0 .4rem; }
+    .reflect-card.learnings h3 { color: #56d364; }
+    .reflect-card.blockers  h3 { color: #f85149; }
+    .reflect-card.final     h3 { color: #f0c674; }
+    .reflect-card p { font-size: .84rem; color: #c9d1d9; line-height: 1.75; margin-bottom: .5rem; }
+    .reflect-card ul, .reflect-card ol { padding-left: 1.2rem; margin-bottom: .6rem; }
+    .reflect-card li { font-size: .84rem; color: #c9d1d9; line-height: 1.75; margin-bottom: .3rem; }
+    .reflect-card li strong { color: #e6edf3; }
+    .reflect-card code { font-family: "Menlo","Monaco",monospace; font-size: .8em; background: #0d1117; border: 1px solid #30363d; padding: 1px 5px; border-radius: 4px; color: #a5d6ff; }
+    .reflect-card hr { border: none; border-top: 1px solid #21262d; margin: 1rem 0; }
+
+    /* Process step pills */
+    .process-steps { display: flex; flex-direction: column; gap: .55rem; margin: .75rem 0; }
+    .p-step { display: flex; gap: .75rem; align-items: flex-start; }
+    .p-icon { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: .82rem; flex-shrink: 0; }
+    .p-icon.purple { background: #18102d; border: 1px solid #6e40c9; }
+    .p-icon.blue   { background: #0c1e38; border: 1px solid #1f6feb; }
+    .p-icon.green  { background: #0b1f0b; border: 1px solid #238636; }
+    .p-icon.amber  { background: #2d1a00; border: 1px solid #92400e; }
+    .p-icon.red    { background: #2d1a1a; border: 1px solid #b91c1c; }
+    .p-content { flex: 1; padding-top: .25rem; }
+    .p-title { font-size: .84rem; font-weight: 700; color: #e6edf3; margin-bottom: .15rem; }
+    .p-desc  { font-size: .8rem; color: #8b949e; line-height: 1.6; }
+
+    /* Final checklist */
+    .final-list { list-style: none; padding: 0; margin: .75rem 0; }
+    .final-list li { display: flex; align-items: flex-start; gap: .65rem; padding: .55rem 0; border-bottom: 1px solid #21262d; font-size: .85rem; color: #c9d1d9; line-height: 1.6; }
+    .final-list li:last-child { border-bottom: none; }
+    .final-check { width: 20px; height: 20px; border-radius: 50%; background: #238636; color: #fff; font-size: .7rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: .1rem; }
+
+    /* Export button */
+    .export-btn { position: fixed; bottom: 1.5rem; right: 1.5rem; background: #6e40c9; color: #fff; border: none; border-radius: 8px; padding: .55rem 1.1rem; font-size: .82rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: .4rem; box-shadow: 0 2px 12px rgba(0,0,0,.4); z-index: 100; }
+    .export-btn:hover { background: #7c3aed; }
+
+    /* Footer */
+    .site-footer { text-align: center; padding: 1.25rem; border-top: 1px solid #21262d; margin-top: 2rem; color: #484f58; font-size: .77rem; }
+
+    /* Print */
+    @media print {
+      @page { size: A4; margin: 1.2cm 1.4cm; }
+      body { background: #fff !important; color: #111 !important; font-size: 9pt; }
+      .navbar, .export-btn { display: none !important; }
+      .page-body { max-width: 100%; padding: 0; }
+      h1 { color: #111 !important; font-size: 16pt; }
+      .page-sub { color: #555 !important; }
+      .page-badge { background: #6e40c9 !important; color: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .progress-wrap { background: #f9f9f9 !important; border-color: #ccc !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .step-pill.done { background: #f0fdf4 !important; border-color: #15803d !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .step-check { background: #15803d !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .done-badge { background: #f0fdf4 !important; border-color: #15803d !important; color: #15803d !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .screenshot-wrap { border-color: #ccc !important; page-break-inside: avoid; }
+      .reflect-card { background: #fafafa !important; border-color: #ccc !important; page-break-inside: avoid; }
+      .insight-strip { background: #f5f0ff !important; border-color: #6e40c9 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .notebook-viewer { border-color: #ccc !important; page-break-inside: avoid; }
+      .lc-bronze, .lc-silver, .lc-gold, .lc-raw { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .arch-card { background: #fafafa !important; border-color: #ccc !important; page-break-inside: avoid; }
+    }
+
+    @media (max-width: 680px) {
+      .progress-steps { flex-direction: column; }
+      .step-pill { min-width: unset; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="module-05.html">&#8592; Module 05 Lab Guide</a>
+  <span class="nav-pill">Data Governance &rsaquo; Module 05 &rsaquo; Deliverables</span>
+</nav>
+
+<div class="page-body">
+
+  <!-- Breadcrumb -->
+  <div class="breadcrumb">
+    <a href="../../index.html">Playground</a>
+    <span>/</span>
+    <a href="../../index.html">Classroom Activities</a>
+    <span>/</span>
+    <a href="index.html">Data Governance</a>
+    <span>/</span>
+    <a href="module-05.html">Module 05</a>
+    <span>/</span>
+    <span>Deliverables</span>
+  </div>
+
+  <!-- Header -->
+  <div class="page-badge">&#127891; Student Submission</div>
+  <h1>Module 05 Deliverables</h1>
+  <p class="page-sub">Data Ingestion &amp; Medallion Architecture &mdash; SmartFactory IoT Case Study &mdash; Clark Ngo</p>
+
+  <!-- Progress bar -->
+  <div class="progress-wrap">
+    <div class="progress-label">Submission Checklist &mdash; 4 / 4 Complete</div>
+    <div class="progress-steps">
+      <div class="step-pill done">
+        <div class="step-check">&#10003;</div>
+        <div class="step-text">D1 &mdash; Databricks Notebook</div>
+      </div>
+      <div class="step-pill done">
+        <div class="step-check">&#10003;</div>
+        <div class="step-text">D2 &mdash; OpenMetadata Screenshots</div>
+      </div>
+      <div class="step-pill done">
+        <div class="step-check">&#10003;</div>
+        <div class="step-text">D3 &mdash; Data Lake vs Warehouse</div>
+      </div>
+      <div class="step-pill done">
+        <div class="step-check">&#10003;</div>
+        <div class="step-text">D4 &mdash; IoT Architecture Design</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════ -->
+  <!-- D1 DATABRICKS NOTEBOOK                  -->
+  <!-- ════════════════════════════════════════ -->
+  <div class="deliverable" id="d1">
+    <div class="d-header">
+      <div class="d-num">D1</div>
+      <div>
+        <div class="d-title">Databricks Notebook &mdash; Medallion Ingestion Pipeline</div>
+        <div class="d-desc">Module05_Data_Ingestion.ipynb &mdash; Weather API ingestion, Bronze/Silver table creation for both weather and sensor datasets</div>
+      </div>
+      <div class="done-badge">&#10003; Complete &mdash; 11 cells</div>
+    </div>
+
+    <div class="sub-label">Module05_Data_Ingestion.ipynb &mdash; Full Notebook</div>
+
+    <div class="notebook-viewer">
+
+      <!-- In [1]: Simulate OpenWeather API Response -->
+      <div class="notebook-cell">
+        <div class="nb-gutter"><span class="nb-in">In [1]</span></div>
+        <div class="nb-content">
+          <div class="nb-code"><span class="cm"># Simulate OpenWeather API Response</span>
+<span class="ck">import</span> json
+<span class="ck">from</span> pyspark.sql <span class="ck">import</span> Row
+
+<span class="cv">api_response</span> = {
+    <span class="cs">"city"</span>: <span class="cs">"SmartFactory-Zone-A"</span>,
+    <span class="cs">"timestamp"</span>: <span class="cs">"2026-04-01T08:00:00Z"</span>,
+    <span class="cs">"temperature_c"</span>: 22.4,
+    <span class="cs">"humidity_pct"</span>: 61,
+    <span class="cs">"wind_speed_ms"</span>: 3.2,
+    <span class="cs">"condition"</span>: <span class="cs">"Clear"</span>,
+    <span class="cs">"aqi"</span>: 42
+}
+
+print(<span class="cs">"API response loaded:"</span>, json.dumps(api_response, indent=2))</div>
+          <div class="nb-output-live">API response loaded: {
+  "city": "SmartFactory-Zone-A",
+  "timestamp": "2026-04-01T08:00:00Z",
+  "temperature_c": 22.4,
+  "humidity_pct": 61,
+  "wind_speed_ms": 3.2,
+  "condition": "Clear",
+  "aqi": 42
+}</div>
+        </div>
+      </div>
+
+      <!-- In [2]: Create and Display Bronze Weather DataFrame -->
+      <div class="notebook-cell">
+        <div class="nb-gutter"><span class="nb-in">In [2]</span></div>
+        <div class="nb-content">
+          <div class="nb-code"><span class="cm"># Create Bronze DataFrame from raw API response (retain all fields)</span>
+<span class="ck">from</span> pyspark.sql <span class="ck">import</span> SparkSession
+<span class="ck">from</span> pyspark.sql.types <span class="ck">import</span> StructType, StructField, StringType, DoubleType, IntegerType
+
+<span class="cv">schema</span> = StructType([
+    StructField(<span class="cs">"city"</span>,           StringType(),  <span class="ck">True</span>),
+    StructField(<span class="cs">"timestamp"</span>,       StringType(),  <span class="ck">True</span>),
+    StructField(<span class="cs">"temperature_c"</span>,   DoubleType(),  <span class="ck">True</span>),
+    StructField(<span class="cs">"humidity_pct"</span>,    IntegerType(), <span class="ck">True</span>),
+    StructField(<span class="cs">"wind_speed_ms"</span>,   DoubleType(),  <span class="ck">True</span>),
+    StructField(<span class="cs">"condition"</span>,       StringType(),  <span class="ck">True</span>),
+    StructField(<span class="cs">"aqi"</span>,             IntegerType(), <span class="ck">True</span>),
+])
+
+<span class="cv">weather_raw_df</span> = spark.createDataFrame([api_response], schema=schema)
+display(weather_raw_df)</div>
+        </div>
+      </div>
+
+      <!-- In [3]: Save weather_bronze -->
+      <div class="notebook-cell">
+        <div class="nb-gutter"><span class="nb-in">In [3]</span></div>
+        <div class="nb-content">
+          <div class="nb-code"><span class="cm"># Save raw API data as Bronze table (retain all original fields)</span>
+weather_raw_df.write \
+    .mode(<span class="cs">"overwrite"</span>) \
+    .saveAsTable(<span class="cs">"weather_bronze"</span>)
+
+print(<span class="cs">"weather_bronze saved."</span>)</div>
+          <div class="nb-output-live">weather_bronze saved.</div>
+        </div>
+      </div>
+
+      <!-- Md: Silver Transformation -->
+      <div class="notebook-cell" style="background:#0d1a2a;">
+        <div class="nb-gutter"><span class="nb-in" style="color:#8b949e;">Md</span></div>
+        <div class="nb-content" style="color:#8b949e; font-size:.82rem; line-height:1.7;">
+          <strong style="color:#c9d1d9;">Silver Transformation &mdash; Weather Data</strong><br>
+          Drop the <code style="background:#0d1117;padding:1px 4px;border-radius:3px;font-family:monospace;font-size:.78rem;">timestamp</code> field (not needed for dashboards). Cast temperature and humidity to confirmed types. Result is query-safe.
+        </div>
+      </div>
+
+      <!-- In [4]: Create weather_silver -->
+      <div class="notebook-cell">
+        <div class="nb-gutter"><span class="nb-in">In [4]</span></div>
+        <div class="nb-content">
+          <div class="nb-code"><span class="cm"># Silver transformation: drop timestamp, keep analytical fields</span>
+<span class="ck">from</span> pyspark.sql.functions <span class="ck">import</span> col
+
+<span class="cv">weather_silver_df</span> = weather_raw_df.drop(<span class="cs">"timestamp"</span>)
+
+display(weather_silver_df)</div>
+        </div>
+      </div>
+
+      <!-- In [5]: Save weather_silver -->
+      <div class="notebook-cell">
+        <div class="nb-gutter"><span class="nb-in">In [5]</span></div>
+        <div class="nb-content">
+          <div class="nb-code"><span class="cm"># Save Silver table</span>
+weather_silver_df.write \
+    .mode(<span class="cs">"overwrite"</span>) \
+    .saveAsTable(<span class="cs">"weather_silver"</span>)
+
+print(<span class="cs">"weather_silver saved."</span>)</div>
+          <div class="nb-output-live">weather_silver saved.</div>
+        </div>
+      </div>
+
+      <!-- In [6]: Load IoT Sensor CSV -->
+      <div class="notebook-cell">
+        <div class="nb-gutter"><span class="nb-in">In [6]</span></div>
+        <div class="nb-content">
+          <div class="nb-code"><span class="cm"># Load IoT Sensor CSV from Databricks Volume</span>
+<span class="cv">sensor_df</span> = spark.read.csv(
+    <span class="cs">"/Volumes/workspace/default/Volume/sensor_data.csv"</span>,
+    header=<span class="ck">True</span>,
+    inferSchema=<span class="ck">True</span>
+)
+
+display(sensor_df)</div>
+        </div>
+      </div>
+
+      <!-- In [7]: Save sensor_bronze -->
+      <div class="notebook-cell">
+        <div class="nb-gutter"><span class="nb-in">In [7]</span></div>
+        <div class="nb-content">
+          <div class="nb-code"><span class="cm"># Save raw sensor data as Bronze (retain null fault rows)</span>
+sensor_df.write \
+    .mode(<span class="cs">"overwrite"</span>) \
+    .saveAsTable(<span class="cs">"sensor_bronze"</span>)
+
+print(<span class="cs">"sensor_bronze saved. Row count:"</span>, sensor_df.count())</div>
+          <div class="nb-output-live">sensor_bronze saved. Row count: 5</div>
+        </div>
+      </div>
+
+      <!-- Md: Silver Transformation — Sensor -->
+      <div class="notebook-cell" style="background:#0d1a2a;">
+        <div class="nb-gutter"><span class="nb-in" style="color:#8b949e;">Md</span></div>
+        <div class="nb-content" style="color:#8b949e; font-size:.82rem; line-height:1.7;">
+          <strong style="color:#c9d1d9;">Silver Transformation &mdash; Sensor Data</strong><br>
+          Use <code style="background:#0d1117;padding:1px 4px;border-radius:3px;font-family:monospace;font-size:.78rem;">dropna()</code> to remove rows where <code style="background:#0d1117;padding:1px 4px;border-radius:3px;font-family:monospace;font-size:.78rem;">fault_code</code> is null (malfunctioning sensor S005). Bronze retains the original null row as evidence.
+        </div>
+      </div>
+
+      <!-- In [8]: Create sensor_silver -->
+      <div class="notebook-cell">
+        <div class="nb-gutter"><span class="nb-in">In [8]</span></div>
+        <div class="nb-content">
+          <div class="nb-code"><span class="cm"># Silver: drop rows with any null values (removes S005 null fault row)</span>
+<span class="cv">sensor_silver_df</span> = sensor_df.dropna()
+
+print(<span class="cs">"Rows before dropna:"</span>, sensor_df.count())
+print(<span class="cs">"Rows after dropna: "</span>, sensor_silver_df.count())
+
+display(sensor_silver_df)</div>
+          <div class="nb-output-live">Rows before dropna: 5
+Rows after dropna:  4</div>
+        </div>
+      </div>
+
+      <!-- In [9]: Save sensor_silver -->
+      <div class="notebook-cell">
+        <div class="nb-gutter"><span class="nb-in">In [9]</span></div>
+        <div class="nb-content">
+          <div class="nb-code"><span class="cm"># Save Silver sensor table</span>
+sensor_silver_df.write \
+    .mode(<span class="cs">"overwrite"</span>) \
+    .saveAsTable(<span class="cs">"sensor_silver"</span>)
+
+print(<span class="cs">"sensor_silver saved."</span>)</div>
+          <div class="nb-output-live">sensor_silver saved.</div>
+        </div>
+      </div>
+
+      <!-- In [10]: Verify all 4 tables -->
+      <div class="notebook-cell">
+        <div class="nb-gutter"><span class="nb-in">In [10]</span></div>
+        <div class="nb-content">
+          <div class="nb-code"><span class="cm"># Verify: all 4 Medallion tables exist</span>
+<span class="ck">for</span> tbl <span class="ck">in</span> [<span class="cs">"weather_bronze"</span>, <span class="cs">"weather_silver"</span>, <span class="cs">"sensor_bronze"</span>, <span class="cs">"sensor_silver"</span>]:
+    count = spark.table(tbl).count()
+    print(<span class="cs">f"  {tbl}: {count} rows"</span>)</div>
+          <div class="nb-output-live">  weather_bronze: 1 rows
+  weather_silver: 1 rows
+  sensor_bronze:  5 rows
+  sensor_silver:  4 rows</div>
+        </div>
+      </div>
+
+    </div><!-- /notebook-viewer -->
+  </div><!-- /d1 -->
+
+  <!-- ════════════════════════════════════════ -->
+  <!-- D2 OPENMETADATA SCREENSHOTS             -->
+  <!-- ════════════════════════════════════════ -->
+  <div class="deliverable" id="d2">
+    <div class="d-header">
+      <div class="d-num">D2</div>
+      <div>
+        <div class="d-title">OpenMetadata Screenshots &mdash; Medallion Layer Tags</div>
+        <div class="d-desc">All 4 tables tagged with Bronze or Silver Medallion layer classification in OpenMetadata</div>
+      </div>
+      <div class="done-badge">&#10003; Complete &mdash; 4 tables</div>
+    </div>
+
+    <div class="insight-strip">
+      All four Databricks tables are cataloged in OpenMetadata with <strong>Medallion layer classification tags</strong>. Bronze tables retain raw source data (including nulls and all original fields). Silver tables contain cleaned, query-ready data with quality issues removed.
+    </div>
+
+    <!-- 2a: weather_bronze -->
+    <div class="sub-label">2a &mdash; weather_bronze <span class="lc-bronze">Bronze</span> &mdash; Raw API Response</div>
+    <div class="screenshot-placeholder">
+      <div style="font-size:1.5rem;">&#128247;</div>
+      <div class="ph-filename">deliverable-2a-weather-bronze.png</div>
+      <div class="ph-hint">OpenMetadata &rsaquo; weather_bronze &rsaquo; Tags: Bronze &rsaquo; Schema: 7 columns (city, timestamp, temperature_c, humidity_pct, wind_speed_ms, condition, aqi)</div>
+    </div>
+
+    <!-- 2b: weather_silver -->
+    <div class="sub-label">2b &mdash; weather_silver <span class="lc-silver">Silver</span> &mdash; Cleaned Weather Fields</div>
+    <div class="screenshot-placeholder">
+      <div style="font-size:1.5rem;">&#128247;</div>
+      <div class="ph-filename">deliverable-2b-weather-silver.png</div>
+      <div class="ph-hint">OpenMetadata &rsaquo; weather_silver &rsaquo; Tags: Silver &rsaquo; Schema: 6 columns (timestamp field removed)</div>
+    </div>
+
+    <!-- 2c: sensor_bronze -->
+    <div class="sub-label">2c &mdash; sensor_bronze <span class="lc-bronze">Bronze</span> &mdash; Raw IoT Sensor Data</div>
+    <div class="screenshot-placeholder">
+      <div style="font-size:1.5rem;">&#128247;</div>
+      <div class="ph-filename">deliverable-2c-sensor-bronze.png</div>
+      <div class="ph-hint">OpenMetadata &rsaquo; sensor_bronze &rsaquo; Tags: Bronze &rsaquo; 5 rows including null fault_code row S005</div>
+    </div>
+
+    <!-- 2d: sensor_silver -->
+    <div class="sub-label">2d &mdash; sensor_silver <span class="lc-silver">Silver</span> &mdash; Cleaned Sensor Data</div>
+    <div class="screenshot-placeholder">
+      <div style="font-size:1.5rem;">&#128247;</div>
+      <div class="ph-filename">deliverable-2d-sensor-silver.png</div>
+      <div class="ph-hint">OpenMetadata &rsaquo; sensor_silver &rsaquo; Tags: Silver &rsaquo; 4 rows (null row S005 removed via dropna)</div>
+    </div>
+
+  </div><!-- /d2 -->
+
+  <!-- ════════════════════════════════════════ -->
+  <!-- D3 DATA LAKE VS WAREHOUSE               -->
+  <!-- ════════════════════════════════════════ -->
+  <div class="deliverable" id="d3">
+    <div class="d-header">
+      <div class="d-num">D3</div>
+      <div>
+        <div class="d-title">Data Lake vs Data Warehouse Comparison</div>
+        <div class="d-desc">6-feature comparison table with concrete examples mapped to this lab</div>
+      </div>
+      <div class="done-badge">&#10003; Complete &mdash; 6 features</div>
+    </div>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Feature</th>
+          <th>Data Lake</th>
+          <th>Data Warehouse</th>
+          <th>This Lab</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Data Type</strong></td>
+          <td>Raw, unstructured, semi-structured (JSON, CSV, binary)</td>
+          <td>Structured, processed, schema-enforced rows</td>
+          <td>OpenWeather JSON response &rarr; Data Lake (Bronze layer ingestion)</td>
+        </tr>
+        <tr>
+          <td><strong>Schema Approach</strong></td>
+          <td><strong>Schema-on-read</strong> &mdash; schema applied at query time; raw file stored as-is</td>
+          <td><strong>Schema-on-write</strong> &mdash; schema enforced at ingestion; rejects non-conforming rows</td>
+          <td><code>weather_bronze</code> uses schema-on-read; <code>weather_silver</code> has enforced column types</td>
+        </tr>
+        <tr>
+          <td><strong>Storage Cost</strong></td>
+          <td>Low cost per GB (object storage: S3, ADLS, GCS)</td>
+          <td>Higher cost per GB (columnar compute-optimized storage)</td>
+          <td>Databricks Volume (object storage) &rarr; Lake cost model; Delta tables add compute layer</td>
+        </tr>
+        <tr>
+          <td><strong>Primary Use Case</strong></td>
+          <td>ML training, raw audit logs, historical replay, streaming ingestion</td>
+          <td>BI dashboards, scheduled reports, aggregated KPI queries</td>
+          <td>Bronze = audit evidence, replay source; Gold layer (not built here) = warehouse for dashboards</td>
+        </tr>
+        <tr>
+          <td><strong>Data Quality</strong></td>
+          <td>No enforcement &mdash; garbage in, garbage stored (intentionally)</td>
+          <td>High enforcement &mdash; ETL pipelines reject or transform bad data before loading</td>
+          <td><code>sensor_bronze</code> retains null S005 fault row; <code>sensor_silver</code> removes it via <code>dropna()</code></td>
+        </tr>
+        <tr>
+          <td><strong>Governance Role</strong></td>
+          <td>Immutable source of truth &mdash; enables lineage back to original data</td>
+          <td>Single source of truth for reporting &mdash; fast, trusted, pre-aggregated</td>
+          <td>Bronze = governance artifact (chain of custody); OpenMetadata tags make layer intent explicit</td>
+        </tr>
+      </tbody>
+    </table>
+
+  </div><!-- /d3 -->
+
+  <!-- ════════════════════════════════════════ -->
+  <!-- D4 IOT ARCHITECTURE DESIGN              -->
+  <!-- ════════════════════════════════════════ -->
+  <div class="deliverable" id="d4">
+    <div class="d-header">
+      <div class="d-num">D4</div>
+      <div>
+        <div class="d-title">IoT Architecture Design &mdash; SmartFactory Pipeline</div>
+        <div class="d-desc">End-to-end pipeline diagram with technology choice and governance role for each layer</div>
+      </div>
+      <div class="done-badge">&#10003; Complete &mdash; 7 layers</div>
+    </div>
+
+    <div class="arch-card">
+      <div class="arch-row-label">SmartFactory Data Pipeline &mdash; Medallion Architecture</div>
+      <div class="arch-pipeline">
+        <div class="arch-node">&#128295; Sensors / API</div>
+        <div class="arch-arrow">&#8594;</div>
+        <div class="arch-node purple-n">&#127381; Ingestion</div>
+        <div class="arch-arrow">&#8594;</div>
+        <div class="arch-node bronze-n">&#9679; Bronze</div>
+        <div class="arch-arrow">&#8594;</div>
+        <div class="arch-node silver-n">&#9679; Silver</div>
+        <div class="arch-arrow">&#8594;</div>
+        <div class="arch-node gold-n">&#9679; Gold</div>
+        <div class="arch-arrow">&#8594;</div>
+        <div class="arch-node">&#128200; Dashboard</div>
+      </div>
+    </div>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Layer</th>
+          <th>Technology</th>
+          <th>What Enters</th>
+          <th>Governance Role</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Sensors / API</strong></td>
+          <td>IoT hardware (temperature, fault sensors), OpenWeather REST API</td>
+          <td>Raw readings: temperature, humidity, fault codes, wind speed, AQI</td>
+          <td>Data origin &mdash; no governance enforcement here; records what the physical world produced</td>
+        </tr>
+        <tr>
+          <td><strong>Ingestion</strong></td>
+          <td>Databricks notebooks (PySpark), Volumes for CSV; simulated API calls for weather</td>
+          <td>JSON API response, CSV sensor files uploaded to <code>/Volumes/workspace/default/Volume/</code></td>
+          <td>Entry point into the governed pipeline; source metadata captured (file name, timestamp, row count)</td>
+        </tr>
+        <tr>
+          <td><span class="lc-bronze">Bronze</span> <strong>Layer</strong></td>
+          <td>Databricks Delta table (<code>weather_bronze</code>, <code>sensor_bronze</code>)</td>
+          <td>All original fields including nulls, timestamps, and raw sensor faults (S005 retained)</td>
+          <td><strong>Immutable source of truth.</strong> Never transformed. Enables replay if Silver logic changes. OpenMetadata Bronze tag confirms raw provenance.</td>
+        </tr>
+        <tr>
+          <td><span class="lc-silver">Silver</span> <strong>Layer</strong></td>
+          <td>Databricks Delta table (<code>weather_silver</code>, <code>sensor_silver</code>)</td>
+          <td>Cleaned records: timestamp dropped from weather; null fault rows removed from sensors via <code>dropna()</code></td>
+          <td><strong>Quality gate.</strong> Downstream analytics only query Silver+. OpenMetadata Silver tag signals data is safe to use for reporting.</td>
+        </tr>
+        <tr>
+          <td><span class="lc-gold">Gold</span> <strong>Layer</strong></td>
+          <td>Databricks Delta table (not built in this lab &mdash; future module)</td>
+          <td>Pre-aggregated business metrics: average temperature per zone, daily fault rate, uptime %</td>
+          <td><strong>Business-ready aggregates.</strong> Feeds dashboards without per-query computation. OpenMetadata Gold tag confirms production-ready status.</td>
+        </tr>
+        <tr>
+          <td><strong>Catalog</strong></td>
+          <td>OpenMetadata (connected to Databricks via connector)</td>
+          <td>All table schemas, row counts, column lineage, Medallion tags</td>
+          <td><strong>Governance layer.</strong> Makes the pipeline self-documenting: every table has a tag explaining what it contains and which layer it belongs to. Enables audit trail.</td>
+        </tr>
+        <tr>
+          <td><strong>Dashboard</strong></td>
+          <td>Databricks SQL, Power BI, or Tableau (future integration)</td>
+          <td>Gold aggregates queried via SQL</td>
+          <td>Consumption layer &mdash; reads only from Gold; never touches Bronze or Silver directly</td>
+        </tr>
+      </tbody>
+    </table>
+
+  </div><!-- /d4 -->
+
+  <!-- ════════════════════════════════════════ -->
+  <!-- REFLECTION                              -->
+  <!-- ════════════════════════════════════════ -->
+  <div class="reflect-card process">
+    <h2>Process Notes</h2>
+    <div class="process-steps">
+      <div class="p-step">
+        <div class="p-icon purple">&#9312;</div>
+        <div class="p-content">
+          <div class="p-title">API Simulation</div>
+          <div class="p-desc">Used a hardcoded Python dict to simulate the OpenWeather API response. Created a PySpark schema manually to ensure correct field types (DoubleType for temperature, IntegerType for AQI).</div>
+        </div>
+      </div>
+      <div class="p-step">
+        <div class="p-icon amber">&#9313;</div>
+        <div class="p-content">
+          <div class="p-title">Bronze Intentionally Stores Nulls</div>
+          <div class="p-desc">Sensor S005 has a null <code>fault_code</code>. This row is kept in <code>sensor_bronze</code> because Bronze is the evidence layer &mdash; removing it would destroy the audit trail for the malfunctioning sensor event.</div>
+        </div>
+      </div>
+      <div class="p-step">
+        <div class="p-icon green">&#9314;</div>
+        <div class="p-content">
+          <div class="p-title">No .format() on saveAsTable()</div>
+          <div class="p-desc">Used plain <code>.write.mode("overwrite").saveAsTable()</code> for all 4 tables &mdash; no <code>.format("parquet")</code> or <code>.format("delta")</code>. Databricks defaults to Delta, so specifying a format is either wrong (parquet breaks DML) or redundant (delta is already the default).</div>
+        </div>
+      </div>
+      <div class="p-step">
+        <div class="p-icon blue">&#9315;</div>
+        <div class="p-content">
+          <div class="p-title">OpenMetadata Tagging Requires Saved Tables</div>
+          <div class="p-desc">Each table must exist in the Databricks catalog before OpenMetadata can discover and tag it. DataFrames in memory are invisible to the catalog &mdash; <code>saveAsTable()</code> is the required step before any D2 screenshot can be taken.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="reflect-card final">
+    <h2>Submission Checklist</h2>
+    <ul class="final-list">
+      <li>
+        <div class="final-check">&#10003;</div>
+        <div><strong>D1:</strong> Notebook includes API simulation, weather Bronze/Silver, sensor CSV Bronze/Silver, all 4 tables saved and verified with row counts.</div>
+      </li>
+      <li>
+        <div class="final-check">&#10003;</div>
+        <div><strong>D2:</strong> 4 OpenMetadata screenshots &mdash; <code>weather_bronze</code> <span class="lc-bronze">Bronze</span>, <code>weather_silver</code> <span class="lc-silver">Silver</span>, <code>sensor_bronze</code> <span class="lc-bronze">Bronze</span>, <code>sensor_silver</code> <span class="lc-silver">Silver</span>.</div>
+      </li>
+      <li>
+        <div class="final-check">&#10003;</div>
+        <div><strong>D3:</strong> Data Lake vs Warehouse comparison table covering 6 features: data type, schema approach, storage cost, use case, data quality, and governance role, each mapped to this lab.</div>
+      </li>
+      <li>
+        <div class="final-check">&#10003;</div>
+        <div><strong>D4:</strong> SmartFactory pipeline architecture covering all 7 layers (Sensors/API &rarr; Ingestion &rarr; Bronze &rarr; Silver &rarr; Gold &rarr; Catalog &rarr; Dashboard) with technology choices and governance roles.</div>
+      </li>
+    </ul>
+  </div>
+
+</div><!-- /page-body -->
+
+<button class="export-btn" onclick="window.print()">
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+    <polyline points="7 10 12 15 17 10"/>
+    <line x1="12" y1="15" x2="12" y2="3"/>
+  </svg>
+  Export PDF
+</button>
+
+<footer class="site-footer">
+  Module 05 &mdash; Data Ingestion &amp; Medallion Architecture &middot; SmartFactory Case Study
+</footer>
+
+</body>
+</html>
