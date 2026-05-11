@@ -5,6 +5,17 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-05-07
+
+### [feature] Added "Types of Digital Twins" interactive section to 01-intro.html
+- New section inserted between Core Concepts and Where Are Twins Used
+- Five maturity levels (L1 Virtual → L5 Autonomous) with click-to-select strip
+- Animated capability bar chart updates on each level selection (Model / Live Data / Predict / Prescribe / Automate)
+- Per-level: rephrased description, advantage, real-world example, color-coded badge and panel border
+- Prev/Next navigation between levels; selected level button highlighted with indigo border
+
+---
+
 ## 2026-03-05
 
 ### [feature] Completed Digital Twin lab series with modules 08–10
