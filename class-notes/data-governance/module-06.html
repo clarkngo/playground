@@ -1,0 +1,1383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Data Governance &mdash; Module 6 Class Notes</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0d1117; color: #c9d1d9; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; min-height: 100vh; }
+
+    .navbar { background: #161b22; border-bottom: 1px solid #30363d; padding: .75rem 1.5rem; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 200; }
+    .navbar a { color: #e6edf3; text-decoration: none; font-weight: 700; font-size: 1rem; }
+    .navbar a:hover { color: #58a6ff; }
+    .nav-pill { font-size: .78rem; color: #8b949e; }
+
+    .layout { display: flex; max-width: 1280px; margin: 0 auto; padding: 0 1rem; gap: 2rem; }
+
+    .sidebar { width: 220px; flex-shrink: 0; position: sticky; top: 56px; align-self: flex-start; height: calc(100vh - 64px); overflow-y: auto; padding: 1.5rem 0; }
+    .toc-label { font-size: .67rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #484f58; margin-bottom: .65rem; padding-left: .5rem; }
+    .toc { display: flex; flex-direction: column; gap: 2px; }
+    .toc-link { font-size: .78rem; color: #8b949e; text-decoration: none; padding: .3rem .5rem; border-radius: 5px; border-left: 2px solid transparent; line-height: 1.4; transition: all .15s; }
+    .toc-link:hover { color: #e6edf3; background: #161b22; }
+    .toc-link.active { color: #58a6ff; border-left-color: #58a6ff; background: #0c1e38; font-weight: 600; }
+    .toc-group { font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: #484f58; margin: .85rem 0 .25rem .5rem; }
+
+    .content { flex: 1; min-width: 0; padding: 2rem 0 4rem; }
+
+    .breadcrumb { font-size: .78rem; color: #8b949e; display: flex; align-items: center; gap: .4rem; margin-bottom: .85rem; flex-wrap: wrap; }
+    .breadcrumb a { color: #58a6ff; text-decoration: none; font-weight: 600; }
+    .breadcrumb a:hover { text-decoration: underline; }
+    .breadcrumb span { color: #484f58; }
+
+    .page-badge { display: inline-block; background: #1f6feb; color: #fff; font-size: .72rem; font-weight: 700; padding: 3px 12px; border-radius: 12px; text-transform: uppercase; letter-spacing: .07em; margin-bottom: .6rem; }
+    .page-header h1 { color: #e6edf3; font-size: 1.85rem; font-weight: 800; margin-bottom: .3rem; line-height: 1.2; }
+    .page-subtitle { color: #8b949e; font-size: .9rem; margin-bottom: .65rem; }
+    .tag-row { display: flex; gap: .4rem; flex-wrap: wrap; margin-bottom: 2rem; }
+    .tag { display: inline-block; font-size: .68rem; padding: 2px 8px; border-radius: 8px; font-weight: 600; }
+    .tag-blue   { background: #1f3a5c; color: #58a6ff; }
+    .tag-green  { background: #1a2f1a; color: #3fb950; }
+    .tag-yellow { background: #2d2009; color: #e3b341; }
+    .tag-purple { background: #24183a; color: #bc8cff; }
+
+    .notes-section { margin-bottom: 3rem; scroll-margin-top: 72px; }
+    .section-header { display: flex; align-items: baseline; gap: .75rem; margin-bottom: 1.35rem; padding-bottom: .75rem; border-bottom: 1px solid #21262d; }
+    .section-num { font-size: .72rem; font-weight: 700; color: #484f58; background: #161b22; border: 1px solid #30363d; padding: 2px 9px; border-radius: 8px; white-space: nowrap; }
+    .section-title { font-size: 1.25rem; font-weight: 800; color: #e6edf3; }
+
+    .prose { font-size: .875rem; color: #c9d1d9; line-height: 1.8; margin-bottom: 1rem; }
+    .prose strong { color: #e6edf3; }
+    .prose em { color: #8b949e; font-style: italic; }
+
+    .def-card { background: #0c1e38; border: 1px solid #1f6feb; border-left: 4px solid #1f6feb; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+    .def-label { font-size: .67rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #58a6ff; margin-bottom: .4rem; }
+    .def-term { font-size: 1rem; font-weight: 800; color: #a5d6ff; margin-bottom: .35rem; }
+    .def-text { font-size: .85rem; color: #c9d1d9; line-height: 1.75; }
+
+    .concept-card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: .85rem; }
+    .concept-title { font-size: .85rem; font-weight: 700; color: #e6edf3; margin-bottom: .4rem; }
+    .concept-text { font-size: .84rem; color: #c9d1d9; line-height: 1.75; }
+    .concept-text ul { padding-left: 1.1rem; }
+    .concept-text li { margin-bottom: .3rem; }
+
+    .example-card { background: #0b1f0b; border: 1px solid #238636; border-left: 4px solid #3fb950; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+    .example-label { font-size: .67rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #3fb950; margin-bottom: .4rem; }
+    .example-title { font-size: .9rem; font-weight: 700; color: #56d364; margin-bottom: .35rem; }
+    .example-text { font-size: .84rem; color: #c9d1d9; line-height: 1.75; }
+    .example-text ul, .example-text ol { padding-left: 1.1rem; }
+    .example-text li { margin-bottom: .3rem; }
+    .example-text strong { color: #56d364; }
+
+    .insight-card { background: #1d1600; border: 1px solid #9e6a03; border-left: 4px solid #e3b341; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+    .insight-label { font-size: .67rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #e3b341; margin-bottom: .4rem; }
+    .insight-text { font-size: .85rem; color: #c9d1d9; line-height: 1.75; }
+    .insight-text strong { color: #f0c674; }
+    .insight-text ul { padding-left: 1.1rem; }
+    .insight-text li { margin-bottom: .3rem; }
+
+    .warn-card { background: #2d1a1a; border: 1px solid #f85149; border-left: 4px solid #f85149; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+    .warn-label { font-size: .67rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #f85149; margin-bottom: .4rem; }
+    .warn-text { font-size: .85rem; color: #c9d1d9; line-height: 1.75; }
+    .warn-text ul { padding-left: 1.1rem; }
+    .warn-text li { margin-bottom: .3rem; }
+    .warn-text strong { color: #ff7b72; }
+
+    .compare-table { width: 100%; border-collapse: collapse; font-size: .84rem; margin-bottom: 1.1rem; }
+    .compare-table th { background: #0d1117; color: #8b949e; font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; padding: .55rem .85rem; text-align: left; border-bottom: 2px solid #30363d; }
+    .compare-table td { padding: .6rem .85rem; border-bottom: 1px solid #21262d; color: #c9d1d9; vertical-align: top; line-height: 1.6; }
+    .compare-table tr:last-child td { border-bottom: none; }
+    .compare-table tr:hover td { background: #161b22; }
+    .compare-table .col-a { color: #58a6ff; font-weight: 700; }
+    .compare-table .col-b { color: #3fb950; font-weight: 700; }
+    .compare-table .col-c { color: #bc8cff; font-weight: 700; }
+    .compare-table .col-d { color: #e3b341; font-weight: 700; }
+    .compare-table .col-r { color: #ff7b72; font-weight: 700; }
+
+    .pill { display: inline-block; font-size: .67rem; font-weight: 700; padding: 2px 8px; border-radius: 10px; white-space: nowrap; }
+    .pill-green  { background: #1a3a1a; color: #3fb950; border: 1px solid #238636; }
+    .pill-red    { background: #2d1a1a; color: #f85149; border: 1px solid #da3633; }
+    .pill-yellow { background: #2d2009; color: #e3b341; border: 1px solid #9e6a03; }
+    .pill-blue   { background: #1f3a5c; color: #58a6ff; border: 1px solid #1f6feb; }
+    .pill-purple { background: #24183a; color: #bc8cff; border: 1px solid #6e40c9; }
+
+    .flow-wrap { overflow-x: auto; margin-bottom: 1.25rem; }
+    .flow { display: flex; align-items: stretch; gap: 0; flex-wrap: nowrap; min-width: max-content; padding: .5rem 0; }
+    .flow-node { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: .65rem 1rem; font-size: .78rem; font-weight: 700; color: #e6edf3; text-align: center; min-width: 110px; display: flex; flex-direction: column; align-items: center; gap: .25rem; }
+    .flow-node .fn-sub { font-size: .67rem; font-weight: 400; color: #8b949e; margin-top: .1rem; }
+    .flow-arrow { display: flex; align-items: center; color: #30363d; font-size: 1.1rem; padding: 0 .2rem; }
+    .flow-node.blue   { border-color: #1f6feb; background: #0c1e38; color: #a5d6ff; }
+    .flow-node.green  { border-color: #238636; background: #0b1f0b; color: #56d364; }
+    .flow-node.yellow { border-color: #9e6a03; background: #1d1600; color: #f0c674; }
+    .flow-node.purple { border-color: #6e40c9; background: #18102d; color: #d2a8ff; }
+    .flow-node.red    { border-color: #da3633; background: #2d1a1a; color: #ff7b72; }
+
+    .two-col   { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.1rem; }
+    .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.1rem; }
+    .four-col  { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: .75rem; margin-bottom: 1.1rem; }
+
+    .pillar-card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1.25rem 1rem; text-align: center; }
+    .pillar-icon { font-size: 1.8rem; margin-bottom: .5rem; }
+    .pillar-name { font-size: .95rem; font-weight: 800; color: #e6edf3; margin-bottom: .4rem; }
+    .pillar-desc { font-size: .78rem; color: #8b949e; line-height: 1.6; }
+
+    .num-list { display: flex; flex-direction: column; gap: .6rem; margin-bottom: 1rem; }
+    .num-item { display: flex; gap: .85rem; align-items: flex-start; }
+    .num-badge { width: 26px; height: 26px; border-radius: 50%; background: #1f6feb; color: #fff; font-size: .75rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: .1rem; }
+    .num-badge.green  { background: #238636; }
+    .num-badge.purple { background: #6e40c9; }
+    .num-badge.yellow { background: #9e6a03; }
+    .num-badge.red    { background: #b91c1c; }
+    .num-content { flex: 1; }
+    .num-title { font-size: .88rem; font-weight: 700; color: #e6edf3; margin-bottom: .2rem; }
+    .num-text  { font-size: .82rem; color: #c9d1d9; line-height: 1.65; }
+
+    .arch-box { border: 1px solid #30363d; border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+    .arch-title { font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #8b949e; margin-bottom: .75rem; }
+    .arch-row { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; margin-bottom: .5rem; }
+    .arch-app { background: #1f3a5c; border: 1px solid #1f6feb; border-radius: 6px; padding: .35rem .75rem; font-size: .75rem; font-weight: 700; color: #a5d6ff; }
+    .arch-app.green  { background: #1a3a1a; border-color: #238636; color: #56d364; }
+    .arch-app.yellow { background: #2d2009; border-color: #9e6a03; color: #f0c674; }
+    .arch-app.purple { background: #24183a; border-color: #6e40c9; color: #d2a8ff; }
+    .arch-app.red    { background: #2d1a1a; border-color: #da3633; color: #ff7b72; }
+    .arch-hub { background: #1d1600; border: 2px solid #e3b341; border-radius: 8px; padding: .5rem 1rem; font-size: .82rem; font-weight: 800; color: #f0c674; text-align: center; min-width: 100px; }
+    .arch-line { color: #484f58; font-size: .9rem; }
+
+    /* RDS Tier Stack */
+    .tier-stack { display: flex; flex-direction: column; gap: 0; margin-bottom: 1.25rem; }
+    .tier-row { display: flex; align-items: stretch; gap: 0; }
+    .tier-label { width: 130px; flex-shrink: 0; display: flex; align-items: center; justify-content: flex-end; padding-right: .75rem; font-size: .67rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #484f58; }
+    .tier-body { flex: 1; border: 1px solid #30363d; border-radius: 8px; padding: .65rem 1rem; margin-bottom: .4rem; }
+    .tier-body.t-marketplace { border-color: #6e40c9; background: #18102d; }
+    .tier-body.t-meta        { border-color: #1f6feb; background: #0c1e38; }
+    .tier-body.t-provider    { border-color: #238636; background: #0b1f0b; }
+    .tier-body.t-incoming    { border-color: #9e6a03; background: #1d1600; }
+    .tier-body.t-access      { border-color: #e3b341; background: #1d1600; }
+    .tier-body.t-consumer    { border-color: #3fb950; background: #0b1f0b; }
+    .tier-name { font-size: .82rem; font-weight: 800; color: #e6edf3; margin-bottom: .2rem; }
+    .tier-chips { display: flex; gap: .4rem; flex-wrap: wrap; }
+    .tier-chip { font-size: .67rem; padding: 2px 8px; border-radius: 6px; font-weight: 600; background: #21262d; color: #8b949e; border: 1px solid #30363d; }
+
+    /* CQRS diagram */
+    .cqrs-wrap { display: grid; grid-template-columns: 1fr auto 1fr; gap: 0; align-items: center; margin-bottom: 1.25rem; overflow-x: auto; }
+    .cqrs-side { border: 1px solid #30363d; border-radius: 10px; padding: 1rem; }
+    .cqrs-side.write { border-color: #f85149; background: #2d1a1a; }
+    .cqrs-side.read  { border-color: #58a6ff; background: #0c1e38; }
+    .cqrs-label { font-size: .67rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; margin-bottom: .5rem; }
+    .cqrs-side.write .cqrs-label { color: #f85149; }
+    .cqrs-side.read  .cqrs-label { color: #58a6ff; }
+    .cqrs-db { font-size: .82rem; font-weight: 800; color: #e6edf3; margin-bottom: .4rem; }
+    .cqrs-detail { font-size: .77rem; color: #8b949e; line-height: 1.6; }
+    .cqrs-mid { display: flex; flex-direction: column; align-items: center; gap: .2rem; padding: 0 .75rem; }
+    .cqrs-sync { font-size: .65rem; font-weight: 700; text-transform: uppercase; color: #484f58; letter-spacing: .08em; white-space: nowrap; }
+    .cqrs-arrow { color: #58a6ff; font-size: 1.4rem; }
+
+    .divider { border: none; border-top: 1px solid #21262d; margin: 1.75rem 0; }
+    .sub-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: #8b949e; border-left: 3px solid #30363d; padding-left: .6rem; margin: 1.5rem 0 .85rem; }
+
+    .term   { color: #a5d6ff; font-weight: 700; }
+    .term-g { color: #56d364; font-weight: 700; }
+    .term-y { color: #f0c674; font-weight: 700; }
+    .term-p { color: #d2a8ff; font-weight: 700; }
+    .term-r { color: #ff7b72; font-weight: 700; }
+
+    .site-footer { text-align: center; padding: 1.5rem; border-top: 1px solid #21262d; color: #484f58; font-size: .77rem; margin-top: 2rem; }
+
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .two-col, .three-col, .four-col { grid-template-columns: 1fr; }
+      .cqrs-wrap { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 620px) {
+      .two-col { grid-template-columns: 1fr; }
+    }
+    @media print {
+      @page { size: A4; margin: 1.4cm 1.6cm; }
+      body { background: #fff !important; color: #111 !important; font-size: 9pt; }
+      .navbar, .sidebar, .site-footer { display: none !important; }
+      .layout { max-width: 100%; padding: 0; gap: 0; }
+      .content { padding: 0; }
+      .notes-section { margin-bottom: 1.5rem; page-break-inside: avoid; }
+      .section-header { border-bottom-color: #ccc !important; }
+      .section-num { background: #eee !important; color: #555 !important; border-color: #ccc !important; }
+      .section-title { color: #111 !important; font-size: 13pt; }
+      .def-card, .concept-card, .example-card, .insight-card, .warn-card, .pillar-card { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .def-text, .concept-text, .example-text, .insight-text, .warn-text, .prose { color: #222 !important; font-size: 8.5pt; }
+      .compare-table th { background: #f3f4f6 !important; color: #555 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .compare-table td { color: #111 !important; border-bottom-color: #eee !important; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="../../index.html">Playground</a>
+  <span class="nav-pill">Class Notes &rsaquo; Data Governance &rsaquo; Module 6</span>
+</nav>
+
+<div class="layout">
+
+  <!-- ── TOC SIDEBAR ─────────────────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="toc-label">Contents</div>
+    <nav class="toc">
+      <div class="toc-group">Foundations</div>
+      <a href="#s1" class="toc-link">1. Architecture Fundamentals</a>
+      <a href="#s2" class="toc-link">2. Data Architecture</a>
+      <a href="#s3" class="toc-link">3. Data Design Principles</a>
+      <div class="toc-group">Stores &amp; Models</div>
+      <a href="#s4" class="toc-link">4. OLTP &amp; Transactional Systems</a>
+      <a href="#s5" class="toc-link">5. Stores, Warehouses &amp; Marts</a>
+      <a href="#s6" class="toc-link">6. Operational Read-Only Data Store</a>
+      <a href="#s7" class="toc-link">7. Why RDS Matters &amp; Trade-offs</a>
+      <div class="toc-group">CQRS</div>
+      <a href="#s8" class="toc-link">8. CQRS Pattern</a>
+      <a href="#s9" class="toc-link">9. CQRS at Scale</a>
+      <div class="toc-group">RDS Deep Dive</div>
+      <a href="#s10" class="toc-link">10. RDS Components</a>
+      <a href="#s11" class="toc-link">11. RDS Tiers</a>
+      <a href="#s12" class="toc-link">12. Data Ingestion</a>
+      <div class="toc-group">Integration</div>
+      <a href="#s13" class="toc-link">13. COTS, APIs &amp; SaaS</a>
+      <a href="#s14" class="toc-link">14. Historical Data Service</a>
+      <a href="#s15" class="toc-link">15. Design Variations</a>
+      <a href="#s16" class="toc-link">16. Data Replication</a>
+      <a href="#s17" class="toc-link">17. Access, Masking &amp; Delivery</a>
+    </nav>
+  </aside>
+
+  <!-- ── MAIN CONTENT ────────────────────────────────────────── -->
+  <main class="content">
+
+    <div class="breadcrumb">
+      <a href="../../index.html">Playground</a>
+      <span>/</span><a href="../index.html">Class Notes</a>
+      <span>/</span><a href="index.html">Data Governance</a>
+      <span>/</span><span>Module 6</span>
+    </div>
+    <div class="page-header">
+      <div class="page-badge">Module 6</div>
+      <h1>Architecture</h1>
+      <div class="page-subtitle">RDS, CQRS, data design, ingestion patterns, and how the enterprise data layer is structured to serve diverse consumers</div>
+      <div class="tag-row">
+        <span class="tag tag-blue">Data Architecture</span>
+        <span class="tag tag-green">RDS / ORDS</span>
+        <span class="tag tag-yellow">CQRS</span>
+        <span class="tag tag-purple">Integration Patterns</span>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════ S1 -->
+    <section class="notes-section" id="s1">
+      <div class="section-header">
+        <span class="section-num">01</span>
+        <span class="section-title">Architecture Fundamentals</span>
+      </div>
+
+      <div class="def-card">
+        <div class="def-label">Definition</div>
+        <div class="def-term">Architecture</div>
+        <div class="def-text">The <strong>logical and physical interrelationships</strong> between the components of a computing system. Architecture defines what exists, how components connect, and where they live &mdash; from the highest business overview down to individual server configurations.</div>
+      </div>
+
+      <p class="prose">Architecture operates at three levels simultaneously. Each level answers a different question and serves a different audience.</p>
+
+      <div class="three-col">
+        <div class="pillar-card">
+          <div class="pillar-icon">&#128202;</div>
+          <div class="pillar-name">High-Level Overview</div>
+          <div class="pillar-desc">How business capabilities map to systems. The view a CTO or enterprise architect uses to communicate strategy. Boxes represent systems; arrows represent data or control flows.</div>
+        </div>
+        <div class="pillar-card">
+          <div class="pillar-icon">&#127760;</div>
+          <div class="pillar-name">Network Level</div>
+          <div class="pillar-desc">Topology, switches, load balancers, firewalls, VPNs, DNS, and bandwidth constraints. Governs how data physically moves between systems and users.</div>
+        </div>
+        <div class="pillar-card">
+          <div class="pillar-icon">&#9881;</div>
+          <div class="pillar-name">Systems Level</div>
+          <div class="pillar-desc">Applications, databases, APIs, middleware, and message queues. The layer where engineers implement business logic and data storage.</div>
+        </div>
+      </div>
+
+      <div class="sub-label">Logical vs Physical Architecture</div>
+
+      <div class="two-col">
+        <div class="concept-card">
+          <div class="concept-title">&#128196; Logical Architecture</div>
+          <div class="concept-text">
+            Describes <em>what</em> components exist and <em>how</em> they relate conceptually &mdash; independent of technology or infrastructure choices. A logical diagram shows services, their responsibilities, and communication patterns without specifying which cloud provider or database product is used.
+            <ul style="margin-top:.5rem">
+              <li>Technology-agnostic</li>
+              <li>Focused on responsibilities and relationships</li>
+              <li>Used for design discussions and governance decisions</li>
+            </ul>
+          </div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">&#128421; Physical Architecture</div>
+          <div class="concept-text">
+            Describes <em>where</em> components actually live &mdash; specific servers, cloud regions, data centers, containers, pods, or edge nodes. Physical architecture drives infrastructure cost, latency, and regulatory compliance (data residency).
+            <ul style="margin-top:.5rem">
+              <li>Technology-specific (AWS us-east-1, Azure West Europe)</li>
+              <li>Includes hardware specs, replication zones, network paths</li>
+              <li>Used for capacity planning and disaster recovery</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-label">Key Insight</div>
+        <div class="insight-text">Logical and physical architectures must stay aligned. A logically elegant design can fail in production if the physical constraints &mdash; network latency, bandwidth limits, cloud egress costs &mdash; were not considered during design.</div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ S2 -->
+    <section class="notes-section" id="s2">
+      <div class="section-header">
+        <span class="section-num">02</span>
+        <span class="section-title">Data Architecture</span>
+      </div>
+
+      <div class="def-card">
+        <div class="def-label">Definition</div>
+        <div class="def-term">Data Architecture</div>
+        <div class="def-text">The design of data applications and the <strong>logical and physical interrelationships between their components</strong>. Data architecture governs how data flows through an organization &mdash; how it is collected, stored, transformed, governed, and made available to consumers.</div>
+      </div>
+
+      <p class="prose">Data architecture bridges business requirements and technical implementation. It answers: <em>Where does data come from? Where does it live? Who can access it? How does it move?</em> Every governance policy, every SLA, and every data contract is grounded in architectural decisions.</p>
+
+      <div class="sub-label">Scaled Architecture: Centralized + Distributed</div>
+
+      <p class="prose">Pure centralized architectures &mdash; a single database serving everything &mdash; are easy to govern but become bottlenecks at scale and create single points of failure. Pure distributed architectures &mdash; each service owning its own data &mdash; are resilient but make cross-domain queries difficult and governance inconsistent. <strong>Scaled architecture</strong> combines both approaches:</p>
+
+      <div class="flow-wrap">
+        <div class="flow">
+          <div class="flow-node green">Source Systems<div class="fn-sub">Distributed ownership</div></div>
+          <div class="flow-arrow">&#8594;</div>
+          <div class="flow-node yellow">Central Governance Layer<div class="fn-sub">Policies, metadata, contracts</div></div>
+          <div class="flow-arrow">&#8594;</div>
+          <div class="flow-node blue">Distributed Execution<div class="fn-sub">Domain-local compute</div></div>
+          <div class="flow-arrow">&#8594;</div>
+          <div class="flow-node purple">Consumers<div class="fn-sub">Analytics, ML, APIs</div></div>
+        </div>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-label">Design Rule</div>
+        <div class="insight-text"><strong>Centralize governance; distribute execution.</strong> Policies, contracts, and metadata live in one place. Compute and storage are distributed to where data originates or is consumed. This avoids the bottleneck of a single monolithic store while maintaining organizational control.</div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ S3 -->
+    <section class="notes-section" id="s3">
+      <div class="section-header">
+        <span class="section-num">03</span>
+        <span class="section-title">Data Design Principles</span>
+      </div>
+
+      <p class="prose">Good data design is not just about storage efficiency &mdash; it is about building a system that is trustworthy, usable, and adaptable over time. A poorly designed data layer creates technical debt that compounds: bad schemas propagate into downstream reports, incorrect defaults silently corrupt analytics, and rigid structures block future business pivots.</p>
+
+      <div class="four-col">
+        <div class="pillar-card">
+          <div class="pillar-icon">&#9989;</div>
+          <div class="pillar-name">Quality</div>
+          <div class="pillar-desc">Accurate, complete, consistent, and timely. Every dataset should meet defined quality thresholds before it reaches consumers.</div>
+        </div>
+        <div class="pillar-card">
+          <div class="pillar-icon">&#9889;</div>
+          <div class="pillar-name">Efficient</div>
+          <div class="pillar-desc">Minimize redundancy. Optimize storage and query patterns for the expected workload &mdash; a design optimized for writes differs from one optimized for reads.</div>
+        </div>
+        <div class="pillar-card">
+          <div class="pillar-icon">&#128274;</div>
+          <div class="pillar-name">Reliable</div>
+          <div class="pillar-desc">Fault-tolerant, recoverable, and predictable. Consumers must be able to depend on the data being there and being correct when they need it.</div>
+        </div>
+        <div class="pillar-card">
+          <div class="pillar-icon">&#128270;</div>
+          <div class="pillar-name">User-Intuitive</div>
+          <div class="pillar-desc">Consumers should understand and use the data without decoding internal technical identifiers. Design with the consumer in mind.</div>
+        </div>
+      </div>
+
+      <div class="sub-label">Consumer-First Denormalization</div>
+
+      <p class="prose">A core data design principle is to <strong>provide full data for the consuming application</strong>. In a normalized golden source, related data is split across tables linked by foreign keys. Consumers are expected to perform joins to assemble a complete record &mdash; but this is expensive, error-prone, and often unnecessary. Instead, <em>denormalize your data based on your consumer</em>: pre-join and embed the data that each consumer needs.</p>
+
+      <div class="example-card">
+        <div class="example-label">Real-World Example</div>
+        <div class="example-title">ServiceNow API &mdash; ID Resolution Problem</div>
+        <div class="example-text">
+          When extracting experiment data from the ServiceNow API, the JSON response contains <code>experiment_id</code>, <code>assignee_id</code>, and <code>group_id</code> &mdash; but not the human-readable names or details behind those IDs. To get meaningful data, you must make additional API calls for each ID to resolve the full record. A well-designed data layer would pre-resolve all foreign key IDs and return an enriched, denormalized record in a single call &mdash; eliminating the N+1 lookup problem.
+          <ul style="margin-top:.5rem">
+            <li>Bad: consumer receives <code>assignee_id: "abc123"</code> and must call /users/abc123</li>
+            <li>Good: consumer receives <code>assignee: { id: "abc123", name: "Jane Lee", team: "Data Platform" }</code></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-label">Principle</div>
+        <div class="insight-text"><strong>Agility and scalability</strong> are also design goals. A data model that cannot accommodate a new field without breaking downstream consumers, or that cannot handle 10x data volume without a redesign, is not truly well-designed. Plan for change from the start: use versioned schemas, support additive changes, and avoid hard-coding assumptions about data volume.</div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ S4 -->
+    <section class="notes-section" id="s4">
+      <div class="section-header">
+        <span class="section-num">04</span>
+        <span class="section-title">OLTP &amp; Transactional Systems</span>
+      </div>
+
+      <div class="def-card">
+        <div class="def-label">Definition</div>
+        <div class="def-term">OLTP &mdash; Online Transaction Processing</div>
+        <div class="def-text">Systems designed for high-frequency, low-latency read and write operations that represent business events &mdash; placing an order, updating an account balance, booking a seat. OLTP is the operational heartbeat of a business: every customer interaction, every workflow step, every status change flows through it.</div>
+      </div>
+
+      <div class="two-col">
+        <div class="concept-card">
+          <div class="concept-title">OLTP Characteristics</div>
+          <div class="concept-text">
+            <ul>
+              <li><strong>Row-based storage</strong> &mdash; optimized for fetching entire rows quickly</li>
+              <li><strong>ACID compliance</strong> &mdash; Atomicity, Consistency, Isolation, Durability</li>
+              <li><strong>Normalized schema</strong> (3NF or higher) &mdash; minimizes redundancy, maximizes write integrity</li>
+              <li><strong>High concurrency</strong> &mdash; many users performing small operations simultaneously</li>
+              <li><strong>Short transactions</strong> &mdash; millisecond-level operations, not long-running queries</li>
+              <li><strong>Delete operations are rare</strong> &mdash; usually soft-deleted (status flag) or retained for audit</li>
+            </ul>
+          </div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">Why OLTP Is a Poor Analytics Platform</div>
+          <div class="concept-text">
+            <ul>
+              <li>Full table scans for analytics compete with live transactions, causing lock contention</li>
+              <li>Normalized schema requires complex multi-table JOINs &mdash; slow for large aggregations</li>
+              <li>Row storage is inefficient for column-level aggregations (SUM, AVG, COUNT)</li>
+              <li>Schema is optimized for writes, not reads &mdash; wrong access pattern for analytics</li>
+              <li>Analytics workloads spike unpredictably and can overwhelm transactional capacity</li>
+            </ul>
+            <p style="margin-top:.5rem;font-size:.82rem;color:#8b949e;">This is why data is extracted from OLTP systems into analytical stores (data warehouses, lakes, or RDS).</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ S5 -->
+    <section class="notes-section" id="s5">
+      <div class="section-header">
+        <span class="section-num">05</span>
+        <span class="section-title">Data Stores, Warehouses &amp; Data Marts</span>
+      </div>
+
+      <div class="def-card">
+        <div class="def-label">Definition</div>
+        <div class="def-term">Data Store</div>
+        <div class="def-text">A repository for <strong>persistently storing and managing collections of data</strong> in a structured or semi-structured form. The term is broad &mdash; it encompasses relational databases, document stores, object stores, key-value caches, and more.</div>
+      </div>
+
+      <div class="sub-label">Data Warehouse Model</div>
+      <p class="prose">A <span class="term">data warehouse</span> is a centralized, integrated store designed for analytical queries. Data from operational systems is extracted, transformed, and loaded (ETL) into the warehouse, where it is organized into subject-oriented schemas optimized for querying large volumes of historical data.</p>
+
+      <div class="arch-box">
+        <div class="arch-title">Centralized Data Warehouse</div>
+        <div class="arch-row">
+          <span class="arch-app green">CRM System</span>
+          <span class="arch-line">&#8594;</span>
+          <span class="arch-app yellow">ETL Pipeline</span>
+          <span class="arch-line">&#8594;</span>
+          <span class="arch-hub">Data Warehouse</span>
+          <span class="arch-line">&#8594;</span>
+          <span class="arch-app purple">BI / Reports</span>
+        </div>
+        <div class="arch-row">
+          <span class="arch-app green">ERP System</span>
+          <span class="arch-line">&#8594;</span>
+          <span class="arch-app yellow">ETL Pipeline</span>
+          <span class="arch-line">&#8594;</span>
+          <span style="min-width:100px;"></span>
+          <span class="arch-line">&#8594;</span>
+          <span class="arch-app purple">Analytics Tools</span>
+        </div>
+        <div class="arch-row">
+          <span class="arch-app green">OLTP DB</span>
+          <span class="arch-line">&#8594;</span>
+          <span class="arch-app yellow">ETL Pipeline</span>
+        </div>
+      </div>
+
+      <div class="sub-label">Data Mart</div>
+      <p class="prose">A <span class="term">data mart</span> is a subject-specific subset of a data warehouse, scoped to a single domain (e.g., Sales, Finance, HR). Data marts give domain teams faster, simpler queries without navigating the full warehouse schema. However, ungoverned data marts risk becoming silos with inconsistent definitions of shared metrics.</p>
+
+      <div class="two-col">
+        <div class="concept-card">
+          <div class="concept-title">&#128202; Data Warehouse (Operational Model)</div>
+          <div class="concept-text">
+            <ul>
+              <li>Normalized schema &mdash; reduces redundancy, supports frequent writes</li>
+              <li>Optimized for transaction speed (row-based storage)</li>
+              <li>Reflects current state of business operations</li>
+              <li>Source of truth for transactional systems</li>
+            </ul>
+          </div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">&#128202; Data Warehouse (Analytical Model)</div>
+          <div class="concept-text">
+            <ul>
+              <li>Star or snowflake schema &mdash; denormalized for query performance</li>
+              <li>Optimized for read-heavy analytical workloads</li>
+              <li>Contains historical data (time-variant, non-volatile)</li>
+              <li>Subject-oriented: organized around business topics, not application functions</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ S6 -->
+    <section class="notes-section" id="s6">
+      <div class="section-header">
+        <span class="section-num">06</span>
+        <span class="section-title">Operational Read-Only Data Store (RDS / ORDS)</span>
+      </div>
+
+      <div class="def-card">
+        <div class="def-label">Definition</div>
+        <div class="def-term">RDS &mdash; Read-Only Data Store (also: ORDS)</div>
+        <div class="def-text">A <strong>read-optimized copy of operational data</strong> aggregated from multiple golden sources, designed to serve query workloads without impacting the transactional source systems. The RDS does not replace the golden source &mdash; data flows <em>to</em> the RDS from upstream providers. It enables cross-domain querying across bounded contexts that would otherwise be inaccessible to one another.</div>
+      </div>
+
+      <p class="prose">The core challenge the RDS solves: as organizations grow, data becomes fragmented across many systems &mdash; CRM, ERP, billing, logistics, customer support. No single system has a complete view. Joining across these systems requires touching live transactional databases, which creates load, coupling, and security risk. The RDS provides a safe, read-only surface that aggregates the golden records from each domain.</p>
+
+      <div class="arch-box">
+        <div class="arch-title">Data Flow: Golden Sources &#8594; RDS &#8594; Consumers</div>
+        <div class="arch-row">
+          <span class="arch-app green">CRM (Golden Source)</span>
+          <span class="arch-line">&#8594;</span>
+          <span class="arch-hub">Read-Only Data Store (RDS)</span>
+          <span class="arch-line">&#8594;</span>
+          <span class="arch-app purple">Analytics</span>
+        </div>
+        <div class="arch-row">
+          <span class="arch-app green">Billing (Golden Source)</span>
+          <span class="arch-line">&#8594;</span>
+          <span style="min-width:180px"></span>
+          <span class="arch-line">&#8594;</span>
+          <span class="arch-app purple">ML Platform</span>
+        </div>
+        <div class="arch-row">
+          <span class="arch-app green">Logistics (Golden Source)</span>
+          <span class="arch-line">&#8594;</span>
+        </div>
+      </div>
+
+      <div class="example-card">
+        <div class="example-label">Industry Example</div>
+        <div class="example-title">Vanguard ORDS on Amazon Redshift</div>
+        <div class="example-text">
+          Vanguard (one of the world's largest investment firms) built an Operational Read-Only Data Store on Amazon Redshift to bridge data silos across bounded contexts. Each business domain (funds, accounts, clients, transactions) owns its golden source. The ORDS aggregates records from each domain, enabling analysts to run cross-domain queries &mdash; for example, linking a client account to their fund holdings and recent transactions &mdash; without touching any live transactional system. See: <em>AWS Big Data Blog &mdash; "Bridging Data Silos: Cross-Bounded Context Querying with Vanguard ORDS."</em>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ S7 -->
+    <section class="notes-section" id="s7">
+      <div class="section-header">
+        <span class="section-num">07</span>
+        <span class="section-title">Why RDS Matters &amp; Its Trade-offs</span>
+      </div>
+
+      <div class="sub-label">Why RDS Matters</div>
+
+      <div class="num-list">
+        <div class="num-item">
+          <div class="num-badge">1</div>
+          <div class="num-content">
+            <div class="num-title">Protects source systems</div>
+            <div class="num-text">Heavy read queries from analysts and ML pipelines are redirected away from live OLTP databases, eliminating lock contention and protecting transactional performance.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge">2</div>
+          <div class="num-content">
+            <div class="num-title">Enables cross-domain querying</div>
+            <div class="num-text">A consumer can query data from multiple bounded contexts (CRM + Billing + Logistics) in a single query, without coupling those systems to each other or building fragile point-to-point integrations.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge green">3</div>
+          <div class="num-content">
+            <div class="num-title">Single governance enforcement point</div>
+            <div class="num-text">Access control, data masking, row-level security, and audit logging are enforced at the RDS layer for all consumers, rather than having each source system implement its own policies.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge green">4</div>
+          <div class="num-content">
+            <div class="num-title">Supports diverse consumer types simultaneously</div>
+            <div class="num-text">Real-time dashboards, batch analytics, ML feature extraction, and API consumers can all query the RDS using the access pattern most appropriate for their workload.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sub-label">How RDS Handles Large Read Requests</div>
+
+      <div class="two-col">
+        <div class="concept-card">
+          <div class="concept-title">Scaling Strategies</div>
+          <div class="concept-text">
+            <ul>
+              <li><strong>Read replicas</strong> &mdash; additional copies of the database serving read traffic</li>
+              <li><strong>Sharding / partitioning</strong> &mdash; split data by date, region, or ID range across nodes</li>
+              <li><strong>Columnar storage</strong> &mdash; scans only relevant columns for aggregations</li>
+              <li><strong>Materialized views</strong> &mdash; pre-computed aggregates refreshed on a schedule</li>
+              <li><strong>Query caching</strong> &mdash; return stored results for repeated identical queries</li>
+            </ul>
+          </div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">Trade-offs and Cons</div>
+          <div class="concept-text">
+            <ul>
+              <li><span class="term-r">Eventual consistency</span> &mdash; data in the RDS lags behind the golden source; not suitable for real-time decisions</li>
+              <li><span class="term-r">Synchronization complexity</span> &mdash; each source has different schemas, schedules, and failure modes</li>
+              <li><span class="term-r">Infrastructure cost</span> &mdash; maintaining a separate cluster adds compute and storage expense</li>
+              <li><span class="term-r">Schema drift</span> &mdash; source schema changes break the ingestion pipeline</li>
+              <li><span class="term-r">Operational overhead</span> &mdash; replication lag monitoring, failure recovery, and freshness SLAs</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="warn-card">
+        <div class="warn-label">Critical Trade-off</div>
+        <div class="warn-text">The RDS is <strong>never the source of truth</strong>. If a consumer needs real-time accuracy (e.g., checking current account balance before approving a transaction), it must query the golden source directly. The RDS is for analytical and operational <em>read</em> workloads where slight data lag is acceptable.</div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ S8 -->
+    <section class="notes-section" id="s8">
+      <div class="section-header">
+        <span class="section-num">08</span>
+        <span class="section-title">CQRS &mdash; Command &amp; Query Responsibility Segregation</span>
+      </div>
+
+      <div class="def-card">
+        <div class="def-label">Pattern</div>
+        <div class="def-term">CQRS &mdash; Command and Query Responsibility Segregation</div>
+        <div class="def-text">An architectural pattern, rooted in Domain-Driven Design, that <strong>separates the model used to write data (commands) from the model used to read data (queries)</strong> into two distinct databases. Each side is optimized independently for its workload, and data is replicated from the write side to the read side via events or change streams.</div>
+      </div>
+
+      <div class="cqrs-wrap">
+        <div class="cqrs-side write">
+          <div class="cqrs-label">&#128221; Write Side (Commands)</div>
+          <div class="cqrs-db">Command Database</div>
+          <div class="cqrs-detail">
+            Normalized (OLTP)<br>
+            ACID transactions<br>
+            Business logic validation<br>
+            INSERT / UPDATE / DELETE<br>
+            <span style="color:#f85149;font-weight:700;font-size:.75rem;">Changes application state</span>
+          </div>
+        </div>
+        <div class="cqrs-mid">
+          <div class="cqrs-sync">Event / CDC / Replication</div>
+          <div class="cqrs-arrow">&#8594;</div>
+          <div class="cqrs-sync">Read end state; copy to read DB</div>
+        </div>
+        <div class="cqrs-side read">
+          <div class="cqrs-label">&#128269; Read Side (Queries)</div>
+          <div class="cqrs-db">Query Database</div>
+          <div class="cqrs-detail">
+            Denormalized / materialized<br>
+            In-memory cache (Redis)<br>
+            Pre-joined, consumer-shaped<br>
+            SELECT only &mdash; no side effects<br>
+            <span style="color:#58a6ff;font-weight:700;font-size:.75rem;">Returns data without changing state</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="concept-card">
+          <div class="concept-title">&#9997; Commands</div>
+          <div class="concept-text">
+            Operations that <em>change application state</em>. Commands pass through business rule validation before being persisted to the write database. Examples: <code>PlaceOrder</code>, <code>UpdateCustomerAddress</code>, <code>CancelSubscription</code>. A command either succeeds entirely or fails entirely (ACID).
+          </div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">&#128202; Queries</div>
+          <div class="concept-text">
+            Operations that <em>retrieve data without side effects</em>. Queries read from the optimized read database, which may be a denormalized view, a columnar store, or an in-memory cache. Because the read model is separate, it can be shaped exactly for each consumer without impacting the write model.
+          </div>
+        </div>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-label">In-Memory Databases for Queries</div>
+        <div class="insight-text">For frequently-read, rarely-changed data, the query side can be served entirely from an in-memory database like <strong>Redis</strong> or <strong>Memcached</strong>. Sub-millisecond response times are achievable. The write side persists to disk (Postgres, MySQL); the read side materializes into memory. Replication from write to read happens via event streams. This is the CQRS pattern at its most extreme.</div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ S9 -->
+    <section class="notes-section" id="s9">
+      <div class="section-header">
+        <span class="section-num">09</span>
+        <span class="section-title">CQRS at Scale</span>
+      </div>
+
+      <p class="prose">At enterprise scale, the CQRS read layer must handle a wide variety of consumers, query sizes, latency requirements, and data transformation needs &mdash; simultaneously, without degradation. A single read database is no longer sufficient.</p>
+
+      <div class="sub-label">Multi-Technology Data Layer</div>
+
+      <div class="three-col">
+        <div class="pillar-card">
+          <div class="pillar-icon">&#9889;</div>
+          <div class="pillar-name">Large / Batch Queries</div>
+          <div class="pillar-desc">Full-scan aggregations, historical trends, bulk exports. Served by columnar stores (Redshift, BigQuery, Snowflake) or MPP (Massively Parallel Processing) engines.</div>
+        </div>
+        <div class="pillar-card">
+          <div class="pillar-icon">&#9889;</div>
+          <div class="pillar-name">Single-Point Queries</div>
+          <div class="pillar-desc">Lookup by ID, user profile fetch, real-time status check. Served by key-value stores (Redis, DynamoDB) with sub-millisecond latency.</div>
+        </div>
+        <div class="pillar-card">
+          <div class="pillar-icon">&#128257;</div>
+          <div class="pillar-name">Streaming Queries</div>
+          <div class="pillar-desc">Continuous event processing, real-time dashboards, alerting. Served by stream processors (Kafka Streams, Flink, Spark Streaming).</div>
+        </div>
+      </div>
+
+      <div class="sub-label">Consumer-Specific Optimization</div>
+
+      <div class="two-col">
+        <div class="concept-card">
+          <div class="concept-title">&#129302; ML Consumers</div>
+          <div class="concept-text">
+            Machine learning models often need <em>raw, untransformed features</em> &mdash; the original values before any business logic is applied. Transformation can introduce bias or information leakage. The data layer should be able to serve unmodified records directly from the ingestion point, bypassing the business-rule transformation layer when the consumer explicitly requests it.
+          </div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">&#128202; Analytics Consumers</div>
+          <div class="concept-text">
+            Business analysts need data that has been <em>denormalized, enriched, and business-rule-applied</em> &mdash; customer segments calculated, revenue recognized per accounting policy, dates localized. The data layer transforms and shapes the record based on the consumer domain before delivery.
+          </div>
+        </div>
+      </div>
+
+      <div class="sub-label">Syntactic Translation Engine (Semantic Layer)</div>
+
+      <div class="def-card">
+        <div class="def-label">Concept</div>
+        <div class="def-term">Syntactic Translation Engine</div>
+        <div class="def-text">An abstraction layer that translates <strong>business terminology and logic into technical queries</strong>, bridging the gap between how business users express needs and the underlying technical storage format. It handles dialect differences (SQL vs NoSQL vs REST API) and denormalization for each consumer type.</div>
+      </div>
+
+      <div class="example-card">
+        <div class="example-label">Example</div>
+        <div class="example-title">Business Logic &#8594; Technical Query</div>
+        <div class="example-text">
+          Business user asks: <em>"Show active customers who purchased in Q3."</em><br><br>
+          Translation engine resolves:<br>
+          <code>WHERE customer_status = 'A' AND purchase_date BETWEEN '2024-07-01' AND '2024-09-30'</code><br><br>
+          The golden source may be heavily normalized &mdash; customer status lives in one table, purchases in another. The translation engine handles the JOIN, applies the business definition of "active," and returns results shaped for the consumer without the consumer needing to know the physical schema.
+        </div>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-label">Design Requirement</div>
+        <div class="insight-text">The data layer must support <strong>all delivery modes simultaneously</strong>: real-time, streaming, event-driven, and batch. A consumer should not be forced into batch because the architecture only supports scheduled extracts. Conversely, the system should not force streaming overhead onto consumers who only need daily snapshots. Design for mode flexibility from the start.</div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ S10 -->
+    <section class="notes-section" id="s10">
+      <div class="section-header">
+        <span class="section-num">10</span>
+        <span class="section-title">RDS Components &mdash; Metadata, Validation &amp; Integrity</span>
+      </div>
+
+      <div class="sub-label">Enterprise Metadata Functions</div>
+
+      <div class="two-col">
+        <div class="concept-card">
+          <div class="concept-title">Governance Metadata</div>
+          <div class="concept-text">
+            <ul>
+              <li><strong>Ownership</strong> &mdash; who is accountable for each dataset</li>
+              <li><strong>Data classification</strong> &mdash; sensitivity level (public / internal / confidential / restricted)</li>
+              <li><strong>Retention policy</strong> &mdash; how long data is kept before archival or deletion</li>
+              <li><strong>Compliance tags</strong> &mdash; GDPR, HIPAA, SOX applicability</li>
+              <li><strong>Steward assignment</strong> &mdash; the domain expert responsible for quality</li>
+            </ul>
+          </div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">Technical Metadata</div>
+          <div class="concept-text">
+            <ul>
+              <li><strong>Schema</strong> &mdash; column names, data types, nullability, constraints</li>
+              <li><strong>Lineage</strong> &mdash; source system → transformation → target (full provenance)</li>
+              <li><strong>Refresh schedule</strong> &mdash; when data was last updated and how frequently</li>
+              <li><strong>Record count &amp; size</strong> &mdash; volume metrics for capacity planning</li>
+              <li><strong>Partition info</strong> &mdash; how data is physically organized (date, region, ID range)</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="sub-label">Validation Rules &amp; Service Contracts</div>
+
+      <p class="prose"><span class="term">Validation rules</span> define the expected schema, format, range, and cardinality for each field. They are enforced at ingestion time &mdash; records that fail validation are rejected or quarantined for remediation rather than silently corrupting the RDS. Validation rules are the technical implementation of a <span class="term-y">service contract</span> &mdash; the formal agreement between a data provider and the RDS about what data will be delivered, in what format, and at what frequency.</p>
+
+      <div class="insight-card">
+        <div class="insight-label">Design Question: What if data trends change and validation rules no longer catch anomalies?</div>
+        <div class="insight-text">
+          This is handled through <strong>versioned service contracts</strong>. When the business definition of a field changes (e.g., a field that was always positive can now be negative after a financial restatement), the contract is updated to V2. The provider communicates the change, a new validation rule set is authored, and both V1 and V2 consumers can be supported in parallel during a migration window.
+          <ul style="margin-top:.5rem">
+            <li>Rules should be <strong>reviewed quarterly</strong> even when no errors are found &mdash; absence of errors is not proof that the rule is still meaningful</li>
+            <li><strong>Never delete old rules</strong> &mdash; archive them with a version number and deactivation date for audit purposes</li>
+            <li>If no errors are found over a long period, keep the rule: it serves as documentation and insurance against regressions</li>
+            <li>Anomaly detection (statistical) complements validation (static) &mdash; it catches trend shifts that static rules miss</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="sub-label">Integrity &amp; Quality Checks</div>
+
+      <table class="compare-table">
+        <thead>
+          <tr><th>Check Type</th><th>What It Verifies</th><th>Example</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="col-a">Referential Integrity</td><td>Every foreign key has a matching primary key in the referenced table</td><td>Every <code>order.customer_id</code> exists in the <code>customers</code> table</td></tr>
+          <tr><td class="col-a">Uniqueness</td><td>No duplicate values on a primary key or unique constraint</td><td>No two rows share the same <code>transaction_id</code></td></tr>
+          <tr><td class="col-a">Temporal Integrity</td><td>Timestamps are chronologically consistent</td><td><code>updated_at</code> is always &ge; <code>created_at</code></td></tr>
+          <tr><td class="col-a">Cross-Field Validation</td><td>Conditional logic between fields is satisfied</td><td>If <code>status = CANCELLED</code> then <code>cancel_reason</code> is NOT NULL</td></tr>
+          <tr><td class="col-b">Completeness</td><td>% of non-null values meets threshold</td><td>&ge; 99% of <code>email</code> fields are populated</td></tr>
+          <tr><td class="col-b">Consistency</td><td>Same entity represented identically across datasets</td><td>Customer name spelled the same in CRM and Billing</td></tr>
+          <tr><td class="col-b">Timeliness</td><td>Data arrived within the expected window</td><td>Daily feed arrived by 06:00 UTC</td></tr>
+          <tr><td class="col-c">Anomaly Detection</td><td>Statistical deviation from expected distribution</td><td>NULL rate spiked from 2% to 40% in last load</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ S11 -->
+    <section class="notes-section" id="s11">
+      <div class="section-header">
+        <span class="section-num">11</span>
+        <span class="section-title">RDS Tiers &mdash; A Deep Dive</span>
+      </div>
+
+      <p class="prose">The RDS is not a single database &mdash; it is a <strong>layered architecture</strong> of services, each with a distinct responsibility. Data enters through providers, is validated and transformed in the incoming tier, made accessible through the access tier, and consumed by downstream teams. A central metadata layer governs the entire stack.</p>
+
+      <div class="tier-stack">
+        <div class="tier-row">
+          <div class="tier-label">Discovery</div>
+          <div class="tier-body t-marketplace">
+            <div class="tier-name">Marketplace / Catalog Layer</div>
+            <div class="tier-chips">
+              <span class="tier-chip">Data Discovery</span>
+              <span class="tier-chip">Dataset Search</span>
+              <span class="tier-chip">Access Requests</span>
+              <span class="tier-chip">Dataset Ratings</span>
+            </div>
+            <p style="font-size:.77rem;color:#8b949e;margin-top:.5rem;">Consumers browse available datasets, understand their contents, and request access. Analogous to an internal data marketplace where datasets are published products.</p>
+          </div>
+        </div>
+        <div class="tier-row">
+          <div class="tier-label">Governance</div>
+          <div class="tier-body t-meta">
+            <div class="tier-name">Central Metadata &amp; Application Functions</div>
+            <div class="tier-chips">
+              <span class="tier-chip">Governance Metadata</span>
+              <span class="tier-chip">Technical Metadata</span>
+              <span class="tier-chip">Lineage Tracking</span>
+              <span class="tier-chip">Policy Enforcement</span>
+              <span class="tier-chip">Dataset-Level Info</span>
+            </div>
+            <p style="font-size:.77rem;color:#8b949e;margin-top:.5rem;">The central registry that tracks ownership, classification, schema, lineage, and policies for every dataset in the RDS. Every other tier updates and reads from here. Each level of ingestion or transformation updates the metadata accordingly.</p>
+          </div>
+        </div>
+        <div class="tier-row">
+          <div class="tier-label">Sources</div>
+          <div class="tier-body t-provider">
+            <div class="tier-name">Providers (Golden Sources)</div>
+            <div class="tier-chips">
+              <span class="tier-chip">Domain A (CRM)</span>
+              <span class="tier-chip">Domain B (ERP)</span>
+              <span class="tier-chip">Domain C (Billing)</span>
+              <span class="tier-chip">External APIs</span>
+              <span class="tier-chip">SaaS Systems</span>
+            </div>
+            <p style="font-size:.77rem;color:#8b949e;margin-top:.5rem;">Upstream systems that own and publish authoritative data via defined interfaces (APIs, file drops, CDC streams). Providers are accountable for data accuracy and timely delivery per the service contract.</p>
+          </div>
+        </div>
+        <div class="tier-row">
+          <div class="tier-label">Ingestion</div>
+          <div class="tier-body t-incoming">
+            <div class="tier-name">Incoming Tier</div>
+            <div class="tier-chips">
+              <span class="tier-chip">Validation Rules</span>
+              <span class="tier-chip">Schema Enforcement</span>
+              <span class="tier-chip">Anomaly Detection</span>
+              <span class="tier-chip">Quarantine Queue</span>
+              <span class="tier-chip">Transformation</span>
+            </div>
+            <p style="font-size:.77rem;color:#8b949e;margin-top:.5rem;">The data entry point. Receives data from providers, applies validation rules and integrity checks, transforms to the target schema, and loads into the RDS storage layer. Invalid records are quarantined and flagged for remediation.</p>
+          </div>
+        </div>
+        <div class="tier-row">
+          <div class="tier-label">Access</div>
+          <div class="tier-body t-access">
+            <div class="tier-name">Access Tier</div>
+            <div class="tier-chips">
+              <span class="tier-chip">Query Acceleration</span>
+              <span class="tier-chip">Data Virtualization</span>
+              <span class="tier-chip">Policy Enforcement</span>
+              <span class="tier-chip">Row-Level Security</span>
+              <span class="tier-chip">Column Masking</span>
+              <span class="tier-chip">Semantic Layer</span>
+            </div>
+            <p style="font-size:.77rem;color:#8b949e;margin-top:.5rem;"><strong style="color:#e3b341;">Query acceleration</strong> uses materialized views and pre-computed aggregates to serve common queries without full scans. <strong style="color:#e3b341;">Data virtualization</strong> presents data from multiple stores as a unified surface without physical data movement. <strong style="color:#e3b341;">Policy enforcement</strong> ensures consumers only see data they are authorized to access.</p>
+          </div>
+        </div>
+        <div class="tier-row">
+          <div class="tier-label">Consumers</div>
+          <div class="tier-body t-consumer">
+            <div class="tier-name">Consumer Layer</div>
+            <div class="tier-chips">
+              <span class="tier-chip">ML Pipelines</span>
+              <span class="tier-chip">Analytics / BI</span>
+              <span class="tier-chip">Operational Apps</span>
+              <span class="tier-chip">External APIs</span>
+              <span class="tier-chip">File Exports</span>
+            </div>
+            <p style="font-size:.77rem;color:#8b949e;margin-top:.5rem;">Each consumer type accesses the RDS in the mode and format suited to their workload: raw features for ML, denormalized views for BI, REST APIs for operational apps, scheduled file exports for partners.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ S12 -->
+    <section class="notes-section" id="s12">
+      <div class="section-header">
+        <span class="section-num">12</span>
+        <span class="section-title">Data Ingestion</span>
+      </div>
+
+      <div class="def-card">
+        <div class="def-label">Definition</div>
+        <div class="def-term">Data Ingestion</div>
+        <div class="def-text">The process of <strong>importing, loading, and bringing data into a target store</strong> from one or more providers. Ingestion design determines freshness, throughput, reliability, and the ability to recover from failures. The right ingestion pattern depends on the source system, data volume, latency requirements, and downstream consumer needs.</div>
+      </div>
+
+      <div class="two-col">
+        <div class="concept-card">
+          <div class="concept-title">Ingestion Modes</div>
+          <div class="concept-text">
+            <ul>
+              <li><strong>Batch</strong> &mdash; large volumes at scheduled intervals (hourly, daily). Efficient but introduces lag equal to the batch interval.</li>
+              <li><strong>Streaming</strong> &mdash; continuous real-time flow via Kafka, Kinesis, or Pub/Sub. Low latency but higher infrastructure complexity.</li>
+              <li><strong>Event-driven</strong> &mdash; triggered by a specific event (file landed in S3, webhook received). Efficient for sparse, irregular data.</li>
+              <li><strong>CDC (Change Data Capture)</strong> &mdash; reads the database write-ahead log to capture only changed rows, minimizing load on the source and enabling near-real-time sync.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">Ingestion Design Considerations</div>
+          <div class="concept-text">
+            <ul>
+              <li><strong>Schema evolution</strong> &mdash; how does the pipeline handle a new column or renamed field from the source?</li>
+              <li><strong>Late-arriving data</strong> &mdash; records that arrive after their expected processing window (e.g., a transaction timestamped yesterday arrives today)</li>
+              <li><strong>Idempotency</strong> &mdash; re-processing the same batch must not create duplicate records</li>
+              <li><strong>Backfill</strong> &mdash; loading historical data when onboarding a new dataset or recovering from failure</li>
+              <li><strong>Error handling</strong> &mdash; quarantine invalid records; alert stewards; never silently drop data</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ S13 -->
+    <section class="notes-section" id="s13">
+      <div class="section-header">
+        <span class="section-num">13</span>
+        <span class="section-title">Integrating COTS, External APIs &amp; SaaS</span>
+      </div>
+
+      <div class="def-card">
+        <div class="def-label">Definition</div>
+        <div class="def-term">COTS &mdash; Commercial Off-The-Shelf</div>
+        <div class="def-text">Pre-built software products purchased and deployed rather than developed in-house. Examples: Salesforce (CRM), Workday (HR), SAP (ERP), ServiceNow (ITSM). COTS systems are data providers whose APIs and export formats you do not control.</div>
+      </div>
+
+      <div class="sub-label">Vendor Lock-in Risk</div>
+
+      <p class="prose">Tightly coupling your data architecture to a vendor-specific format, API version, or proprietary schema creates <span class="term-r">vendor lock-in</span>: the cost of switching vendors becomes so high that organizations are trapped. Minimize lock-in by:</p>
+
+      <div class="num-list">
+        <div class="num-item">
+          <div class="num-badge">1</div>
+          <div class="num-content">
+            <div class="num-title">Use abstraction / adapter layers</div>
+            <div class="num-text">Isolate vendor-specific API calls behind an internal interface. If the vendor changes their API, only the adapter changes &mdash; the rest of the pipeline is unaffected.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge">2</div>
+          <div class="num-content">
+            <div class="num-title">Standardize on open formats</div>
+            <div class="num-text">Convert vendor-proprietary formats (XML exports, custom CSV) to open standards (Parquet, JSON, Avro) at the ingestion boundary. Downstream consumers work with the standard format, not the vendor format.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge green">3</div>
+          <div class="num-content">
+            <div class="num-title">Define data contracts at the boundary</div>
+            <div class="num-text">Specify what fields you require, their types, and expected ranges &mdash; independently of how the vendor exposes them. Validate against your contract on every extract.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sub-label">External API Integration Challenges</div>
+
+      <table class="compare-table">
+        <thead>
+          <tr><th>Challenge</th><th>Description</th><th>Mitigation</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="col-a">Rate Limiting</td><td>Provider limits calls per second or per day</td><td>Implement exponential backoff; cache responses; schedule extracts in off-peak windows</td></tr>
+          <tr><td class="col-a">Pagination</td><td>Large datasets returned in pages, requiring sequential requests</td><td>Build cursor-based or offset-based pagination loops; support resumable extracts</td></tr>
+          <tr><td class="col-a">Schema Drift</td><td>Provider changes response format without notice</td><td>Validate response against contract schema; alert on unexpected fields or missing keys</td></tr>
+          <tr><td class="col-b">Authentication</td><td>OAuth2 token expiry, rotating API keys</td><td>Automate token refresh; store secrets in a vault (AWS Secrets Manager, HashiCorp Vault)</td></tr>
+          <tr><td class="col-b">Webhook vs Polling</td><td>Webhooks push changes; polling checks periodically</td><td>Prefer webhooks for low-latency; use polling as fallback; validate webhook authenticity</td></tr>
+          <tr><td class="col-c">Availability</td><td>SaaS provider experiences downtime</td><td>Design for graceful degradation; queue requests; replay after recovery</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ S14 -->
+    <section class="notes-section" id="s14">
+      <div class="section-header">
+        <span class="section-num">14</span>
+        <span class="section-title">Historical Data Service</span>
+      </div>
+
+      <div class="def-card">
+        <div class="def-label">Definition</div>
+        <div class="def-term">Historical Data Service</div>
+        <div class="def-text">A service that provides access to <strong>historical snapshots of data</strong>, enabling consumers to query the state of a record at any point in the past &mdash; not just its current value. Essential for auditing, trend analysis, regulatory compliance, and debugging production data issues.</div>
+      </div>
+
+      <p class="prose"><span class="term">Temporal queries</span> ask "what was the state of X at time T?" This requires the data store to preserve prior versions of records rather than overwriting them. The approach chosen determines storage cost, query complexity, and the granularity of historical access.</p>
+
+      <div class="sub-label">Slowly Changing Dimensions (SCD)</div>
+
+      <table class="compare-table">
+        <thead>
+          <tr><th>Type</th><th>How History Is Handled</th><th>Trade-off</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="col-a">Type 1 &mdash; Overwrite</td><td>Old value is replaced. No history is preserved.</td><td>Simple but loses all history. Only current state visible.</td></tr>
+          <tr><td class="col-b">Type 2 &mdash; New Row</td><td>A new row is inserted with a start/end date range. The old row is closed. Full history is preserved.</td><td>Most common in data warehouses. Enables point-in-time queries. Increases table size.</td></tr>
+          <tr><td class="col-c">Type 3 &mdash; Previous Column</td><td>A "previous value" column is added next to the current value column.</td><td>Only one prior state preserved. Simple queries but limited history depth.</td></tr>
+        </tbody>
+      </table>
+
+      <div class="insight-card">
+        <div class="insight-label">Immutability Principle</div>
+        <div class="insight-text">Historical records should be <strong>append-only</strong>. Once a record is written for a past event, it should never be modified or deleted (except under an explicit retention policy). This guarantees auditability &mdash; the historical store tells exactly what the system knew at each point in time. Corrections are recorded as new entries with an effective date, not as edits to existing rows.</div>
+      </div>
+
+      <p class="prose">Retention policies define how long historical data is kept before archival or deletion &mdash; governed by regulation (GDPR requires right-to-erasure for personal data; HIPAA requires 6-year retention for medical records; financial regulations often require 7 years). Data that cannot be deleted under retention policy must be appropriately secured even after it is no longer operationally needed.</p>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ S15 -->
+    <section class="notes-section" id="s15">
+      <div class="section-header">
+        <span class="section-num">15</span>
+        <span class="section-title">Design Variations &mdash; Row, Column &amp; Document Stores</span>
+      </div>
+
+      <p class="prose">There is no universally optimal storage model. The right choice depends on the access pattern, data structure, and workload type. Enterprises typically use multiple storage models simultaneously &mdash; one for transactions, another for analytics, another for flexible semi-structured data.</p>
+
+      <div class="three-col">
+        <div class="pillar-card">
+          <div class="pillar-icon">&#128200;</div>
+          <div class="pillar-name">Row-Based</div>
+          <div class="pillar-desc">Data stored row by row. Optimal for OLTP: fetching full records by ID, frequent inserts and updates. Inefficient for column aggregations across millions of rows.</div>
+        </div>
+        <div class="pillar-card">
+          <div class="pillar-icon">&#128201;</div>
+          <div class="pillar-name">Column-Based</div>
+          <div class="pillar-desc">Data stored column by column. Optimal for OLAP: aggregating a single metric across millions of rows. Scans only relevant columns. Excellent compression.</div>
+        </div>
+        <div class="pillar-card">
+          <div class="pillar-icon">&#128196;</div>
+          <div class="pillar-name">Document-Based</div>
+          <div class="pillar-desc">Data stored as JSON/BSON documents with flexible schema. Optimal for nested, variable, semi-structured data. No rigid schema enforcement.</div>
+        </div>
+      </div>
+
+      <table class="compare-table">
+        <thead>
+          <tr><th>Store Type</th><th>Examples</th><th>Best For</th><th>Industries / Use Cases</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="col-a">Row-Based</td>
+            <td>PostgreSQL, MySQL, Oracle, SQL Server</td>
+            <td>CRUD operations, transactional integrity, point lookups</td>
+            <td>E-commerce orders, banking transactions, CRM records, booking systems</td>
+          </tr>
+          <tr>
+            <td class="col-b">Columnar</td>
+            <td>Amazon Redshift, BigQuery, Snowflake, Apache Parquet</td>
+            <td>Aggregations over large datasets, analytics, reporting</td>
+            <td>Financial analytics, ad-tech attribution, IoT telemetry, BI dashboards</td>
+          </tr>
+          <tr>
+            <td class="col-c">Document</td>
+            <td>MongoDB, Couchbase, Firestore, Cosmos DB</td>
+            <td>Flexible schema, nested data, rapid iteration on data model</td>
+            <td>Product catalogs, clinical records, user profiles, content management</td>
+          </tr>
+          <tr>
+            <td class="col-d">Key-Value</td>
+            <td>Redis, DynamoDB, Memcached</td>
+            <td>Ultra-fast single-key lookups, session data, caching</td>
+            <td>Session stores, leaderboards, shopping carts, feature flags</td>
+          </tr>
+          <tr>
+            <td class="col-d">Time-Series</td>
+            <td>InfluxDB, TimescaleDB, Prometheus</td>
+            <td>High-frequency sequential timestamped data with time-window queries</td>
+            <td>Infrastructure metrics, sensor data, financial tick data, telemetry</td>
+          </tr>
+          <tr>
+            <td class="col-r">Graph</td>
+            <td>Neo4j, Amazon Neptune, TigerGraph</td>
+            <td>Relationship traversal, network analysis, shortest-path queries</td>
+            <td>Fraud detection, social networks, knowledge graphs, recommendation engines</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ S16 -->
+    <section class="notes-section" id="s16">
+      <div class="section-header">
+        <span class="section-num">16</span>
+        <span class="section-title">Data Replication</span>
+      </div>
+
+      <div class="def-card">
+        <div class="def-label">Definition</div>
+        <div class="def-term">Data Replication</div>
+        <div class="def-text">The process of <strong>creating and maintaining synchronized copies of data</strong> across multiple locations, systems, or storage tiers. Replication enables high availability, geographic distribution, read scaling, and disaster recovery. In the RDS context, it is the mechanism by which golden source data reaches the read layer.</div>
+      </div>
+
+      <div class="sub-label">Replication Tools</div>
+
+      <table class="compare-table">
+        <thead>
+          <tr><th>Tool</th><th>What It Does</th><th>Best For</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="col-a">Apache Sqoop</td><td>Bulk data transfer between Hadoop/HDFS and relational databases via JDBC</td><td>Migrating large volumes from RDBMS to Hadoop ecosystem; batch-only</td></tr>
+          <tr><td class="col-a">rsync</td><td>File-level synchronization using delta-transfer to copy only changed bytes</td><td>Flat files, archives, on-premises file server replication</td></tr>
+          <tr><td class="col-b">Azure StorSimple</td><td>Hybrid cloud storage tiering &mdash; hot data on-premises, cold data in Azure Blob</td><td>Organizations bridging on-premises and Azure storage</td></tr>
+          <tr><td class="col-b">AWS Storage Gateway</td><td>On-premises gateway that connects to AWS storage services (S3, EBS, Glacier) transparently</td><td>Hybrid on-premises/cloud architectures on AWS</td></tr>
+          <tr><td class="col-c">WanDisco (WANdisco Fusion)</td><td>Active-active data replication across data centers and clouds with consistency guarantees even on unreliable WAN links</td><td>Multi-cloud or multi-DC replication with zero downtime migrations</td></tr>
+        </tbody>
+      </table>
+
+      <div class="sub-label">Provider Responsibilities</div>
+
+      <p class="prose">The data <span class="term">provider</span> (the golden source team) bears primary accountability for ensuring the replicated RDS stays synchronized. This includes:</p>
+
+      <div class="two-col">
+        <div class="concept-card">
+          <div class="concept-title">&#9989; Provider Must</div>
+          <div class="concept-text">
+            <ul>
+              <li>Define and honor a replication SLA (e.g., data available in RDS within 15 minutes of commit)</li>
+              <li>Trigger a re-sync when source data is corrected or retroactively updated</li>
+              <li>Notify the RDS team of schema changes before they are deployed</li>
+              <li>Maintain a delivery log so failures can be identified and replayed</li>
+            </ul>
+          </div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">&#128196; Metadata Must Also Be Replicated</div>
+          <div class="concept-text">
+            When data is replicated, the metadata repository must also be updated:
+            <ul style="margin-top:.4rem">
+              <li><strong>Freshness timestamp</strong> &mdash; when did data last arrive?</li>
+              <li><strong>Record count</strong> &mdash; did the expected volume arrive?</li>
+              <li><strong>Lineage</strong> &mdash; which version of the source schema produced this replica?</li>
+              <li><strong>Replication lag</strong> &mdash; how far behind is the RDS from the golden source?</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ S17 -->
+    <section class="notes-section" id="s17">
+      <div class="section-header">
+        <span class="section-num">17</span>
+        <span class="section-title">Access, File Manipulation &amp; Intelligent Delivery</span>
+      </div>
+
+      <div class="sub-label">Access Layer &mdash; Security for Consumers</div>
+
+      <p class="prose">The access layer enforces what each consumer is permitted to see. Access is not binary (all-or-nothing) &mdash; it is <strong>fine-grained and policy-driven</strong>:</p>
+
+      <div class="two-col">
+        <div class="concept-card">
+          <div class="concept-title">Access Control Dimensions</div>
+          <div class="concept-text">
+            <ul>
+              <li><strong>Column-level</strong> &mdash; consumer sees only permitted columns (PII columns masked or hidden)</li>
+              <li><strong>Row-level</strong> &mdash; consumer sees only rows matching their org code, region, or role</li>
+              <li><strong>Time-period</strong> &mdash; consumer can only query data within an authorized date range (e.g., last 90 days)</li>
+              <li><strong>Volume limits</strong> &mdash; rate limiting and query cost caps prevent runaway queries</li>
+            </ul>
+          </div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">Access Types in the Integration Layer</div>
+          <div class="concept-text">
+            <ul>
+              <li><strong>Direct SQL query</strong> &mdash; consumer runs queries via JDBC/ODBC against the RDS</li>
+              <li><strong>REST API</strong> &mdash; consumer calls a standardized endpoint; server enforces access policies</li>
+              <li><strong>File export</strong> &mdash; scheduled extract delivered to the consumer in CSV, Parquet, or JSON</li>
+              <li><strong>Data subscription</strong> &mdash; consumer subscribes to a change feed (CDC) for near-real-time updates</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="sub-label">File Manipulation Service</div>
+      <p class="prose">Before data reaches a consumer as a file, a file manipulation service may apply format conversion, masking, encryption, and splitting/merging. This ensures that the output file matches the consumer contract regardless of the internal storage format.</p>
+
+      <div class="arch-box">
+        <div class="arch-title">File Manipulation Pipeline</div>
+        <div class="arch-row">
+          <span class="arch-app">Raw Extract (Parquet)</span>
+          <span class="arch-line">&#8594;</span>
+          <span class="arch-app yellow">Data Masking</span>
+          <span class="arch-line">&#8594;</span>
+          <span class="arch-app purple">Format Conversion</span>
+          <span class="arch-line">&#8594;</span>
+          <span class="arch-app green">Consumer Delivery (CSV)</span>
+        </div>
+        <p style="font-size:.77rem;color:#8b949e;margin-top:.6rem;">Masking replaces sensitive values with tokens, hashes, or synthetic values. Format conversion changes encoding without altering content. Each step is logged in the metadata repository for lineage.</p>
+      </div>
+
+      <div class="sub-label">Intelligent Consumption Service</div>
+      <p class="prose">Rather than every consumer querying the RDS directly, an <span class="term">intelligent consumption service</span> sits between the access tier and consumers. It routes requests to the most appropriate underlying store, applies consumer-specific transformations, caches frequent results, and can surface AI-powered recommendations.</p>
+
+      <div class="two-col">
+        <div class="concept-card">
+          <div class="concept-title">What It Does</div>
+          <div class="concept-text">
+            <ul>
+              <li>Routes a small point-lookup to the key-value cache instead of the columnar store</li>
+              <li>Routes a large aggregation to the MPP cluster</li>
+              <li>Caches the result of a commonly-repeated query and serves subsequent requests from cache</li>
+              <li>Applies consumer-specific transformation rules (denormalization, currency conversion, timezone)</li>
+            </ul>
+          </div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">Populating RDS on Demand</div>
+          <div class="concept-text">
+            Instead of pre-loading all data, low-frequency datasets can be loaded <em>only when first requested</em>:
+            <ul style="margin-top:.4rem">
+              <li>Reduces storage cost for rarely-accessed data</li>
+              <li>Risk: first request has high latency ("cold start" problem)</li>
+              <li>Hybrid approach: frequently-accessed data is always pre-loaded; rare data is loaded on demand and cached after first access</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="sub-label">Data Delivery Contracts</div>
+      <p class="prose">A <span class="term">data delivery contract</span> is a formal, versioned agreement between a data provider and one or more consumers specifying exactly what data will be delivered, how, and when. Contracts enable independent evolution of provider and consumer systems.</p>
+
+      <table class="compare-table">
+        <thead>
+          <tr><th>Contract Element</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="col-a">Schema</td><td>Field names, data types, nullability, key constraints &mdash; versioned (V1, V2)</td></tr>
+          <tr><td class="col-a">Delivery Frequency</td><td>Real-time, near-real-time (5 min), hourly, daily &mdash; agreed SLA</td></tr>
+          <tr><td class="col-a">Format</td><td>JSON, CSV, Parquet, Avro &mdash; including encoding (UTF-8) and compression</td></tr>
+          <tr><td class="col-b">Quality SLA</td><td>Minimum completeness %, maximum allowed error rate, freshness guarantee</td></tr>
+          <tr><td class="col-b">Access Controls</td><td>Which fields are accessible to which consumer roles</td></tr>
+          <tr><td class="col-b">Change Management</td><td>How breaking changes are communicated; deprecation notice period; migration support window</td></tr>
+          <tr><td class="col-c">Retention</td><td>How long the RDS retains data on behalf of the consumer</td></tr>
+        </tbody>
+      </table>
+
+      <div class="sub-label">Domains Across Networks &mdash; Integration Considerations</div>
+
+      <table class="compare-table">
+        <thead>
+          <tr><th>Consideration</th><th>What It Means</th><th>Design Response</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="col-a">Latency</td><td>Network round-trip time between domains (especially cross-region or cross-cloud)</td><td>Co-locate high-traffic domain pairs; use async messaging to decouple latency from throughput</td></tr>
+          <tr><td class="col-a">Security</td><td>Data must be encrypted in transit between domains</td><td>TLS 1.3 minimum; mTLS for service-to-service; API gateway with token validation</td></tr>
+          <tr><td class="col-b">Protocol</td><td>Domains may speak REST, gRPC, AMQP, MQTT, or proprietary protocols</td><td>Standardize on an integration protocol at the boundary; use adapters for legacy systems</td></tr>
+          <tr><td class="col-b">Data Format</td><td>JSON, XML, Avro, Protobuf may all be in use simultaneously</td><td>Translate to canonical format at the ingestion boundary; do not let internal formats leak</td></tr>
+          <tr><td class="col-c">Rate Limiting</td><td>High-volume consumers can overwhelm providers</td><td>Implement throttling and circuit breakers; communicate rate limits in the contract</td></tr>
+          <tr><td class="col-c">Error Handling</td><td>Network failures, schema mismatches, and timeouts are inevitable</td><td>Retry with exponential backoff; dead-letter queues for unprocessable records; alerting on failure thresholds</td></tr>
+          <tr><td class="col-d">Authentication</td><td>Cross-domain calls must verify identity</td><td>OAuth2 / service accounts / certificate-based auth; rotate secrets automatically</td></tr>
+          <tr><td class="col-d">Compliance</td><td>Data may not legally cross certain geographic or organizational boundaries</td><td>Enforce data residency rules at the network layer; tag records with jurisdiction; block unauthorized transfers</td></tr>
+        </tbody>
+      </table>
+
+    </section>
+
+    <footer class="site-footer">
+      Data Governance &mdash; Module 6 Class Notes &bull; Playground
+    </footer>
+
+  </main>
+</div>
+
+<script>
+(function () {
+  var links = document.querySelectorAll(".toc-link");
+  var sections = [];
+  links.forEach(function (l) {
+    var id = l.getAttribute("href").slice(1);
+    var el = document.getElementById(id);
+    if (el) sections.push({ el: el, link: l });
+  });
+
+  function onScroll() {
+    var scrollY = window.scrollY + 90;
+    var active = null;
+    for (var i = 0; i < sections.length; i++) {
+      if (sections[i].el.offsetTop <= scrollY) active = sections[i];
+    }
+    links.forEach(function (l) { l.classList.remove("active"); });
+    if (active) active.link.classList.add("active");
+  }
+
+  window.addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
+})();
+</script>
+
+</body>
+</html>

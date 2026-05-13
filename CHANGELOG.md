@@ -24,6 +24,7 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ## 2026-05-06
 
+- [feature] `class-notes/data-governance/module-06.html` — 17-section class notes on "Architecture": RDS/ORDS, CQRS, data design, ingestion patterns, tier stack, replication, access control, and intelligent delivery; index updated to 6 modules
 - [feature] `class-notes/index.html` + `class-notes/data-governance/index.html` — class notes index pages; Data Governance course card links to module list; all 5 module breadcrumbs updated with clickable "Class Notes" and "Data Governance" links
 - [feature] `class-notes/data-governance/module-05.html` — 17-section class notes on "Collection": architecture evolution (P2P → ESB → Warehouse → Lake → Lakehouse), DDD, golden source rules, data delivery contracts, and data staging
 

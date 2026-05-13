@@ -31,6 +31,30 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ## 2026-05-06
 
+### [feature] Class notes — Module 6 Architecture
+- Created `class-notes/data-governance/module-06.html` — 17-section notes on "Architecture" with GitHub dark theme
+- Section 1: Architecture Fundamentals — logical vs physical, three levels (high-level, network, systems)
+- Section 2: Data Architecture — interrelationships, scaled (centralized + distributed) architecture pattern
+- Section 3: Data Design Principles — quality, efficiency, reliability, user-intuitive; consumer-first denormalization; ServiceNow API ID resolution example
+- Section 4: OLTP & Transactional Systems — characteristics, ACID, why OLTP is a poor analytics platform
+- Section 5: Data Stores, Warehouses & Data Marts — centralized warehouse diagram, star schema, data mart trade-offs
+- Section 6: Operational RDS/ORDS — definition, golden source aggregation, Vanguard ORDS on Redshift example
+- Section 7: Why RDS Matters & Trade-offs — 4 benefits, read scaling strategies, 5 cons (eventual consistency, schema drift, cost)
+- Section 8: CQRS Pattern — commands vs queries, write/read database separation diagram, in-memory query layer
+- Section 9: CQRS at Scale — multi-technology data layer, ML vs analytics consumers, syntactic translation engine
+- Section 10: RDS Components — governance/technical metadata, validation rules, versioned service contracts, integrity & quality checks table
+- Section 11: RDS Tiers — 6-layer `.tier-stack` diagram: marketplace, central metadata, providers, incoming, access, consumer
+- Section 12: Data Ingestion — batch/streaming/event-driven/CDC modes, schema evolution, idempotency, backfill
+- Section 13: COTS, APIs & SaaS — vendor lock-in minimization, API integration challenges table (rate limits, pagination, schema drift)
+- Section 14: Historical Data Service — SCD Type 1/2/3 table, immutability principle, retention policies
+- Section 15: Design Variations — row/columnar/document/key-value/time-series/graph store comparison table
+- Section 16: Data Replication — Sqoop/rsync/StorSimple/AWS Gateway/WanDisco, provider responsibilities, metadata replication
+- Section 17: Access, File Manipulation & Delivery — fine-grained access, file manipulation pipeline, intelligent consumption, on-demand RDS, data delivery contract elements table, cross-domain integration considerations table
+- New CSS: `.tier-stack`/`.tier-row`/`.tier-body`/`.tier-chip` (layered tier diagram), `.cqrs-wrap`/`.cqrs-side`/`.cqrs-mid` (CQRS split diagram)
+- `class-notes/data-governance/index.html`: added Module 06 card, updated progress to "6 of 6 modules"
+- `class-notes/index.html`: updated badge to "6 Modules"
+- JS syntax check: passed; no console errors
+
 ### [feature] Class notes — index pages and breadcrumb navigation
 - Created `class-notes/index.html` — top-level course browser showing "Data Governance" as a clickable card (Active · 5 Modules badge)
 - Created `class-notes/data-governance/index.html` — module list with numbered cards (01–05), descriptions, topic tags, progress bar ("5 of 5 modules"), and breadcrumb: Playground → Class Notes → Data Governance
