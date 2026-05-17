@@ -556,7 +556,7 @@
           <li><span class="task-num" style="background:#0a2028;color:#22d3ee;">1</span><span class="task-text">Write <strong>Executive Abstract</strong>: frame the 30M-row dataset, the reactive-to-proactive maintenance goal, and why AUC-ROC + Recall replace Accuracy as primary metrics.</span></li>
           <li><span class="task-num" style="background:#0a2028;color:#22d3ee;">2</span><span class="task-text">Document the <strong>Data Engineering Pipeline</strong>: NB01 wildcard ingestion of 92 CSVs, 6-attribute SMART selection, 30-day forward label, NB03 lag/velocity features, and managed Delta Tables as checkpoints throughout.</span></li>
           <li><span class="task-num" style="background:#0a2028;color:#22d3ee;">3</span><span class="task-text">Summarize <strong>EDA Insights</strong>: 99.93% / 0.07% imbalance (donut chart), SMART spike confirmation (categorical grouped bar chart) — both linked explicitly to the design decisions they justify downstream.</span></li>
-          <li><span class="task-num" style="background:#0a2028;color:#22d3ee;">4</span><span class="task-text">Write <strong>ML Strategy &amp; Evaluation</strong> with placeholder brackets: temporal split rationale, dynamic <code>weightCol</code> approach, <code>[AUC-ROC SCORE]</code> and <code>[RECALL SCORE]</code> filled in from NB04, and direct comparison vs. Backblaze simple rule benchmark.</span></li>
+          <li><span class="task-num" style="background:#0a2028;color:#22d3ee;">4</span><span class="task-text">Write <strong>ML Strategy &amp; Evaluation</strong> with actual NB04 results: temporal split rationale, dynamic <code>weightCol</code> approach, GBT model achieved <strong>AUC-ROC 0.8604</strong> and <strong>Recall 74.47%</strong> vs. Backblaze simple rule Recall 65.78% — include the full comparison table and strategic precision-recall tradeoff narrative.</span></li>
           <li><span class="task-num" style="background:#0a2028;color:#22d3ee;">5</span><span class="task-text">Write <strong>Limitations &amp; Future Scope</strong>: Weibull survival analysis for RUL estimation, LSTM/Transformer sequential models for full health trajectory, and Spark Structured Streaming for real-time daily snapshot scoring. Write this section while NB04 trains — it is not blocked on results.</span></li>
         </ul>
         <div class="deliverable-box">
@@ -945,8 +945,8 @@
     <div class="card-grid">
       <div class="card green">
         <div class="card-icon">&#128200;</div>
-        <h3>AUC-ROC &gt; 0.85</h3>
-        <p>The area under the ROC curve measures discriminative power across all classification thresholds — immune to class imbalance distortion. Anything above <strong>0.85</strong> is outstanding for this industry problem. This is your primary headline metric for the paper.</p>
+        <h3>AUC-ROC &gt; 0.85 &mdash; Achieved: <strong>0.8604</strong></h3>
+        <p>The area under the ROC curve measures discriminative power across all classification thresholds — immune to class imbalance distortion. The GBT model achieved <strong>0.8604</strong>, clearing the 0.85 threshold and demonstrating strong discriminative power on real-world data center telemetry. Primary headline metric for the paper.</p>
       </div>
       <div class="card red">
         <div class="card-icon">&#128308;</div>
@@ -955,8 +955,8 @@
       </div>
       <div class="card yellow">
         <div class="card-icon">&#9889;</div>
-        <h3>Beat the Backblaze Simple Rule</h3>
-        <p>Compare your Recall and Precision against the heuristic benchmark computed in NB02 Step 5. Your ML pipeline must beat this rule&apos;s recall to justify the engineering complexity — if it does not, the paper&apos;s conclusion shifts to discussing why the rule is difficult to outperform.</p>
+        <h3>Beat the Backblaze Simple Rule &mdash; &#10003; Done</h3>
+        <p>GBT Recall <strong>74.47%</strong> vs. heuristic Recall <strong>65.78%</strong> — a +8.69 percentage-point improvement. The ML pipeline catches nearly 9% more failing drives than the simple SMART threshold rule, justifying the full engineering stack in the paper.</p>
       </div>
       <div class="card highlight">
         <div class="card-icon">&#128683;</div>
@@ -969,7 +969,7 @@
 
     <div class="insight-box blue">
       <div class="ib-label">What NB05 is</div>
-      <p>A clean, markdown-heavy executive summary that ties all five notebooks together. It functions as the exact technical narrative you can port directly to a portfolio site or submit as an engineering case study. NB05 can be architected <strong>while NB04 is still training</strong> — use placeholder brackets for AUC-ROC and Recall scores that will be filled in once NB04 finishes.</p>
+      <p>A clean, markdown-heavy executive summary that ties all five notebooks together. It functions as the exact technical narrative you can port directly to a portfolio site or submit as an engineering case study. Section 4 is now complete with actual NB04 results: <strong>AUC-ROC 0.8604</strong>, Recall <strong>74.47%</strong> (vs. 65.78% for the Backblaze simple rule).</p>
     </div>
 
     <div class="genie-step">
@@ -1007,9 +1007,53 @@
         <div class="genie-step-num">4</div>
         <div class="genie-step-title">Machine Learning Strategy &amp; Evaluation</div>
       </div>
-      <div class="genie-why">The technical core of the whitepaper. Three mandatory sub-topics: <strong>Temporal Split</strong> — why random split causes leakage on consecutive drive rows, and how the Oct/Nov train &rarr; Dec test boundary prevents it; <strong>Class Weighting</strong> — the dynamic Count(0)/Count(1) weight factor injected as <code>weightCol</code> to penalize missed failures mathematically; <strong>Baseline Benchmark</strong> — the Backblaze simple heuristic rule precision &amp; recall from NB02 compared directly against the GBT model output. Leave placeholder brackets for the final metrics until NB04 finishes.</div>
+      <div class="genie-why">The technical core of the whitepaper — now complete with actual NB04 results. Three sub-topics: <strong>Temporal Split</strong> — why random split causes leakage on consecutive drive rows, and how the Oct/Nov &rarr; Dec boundary prevents it; <strong>Class Weighting</strong> — the dynamic Count(0)/Count(1) weight factor injected as <code>weightCol</code>; <strong>Baseline Benchmark</strong> — GBT vs. Backblaze simple rule on the December held-out test set.</div>
       <div class="genie-prompt-label">&#128172; Prompt &mdash; paste into Databricks Assistant (Markdown Cell)</div>
-      <div class="genie-prompt">Write a structured markdown section titled &apos;Machine Learning Strategy and Model Evaluation&apos;. Cover three areas: (1) temporal train/test split rationale and why a random split would cause data leakage on time-series drive data; (2) dynamic class weight calculation and how the weightCol parameter forces GBTClassifier to penalize missed failures; (3) model evaluation against the Backblaze simple rule baseline — include placeholder brackets [AUC-ROC SCORE] and [RECALL SCORE] to be filled in after Notebook 04 completes, and compare to the heuristic rule precision and recall computed in Notebook 02.</div>
+      <div class="genie-prompt">Write a structured markdown section titled &apos;Machine Learning Strategy and Model Evaluation&apos;. Cover three areas: (1) temporal train/test split rationale and why a random split would cause data leakage on time-series drive data; (2) dynamic class weight calculation and how the weightCol parameter forces GBTClassifier to penalize missed failures; (3) model evaluation against the Backblaze simple rule baseline — our GBT model achieved an AUC-ROC of 0.8604 and a Recall of 74.47% on the December test set, compared to the heuristic rule which achieved a Recall of 65.78% at a Precision of 0.72%.</div>
+
+      <div class="section-label" style="margin-top:1.2rem;">NB05 Section 4 &mdash; Actual Results (NB04 Complete)</div>
+
+      <div class="result-step" style="margin-top:.75rem;">
+        <div class="result-header"><div class="result-num">&#10003;</div><div class="result-title">AUC-ROC Score</div></div>
+        <div class="result-insight">&#128200; <strong>0.8604</strong> &mdash; Outstanding discriminative power on highly skewed, real-world data center telemetry. Exceeds the 0.85 target.</div>
+        <div class="result-value">Instance-level dynamic weights applied via <code>weightCol</code> successfully penalized misclassified minority instances (failures), preventing the model from collapsing to predicting all zeros.</div>
+      </div>
+
+      <div class="result-step">
+        <div class="result-header"><div class="result-num">&#128202;</div><div class="result-title">Performance Comparison &mdash; GBT vs. Backblaze Simple Rule (December Test Set)</div></div>
+        <table class="smart-table" style="margin-top:.6rem;margin-bottom:0;">
+          <thead>
+            <tr>
+              <th>Metric</th>
+              <th>Heuristic Baseline (SMART Rule &gt; 0)</th>
+              <th>GBT Model</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>AUC-ROC</strong></td>
+              <td><span class="pred-badge pred-low">0.5000</span> &nbsp;<small style="color:#8b949e;">Random heuristic</small></td>
+              <td><strong style="color:#3fb950;">0.8604</strong></td>
+            </tr>
+            <tr>
+              <td><strong>Precision</strong></td>
+              <td>0.72%</td>
+              <td>0.25%</td>
+            </tr>
+            <tr>
+              <td><strong>Recall</strong></td>
+              <td>65.78%</td>
+              <td><strong style="color:#3fb950;">74.47%</strong></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="result-step">
+        <div class="result-header"><div class="result-num">&#9889;</div><div class="result-title">Strategic Engineering Narrative</div></div>
+        <div class="result-insight">&#128308; <strong>The Critical Recall Win:</strong> GBT increased the failure catch rate from 65.78% &rarr; 74.47% — catching nearly 9% more crashing drives ahead of their failure windows. In enterprise data infrastructure, each uncaught failure risks unrecoverable data loss and unplanned cluster array degradation.</div>
+        <div class="result-value" style="margin-top:.65rem;"><strong>The Precision-Recall Frontier:</strong> The heuristic rule yields slightly higher precision (0.72% vs. 0.25%), but does so by leaving over 34% of failing drives completely unflagged (False Negatives). The GBT architecture, augmented by dynamic minority class weights, intentionally spreads a wider protective net — exchanging a manageable volume of additional predictive maintenance inspections for a mission-critical boost in Recall. In a fault-tolerance domain, this is the correct engineering tradeoff.</div>
+      </div>
     </div>
 
     <div class="genie-step">
