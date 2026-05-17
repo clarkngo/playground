@@ -564,6 +564,67 @@
       <p class="genie-note">&#9432; Downstream notebooks (02, 03, 04) load this with <code>spark.read.table("backblaze_master_delta")</code> — faster than re-reading CSVs and requires no DBFS path management. The <code>.cache()</code> guardrail for ML training happens in NB04, on the training split, immediately before <code>CrossValidator.fit()</code>.</p>
     </div>
 
+    <div class="section-label">Genie Code Guide &mdash; How NB02 Was Actually Built</div>
+
+    <div class="insight-box green">
+      <div class="ib-label">EDA isn&apos;t just pretty charts &mdash; it produces the baseline your model must beat</div>
+      <p>Because Databricks has a built-in visualization engine, you don&apos;t need <code>matplotlib</code> or <code>seaborn</code>. Ask Genie to build summary DataFrames, then click the <strong>+</strong> icon next to any output table and select <strong>Visualization</strong> to turn it into a bar chart or histogram instantly. The five steps below produce the statistical evidence for every claim in your paper&apos;s EDA section — and Step 5 gives you the exact precision and recall score your ML model must exceed.</p>
+    </div>
+
+    <div class="genie-step">
+      <div class="genie-step-header">
+        <div class="genie-step-num">1</div>
+        <div class="genie-step-title">Quantify the Severe Class Imbalance</div>
+      </div>
+      <div class="genie-why">Before touching a model, you need to see exactly how rare failure events are in Q4 2025. This percentage breakdown is the direct justification in your paper for why Accuracy is omitted and why class weighting is mandatory in NB04.</div>
+      <div class="genie-prompt-label">&#128172; Prompt &mdash; paste into Genie Code</div>
+      <div class="genie-prompt">Load the managed table &apos;backblaze_master_delta&apos; into a dataframe named df. Write PySpark code to group by the &apos;label&apos; column, calculate the count for each group, and compute the percentage distribution of 0s and 1s to demonstrate class imbalance.</div>
+      <p class="genie-note">&#9432; After Genie runs this cell, click <strong>+</strong> next to the output table and choose <strong>Visualization &rarr; Bar chart</strong> with label on the X axis and percentage on the Y axis. Screenshot this for the paper&apos;s EDA section.</p>
+    </div>
+
+    <div class="genie-step">
+      <div class="genie-step-header">
+        <div class="genie-step-num">2</div>
+        <div class="genie-step-title">Calculate Annualized Failure Rate (AFR) by Manufacturer</div>
+      </div>
+      <div class="genie-why">Hard drive reliability varies significantly by brand. The industry-standard AFR formula scales the observed failure rate over millions of drive-days to a comparable annualized percentage: <strong>AFR = (&#931; Failures / &#931; Drive-Days) &times; 365 &times; 100%</strong>. Genie handles the GROUP BY and formula in one step — parsing the manufacturer from the model prefix automatically.</div>
+      <div class="genie-prompt-label">&#128172; Prompt &mdash; paste into Genie Code</div>
+      <div class="genie-prompt">Using df, write PySpark code to create a new column called &apos;manufacturer&apos; by parsing the prefix of the &apos;model&apos; column (e.g., if it starts with &apos;ST&apos; assign &apos;Seagate&apos;, &apos;WDC&apos; or &apos;WD&apos; for &apos;Western Digital&apos;, &apos;TOSHIBA&apos; for &apos;Toshiba&apos;, and &apos;HGST&apos; for &apos;HGST&apos;). Group by &apos;manufacturer&apos; and calculate the Annualized Failure Rate (AFR) using the formula: (sum of &apos;failure&apos; / total row count) * 365 * 100. Order the results by AFR descending.</div>
+    </div>
+
+    <div class="genie-step">
+      <div class="genie-step-header">
+        <div class="genie-step-num">3</div>
+        <div class="genie-step-title">Map the Drive Age Lifecycle (Bathtub Curve)</div>
+      </div>
+      <div class="genie-why">Drives fail early from manufacturing defects ("infant mortality") or much later from mechanical wear. This prompt isolates only the drives that actually failed (<code>failure = 1</code>), extracts their Power-On Hours as a proxy for age, and converts to years for a readable scale. Plot as a histogram to show whether Q4 2025 failures skew toward new drives, old drives, or both.</div>
+      <div class="genie-prompt-label">&#128172; Prompt &mdash; paste into Genie Code</div>
+      <div class="genie-prompt">Using df, filter for rows where the actual &apos;failure&apos; column equals 1. For these failed drives, select &apos;smart_9_raw&apos; (which represents Power-On Hours). Convert these hours into years by dividing by 8760, and output a dataframe containing this age-at-failure data so it can be plotted as a histogram.</div>
+      <p class="genie-note">&#9432; In the Databricks visualization builder, choose <strong>Histogram</strong>, set the age-in-years column as the X axis, and bin width to 0.5 or 1 year. Peaks near 0 = infant mortality; a rising tail past 4 years = wear-out phase.</p>
+    </div>
+
+    <div class="genie-step">
+      <div class="genie-step-header">
+        <div class="genie-step-num">4</div>
+        <div class="genie-step-title">Compare Critical SMART Profiles — Healthy vs. Failing</div>
+      </div>
+      <div class="genie-why">The four highest-signal SMART attributes (5, 187, 197, 198) should show elevated averages in the 30-day pre-failure window (label = 1) compared to healthy drives (label = 0). This comparison table is the empirical evidence in your paper that these attributes have predictive value — and it validates why GBT should rank them as top features.</div>
+      <div class="genie-prompt-label">&#128172; Prompt &mdash; paste into Genie Code</div>
+      <div class="genie-prompt">Using df, write PySpark code to calculate and compare the average values of &apos;smart_5_raw&apos;, &apos;smart_187_raw&apos;, &apos;smart_197_raw&apos;, and &apos;smart_198_raw&apos; grouped by the &apos;label&apos; column (0 vs 1). Show the results in a clean comparison table.</div>
+      <p class="genie-note">&#9432; If all four averages for label = 1 are meaningfully higher than label = 0, you have direct evidence for the feature selection rationale in Section III of your paper.</p>
+    </div>
+
+    <div class="genie-step">
+      <div class="genie-step-header">
+        <div class="genie-step-num">5</div>
+        <div class="genie-step-title">Benchmark the Backblaze Simple Rule &mdash; The Target to Beat</div>
+      </div>
+      <div class="genie-why">Backblaze&apos;s own research states that if any of SMART 5, 187, 197, or 198 is greater than 0, the drive should be replaced. This is a human-crafted heuristic with no ML involved. Computing its precision and recall against your engineered <code>label</code> column gives you the exact baseline score your GBTClassifier must beat to justify the complexity of a Spark ML pipeline in your paper.</div>
+      <div class="genie-prompt-label">&#128172; Prompt &mdash; paste into Genie Code</div>
+      <div class="genie-prompt">Using df, write PySpark code to test a baseline rule. Create a temporary prediction column that is set to 1 if &apos;smart_5_raw&apos; &gt; 0, or &apos;smart_187_raw&apos; &gt; 0, or &apos;smart_197_raw&apos; &gt; 0, or &apos;smart_198_raw&apos; &gt; 0. Otherwise, set it to 0. Calculate and print the Precision and Recall of this baseline rule compared against our true &apos;label&apos; column.</div>
+      <p class="genie-note">&#9432; <strong>Save these numbers.</strong> Recall in particular is your primary target — in a failure-prediction context, missing a failure (false negative) is far more costly than a false alarm. Your NB04 GBT model must beat this Recall at a comparable or lower false alarm rate to justify the ML approach. Record both values in a comment cell at the bottom of NB02 for easy reference in NB04.</p>
+    </div>
+
     <div class="section-label">Sequential Execution Checklist</div>
     <table class="fw-table">
       <thead>
