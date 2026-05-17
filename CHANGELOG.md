@@ -37,6 +37,13 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-05-17
+
+### [ux] HDD Failure project — solo/Q4-2025 scope adaptation
+- `team-project/hdd-failure/index.html`: adapted all 5 tabs from a 4-person multi-year template to a solo Databricks Community Edition implementation using Q4 2025 (92 files); 4-member cards replaced with 4-notebook sequential workflow; lag/velocity feature engineering added as NB03; free-tier guardrails documented (3-fold CV, 4-combo max, .cache() before fit); Accuracy explicitly omitted; Delta Lake replaces Parquet throughout; intra-quarter temporal split (Oct–Nov train / Dec test)
+
+---
+
 ## 2026-05-03
 
 ### [feature] Team Project — HDD Failure Prediction using Backblaze Drive Stats

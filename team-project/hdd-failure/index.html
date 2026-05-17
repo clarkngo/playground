@@ -192,23 +192,23 @@
 
   <div class="page-badge">&#128190; Team Project</div>
   <h1>Hard Drive Failure Prediction</h1>
-  <p class="page-sub">Binary classification model using Apache Spark MLlib on the Backblaze Drive Stats dataset — predicting hard drive failure from daily S.M.A.R.T. sensor snapshots across millions of drive-days of real production data.</p>
+  <p class="page-sub">Binary classification model using Apache Spark MLlib on the Backblaze Q4 2025 Drive Stats dataset — predicting hard drive failure 30 days in advance from daily S.M.A.R.T. sensor snapshots. Solo implementation on Databricks Community Edition using 92 daily CSV files (~30 million drive-days).</p>
 
   <a href="pm.html" style="display:inline-flex;align-items:center;gap:.5rem;background:#2d2009;border:1px solid #9e6a03;color:#e3b341;text-decoration:none;font-size:.82rem;font-weight:700;padding:.45rem 1rem;border-radius:8px;margin-bottom:1.5rem;transition:background .15s;" onmouseover="this.style.background='#9e6a03';this.style.color='#fff'" onmouseout="this.style.background='#2d2009';this.style.color='#e3b341'">&#128203; PM Dashboard &rarr;</a>
 
   <div class="meta-row">
     <div class="meta-pill"><strong>Course:</strong> Big Data &amp; Machine Learning</div>
-    <div class="meta-pill"><strong>Dataset:</strong> Backblaze Drive Stats (open source)</div>
-    <div class="meta-pill"><strong>Team Size:</strong> 4 members</div>
-    <div class="meta-pill"><strong>Tool:</strong> Apache Spark MLlib</div>
+    <div class="meta-pill"><strong>Dataset:</strong> Backblaze Q4 2025 (Oct&ndash;Dec, 92 CSV files)</div>
+    <div class="meta-pill"><strong>Scope:</strong> Solo Engineer &mdash; Databricks Community Edition</div>
+    <div class="meta-pill"><strong>Tool:</strong> Apache Spark MLlib + Delta Lake</div>
     <div class="meta-pill"><strong>Paper:</strong> EDSIG/CONISAR template, 6&ndash;7 pages</div>
-    <div class="meta-pill"><strong>Scale:</strong> 30M+ drive-days, 12+ GB/quarter</div>
+    <div class="meta-pill"><strong>Scale:</strong> ~30M drive-days, 4 notebooks, 1 cluster</div>
   </div>
 
   <!-- Tab Nav -->
   <div class="tab-nav">
     <button class="tab-btn active" onclick="showTab('domain',    this)">&#128190; Domain Learning</button>
-    <button class="tab-btn"        onclick="showTab('tasks',     this)">&#9989; Team Action Items</button>
+    <button class="tab-btn"        onclick="showTab('tasks',     this)">&#128218; Notebook Workflow</button>
     <button class="tab-btn"        onclick="showTab('framework', this)">&#128196; Project Framework</button>
     <button class="tab-btn"        onclick="showTab('course',    this)">&#128218; Course Alignment</button>
     <button class="tab-btn"        onclick="showTab('paper',     this)">&#128394; Paper Guide</button>
@@ -252,23 +252,23 @@
     <div class="card-grid">
       <div class="card blue">
         <div class="card-icon">&#128197;</div>
-        <h3>Coverage: 2013&ndash;Present</h3>
-        <p>12+ years of quarterly releases. For a team project, use <strong>1&ndash;2 years</strong> (e.g., 2024, all 4 quarters) to keep file sizes manageable while still having millions of drive-day records.</p>
+        <h3>Scope: Q4 2025 (Oct&ndash;Dec)</h3>
+        <p>This implementation uses <strong>exactly 92 daily CSV files</strong> covering October 1 through December 31, 2025. All 92 files belong to the same quarter, so their SMART column schemas are already identical — no cross-quarter normalization required.</p>
       </div>
       <div class="card blue">
         <div class="card-icon">&#127981;</div>
-        <h3>4 Manufacturers</h3>
-        <p>HGST (8%), Seagate (34%), Toshiba (33%), WDC/Western Digital (25%). Failure rates vary significantly by model and manufacturer — a key EDA finding.</p>
+        <h3>4 Manufacturers in Dataset</h3>
+        <p>HGST, Seagate, Toshiba, WDC/Western Digital. Extract manufacturer directly from the <code>model</code> column prefix (e.g., "ST" = Seagate, "WDC" = WDC). Failure rates vary significantly by model — a key EDA finding for the paper.</p>
       </div>
       <div class="card blue">
-        <div class="card-icon">&#128209;</div>
-        <h3>Schema Evolves Quarterly</h3>
-        <p>Backblaze adds or removes SMART columns as drives change. Columns present in Q1 may be absent in Q4. The data cleaning step <strong>must normalize the schema</strong> before unioning quarters.</p>
+        <div class="card-icon">&#128190;</div>
+        <h3>Storage: Delta Lake on DBFS</h3>
+        <p>Save all intermediate DataFrames to Delta Lake: <code>df.write.format("delta").save("dbfs:/FileStore/...")</code>. Delta handles schema management and ACID transactions perfectly on Databricks Community Edition — no external cloud bucket needed.</p>
       </div>
       <div class="card red">
         <div class="card-icon">&#128200;</div>
         <h3>~1% Annualized Failure Rate</h3>
-        <p>Q4 2025 AFR = 1.13%. Across 30M drive-days, only 943 failures. This is an even more severe imbalance than the AI4I dataset — model accuracy is meaningless; use AUC-ROC and recall.</p>
+        <p>Q4 2025 AFR = 1.13%. Across ~30M drive-days, only 943 failures. This is an extremely severe imbalance — <strong>accuracy is omitted</strong> as a metric entirely. Primary metrics are AUC-ROC and Recall only.</p>
       </div>
     </div>
 
@@ -378,141 +378,142 @@
     </div>
 
     <div class="insight-box">
-      <div class="ib-label">Temporal Split — Prevent Data Leakage</div>
-      <p>Do <strong>not</strong> use a random train/test split on this dataset. Because drives appear on many consecutive days, a random split would allow future drive data to leak into training. Instead, use a <strong>temporal split</strong>: train on 2022&ndash;2023, test on 2024. This mirrors how the model would operate in production.</p>
+      <div class="ib-label">Temporal Split — Intra-Quarter (Q4 2025 Only)</div>
+      <p>Do <strong>not</strong> use a random train/test split — drives appear on many consecutive days, so random splitting allows future drive data to leak into training. Since this implementation uses only Q4 2025 (no multi-year data), use an <strong>intra-quarter temporal split</strong>:</p>
+      <p style="margin-top:.5rem;"><strong style="color:#e3b341;">Train Set:</strong> October 1 &ndash; November 30, 2025 &mdash; Files 1&ndash;61 &mdash; filter <code>date &lt; "2025-12-01"</code></p>
+      <p style="margin-top:.35rem;"><strong style="color:#3fb950;">Test Set:</strong> December 1 &ndash; December 31, 2025 &mdash; Files 62&ndash;92 &mdash; filter <code>date &gt;= "2025-12-01"</code></p>
+      <p style="margin-top:.5rem;">This mirrors production deployment: train on all history available today, evaluate on the most recent unseen month.</p>
     </div>
 
   </div>
 
   <!-- ══════════════════════════════════════════════
-       TAB 2 — TEAM ACTION ITEMS
+       TAB 2 — NOTEBOOK WORKFLOW (SOLO)
   ══════════════════════════════════════════════ -->
   <div class="tab-section" id="tab-tasks">
 
     <div class="insight-box blue">
-      <div class="ib-label">Team Structure — 4 Members</div>
-      <p>M1 handles the large-scale data ingestion and schema normalization — the biggest bottleneck. M2 and M3 can begin planning in parallel. The forward-looking label engineering (window function) is M1 &amp; M3 shared responsibility and must be agreed upon before M3 starts training.</p>
+      <div class="ib-label">Solo Engineer — 4-Notebook Sequential Workflow</div>
+      <p>Roles M1, M2, M3, and M4 are collapsed into a single sequential pipeline across 4 notebooks. Each notebook produces a Delta Lake checkpoint that the next notebook reads from — no cross-team handoffs needed. Run notebooks in order: 01 &rarr; 02 &rarr; 03 &rarr; 04.</p>
     </div>
 
     <div class="member-grid">
 
-      <!-- M1 -->
+      <!-- NB 01 -->
       <div class="member-card m1">
         <div class="member-header">
-          <div class="member-num n1">M1</div>
+          <div class="member-num n1">01</div>
           <div>
-            <div class="member-title">Data Engineering Lead</div>
-            <div class="member-role">Data ingestion &bull; Schema normalization &bull; Label engineering</div>
+            <div class="member-title">Data Ingestion &amp; Label Engineering</div>
+            <div class="member-role">Load Q4 2025 CSVs &bull; null handling &bull; 30-day forward label &bull; Delta Lake write</div>
           </div>
         </div>
         <ul class="task-list">
-          <li><span class="task-num t1">1</span><span class="task-text">Download Backblaze Drive Stats ZIP files for the chosen year (e.g., all 4 quarters of 2024) from <code>f001.backblazeb2.com/file/Backblaze-Hard-Drive-Data/</code>.</span></li>
-          <li><span class="task-num t1">2</span><span class="task-text">Unzip and load each quarter into a Spark DataFrame. Print schema for each and identify SMART columns that appear or disappear across quarters.</span></li>
-          <li><span class="task-num t1">3</span><span class="task-text">Select the 6 core SMART attributes present in all quarters: <code>smart_5_raw</code>, <code>smart_9_raw</code>, <code>smart_187_raw</code>, <code>smart_188_raw</code>, <code>smart_197_raw</code>, <code>smart_198_raw</code>.</span></li>
-          <li><span class="task-num t1">4</span><span class="task-text">Keep core columns: <code>date</code>, <code>serial_number</code>, <code>model</code>, <code>capacity_bytes</code>, <code>failure</code>, plus the 6 SMART attributes. Drop all other columns.</span></li>
-          <li><span class="task-num t1">5</span><span class="task-text">Cast all SMART columns to <code>LongType</code>. Fill null SMART values with 0 (absent attribute = no reported error).</span></li>
-          <li><span class="task-num t1">6</span><span class="task-text">Union all four quarterly DataFrames into one. Verify row count and confirm the <code>failure</code> column sums to the expected failure count for the year.</span></li>
-          <li><span class="task-num t1">7</span><span class="task-text">Engineer the forward-looking label: using a Spark window partitioned by <code>serial_number</code> and ordered by <code>date</code>, look ahead 30 days and set <code>label = 1</code> if any row in the window has <code>failure = 1</code>.</span></li>
-          <li><span class="task-num t1">8</span><span class="task-text">Cache the final labeled DataFrame. Write to Parquet partitioned by manufacturer (extracted from <code>model</code> prefix) for M2 and M3 to load.</span></li>
-          <li><span class="task-num t1">9</span><span class="task-text">Document the label engineering logic clearly — M3 must use this exact labeled dataset to avoid leakage.</span></li>
+          <li><span class="task-num t1">1</span><span class="task-text">Download <code>data_Q4_2025.zip</code> from <code>f001.backblazeb2.com/file/Backblaze-Hard-Drive-Data/</code>. Unzip to get the 92 daily CSV files (2025-10-01.csv through 2025-12-31.csv).</span></li>
+          <li><span class="task-num t1">2</span><span class="task-text">Upload the 92 CSVs to <code>dbfs:/FileStore/backblaze_q4_2025/</code> using the Databricks UI or CLI. Load into Spark: <code>spark.read.csv("dbfs:/FileStore/backblaze_q4_2025/", header=True, inferSchema=True)</code>.</span></li>
+          <li><span class="task-num t1">3</span><span class="task-text">Print schema. Since all 92 files are from the same quarter, the schema is already uniform — skip cross-quarter normalization. Confirm the 6 core SMART columns are present: <code>smart_5_raw</code>, <code>smart_9_raw</code>, <code>smart_187_raw</code>, <code>smart_188_raw</code>, <code>smart_197_raw</code>, <code>smart_198_raw</code>.</span></li>
+          <li><span class="task-num t1">4</span><span class="task-text">Select core columns only: <code>date</code>, <code>serial_number</code>, <code>model</code>, <code>capacity_bytes</code>, <code>failure</code>, plus the 6 SMART raw attributes. Drop all other columns.</span></li>
+          <li><span class="task-num t1">5</span><span class="task-text">Cast all SMART columns to <code>LongType</code>. Fill null SMART values with <code>0</code> — absent attribute means no reported error for that attribute.</span></li>
+          <li><span class="task-num t1">6</span><span class="task-text">Extract manufacturer from the <code>model</code> column prefix: Seagate = starts with "ST", WDC = starts with "WDC", HGST = starts with "HDS" or "HMS", Toshiba = starts with "TOSHIBA" or "MG". Add as new <code>mfr</code> column using <code>when/otherwise</code>.</span></li>
+          <li><span class="task-num t1">7</span><span class="task-text">Engineer the 30-day forward label: define <code>w = Window.partitionBy("serial_number").orderBy("date")</code>. For each drive-day, look ahead up to 30 rows. If <code>failure=1</code> appears within 30 days, set <code>label=1</code>, else <code>label=0</code>. Use <code>max(col("failure")).over(w.rowsBetween(0, 30))</code> or equivalent LEAD approach.</span></li>
+          <li><span class="task-num t1">8</span><span class="task-text">Verify label counts: print count of <code>label=1</code> and <code>label=0</code>. The window expansion will inflate the positive class but still leave heavy imbalance (expected: 2&ndash;5% positive after expansion from raw 1.13% AFR).</span></li>
+          <li><span class="task-num t1">9</span><span class="task-text">Write the labeled DataFrame to Delta Lake: <code>df.write.format("delta").mode("overwrite").save("dbfs:/FileStore/hdd_labeled/")</code>. Do not use standard Parquet — Delta enables reliable re-reads for all downstream notebooks.</span></li>
         </ul>
         <div class="deliverable-box">
-          <div class="db-label">Deliverable</div>
-          <code>01_data_ingestion_labeling.ipynb</code> — schema comparison across quarters, union, null handling, window-function label logic, Parquet output
+          <div class="db-label">Deliverable &rarr; Delta checkpoint</div>
+          <code>01_data_ingestion_labeling.ipynb</code> &mdash; 92 CSVs loaded, schema verified, nulls filled, 30-day window label, <code>dbfs:/FileStore/hdd_labeled/</code>
         </div>
       </div>
 
-      <!-- M2 -->
+      <!-- NB 02 -->
       <div class="member-card m2">
         <div class="member-header">
-          <div class="member-num n2">M2</div>
+          <div class="member-num n2">02</div>
           <div>
-            <div class="member-title">EDA &amp; Analytics Lead</div>
-            <div class="member-role">Failure analysis &bull; SMART distributions &bull; Visualizations</div>
+            <div class="member-title">EDA &amp; Baseline Benchmark</div>
+            <div class="member-role">Failure analysis &bull; SMART distributions &bull; Backblaze rule baseline</div>
           </div>
         </div>
         <ul class="task-list">
-          <li><span class="task-num t2">1</span><span class="task-text">Compute AFR by manufacturer: <code>SELECT model, COUNT(CASE WHEN failure=1 THEN 1 END) / COUNT(*) * 365 AS afr FROM drives GROUP BY model ORDER BY afr DESC</code>. Identify top 5 most and least reliable models.</span></li>
-          <li><span class="task-num t2">2</span><span class="task-text">Analyze drive age at failure: use <code>smart_9_raw</code> (Power-On Hours) to build a distribution of age at time of failure vs. age at snapshot for healthy drives.</span></li>
-          <li><span class="task-num t2">3</span><span class="task-text">Compare SMART 5, 187, 197, 198 distributions between failed drives (in the 30-day window before failure) vs. healthy drives. Show that nonzero values cluster near failures.</span></li>
-          <li><span class="task-num t2">4</span><span class="task-text">Validate the bathtub curve: compute failure rate by age cohort (bucket <code>smart_9_raw</code> by 1,000-hour intervals). Plot early-life spike, steady state, and wear-out phase.</span></li>
-          <li><span class="task-num t2">5</span><span class="task-text">Run the Backblaze baseline rule: flag any drive with nonzero SMART 5, 187, 197, or 198. Compute precision and recall of this rule vs. the 30-day label. This is the baseline the ML model must beat.</span></li>
-          <li><span class="task-num t2">6</span><span class="task-text">Compute correlation matrix of the 6 SMART features. Identify which are most correlated with each other (potential redundancy for feature selection).</span></li>
-          <li><span class="task-num t2">7</span><span class="task-text">Visualize class imbalance: count label=1 vs. label=0 across the full dataset. Express as a percentage and compute what "predict everything healthy" would score on accuracy and recall.</span></li>
-          <li><span class="task-num t2">8</span><span class="task-text">Write the Data Exploration section of the paper (Section 3) using the above query results. Export all figures as PNG for M4 inclusion.</span></li>
+          <li><span class="task-num t2">1</span><span class="task-text">Load from Delta: <code>spark.read.format("delta").load("dbfs:/FileStore/hdd_labeled/")</code>. Run <code>.count()</code> and verify row count matches expected Q4 2025 drive-days.</span></li>
+          <li><span class="task-num t2">2</span><span class="task-text">Compute overall label distribution: count <code>label=1</code> vs <code>label=0</code> and express as percentage. Note that a model predicting all zeros would achieve ~98% accuracy but 0% recall — this is why Accuracy is omitted as a metric.</span></li>
+          <li><span class="task-num t2">3</span><span class="task-text">Compute AFR by manufacturer using the extracted <code>mfr</code> column: <code>SELECT mfr, COUNT(CASE WHEN failure=1 THEN 1 END) / COUNT(*) * 365 AS afr FROM drives GROUP BY mfr ORDER BY afr DESC</code>. Identify the most and least reliable manufacturer in Q4 2025.</span></li>
+          <li><span class="task-num t2">4</span><span class="task-text">Analyze drive age at failure: use <code>smart_9_raw</code> (Power-On Hours) to compare the distribution of age for drives in the 30-day failure window vs. healthy drives. Show that older drives concentrate more failures (wear-out phase).</span></li>
+          <li><span class="task-num t2">5</span><span class="task-text">Validate the bathtub curve: bucket <code>smart_9_raw</code> into 1,000-hour intervals. Compute failure rate per bucket. Expect an early-life spike for drives under 1,000 hours and a rising wear-out rate for drives over 30,000 hours.</span></li>
+          <li><span class="task-num t2">6</span><span class="task-text">Compare SMART 5, 187, 197, 198 value distributions for <code>label=1</code> vs <code>label=0</code> drives. Show that nonzero values are heavily concentrated in the pre-failure window.</span></li>
+          <li><span class="task-num t2">7</span><span class="task-text">Run the Backblaze simple rule baseline (in Spark SQL): flag any drive-day where <code>smart_5_raw &gt; 0 OR smart_187_raw &gt; 0 OR smart_197_raw &gt; 0 OR smart_198_raw &gt; 0</code>. Compute precision and recall of this rule against the 30-day <code>label</code>. <strong>Record these numbers</strong> — your ML model must beat this recall.</span></li>
+          <li><span class="task-num t2">8</span><span class="task-text">Compute correlation matrix of the 6 SMART raw features. Identify pairs with high correlation (e.g., smart_197 and smart_198 often move together). Flag for potential removal in feature engineering.</span></li>
         </ul>
         <div class="deliverable-box">
-          <div class="db-label">Deliverable</div>
-          <code>02_eda_backblaze.ipynb</code> — AFR table, age-at-failure distribution, SMART distributions, bathtub curve, baseline rule benchmark, figures for paper
+          <div class="db-label">Deliverable &rarr; Baseline score</div>
+          <code>02_eda_visualization.ipynb</code> &mdash; AFR by manufacturer, bathtub curve, SMART distributions, Backblaze simple-rule precision &amp; recall benchmark
         </div>
       </div>
 
-      <!-- M3 -->
+      <!-- NB 03 -->
       <div class="member-card m3">
         <div class="member-header">
-          <div class="member-num n3">M3</div>
+          <div class="member-num n3">03</div>
           <div>
-            <div class="member-title">ML Pipeline Engineer</div>
-            <div class="member-role">Spark ML Pipeline &bull; GBT classifier &bull; Temporal evaluation</div>
+            <div class="member-title">Feature Engineering</div>
+            <div class="member-role">Lag features &bull; Velocity features &bull; Window analytics &bull; Delta Lake write</div>
           </div>
         </div>
         <ul class="task-list">
-          <li><span class="task-num t3">1</span><span class="task-text">Load the labeled Parquet from M1. Apply a <strong>temporal train/test split</strong>: filter <code>date &lt; '2024-10-01'</code> for training, <code>date &ge; '2024-10-01'</code> for testing. Do not use random split.</span></li>
-          <li><span class="task-num t3">2</span><span class="task-text">Build <code>VectorAssembler</code> combining all 6 SMART raw attributes into a single feature vector.</span></li>
-          <li><span class="task-num t3">3</span><span class="task-text">Add <code>StandardScaler</code> stage to normalize feature magnitudes across SMART attributes.</span></li>
-          <li><span class="task-num t3">4</span><span class="task-text">Configure <code>GBTClassifier</code> (Gradient Boosted Trees) with <code>labelCol="label"</code>. GBT handles imbalance better than logistic regression and produces feature importances natively.</span></li>
-          <li><span class="task-num t3">5</span><span class="task-text">Set class weights: compute weight for class 1 as <code>count(label=0) / count(label=1)</code>. Add <code>weightCol</code> to the training DataFrame to compensate for the ~99:1 imbalance.</span></li>
-          <li><span class="task-num t3">6</span><span class="task-text">Build <code>ParamGridBuilder</code> with <code>maxIter</code> in [10, 20] and <code>maxDepth</code> in [3, 5]. Wrap in <code>CrossValidator</code> with 3-fold CV (large dataset — 5 folds may be too slow).</span></li>
-          <li><span class="task-num t3">7</span><span class="task-text">Cache the training DataFrame before CrossValidator. Document time savings vs. uncached run (Chapter 7 reference).</span></li>
-          <li><span class="task-num t3">8</span><span class="task-text">Evaluate on test set: report AUC-ROC (<code>BinaryClassificationEvaluator</code>), precision, recall, and F1 at the 0.5 threshold. Also report recall at a 0.3 threshold (catching more failures at cost of more false alarms).</span></li>
-          <li><span class="task-num t3">9</span><span class="task-text">Extract and rank feature importances from the best GBT model. Confirm SMART 5, 187, 197, 198 rank highest — validating Backblaze research findings.</span></li>
+          <li><span class="task-num t3">1</span><span class="task-text">Load from Delta: <code>spark.read.format("delta").load("dbfs:/FileStore/hdd_labeled/")</code>. This notebook adds time-series features that a point-in-time model misses.</span></li>
+          <li><span class="task-num t3">2</span><span class="task-text">Define the drive-level window spec: <code>w = Window.partitionBy("serial_number").orderBy("date")</code>.</span></li>
+          <li><span class="task-num t3">3</span><span class="task-text">Add <strong>7-day lag features</strong> for the 4 highest-signal SMART attributes: <code>lag("smart_5_raw", 7).over(w)</code> &rarr; <code>smart_5_lag7</code>. Repeat for <code>smart_187_raw</code>, <code>smart_197_raw</code>, <code>smart_198_raw</code>. These capture the historical baseline value per drive.</span></li>
+          <li><span class="task-num t3">4</span><span class="task-text">Add <strong>7-day velocity features</strong> (rate of change): <code>(col("smart_5_raw") - col("smart_5_lag7"))</code> &rarr; <code>smart_5_delta7</code>. Repeat for smart_187, 197, 198. Rapid growth in reallocated sectors is far more alarming than a stable nonzero count.</span></li>
+          <li><span class="task-num t3">5</span><span class="task-text">Fill nulls in all lag and velocity columns with <code>0</code> — the first 7 days of each drive history will have no lag available. This is acceptable for a Q4 dataset where drives have prior history.</span></li>
+          <li><span class="task-num t3">6</span><span class="task-text">Verify total column count: 6 original SMART features + 4 lag features + 4 velocity features = 14 engineered features for the model. Print schema to confirm.</span></li>
+          <li><span class="task-num t3">7</span><span class="task-text">Cache the feature-engineered DataFrame in memory: <code>df_features.cache()</code>. Run a <code>.count()</code> to materialize the cache. This avoids recomputing window functions every time the next notebook reads the data.</span></li>
+          <li><span class="task-num t3">8</span><span class="task-text">Write to Delta Lake: <code>df_features.write.format("delta").mode("overwrite").save("dbfs:/FileStore/hdd_features/")</code>. Notebook 04 reads from this path.</span></li>
         </ul>
         <div class="deliverable-box">
-          <div class="db-label">Deliverable</div>
-          <code>03_ml_pipeline_gbt.ipynb</code> — temporal split rationale, Pipeline code, class weighting, CrossValidator results, AUC-ROC + recall metrics, feature importance chart
+          <div class="db-label">Deliverable &rarr; Delta checkpoint</div>
+          <code>03_feature_engineering.ipynb</code> &mdash; 14 features (6 SMART + 4 lag-7 + 4 delta-7), cached, <code>dbfs:/FileStore/hdd_features/</code>
         </div>
       </div>
 
-      <!-- M4 -->
+      <!-- NB 04 -->
       <div class="member-card m4">
         <div class="member-header">
-          <div class="member-num n4">M4</div>
+          <div class="member-num n4">04</div>
           <div>
-            <div class="member-title">Paper &amp; Presentation Lead</div>
-            <div class="member-role">EDSIG/CONISAR template &bull; Paper writing &bull; Slides</div>
+            <div class="member-title">ML Modeling &amp; Evaluation</div>
+            <div class="member-role">Temporal split &bull; GBTClassifier &bull; Free-tier guardrails &bull; AUC-ROC + Recall</div>
           </div>
         </div>
         <ul class="task-list">
-          <li><span class="task-num t4">1</span><span class="task-text">Set up EDSIG/CONISAR Word template (6&ndash;7 pages, two-column IEEE style). Create section placeholders for all 7 sections.</span></li>
-          <li><span class="task-num t4">2</span><span class="task-text">Write Abstract (~150 words): data center HDD failure costs, Spark-based approach, Backblaze dataset, forward-looking label engineering, GBT model, AUC-ROC as primary metric.</span></li>
-          <li><span class="task-num t4">3</span><span class="task-text">Write Introduction + Problem Statement: define the business problem (proactive replacement vs. reactive repair), the 30-day prediction horizon, and success criteria (AUC-ROC &gt; 0.85, recall &gt; 0.70 at 0.5 threshold).</span></li>
-          <li><span class="task-num t4">4</span><span class="task-text">Write Dataset Selection section: describe Backblaze Drive Stats (2013&ndash;present, open source, real production data). Cite Backblaze. State limitations: data is from a single operator (Backblaze) in controlled data center conditions — may not generalize to other environments or consumer drives.</span></li>
-          <li><span class="task-num t4">5</span><span class="task-text">Write Data Cleaning section (from M1 results): schema normalization across quarters, SMART column selection, null imputation, forward-looking label window function. Include before/after schema table.</span></li>
-          <li><span class="task-num t4">6</span><span class="task-text">Integrate M2 EDA figures into Section 3 (Data Exploration). Write narrative: AFR by model, SMART distributions at failure, bathtub curve, and baseline rule benchmark.</span></li>
-          <li><span class="task-num t4">7</span><span class="task-text">Write ML Method section: GBT choice rationale (handles imbalance, produces feature importances, ensemble of trees), Pipeline stages, class weighting strategy, temporal split rationale, CrossValidator config, caching reference (Chapter 7).</span></li>
-          <li><span class="task-num t4">8</span><span class="task-text">Write Model Evaluation section: AUC-ROC curve, precision/recall at multiple thresholds, feature importance ranking. Compare ML model recall vs. Backblaze simple rule (M2 baseline).</span></li>
-          <li><span class="task-num t4">9</span><span class="task-text">Write Conclusion + Future Work: summarize results, note limitations (single operator, SMART not reported by all models). Suggest survival analysis (Weibull) or LSTM time-series model as extensions. Reference Structured Streaming (Chapter 8) for real-time deployment.</span></li>
-          <li><span class="task-num t4">10</span><span class="task-text">Build 10-slide presentation deck: title, problem, dataset scale, SMART primer, bathtub curve, pipeline, results vs. baseline, feature importances, conclusion, next steps.</span></li>
+          <li><span class="task-num t4">1</span><span class="task-text">Load from Delta: <code>spark.read.format("delta").load("dbfs:/FileStore/hdd_features/")</code>.</span></li>
+          <li><span class="task-num t4">2</span><span class="task-text">Apply <strong>intra-quarter temporal split</strong>: <code>train = df.filter(col("date") &lt; "2025-12-01")</code> (files 1&ndash;61, Oct&ndash;Nov); <code>test = df.filter(col("date") &gt;= "2025-12-01")</code> (files 62&ndash;92, December only). Never use random split.</span></li>
+          <li><span class="task-num t4">3</span><span class="task-text">Compute class weights from training data: <code>n0 = train.filter(col("label")==0).count()</code>, <code>n1 = train.filter(col("label")==1).count()</code>. Weight for class 1 = <code>n0 / n1</code>. Add <code>weightCol</code> column to training DataFrame using <code>when(col("label")==1, weight).otherwise(1.0)</code>.</span></li>
+          <li><span class="task-num t4">4</span><span class="task-text"><strong>Free-Tier Guardrail:</strong> run <code>train.cache()</code> then <code>train.count()</code> to materialize before the Pipeline fit. Without this, CrossValidator re-reads and re-executes all window functions on every fold — this will crash or time out on Community Edition.</span></li>
+          <li><span class="task-num t4">5</span><span class="task-text">Build Spark ML Pipeline: <code>VectorAssembler</code> (all 14 features &rarr; "features") &rarr; <code>StandardScaler</code> &rarr; <code>GBTClassifier(labelCol="label", weightCol="weight", featuresCol="scaled_features")</code>.</span></li>
+          <li><span class="task-num t4">6</span><span class="task-text"><strong>Free-Tier Guardrail:</strong> keep <code>ParamGridBuilder</code> to exactly <strong>2&ndash;3 combinations</strong>: <code>maxIter=[10, 20]</code> and <code>maxDepth=[3]</code> (2 combos) or add <code>maxDepth=[3, 5]</code> (4 combos max). More than 4 param combinations with 3-fold CV will likely exhaust Community Edition memory.</span></li>
+          <li><span class="task-num t4">7</span><span class="task-text">Wrap in <code>CrossValidator</code> with <strong>exactly 3 folds</strong> (not 5) and <code>BinaryClassificationEvaluator(metricName="areaUnderROC")</code>. Fit on training set. This step will take several minutes — do not interrupt the cluster.</span></li>
+          <li><span class="task-num t4">8</span><span class="task-text">Evaluate best model on test set. Report: <strong>AUC-ROC</strong> (primary), <strong>Recall</strong> at threshold 0.5 (secondary), Precision at 0.5, Recall at threshold 0.3 (to show the precision-recall tradeoff). <strong>Do not report Accuracy</strong> — it is not a valid metric for a 1% failure rate dataset and must be explicitly omitted in the paper.</span></li>
+          <li><span class="task-num t4">9</span><span class="task-text">Extract feature importances from the best GBT model: <code>bestModel.stages[-1].featureImportances</code>. Map back to feature names. Confirm that lag and velocity features for SMART 5, 187, 197, 198 rank higher than the raw point-in-time values — this validates the feature engineering contribution.</span></li>
+          <li><span class="task-num t4">10</span><span class="task-text">Compare final ML Recall vs. the Backblaze simple rule Recall (from Notebook 02). This comparison is the headline result of the paper: does the ML model identify more failing drives at a comparable or lower false positive rate?</span></li>
         </ul>
         <div class="deliverable-box">
-          <div class="db-label">Deliverable</div>
-          <code>team_paper_hdd.docx</code> (EDSIG/CONISAR, 6&ndash;7 pages) + <code>presentation_hdd.pptx</code> (10 slides)
+          <div class="db-label">Deliverable &rarr; Final results</div>
+          <code>04_ml_modeling.ipynb</code> &mdash; temporal split, cached train, GBT Pipeline, 3-fold CV (max 4 param combos), AUC-ROC + Recall reported, Accuracy omitted, feature importances ranked
         </div>
       </div>
 
     </div>
 
-    <div class="section-label">Coordination Checkpoints</div>
+    <div class="section-label">Sequential Execution Checklist</div>
     <table class="fw-table">
       <thead>
-        <tr><th>Checkpoint</th><th>Who</th><th>Gate Condition</th></tr>
+        <tr><th>Step</th><th>Notebook</th><th>Gate Condition Before Proceeding</th></tr>
       </thead>
       <tbody>
-        <tr><td class="fw-sec">Kickoff Sync</td><td>All 4</td><td>Agree on year scope (recommend 2024), Spark environment, shared storage, and the exact 30-day label window definition before any code is written</td></tr>
-        <tr><td class="fw-sec">Label Agreement</td><td>M1 + M3</td><td>M1 and M3 must agree on label window logic and column names before M1 writes the labeled Parquet and before M3 writes any pipeline code</td></tr>
-        <tr><td class="fw-sec">Data Handoff</td><td>M1 &rarr; M2, M3</td><td>M1 shares Parquet path and schema. M2 and M3 verify they can load it and run a basic <code>.count()</code> before proceeding</td></tr>
-        <tr><td class="fw-sec">Baseline vs. ML</td><td>M2 + M3</td><td>M2 shares baseline rule recall score. M3 uses this as the target to beat — not just any positive AUC-ROC but specifically better recall than the simple SMART threshold rule</td></tr>
-        <tr><td class="fw-sec">Paper Draft Review</td><td>All 4</td><td>Full draft shared in Week 5. All members review before M4 submits final version</td></tr>
+        <tr><td class="fw-sec">1 &rarr; 2</td><td><code>01_data_ingestion_labeling.ipynb</code></td><td>Delta table at <code>dbfs:/FileStore/hdd_labeled/</code> exists. <code>spark.read.format("delta").load(...).count()</code> returns expected row count. Label counts printed (label=1 and label=0 both nonzero).</td></tr>
+        <tr><td class="fw-sec">2 &rarr; 3</td><td><code>02_eda_visualization.ipynb</code></td><td>Backblaze simple rule recall score recorded. AFR by manufacturer table completed. These numbers become the baseline target for Notebook 04.</td></tr>
+        <tr><td class="fw-sec">3 &rarr; 4</td><td><code>03_feature_engineering.ipynb</code></td><td>Delta table at <code>dbfs:/FileStore/hdd_features/</code> exists. Schema shows 14 feature columns (6 SMART + 4 lag7 + 4 delta7). No null counts in lag/delta columns (all filled with 0).</td></tr>
+        <tr><td class="fw-sec">Final</td><td><code>04_ml_modeling.ipynb</code></td><td>AUC-ROC and Recall reported on December test set. ML Recall compared to simple rule Recall. Feature importances ranked and exported. Accuracy intentionally omitted from all output.</td></tr>
       </tbody>
     </table>
 
@@ -526,16 +527,28 @@
     <div class="section-label">Project Abstract</div>
     <div class="insight-box">
       <div class="ib-label">Abstract</div>
-      <p>Hard drive failures in data center environments cause costly unplanned downtime and data recovery operations. This project applies Apache Spark MLlib to the Backblaze Drive Stats dataset — over 30 million drive-days of real production data — to build a binary classifier predicting HDD failure within a 30-day horizon using daily S.M.A.R.T. sensor snapshots. A Spark ML Pipeline incorporates VectorAssembler, StandardScaler, and a Gradient Boosted Trees classifier with class-weighted training to address severe label imbalance (~1% failure rate). A temporal train/test split prevents data leakage. Results are evaluated using AUC-ROC and recall, and compared against Backblaze published baseline rules. Chapter 7 caching strategies are demonstrated to manage the dataset at scale.</p>
+      <p>Hard drive failures in data center environments cause costly unplanned downtime and data recovery operations. This project applies Apache Spark MLlib to the Backblaze Q4 2025 Drive Stats dataset — 92 daily CSV files comprising approximately 30 million drive-days of real production data — to build a binary classifier predicting HDD failure within a 30-day horizon using daily S.M.A.R.T. sensor snapshots. A Spark ML Pipeline incorporates lag and velocity feature engineering (7-day lookback window functions), VectorAssembler, StandardScaler, and a Gradient Boosted Trees classifier with class-weighted training to address severe label imbalance (~1% failure rate). An intra-quarter temporal split (October&ndash;November train, December test) prevents data leakage. Intermediate datasets are persisted to Delta Lake on Databricks Community Edition with explicit caching to manage free-tier compute constraints. Results are evaluated using AUC-ROC and Recall — Accuracy is explicitly omitted — and compared against the Backblaze published simple-rule baseline. Chapter 7 caching strategies and a 3-fold CrossValidator with a constrained parameter grid are documented as free-tier optimization guardrails.</p>
     </div>
 
     <div class="section-label">Spark ML Pipeline Architecture</div>
     <div class="pipeline">
-      <div class="pipe-step blue">Load Parquet</div>
+      <div class="pipe-step blue">Load 92 CSVs</div>
+      <div class="pipe-arrow">&#8594;</div>
+      <div class="pipe-step blue">Null Fill + Cast</div>
+      <div class="pipe-arrow">&#8594;</div>
+      <div class="pipe-step blue">30-day Label Window</div>
+      <div class="pipe-arrow">&#8594;</div>
+      <div class="pipe-step blue">&#916; Delta hdd_labeled</div>
+      <div class="pipe-arrow">&#8594;</div>
+      <div class="pipe-step purple">Lag-7 Features</div>
+      <div class="pipe-arrow">&#8594;</div>
+      <div class="pipe-step purple">Velocity-7 Features</div>
+      <div class="pipe-arrow">&#8594;</div>
+      <div class="pipe-step blue">&#916; Delta hdd_features</div>
       <div class="pipe-arrow">&#8594;</div>
       <div class="pipe-step blue">Temporal Split</div>
       <div class="pipe-arrow">&#8594;</div>
-      <div class="pipe-step blue">Class Weighting</div>
+      <div class="pipe-step blue">Class Weighting + .cache()</div>
       <div class="pipe-arrow">&#8594;</div>
       <div class="pipe-step blue">VectorAssembler</div>
       <div class="pipe-arrow">&#8594;</div>
@@ -543,52 +556,58 @@
       <div class="pipe-arrow">&#8594;</div>
       <div class="pipe-step">GBTClassifier</div>
       <div class="pipe-arrow">&#8594;</div>
-      <div class="pipe-step green">CrossValidator</div>
+      <div class="pipe-step green">CrossValidator 3-fold</div>
       <div class="pipe-arrow">&#8594;</div>
-      <div class="pipe-step yellow">BinaryEvaluator</div>
+      <div class="pipe-step yellow">AUC-ROC + Recall</div>
     </div>
 
     <div class="section-label">Five-Section Project Framework</div>
     <table class="fw-table">
       <thead>
-        <tr><th>Section</th><th>Objective</th><th>Spark Techniques</th><th>Owner</th></tr>
+        <tr><th>Section</th><th>Objective</th><th>Spark Techniques</th><th>Notebook</th></tr>
       </thead>
       <tbody>
         <tr>
           <td class="fw-sec">1. Problem Statement</td>
-          <td>Predict drive failure within 30 days. Success = AUC-ROC &gt; 0.85, recall &gt; 0.70 at 0.5 threshold, beats Backblaze simple rule</td>
+          <td>Predict drive failure within 30 days using Q4 2025 data. Success = AUC-ROC &gt; 0.85, recall &gt; 0.70 at 0.5 threshold, beats Backblaze simple rule</td>
           <td>&mdash;</td>
-          <td><span class="fw-tag yellow">M4</span></td>
+          <td><span class="fw-tag yellow">Paper</span></td>
         </tr>
         <tr>
           <td class="fw-sec">2a. Dataset Selection</td>
-          <td>Justify Backblaze dataset; document limitations (single operator, controlled environment)</td>
+          <td>Justify Backblaze Q4 2025 (92 files, ~30M rows); document scope limitations (single operator, single quarter)</td>
           <td>&mdash;</td>
-          <td><span class="fw-tag yellow">M4</span></td>
+          <td><span class="fw-tag yellow">Paper</span></td>
         </tr>
         <tr>
-          <td class="fw-sec">2b. Data Cleaning</td>
-          <td>Normalize quarterly schemas; select 6 SMART columns; impute nulls; engineer 30-day forward label</td>
-          <td>Window functions (<code>LEAD</code>), <code>.fillna()</code>, <code>.union()</code>, <code>.cache()</code>, Parquet write</td>
-          <td><span class="fw-tag blue">M1</span></td>
+          <td class="fw-sec">2b. Data Cleaning &amp; Label Engineering</td>
+          <td>Load 92 CSVs; select 6 SMART columns; cast to LongType; fill nulls; engineer 30-day forward label with window function; write to Delta Lake</td>
+          <td>Window functions (<code>rowsBetween(0,30)</code>), <code>.fillna(0)</code>, <code>.cache()</code>, Delta Lake write</td>
+          <td><span class="fw-tag blue">NB 01</span></td>
         </tr>
         <tr>
           <td class="fw-sec">3. Exploration &amp; Analysis</td>
-          <td>AFR by model, SMART distributions at failure, bathtub curve, baseline rule benchmark</td>
-          <td>Spark SQL <code>GROUP BY</code>, window functions, <code>.describe()</code>, <code>.crosstab()</code></td>
-          <td><span class="fw-tag green">M2</span></td>
+          <td>AFR by manufacturer (from model prefix), SMART distributions at failure, bathtub curve, Backblaze simple rule baseline (precision &amp; recall)</td>
+          <td>Spark SQL <code>GROUP BY</code>, <code>CASE WHEN</code>, <code>.describe()</code>, window buckets</td>
+          <td><span class="fw-tag green">NB 02</span></td>
+        </tr>
+        <tr>
+          <td class="fw-sec">3b. Feature Engineering</td>
+          <td>Add 7-day lag features and 7-day velocity (delta) features for SMART 5, 187, 197, 198; fill lag nulls; write enriched dataset to Delta Lake</td>
+          <td><code>Window.partitionBy.orderBy</code>, <code>lag(col, 7)</code>, column arithmetic, Delta Lake write</td>
+          <td><span class="fw-tag purple">NB 03</span></td>
         </tr>
         <tr>
           <td class="fw-sec">4. ML Method &amp; Training</td>
-          <td>GBT Pipeline; class weighting; temporal split; CrossValidator; caching benchmark</td>
-          <td><code>GBTClassifier</code>, <code>Pipeline</code>, <code>CrossValidator</code>, <code>ParamGridBuilder</code>, <code>.cache()</code></td>
-          <td><span class="fw-tag purple">M3</span></td>
+          <td>Intra-quarter temporal split (Oct&ndash;Nov train, Dec test); class weighting; cache before CV; GBT Pipeline; 3-fold CrossValidator (max 4 param combos for free tier)</td>
+          <td><code>GBTClassifier(weightCol)</code>, <code>Pipeline</code>, <code>CrossValidator</code>, <code>ParamGridBuilder</code>, <code>.cache()</code></td>
+          <td><span class="fw-tag yellow">NB 04</span></td>
         </tr>
         <tr>
           <td class="fw-sec">5. Model Evaluation</td>
-          <td>AUC-ROC, precision/recall at multiple thresholds, feature importances, comparison to baseline</td>
-          <td><code>BinaryClassificationEvaluator</code>, <code>MulticlassClassificationEvaluator</code></td>
-          <td><span class="fw-tag purple">M3</span> <span class="fw-tag yellow">M4</span></td>
+          <td>AUC-ROC (primary) and Recall at 0.5 and 0.3 thresholds. Accuracy explicitly omitted. Feature importance ranking. ML recall vs. Backblaze simple rule recall comparison.</td>
+          <td><code>BinaryClassificationEvaluator(areaUnderROC)</code>, <code>featureImportances</code></td>
+          <td><span class="fw-tag yellow">NB 04</span></td>
         </tr>
       </tbody>
     </table>
@@ -612,8 +631,13 @@
       </div>
       <div class="card yellow">
         <div class="card-icon">&#9888;</div>
-        <h3>Scale Demonstrated</h3>
-        <p>The paper must reference specific row counts and file sizes to justify Spark (vs. pandas). A single year of data at ~3 GB/quarter compressed = real Big Data justification for the course.</p>
+        <h3>Accuracy Explicitly Omitted</h3>
+        <p>A model predicting all zeros scores ~98.9% accuracy on this dataset while catching zero failures. The paper must state explicitly that Accuracy is not reported. Metrics used: AUC-ROC and Recall only.</p>
+      </div>
+      <div class="card yellow">
+        <div class="card-icon">&#128190;</div>
+        <h3>Scale Demonstrated (Free Tier)</h3>
+        <p>~30M drive-days across 92 CSVs justifies Spark over pandas. Document the caching guardrail: <code>.cache()</code> before CrossValidator prevents re-executing window functions on every fold — a real Chapter 7 demonstration on constrained hardware.</p>
       </div>
     </div>
 
@@ -622,17 +646,17 @@
       <div class="ib-label">Challenge: Extreme Class Imbalance (~1%)</div>
       <p>With only ~1% positive labels after the 30-day window expansion (raw failure rate is even lower), the model will converge to "predict 0 always." Mitigation: compute class weights from training data and pass via <code>weightCol</code>; use AUC-ROC as the CrossValidator metric, not accuracy; tune the decision threshold after training.</p>
     </div>
-    <div class="insight-box">
-      <div class="ib-label">Challenge: Schema Changes Across Quarters</div>
-      <p>Backblaze adds or removes SMART columns quarterly. Mitigation: M1 must load each quarter separately, print schema, and select only the intersection of columns present in all quarters. The 6 core SMART attributes listed above are stable across most years.</p>
-    </div>
     <div class="insight-box blue">
-      <div class="ib-label">Challenge: Dataset Size (12+ GB/year uncompressed)</div>
-      <p>A full year is large for a local Spark setup. Mitigation: use Databricks Community Edition for free cluster compute; OR work with a representative sample (e.g., Seagate drives only, which are the largest manufacturer group). Cache aggressively and repartition by <code>model</code> to minimize shuffle.</p>
+      <div class="ib-label">Challenge: Free-Tier Compute Limits (Community Edition)</div>
+      <p>Databricks Community Edition has limited RAM and no autoscaling. Three guardrails are mandatory: (1) call <code>.cache()</code> then <code>.count()</code> on the training DataFrame before fitting CrossValidator — without this, every fold re-executes all window functions from scratch; (2) limit <code>ParamGridBuilder</code> to 2&ndash;3 combinations max (4 is the hard ceiling before memory exhaustion); (3) use <code>numFolds=3</code> in CrossValidator, not 5.</p>
     </div>
     <div class="insight-box purple">
       <div class="ib-label">Challenge: Label Engineering Complexity</div>
-      <p>The 30-day forward label requires a Spark window function sorted in reverse: for each serial_number, look N rows ahead for a failure=1. This is the hardest technical step. M1 should test the logic on a single drive before applying to all drives.</p>
+      <p>The 30-day forward label requires a Spark window function that looks ahead: for each serial_number, flag the row as label=1 if any of the next 30 rows contains failure=1. Use <code>max(col("failure")).over(w.rowsBetween(0, 30))</code>. Test the logic on a single drive (filter to one serial_number) before applying to all ~30M rows.</p>
+    </div>
+    <div class="insight-box teal">
+      <div class="ib-label">Challenge: Lag Features &amp; Null Handling</div>
+      <p>The first 7 drive-days of each drive history will have no lag values available (not enough prior rows within Q4 2025). These will be null. Fill all lag and velocity nulls with <code>0</code> after computing them. This is a safe imputation — a new drive entering the quarter with no prior SMART growth history should default to "no change."</p>
     </div>
 
   </div>
@@ -647,13 +671,13 @@
       <div class="ch-card">
         <div class="ch-num">Chapter 1</div>
         <div class="ch-title">Introduction to Apache Spark</div>
-        <div class="ch-use">Spark architecture justification: at 12 GB/quarter and multiple quarters, this dataset genuinely exceeds single-machine pandas capacity. The lazy evaluation model is critical — transformations on a 30M-row DataFrame are planned, not executed, until an action is called.</div>
+        <div class="ch-use">Spark architecture justification: 92 daily CSV files comprising ~30M drive-days genuinely exceed single-machine pandas capacity. The lazy evaluation model is critical — window function transformations for label engineering and lag features across 30M rows are planned, not executed, until an action is called.</div>
         <span class="ch-badge used">Context</span>
       </div>
       <div class="ch-card">
         <div class="ch-num">Chapter 2</div>
         <div class="ch-title">Getting Started with Spark</div>
-        <div class="ch-use">M1 setup: SparkSession configuration for a large dataset. Set <code>spark.sql.shuffle.partitions</code> to match the cluster size. Recommend Databricks Community Edition for the compute required by this dataset.</div>
+        <div class="ch-use">SparkSession is already initialized on Databricks Community Edition — no manual setup needed. Key config: set <code>spark.sql.shuffle.partitions</code> to 8&ndash;16 (default 200 is too high for Community Edition and causes memory pressure). Load all 92 CSVs with a single glob path.</div>
         <span class="ch-badge used">Used — M1</span>
       </div>
       <div class="ch-card">
@@ -665,7 +689,7 @@
       <div class="ch-card">
         <div class="ch-num">Chapter 5</div>
         <div class="ch-title">External Data Sources</div>
-        <div class="ch-use">M1 reads quarterly CSV files with <code>spark.read.csv()</code> and writes the cleaned, labeled dataset to Parquet with <code>df.write.parquet()</code> partitioned by manufacturer. M2 and M3 read from Parquet — much faster than re-reading raw CSVs.</div>
+        <div class="ch-use">Notebook 01 reads 92 daily CSVs via <code>spark.read.csv("dbfs:/FileStore/backblaze_q4_2025/", header=True, inferSchema=True)</code>. Intermediate datasets are written to <strong>Delta Lake</strong> (<code>df.write.format("delta").save("dbfs:/FileStore/...")</code>) — not plain Parquet. Subsequent notebooks read from Delta for reliable schema management and faster re-reads.</div>
         <span class="ch-badge used">Used — M1</span>
       </div>
       <div class="ch-card">
@@ -677,7 +701,7 @@
       <div class="ch-card">
         <div class="ch-num">Chapter 7 &#9733;</div>
         <div class="ch-title">Optimizing and Tuning Spark</div>
-        <div class="ch-use"><strong>Most critical chapter for this project.</strong> At 12 GB/year, every optimization matters: cache the labeled DataFrame before CrossValidator to avoid re-reading Parquet on each fold; repartition by model to reduce cross-partition joins in EDA; set executor memory and cores appropriately for the cluster.</div>
+        <div class="ch-use"><strong>Most critical chapter for this project.</strong> Free-tier guardrails are mandatory: (1) <code>.cache()</code> then <code>.count()</code> on training DataFrame before CrossValidator — prevents re-executing window functions on every fold; (2) limit <code>spark.sql.shuffle.partitions</code> to 8&ndash;16; (3) keep ParamGrid to 2&ndash;4 combos; (4) use 3-fold CV not 5-fold. Document before/after cache timing as the Chapter 7 demonstration.</div>
         <span class="ch-badge core">Core — M1, M3</span>
       </div>
       <div class="ch-card">
@@ -689,7 +713,7 @@
       <div class="ch-card">
         <div class="ch-num">Chapter 9</div>
         <div class="ch-title">Reliable Data Lakes</div>
-        <div class="ch-use">The Backblaze dataset has quarterly schema changes — exactly the schema evolution problem Delta Lake solves. Reference Delta Lake or Parquet with schema merge as the storage layer. Backblaze even offers the dataset in Apache Iceberg format (read-only via AWS credentials).</div>
+        <div class="ch-use">Although Q4 2025 files share a uniform schema (no cross-quarter normalization needed), Delta Lake is still the right storage layer: it provides ACID transactions, schema enforcement, and efficient overwrites when regenerating the labeled dataset. This is exactly the schema governance problem Data Lakes address. Reference as the storage architecture rationale in the paper.</div>
         <span class="ch-badge used">Context — Paper</span>
       </div>
       <div class="ch-card">
@@ -706,15 +730,19 @@
         <tr><th>API / Class</th><th>Purpose in This Project</th><th>Chapter</th></tr>
       </thead>
       <tbody>
-        <tr><td><code>spark.read.csv(path, header=True, inferSchema=True)</code></td><td>Load each quarterly CSV file into a DataFrame</td><td>Ch. 5</td></tr>
+        <tr><td><code>spark.read.csv("dbfs:/FileStore/backblaze_q4_2025/", header=True, inferSchema=True)</code></td><td>Load all 92 Q4 2025 daily CSVs into a single DataFrame in one call</td><td>Ch. 5</td></tr>
         <tr><td><code>df.select([col list]).fillna(0)</code></td><td>Select 6 SMART columns + core fields; fill nulls with 0</td><td>Ch. 3</td></tr>
-        <tr><td><code>Window.partitionBy("serial_number").orderBy("date")</code></td><td>Window spec for forward-looking label engineering</td><td>Ch. 6</td></tr>
-        <tr><td><code>df.write.parquet(path, partitionBy="mfr")</code></td><td>Write labeled dataset partitioned by manufacturer</td><td>Ch. 5</td></tr>
-        <tr><td><code>df.cache()</code></td><td>Cache labeled DataFrame before CrossValidator and EDA queries</td><td>Ch. 7</td></tr>
-        <tr><td><code>VectorAssembler(inputCols=[smart_cols], outputCol="features")</code></td><td>Combine 6 SMART attributes into feature vector</td><td>Ch. 10</td></tr>
-        <tr><td><code>GBTClassifier(labelCol="label", weightCol="weight")</code></td><td>Train binary classifier with class weighting</td><td>Ch. 10</td></tr>
-        <tr><td><code>BinaryClassificationEvaluator(metricName="areaUnderROC")</code></td><td>AUC-ROC metric for CrossValidator and final evaluation</td><td>Ch. 10</td></tr>
-        <tr><td><code>model.featureImportances</code></td><td>Extract SMART attribute importance ranking from GBT model</td><td>Ch. 10</td></tr>
+        <tr><td><code>Window.partitionBy("serial_number").orderBy("date")</code></td><td>Window spec for label engineering, lag features, and velocity features</td><td>Ch. 6</td></tr>
+        <tr><td><code>max(col("failure")).over(w.rowsBetween(0, 30))</code></td><td>30-day forward-looking label: 1 if failure occurs within next 30 rows</td><td>Ch. 6</td></tr>
+        <tr><td><code>lag("smart_5_raw", 7).over(w)</code></td><td>7-day lag feature: SMART value 7 days ago for the same drive</td><td>Ch. 6</td></tr>
+        <tr><td><code>col("smart_5_raw") - col("smart_5_lag7")</code></td><td>7-day velocity feature: rate of change in reallocated sectors</td><td>Ch. 6</td></tr>
+        <tr><td><code>df.write.format("delta").mode("overwrite").save("dbfs:/FileStore/...")</code></td><td>Write intermediate datasets to Delta Lake on DBFS (not plain Parquet)</td><td>Ch. 5, 9</td></tr>
+        <tr><td><code>df.cache()</code> then <code>df.count()</code></td><td>Materialize training DataFrame in memory before CrossValidator fit (free-tier guardrail)</td><td>Ch. 7</td></tr>
+        <tr><td><code>VectorAssembler(inputCols=[14 features], outputCol="features")</code></td><td>Combine 6 SMART raw + 4 lag-7 + 4 delta-7 attributes into feature vector</td><td>Ch. 10</td></tr>
+        <tr><td><code>GBTClassifier(labelCol="label", weightCol="weight")</code></td><td>Train binary classifier with class weighting to handle ~1% positive rate</td><td>Ch. 10</td></tr>
+        <tr><td><code>CrossValidator(numFolds=3)</code></td><td>3-fold CV (not 5) — mandatory for Databricks Community Edition memory limits</td><td>Ch. 10</td></tr>
+        <tr><td><code>BinaryClassificationEvaluator(metricName="areaUnderROC")</code></td><td>AUC-ROC metric for CrossValidator and final evaluation (Accuracy omitted)</td><td>Ch. 10</td></tr>
+        <tr><td><code>bestModel.stages[-1].featureImportances</code></td><td>Extract SMART + lag + velocity importance ranking from best GBT model</td><td>Ch. 10</td></tr>
       </tbody>
     </table>
 
@@ -744,19 +772,19 @@
     <div class="paper-section">
       <div class="ps-header"><div class="ps-num">II</div><div class="ps-title">Problem Statement + Dataset Selection</div><div class="ps-page">~1 page</div></div>
       <div class="ps-body"><ul>
-        <li><strong>Problem:</strong> Predict binary outcome (drive will fail within 30 days: yes/no). Success = AUC-ROC &gt; 0.85, recall &gt; 0.70 at 0.5 threshold, beating Backblaze simple rule.</li>
-        <li><strong>Dataset:</strong> Backblaze Drive Stats, open source, real production data from 2013&ndash;present. Cite Backblaze directly. Selected subset: one full year (e.g., 2024) across all manufacturers.</li>
-        <li><strong>Limitations:</strong> (1) Single operator data — Backblaze uses uniform hardware in climate-controlled facilities; may not generalize to consumer or enterprise environments. (2) Not all drive models report all SMART attributes, requiring null imputation. (3) Label engineering introduces a design choice (30-day window) that affects results.</li>
+        <li><strong>Problem:</strong> Predict binary outcome (drive will fail within 30 days: yes/no). Success = AUC-ROC &gt; 0.85, recall &gt; 0.70 at 0.5 threshold, beating Backblaze simple rule. Accuracy is explicitly omitted as a metric.</li>
+        <li><strong>Dataset:</strong> Backblaze Q4 2025 Drive Stats — 92 daily CSV files, October 1 through December 31, 2025, approximately 30 million drive-days. Open source, real production data. Cite Backblaze directly.</li>
+        <li><strong>Limitations:</strong> (1) Single operator and single quarter — Backblaze uses uniform hardware in climate-controlled facilities; results may not generalize to consumer drives or other data centers. (2) Q4-only scope means the temporal split is intra-quarter (Oct&ndash;Nov train, Dec test) rather than multi-year. (3) Label engineering introduces a design choice (30-day window) that affects results. (4) Community Edition compute constraints required a reduced parameter grid and 3-fold CV.</li>
       </ul></div>
     </div>
 
     <div class="paper-section">
       <div class="ps-header"><div class="ps-num">III</div><div class="ps-title">Data Cleaning &amp; Label Engineering</div><div class="ps-page">~0.75 pages</div></div>
       <div class="ps-body"><ul>
-        <li>Describe quarterly ZIP download, per-quarter schema inspection, column intersection approach.</li>
-        <li>List the 6 selected SMART attributes and justify their selection (Backblaze research, predictive power).</li>
-        <li><strong>Label engineering is the key contribution of this section:</strong> explain the window function approach to create the 30-day forward-looking label. Include a small diagram or table showing before/after label assignment for a sample drive.</li>
-        <li>Describe null imputation (fill 0) and type casting. Reference <code>.cache()</code> and Parquet write as Chapter 7/5 elements.</li>
+        <li>Describe Q4 2025 ZIP download and loading all 92 daily CSVs into a single Spark DataFrame. Note that single-quarter data has a uniform schema — no cross-quarter normalization required.</li>
+        <li>List the 6 selected SMART attributes and justify their selection (Backblaze research, predictive power). Describe null imputation (fill 0) and LongType casting.</li>
+        <li><strong>Label engineering is the key contribution of this section:</strong> explain the <code>Window.partitionBy("serial_number").orderBy("date")</code> approach with <code>rowsBetween(0, 30)</code> to create the 30-day forward-looking label. Include a small table showing before/after label assignment for a sample drive.</li>
+        <li>Describe Delta Lake storage (<code>df.write.format("delta").save("dbfs:/FileStore/...")</code>) as the intermediate checkpoint format. Reference <code>.cache()</code> as the Chapter 7 free-tier guardrail.</li>
       </ul></div>
     </div>
 
@@ -773,30 +801,30 @@
     <div class="paper-section">
       <div class="ps-header"><div class="ps-num">V</div><div class="ps-title">ML Method &amp; Model Training</div><div class="ps-page">~1 page</div></div>
       <div class="ps-body"><ul>
-        <li>Explain <strong>temporal train/test split</strong> — why random split would cause data leakage in time-series drive data. This is a sophisticated point that demonstrates understanding beyond basic ML.</li>
-        <li>Justify GBT over Random Forest: better handling of imbalanced data, built-in feature importance, fewer hyperparameters to tune. Reference the ensemble-of-trees connection to Matzka 2020 if citing cross-project.</li>
-        <li>Describe class weighting strategy: compute weight from training label distribution and pass as <code>weightCol</code>.</li>
-        <li>Report CrossValidator configuration (4 combinations, 3-fold CV) and best hyperparameters found.</li>
-        <li>Include caching benchmark as Chapter 7 demonstration.</li>
+        <li>Explain <strong>intra-quarter temporal split</strong> (October&ndash;November train, December test): why random split would cause data leakage on time-series drive data. This demonstrates understanding beyond basic ML.</li>
+        <li>Describe the <strong>lag and velocity feature engineering</strong> (7-day lookback window) as the key technical contribution that elevates this above a point-in-time SMART classifier.</li>
+        <li>Justify GBT over Random Forest: better handling of imbalanced data, built-in feature importance, stronger performance on tabular data.</li>
+        <li>Describe class weighting strategy: <code>weight = count(label=0) / count(label=1)</code> in training data; passed as <code>weightCol</code> to GBTClassifier.</li>
+        <li>Report CrossValidator configuration: 3-fold CV, max 4 parameter combinations (constrained for Databricks Community Edition). Include <code>.cache()</code> before fit as Chapter 7 guardrail and document time saved.</li>
       </ul></div>
     </div>
 
     <div class="paper-section">
       <div class="ps-header"><div class="ps-num">VI</div><div class="ps-title">Model Evaluation</div><div class="ps-page">~0.75 pages</div></div>
       <div class="ps-body"><ul>
-        <li>Report AUC-ROC as primary metric. Include the ROC curve figure.</li>
-        <li>Report precision and recall at threshold 0.5 and at a lower threshold (e.g., 0.3) to show the tradeoff. In this domain, higher recall at lower precision is operationally preferable.</li>
-        <li><strong>Compare ML recall vs. Backblaze simple rule recall</strong> — this is the headline result. Does the model identify more failures at the same or lower false positive rate?</li>
-        <li>Show feature importance bar chart. Confirm SMART 5, 187, 197, 198 are top-ranked (validates domain knowledge).</li>
+        <li>Report AUC-ROC as primary metric. Include the ROC curve figure. <strong>Do not report Accuracy</strong> — explicitly state it is omitted and explain why (baseline of predicting all zeros achieves ~98.9% accuracy but 0% recall).</li>
+        <li>Report Recall at threshold 0.5 and at a lower threshold (e.g., 0.3) to show the precision-recall tradeoff. In this domain, higher recall at lower precision is operationally preferable.</li>
+        <li><strong>Compare ML recall vs. Backblaze simple rule recall</strong> — this is the headline result of the paper. Does the model identify more failing drives at a comparable or lower false positive rate?</li>
+        <li>Show feature importance bar chart. Confirm that lag and velocity features for SMART 5, 187, 197, 198 rank highly — validating that time-series feature engineering adds value over raw point-in-time values.</li>
       </ul></div>
     </div>
 
     <div class="paper-section">
       <div class="ps-header"><div class="ps-num">VII</div><div class="ps-title">Conclusion &amp; Future Work</div><div class="ps-page">~0.5 pages</div></div>
       <div class="ps-body"><ul>
-        <li>State whether success criteria were met (AUC-ROC &gt; 0.85, recall &gt; 0.70, beats baseline).</li>
-        <li>Limitations: single operator, SMART columns vary by drive model, 30-day window is a design choice.</li>
-        <li><strong>Future Work (high-impact suggestions):</strong> (1) Survival analysis (Weibull model) to estimate time-to-failure rather than a binary threshold. (2) LSTM / time-series model to capture trajectory of SMART values over time, not just point-in-time. (3) Spark Structured Streaming deployment to score new daily snapshots in near-real-time (Chapter 8).</li>
+        <li>State whether success criteria were met (AUC-ROC &gt; 0.85, recall &gt; 0.70, beats Backblaze simple rule).</li>
+        <li>Limitations: single operator (Backblaze only), single quarter (Q4 2025), SMART columns vary by drive model, 30-day window is a design choice, Community Edition compute required reduced CV grid.</li>
+        <li><strong>Future Work (high-impact suggestions):</strong> (1) Extend to multi-year data (2022&ndash;2025) with a multi-year temporal split for stronger generalization. (2) Survival analysis (Weibull model) to estimate time-to-failure rather than a binary threshold. (3) LSTM / time-series model to capture full SMART trajectory rather than fixed 7-day windows. (4) Spark Structured Streaming to score new daily snapshots in near-real-time as they arrive (Chapter 8).</li>
       </ul></div>
     </div>
 
@@ -805,7 +833,7 @@
     <div class="ref-box">
       <div class="ref-title">[1] Primary Dataset</div>
       <div class="ref-meta">Backblaze, Inc. (2025). <em>Backblaze Drive Stats Dataset.</em> Retrieved from https://www.backblaze.com/cloud-storage/resources/hard-drive-test-data</div>
-      <div class="ref-body">The source of all drive data used in this project. Backblaze publishes quarterly reports and the full dataset publicly. Cite all quarterly reports used (e.g., Q1&ndash;Q4 2024).</div>
+      <div class="ref-body">The source of all drive data used in this project. Backblaze publishes quarterly reports and the full dataset publicly. Cite the Q4 2025 release specifically: <code>data_Q4_2025.zip</code>, comprising 92 daily CSV files covering October 1 &ndash; December 31, 2025.</div>
     </div>
     <div class="ref-box">
       <div class="ref-title">[2] Course Textbook</div>

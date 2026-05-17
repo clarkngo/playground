@@ -251,6 +251,18 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-05-17
+
+### [ux] HDD Failure project — solo/Q4-2025 scope adaptation
+- `team-project/hdd-failure/index.html`: full adaptation from 4-person multi-year template to solo Databricks Community Edition implementation using Q4 2025 only (92 files, ~30M drive-days)
+- **Tab 1 (Domain Learning):** updated dataset coverage card (Q4 2025 = 92 files, uniform schema — no cross-quarter normalization); schema evolution card replaced with Delta Lake storage rationale; temporal split insight box updated to intra-quarter split (Oct–Nov train / Dec test) with exact date filter and file ranges; AFR imbalance card now explicitly states Accuracy is omitted
+- **Tab 2 (Notebook Workflow):** completely restructured from 4-member M1–M4 cards to solo 4-notebook sequential workflow — NB01 (Data Ingestion + Label Engineering, Delta Lake write), NB02 (EDA + Backblaze rule baseline), NB03 (Lag-7 and Velocity-7 feature engineering, Delta Lake write), NB04 (ML modeling with free-tier guardrails); coordination table replaced with "Sequential Execution Checklist"
+- **Tab 3 (Project Framework):** abstract updated to solo/Q4/Delta Lake/lag+velocity/free-tier guardrails; pipeline diagram expanded to show Delta checkpoints, lag/velocity steps, and cache step; framework table updated with NB columns and new Feature Engineering row; success criteria adds "Accuracy Explicitly Omitted" and "Scale Demonstrated (Free Tier)" cards; challenges updated — schema-across-quarters removed, free-tier compute limits and lag null-handling added
+- **Tab 4 (Course Alignment):** Ch. 1 updated to Q4 scale; Ch. 2 updated to Databricks CE config; Ch. 5 updated to Delta Lake; Ch. 7 updated to free-tier guardrails (shuffle.partitions, 3-fold, cache timing); Ch. 9 updated — Q4 schema is uniform but Delta still justified; APIs table expanded with lag/velocity/Delta Lake/CrossValidator guardrail entries
+- **Tab 5 (Paper Guide):** limitations updated to include Q4-only scope and Community Edition constraints; cleaning section updated to Delta Lake; ML method section updated to include lag+velocity engineering and 3-fold CV with 4-combo max; evaluation section updated to explicitly note Accuracy omission; conclusion/future work updated with multi-year extension as future direction
+
+---
+
 ## 2026-05-03
 
 ### [feature] Team Project — HDD Failure Prediction (Backblaze Drive Stats)
