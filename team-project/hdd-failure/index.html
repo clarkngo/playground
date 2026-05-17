@@ -171,6 +171,18 @@
     .tag.teal   { background: #0a2028; color: #22d3ee; }
 
     .site-footer { text-align: center; padding: 1.25rem; border-top: 1px solid #21262d; margin-top: 3rem; color: #484f58; font-size: .77rem; }
+
+    /* Genie Code step cards */
+    .genie-step { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1.25rem; margin-bottom: 1rem; }
+    .genie-step-header { display: flex; align-items: center; gap: .75rem; margin-bottom: .55rem; }
+    .genie-step-num { width: 28px; height: 28px; border-radius: 7px; background: #2d2009; color: #e3b341; font-size: .8rem; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .genie-step-title { font-size: .95rem; font-weight: 700; color: #e6edf3; }
+    .genie-why { font-size: .81rem; color: #8b949e; line-height: 1.65; margin-bottom: .8rem; }
+    .genie-prompt-label { font-size: .64rem; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: #e3b341; margin-bottom: .35rem; display: flex; align-items: center; gap: .4rem; }
+    .genie-prompt { background: #0d1117; border: 1px solid #9e6a03; border-left: 4px solid #e3b341; border-radius: 7px; padding: .85rem 1rem; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: .82rem; color: #e3b341; line-height: 1.75; white-space: pre-wrap; word-break: break-word; font-style: italic; }
+    .genie-note { margin-top: .6rem; font-size: .76rem; color: #8b949e; line-height: 1.6; }
+    .genie-note code { font-family: monospace; background: #1c2128; padding: 1px 5px; border-radius: 3px; color: #79c0ff; font-size: .75rem; }
+    .genie-kbd { display: inline-block; background: #21262d; border: 1px solid #30363d; border-radius: 4px; padding: 1px 6px; font-size: .72rem; color: #c9d1d9; font-family: monospace; }
   </style>
 </head>
 <body>
@@ -417,11 +429,11 @@
           <li><span class="task-num t1">6</span><span class="task-text">Extract manufacturer from the <code>model</code> column prefix: Seagate = starts with "ST", WDC = starts with "WDC", HGST = starts with "HDS" or "HMS", Toshiba = starts with "TOSHIBA" or "MG". Add as new <code>mfr</code> column using <code>when/otherwise</code>.</span></li>
           <li><span class="task-num t1">7</span><span class="task-text">Engineer the 30-day forward label: define <code>w = Window.partitionBy("serial_number").orderBy("date")</code>. For each drive-day, look ahead up to 30 rows. If <code>failure=1</code> appears within 30 days, set <code>label=1</code>, else <code>label=0</code>. Use <code>max(col("failure")).over(w.rowsBetween(0, 30))</code> or equivalent LEAD approach.</span></li>
           <li><span class="task-num t1">8</span><span class="task-text">Verify label counts: print count of <code>label=1</code> and <code>label=0</code>. The window expansion will inflate the positive class but still leave heavy imbalance (expected: 2&ndash;5% positive after expansion from raw 1.13% AFR).</span></li>
-          <li><span class="task-num t1">9</span><span class="task-text">Write the labeled DataFrame to Delta Lake: <code>df.write.format("delta").mode("overwrite").save("dbfs:/FileStore/hdd_labeled/")</code>. Do not use standard Parquet — Delta enables reliable re-reads for all downstream notebooks.</span></li>
+          <li><span class="task-num t1">9</span><span class="task-text">Write the labeled DataFrame to a <strong>managed Delta table</strong>: <code>labeled_df.write.format("delta").mode("overwrite").saveAsTable("backblaze_master_delta")</code>. Downstream notebooks load it with <code>spark.read.table("backblaze_master_delta")</code> — no DBFS path management needed. Do not add <code>.cache()</code> at write time (not supported on serverless/Community Edition).</span></li>
         </ul>
         <div class="deliverable-box">
-          <div class="db-label">Deliverable &rarr; Delta checkpoint</div>
-          <code>01_data_ingestion_labeling.ipynb</code> &mdash; 92 CSVs loaded, schema verified, nulls filled, 30-day window label, <code>dbfs:/FileStore/hdd_labeled/</code>
+          <div class="db-label">Deliverable &rarr; Managed Delta table</div>
+          <code>01_data_ingestion_labeling.ipynb</code> &mdash; 92 CSVs loaded, schema verified, nulls filled, 30-day window label, saved as managed table <code>backblaze_master_delta</code>
         </div>
       </div>
 
@@ -435,7 +447,7 @@
           </div>
         </div>
         <ul class="task-list">
-          <li><span class="task-num t2">1</span><span class="task-text">Load from Delta: <code>spark.read.format("delta").load("dbfs:/FileStore/hdd_labeled/")</code>. Run <code>.count()</code> and verify row count matches expected Q4 2025 drive-days.</span></li>
+          <li><span class="task-num t2">1</span><span class="task-text">Load from the managed Delta table: <code>spark.read.table("backblaze_master_delta")</code>. Run <code>.count()</code> and verify row count matches expected Q4 2025 drive-days.</span></li>
           <li><span class="task-num t2">2</span><span class="task-text">Compute overall label distribution: count <code>label=1</code> vs <code>label=0</code> and express as percentage. Note that a model predicting all zeros would achieve ~98% accuracy but 0% recall — this is why Accuracy is omitted as a metric.</span></li>
           <li><span class="task-num t2">3</span><span class="task-text">Compute AFR by manufacturer using the extracted <code>mfr</code> column: <code>SELECT mfr, COUNT(CASE WHEN failure=1 THEN 1 END) / COUNT(*) * 365 AS afr FROM drives GROUP BY mfr ORDER BY afr DESC</code>. Identify the most and least reliable manufacturer in Q4 2025.</span></li>
           <li><span class="task-num t2">4</span><span class="task-text">Analyze drive age at failure: use <code>smart_9_raw</code> (Power-On Hours) to compare the distribution of age for drives in the 30-day failure window vs. healthy drives. Show that older drives concentrate more failures (wear-out phase).</span></li>
@@ -460,18 +472,18 @@
           </div>
         </div>
         <ul class="task-list">
-          <li><span class="task-num t3">1</span><span class="task-text">Load from Delta: <code>spark.read.format("delta").load("dbfs:/FileStore/hdd_labeled/")</code>. This notebook adds time-series features that a point-in-time model misses.</span></li>
+          <li><span class="task-num t3">1</span><span class="task-text">Load from the managed Delta table: <code>spark.read.table("backblaze_master_delta")</code>. This notebook adds time-series features that a point-in-time model misses.</span></li>
           <li><span class="task-num t3">2</span><span class="task-text">Define the drive-level window spec: <code>w = Window.partitionBy("serial_number").orderBy("date")</code>.</span></li>
           <li><span class="task-num t3">3</span><span class="task-text">Add <strong>7-day lag features</strong> for the 4 highest-signal SMART attributes: <code>lag("smart_5_raw", 7).over(w)</code> &rarr; <code>smart_5_lag7</code>. Repeat for <code>smart_187_raw</code>, <code>smart_197_raw</code>, <code>smart_198_raw</code>. These capture the historical baseline value per drive.</span></li>
           <li><span class="task-num t3">4</span><span class="task-text">Add <strong>7-day velocity features</strong> (rate of change): <code>(col("smart_5_raw") - col("smart_5_lag7"))</code> &rarr; <code>smart_5_delta7</code>. Repeat for smart_187, 197, 198. Rapid growth in reallocated sectors is far more alarming than a stable nonzero count.</span></li>
           <li><span class="task-num t3">5</span><span class="task-text">Fill nulls in all lag and velocity columns with <code>0</code> — the first 7 days of each drive history will have no lag available. This is acceptable for a Q4 dataset where drives have prior history.</span></li>
           <li><span class="task-num t3">6</span><span class="task-text">Verify total column count: 6 original SMART features + 4 lag features + 4 velocity features = 14 engineered features for the model. Print schema to confirm.</span></li>
           <li><span class="task-num t3">7</span><span class="task-text">Cache the feature-engineered DataFrame in memory: <code>df_features.cache()</code>. Run a <code>.count()</code> to materialize the cache. This avoids recomputing window functions every time the next notebook reads the data.</span></li>
-          <li><span class="task-num t3">8</span><span class="task-text">Write to Delta Lake: <code>df_features.write.format("delta").mode("overwrite").save("dbfs:/FileStore/hdd_features/")</code>. Notebook 04 reads from this path.</span></li>
+          <li><span class="task-num t3">8</span><span class="task-text">Write to a managed Delta table: <code>df_features.write.format("delta").mode("overwrite").saveAsTable("backblaze_features_delta")</code>. Notebook 04 loads it with <code>spark.read.table("backblaze_features_delta")</code>.</span></li>
         </ul>
         <div class="deliverable-box">
-          <div class="db-label">Deliverable &rarr; Delta checkpoint</div>
-          <code>03_feature_engineering.ipynb</code> &mdash; 14 features (6 SMART + 4 lag-7 + 4 delta-7), cached, <code>dbfs:/FileStore/hdd_features/</code>
+          <div class="db-label">Deliverable &rarr; Managed Delta table</div>
+          <code>03_feature_engineering.ipynb</code> &mdash; 14 features (6 SMART + 4 lag-7 + 4 delta-7), saved as managed table <code>backblaze_features_delta</code>
         </div>
       </div>
 
@@ -485,7 +497,7 @@
           </div>
         </div>
         <ul class="task-list">
-          <li><span class="task-num t4">1</span><span class="task-text">Load from Delta: <code>spark.read.format("delta").load("dbfs:/FileStore/hdd_features/")</code>.</span></li>
+          <li><span class="task-num t4">1</span><span class="task-text">Load from the managed Delta table: <code>spark.read.table("backblaze_features_delta")</code>.</span></li>
           <li><span class="task-num t4">2</span><span class="task-text">Apply <strong>intra-quarter temporal split</strong>: <code>train = df.filter(col("date") &lt; "2025-12-01")</code> (files 1&ndash;61, Oct&ndash;Nov); <code>test = df.filter(col("date") &gt;= "2025-12-01")</code> (files 62&ndash;92, December only). Never use random split.</span></li>
           <li><span class="task-num t4">3</span><span class="task-text">Compute class weights from training data: <code>n0 = train.filter(col("label")==0).count()</code>, <code>n1 = train.filter(col("label")==1).count()</code>. Weight for class 1 = <code>n0 / n1</code>. Add <code>weightCol</code> column to training DataFrame using <code>when(col("label")==1, weight).otherwise(1.0)</code>.</span></li>
           <li><span class="task-num t4">4</span><span class="task-text"><strong>Free-Tier Guardrail:</strong> run <code>train.cache()</code> then <code>train.count()</code> to materialize before the Pipeline fit. Without this, CrossValidator re-reads and re-executes all window functions on every fold — this will crash or time out on Community Edition.</span></li>
@@ -504,15 +516,63 @@
 
     </div>
 
+    <div class="section-label">Genie Code Guide &mdash; How NB01 Was Actually Built</div>
+
+    <div class="insight-box">
+      <div class="ib-label">Databricks Assistant (Genie Code) &mdash; Sequential Prompting Strategy</div>
+      <p>Inside a Databricks notebook, press <span class="genie-kbd">Ctrl + I</span> / <span class="genie-kbd">Cmd + I</span> on any blank cell to open the Genie Code pane. Feed it <strong>declarative, goal-oriented prompts</strong> — describe what you want the output DataFrame to look like, not how to achieve it. On the free tier, prompts must explicitly request memory-efficient patterns so the driver node does not crash. Run the four prompts below in sequence to build the complete NB01 pipeline.</p>
+    </div>
+
+    <div class="genie-step">
+      <div class="genie-step-header">
+        <div class="genie-step-num">1</div>
+        <div class="genie-step-title">Bulk Read with Wildcards</div>
+      </div>
+      <div class="genie-why">All 92 daily CSV files live in one DBFS directory. A wildcard glob loads them in a single call. Setting <code>inferSchema=True</code> lets Spark detect numeric SMART columns automatically, avoiding manual schema definitions across 100+ columns.</div>
+      <div class="genie-prompt-label">&#128172; Prompt &mdash; paste into Genie Code</div>
+      <div class="genie-prompt">Write PySpark code to read all CSV files located in &apos;dbfs:/FileStore/backblaze_drive_data_Q4_2025/&apos;. The files have a header row. Set inferSchema to true. Store it in a dataframe named raw_df.</div>
+    </div>
+
+    <div class="genie-step">
+      <div class="genie-step-header">
+        <div class="genie-step-num">2</div>
+        <div class="genie-step-title">Target Column Selection &amp; Type Safety</div>
+      </div>
+      <div class="genie-why">The Backblaze schema has over 100 columns. Selecting only 11 core columns (5 identifiers + 6 SMART attributes) dramatically reduces memory pressure on the Community Edition driver. Casting to <code>LongType</code> and filling nulls with 0 ensures a consistent schema before the window function step.</div>
+      <div class="genie-prompt-label">&#128172; Prompt &mdash; paste into Genie Code</div>
+      <div class="genie-prompt">Using raw_df, write PySpark code to select only these columns: &apos;date&apos;, &apos;serial_number&apos;, &apos;model&apos;, &apos;capacity_bytes&apos;, &apos;failure&apos;, &apos;smart_5_raw&apos;, &apos;smart_9_raw&apos;, &apos;smart_187_raw&apos;, &apos;smart_188_raw&apos;, &apos;smart_197_raw&apos;, and &apos;smart_198_raw&apos;. Cast all of these 6 SMART raw columns to LongType. Fill any null values in these 6 SMART columns with 0. Name the resulting dataframe clean_df.</div>
+    </div>
+
+    <div class="genie-step">
+      <div class="genie-step-header">
+        <div class="genie-step-num">3</div>
+        <div class="genie-step-title">Forward-Looking Label Engineering</div>
+      </div>
+      <div class="genie-why">The raw <code>failure</code> column is 1 only on the single day a drive dies — useless for prediction. This prompt asks Genie to build the 30-day forward window: each drive-day is labeled 1 if the drive will fail within the next 30 days. The window is partitioned by <code>serial_number</code> so each drive's history is evaluated independently, and ordered by <code>date</code> ascending so "ahead" means later in time.</div>
+      <div class="genie-prompt-label">&#128172; Prompt &mdash; paste into Genie Code</div>
+      <div class="genie-prompt">Using clean_df, write PySpark code using a Window function to create a new column named &apos;label&apos;. The window should be partitioned by &apos;serial_number&apos; and ordered by &apos;date&apos; ascending. The &apos;label&apos; column should be set to 1 if the &apos;failure&apos; column equals 1 at any point within the next 30 days (current row and 30 rows ahead). Otherwise, it should be 0. Call this final dataframe labeled_df.</div>
+    </div>
+
+    <div class="genie-step">
+      <div class="genie-step-header">
+        <div class="genie-step-num">4</div>
+        <div class="genie-step-title">Write to Delta as a Managed Table</div>
+      </div>
+      <div class="genie-why">Saving as a managed Delta table (not a raw DBFS path) means notebooks 02, 03, and 04 can load the data with a simple <code>spark.read.table("backblaze_master_delta")</code> call. The prompt explicitly excludes DBFS paths and cache/persist commands — on Databricks serverless or Community Edition, manual <code>.cache()</code> at write time is not supported and will error.</div>
+      <div class="genie-prompt-label">&#128172; Prompt &mdash; paste into Genie Code</div>
+      <div class="genie-prompt">Write PySpark code to save labeled_df in Delta format as a managed table named &apos;backblaze_master_delta&apos;. Use overwrite mode. Do not use any DBFS or file storage paths, and do not include any cache or persist commands, as manual caching is not supported on serverless compute.</div>
+      <p class="genie-note">&#9432; Downstream notebooks (02, 03, 04) load this with <code>spark.read.table("backblaze_master_delta")</code> — faster than re-reading CSVs and requires no DBFS path management. The <code>.cache()</code> guardrail for ML training happens in NB04, on the training split, immediately before <code>CrossValidator.fit()</code>.</p>
+    </div>
+
     <div class="section-label">Sequential Execution Checklist</div>
     <table class="fw-table">
       <thead>
         <tr><th>Step</th><th>Notebook</th><th>Gate Condition Before Proceeding</th></tr>
       </thead>
       <tbody>
-        <tr><td class="fw-sec">1 &rarr; 2</td><td><code>01_data_ingestion_labeling.ipynb</code></td><td>Delta table at <code>dbfs:/FileStore/hdd_labeled/</code> exists. <code>spark.read.format("delta").load(...).count()</code> returns expected row count. Label counts printed (label=1 and label=0 both nonzero).</td></tr>
+        <tr><td class="fw-sec">1 &rarr; 2</td><td><code>01_data_ingestion_labeling.ipynb</code></td><td>Managed Delta table <code>backblaze_master_delta</code> exists. <code>spark.read.table("backblaze_master_delta").count()</code> returns expected row count. Label counts printed (label=1 and label=0 both nonzero).</td></tr>
         <tr><td class="fw-sec">2 &rarr; 3</td><td><code>02_eda_visualization.ipynb</code></td><td>Backblaze simple rule recall score recorded. AFR by manufacturer table completed. These numbers become the baseline target for Notebook 04.</td></tr>
-        <tr><td class="fw-sec">3 &rarr; 4</td><td><code>03_feature_engineering.ipynb</code></td><td>Delta table at <code>dbfs:/FileStore/hdd_features/</code> exists. Schema shows 14 feature columns (6 SMART + 4 lag7 + 4 delta7). No null counts in lag/delta columns (all filled with 0).</td></tr>
+        <tr><td class="fw-sec">3 &rarr; 4</td><td><code>03_feature_engineering.ipynb</code></td><td>Managed Delta table <code>backblaze_features_delta</code> exists. Schema shows 14 feature columns (6 SMART + 4 lag7 + 4 delta7). No null counts in lag/delta columns (all filled with 0).</td></tr>
         <tr><td class="fw-sec">Final</td><td><code>04_ml_modeling.ipynb</code></td><td>AUC-ROC and Recall reported on December test set. ML Recall compared to simple rule Recall. Feature importances ranked and exported. Accuracy intentionally omitted from all output.</td></tr>
       </tbody>
     </table>
@@ -581,8 +641,8 @@
         </tr>
         <tr>
           <td class="fw-sec">2b. Data Cleaning &amp; Label Engineering</td>
-          <td>Load 92 CSVs; select 6 SMART columns; cast to LongType; fill nulls; engineer 30-day forward label with window function; write to Delta Lake</td>
-          <td>Window functions (<code>rowsBetween(0,30)</code>), <code>.fillna(0)</code>, <code>.cache()</code>, Delta Lake write</td>
+          <td>Load 92 CSVs; select 6 SMART columns; cast to LongType; fill nulls; engineer 30-day forward label with window function; save as managed Delta table <code>backblaze_master_delta</code></td>
+          <td>Window functions (<code>rowsBetween(0,30)</code>), <code>.fillna(0)</code>, <code>.saveAsTable("backblaze_master_delta")</code></td>
           <td><span class="fw-tag blue">NB 01</span></td>
         </tr>
         <tr>
@@ -593,8 +653,8 @@
         </tr>
         <tr>
           <td class="fw-sec">3b. Feature Engineering</td>
-          <td>Add 7-day lag features and 7-day velocity (delta) features for SMART 5, 187, 197, 198; fill lag nulls; write enriched dataset to Delta Lake</td>
-          <td><code>Window.partitionBy.orderBy</code>, <code>lag(col, 7)</code>, column arithmetic, Delta Lake write</td>
+          <td>Add 7-day lag features and 7-day velocity (delta) features for SMART 5, 187, 197, 198; fill lag nulls; save enriched dataset as managed Delta table <code>backblaze_features_delta</code></td>
+          <td><code>Window.partitionBy.orderBy</code>, <code>lag(col, 7)</code>, column arithmetic, <code>.saveAsTable("backblaze_features_delta")</code></td>
           <td><span class="fw-tag purple">NB 03</span></td>
         </tr>
         <tr>
@@ -736,7 +796,7 @@
         <tr><td><code>max(col("failure")).over(w.rowsBetween(0, 30))</code></td><td>30-day forward-looking label: 1 if failure occurs within next 30 rows</td><td>Ch. 6</td></tr>
         <tr><td><code>lag("smart_5_raw", 7).over(w)</code></td><td>7-day lag feature: SMART value 7 days ago for the same drive</td><td>Ch. 6</td></tr>
         <tr><td><code>col("smart_5_raw") - col("smart_5_lag7")</code></td><td>7-day velocity feature: rate of change in reallocated sectors</td><td>Ch. 6</td></tr>
-        <tr><td><code>df.write.format("delta").mode("overwrite").save("dbfs:/FileStore/...")</code></td><td>Write intermediate datasets to Delta Lake on DBFS (not plain Parquet)</td><td>Ch. 5, 9</td></tr>
+        <tr><td><code>df.write.format("delta").mode("overwrite").saveAsTable("table_name")</code></td><td>Save intermediate datasets as managed Delta tables (no DBFS path needed; load with <code>spark.read.table("table_name")</code>)</td><td>Ch. 5, 9</td></tr>
         <tr><td><code>df.cache()</code> then <code>df.count()</code></td><td>Materialize training DataFrame in memory before CrossValidator fit (free-tier guardrail)</td><td>Ch. 7</td></tr>
         <tr><td><code>VectorAssembler(inputCols=[14 features], outputCol="features")</code></td><td>Combine 6 SMART raw + 4 lag-7 + 4 delta-7 attributes into feature vector</td><td>Ch. 10</td></tr>
         <tr><td><code>GBTClassifier(labelCol="label", weightCol="weight")</code></td><td>Train binary classifier with class weighting to handle ~1% positive rate</td><td>Ch. 10</td></tr>

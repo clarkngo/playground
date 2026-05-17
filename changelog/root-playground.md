@@ -253,6 +253,18 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ## 2026-05-17
 
+### [feature] HDD Failure — Genie Code prompting guide for NB01 added
+- `team-project/hdd-failure/index.html` Tab 2: added "Genie Code Guide — How NB01 Was Actually Built" section with 4 sequential Databricks Assistant prompts (bulk wildcard read, column selection + type safety, 30-day window label engineering, managed Delta table write)
+- Each prompt card includes: rationale explaining why the prompt is phrased that way + the exact copyable prompt text + notes on free-tier constraints
+- Step 4 prompt explicitly excludes DBFS paths and cache/persist commands (not supported on serverless compute) — saves to managed table `backblaze_master_delta` instead
+- All notebook load/write references updated throughout the page from DBFS paths to managed Delta tables: `backblaze_master_delta` (NB01 output, used by NB02 + NB03) and `backblaze_features_delta` (NB03 output, used by NB04)
+- NB01 task 9, NB02 task 1, NB03 tasks 1 + 8, NB04 task 1, Sequential Execution Checklist, Framework table, and APIs quick-reference table all updated to use `spark.read.table()` / `saveAsTable()` pattern
+- New CSS classes: `.genie-step`, `.genie-step-header`, `.genie-step-num`, `.genie-step-title`, `.genie-why`, `.genie-prompt-label`, `.genie-prompt`, `.genie-note`, `.genie-kbd`
+
+---
+
+## 2026-05-17 (2)
+
 ### [ux] HDD Failure project — solo/Q4-2025 scope adaptation
 - `team-project/hdd-failure/index.html`: full adaptation from 4-person multi-year template to solo Databricks Community Edition implementation using Q4 2025 only (92 files, ~30M drive-days)
 - **Tab 1 (Domain Learning):** updated dataset coverage card (Q4 2025 = 92 files, uniform schema — no cross-quarter normalization); schema evolution card replaced with Delta Lake storage rationale; temporal split insight box updated to intra-quarter split (Oct–Nov train / Dec test) with exact date filter and file ranges; AFR imbalance card now explicitly states Accuracy is omitted

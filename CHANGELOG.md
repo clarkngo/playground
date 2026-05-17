@@ -39,6 +39,13 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ## 2026-05-17
 
+### [feature] HDD Failure — Genie Code NB01 prompting guide + managed Delta table pattern
+- `team-project/hdd-failure/index.html`: added 4-step Genie Code / Databricks Assistant prompting guide to Tab 2; all notebook storage updated from DBFS paths to managed Delta tables (`backblaze_master_delta`, `backblaze_features_delta`)
+
+---
+
+## 2026-05-17 (solo scope rework)
+
 ### [ux] HDD Failure project — solo/Q4-2025 scope adaptation
 - `team-project/hdd-failure/index.html`: adapted all 5 tabs from a 4-person multi-year template to a solo Databricks Community Edition implementation using Q4 2025 (92 files); 4-member cards replaced with 4-notebook sequential workflow; lag/velocity feature engineering added as NB03; free-tier guardrails documented (3-fold CV, 4-combo max, .cache() before fit); Accuracy explicitly omitted; Delta Lake replaces Parquet throughout; intra-quarter temporal split (Oct–Nov train / Dec test)
 
