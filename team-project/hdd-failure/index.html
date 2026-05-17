@@ -183,6 +183,35 @@
     .genie-note { margin-top: .6rem; font-size: .76rem; color: #8b949e; line-height: 1.6; }
     .genie-note code { font-family: monospace; background: #1c2128; padding: 1px 5px; border-radius: 3px; color: #79c0ff; font-size: .75rem; }
     .genie-kbd { display: inline-block; background: #21262d; border: 1px solid #30363d; border-radius: 4px; padding: 1px 6px; font-size: .72rem; color: #c9d1d9; font-family: monospace; }
+
+    /* NB results step cards */
+    .result-step { background: #161b22; border: 1px solid #30363d; border-left: 4px solid #238636; border-radius: 10px; padding: 1.25rem; margin-bottom: 1rem; }
+    .result-header { display: flex; align-items: center; gap: .75rem; margin-bottom: .6rem; }
+    .result-num { width: 28px; height: 28px; border-radius: 7px; background: #1a2f1a; color: #3fb950; font-size: .8rem; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .result-title { font-size: .95rem; font-weight: 700; color: #e6edf3; }
+    .result-body { font-size: .82rem; color: #8b949e; line-height: 1.65; }
+    .result-body strong { color: #c9d1d9; }
+    .result-insight { margin-top: .7rem; background: #0d1117; border: 1px solid #238636; border-radius: 6px; padding: .6rem .9rem; font-size: .81rem; color: #3fb950; line-height: 1.6; }
+    .result-value { margin-top: .7rem; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: .6rem .9rem; font-size: .81rem; color: #8b949e; line-height: 1.6; }
+    .result-value strong { color: #c9d1d9; }
+
+    /* Databricks viz UI guide cards */
+    .viz-card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1.25rem; margin-bottom: 1rem; }
+    .viz-card-header { display: flex; align-items: center; gap: .75rem; margin-bottom: .8rem; flex-wrap: wrap; }
+    .viz-chart-num { width: 28px; height: 28px; border-radius: 7px; background: #0a2028; color: #22d3ee; font-size: .8rem; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .viz-chart-title { font-size: .95rem; font-weight: 700; color: #e6edf3; flex: 1; min-width: 0; }
+    .viz-chart-type { display: inline-block; font-size: .68rem; font-weight: 700; padding: 2px 10px; border-radius: 12px; background: #0a2028; color: #22d3ee; border: 1px solid #1a7f64; white-space: nowrap; }
+    .viz-config { width: 100%; border-collapse: collapse; font-size: .8rem; margin-bottom: .75rem; }
+    .viz-config td { padding: .45rem .65rem; border-bottom: 1px solid #21262d; vertical-align: top; line-height: 1.6; }
+    .viz-config tr:last-child td { border-bottom: none; }
+    .viz-config .vc-key { color: #8b949e; white-space: nowrap; font-weight: 600; width: 140px; font-size: .78rem; }
+    .viz-config .vc-val { color: #c9d1d9; }
+    .viz-config .vc-val code { font-family: monospace; background: #1c2128; padding: 1px 4px; border-radius: 3px; color: #79c0ff; font-size: .76rem; }
+    .viz-config .vc-warn { background: #2d2009; }
+    .viz-config .vc-warn .vc-key { color: #e3b341; }
+    .viz-config .vc-warn .vc-val { color: #e3b341; font-weight: 600; }
+    .viz-result { font-size: .8rem; background: #0d1117; border: 1px solid #1a7f64; border-left: 3px solid #22d3ee; border-radius: 6px; padding: .6rem .9rem; color: #c9d1d9; line-height: 1.6; }
+    .viz-result strong { color: #22d3ee; }
   </style>
 </head>
 <body>
@@ -623,6 +652,105 @@
       <div class="genie-prompt-label">&#128172; Prompt &mdash; paste into Genie Code</div>
       <div class="genie-prompt">Using df, write PySpark code to test a baseline rule. Create a temporary prediction column that is set to 1 if &apos;smart_5_raw&apos; &gt; 0, or &apos;smart_187_raw&apos; &gt; 0, or &apos;smart_197_raw&apos; &gt; 0, or &apos;smart_198_raw&apos; &gt; 0. Otherwise, set it to 0. Calculate and print the Precision and Recall of this baseline rule compared against our true &apos;label&apos; column.</div>
       <p class="genie-note">&#9432; <strong>Save these numbers.</strong> Recall in particular is your primary target — in a failure-prediction context, missing a failure (false negative) is far more costly than a false alarm. Your NB04 GBT model must beat this Recall at a comparable or lower false alarm rate to justify the ML approach. Record both values in a comment cell at the bottom of NB02 for easy reference in NB04.</p>
+    </div>
+
+    <div class="section-label">NB02 Results &amp; Key Insights</div>
+
+    <div class="result-step">
+      <div class="result-header"><div class="result-num">1</div><div class="result-title">Quantified Class Imbalance</div></div>
+      <div class="result-body"><strong>What was done:</strong> Grouped the master table by the target <code style="font-family:monospace;background:#1c2128;padding:1px 5px;border-radius:3px;color:#79c0ff;font-size:.78rem;">label</code> column and computed the fractional distribution of healthy vs. failing drive-days.</div>
+      <div class="result-insight">&#128308; <strong>99.93% Healthy (0) &nbsp;&mdash;&nbsp; 0.07% Failing (1)</strong></div>
+      <div class="result-value"><strong>Project Value:</strong> This permanently eliminates Accuracy as a valid metric. A model that guesses "Healthy" every single time scores 99.93% accuracy but catches 0 failures. AUC-ROC and Recall are the only valid metrics for this dataset — and the paper must state this explicitly.</div>
+    </div>
+
+    <div class="result-step">
+      <div class="result-header"><div class="result-num">2</div><div class="result-title">Annualized Failure Rate by Manufacturer</div></div>
+      <div class="result-body"><strong>What was done:</strong> Parsed brand names (Seagate, Western Digital, Toshiba, HGST) from model string prefixes and applied the industry-standard AFR formula: <strong>(&#931; Failures / &#931; Drive-Days) &times; 365 &times; 100%</strong> across the full 30-million-row fleet.</div>
+      <div class="result-value"><strong>Project Value:</strong> Establishes brand-specific real-world reliability benchmarks for the paper narrative. Drives the EDA section discussion of which manufacturers appear most frequently near failure events in Q4 2025.</div>
+    </div>
+
+    <div class="result-step">
+      <div class="result-header"><div class="result-num">3</div><div class="result-title">Drive Age at Failure — Bathtub Curve</div></div>
+      <div class="result-body"><strong>What was done:</strong> Filtered strictly for active failure events (<code style="font-family:monospace;background:#1c2128;padding:1px 5px;border-radius:3px;color:#79c0ff;font-size:.78rem;">failure = 1</code>), extracted <code style="font-family:monospace;background:#1c2128;padding:1px 5px;border-radius:3px;color:#79c0ff;font-size:.78rem;">smart_9_raw</code> (Power-On Hours), and converted to fractional years by dividing by 8,760.</div>
+      <div class="result-value"><strong>Project Value:</strong> Mapped the real-world Bathtub Curve for the Q4 2025 slice — revealing whether failures in this quarter skewed toward brand-new drives (infant mortality) or older drives approaching mechanical wear-out. This histogram is a strong visual for Section IV of the paper.</div>
+    </div>
+
+    <div class="result-step">
+      <div class="result-header"><div class="result-num">4</div><div class="result-title">Critical SMART Profile — Healthy vs. Failing</div></div>
+      <div class="result-body"><strong>What was done:</strong> Computed mathematical averages for the 4 highest-signal SMART attributes (<code style="font-family:monospace;background:#1c2128;padding:1px 5px;border-radius:3px;color:#79c0ff;font-size:.78rem;">smart_5</code>, <code style="font-family:monospace;background:#1c2128;padding:1px 5px;border-radius:3px;color:#79c0ff;font-size:.78rem;">smart_187</code>, <code style="font-family:monospace;background:#1c2128;padding:1px 5px;border-radius:3px;color:#79c0ff;font-size:.78rem;">smart_197</code>, <code style="font-family:monospace;background:#1c2128;padding:1px 5px;border-radius:3px;color:#79c0ff;font-size:.78rem;">smart_198</code>) separated by label 0 and 1. X axis scale was switched from Linear to <strong>Categorical</strong> to remove decimal axis noise and unstack the bars side-by-side.</div>
+      <div class="result-insight">&#9989; <strong>Confirmed:</strong> Healthy drives hold a flat line near zero across all 4 metrics. Failing drives show clear, unmistakable spikes — direct empirical evidence for SMART predictive value.</div>
+      <div class="result-value"><strong>Project Value:</strong> This grouped bar chart is the visual anchor for the feature selection rationale in Section III of the paper. It also validates that GBT should naturally rank these 4 attributes as top features in Notebook 04.</div>
+    </div>
+
+    <div class="result-step">
+      <div class="result-header"><div class="result-num">5</div><div class="result-title">Backblaze Simple Rule Benchmark</div></div>
+      <div class="result-body"><strong>What was done:</strong> Simulated the human heuristic — "if a drive records a value greater than 0 on SMART 5, 187, 197, or 198, flag it for replacement" — and computed its exact Precision and Recall against the 30-day engineered <code style="font-family:monospace;background:#1c2128;padding:1px 5px;border-radius:3px;color:#79c0ff;font-size:.78rem;">label</code> column.</div>
+      <div class="result-insight">&#127919; <strong>This is the target.</strong> NB04 has one goal: beat both the Precision and Recall of this simple rule using the full GBT ML pipeline — no ML required to set this baseline, just four SMART threshold checks.</div>
+    </div>
+
+    <div class="section-label">Databricks Visualization UI Guide &mdash; Notebook 02</div>
+
+    <div class="insight-box teal">
+      <div class="ib-label">No matplotlib or seaborn needed</div>
+      <p>After any Genie cell outputs a summary DataFrame, click the <strong>+</strong> icon next to the table in the Databricks output pane and select <strong>Visualization</strong>. Use the configuration panels below to set up each chart exactly.</p>
+    </div>
+
+    <div class="viz-card">
+      <div class="viz-card-header">
+        <div class="viz-chart-num">1</div>
+        <div class="viz-chart-title">Class Imbalance Profile</div>
+        <span class="viz-chart-type">Pie / Donut</span>
+      </div>
+      <table class="viz-config">
+        <tr><td class="vc-key">X column</td><td class="vc-val"><code>label</code> &mdash; creates the two slices (0 and 1)</td></tr>
+        <tr><td class="vc-key">Y columns</td><td class="vc-val"><code>count</code> &mdash; controls slice sizing</td></tr>
+        <tr><td class="vc-key">Group by</td><td class="vc-val">Leave completely blank</td></tr>
+        <tr class="vc-warn"><td class="vc-key">Data Labels tab</td><td class="vc-val">Check "Show data labels" &rarr; change display format to <strong>Percentage</strong></td></tr>
+      </table>
+      <div class="viz-result"><strong>Visual result:</strong> A massive green circle representing <strong>99.93%</strong> healthy drive-days with a tiny sliver of red at <strong>0.07%</strong> failures.</div>
+    </div>
+
+    <div class="viz-card">
+      <div class="viz-card-header">
+        <div class="viz-chart-num">2</div>
+        <div class="viz-chart-title">Manufacturer Reliability (AFR)</div>
+        <span class="viz-chart-type">Bar</span>
+      </div>
+      <table class="viz-config">
+        <tr><td class="vc-key">X column</td><td class="vc-val"><code>manufacturer</code> &mdash; Seagate, Toshiba, WDC, HGST</td></tr>
+        <tr><td class="vc-key">Y columns</td><td class="vc-val"><code>AFR</code> &mdash; Annualized Failure Rate</td></tr>
+        <tr><td class="vc-key">General tab</td><td class="vc-val">Toggle <em>Horizontal chart</em> if manufacturer names overlap</td></tr>
+        <tr class="vc-warn"><td class="vc-key">Sorting</td><td class="vc-val">Set to <strong>Value descending</strong> to push the worst-performing brand to the left</td></tr>
+      </table>
+    </div>
+
+    <div class="viz-card">
+      <div class="viz-card-header">
+        <div class="viz-chart-num">3</div>
+        <div class="viz-chart-title">Hard Drive Wear-Out Lifecycle</div>
+        <span class="viz-chart-type">Histogram</span>
+      </div>
+      <table class="viz-config">
+        <tr><td class="vc-key">X column</td><td class="vc-val">Age-in-years column derived from <code>smart_9_raw / 8760</code></td></tr>
+        <tr><td class="vc-key">Y columns</td><td class="vc-val">Leave blank &mdash; histogram counts frequencies automatically</td></tr>
+        <tr class="vc-warn"><td class="vc-key">Bins</td><td class="vc-val">Set manually to <strong>20 or 30</strong> in the settings pane to cluster age groups into clean bars</td></tr>
+      </table>
+      <div class="viz-result"><strong>What to look for:</strong> A spike near 0 years = infant mortality (manufacturing defects). A rising tail past 4&ndash;5 years = wear-out phase. Both together confirm the classic bathtub curve shape.</div>
+    </div>
+
+    <div class="viz-card">
+      <div class="viz-card-header">
+        <div class="viz-chart-num">4</div>
+        <div class="viz-chart-title">Health Sensor Profiling (Healthy vs. Failing)</div>
+        <span class="viz-chart-type">Bar</span>
+      </div>
+      <table class="viz-config">
+        <tr><td class="vc-key">X column</td><td class="vc-val"><code>label</code> (0 = healthy, 1 = pre-failure)</td></tr>
+        <tr><td class="vc-key">Y columns</td><td class="vc-val">Select all four: <code>avg_smart_5_raw</code>, <code>avg_smart_187_raw</code>, <code>avg_smart_197_raw</code>, <code>avg_smart_198_raw</code>. Set aggregation dropdown for each to <strong>Sum</strong> or <strong>Average</strong>.</td></tr>
+        <tr class="vc-warn"><td class="vc-key">X axis tab &rarr; Scale</td><td class="vc-val">Change from <em>Automatic (Linear)</em> to <strong>Categorical</strong> &mdash; removes &minus;0.5 / 1.5 decimal noise on the axis</td></tr>
+        <tr class="vc-warn"><td class="vc-key">Y axis tab &rarr; Stacking</td><td class="vc-val">Set to <strong>None</strong> (or Grouped) &mdash; unstacks color bars so each SMART metric appears side-by-side</td></tr>
+      </table>
+      <div class="viz-result"><strong>Visual result:</strong> Healthy (label 0) drives sit at a flat line near zero across all 4 metrics. Failing (label 1) drives show unmistakable spikes — the grouped side-by-side layout makes the difference impossible to miss.</div>
     </div>
 
     <div class="section-label">Sequential Execution Checklist</div>
