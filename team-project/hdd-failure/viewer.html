@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notebook Viewer &mdash; HDD Failure Prediction</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0d1117;
+      color: #c9d1d9;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Navbar ── */
+    .navbar {
+      background: #161b22;
+      border-bottom: 1px solid #30363d;
+      padding: .75rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .navbar-left { display: flex; align-items: center; gap: 1rem; }
+    .nav-back {
+      color: #8b949e;
+      text-decoration: none;
+      font-size: .85rem;
+      display: flex;
+      align-items: center;
+      gap: .35rem;
+      transition: color .15s;
+    }
+    .nav-back:hover { color: #e3b341; }
+    .nav-sep { color: #30363d; font-size: 1.1rem; }
+    .nav-title { color: #e6edf3; font-weight: 700; font-size: 1rem; }
+    .nav-badge {
+      background: #9e6a03;
+      color: #fff;
+      font-size: .7rem;
+      font-weight: 700;
+      padding: 2px 10px;
+      border-radius: 12px;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+    }
+
+    /* ── Two-column layout ── */
+    .layout {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+      height: calc(100vh - 49px);
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: 240px;
+      flex-shrink: 0;
+      background: #161b22;
+      border-right: 1px solid #30363d;
+      overflow-y: auto;
+      padding: 1rem .75rem;
+    }
+    .sidebar-label {
+      font-size: .68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: #8b949e;
+      padding: 0 .5rem;
+      margin-bottom: .75rem;
+    }
+    .nb-btn {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      background: none;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      padding: .7rem .75rem;
+      cursor: pointer;
+      text-align: left;
+      transition: background .12s, border-color .12s;
+      margin-bottom: .35rem;
+      color: #c9d1d9;
+    }
+    .nb-btn:hover { background: #21262d; border-color: #30363d; }
+    .nb-btn.active {
+      background: #1c1400;
+      border-color: #9e6a03;
+      border-left: 3px solid #e3b341;
+    }
+    .nb-btn-top { display: flex; align-items: center; gap: .5rem; margin-bottom: .3rem; }
+    .nb-badge {
+      font-size: .65rem;
+      font-weight: 700;
+      background: #21262d;
+      color: #e3b341;
+      border: 1px solid #9e6a03;
+      border-radius: 4px;
+      padding: 1px 6px;
+      white-space: nowrap;
+      font-family: "SF Mono", "Fira Code", monospace;
+    }
+    .nb-btn.active .nb-badge { background: #2d1f00; }
+    .nb-name {
+      font-size: .83rem;
+      font-weight: 600;
+      color: #e6edf3;
+      line-height: 1.35;
+    }
+    .nb-btn.active .nb-name { color: #e3b341; }
+    .nb-size {
+      font-size: .7rem;
+      color: #8b949e;
+      background: #21262d;
+      border-radius: 10px;
+      padding: 1px 7px;
+      display: inline-block;
+      margin-top: .2rem;
+      width: fit-content;
+    }
+
+    /* ── Main content ── */
+    .main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem 2rem 3rem;
+    }
+
+    /* ── Loading ── */
+    .loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 300px;
+      gap: 1rem;
+    }
+    .loading p { color: #8b949e; font-size: .88rem; }
+    .spinner {
+      border: 3px solid #30363d;
+      border-top-color: #e3b341;
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Error state ── */
+    .error-state {
+      background: #2d1a1a;
+      border: 1px solid #da3633;
+      border-radius: 8px;
+      padding: 1.25rem;
+      color: #f85149;
+      font-size: .88rem;
+      margin-top: 2rem;
+    }
+
+    /* ── Notebook header ── */
+    .nb-header {
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid #30363d;
+    }
+    .nb-header-badge {
+      font-size: .68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: #e3b341;
+      margin-bottom: .4rem;
+    }
+    .nb-header h2 {
+      color: #e6edf3;
+      font-size: 1.35rem;
+      font-weight: 800;
+      margin-bottom: .3rem;
+    }
+    .nb-header-meta { font-size: .78rem; color: #8b949e; }
+
+    /* ── Cells ── */
+    .cell { margin-bottom: 1.25rem; }
+
+    /* Markdown cells */
+    .cell-md {
+      padding: .25rem 0;
+      line-height: 1.75;
+    }
+    .cell-md h1 { color: #e3b341; font-size: 1.4rem; font-weight: 800; margin: 1.2rem 0 .6rem; border-bottom: 1px solid #30363d; padding-bottom: .4rem; }
+    .cell-md h2 { color: #e6edf3; font-size: 1.15rem; font-weight: 700; margin: 1rem 0 .5rem; }
+    .cell-md h3 { color: #e6edf3; font-size: 1rem; font-weight: 700; margin: .85rem 0 .4rem; }
+    .cell-md h4 { color: #c9d1d9; font-size: .92rem; font-weight: 700; margin: .7rem 0 .35rem; }
+    .cell-md p { color: #c9d1d9; margin-bottom: .6rem; font-size: .9rem; }
+    .cell-md ul, .cell-md ol { color: #c9d1d9; margin: .5rem 0 .6rem 1.4rem; font-size: .9rem; }
+    .cell-md li { margin-bottom: .25rem; line-height: 1.65; }
+    .cell-md code { font-family: "SF Mono", "Fira Code", monospace; background: #1c2128; padding: 1px 5px; border-radius: 3px; color: #79c0ff; font-size: .82rem; }
+    .cell-md pre { background: #1c2128; border: 1px solid #30363d; border-radius: 6px; padding: .85rem 1rem; margin: .6rem 0; overflow-x: auto; }
+    .cell-md pre code { background: none; padding: 0; color: #c9d1d9; }
+    .cell-md blockquote { border-left: 3px solid #9e6a03; padding-left: .85rem; color: #8b949e; margin: .6rem 0; }
+    .cell-md a { color: #58a6ff; }
+    .cell-md strong { color: #e6edf3; }
+    .cell-md table { border-collapse: collapse; width: 100%; margin: .6rem 0; font-size: .83rem; }
+    .cell-md th { background: #21262d; color: #e6edf3; font-weight: 700; padding: .4rem .7rem; text-align: left; border-bottom: 1px solid #30363d; }
+    .cell-md td { padding: .35rem .7rem; border-bottom: 1px solid #21262d; }
+    .cell-md hr { border: none; border-top: 1px solid #30363d; margin: 1rem 0; }
+
+    /* Code cells */
+    .cell-code { display: flex; gap: .75rem; align-items: flex-start; }
+    .cell-in-label {
+      font-family: "SF Mono", "Fira Code", monospace;
+      font-size: .72rem;
+      color: #9e6a03;
+      white-space: nowrap;
+      padding-top: .95rem;
+      min-width: 52px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+    .cell-code-body { flex: 1; min-width: 0; }
+    .code-block {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 1rem;
+      font-family: "SF Mono", "Fira Code", monospace;
+      font-size: .82rem;
+      color: #c9d1d9;
+      overflow-x: auto;
+      white-space: pre;
+      line-height: 1.6;
+    }
+    /* Override hljs background to match */
+    .hljs { background: transparent !important; }
+
+    /* ── Outputs ── */
+    .outputs { margin-top: .5rem; }
+
+    pre.out-stream {
+      background: #0a0a0a;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      padding: .65rem .85rem;
+      font-family: "SF Mono", "Fira Code", monospace;
+      font-size: .78rem;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+      margin-bottom: .4rem;
+    }
+    pre.out-stream.stdout { color: #3fb950; }
+    pre.out-stream.stderr { color: #f85149; }
+
+    pre.out-text {
+      background: #0a0a0a;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      padding: .65rem .85rem;
+      font-family: "SF Mono", "Fira Code", monospace;
+      font-size: .78rem;
+      color: #c9d1d9;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      margin-bottom: .4rem;
+    }
+
+    pre.out-error {
+      background: #1a0a0a;
+      border: 1px solid #da3633;
+      border-radius: 6px;
+      padding: .65rem .85rem;
+      font-family: "SF Mono", "Fira Code", monospace;
+      font-size: .78rem;
+      color: #f85149;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      margin-bottom: .4rem;
+    }
+
+    /* Table output */
+    .out-table-wrap {
+      overflow-x: auto;
+      margin-bottom: .4rem;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+    }
+    .out-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .78rem;
+      background: #161b22;
+    }
+    .out-table thead tr { background: #21262d; }
+    .out-table th {
+      color: #e3b341;
+      font-weight: 700;
+      padding: .45rem .75rem;
+      text-align: left;
+      border-bottom: 1px solid #30363d;
+      white-space: nowrap;
+    }
+    .out-table td {
+      padding: .4rem .75rem;
+      border-bottom: 1px solid #21262d;
+      color: #c9d1d9;
+    }
+    .out-table tbody tr:nth-child(even) td { background: #1c2128; }
+    .out-table tbody tr:hover td { background: #2d333b; }
+
+    /* Large HTML pill */
+    .large-html-pill {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      background: #1c2128;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      padding: .5rem .85rem;
+      font-size: .8rem;
+      color: #8b949e;
+      margin-bottom: .4rem;
+    }
+    .large-html-pill .pill-icon { font-size: 1rem; }
+    .large-html-toggle {
+      margin-left: auto;
+      background: #21262d;
+      border: 1px solid #30363d;
+      border-radius: 5px;
+      padding: .25rem .65rem;
+      font-size: .75rem;
+      color: #c9d1d9;
+      cursor: pointer;
+      transition: background .12s;
+    }
+    .large-html-toggle:hover { background: #2d333b; }
+    .large-html-content {
+      max-height: 400px;
+      overflow: auto;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      padding: .5rem;
+      margin-bottom: .4rem;
+      background: #161b22;
+      font-size: .78rem;
+      color: #c9d1d9;
+    }
+
+    /* Empty cell */
+    .cell-empty-code { opacity: .35; }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="navbar-left">
+      <a href="index.html" class="nav-back">&#8592; HDD Failure Prediction</a>
+      <span class="nav-sep">/</span>
+      <span class="nav-title">Notebook Viewer</span>
+    </div>
+    <span class="nav-badge">Jupyter</span>
+  </nav>
+
+  <!-- Layout -->
+  <div class="layout">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-label">Notebooks</div>
+
+      <button class="nb-btn" onclick="loadNotebook(0)" id="nb-btn-0">
+        <div class="nb-btn-top">
+          <span class="nb-badge">NB01</span>
+          <span class="nb-name">Data Ingestion</span>
+        </div>
+        <span class="nb-size">7.5 MB</span>
+      </button>
+
+      <button class="nb-btn" onclick="loadNotebook(1)" id="nb-btn-1">
+        <div class="nb-btn-top">
+          <span class="nb-badge">NB02</span>
+          <span class="nb-name">EDA &amp; Visualization</span>
+        </div>
+        <span class="nb-size">126 KB</span>
+      </button>
+
+      <button class="nb-btn" onclick="loadNotebook(2)" id="nb-btn-2">
+        <div class="nb-btn-top">
+          <span class="nb-badge">NB03</span>
+          <span class="nb-name">Feature Engineering</span>
+        </div>
+        <span class="nb-size">9.3 MB</span>
+      </button>
+
+      <button class="nb-btn" onclick="loadNotebook(3)" id="nb-btn-3">
+        <div class="nb-btn-top">
+          <span class="nb-badge">NB04</span>
+          <span class="nb-name">Model Training &amp; Evaluation</span>
+        </div>
+        <span class="nb-size">25 KB</span>
+      </button>
+
+      <button class="nb-btn" onclick="loadNotebook(4)" id="nb-btn-4">
+        <div class="nb-btn-top">
+          <span class="nb-badge">NB05</span>
+          <span class="nb-name">Project Documentation</span>
+        </div>
+        <span class="nb-size">9.7 KB</span>
+      </button>
+    </aside>
+
+    <!-- Main content -->
+    <main class="main" id="main-content">
+      <div class="loading">
+        <div class="spinner"></div>
+        <p>Loading notebook... (large files may take a moment)</p>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const NOTEBOOKS = [
+      { file: "01_Data_Ingestion.ipynb",               label: "NB01", title: "Data Ingestion",                   size: "7.5 MB" },
+      { file: "02_EDA_and_Visualization.ipynb",        label: "NB02", title: "EDA and Visualization",            size: "126 KB" },
+      { file: "03_Feature_Engineering.ipynb",          label: "NB03", title: "Feature Engineering",             size: "9.3 MB" },
+      { file: "04_Model_Training_and_Evaluation.ipynb",label: "NB04", title: "Model Training and Evaluation",   size: "25 KB"  },
+      { file: "05_Project_Documentation.ipynb",        label: "NB05", title: "Project Documentation",           size: "9.7 KB" }
+    ];
+
+    let currentIdx = -1;
+
+    // ── ANSI strip ──────────────────────────────────────────────────────────
+    function stripAnsi(str) {
+      return str.replace(/\x1b\[[0-9;]*m/g, "");
+    }
+
+    // ── Databricks table parser ─────────────────────────────────────────────
+    function parseDatabricksTable(htmlStr) {
+      const thMatches = [...htmlStr.matchAll(/<th>(.*?)<\/th>/g)].map(m => m[1]);
+      const trMatches = [...htmlStr.matchAll(/<tr>(.*?)<\/tr>/gs)];
+      const rows = [];
+      for (const tr of trMatches) {
+        const tds = [...tr[1].matchAll(/<td>(.*?)<\/td>/g)].map(m => m[1]);
+        if (tds.length > 0) rows.push(tds);
+      }
+      return { headers: thMatches, rows };
+    }
+
+    function renderTable({ headers, rows }) {
+      const ths = headers.map(h => `<th>${h}</th>`).join("");
+      const trs = rows.map(r => `<tr>${r.map(td => `<td>${td}</td>`).join("")}</tr>`).join("");
+      return `<div class="out-table-wrap"><table class="out-table"><thead><tr>${ths}</tr></thead><tbody>${trs}</tbody></table></div>`;
+    }
+
+    // ── Output rendering ────────────────────────────────────────────────────
+    function renderOutput(output) {
+      const type = output.output_type;
+
+      if (type === "stream") {
+        const text = Array.isArray(output.text) ? output.text.join("") : (output.text || "");
+        const cls = output.name === "stderr" ? "stderr" : "stdout";
+        return `<pre class="out-stream ${cls}">${escHtml(text)}</pre>`;
+      }
+
+      if (type === "error") {
+        const tb = Array.isArray(output.traceback)
+          ? output.traceback.map(l => stripAnsi(l)).join("\n")
+          : stripAnsi(output.evalue || "");
+        return `<pre class="out-error">${escHtml(tb)}</pre>`;
+      }
+
+      if (type === "execute_result" || type === "display_data") {
+        const data = output.data || {};
+
+        if (data["text/html"]) {
+          const htmlArr = data["text/html"];
+          const htmlStr = Array.isArray(htmlArr) ? htmlArr.join("") : htmlArr;
+          const byteLen = new TextEncoder().encode(htmlStr).length;
+
+          if (byteLen >= 60000) {
+            const kb = Math.round(byteLen / 1024);
+            const uid = "lh_" + Math.random().toString(36).slice(2);
+            return `<div class="large-html-pill" id="pill_${uid}">
+              <span class="pill-icon">&#9889;</span>
+              <span>Large Databricks display output &mdash; ${kb} KB</span>
+              <button class="large-html-toggle" onclick="toggleLargeHtml('${uid}', this)">Show</button>
+            </div>
+            <div class="large-html-content" id="lhc_${uid}" style="display:none;"></div>`;
+          }
+
+          // Small HTML — try Databricks table
+          const parsed = parseDatabricksTable(htmlStr);
+          if (parsed.headers.length > 0 || parsed.rows.length > 0) {
+            return renderTable(parsed);
+          }
+          // Fallback: render small HTML inline (tag will be set via post-render pass)
+          const uid2 = "rh_" + Math.random().toString(36).slice(2);
+          // Tag the output so post-render can inject innerHTML
+          output._rawHtml = htmlStr;
+          output._rawHtmlUid = uid2;
+          return `<div id="${uid2}" class="out-text" style="background:#161b22;border:1px solid #30363d;border-radius:6px;padding:.5rem;margin-bottom:.4rem;overflow:auto;max-height:300px;"></div>`;
+        }
+
+        if (data["text/plain"]) {
+          const txt = Array.isArray(data["text/plain"])
+            ? data["text/plain"].join("")
+            : data["text/plain"];
+          return `<pre class="out-text">${escHtml(txt)}</pre>`;
+        }
+      }
+
+      return "";
+    }
+
+    function toggleLargeHtml(uid, btn) {
+      const container = document.getElementById("lhc_" + uid);
+      if (!container) return;
+      if (container.style.display === "none") {
+        // Lazy-inject: retrieve stored html from data attribute on pill
+        const pill = document.getElementById("pill_" + uid);
+        const stored = pill ? pill.dataset.html : "";
+        if (stored) container.innerHTML = stored;
+        container.style.display = "block";
+        btn.textContent = "Hide";
+      } else {
+        container.style.display = "none";
+        btn.textContent = "Show";
+      }
+    }
+
+    // ── HTML escaping ───────────────────────────────────────────────────────
+    function escHtml(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    // ── Cell rendering ──────────────────────────────────────────────────────
+    function renderCell(cell, idx) {
+      const cellType = cell.cell_type;
+      const source = Array.isArray(cell.source) ? cell.source.join("") : (cell.source || "");
+
+      if (cellType === "markdown") {
+        const rendered = marked.parse(source);
+        return `<div class="cell cell-md">${rendered}</div>`;
+      }
+
+      if (cellType === "code") {
+        const execCount = cell.execution_count;
+        const label = execCount !== null && execCount !== undefined
+          ? `In [${execCount}]:`
+          : "In [ ]:";
+
+        let codeHtml = "";
+        if (source.trim()) {
+          const highlighted = hljs.highlight(source, { language: "python", ignoreIllegals: true });
+          codeHtml = `<div class="code-block hljs">${highlighted.value}</div>`;
+        } else {
+          codeHtml = `<div class="code-block cell-empty-code" style="color:#484f58;font-size:.78rem;"># empty cell</div>`;
+        }
+
+        let outputsHtml = "";
+        if (cell.outputs && cell.outputs.length > 0) {
+          outputsHtml = `<div class="outputs">${cell.outputs.map(renderOutput).join("")}</div>`;
+        }
+
+        return `<div class="cell cell-code">
+          <div class="cell-in-label">${escHtml(label)}</div>
+          <div class="cell-code-body">${codeHtml}${outputsHtml}</div>
+        </div>`;
+      }
+
+      if (cellType === "raw") {
+        return `<div class="cell cell-md"><pre class="out-text">${escHtml(source)}</pre></div>`;
+      }
+
+      return "";
+    }
+
+    // ── Notebook loader ─────────────────────────────────────────────────────
+    async function loadNotebook(idx) {
+      if (idx === currentIdx) return;
+      currentIdx = idx;
+
+      // Update sidebar active state
+      document.querySelectorAll(".nb-btn").forEach((btn, i) => {
+        btn.classList.toggle("active", i === idx);
+      });
+
+      const nb = NOTEBOOKS[idx];
+      const main = document.getElementById("main-content");
+
+      // Show spinner
+      main.innerHTML = `<div class="loading"><div class="spinner"></div><p>Loading notebook... (large files may take a moment)</p></div>`;
+
+      try {
+        const resp = await fetch(nb.file);
+        if (!resp.ok) {
+          throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
+        }
+        const json = await resp.json();
+        renderNotebook(json, nb, main);
+      } catch (err) {
+        main.innerHTML = `<div class="error-state">
+          <strong>Failed to load ${escHtml(nb.file)}</strong><br>
+          ${escHtml(err.message)}
+        </div>`;
+      }
+    }
+
+    function renderNotebook(nb, meta, container) {
+      const cells = nb.cells || [];
+      const kernelName = nb.metadata && nb.metadata.kernelspec
+        ? nb.metadata.kernelspec.display_name || nb.metadata.kernelspec.name || "Python"
+        : "Python";
+      const langVersion = nb.metadata && nb.metadata.language_info && nb.metadata.language_info.version
+        ? nb.metadata.language_info.version
+        : "";
+
+      let html = `<div class="nb-header">
+        <div class="nb-header-badge">${escHtml(meta.label)}</div>
+        <h2>${escHtml(meta.title)}</h2>
+        <div class="nb-header-meta">${escHtml(kernelName)}${langVersion ? " " + escHtml(langVersion) : ""} &nbsp;&bull;&nbsp; ${cells.length} cells &nbsp;&bull;&nbsp; ${escHtml(meta.size)}</div>
+      </div>`;
+
+      // Pre-scan: mark large HTML outputs so renderOutput can tag them, then render
+      cells.forEach((cell, cellIdx) => {
+        if (cell.cell_type === "code" && cell.outputs) {
+          cell.outputs.forEach(output => {
+            const type = output.output_type;
+            if (type === "execute_result" || type === "display_data") {
+              const data = output.data || {};
+              if (data["text/html"]) {
+                const htmlArr = data["text/html"];
+                const htmlStr = Array.isArray(htmlArr) ? htmlArr.join("") : htmlArr;
+                const byteLen = new TextEncoder().encode(htmlStr).length;
+                if (byteLen >= 60000) {
+                  output._largeHtml = htmlStr;
+                }
+              }
+            }
+          });
+        }
+        html += renderCell(cell, cellIdx);
+      });
+
+      container.innerHTML = html;
+
+      // Post-render pass 1: store large HTML payloads in pill data attributes
+      const allLargeHtmls = [];
+      cells.forEach(cell => {
+        if (cell.cell_type === "code" && cell.outputs) {
+          cell.outputs.forEach(output => {
+            if (output._largeHtml) {
+              allLargeHtmls.push(output._largeHtml);
+            }
+          });
+        }
+      });
+      const pills = container.querySelectorAll("[id^='pill_']");
+      pills.forEach((pill, i) => {
+        if (allLargeHtmls[i] !== undefined) {
+          pill.dataset.html = allLargeHtmls[i];
+        }
+      });
+
+      // Post-render pass 2: inject small raw HTML outputs
+      cells.forEach(cell => {
+        if (cell.cell_type === "code" && cell.outputs) {
+          cell.outputs.forEach(output => {
+            if (output._rawHtml && output._rawHtmlUid) {
+              const el = container.querySelector("#" + output._rawHtmlUid);
+              if (el) el.innerHTML = output._rawHtml;
+            }
+          });
+        }
+      });
+    }
+
+    // ── Auto-load NB01 on page load ─────────────────────────────────────────
+    document.addEventListener("DOMContentLoaded", function() {
+      loadNotebook(0);
+    });
+  </script>
+</body>
+</html>

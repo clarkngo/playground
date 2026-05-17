@@ -9,7 +9,9 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ## 2026-05-17
 
-- [feature] `team-project/hdd-failure/index.html` — Add precision analysis section to NB05 Step 4: Base Rate Fallacy math (1,167 TP / 458,638 FP = 0.25%), asymmetric error costs table, drive-day vs physical drive nuance, threshold tuning table (0.5→0.7→0.9)
+- [feature] `team-project/hdd-failure/viewer.html` — New Jupyter notebook viewer: 5-notebook sidebar, dark gold theme, markdown + syntax-highlighted code cells, Databricks table parsing, large HTML toggle, auto-loads NB01
+- [feature] `team-project/hdd-failure/meeting.html` — Team Meeting Guide: scroll narrative covering all 5 notebooks with WHY explanations, actual results (AUC-ROC 0.8604, confusion matrix, AFR table, SMART spike bars), GBT vs baseline comparison, next steps
+- [feature] `team-project/hdd-failure/index.html` — Added Notebook Viewer and Team Meeting Guide quick-access buttons; Add precision analysis section to NB05 Step 4
 
 ## 2026-05-10
 

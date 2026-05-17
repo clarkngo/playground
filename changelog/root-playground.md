@@ -7,6 +7,30 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ## 2026-05-17
 
+### [feature] `team-project/hdd-failure/meeting.html` — Team Meeting Guide
+- Created full-narrative meeting discussion page (875 lines) for DS625 Team Z presentation
+- Fixed left sidebar with section links + IntersectionObserver active highlight
+- Sections: Overview → NB01 → NB02 → NB03 → NB04 → Final Results → Next Steps
+- WHY boxes (blue accent) for every major technical decision (wildcard ingestion, 6 SMART cols, 30-day label, Delta Lake, temporal split, class weights, GBT vs RF, Pipeline)
+- Actual data tables: AFR by manufacturer (HGST 2.85% → WD 0.46%), SMART spike bars (49x / 74x / 156x / 212x), full confusion matrix (TN=10,028,402 / FP=458,638 / FN=400 / TP=1,167)
+- GBT vs baseline comparison cards: AUC-ROC 0.8604, Recall 74.47% (+8.69pp), Precision 0.25%
+- Pipeline diagram (VectorAssembler → GBTClassifier → Pipeline model)
+- Base Rate Fallacy explanation, accuracy exclusion rationale, threshold tuning next steps
+- All key PySpark code blocks with syntax color classes (.kw, .fn, .str, .cmt, .num)
+
+### [feature] `team-project/hdd-failure/index.html` — Quick-access button row
+- Added Notebook Viewer (blue) and Team Meeting Guide (green) buttons next to existing PM Dashboard gold button
+
+### [feature] `team-project/hdd-failure/viewer.html` — Jupyter Notebook Viewer
+- Created polished static notebook viewer (702 lines) for 5 `.ipynb` notebooks in the HDD Failure Prediction project
+- Dark theme matching `index.html`: body `#0d1117`, card `#161b22`, gold accent `#e3b341` / `#9e6a03`
+- Two-column layout: fixed 240px sidebar with NB01–NB05 buttons (badge, title, file size pill, gold active state) + scrollable main panel
+- Navbar with back link to `index.html`, sticky positioning
+- Notebook rendering: markdown cells via `marked` CDN, code cells via `highlight.js` Python syntax highlighting with `In [N]:` labels
+- Output handling: stream (stdout green / stderr red), error (ANSI-stripped, red pre), `text/plain`, Databricks table HTML (parsed and re-rendered dark-themed), large HTML (>=60KB) deferred pill with Show/Hide toggle
+- Auto-loads NB01 on page load; spinner shown during fetch; error state on HTTP failure
+- Hardcoded file sizes: NB01 7.5MB, NB02 126KB, NB03 9.3MB, NB04 25KB, NB05 9.7KB
+
 ### [feature] `team-project/hdd-failure/index.html` — Precision Analysis Section (NB05 Step 4)
 - Added 4 result-step cards explaining why 0.25% GBT precision is mathematically expected and operationally acceptable
 - **Base Rate Fallacy math**: `Precision = 1,167 / (1,167 + 458,638) = 0.25%` — even a 4.5% FPR on 10M healthy drive-days produces 450,000+ FPs swamping 1,167 TPs
