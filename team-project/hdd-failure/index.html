@@ -860,6 +860,89 @@
       </tbody>
     </table>
 
+    <div class="section-label">Genie Code Guide &mdash; How NB04 Was Actually Built</div>
+
+    <div class="insight-box red">
+      <div class="ib-label">Serverless compute constraints + 99.93% class imbalance = two mandatory design decisions</div>
+      <p>Because this runs on Databricks Serverless, manual <code>.cache()</code> and <code>.persist()</code> at write time are forbidden — do not include them in any Genie prompt for this notebook. To counteract the extreme class imbalance discovered in NB02 (99.93% healthy), we compute a <strong>dynamic weight factor</strong> and inject it as a <code>weightCol</code> into the <code>GBTClassifier</code>. This forces the model to treat a missed failure as a catastrophic mathematical penalty rather than a negligible rounding error — the only way to prevent it from collapsing to "predict Healthy every time."</p>
+    </div>
+
+    <div class="genie-step">
+      <div class="genie-step-header">
+        <div class="genie-step-num">1</div>
+        <div class="genie-step-title">Load Engineered Features</div>
+      </div>
+      <div class="genie-why">Pull the fully engineered feature set — 6 SMART raw attributes plus the 4 lag and velocity columns written by NB03 — into the modeling session in one line.</div>
+      <div class="genie-prompt-label">&#128172; Prompt &mdash; paste into Genie Code</div>
+      <div class="genie-prompt">Load the managed table &apos;backblaze_features_delta&apos; into a dataframe named feature_df.</div>
+    </div>
+
+    <div class="genie-step">
+      <div class="genie-step-header">
+        <div class="genie-step-num">2</div>
+        <div class="genie-step-title">Temporal Train / Test Split</div>
+      </div>
+      <div class="genie-why">A random split on time-series drive data causes leakage: future rows from the same drive bleed into the training set, making the model appear far more accurate than it will be in production. We enforce a strict chronological boundary — October and November for training, December held out entirely as a live deployment simulator. The prompt requests row-count confirmation so you can verify the split landed where expected before training begins.</div>
+      <div class="genie-prompt-label">&#128172; Prompt &mdash; paste into Genie Code</div>
+      <div class="genie-prompt">Using feature_df, apply a temporal split based on the &apos;date&apos; column. Filter for rows where date is strictly before &apos;2025-12-01&apos; to create train_df. Filter for rows where date is on or after &apos;2025-12-01&apos; to create test_df. Print the row counts of both dataframes to confirm the split.</div>
+    </div>
+
+    <div class="genie-step">
+      <div class="genie-step-header">
+        <div class="genie-step-num">3</div>
+        <div class="genie-step-title">Compute and Append Dynamic Class Weights</div>
+      </div>
+      <div class="genie-why">The weight factor scales the loss function so each failure event is treated as if it occurred thousands of times more than it actually did in the data. Formula: <strong>Weight = Count(label=0) / Count(label=1)</strong> from the training set. This ratio is then stamped onto every training row as a new <code>weight</code> column — healthy rows get 1.0, pre-failure rows get the full ratio. GBTClassifier reads this via <code>weightCol</code> and adjusts its gradient updates accordingly.</div>
+      <div class="genie-prompt-label">&#128172; Prompt &mdash; paste into Genie Code</div>
+      <div class="genie-prompt">Using train_df, calculate the count of rows where label=0 divided by the count of rows where label=1. Store this ratio value in a variable. Add a new column to train_df called &apos;weight&apos;. If label=1, assign it this calculated ratio value; if label=0, assign it a flat value of 1.0. Name this weighted dataframe weighted_train_df.</div>
+    </div>
+
+    <div class="genie-step">
+      <div class="genie-step-header">
+        <div class="genie-step-num">4</div>
+        <div class="genie-step-title">Construct the Spark ML Pipeline</div>
+      </div>
+      <div class="genie-why">The pipeline bundles feature assembly and classification into a single reusable object. <code>VectorAssembler</code> concatenates the 6 engineered features into a single dense vector column. <code>GBTClassifier</code> then reads that vector plus the <code>weight</code> column during training. Wrapping both in a <code>Pipeline</code> means the identical transformation chain runs automatically on unseen test data in Step 5 — no manual re-assembly needed.</div>
+      <div class="genie-prompt-label">&#128172; Prompt &mdash; paste into Genie Code</div>
+      <div class="genie-prompt">Write PySpark ML code to build and fit a machine learning pipeline. First, use VectorAssembler to combine the features [&apos;smart_5_raw&apos;, &apos;smart_187_raw&apos;, &apos;smart_197_raw&apos;, &apos;smart_198_raw&apos;, &apos;smart_5_delta_7&apos;, &apos;smart_187_delta_7&apos;] into a single column named &apos;features&apos;. Second, initialize a GBTClassifier setting labelCol=&apos;label&apos;, featuresCol=&apos;features&apos;, and weightCol=&apos;weight&apos;. Bundle these stages into a Pipeline, fit it on weighted_train_df, and save the resulting model as final_gbt_model.</div>
+      <p class="genie-note">&#9432; The feature list is deliberately focused: 4 raw SMART attributes (5, 187, 197, 198) chosen for their high predictive signal from NB02, plus the 2 velocity delta features engineered in NB03. This keeps the input dimensionality low — important for GBT convergence speed on Community Edition / serverless hardware.</p>
+    </div>
+
+    <div class="genie-step">
+      <div class="genie-step-header">
+        <div class="genie-step-num">5</div>
+        <div class="genie-step-title">Evaluate on the December Test Set</div>
+      </div>
+      <div class="genie-why">We bypass accuracy entirely and ask for two things: <strong>AUC-ROC</strong> (the overall discriminative power of the model across all thresholds) and a raw <strong>Confusion Matrix</strong> (the exact TP / FP / TN / FN counts). The confusion matrix is the source of truth for Recall: True Positives &divide; (True Positives + False Negatives) tells you what fraction of the drives that actually failed in December the model successfully flagged in advance.</div>
+      <div class="genie-prompt-label">&#128172; Prompt &mdash; paste into Genie Code</div>
+      <div class="genie-prompt">Using final_gbt_model, transform test_df to generate a dataframe named predictions. Use BinaryClassificationEvaluator with metricName=&apos;areaUnderROC&apos; to calculate and print the AUC-ROC score. Finally, use Spark SQL group functions on the predictions dataframe to compute and print a custom confusion matrix showing the exact counts of True Positives, False Positives, True Negatives, and False Negatives.</div>
+    </div>
+
+    <div class="section-label">NB04 — What to Look for in the Results</div>
+
+    <div class="card-grid">
+      <div class="card green">
+        <div class="card-icon">&#128200;</div>
+        <h3>AUC-ROC &gt; 0.85</h3>
+        <p>The area under the ROC curve measures discriminative power across all classification thresholds — immune to class imbalance distortion. Anything above <strong>0.85</strong> is outstanding for this industry problem. This is your primary headline metric for the paper.</p>
+      </div>
+      <div class="card red">
+        <div class="card-icon">&#128308;</div>
+        <h3>True Positives vs. False Negatives</h3>
+        <p>From the confusion matrix: <strong>Recall = TP / (TP + FN)</strong>. This is the fraction of drives that actually died in December that your model flagged in advance. A False Negative here means a drive crashed with no warning — the scenario your entire pipeline exists to prevent.</p>
+      </div>
+      <div class="card yellow">
+        <div class="card-icon">&#9889;</div>
+        <h3>Beat the Backblaze Simple Rule</h3>
+        <p>Compare your Recall and Precision against the heuristic benchmark computed in NB02 Step 5. Your ML pipeline must beat this rule&apos;s recall to justify the engineering complexity — if it does not, the paper&apos;s conclusion shifts to discussing why the rule is difficult to outperform.</p>
+      </div>
+      <div class="card highlight">
+        <div class="card-icon">&#128683;</div>
+        <h3>Do Not Report Accuracy</h3>
+        <p>A model predicting all zeros scores 99.93% accuracy with zero predictive value. Do not include this number in the paper. State explicitly that Accuracy is omitted and explain why — this demonstrates you understand the imbalance problem, which is a graded evaluation criterion.</p>
+      </div>
+    </div>
+
     <div class="section-label">Sequential Execution Checklist</div>
     <table class="fw-table">
       <thead>
