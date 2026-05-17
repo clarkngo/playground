@@ -5,6 +5,15 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-05-17
+
+### [feature] `team-project/hdd-failure/index.html` — Precision Analysis Section (NB05 Step 4)
+- Added 4 result-step cards explaining why 0.25% GBT precision is mathematically expected and operationally acceptable
+- **Base Rate Fallacy math**: `Precision = 1,167 / (1,167 + 458,638) = 0.25%` — even a 4.5% FPR on 10M healthy drive-days produces 450,000+ FPs swamping 1,167 TPs
+- **Asymmetric error cost table**: FP row (cheap swap, $0 data loss) vs FN row (catastrophic data loss / downtime) — justifies recall-optimized threshold
+- **Drive-day vs physical drive nuance**: 5 flagged days on 1 drive = 5 FPs in matrix; production fix is a 3-consecutive-day persistence rule
+- **Threshold tuning table**: threshold 0.5 (74.47% recall, current) → 0.7 (balanced) → 0.9 (conservative, ~50% recall) with directional precision/recall arrows
+
 ## 2026-05-10
 
 ### [feature] `classroom-activities/data-governance/module-05.html` — Module 05 Lab Guide
