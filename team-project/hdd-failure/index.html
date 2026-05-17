@@ -753,6 +753,113 @@
       <div class="viz-result"><strong>Visual result:</strong> Healthy (label 0) drives sit at a flat line near zero across all 4 metrics. Failing (label 1) drives show unmistakable spikes — the grouped side-by-side layout makes the difference impossible to miss.</div>
     </div>
 
+    <div class="section-label">Genie Code Guide &mdash; How NB03 Was Actually Built</div>
+
+    <div class="insight-box purple">
+      <div class="ib-label">Why point-in-time snapshots are not enough</div>
+      <p>Hard drives rarely fail out of nowhere. A drive with 50 reallocated sectors that has been stable for two years is far safer than a drive that had 0 yesterday and jumped to 45 today. Point-in-time SMART values alone cannot distinguish these two scenarios. The four steps below use <strong>Spark Window functions</strong> to look backward across each drive&apos;s individual timeline — capturing <strong>historical baselines (7-day lags)</strong> and <strong>rates of degradation (7-day velocity deltas)</strong> that give GBTClassifier a fundamentally richer signal than raw SMART values alone.</p>
+    </div>
+
+    <div class="genie-step">
+      <div class="genie-step-header">
+        <div class="genie-step-num">1</div>
+        <div class="genie-step-title">Initialize the Master Data</div>
+      </div>
+      <div class="genie-why">Pull the cleaned, labeled dataset from the managed Delta table written by NB01. All 92 days of Q4 2025, 11 core columns, nulls already filled, 30-day label already engineered — no re-processing needed.</div>
+      <div class="genie-prompt-label">&#128172; Prompt &mdash; paste into Genie Code</div>
+      <div class="genie-prompt">Load the managed table &apos;backblaze_master_delta&apos; into a dataframe named base_df.</div>
+    </div>
+
+    <div class="genie-step">
+      <div class="genie-step-header">
+        <div class="genie-step-num">2</div>
+        <div class="genie-step-title">Engineer 7-Day Lag Features</div>
+      </div>
+      <div class="genie-why">Establishes what each drive&apos;s health profile looked like exactly one week prior. We focus on <code>smart_5_raw</code> (Reallocated Sectors) and <code>smart_187_raw</code> (Uncorrectable Errors) — the two most volatile pre-failure indicators. The window is partitioned by <code>serial_number</code> so each drive&apos;s history is evaluated independently, never mixing rows across drives. Nulls appear for the first 7 days of each drive&apos;s Q4 history (no prior rows available) and are filled with 0.</div>
+      <div class="genie-prompt-label">&#128172; Prompt &mdash; paste into Genie Code</div>
+      <div class="genie-prompt">Using base_df, write PySpark code to create 7-day lag features. Define a Window function partitioned by &apos;serial_number&apos; and ordered by &apos;date&apos; ascending. Use the lag() function exactly on the input columns &apos;smart_5_raw&apos; and &apos;smart_187_raw&apos; (do not drop the &apos;_raw&apos; suffix) to create two new columns named &apos;smart_5_lag_7&apos; and &apos;smart_187_lag_7&apos; representing the values from 7 days prior. Fill any resulting null values from the early historical window with 0. Name this dataframe lag_df.</div>
+      <p class="genie-note">&#9432; The prompt explicitly instructs Genie to preserve the <code>_raw</code> suffix in input column names. Without this guard, Genie occasionally drops the suffix and tries to reference a column that does not exist, causing a runtime AnalysisException.</p>
+    </div>
+
+    <div class="genie-step">
+      <div class="genie-step-header">
+        <div class="genie-step-num">3</div>
+        <div class="genie-step-title">Engineer Velocity (Delta) Features</div>
+      </div>
+      <div class="genie-why">A stable SMART count is benign; a rapidly growing one is an emergency signal. The delta captures the <em>momentum</em> of degradation over the 7-day window: <strong>Delta&#8327; = Current Raw Value &minus; Value 7 Days Ago</strong>. A sudden +45 jump in reallocated sectors in one week is far more alarming than a static 50 — and GBTClassifier can learn this distinction automatically when both the lag and delta are in the feature vector.</div>
+      <div class="genie-prompt-label">&#128172; Prompt &mdash; paste into Genie Code</div>
+      <div class="genie-prompt">Using lag_df, write PySpark code to create two velocity columns: &apos;smart_5_delta_7&apos; (calculated as &apos;smart_5_raw&apos; minus &apos;smart_5_lag_7&apos;) and &apos;smart_187_delta_7&apos; (calculated as &apos;smart_187_raw&apos; minus &apos;smart_187_lag_7&apos;). Name this final dataframe engineered_df.</div>
+    </div>
+
+    <div class="genie-step">
+      <div class="genie-step-header">
+        <div class="genie-step-num">4</div>
+        <div class="genie-step-title">Write to a Serverless Feature Table</div>
+      </div>
+      <div class="genie-why">Persisting to a managed Delta table means NB04 can load the fully engineered feature set in one line — no re-running the heavy window functions. The prompt explicitly excludes DBFS paths and <code>.cache()</code> / <code>.persist()</code> calls, which are not supported on serverless compute at write time.</div>
+      <div class="genie-prompt-label">&#128172; Prompt &mdash; paste into Genie Code</div>
+      <div class="genie-prompt">Write PySpark code to save engineered_df in Delta format as a managed table named &apos;backblaze_features_delta&apos;. Use overwrite mode. Do not use any DBFS or file storage paths, and do not include any cache or persist commands, as manual caching is not supported on our serverless compute.</div>
+      <p class="genie-note">&#9432; NB04 loads this with <code>spark.read.table("backblaze_features_delta")</code>. The <code>.cache()</code> guardrail for ML training is applied in NB04, on the temporal training split only, immediately before <code>CrossValidator.fit()</code> — not at write time here.</p>
+    </div>
+
+    <div class="section-label">NB03 Final Output Schema</div>
+
+    <div class="insight-box">
+      <div class="ib-label">What backblaze_features_delta contains</div>
+      <p>Once all four Genie cells run successfully, the <code>backblaze_features_delta</code> managed table contains the original core identifiers, the 30-day forward-looking <code>label</code>, and four new historical indicator columns. The delta column is the key signal: a value of <strong>+5</strong> means the drive degraded by 5 reallocated sectors over the past week; <strong>0</strong> means no change; a large positive spike in the pre-failure window is the pattern GBTClassifier learns to detect.</p>
+    </div>
+
+    <table class="smart-table">
+      <thead>
+        <tr>
+          <th>serial_number</th>
+          <th>date</th>
+          <th>label</th>
+          <th>smart_5_raw</th>
+          <th>smart_5_lag_7</th>
+          <th>smart_5_delta_7</th>
+          <th>smart_187_raw</th>
+          <th>smart_187_lag_7</th>
+          <th>smart_187_delta_7</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="smart-code">W1F0XGZA</span></td>
+          <td>2025-10-01</td>
+          <td><span class="pred-badge pred-low">0</span></td>
+          <td>0</td>
+          <td>0</td>
+          <td><strong style="color:#3fb950;">0</strong></td>
+          <td>0</td>
+          <td>0</td>
+          <td><strong style="color:#3fb950;">0</strong></td>
+        </tr>
+        <tr>
+          <td><span class="smart-code">W1F0XGZA</span></td>
+          <td>2025-10-08</td>
+          <td><span class="pred-badge pred-low">0</span></td>
+          <td>5</td>
+          <td>0</td>
+          <td><strong style="color:#e3b341;">+5 &nbsp;<small style="font-weight:400;color:#8b949e;">Degrading</small></strong></td>
+          <td>0</td>
+          <td>0</td>
+          <td><strong style="color:#3fb950;">0</strong></td>
+        </tr>
+        <tr>
+          <td><span class="smart-code">W1F0XGZA</span></td>
+          <td>2025-10-15</td>
+          <td><span class="pred-badge pred-high">1</span></td>
+          <td>12</td>
+          <td>5</td>
+          <td><strong style="color:#f85149;">+7 &nbsp;<small style="font-weight:400;color:#8b949e;">Accelerating</small></strong></td>
+          <td>3</td>
+          <td>0</td>
+          <td><strong style="color:#e3b341;">+3 &nbsp;<small style="font-weight:400;color:#8b949e;">Rising</small></strong></td>
+        </tr>
+      </tbody>
+    </table>
+
     <div class="section-label">Sequential Execution Checklist</div>
     <table class="fw-table">
       <thead>
