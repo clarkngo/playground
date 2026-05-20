@@ -1,0 +1,1395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Data Governance &mdash; Module 7 Class Notes</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0d1117; color: #c9d1d9; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; min-height: 100vh; }
+
+    .navbar { background: #161b22; border-bottom: 1px solid #30363d; padding: .75rem 1.5rem; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 200; }
+    .navbar a { color: #e6edf3; text-decoration: none; font-weight: 700; font-size: 1rem; }
+    .navbar a:hover { color: #58a6ff; }
+    .nav-pill { font-size: .78rem; color: #8b949e; }
+
+    .layout { display: flex; max-width: 1280px; margin: 0 auto; padding: 0 1rem; gap: 2rem; }
+
+    .sidebar { width: 220px; flex-shrink: 0; position: sticky; top: 56px; align-self: flex-start; height: calc(100vh - 64px); overflow-y: auto; padding: 1.5rem 0; }
+    .toc-label { font-size: .67rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #484f58; margin-bottom: .65rem; padding-left: .5rem; }
+    .toc { display: flex; flex-direction: column; gap: 2px; }
+    .toc-link { font-size: .78rem; color: #8b949e; text-decoration: none; padding: .3rem .5rem; border-radius: 5px; border-left: 2px solid transparent; line-height: 1.4; transition: all .15s; }
+    .toc-link:hover { color: #e6edf3; background: #161b22; }
+    .toc-link.active { color: #58a6ff; border-left-color: #58a6ff; background: #0c1e38; font-weight: 600; }
+    .toc-group { font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: #484f58; margin: .85rem 0 .25rem .5rem; }
+
+    .content { flex: 1; min-width: 0; padding: 2rem 0 4rem; }
+
+    .breadcrumb { font-size: .78rem; color: #8b949e; display: flex; align-items: center; gap: .4rem; margin-bottom: .85rem; flex-wrap: wrap; }
+    .breadcrumb a { color: #58a6ff; text-decoration: none; font-weight: 600; }
+    .breadcrumb a:hover { text-decoration: underline; }
+    .breadcrumb span { color: #484f58; }
+
+    .page-badge { display: inline-block; background: #1f6feb; color: #fff; font-size: .72rem; font-weight: 700; padding: 3px 12px; border-radius: 12px; text-transform: uppercase; letter-spacing: .07em; margin-bottom: .6rem; }
+    .page-header h1 { color: #e6edf3; font-size: 1.85rem; font-weight: 800; margin-bottom: .3rem; line-height: 1.2; }
+    .page-subtitle { color: #8b949e; font-size: .9rem; margin-bottom: .65rem; }
+    .tag-row { display: flex; gap: .4rem; flex-wrap: wrap; margin-bottom: 2rem; }
+    .tag { display: inline-block; font-size: .68rem; padding: 2px 8px; border-radius: 8px; font-weight: 600; }
+    .tag-blue   { background: #1f3a5c; color: #58a6ff; }
+    .tag-green  { background: #1a2f1a; color: #3fb950; }
+    .tag-yellow { background: #2d2009; color: #e3b341; }
+    .tag-purple { background: #24183a; color: #bc8cff; }
+
+    .notes-section { margin-bottom: 3rem; scroll-margin-top: 72px; }
+    .section-header { display: flex; align-items: baseline; gap: .75rem; margin-bottom: 1.35rem; padding-bottom: .75rem; border-bottom: 1px solid #21262d; }
+    .section-num { font-size: .72rem; font-weight: 700; color: #484f58; background: #161b22; border: 1px solid #30363d; padding: 2px 9px; border-radius: 8px; white-space: nowrap; }
+    .section-title { font-size: 1.25rem; font-weight: 800; color: #e6edf3; }
+
+    .prose { font-size: .875rem; color: #c9d1d9; line-height: 1.8; margin-bottom: 1rem; }
+    .prose strong { color: #e6edf3; }
+    .prose em { color: #8b949e; font-style: italic; }
+
+    .def-card { background: #0c1e38; border: 1px solid #1f6feb; border-left: 4px solid #1f6feb; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+    .def-label { font-size: .67rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #58a6ff; margin-bottom: .4rem; }
+    .def-term { font-size: 1rem; font-weight: 800; color: #a5d6ff; margin-bottom: .35rem; }
+    .def-text { font-size: .85rem; color: #c9d1d9; line-height: 1.75; }
+    .def-text ul { padding-left: 1.1rem; margin-top: .4rem; }
+    .def-text li { margin-bottom: .25rem; }
+
+    .concept-card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: .85rem; }
+    .concept-title { font-size: .85rem; font-weight: 700; color: #e6edf3; margin-bottom: .4rem; }
+    .concept-text { font-size: .84rem; color: #c9d1d9; line-height: 1.75; }
+    .concept-text ul { padding-left: 1.1rem; }
+    .concept-text li { margin-bottom: .3rem; }
+
+    .example-card { background: #0b1f0b; border: 1px solid #238636; border-left: 4px solid #3fb950; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+    .example-label { font-size: .67rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #3fb950; margin-bottom: .4rem; }
+    .example-title { font-size: .9rem; font-weight: 700; color: #56d364; margin-bottom: .35rem; }
+    .example-text { font-size: .84rem; color: #c9d1d9; line-height: 1.75; }
+    .example-text ul, .example-text ol { padding-left: 1.1rem; }
+    .example-text li { margin-bottom: .3rem; }
+    .example-text strong { color: #56d364; }
+
+    .insight-card { background: #1d1600; border: 1px solid #9e6a03; border-left: 4px solid #e3b341; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+    .insight-label { font-size: .67rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #e3b341; margin-bottom: .4rem; }
+    .insight-text { font-size: .85rem; color: #c9d1d9; line-height: 1.75; }
+    .insight-text strong { color: #f0c674; }
+    .insight-text ul { padding-left: 1.1rem; }
+    .insight-text li { margin-bottom: .3rem; }
+
+    .warn-card { background: #2d1a1a; border: 1px solid #f85149; border-left: 4px solid #f85149; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+    .warn-label { font-size: .67rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #f85149; margin-bottom: .4rem; }
+    .warn-text { font-size: .85rem; color: #c9d1d9; line-height: 1.75; }
+    .warn-text ul { padding-left: 1.1rem; }
+    .warn-text li { margin-bottom: .3rem; }
+    .warn-text strong { color: #ff7b72; }
+
+    .compare-table { width: 100%; border-collapse: collapse; font-size: .84rem; margin-bottom: 1.1rem; }
+    .compare-table th { background: #0d1117; color: #8b949e; font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; padding: .55rem .85rem; text-align: left; border-bottom: 2px solid #30363d; }
+    .compare-table td { padding: .6rem .85rem; border-bottom: 1px solid #21262d; color: #c9d1d9; vertical-align: top; line-height: 1.6; }
+    .compare-table tr:last-child td { border-bottom: none; }
+    .compare-table tr:hover td { background: #161b22; }
+    .compare-table .col-a { color: #58a6ff; font-weight: 700; }
+    .compare-table .col-b { color: #3fb950; font-weight: 700; }
+    .compare-table .col-c { color: #bc8cff; font-weight: 700; }
+    .compare-table .col-d { color: #e3b341; font-weight: 700; }
+    .compare-table .col-r { color: #ff7b72; font-weight: 700; }
+
+    .pill { display: inline-block; font-size: .67rem; font-weight: 700; padding: 2px 8px; border-radius: 10px; white-space: nowrap; }
+    .pill-green  { background: #1a3a1a; color: #3fb950; border: 1px solid #238636; }
+    .pill-red    { background: #2d1a1a; color: #f85149; border: 1px solid #da3633; }
+    .pill-yellow { background: #2d2009; color: #e3b341; border: 1px solid #9e6a03; }
+    .pill-blue   { background: #1f3a5c; color: #58a6ff; border: 1px solid #1f6feb; }
+    .pill-purple { background: #24183a; color: #bc8cff; border: 1px solid #6e40c9; }
+
+    .flow-wrap { overflow-x: auto; margin-bottom: 1.25rem; }
+    .flow { display: flex; align-items: stretch; gap: 0; flex-wrap: nowrap; min-width: max-content; padding: .5rem 0; }
+    .flow-node { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: .65rem 1rem; font-size: .78rem; font-weight: 700; color: #e6edf3; text-align: center; min-width: 110px; display: flex; flex-direction: column; align-items: center; gap: .25rem; }
+    .flow-node .fn-sub { font-size: .67rem; font-weight: 400; color: #8b949e; margin-top: .1rem; }
+    .flow-arrow { display: flex; align-items: center; color: #30363d; font-size: 1.1rem; padding: 0 .2rem; }
+    .flow-node.blue   { border-color: #1f6feb; background: #0c1e38; color: #a5d6ff; }
+    .flow-node.green  { border-color: #238636; background: #0b1f0b; color: #56d364; }
+    .flow-node.yellow { border-color: #9e6a03; background: #1d1600; color: #f0c674; }
+    .flow-node.purple { border-color: #6e40c9; background: #18102d; color: #d2a8ff; }
+    .flow-node.red    { border-color: #da3633; background: #2d1a1a; color: #ff7b72; }
+
+    .two-col   { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.1rem; }
+    .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.1rem; }
+    .four-col  { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: .75rem; margin-bottom: 1.1rem; }
+
+    .pillar-card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1.25rem 1rem; text-align: center; }
+    .pillar-icon { font-size: 1.8rem; margin-bottom: .5rem; }
+    .pillar-name { font-size: .95rem; font-weight: 800; color: #e6edf3; margin-bottom: .4rem; }
+    .pillar-desc { font-size: .78rem; color: #8b949e; line-height: 1.6; }
+
+    .num-list { display: flex; flex-direction: column; gap: .6rem; margin-bottom: 1rem; }
+    .num-item { display: flex; gap: .85rem; align-items: flex-start; }
+    .num-badge { width: 26px; height: 26px; border-radius: 50%; background: #1f6feb; color: #fff; font-size: .75rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: .1rem; }
+    .num-badge.green  { background: #238636; }
+    .num-badge.purple { background: #6e40c9; }
+    .num-badge.yellow { background: #9e6a03; }
+    .num-badge.red    { background: #b91c1c; }
+    .num-content { flex: 1; }
+    .num-title { font-size: .88rem; font-weight: 700; color: #e6edf3; margin-bottom: .2rem; }
+    .num-text  { font-size: .82rem; color: #c9d1d9; line-height: 1.65; }
+
+    /* Auth method card */
+    .auth-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: .75rem; margin-bottom: 1.1rem; }
+    .auth-card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: .9rem 1rem; }
+    .auth-era { font-size: .62rem; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: #484f58; margin-bottom: .25rem; }
+    .auth-name { font-size: .9rem; font-weight: 800; color: #e6edf3; margin-bottom: .3rem; }
+    .auth-desc { font-size: .77rem; color: #8b949e; line-height: 1.55; }
+    .auth-card.current { border-color: #238636; }
+    .auth-card.current .auth-name { color: #56d364; }
+    .auth-card.legacy  { border-color: #484f58; }
+    .auth-card.legacy  .auth-name { color: #8b949e; }
+
+    /* Classification matrix */
+    .matrix-wrap { overflow-x: auto; margin-bottom: 1.25rem; }
+    .matrix { border-collapse: collapse; min-width: 520px; width: 100%; font-size: .82rem; }
+    .matrix th { background: #161b22; color: #8b949e; font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; padding: .5rem .85rem; text-align: left; border: 1px solid #30363d; }
+    .matrix td { padding: .55rem .85rem; border: 1px solid #21262d; vertical-align: top; line-height: 1.55; color: #c9d1d9; }
+    .matrix .row-head { font-weight: 700; color: #e6edf3; background: #161b22; }
+    .matrix .cell-public     { background: #1a3a1a22; color: #3fb950; font-weight: 600; }
+    .matrix .cell-internal   { background: #1f3a5c22; color: #58a6ff; font-weight: 600; }
+    .matrix .cell-conf       { background: #2d200922; color: #e3b341; font-weight: 600; }
+    .matrix .cell-restricted { background: #2d1a1a22; color: #f85149; font-weight: 600; }
+
+    /* SSO pros/cons strip */
+    .pro-con-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.1rem; }
+    .pro-card { background: #0b1f0b; border: 1px solid #238636; border-radius: 8px; padding: 1rem; }
+    .con-card { background: #2d1a1a; border: 1px solid #da3633; border-radius: 8px; padding: 1rem; }
+    .pro-card-title { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: #3fb950; margin-bottom: .5rem; }
+    .con-card-title { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: #f85149; margin-bottom: .5rem; }
+    .pro-card ul, .con-card ul { padding-left: 1rem; font-size: .82rem; color: #c9d1d9; line-height: 1.7; }
+    .pro-card li, .con-card li { margin-bottom: .25rem; }
+
+    /* Arch box */
+    .arch-box { border: 1px solid #30363d; border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+    .arch-title { font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #8b949e; margin-bottom: .75rem; }
+    .arch-row { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; margin-bottom: .5rem; }
+    .arch-app { background: #1f3a5c; border: 1px solid #1f6feb; border-radius: 6px; padding: .35rem .75rem; font-size: .75rem; font-weight: 700; color: #a5d6ff; }
+    .arch-app.green  { background: #1a3a1a; border-color: #238636; color: #56d364; }
+    .arch-app.yellow { background: #2d2009; border-color: #9e6a03; color: #f0c674; }
+    .arch-app.purple { background: #24183a; border-color: #6e40c9; color: #d2a8ff; }
+    .arch-app.red    { background: #2d1a1a; border-color: #da3633; color: #ff7b72; }
+    .arch-hub { background: #1d1600; border: 2px solid #e3b341; border-radius: 8px; padding: .5rem 1rem; font-size: .82rem; font-weight: 800; color: #f0c674; text-align: center; min-width: 100px; }
+    .arch-line { color: #484f58; font-size: .9rem; }
+
+    .divider { border: none; border-top: 1px solid #21262d; margin: 1.75rem 0; }
+    .sub-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: #8b949e; border-left: 3px solid #30363d; padding-left: .6rem; margin: 1.5rem 0 .85rem; }
+
+    .term   { color: #a5d6ff; font-weight: 700; }
+    .term-g { color: #56d364; font-weight: 700; }
+    .term-y { color: #f0c674; font-weight: 700; }
+    .term-p { color: #d2a8ff; font-weight: 700; }
+    .term-r { color: #ff7b72; font-weight: 700; }
+
+    .site-footer { text-align: center; padding: 1.5rem; border-top: 1px solid #21262d; color: #484f58; font-size: .77rem; margin-top: 2rem; }
+
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .two-col, .three-col, .four-col, .pro-con-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 620px) {
+      .two-col { grid-template-columns: 1fr; }
+    }
+    @media print {
+      @page { size: A4; margin: 1.4cm 1.6cm; }
+      body { background: #fff !important; color: #111 !important; font-size: 9pt; }
+      .navbar, .sidebar, .site-footer { display: none !important; }
+      .layout { max-width: 100%; padding: 0; gap: 0; }
+      .content { padding: 0; }
+      .notes-section { margin-bottom: 1.5rem; page-break-inside: avoid; }
+      .section-header { border-bottom-color: #ccc !important; }
+      .section-num { background: #eee !important; color: #555 !important; border-color: #ccc !important; }
+      .section-title { color: #111 !important; font-size: 13pt; }
+      .def-card, .concept-card, .example-card, .insight-card, .warn-card { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .def-text, .concept-text, .example-text, .insight-text, .warn-text, .prose { color: #222 !important; font-size: 8.5pt; }
+      .compare-table th, .matrix th { background: #f3f4f6 !important; color: #555 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .compare-table td, .matrix td { color: #111 !important; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="../../index.html">Playground</a>
+  <span class="nav-pill">Class Notes &rsaquo; Data Governance &rsaquo; Module 7</span>
+</nav>
+
+<div class="layout">
+
+  <!-- ── TOC SIDEBAR ─────────────────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="toc-label">Contents</div>
+    <nav class="toc">
+      <div class="toc-group">Architecture</div>
+      <a href="#s1" class="toc-link">1. Centralized &#8594; Scaled</a>
+      <a href="#s2" class="toc-link">2. App-Based &#8594; Data-Based Ownership</a>
+      <a href="#s3" class="toc-link">3. Governance Processes at Scale</a>
+      <div class="toc-group">Access Control</div>
+      <a href="#s4" class="toc-link">4. Authorization Models</a>
+      <a href="#s5" class="toc-link">5. Ownership, Stewardship &amp; Custodianship</a>
+      <a href="#s6" class="toc-link">6. Lifecycle, Accuracy &amp; Purpose Access</a>
+      <div class="toc-group">Governance Bodies</div>
+      <a href="#s7" class="toc-link">7. Governance Body &amp; Responsibilities</a>
+      <a href="#s8" class="toc-link">8. Standards, Trust &amp; Consequences</a>
+      <a href="#s9" class="toc-link">9. Metadata, Glossary &amp; Lineage</a>
+      <div class="toc-group">Data Operations</div>
+      <a href="#s10" class="toc-link">10. Dataset Activities &amp; Classification</a>
+      <a href="#s11" class="toc-link">11. Dataset-Specific Metrics</a>
+      <a href="#s12" class="toc-link">12. Backup, Retention &amp; Tool Governance</a>
+      <div class="toc-group">Classification &amp; Identity</div>
+      <a href="#s13" class="toc-link">13. Data vs Security Classification</a>
+      <a href="#s14" class="toc-link">14. Enterprise Dictionary &amp; Standardization</a>
+      <a href="#s15" class="toc-link">15. Authentication Standards</a>
+      <a href="#s16" class="toc-link">16. SSO: Benefits, Risks &amp; Mitigations</a>
+      <a href="#s17" class="toc-link">17. Security Arch &amp; Data Consumption</a>
+    </nav>
+  </aside>
+
+  <!-- ── MAIN CONTENT ────────────────────────────────────────── -->
+  <main class="content">
+
+    <div class="breadcrumb">
+      <a href="../../index.html">Playground</a>
+      <span>/</span><a href="../index.html">Class Notes</a>
+      <span>/</span><a href="index.html">Data Governance</a>
+      <span>/</span><span>Module 7</span>
+    </div>
+    <div class="page-header">
+      <div class="page-badge">Module 7</div>
+      <h1>Governance &amp; Security in Scaled Architecture</h1>
+      <div class="page-subtitle">How data governance and data security evolve from centralized to scaled architectures &mdash; ownership, authorization, classification, authentication, and consumption controls</div>
+      <div class="tag-row">
+        <span class="tag tag-blue">Scaled Architecture</span>
+        <span class="tag tag-green">Data Security</span>
+        <span class="tag tag-yellow">ABAC / RBAC</span>
+        <span class="tag tag-purple">Authentication</span>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════ S1 -->
+    <section class="notes-section" id="s1">
+      <div class="section-header">
+        <span class="section-num">01</span>
+        <span class="section-title">From Centralized to Scaled Architecture</span>
+      </div>
+
+      <p class="prose">As organizations grow, their data architecture passes through three distinct stages. Each stage introduces new governance and security challenges that the previous model could not anticipate. Understanding where your organization sits on this spectrum determines what governance processes are realistic to implement today.</p>
+
+      <div class="flow-wrap">
+        <div class="flow">
+          <div class="flow-node blue">Centralized<div class="fn-sub">One database, one team</div></div>
+          <div class="flow-arrow">&#8594;</div>
+          <div class="flow-node yellow">Distributed<div class="fn-sub">Each service owns data</div></div>
+          <div class="flow-arrow">&#8594;</div>
+          <div class="flow-node green">Scaled<div class="fn-sub">Central governance + distributed execution</div></div>
+        </div>
+      </div>
+
+      <div class="three-col">
+        <div class="pillar-card">
+          <div class="pillar-icon">&#127963;</div>
+          <div class="pillar-name">Centralized</div>
+          <div class="pillar-desc">Single database, single team, single governance policy. Easy to control but creates a bottleneck. One breach or outage affects everything. Governance is straightforward because there is only one place to enforce rules.</div>
+        </div>
+        <div class="pillar-card">
+          <div class="pillar-icon">&#127760;</div>
+          <div class="pillar-name">Distributed</div>
+          <div class="pillar-desc">Each service or team owns its own database. Resilient and independently scalable, but governance becomes inconsistent &mdash; every team implements their own access controls, schemas, and quality rules with no coordination.</div>
+        </div>
+        <div class="pillar-card">
+          <div class="pillar-icon">&#9881;</div>
+          <div class="pillar-name">Scaled</div>
+          <div class="pillar-desc">Governance, policies, and metadata are centralized. Data storage and processing are distributed. Each domain operates independently within guardrails defined by the central governance body. This is the target state for enterprise data organizations.</div>
+        </div>
+      </div>
+
+      <div class="sub-label">Governance Implications at Each Stage</div>
+
+      <table class="compare-table">
+        <thead>
+          <tr><th>Dimension</th><th>Centralized</th><th>Distributed</th><th>Scaled</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="col-a">Policy Enforcement</td><td>One place, enforced by DBA</td><td>Inconsistent — each team decides</td><td>Central policies, federated enforcement</td></tr>
+          <tr><td class="col-a">Access Control</td><td>Database-level roles</td><td>Each service manages its own auth</td><td>Centralized identity + fine-grained policies per domain</td></tr>
+          <tr><td class="col-a">Data Quality</td><td>Managed centrally, easy to monitor</td><td>No standard — gaps everywhere</td><td>Standards defined centrally, applied per domain by stewards</td></tr>
+          <tr><td class="col-a">Security</td><td>Single perimeter, single risk surface</td><td>Expanded attack surface, inconsistent controls</td><td>Defense in depth: perimeter + identity + data-level controls</td></tr>
+          <tr><td class="col-a">Scalability</td><td>Limited — single point of contention</td><td>High — each service scales independently</td><td>High — distributed compute with governed data contracts</td></tr>
+        </tbody>
+      </table>
+
+      <div class="insight-card">
+        <div class="insight-label">Key Shift</div>
+        <div class="insight-text">In a <strong>scaled architecture</strong>, governance cannot rely on physical proximity to data. You cannot govern what you cannot see, and you cannot see everything in a distributed world. The answer is <strong>metadata as the control plane</strong>: every dataset is registered, tagged, and tracked centrally, even if the data itself lives in distributed stores.</div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ S2 -->
+    <section class="notes-section" id="s2">
+      <div class="section-header">
+        <span class="section-num">02</span>
+        <span class="section-title">From App-Based to Data-Based Ownership</span>
+      </div>
+
+      <div class="two-col">
+        <div class="concept-card">
+          <div class="concept-title">&#128421; App-Based Ownership (Legacy)</div>
+          <div class="concept-text">
+            The application team owns the data <em>as a byproduct of their system</em>. The CRM team owns customer records because they built the CRM. The ERP team owns financial records because they maintain the ERP.
+            <ul style="margin-top:.5rem">
+              <li>Data is locked inside the application schema</li>
+              <li>Application changes break downstream consumers without notice</li>
+              <li>Governance is an afterthought &mdash; data structure serves the app, not the business</li>
+              <li>No portability &mdash; moving to a different CRM means rebuilding all data integrations</li>
+              <li>Multiple apps may hold overlapping copies of the same entity with no reconciliation</li>
+            </ul>
+          </div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">&#128202; Data-Based Ownership (Target State)</div>
+          <div class="concept-text">
+            Domain teams explicitly own <em>datasets</em>, independent of which application stores them. The Customer domain owns all customer data &mdash; whether it lives in Salesforce, a data lake, or a microservice database.
+            <ul style="margin-top:.5rem">
+              <li>Data is treated as a first-class product with its own lifecycle, quality SLA, and contract</li>
+              <li>Application changes do not break data consumers &mdash; the data contract is the interface</li>
+              <li>Data can be moved between systems without breaking downstream consumers</li>
+              <li>Aligns with the <strong>Data Mesh</strong> philosophy: domain teams publish data as governed products</li>
+              <li>Governance accountability is clear: the domain data team is answerable for accuracy and security</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-label">Why This Shift Matters for Security</div>
+        <div class="insight-text">Under app-based ownership, security policies are embedded in application logic &mdash; access controls live inside each app, making them inconsistent and hard to audit. Under data-based ownership, <strong>security policies travel with the data</strong> as metadata tags and contracts. A dataset classified as Restricted carries that classification into every system it touches, regardless of which application stores it.</div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ S3 -->
+    <section class="notes-section" id="s3">
+      <div class="section-header">
+        <span class="section-num">03</span>
+        <span class="section-title">Governance Processes in Scaled Architecture</span>
+      </div>
+
+      <p class="prose">Moving to scaled architecture does not automatically improve governance &mdash; it must be <em>designed in</em>. Several processes must be put in place and maintained collaboratively across domain teams, the governance body, and technology teams.</p>
+
+      <div class="num-list">
+        <div class="num-item">
+          <div class="num-badge">1</div>
+          <div class="num-content">
+            <div class="num-title">Data Cataloging</div>
+            <div class="num-text">Every dataset, field, and transformation is inventoried in a central catalog. Without a catalog, data consumers do not know what data exists, where it is, or who to contact. The catalog is the foundation of discoverability and governance.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge">2</div>
+          <div class="num-content">
+            <div class="num-title">Policy Definition</div>
+            <div class="num-text">The governance body defines rules: who can access what, under what conditions, for how long, and for what purpose. Policies are explicit, versioned, and tied to data classification levels.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge yellow">3</div>
+          <div class="num-content">
+            <div class="num-title">Policy Enforcement</div>
+            <div class="num-text">Technical controls (RBAC, ABAC, column masking, row-level security) implement the governance policies automatically. Manual enforcement at scale is impractical &mdash; controls must be embedded in the data platform.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge yellow">4</div>
+          <div class="num-content">
+            <div class="num-title">Data Quality Monitoring</div>
+            <div class="num-text">Continuous automated checks validate completeness, accuracy, timeliness, and consistency. Quality failures trigger alerts to the data steward and are tracked over time to identify systemic issues.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge green">5</div>
+          <div class="num-content">
+            <div class="num-title">Access Provisioning</div>
+            <div class="num-text">A formal request-and-approval workflow controls who gains access to each dataset. Requests capture purpose, duration, and data sensitivity. Approvals are logged for audit. Access is automatically revoked at expiry.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge green">6</div>
+          <div class="num-content">
+            <div class="num-title">Cross-Team Collaboration</div>
+            <div class="num-text">Federated data stewards represent each domain in the central governance forum. Regular cadences (monthly governance reviews, quarterly policy audits) ensure alignment across teams without creating a central bottleneck.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge red">7</div>
+          <div class="num-content">
+            <div class="num-title">Incident Response</div>
+            <div class="num-text">When data is misused, breached, or incorrectly shared, a defined escalation process must exist. Audit logs enable forensic investigation. Consequences must be clear and consistently enforced.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ S4 -->
+    <section class="notes-section" id="s4">
+      <div class="section-header">
+        <span class="section-num">04</span>
+        <span class="section-title">Authorization Models &mdash; The Shift to ABAC</span>
+      </div>
+
+      <p class="prose">Authorization defines <em>what an authenticated user is permitted to do</em>. As data architectures have scaled, authorization models have evolved from simple, coarse-grained approaches toward fine-grained, context-aware controls. The industry has progressively shifted from DAC through RBAC and is now moving toward <span class="term">ABAC</span>.</p>
+
+      <div class="flow-wrap">
+        <div class="flow">
+          <div class="flow-node">DAC<div class="fn-sub">Owner decides</div></div>
+          <div class="flow-arrow">&#8594;</div>
+          <div class="flow-node yellow">MAC<div class="fn-sub">System-enforced labels</div></div>
+          <div class="flow-arrow">&#8594;</div>
+          <div class="flow-node blue">RBAC<div class="fn-sub">Job role access</div></div>
+          <div class="flow-arrow">&#8594;</div>
+          <div class="flow-node green">ABAC<div class="fn-sub">Attribute-based, fine-grained</div></div>
+        </div>
+      </div>
+
+      <table class="compare-table">
+        <thead>
+          <tr><th>Model</th><th>Full Name</th><th>How It Works</th><th>Best For</th><th>Limitation</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="col-a">DAC</td>
+            <td>Discretionary Access Control</td>
+            <td>The data owner decides who can access their resources and grants permissions at will</td>
+            <td>Small teams, simple sharing (file systems, spreadsheets)</td>
+            <td>Inconsistent &mdash; each owner sets different rules; no organization-wide policy enforcement</td>
+          </tr>
+          <tr>
+            <td class="col-d">MAC</td>
+            <td>Mandatory Access Control</td>
+            <td>System assigns classification labels (Top Secret, Secret, Unclassified); access is enforced by the system, not the owner</td>
+            <td>Government, defense, high-security environments</td>
+            <td>Very rigid; difficult to adapt for complex business rules; poor user experience</td>
+          </tr>
+          <tr>
+            <td class="col-c">RBAC</td>
+            <td>Role-Based Access Control</td>
+            <td>Permissions are assigned to roles (Analyst, Manager, Admin); users inherit permissions from their role</td>
+            <td>Enterprise applications, ERP, standard business systems</td>
+            <td>Coarse-grained; role explosion as business rules get complex; cannot handle contextual conditions (time, location, device)</td>
+          </tr>
+          <tr>
+            <td class="col-b">ABAC</td>
+            <td>Attribute-Based Access Control</td>
+            <td>Access decisions evaluate attributes of the <em>user</em>, the <em>resource</em>, the <em>action</em>, and the <em>environment</em> simultaneously against a policy</td>
+            <td>Scaled enterprise data platforms, cloud-native systems, multi-domain governance</td>
+            <td>More complex to design and audit; requires a mature policy engine; attribute data must be accurate</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="sub-label">ABAC in Practice &mdash; Fine-Grained Access Scenarios</div>
+
+      <p class="prose">ABAC policies express access rules as conditions combining multiple attributes. This is what makes it powerful for scaled governance:</p>
+
+      <div class="num-list">
+        <div class="num-item">
+          <div class="num-badge">1</div>
+          <div class="num-content">
+            <div class="num-title">Personal device access &mdash; restricted to masked data only</div>
+            <div class="num-text"><code>IF device.type = "personal" THEN grant access to masked columns only</code>. A managed corporate laptop may see full PII; a personal device only sees tokenized values.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge yellow">2</div>
+          <div class="num-content">
+            <div class="num-title">Non-office hours &mdash; read-only access</div>
+            <div class="num-text"><code>IF environment.time NOT IN office_hours THEN allow READ only, deny WRITE and DELETE</code>. Prevents bulk deletions or data exports during off-hours when oversight is minimal.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge red">3</div>
+          <div class="num-content">
+            <div class="num-title">Outside office region &mdash; MFA required or access denied</div>
+            <div class="num-text"><code>IF environment.ip_region != user.home_region THEN require MFA or deny access</code>. Blocks access attempts from unexpected geographic locations unless re-authenticated.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge green">4</div>
+          <div class="num-content">
+            <div class="num-title">Purpose-limited access</div>
+            <div class="num-text"><code>IF access.purpose = "audit" THEN allow READ on finance data for 30 days</code>. An external auditor receives time-boxed, purpose-scoped access that automatically expires.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ S5 -->
+    <section class="notes-section" id="s5">
+      <div class="section-header">
+        <span class="section-num">05</span>
+        <span class="section-title">Data Ownership, Stewardship &amp; Custodianship</span>
+      </div>
+
+      <p class="prose">Clear accountability is the foundation of data governance. Without knowing who is responsible for each dataset &mdash; who defines policy, who maintains quality, who secures it &mdash; governance becomes aspirational rather than operational. Three roles form the core accountability structure:</p>
+
+      <div class="three-col">
+        <div class="pillar-card">
+          <div class="pillar-icon">&#128081;</div>
+          <div class="pillar-name">Data Owner</div>
+          <div class="pillar-desc">Senior leader accountable for the dataset. Defines access policy. Approves data sharing agreements. Accountable to the organization for data accuracy and appropriate use. The entire management chain beneath the owner is responsible under them.</div>
+        </div>
+        <div class="pillar-card">
+          <div class="pillar-icon">&#128203;</div>
+          <div class="pillar-name">Data Steward</div>
+          <div class="pillar-desc">Domain expert who implements org policies and data owner policies. Maintains the business glossary for their domain. Approves data definitions. Ensures data quality. Reviews and approves cross-domain data sharing requests.</div>
+        </div>
+        <div class="pillar-card">
+          <div class="pillar-icon">&#128736;</div>
+          <div class="pillar-name">Data Custodian</div>
+          <div class="pillar-desc">Technical team (DBA, platform engineer) that manages the physical storage, backup, encryption, and security infrastructure. Implements the technical controls defined by the governance body. Does not define policy &mdash; executes it.</div>
+        </div>
+      </div>
+
+      <div class="sub-label">Who Answers What?</div>
+
+      <table class="compare-table">
+        <thead>
+          <tr><th>Question</th><th>Answered By</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Who can access this dataset?</td><td class="col-a">Data Owner (sets policy), Data Steward (approves requests)</td></tr>
+          <tr><td>What does this field mean?</td><td class="col-b">Data Steward (maintains business glossary)</td></tr>
+          <tr><td>Where is this data stored and backed up?</td><td class="col-c">Data Custodian</td></tr>
+          <tr><td>Is this data accurate enough to use?</td><td class="col-b">Data Steward (monitors quality), Data Owner (accountable)</td></tr>
+          <tr><td>Who provides the metadata?</td><td class="col-b">Data Steward (governance metadata), Custodian (technical metadata)</td></tr>
+          <tr><td>Who maintains the business glossary?</td><td class="col-b">Data Steward, ratified by Data Owner</td></tr>
+          <tr><td>Who tracks data lineage?</td><td class="col-b">Data Steward (ownership), Custodian (technical lineage in pipelines)</td></tr>
+          <tr><td>Who is responsible if data is breached?</td><td class="col-a">Data Owner (accountability), Custodian (technical failure), Steward (policy failure)</td></tr>
+          <tr><td>Who are the consumers?</td><td class="col-d">Internal employees or external customers &mdash; distinct access tiers and data contracts apply to each</td></tr>
+        </tbody>
+      </table>
+
+      <div class="insight-card">
+        <div class="insight-label">DSAA &mdash; Data Sharing Agreement Layer</div>
+        <div class="insight-text">A <strong>Data Sharing Agreement (DSA)</strong> is a formal contract between a data owner and a consumer (internal team or external organization) specifying what data is shared, under what conditions, for what purpose, and for how long. The <strong>DSAA layer</strong> is the organizational and technical infrastructure that manages, enforces, and audits these agreements at scale. Without a DSAA layer, data sharing is informal &mdash; driven by personal relationships and ad-hoc email approvals &mdash; creating audit, compliance, and security exposure.</div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ S6 -->
+    <section class="notes-section" id="s6">
+      <div class="section-header">
+        <span class="section-num">06</span>
+        <span class="section-title">Data Accuracy, Lifecycle Ownership &amp; Purpose-Based Access</span>
+      </div>
+
+      <div class="def-card">
+        <div class="def-label">Principle</div>
+        <div class="def-term">Data must always be accurate</div>
+        <div class="def-text">Accuracy is not an aspirational quality &mdash; it is a governance requirement. Inaccurate data propagates through every downstream system that trusts it, compounding errors at each step. Governance ensures accuracy through validation rules, quality monitoring, and clear accountability for corrections. An inaccurate golden source is more dangerous than no data at all, because it gives consumers false confidence.</div>
+      </div>
+
+      <div class="sub-label">Every Lifecycle Stage Needs an Owner</div>
+
+      <div class="flow-wrap">
+        <div class="flow">
+          <div class="flow-node blue">Creation<div class="fn-sub">Who creates it?</div></div>
+          <div class="flow-arrow">&#8594;</div>
+          <div class="flow-node green">Storage<div class="fn-sub">Who secures it?</div></div>
+          <div class="flow-arrow">&#8594;</div>
+          <div class="flow-node yellow">Active Use<div class="fn-sub">Who monitors quality?</div></div>
+          <div class="flow-arrow">&#8594;</div>
+          <div class="flow-node purple">Archival<div class="fn-sub">Who triggers archival?</div></div>
+          <div class="flow-arrow">&#8594;</div>
+          <div class="flow-node red">Deletion<div class="fn-sub">Who approves deletion?</div></div>
+        </div>
+      </div>
+
+      <p class="prose">If any lifecycle stage lacks an assigned owner, data lingers in systems past its retention window, is never archived, or is duplicated without any record of where copies exist. This creates compliance exposure (GDPR right-to-erasure cannot be fulfilled if no one knows where all copies live) and security risk (forgotten databases with stale access credentials).</p>
+
+      <div class="sub-label">Duration-Based and Purpose-Based Access</div>
+
+      <div class="two-col">
+        <div class="concept-card">
+          <div class="concept-title">&#8987; Duration-Based Access</div>
+          <div class="concept-text">
+            Access is not permanent. It is granted for a specific time window aligned to a business need:
+            <ul style="margin-top:.5rem">
+              <li>A project team needs access for 90 days &mdash; automatically revoked at day 91</li>
+              <li>An auditor needs access for the audit period (e.g., January 1&ndash;31)</li>
+              <li>A vendor needs access during a contract term &mdash; revoked on contract end</li>
+            </ul>
+            Duration-based access reduces the <em>standing privilege</em> problem: access that was once granted and never revoked, long after the need expired.
+          </div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">&#127919; Purpose-Based Access</div>
+          <div class="concept-text">
+            Access is scoped to a declared purpose. The consumer must state why they need the data, and access is limited to what is required for that purpose:
+            <ul style="margin-top:.5rem">
+              <li>"Access for audit purposes only" &mdash; read-only, no export to external systems</li>
+              <li>"Access for ML model training" &mdash; anonymized records only, no PII</li>
+              <li>"Access for patient care" &mdash; records for named patient only</li>
+            </ul>
+            This is the <strong>data minimization</strong> principle from GDPR: collect and expose only what is necessary for the stated purpose.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ S7 -->
+    <section class="notes-section" id="s7">
+      <div class="section-header">
+        <span class="section-num">07</span>
+        <span class="section-title">Data Governance Body &amp; Responsibilities</span>
+      </div>
+
+      <div class="def-card">
+        <div class="def-label">Definition</div>
+        <div class="def-term">Data Governance Body</div>
+        <div class="def-text">A <strong>cross-functional group of people</strong> responsible for defining, maintaining, and enforcing the policies, standards, and processes that govern how data is created, managed, shared, and retired across the organization. This is not an IT committee &mdash; it includes business leaders, legal, compliance, security, and domain data owners.</div>
+      </div>
+
+      <div class="sub-label">Core Questions the Governance Body Must Answer</div>
+
+      <div class="num-list">
+        <div class="num-item">
+          <div class="num-badge">1</div>
+          <div class="num-content">
+            <div class="num-title">Which application is responsible for creating, updating, and moving data?</div>
+            <div class="num-text">Each dataset must have one authoritative source of creation. If two systems both create customer records, which one is the golden source? The governance body assigns this and communicates it through the enterprise data dictionary.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge">2</div>
+          <div class="num-content">
+            <div class="num-title">Do we trust this data? Is it a golden source or a derived copy?</div>
+            <div class="num-text">Not all data is equally trustworthy. The governance body rates and communicates the trust level of each dataset. Derived or modified data is flagged accordingly. Consumers must know whether they are reading a golden record or a transformed copy.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge yellow">3</div>
+          <div class="num-content">
+            <div class="num-title">What tools are approved for data management?</div>
+            <div class="num-text">The <strong>Enterprise Architect</strong> is responsible for standardizing which tools are approved for cataloging, quality monitoring, access control, ETL, and backup. Without this, different teams purchase incompatible tools, creating integration complexity and governance gaps.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge yellow">4</div>
+          <div class="num-content">
+            <div class="num-title">How is the enterprise data dictionary maintained?</div>
+            <div class="num-text">The governance body owns the enterprise dictionary: the authoritative definitions of all business terms, field names, and data standards. Every team must align to these definitions. Divergence from the dictionary must be explicitly approved and versioned.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge green">5</div>
+          <div class="num-content">
+            <div class="num-title">What are the retention and archival schedules by dataset?</div>
+            <div class="num-text">Different datasets have different legal retention requirements. The governance body defines and communicates these. Without centralized retention policy, database teams may apply arbitrary schedules or none at all, creating compliance liability.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ S8 -->
+    <section class="notes-section" id="s8">
+      <div class="section-header">
+        <span class="section-num">08</span>
+        <span class="section-title">Standard Interfaces, Trust &amp; Consequences</span>
+      </div>
+
+      <div class="sub-label">Standard Interfaces for Data Exchange</div>
+
+      <p class="prose">Without agreed-upon interfaces, every integration between teams becomes a custom negotiation. One team uses REST, another SFTP, another a direct database connection. The result is a web of brittle, undocumented point-to-point connections &mdash; the <em>Big Ball of Mud</em> at the data layer. Standard interfaces define:</p>
+
+      <div class="two-col">
+        <div class="concept-card">
+          <div class="concept-title">&#128268; What Must Be Standardized</div>
+          <div class="concept-text">
+            <ul>
+              <li><strong>Protocols:</strong> REST, gRPC, or event streams &mdash; pick one per integration pattern</li>
+              <li><strong>Data formats:</strong> JSON with ISO 8601 dates, Parquet for batch, Avro for streaming</li>
+              <li><strong>Authentication:</strong> OAuth 2.0 + JWT for all service-to-service calls</li>
+              <li><strong>Error formats:</strong> consistent error code structure so consumers handle failures uniformly</li>
+              <li><strong>Versioning:</strong> v1, v2 path prefixes; deprecation notice period defined in the contract</li>
+            </ul>
+          </div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">&#128270; Clarity on Approved Tools</div>
+          <div class="concept-text">
+            The governance body (working with the Enterprise Architect) publishes an approved tool list:
+            <ul style="margin-top:.4rem">
+              <li>Cataloging: Apache Atlas, Collibra, Azure Purview</li>
+              <li>Quality monitoring: Great Expectations, Monte Carlo, Soda</li>
+              <li>ETL / orchestration: dbt, Apache Airflow, Informatica</li>
+              <li>Access control: AWS Lake Formation, Apache Ranger</li>
+            </ul>
+            Teams that want to use a non-approved tool must submit a justified request to the governance body.
+          </div>
+        </div>
+      </div>
+
+      <div class="sub-label">Trust Levels: Golden Source vs Modified Data</div>
+
+      <table class="compare-table">
+        <thead>
+          <tr><th>Trust Level</th><th>Description</th><th>Consumer Guidance</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="col-b">&#11088; Golden Source</td><td>Authoritative, original record from the domain system of record. No transformation beyond normalization.</td><td>Trust this record. Raise a defect if it is wrong.</td></tr>
+          <tr><td class="col-d">&#9888; Derived Data</td><td>Produced by applying business rules or aggregations to a golden source. May introduce interpretation.</td><td>Understand the transformation rules before using for critical decisions.</td></tr>
+          <tr><td class="col-r">&#10060; Modified / Unverified</td><td>Copied from a source with unknown transformation history, or manually edited without audit trail.</td><td>Do not use as a golden source. Trace lineage before trusting.</td></tr>
+        </tbody>
+      </table>
+
+      <div class="sub-label">Consequences for Data Misuse</div>
+
+      <p class="prose">Governance policies without enforcement are suggestions. The governance body must define and communicate consequences for policy violations &mdash; and enforce them consistently. Without consequences, policies erode: teams take shortcuts, share data informally, and bypass controls when they are inconvenient.</p>
+
+      <div class="two-col">
+        <div class="concept-card">
+          <div class="concept-title">&#9878; Internal Consequences</div>
+          <div class="concept-text">
+            <ul>
+              <li>Immediate access revocation pending investigation</li>
+              <li>Formal written warning and mandatory governance training</li>
+              <li>Escalation to HR and legal for repeat violations</li>
+              <li>Inclusion in the employee performance record</li>
+              <li>Audit trail ensures accountability is traceable</li>
+            </ul>
+          </div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">&#9878; Regulatory Consequences</div>
+          <div class="concept-text">
+            <ul>
+              <li><strong>GDPR:</strong> fines up to 4% of global annual revenue or &euro;20M (whichever is higher)</li>
+              <li><strong>HIPAA:</strong> civil penalties up to $1.9M per violation category per year; criminal charges for willful violations</li>
+              <li><strong>CCPA:</strong> $100&ndash;$750 per consumer per incident for unintentional violations</li>
+              <li>Reputational damage and loss of customer trust are often more costly than the fine itself</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ S9 -->
+    <section class="notes-section" id="s9">
+      <div class="section-header">
+        <span class="section-num">09</span>
+        <span class="section-title">Metadata, Business Glossary &amp; Lineage</span>
+      </div>
+
+      <div class="two-col">
+        <div class="def-card" style="margin-bottom:0">
+          <div class="def-label">Definition</div>
+          <div class="def-term">Business Glossary</div>
+          <div class="def-text">A centrally maintained dictionary of <strong>agreed business term definitions</strong> that eliminates semantic inconsistency across the organization. Without a glossary, "active customer" means different things to Sales, Finance, and Marketing &mdash; and each builds dashboards that contradict each other.</div>
+        </div>
+        <div class="def-card" style="margin-bottom:0">
+          <div class="def-label">Definition</div>
+          <div class="def-term">Data Lineage</div>
+          <div class="def-text">The end-to-end record of <strong>where data originated, what transformations were applied, and where it traveled</strong>. Lineage answers: "Why does this number look wrong?" by allowing engineers to trace a value from the dashboard back to the source row that produced it.</div>
+        </div>
+      </div>
+
+      <div style="margin-top:1rem"></div>
+
+      <div class="sub-label">Who Provides What</div>
+
+      <table class="compare-table">
+        <thead>
+          <tr><th>Metadata Type</th><th>Provided By</th><th>Examples</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="col-b">Governance Metadata</td><td>Data Steward</td><td>Data owner, steward name, classification, retention policy, sensitivity label, compliance tags</td></tr>
+          <tr><td class="col-a">Technical Metadata</td><td>Data Custodian / Platform</td><td>Schema (columns, types), lineage graph, refresh schedule, record count, partition info, storage location</td></tr>
+          <tr><td class="col-d">Business Glossary</td><td>Data Steward + Business SMEs</td><td>Definition of "active customer", "recognized revenue", "churned account", "net promoter score"</td></tr>
+          <tr><td class="col-c">Operational Metadata</td><td>Pipeline / Orchestration tools</td><td>Last run timestamp, rows processed, error counts, SLA compliance flag</td></tr>
+        </tbody>
+      </table>
+
+      <div class="sub-label">Internal vs External Consumers</div>
+
+      <div class="two-col">
+        <div class="concept-card">
+          <div class="concept-title">&#128100; Internal Employees</div>
+          <div class="concept-text">
+            Access data through internal tools (BI platforms, data catalogs, internal APIs). Subject to corporate policies, employment agreements, and data governance training requirements. Access is provisioned through identity management systems (LDAP, Active Directory, Entra ID). Role-based and attribute-based controls apply.
+          </div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">&#127759; External Customers / Partners</div>
+          <div class="concept-text">
+            Access data through public APIs, portals, or data exports under explicit data sharing agreements. Subject to terms of service, privacy policy, and contractual obligations. Data shared must be minimized to what is necessary. Separate authentication tier (OAuth / API keys) with stricter rate limits and audit requirements.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ S10 -->
+    <section class="notes-section" id="s10">
+      <div class="section-header">
+        <span class="section-num">10</span>
+        <span class="section-title">Dataset Activities, Profiling &amp; Classification</span>
+      </div>
+
+      <p class="prose">Data governance is not only about who can access data &mdash; it also specifies what <em>activities</em> are permitted on a dataset and how that dataset should be classified. Activities and classifications are linked: a dataset classified as PII has a different permitted activity set than a dataset classified as General Purpose.</p>
+
+      <div class="sub-label">Process-Related Activities on a Dataset</div>
+
+      <div class="four-col">
+        <div class="pillar-card">
+          <div class="pillar-icon">&#128202;</div>
+          <div class="pillar-name">Profile</div>
+          <div class="pillar-desc">Generate a statistical summary: row count, null %, min/max/mean, value distribution, uniqueness. Profiling reveals quality issues before they reach consumers.</div>
+        </div>
+        <div class="pillar-card">
+          <div class="pillar-icon">&#127991;</div>
+          <div class="pillar-name">Classify</div>
+          <div class="pillar-desc">Apply data class labels (PII, PHI, financial, public). Attach security classification (Confidential, Restricted). Classification drives which downstream controls apply.</div>
+        </div>
+        <div class="pillar-card">
+          <div class="pillar-icon">&#128273;</div>
+          <div class="pillar-name">Mask / Anonymize</div>
+          <div class="pillar-desc">Replace sensitive values with tokens, hashes, or synthetic data. Only authorized roles can unmask. Masking must be consistent across all copies of the dataset.</div>
+        </div>
+        <div class="pillar-card">
+          <div class="pillar-icon">&#9851;</div>
+          <div class="pillar-name">Archive / Delete</div>
+          <div class="pillar-desc">Move to cold storage per the retention policy. Delete only under explicit authorization. Log every deletion for audit. Deletion must cover all copies and backups.</div>
+        </div>
+      </div>
+
+      <div class="sub-label">Data Classes &amp; Their Policy Implications</div>
+
+      <table class="compare-table">
+        <thead>
+          <tr><th>Data Class</th><th>Description</th><th>Access Controls</th><th>Examples</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="col-b">General Purpose</td>
+            <td>Non-sensitive, publicly shareable within the organization</td>
+            <td>Broad internal access; no special masking required</td>
+            <td>Product catalog, office locations, published exchange rates</td>
+          </tr>
+          <tr>
+            <td class="col-a">Private / Internal</td>
+            <td>For internal use only; not for external sharing without approval</td>
+            <td>Role-based; must not leave the organization without DSA</td>
+            <td>Internal headcount reports, project plans, system architecture diagrams</td>
+          </tr>
+          <tr>
+            <td class="col-d">Masked Data</td>
+            <td>Sensitive field is present but replaced with a token or hash; real value stored separately</td>
+            <td>Most consumers see the masked value; unmasking requires elevated privilege</td>
+            <td>Credit card numbers (tokenized), SSN (hashed), email (pseudonymized)</td>
+          </tr>
+          <tr>
+            <td class="col-r">PII / PHI / Sensitive</td>
+            <td>Personally identifiable or protected health information; highest sensitivity</td>
+            <td>Minimal access; purpose-limited; encrypted at rest and in transit; subject to GDPR/HIPAA</td>
+            <td>Full name + address + DOB, medical diagnoses, financial account numbers</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ S11 -->
+    <section class="notes-section" id="s11">
+      <div class="section-header">
+        <span class="section-num">11</span>
+        <span class="section-title">Dataset-Specific Metrics &amp; Quality Rules</span>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-label">Core Principle</div>
+        <div class="insight-text"><strong>Metrics and quality rules for one dataset are not automatically applicable to another.</strong> A generic quality rule ("zero is an error") can be correct for one dataset and disastrously wrong for another. Data stewards must define quality thresholds at the dataset and field level, not globally.</div>
+      </div>
+
+      <div class="sub-label">The Zero Problem &mdash; Context Determines Validity</div>
+
+      <table class="compare-table">
+        <thead>
+          <tr><th>Dataset</th><th>Field</th><th>Zero Value Meaning</th><th>Is Zero an Error?</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="col-a">Daily Revenue</td><td>total_revenue</td><td>No transactions processed today</td><td class="col-r">Yes &mdash; flag for investigation</td></tr>
+          <tr><td class="col-b">Discount Rate</td><td>discount_pct</td><td>No discount applied (full price sale)</td><td class="col-b">No &mdash; valid and expected</td></tr>
+          <tr><td class="col-c">Temperature Sensor</td><td>temp_celsius</td><td>0&deg;C reading (freezing point)</td><td class="col-b">No &mdash; valid measurement</td></tr>
+          <tr><td class="col-d">Order Quantity</td><td>qty_ordered</td><td>Order with zero items</td><td class="col-r">Yes &mdash; should not exist; integrity error</td></tr>
+          <tr><td class="col-a">Financial Adjustment</td><td>adjustment_amount</td><td>No adjustment made to account</td><td class="col-b">No &mdash; neutral state is valid</td></tr>
+          <tr><td class="col-b">Employee Count</td><td>headcount</td><td>A department with no employees</td><td class="col-d">Maybe &mdash; flag if department is normally staffed; valid if new/closing</td></tr>
+        </tbody>
+      </table>
+
+      <div class="sub-label">More Examples of Dataset-Specific Rules</div>
+
+      <div class="two-col">
+        <div class="concept-card">
+          <div class="concept-title">NULL Rate Rules</div>
+          <div class="concept-text">
+            <ul>
+              <li><code>customer_id</code>: 0% NULL allowed &mdash; required field, always populated</li>
+              <li><code>middle_name</code>: up to 40% NULL is normal &mdash; many people have no middle name</li>
+              <li><code>phone_number</code>: up to 15% NULL acceptable &mdash; optional contact field</li>
+              <li><code>email</code>: 0% NULL for digital customers; may be higher for walk-in records</li>
+            </ul>
+            <p style="margin-top:.5rem;font-size:.8rem;color:#8b949e;">The threshold must reflect the business reality of each field &mdash; not a one-size-fits-all percentage.</p>
+          </div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">Range &amp; Sign Rules</div>
+          <div class="concept-text">
+            <ul>
+              <li><code>product_quantity</code>: must be &gt; 0 &mdash; negative quantity is a data error</li>
+              <li><code>financial_adjustment</code>: may be negative &mdash; credits and debits are valid</li>
+              <li><code>age</code>: 0&ndash;120 is valid; outside this range is an error</li>
+              <li><code>appointment_date</code>: future dates valid; birthdate must be in the past</li>
+              <li><code>transaction_amount</code>: negative valid for refunds; zero is suspicious</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="warn-card">
+        <div class="warn-label">Governance Implication</div>
+        <div class="warn-text">If quality rules are not defined per-dataset, automated quality checks will either generate too many false positives (alerting on valid zeros) or too many false negatives (missing real errors because the threshold was set too loosely). <strong>Data stewards must author and maintain quality rule profiles for each dataset they own</strong> &mdash; this is an active, ongoing responsibility, not a one-time configuration.</div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ S12 -->
+    <section class="notes-section" id="s12">
+      <div class="section-header">
+        <span class="section-num">12</span>
+        <span class="section-title">Backup, Retention &amp; Enterprise Tool Governance</span>
+      </div>
+
+      <div class="sub-label">Multiple Backups &mdash; The 3-2-1 Rule</div>
+
+      <div class="def-card">
+        <div class="def-label">Best Practice</div>
+        <div class="def-term">3-2-1 Backup Rule</div>
+        <div class="def-text">
+          <ul>
+            <li><strong>3</strong> copies of data (1 primary + 2 backups)</li>
+            <li><strong>2</strong> different storage media types (e.g., SSD + cloud object storage)</li>
+            <li><strong>1</strong> copy offsite or in a different geographic region / cloud availability zone</li>
+          </ul>
+          No single failure (hardware failure, ransomware, accidental deletion, regional outage) should be able to destroy all copies simultaneously.
+        </div>
+      </div>
+
+      <div class="sub-label">Retention Periods Differ by Dataset</div>
+
+      <table class="compare-table">
+        <thead>
+          <tr><th>Dataset / Domain</th><th>Retention Requirement</th><th>Governing Regulation</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="col-a">Financial records</td><td>7 years</td><td>SOX (Sarbanes-Oxley), IRS requirements</td></tr>
+          <tr><td class="col-a">Medical records (PHI)</td><td>6 years from creation or last use</td><td>HIPAA</td></tr>
+          <tr><td class="col-b">HR / Employment records</td><td>Varies: 3&ndash;7 years by jurisdiction</td><td>EEOC, local labor law</td></tr>
+          <tr><td class="col-b">EU personal data (GDPR)</td><td>As long as purpose exists; right-to-erasure on request</td><td>GDPR Article 5(e), Article 17</td></tr>
+          <tr><td class="col-d">Audit / access logs</td><td>1&ndash;7 years depending on system</td><td>SOX, ISO 27001, internal policy</td></tr>
+          <tr><td class="col-d">Transactional logs</td><td>90 days to 1 year (typical)</td><td>Internal policy; PCI DSS for payment data</td></tr>
+          <tr><td class="col-c">ML training datasets</td><td>Duration of model lifecycle + 1 year</td><td>Internal policy; AI Act (EU) emerging requirements</td></tr>
+        </tbody>
+      </table>
+
+      <div class="warn-card">
+        <div class="warn-label">What Happens Without Defined Retention Policies</div>
+        <div class="warn-text">
+          <ul>
+            <li><strong>Database teams purchase incompatible tools</strong> with different retention capabilities &mdash; some keep data forever, some delete too aggressively</li>
+            <li><strong>Inconsistent storage costs</strong> &mdash; teams retain everything indefinitely "just in case," inflating cloud storage bills</li>
+            <li><strong>Compliance exposure</strong> &mdash; data retained past its legal window creates liability; data deleted before its required window destroys audit evidence</li>
+            <li><strong>GDPR right-to-erasure failures</strong> &mdash; if no one knows where all copies live, erasure requests cannot be fulfilled</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-label">Enterprise Architect Role</div>
+        <div class="insight-text">The <strong>Enterprise Architect</strong> is responsible for standardizing which tools are approved across the organization for backup, archival, cataloging, quality monitoring, and access control. Without this authority, different teams independently evaluate, purchase, and implement different tools &mdash; creating a fragmented technology landscape that is difficult to govern, secure, or support. Tool standardization is a prerequisite for consistent policy enforcement.</div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ S13 -->
+    <section class="notes-section" id="s13">
+      <div class="section-header">
+        <span class="section-num">13</span>
+        <span class="section-title">Data Classification vs Security Classification</span>
+      </div>
+
+      <p class="prose">These two classification systems are often confused but serve different purposes. They are <strong>orthogonal</strong>: any combination of data class and security class is possible. Both must be attached to physical data objects as metadata tags, and both travel with the data as it moves through systems.</p>
+
+      <div class="two-col">
+        <div class="def-card" style="margin-bottom:0">
+          <div class="def-label">Classification Type 1</div>
+          <div class="def-term">Security Classification</div>
+          <div class="def-text">Defines the <strong>sensitivity / clearance level</strong> required to access the data. Governs <em>who</em> can see it based on their authorization level. Applies regardless of what the data is about.</div>
+        </div>
+        <div class="def-card" style="margin-bottom:0">
+          <div class="def-label">Classification Type 2</div>
+          <div class="def-term">Data Classification</div>
+          <div class="def-text">Defines the <strong>subject matter domain</strong> of the data &mdash; HR, Sales, Finance, Customer. Governs <em>what the data is about</em> and which steward owns it. Applies regardless of how sensitive it is.</div>
+        </div>
+      </div>
+
+      <div style="margin-top:1rem"></div>
+      <div class="sub-label">How They Interact &mdash; Classification Matrix</div>
+
+      <div class="matrix-wrap">
+        <table class="matrix">
+          <thead>
+            <tr>
+              <th>Data Domain &#8595; / Security Level &#8594;</th>
+              <th>Public</th>
+              <th>Internal</th>
+              <th>Confidential</th>
+              <th>Restricted</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="row-head">HR Data</td>
+              <td class="cell-public">Org chart, job titles</td>
+              <td class="cell-internal">Headcount reports, turnover rates</td>
+              <td class="cell-conf">Performance reviews, salary bands</td>
+              <td class="cell-restricted">Individual compensation, disciplinary records</td>
+            </tr>
+            <tr>
+              <td class="row-head">Sales Data</td>
+              <td class="cell-public">Product pricing (public), published case studies</td>
+              <td class="cell-internal">Pipeline reports, win/loss analysis</td>
+              <td class="cell-conf">Deal terms, discount thresholds</td>
+              <td class="cell-restricted">Strategic accounts, acquisition targets</td>
+            </tr>
+            <tr>
+              <td class="row-head">Finance Data</td>
+              <td class="cell-public">Published annual reports</td>
+              <td class="cell-internal">Budget summaries, cost center reports</td>
+              <td class="cell-conf">Unpublished quarterly results, P&amp;L details</td>
+              <td class="cell-restricted">M&amp;A financials, board materials</td>
+            </tr>
+            <tr>
+              <td class="row-head">Customer Data</td>
+              <td class="cell-public">Anonymized aggregate stats</td>
+              <td class="cell-internal">Segment reports, cohort analysis</td>
+              <td class="cell-conf">Individual purchase history, preferences</td>
+              <td class="cell-restricted">Full PII, financial account data, health information</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="sub-label">Additional Classification Dimensions</div>
+
+      <div class="two-col">
+        <div class="concept-card">
+          <div class="concept-title">Purpose Classification</div>
+          <div class="concept-text">
+            Why is this data collected and used? Purpose classification is required by GDPR and guides how long data is retained and who can access it:
+            <ul style="margin-top:.4rem">
+              <li><strong>Analytics</strong> &mdash; aggregate insights, typically anonymized</li>
+              <li><strong>Operations</strong> &mdash; day-to-day business processes</li>
+              <li><strong>Compliance</strong> &mdash; audit, regulatory reporting</li>
+              <li><strong>ML Training</strong> &mdash; model development; PII must be removed or consented to</li>
+            </ul>
+          </div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">Decoupling Labels from Systems</div>
+          <div class="concept-text">
+            Classification labels must be <strong>attached to the physical data objects</strong> (tables, files, API responses), not just documented in a spreadsheet. Tools like AWS Glue, Azure Purview, and Apache Atlas tag data at the schema and column level. Labels travel with the data: when a table is copied to a new system, its classification tags replicate with it, ensuring controls apply everywhere the data lives.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ S14 -->
+    <section class="notes-section" id="s14">
+      <div class="section-header">
+        <span class="section-num">14</span>
+        <span class="section-title">Enterprise Dictionary &amp; Standardization</span>
+      </div>
+
+      <div class="def-card">
+        <div class="def-label">Definition</div>
+        <div class="def-term">Enterprise Dictionary</div>
+        <div class="def-text">A centrally maintained, authoritative registry of <strong>standard field definitions, formats, and semantics</strong> that all systems must conform to. The enterprise dictionary eliminates the "format war" problem: when every system stores the same type of information in a different format, downstream integration becomes a chain of custom translators.</div>
+      </div>
+
+      <div class="sub-label">The Format Problem &mdash; Without Standardization</div>
+
+      <table class="compare-table">
+        <thead>
+          <tr><th>Field Type</th><th>System A Format</th><th>System B Format</th><th>System C Format</th><th>Standard (Target)</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="col-a">Date/Time</td><td>MM/DD/YYYY</td><td>YYYY-MM-DD</td><td>Unix epoch (1716000000)</td><td>ISO 8601: <code>2026-05-06T14:30:00Z</code></td></tr>
+          <tr><td class="col-b">Phone Number</td><td>(555) 123-4567</td><td>+15551234567</td><td>5551234567</td><td>E.164: <code>+15551234567</code></td></tr>
+          <tr><td class="col-c">Currency Amount</td><td>1,234.56</td><td>1234.56 USD</td><td>$1234.56</td><td>Decimal with ISO code: <code>1234.56 USD</code></td></tr>
+          <tr><td class="col-d">Boolean</td><td>Y / N</td><td>1 / 0</td><td>true / false</td><td><code>true</code> / <code>false</code> (JSON native)</td></tr>
+          <tr><td class="col-a">Country Code</td><td>United States</td><td>US</td><td>USA</td><td>ISO 3166-1 alpha-2: <code>US</code></td></tr>
+        </tbody>
+      </table>
+
+      <div class="example-card">
+        <div class="example-label">Real-World Pattern</div>
+        <div class="example-title">Hardcoded Format Translation vs Metadata-Driven Standardization</div>
+        <div class="example-text">
+          <strong>Old approach:</strong> when ingesting APIs with different date formats, format conversion logic was written directly inside the backend code &mdash; a brittle hardcoded mapping per API source. Adding a new API source required code changes and testing.
+          <br><br>
+          <strong>Better approach:</strong> infuse format metadata into the API response itself. The response includes a <code>content-format</code> field describing the format of each value:
+          <br><code>{ "created_at": "05/18/2026", "created_at_format": "MM/DD/YYYY" }</code><br>
+          Consumers can auto-detect and standardize without hardcoding. Alternatively, the API contract defines that all dates are ISO 8601 &mdash; format normalization happens at the API gateway, invisible to consumers.
+        </div>
+      </div>
+
+      <div class="sub-label">Gathering Metadata from Diverse Sources</div>
+
+      <p class="prose">Enterprises typically have hundreds of data sources &mdash; APIs, databases, files, SaaS platforms &mdash; each with its own schema. A <span class="term">metadata catalog</span> must be able to scan and infer schemas from these diverse sources automatically, then map them to the enterprise dictionary. This is the foundation of interoperability: once every source is mapped to the standard, any two systems can exchange data without custom translation code.</p>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ S15 -->
+    <section class="notes-section" id="s15">
+      <div class="section-header">
+        <span class="section-num">15</span>
+        <span class="section-title">Authentication Standards &mdash; SSO, OAuth, JWT &amp; JIT</span>
+      </div>
+
+      <p class="prose"><span class="term">Authentication</span> verifies <em>who you are</em>. <span class="term">Authorization</span> determines <em>what you can do</em>. These are distinct &mdash; authentication is always the first gate. In enterprise data systems, authentication has evolved through several generations, each addressing limitations of its predecessor.</p>
+
+      <div class="auth-grid">
+        <div class="auth-card legacy">
+          <div class="auth-era">Legacy</div>
+          <div class="auth-name">Kerberos</div>
+          <div class="auth-desc">Ticket-based protocol used in Windows Active Directory. Users authenticate once to a Key Distribution Center (KDC) and receive tickets for each service. Solid for on-premises Windows environments but poorly suited for cloud-native or cross-organization scenarios.</div>
+        </div>
+        <div class="auth-card legacy">
+          <div class="auth-era">Enterprise (Older Standard)</div>
+          <div class="auth-name">SAML 2.0</div>
+          <div class="auth-desc">Security Assertion Markup Language. XML-based protocol for exchanging authentication data between an Identity Provider (IdP) and a Service Provider (SP). Common in legacy enterprise SSO. Verbose XML makes it heavy for modern REST APIs.</div>
+        </div>
+        <div class="auth-card current">
+          <div class="auth-era">Modern Standard</div>
+          <div class="auth-name">OAuth 2.0</div>
+          <div class="auth-desc">An <em>authorization</em> framework (not authentication) that allows a user to grant a third-party application limited access to their resources without sharing credentials. The foundation of modern API security. Commonly paired with OIDC for authentication.</div>
+        </div>
+        <div class="auth-card current">
+          <div class="auth-era">Modern Standard</div>
+          <div class="auth-name">OIDC</div>
+          <div class="auth-desc">OpenID Connect &mdash; an identity layer built on top of OAuth 2.0. Adds authentication to OAuth by issuing an <em>ID token</em> (a JWT) that confirms who the user is. Used by Google, Microsoft, and most modern IdPs.</div>
+        </div>
+        <div class="auth-card current">
+          <div class="auth-era">Token Format</div>
+          <div class="auth-name">JWT</div>
+          <div class="auth-desc">JSON Web Token &mdash; a compact, self-contained token for transmitting identity claims. Contains a header, payload (user ID, roles, expiry), and a cryptographic signature. Used by OAuth 2.0 / OIDC. Stateless &mdash; the server validates the signature without a database lookup.</div>
+        </div>
+        <div class="auth-card current">
+          <div class="auth-era">Access Pattern</div>
+          <div class="auth-name">JIT Access</div>
+          <div class="auth-desc">Just-In-Time Access &mdash; credentials are provisioned only when needed and automatically revoked after use. Can be restricted to a specific IP, device, time window, or purpose. Implements least privilege dynamically. No standing access = no credential to steal.</div>
+        </div>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-label">No System Is 100% Secure</div>
+        <div class="insight-text">The goal of authentication and authorization is not to achieve perfect security &mdash; it is to <strong>reduce risk to an acceptable level</strong>. Every additional control (MFA, JIT access, device restriction, IP allowlisting) raises the cost and complexity for an attacker. Layering multiple controls (defense in depth) means a single compromised component does not result in full access. JIT access ensures that even if credentials are stolen, they expire before the attacker can use them effectively.</div>
+      </div>
+
+      <div class="sub-label">AWS + Microsoft Entra ID</div>
+      <p class="prose">AWS uses <span class="term">Microsoft Entra ID</span> (formerly Azure Active Directory) as an Identity Provider for federated access. Organizations that already manage users in Entra ID can enable SSO across AWS services without maintaining a separate AWS IAM user database. Users authenticate once against Entra ID and receive short-lived AWS credentials via SAML or OIDC federation.</p>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ S16 -->
+    <section class="notes-section" id="s16">
+      <div class="section-header">
+        <span class="section-num">16</span>
+        <span class="section-title">SSO &mdash; Benefits, Disadvantages &amp; Mitigations</span>
+      </div>
+
+      <div class="def-card">
+        <div class="def-label">Definition</div>
+        <div class="def-term">Single Sign-On (SSO)</div>
+        <div class="def-text">An authentication mechanism that allows a user to <strong>authenticate once</strong> and gain access to multiple systems without re-entering credentials. A central Identity Provider (IdP) holds user credentials and issues tokens that downstream applications trust. The user never shares their password with individual applications.</div>
+      </div>
+
+      <div class="pro-con-grid">
+        <div class="pro-card">
+          <div class="pro-card-title">&#9989; Benefits of SSO</div>
+          <ul>
+            <li><strong>Single user database</strong> &mdash; one source of truth for all identities; onboarding and offboarding touch one system</li>
+            <li><strong>Instant access revocation</strong> &mdash; disable one account and access to all connected systems is immediately cut</li>
+            <li><strong>Reduced password fatigue</strong> &mdash; users remember one credential instead of dozens; fewer forgotten passwords and helpdesk tickets</li>
+            <li><strong>Enhanced user experience</strong> &mdash; seamless single login across all internal tools</li>
+            <li><strong>Centralized audit trail</strong> &mdash; all authentication events flow through one system; easy to detect anomalous logins</li>
+            <li><strong>Consistent MFA enforcement</strong> &mdash; apply MFA once at the IdP layer rather than per-application</li>
+            <li><strong>Faster onboarding</strong> &mdash; new employees get access to all provisioned systems in one step</li>
+          </ul>
+        </div>
+        <div class="con-card">
+          <div class="con-card-title">&#10060; Disadvantages of SSO</div>
+          <ul>
+            <li><strong>Single point of failure</strong> &mdash; if the IdP is unavailable, users cannot log in to <em>any</em> connected application</li>
+            <li><strong>Single point of compromise</strong> &mdash; stolen SSO credentials give an attacker access to every integrated system simultaneously</li>
+            <li><strong>Implementation complexity</strong> &mdash; configuring SAML/OIDC federation, certificates, and attribute mapping requires expertise</li>
+            <li><strong>Vendor dependency</strong> &mdash; organizations become reliant on the IdP vendor (Okta, Entra ID, Ping Identity)</li>
+            <li><strong>Legacy app incompatibility</strong> &mdash; older applications that do not support SAML/OIDC require workarounds or remain excluded</li>
+            <li><strong>Token theft risk</strong> &mdash; if a JWT is intercepted before expiry, it provides valid access without the original password</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="sub-label">Mitigating SSO Disadvantages</div>
+
+      <table class="compare-table">
+        <thead>
+          <tr><th>Risk</th><th>Mitigation</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="col-r">IdP unavailability (single point of failure)</td><td>Deploy IdP in active-active HA configuration across multiple availability zones. Maintain break-glass accounts for emergency access that bypass SSO.</td></tr>
+          <tr><td class="col-r">Credential theft (single point of compromise)</td><td>Enforce MFA on all SSO logins. Implement conditional access (block logins from unknown devices or locations). Use short JWT expiry windows (15&ndash;60 minutes).</td></tr>
+          <tr><td class="col-d">Vendor lock-in</td><td>Use standard protocols (OIDC, SAML) so IdP can be swapped without changing integrated applications. Evaluate multi-IdP federation for critical systems.</td></tr>
+          <tr><td class="col-d">Token theft</td><td>Short token lifetimes + refresh token rotation. Bind tokens to device fingerprint. Revoke tokens immediately on logout or suspicious activity.</td></tr>
+          <tr><td class="col-a">Legacy app incompatibility</td><td>Use an SSO proxy/gateway that sits in front of legacy apps and translates modern OIDC tokens to the authentication format the legacy app understands.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════ S17 -->
+    <section class="notes-section" id="s17">
+      <div class="section-header">
+        <span class="section-num">17</span>
+        <span class="section-title">Security Reference Architecture &amp; Data Consumption</span>
+      </div>
+
+      <div class="sub-label">Security Reference Architecture &mdash; Defense in Depth</div>
+
+      <p class="prose">No single control is sufficient. A <span class="term">security reference architecture</span> layers multiple controls so that a failure in any one layer does not result in a full breach. Each layer independently enforces its controls, and all layers are monitored continuously.</p>
+
+      <div class="arch-box">
+        <div class="arch-title">Layered Security Controls</div>
+        <div class="arch-row">
+          <span class="arch-app red">Perimeter</span>
+          <span class="arch-line">&#8594;</span>
+          <span style="font-size:.77rem;color:#8b949e;">Firewall, WAF, DDoS protection, network segmentation</span>
+        </div>
+        <div class="arch-row">
+          <span class="arch-app yellow">Identity</span>
+          <span class="arch-line">&#8594;</span>
+          <span style="font-size:.77rem;color:#8b949e;">SSO + MFA, JIT access, conditional access policies, device compliance</span>
+        </div>
+        <div class="arch-row">
+          <span class="arch-app blue">Data Access</span>
+          <span class="arch-line">&#8594;</span>
+          <span style="font-size:.77rem;color:#8b949e;">RBAC / ABAC, row-level security, column masking, data classification enforcement</span>
+        </div>
+        <div class="arch-row">
+          <span class="arch-app green">Data at Rest</span>
+          <span class="arch-line">&#8594;</span>
+          <span style="font-size:.77rem;color:#8b949e;">AES-256 encryption, key management (AWS KMS, Azure Key Vault), envelope encryption</span>
+        </div>
+        <div class="arch-row">
+          <span class="arch-app purple">Data in Transit</span>
+          <span class="arch-line">&#8594;</span>
+          <span style="font-size:.77rem;color:#8b949e;">TLS 1.3 minimum, mTLS for service-to-service, certificate rotation</span>
+        </div>
+        <div class="arch-row">
+          <span class="arch-app">Monitoring</span>
+          <span class="arch-line">&#8594;</span>
+          <span style="font-size:.77rem;color:#8b949e;">SIEM, audit logs, anomaly detection, data access alerts, threat intelligence</span>
+        </div>
+      </div>
+
+      <div class="sub-label">Securing Data Consumption at Scale</div>
+
+      <p class="prose">When multiple users or applications need the same data, naive approaches create both security and performance problems. A consumer that runs <code>SELECT * FROM customer_table</code> without a <code>WHERE</code> clause retrieves far more data than needed &mdash; exposing PII unnecessarily and stressing the source system.</p>
+
+      <div class="insight-card">
+        <div class="insight-label">High Read Throughput: The RDS Answer</div>
+        <div class="insight-text">When many consumers need the same data simultaneously, <strong>the Read-Only Data Store (RDS/ORDS) is the answer</strong>. Rather than every consumer hitting the transactional golden source directly, they query the RDS &mdash; a read-optimized copy that can be scaled independently. This isolates the source from read load, allows fine-grained access controls at the RDS layer, and enables consumer-specific views without modifying the source.</div>
+      </div>
+
+      <div class="sub-label">Efficient Partitioning &mdash; Logical vs Physical</div>
+
+      <div class="two-col">
+        <div class="concept-card">
+          <div class="concept-title">&#128202; What Partitioning Is</div>
+          <div class="concept-text">
+            Partitioning is <strong>logically one database or table</strong>, but <strong>physically split across different storage locations, servers, or nodes</strong>. The split is transparent to consumers &mdash; they query a single table and the database routes the request to the correct partition.
+            <ul style="margin-top:.5rem">
+              <li><strong>Date partitioning:</strong> data for each month stored in a separate partition; queries filtered by date only scan the relevant partition</li>
+              <li><strong>Region / country-code partitioning:</strong> HR data for each country stored separately; a query scoped to <code>country = US</code> never touches EU data</li>
+              <li><strong>Tenant partitioning:</strong> in multi-tenant systems, each customer partition is isolated</li>
+            </ul>
+          </div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">&#128274; Security &amp; Efficiency Benefit</div>
+          <div class="concept-text">
+            Partitioning serves both performance and security goals simultaneously:
+            <ul style="margin-top:.5rem">
+              <li><strong>Performance:</strong> queries scan only the relevant partition instead of the entire table &mdash; orders of magnitude faster on large datasets</li>
+              <li><strong>Security:</strong> row-level access policies can be tied to partition boundaries. A consumer with access to <code>region = APAC</code> physically cannot reach <code>region = EU</code> data</li>
+              <li>Example: HR department in the Philippines queries employee records &mdash; they are automatically scoped to <code>country_code = PH</code> partitions only</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="warn-card">
+        <div class="warn-label">Anti-Pattern: SELECT * Without WHERE</div>
+        <div class="warn-text">
+          Running <code>SELECT * FROM large_table</code> without a <code>WHERE</code> clause is both a <strong>security failure</strong> and a <strong>performance failure</strong>:
+          <ul style="margin-top:.4rem">
+            <li>Returns all rows including those the consumer is not authorized to see</li>
+            <li>Returns all columns including PII that the consumer does not need</li>
+            <li>Performs a full table scan, consuming enormous I/O and compute resources</li>
+            <li>Creates unnecessary data transfer costs in cloud environments</li>
+          </ul>
+          <strong>Filtering and cleaning logic must live in the access layer</strong> &mdash; not in each consumer application. The data platform enforces column masking, row-level filters, and partition scoping automatically so that consumers cannot accidentally or intentionally access more than they are authorized for.
+        </div>
+      </div>
+
+    </section>
+
+    <footer class="site-footer">
+      Data Governance &mdash; Module 7 Class Notes &bull; Playground
+    </footer>
+
+  </main>
+</div>
+
+<script>
+(function () {
+  var links = document.querySelectorAll(".toc-link");
+  var sections = [];
+  links.forEach(function (l) {
+    var id = l.getAttribute("href").slice(1);
+    var el = document.getElementById(id);
+    if (el) sections.push({ el: el, link: l });
+  });
+
+  function onScroll() {
+    var scrollY = window.scrollY + 90;
+    var active = null;
+    for (var i = 0; i < sections.length; i++) {
+      if (sections[i].el.offsetTop <= scrollY) active = sections[i];
+    }
+    links.forEach(function (l) { l.classList.remove("active"); });
+    if (active) active.link.classList.add("active");
+  }
+
+  window.addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
+})();
+</script>
+
+</body>
+</html>
