@@ -28,6 +28,10 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 - [feature] `wild-rift/thex-mecha.html` — T-Hex Mecha mini-game (WASD pilot, F mount, G dismount, Q/W/E/R abilities, enemy cubes, skill bar with cooldowns); Wild Rift section added to homepage
 
+## 2026-05-19
+
+- [feature] `class-notes/data-governance/module-07.html` — 17-section class notes on "Governance & Security in Scaled Architecture": ABAC, data ownership, DSAA, classification matrix, SSO/JIT, partitioning, and security reference architecture; index updated to 7 modules
+
 ## 2026-05-06
 
 - [feature] `class-notes/data-governance/module-06.html` — 17-section class notes on "Architecture": RDS/ORDS, CQRS, data design, ingestion patterns, tier stack, replication, access control, and intelligent delivery; index updated to 6 modules

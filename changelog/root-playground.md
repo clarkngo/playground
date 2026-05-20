@@ -62,6 +62,32 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 - Tags: Medallion Architecture, OpenWeather API, Databricks, PySpark, IoT Sensors, OpenMetadata
 - Links to `module-05.html` and `module-05-deliverables.html`
 
+## 2026-05-19
+
+### [feature] Class notes — Module 7: Governance & Security in Scaled Architecture
+- Created `class-notes/data-governance/module-07.html` — 17-section notes with GitHub dark theme
+- Section 1: From Centralized to Scaled Architecture — three-stage evolution (centralized → distributed → scaled) with governance implications table
+- Section 2: App-Based vs Data-Based Ownership — system-centric vs domain-centric accountability, Data Mesh philosophy, domain data contracts
+- Section 3: Governance Processes for Scaled Architecture — 7 core processes: cataloging, classification, quality, lineage, security, compliance, lifecycle
+- Section 4: Authorization Model Evolution — DAC → MAC → RBAC → ABAC progression with trade-offs; ABAC scenario examples (analyst vs exec vs external auditor)
+- Section 5: Data Ownership & Accountability — Data Owner / Data Steward / Data Custodian accountability matrix with responsibilities and example roles
+- Section 6: Duration & Purpose-Based Access — temporary access patterns, DSAA (Data Sharing Agreement Layer) — formal contracts governing cross-domain data sharing
+- Section 7: Governance Body Responsibilities — 5 core governance questions (Who owns? What standards? How is quality enforced? Who can access? How long kept?)
+- Section 8: Standard Interfaces & Trust Levels — internal/partner/external consumer trust levels, regulatory consequences table (GDPR/HIPAA/SOX/PCI-DSS)
+- Section 9: Metadata & Business Glossary — technical vs business vs operational metadata types, enterprise glossary stewardship, internal vs external consumer scoping
+- Section 10: Dataset Activities — profile, classify, mask, archive activity lifecycle; data class policy table (PII, financial, operational, public)
+- Section 11: Dataset-Specific Quality Metrics — zero value context table (sales vs IoT vs HR), NULL rate examples by dataset type
+- Section 12: Backup, Retention & Tool Governance — 3-2-1 backup rule, retention periods by dataset type, tool governance considerations
+- Section 13: Data Classification vs Security Classification — 4×4 orthogonal matrix (domain: HR/Sales/Finance/Customer × sensitivity: Public/Internal/Confidential/Restricted)
+- Section 14: Enterprise Dictionary & Format Standardization — field-level standardization table (ISO 8601, E.164, ISO 3166-1, enum standards)
+- Section 15: Authentication Methods — auth method cards: Kerberos (legacy), SAML (legacy), OAuth 2.0, OIDC, JWT, JIT Access (current); AWS + Microsoft Entra ID federation
+- Section 16: SSO Benefits & Disadvantages — pro-con grid layout, mitigation strategies table for SSO risks
+- Section 17: Security Reference Architecture — layered arch-box, RDS as read throughput solution, partitioning security benefits, SELECT * anti-pattern
+- New CSS: `.auth-grid`/`.auth-card`/`.auth-era` (auth method cards), `.matrix-wrap`/`.matrix`/`.cell-*` (classification matrix), `.pro-card`/`.con-card`/`.pro-con-grid` (SSO pros/cons)
+- `class-notes/data-governance/index.html`: added Module 07 card, updated progress to "7 of 7 modules"
+- `class-notes/index.html`: updated badge to "7 Modules"
+- JS syntax check: passed; no console errors
+
 ## 2026-05-06
 
 ### [feature] Class notes — Module 6 Architecture
