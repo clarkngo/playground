@@ -30,6 +30,7 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ## 2026-05-19
 
+- [ux] `index.html` — Class Notes section: replaced two individual module cards with a single "Data Governance" hub card (links to 7-module index) + Classroom Activities card; nav badge updated to 2
 - [feature] `class-notes/data-governance/module-07.html` — 17-section class notes on "Governance & Security in Scaled Architecture": ABAC, data ownership, DSAA, classification matrix, SSO/JIT, partitioning, and security reference architecture; index updated to 7 modules
 
 ## 2026-05-06

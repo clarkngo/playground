@@ -64,6 +64,13 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ## 2026-05-19
 
+### [ux] `index.html` — Class Notes section redesigned as course hub
+- Replaced two individual module cards (Module 1, Module 2) with a single "Data Governance" hub card linking to `class-notes/data-governance/index.html` (all 7 modules)
+- Hub card shows: icon 🛡️, title, path with "7 modules" count, full coverage description, topic tags (DMBOK, ABAC/RBAC, RDS/CQRS, CIA Triad, SSO/JIT)
+- Added "Data Governance — Classroom Activities" card alongside the hub card (previously only accessible via the separate Classroom Activities section)
+- Section count updated: "2 modules" → "2 courses"
+- Nav sidebar badge updated: 1 → 2
+
 ### [feature] Class notes — Module 7: Governance & Security in Scaled Architecture
 - Created `class-notes/data-governance/module-07.html` — 17-section notes with GitHub dark theme
 - Section 1: From Centralized to Scaled Architecture — three-stage evolution (centralized → distributed → scaled) with governance implications table
