@@ -174,16 +174,244 @@
       <div class="d-num amber">D1</div>
       <div>
         <div class="d-title">Databricks Notebook</div>
-        <div class="d-desc">Module06_Data_Architecture &mdash; Delta versioning steps: UPDATE and DESCRIBE HISTORY</div>
+        <div class="d-desc">Module_06_Data_Management_Architecture &mdash; dimensional models, Silver/Gold layers, Delta versioning</div>
       </div>
       <span class="done-badge">&#10003; Submitted</span>
     </div>
 
     <div class="insight-strip">
-      <strong>Part 8 &mdash; Delta Architecture &amp; Versioning:</strong> Step 14 archives low-value transactions by setting <code style="background:#2d1a00;color:#ffa657;padding:1px 5px;border-radius:3px;font-family:monospace;">status = 'Archived'</code> where <code style="background:#2d1a00;color:#ffa657;padding:1px 5px;border-radius:3px;font-family:monospace;">amount &lt; 100</code>. Step 15 runs <code style="background:#2d1a00;color:#ffa657;padding:1px 5px;border-radius:3px;font-family:monospace;">DESCRIBE HISTORY</code> to confirm both versions (initial write + UPDATE) are recorded in the Delta transaction log.
+      <strong>Notebook coverage:</strong> Dimensional modeling (customer_dim, fact_transactions, sensor_dim, sensor_fact), Silver layer persistence, Gold aggregation by country, and Delta versioning (UPDATE + DESCRIBE HISTORY). Previous steps (load transactions, Bronze table) were already present in the workspace.
     </div>
 
-    <div class="sub-label">Step 14 &mdash; Update Record: Archived</div>
+    <div class="sub-label">Notebook &mdash; Module_06_Data_Management_Architecture.ipynb</div>
+    <div class="notebook-viewer">
+
+      <!-- [0] Markdown — context note -->
+      <div class="notebook-cell">
+        <div class="nb-gutter"><span class="nb-in"></span></div>
+        <div class="nb-content">
+          <div class="nb-code" style="color:#8b949e;font-style:italic;"># Skipping these as I already have them in my workspace
+# Load Transactions Dataset
+# transactions_df = spark.read.csv(...)
+# Save Bronze Table</div>
+        </div>
+      </div>
+
+      <!-- [1] customer_dim -->
+      <div class="notebook-cell">
+        <div class="nb-gutter"><span class="nb-in">In [1]</span></div>
+        <div class="nb-content">
+          <div class="nb-code"><span class="cm"># Create Customer Dimension</span>
+<span class="cv">customer_dim</span> = transactions_df.select(
+    <span class="cs">"customer_id"</span>,
+    <span class="cs">"country"</span>
+).dropDuplicates()
+
+display(customer_dim)</div>
+          <div class="nb-display">
+            <div class="nb-display-scroll">
+              <table>
+                <thead><tr><th>customer_id</th><th>country</th></tr></thead>
+                <tbody>
+                  <tr><td>4251</td><td>UK</td></tr>
+                  <tr><td>5393</td><td>India</td></tr>
+                  <tr><td>3523</td><td>Australia</td></tr>
+                  <tr><td>9434</td><td>UK</td></tr>
+                  <tr><td>4799</td><td>Australia</td></tr>
+                  <tr><td>9219</td><td>UK</td></tr>
+                  <tr><td>4760</td><td>USA</td></tr>
+                  <tr><td>5711</td><td>UK</td></tr>
+                  <tr><td>3445</td><td>Canada</td></tr>
+                  <tr><td>9929</td><td>Canada</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="nb-display-footer">Showing 10 of 344 rows &mdash; 2 columns</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- [2] fact_transactions -->
+      <div class="notebook-cell">
+        <div class="nb-gutter"><span class="nb-in">In [2]</span></div>
+        <div class="nb-content">
+          <div class="nb-code"><span class="cm"># Create Transaction Fact Table</span>
+<span class="cv">fact_transactions</span> = transactions_df.select(
+    <span class="cs">"transaction_id"</span>,
+    <span class="cs">"customer_id"</span>,
+    <span class="cs">"amount"</span>,
+    <span class="cs">"transaction_date"</span>,
+    <span class="cs">"status"</span>
+)
+
+display(fact_transactions)</div>
+          <div class="nb-display">
+            <div class="nb-display-scroll">
+              <table>
+                <thead><tr><th>transaction_id</th><th>customer_id</th><th>amount</th><th>transaction_date</th><th>status</th></tr></thead>
+                <tbody>
+                  <tr><td>100001</td><td>6050</td><td>11882.92</td><td>2020-12-03</td><td>Completed</td></tr>
+                  <tr><td>100002</td><td>3216</td><td>9513.66</td><td>2024-05-05</td><td>Active</td></tr>
+                  <tr><td>100003</td><td>9645</td><td>14640.97</td><td>2019-02-04</td><td>Completed</td></tr>
+                  <tr><td>100004</td><td>5775</td><td>7937.40</td><td>2024-08-03</td><td>Active</td></tr>
+                  <tr><td>100005</td><td>4251</td><td>3287.15</td><td>2021-11-17</td><td>Pending</td></tr>
+                  <tr><td>100006</td><td>7282</td><td>5124.88</td><td>2023-03-22</td><td>Completed</td></tr>
+                  <tr><td>100007</td><td>8109</td><td>9801.50</td><td>2022-07-14</td><td>Active</td></tr>
+                  <tr><td>100008</td><td>2309</td><td>4456.73</td><td>2020-09-30</td><td>Completed</td></tr>
+                  <tr><td>100009</td><td>6621</td><td>2198.44</td><td>2025-01-08</td><td>Pending</td></tr>
+                  <tr><td>100010</td><td>3895</td><td>8763.21</td><td>2023-11-05</td><td>Completed</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="nb-display-footer">Showing 10 of 500 rows &mdash; 5 columns</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- [3] Markdown — Sensor Architecture Modeling -->
+      <div class="notebook-cell">
+        <div class="nb-gutter"><span class="nb-in"></span></div>
+        <div class="nb-content">
+          <div class="nb-code" style="color:#fbbf24;font-weight:700;">### Sensor Architecture Modeling</div>
+        </div>
+      </div>
+
+      <!-- [4] Load sensor_df -->
+      <div class="notebook-cell">
+        <div class="nb-gutter"><span class="nb-in">In [4]</span></div>
+        <div class="nb-content">
+          <div class="nb-code"><span class="cm"># Load Sensor Dataset</span>
+<span class="cv">sensor_df</span> = spark.read.csv(
+    <span class="cs">"/Volumes/workspace/default/Volume/sensor_data.csv"</span>,
+    header=<span class="ck">True</span>,
+    inferSchema=<span class="ck">True</span>
+)</div>
+        </div>
+      </div>
+
+      <!-- [5] sensor_dim -->
+      <div class="notebook-cell">
+        <div class="nb-gutter"><span class="nb-in">In [5]</span></div>
+        <div class="nb-content">
+          <div class="nb-code"><span class="cm"># Create Sensor Dimension</span>
+<span class="cv">sensor_dim</span> = sensor_df.select(
+    <span class="cs">"sensor_id"</span>,
+    <span class="cs">"machine_id"</span>
+).dropDuplicates()</div>
+        </div>
+      </div>
+
+      <!-- [6] sensor_fact -->
+      <div class="notebook-cell">
+        <div class="nb-gutter"><span class="nb-in">In [6]</span></div>
+        <div class="nb-content">
+          <div class="nb-code"><span class="cm"># Create Sensor Fact Table</span>
+<span class="cv">sensor_fact</span> = sensor_df.select(
+    <span class="cs">"sensor_id"</span>,
+    <span class="cs">"timestamp"</span>,
+    <span class="cs">"temperature"</span>,
+    <span class="cs">"pressure"</span>,
+    <span class="cs">"vibration"</span>,
+    <span class="cs">"status"</span>
+)</div>
+        </div>
+      </div>
+
+      <!-- [7] Markdown — Silver Layer -->
+      <div class="notebook-cell">
+        <div class="nb-gutter"><span class="nb-in"></span></div>
+        <div class="nb-content">
+          <div class="nb-code" style="color:#c0c0c0;font-weight:700;">### Silver Layer Architecture</div>
+        </div>
+      </div>
+
+      <!-- [8] Save Silver tables -->
+      <div class="notebook-cell">
+        <div class="nb-gutter"><span class="nb-in">In [8]</span></div>
+        <div class="nb-content">
+          <div class="nb-code"><span class="cm"># Create Processed Tables</span>
+fact_transactions.write.mode(<span class="cs">"overwrite"</span>).saveAsTable(
+    <span class="cs">"transactions_silver"</span>
+)
+
+sensor_fact.write.mode(<span class="cs">"overwrite"</span>).saveAsTable(
+    <span class="cs">"sensor_silver"</span>
+)</div>
+        </div>
+      </div>
+
+      <!-- [9] Markdown — Gold Layer -->
+      <div class="notebook-cell">
+        <div class="nb-gutter"><span class="nb-in"></span></div>
+        <div class="nb-content">
+          <div class="nb-code" style="color:#fbbf24;font-weight:700;">### Gold Layer &ndash; Aggregated Reporting</div>
+        </div>
+      </div>
+
+      <!-- [10] gold_sales display -->
+      <div class="notebook-cell">
+        <div class="nb-gutter"><span class="nb-in">In [10]</span></div>
+        <div class="nb-content">
+          <div class="nb-code"><span class="ck">from</span> pyspark.sql.functions <span class="ck">import</span> sum
+
+<span class="cv">gold_sales</span> = transactions_df.groupBy(
+    <span class="cs">"country"</span>
+).agg(
+    sum(<span class="cs">"amount"</span>).alias(<span class="cs">"total_sales"</span>)
+)
+
+display(gold_sales)</div>
+          <div class="nb-display">
+            <div class="nb-display-scroll">
+              <table>
+                <thead><tr><th>country</th><th>total_sales</th></tr></thead>
+                <tbody>
+                  <tr><td>Australia</td><td>760928.20</td></tr>
+                  <tr><td>USA</td><td>763331.24</td></tr>
+                  <tr><td>Canada</td><td>826041.97</td></tr>
+                  <tr><td>India</td><td>810365.97</td></tr>
+                  <tr><td>UK</td><td>696092.08</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="nb-display-footer">Showing 5 of 5 rows &mdash; 2 columns</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- [11] Save Gold -->
+      <div class="notebook-cell">
+        <div class="nb-gutter"><span class="nb-in">In [11]</span></div>
+        <div class="nb-content">
+          <div class="nb-code"><span class="cm"># Save Gold Table</span>
+gold_sales.write.mode(<span class="cs">"overwrite"</span>).saveAsTable(
+    <span class="cs">"sales_gold"</span>
+)</div>
+        </div>
+      </div>
+
+      <!-- [12] Markdown — Delta -->
+      <div class="notebook-cell">
+        <div class="nb-gutter"><span class="nb-in"></span></div>
+        <div class="nb-content">
+          <div class="nb-code" style="color:#58a6ff;font-weight:700;">### Delta Architecture &amp; Versioning</div>
+        </div>
+      </div>
+
+      <!-- [13] Save Delta table -->
+      <div class="notebook-cell">
+        <div class="nb-gutter"><span class="nb-in">In [13]</span></div>
+        <div class="nb-content">
+          <div class="nb-code"><span class="cm"># Save Delta Table</span>
+transactions_df.write.format(<span class="cs">"delta"</span>) \
+    .mode(<span class="cs">"overwrite"</span>) \
+    .saveAsTable(<span class="cs">"transactions_delta_arch"</span>)</div>
+        </div>
+      </div>
+
+    </div><!-- /notebook-viewer -->
+
+    <div class="sub-label" style="margin-top:1.5rem;">Step 14 &mdash; Update Record: Archived</div>
     <div class="screenshot-wrap">
       <img
         src="module-06/submission/update-record-archived.png"
@@ -210,6 +438,36 @@
     </div>
 
   </div><!-- /d1 -->
+
+  <!-- ── D2: OpenMetadata Screenshots ──────────────── -->
+  <div class="deliverable" id="d2">
+    <div class="d-header">
+      <div class="d-num blue">D2</div>
+      <div>
+        <div class="d-title">OpenMetadata Screenshots</div>
+        <div class="d-desc">Tables registered with architecture tags &mdash; Bronze, Silver, Gold, ReadOnly, Analytics</div>
+      </div>
+      <span class="done-badge">&#10003; Submitted</span>
+    </div>
+
+    <div class="insight-strip">
+      <strong>What this shows:</strong> All four tables (<code style="background:#0d1117;color:#a5d6ff;padding:1px 5px;border-radius:3px;font-family:monospace;">transactions_bronze</code>, <code style="background:#0d1117;color:#a5d6ff;padding:1px 5px;border-radius:3px;font-family:monospace;">transactions_silver</code>, <code style="background:#0d1117;color:#a5d6ff;padding:1px 5px;border-radius:3px;font-family:monospace;">sales_gold</code>, <code style="background:#0d1117;color:#a5d6ff;padding:1px 5px;border-radius:3px;font-family:monospace;">sensor_silver</code>) registered in OpenMetadata with <span class="lc-bronze">Bronze</span> / <span class="lc-silver">Silver</span> / <span class="lc-gold">Gold</span> / <span class="lc-readonly">ReadOnly</span> architecture tags applied.
+    </div>
+
+    <div class="sub-label">OpenMetadata &mdash; Medallion Tags</div>
+    <div class="screenshot-wrap">
+      <img
+        src="module-06/submission/medallion.png"
+        alt="OpenMetadata — Medallion architecture tags applied to registered tables"
+        onerror="this.parentElement.innerHTML='<div class=\'screenshot-placeholder\'><span style=\'font-size:2rem;\'>&#128444;</span><span class=\'ph-filename\'>module-06/submission/medallion.png</span><span class=\'ph-hint\'>Image not found</span></div>'">
+      <div class="screenshot-caption">
+        <span>&#128444;</span>
+        <span class="cap-file">module-06/submission/medallion.png</span>
+        <span style="margin-left:auto;font-size:.7rem;">D2 &mdash; OpenMetadata Tags</span>
+      </div>
+    </div>
+
+  </div><!-- /d2 -->
 
   <!-- ── D3: Architecture Diagram ───────────────── -->
   <div class="deliverable" id="d3">
