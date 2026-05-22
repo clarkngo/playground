@@ -7,6 +7,10 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-05-22
+
+- [feature] `classroom-activities/data-governance/module-07.html` — Module 07 lab guide: Data Security, RBAC &amp; Authentication; indigo theme; 10 parts covering RBAC concepts, restricted views, authentication simulation, email masking, OpenMetadata roles/policies/tags; index.html updated with Module 07 card
+
 ## 2026-05-21
 
 - [feature] `classroom-activities/data-governance/module-06.html` — Module 06 lab guide: Data Architecture, Modeling &amp; Read-Only Data Stores; amber theme; 9 parts covering Bronze/Silver/Gold layers, dimensional modeling, Delta versioning, OpenMetadata integration; index.html updated with Module 06 card
