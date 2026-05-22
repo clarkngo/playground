@@ -9,6 +9,7 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ## 2026-05-22
 
+- [feature] `classroom-activities/data-governance/module-07-deliverables.html` — Module 07 deliverables page; indigo theme; 19-cell notebook viewer with employees_df (salary/SSN sensitivity), analyst_view, login simulation, masked_df email output; notebook file added to submission folder
 - [feature] `classroom-activities/data-governance/module-07.html` — Module 07 lab guide: Data Security, RBAC &amp; Authentication; indigo theme; 10 parts covering RBAC concepts, restricted views, authentication simulation, email masking, OpenMetadata roles/policies/tags; index.html updated with Module 07 card
 
 ## 2026-05-21
