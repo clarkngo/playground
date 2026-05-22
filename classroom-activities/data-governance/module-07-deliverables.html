@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Module 07 Deliverables &mdash; Data Security, RBAC &amp; Authentication</title>
+  <meta name="author" content="Clark Ngo">
+  <meta name="copyright" content="Clark Ngo">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0d1117; color: #c9d1d9; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; min-height: 100vh; font-size: 14px; line-height: 1.6; }
+
+    .navbar { background: #161b22; border-bottom: 1px solid #30363d; padding: .75rem 1.5rem; display: flex; align-items: center; justify-content: space-between; }
+    .navbar a { color: #e6edf3; text-decoration: none; font-weight: 700; font-size: 1rem; }
+    .navbar a:hover { color: #818cf8; }
+    .nav-pill { font-size: .78rem; color: #8b949e; }
+
+    .page-body { max-width: 1020px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+    .breadcrumb { font-size: .78rem; color: #8b949e; display: flex; align-items: center; gap: .4rem; margin-bottom: .85rem; flex-wrap: wrap; }
+    .breadcrumb a { color: #58a6ff; text-decoration: none; font-weight: 600; }
+    .breadcrumb a:hover { text-decoration: underline; }
+    .breadcrumb span { color: #484f58; }
+
+    .page-badge { display: inline-block; background: #4338ca; color: #fff; font-size: .72rem; font-weight: 700; padding: 3px 12px; border-radius: 12px; text-transform: uppercase; letter-spacing: .07em; margin-bottom: .55rem; }
+    h1 { color: #e6edf3; font-size: 1.75rem; font-weight: 800; margin-bottom: .25rem; }
+    .page-sub { color: #8b949e; font-size: .88rem; margin-bottom: 1.5rem; }
+
+    /* Progress */
+    .progress-wrap { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 1.1rem 1.5rem; margin-bottom: 2.25rem; }
+    .progress-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #8b949e; margin-bottom: .75rem; }
+    .progress-steps { display: flex; gap: .5rem; align-items: stretch; flex-wrap: wrap; }
+    .step-pill { flex: 1; min-width: 130px; background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: .55rem .85rem; display: flex; align-items: center; gap: .55rem; }
+    .step-pill.done { border-color: #238636; background: #0b1f0b; }
+    .step-check { width: 18px; height: 18px; border-radius: 50%; background: #238636; color: #fff; font-size: .7rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .step-check.pending { background: #30363d; color: #8b949e; }
+    .step-text { font-size: .78rem; font-weight: 700; line-height: 1.3; }
+    .step-pill.done .step-text { color: #3fb950; }
+    .step-pill:not(.done) .step-text { color: #8b949e; }
+
+    /* Deliverable sections */
+    .deliverable { margin-bottom: 3rem; scroll-margin-top: 1rem; }
+    .d-header { display: flex; align-items: center; gap: .85rem; margin-bottom: 1.25rem; padding-bottom: .85rem; border-bottom: 1px solid #21262d; }
+    .d-num { width: 34px; height: 34px; border-radius: 10px; color: #fff; font-size: .85rem; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .d-num.indigo { background: #4338ca; }
+    .d-num.blue   { background: #1f6feb; }
+    .d-num.green  { background: #238636; }
+    .d-title { font-size: 1.15rem; font-weight: 800; color: #e6edf3; }
+    .d-desc  { font-size: .82rem; color: #8b949e; margin-top: .15rem; }
+    .done-badge { margin-left: auto; background: #0b1f0b; border: 1px solid #238636; color: #3fb950; font-size: .68rem; font-weight: 700; padding: 2px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: .07em; white-space: nowrap; }
+
+    .sub-label { font-size: .69rem; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: #8b949e; border-left: 3px solid #30363d; padding-left: .55rem; margin: 1.25rem 0 .75rem; }
+
+    /* Screenshots */
+    .screenshot-wrap { border: 1px solid #30363d; border-radius: 10px; overflow: hidden; margin-bottom: 1rem; background: #000; }
+    .screenshot-wrap img { width: 100%; display: block; }
+    .screenshot-caption { font-size: .75rem; color: #8b949e; padding: .5rem .85rem; background: #161b22; border-top: 1px solid #21262d; display: flex; align-items: center; gap: .4rem; }
+    .cap-file { font-family: "Menlo","Monaco",monospace; font-size: .72rem; color: #818cf8; }
+    .screenshot-placeholder { background: #161b22; border: 1px dashed #30363d; border-radius: 10px; min-height: 160px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .5rem; color: #484f58; margin-bottom: 1rem; padding: 1.5rem; }
+    .screenshot-placeholder .ph-filename { font-family: "Menlo","Monaco",monospace; font-size: .75rem; color: #818cf8; }
+
+    /* Notebook viewer */
+    .notebook-viewer { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; overflow: hidden; margin-bottom: 1rem; }
+    .notebook-cell { display: flex; border-bottom: 1px solid #21262d; }
+    .notebook-cell:last-child { border-bottom: none; }
+    .nb-gutter { width: 56px; background: #161b22; padding: .75rem .5rem; display: flex; flex-direction: column; align-items: flex-end; gap: .25rem; flex-shrink: 0; border-right: 1px solid #21262d; }
+    .nb-in { font-family: "Menlo","Monaco",monospace; font-size: .65rem; color: #818cf8; white-space: nowrap; }
+    .nb-content { flex: 1; padding: .75rem 1rem; min-width: 0; }
+    .nb-code { font-family: "Menlo","Monaco","Courier New",monospace; font-size: .79rem; color: #c9d1d9; line-height: 1.7; white-space: pre; overflow-x: auto; }
+    .nb-md { font-size: .84rem; color: #8b949e; font-style: italic; line-height: 1.6; }
+    .nb-md strong { color: #e6edf3; font-style: normal; }
+    .nb-output { margin-top: .6rem; padding: .55rem .75rem; background: #0a0e14; border-left: 3px solid #21262d; border-radius: 0 4px 4px 0; font-family: "Menlo","Monaco",monospace; font-size: .79rem; color: #3fb950; }
+    .nb-display { margin-top: .6rem; border: 1px solid #30363d; border-radius: 6px; overflow: hidden; }
+    .nb-display-scroll { overflow-x: auto; }
+    .nb-display table { border-collapse: collapse; font-size: .75rem; font-family: "Menlo","Monaco",monospace; white-space: nowrap; }
+    .nb-display th { background: #1c2435; color: #8b949e; font-weight: 700; padding: .35rem .65rem; text-align: left; border-bottom: 1px solid #30363d; border-right: 1px solid #21262d; }
+    .nb-display th:last-child { border-right: none; }
+    .nb-display td { padding: .3rem .65rem; border-bottom: 1px solid #21262d; border-right: 1px solid #21262d; color: #c9d1d9; vertical-align: top; }
+    .nb-display td:last-child { border-right: none; }
+    .nb-display tr:last-child td { border-bottom: none; }
+    .nb-display tr:hover td { background: #1c2435; }
+    .nb-display-footer { background: #161b22; border-top: 1px solid #21262d; padding: .3rem .65rem; font-size: .68rem; color: #484f58; font-style: italic; }
+    .nb-display td.sensitive { color: #f85149; }
+    .nb-display td.masked { color: #e3b341; font-style: italic; }
+
+    /* Syntax colors */
+    .ck { color: #ff7b72; }
+    .cs { color: #a5d6ff; }
+    .cf { color: #d2a8ff; }
+    .cv { color: #ffa657; }
+    .cm { color: #8b949e; }
+
+    /* Sensitivity badges */
+    .lc-pii          { display: inline-block; font-size: .63rem; font-weight: 700; background: #2d0a1e; color: #f9a8d4; border: 1px solid #9d174d; padding: 1px 6px; border-radius: 4px; text-transform: uppercase; }
+    .lc-confidential { display: inline-block; font-size: .63rem; font-weight: 700; background: #2d2200; color: #fbbf24; border: 1px solid #d97706; padding: 1px 6px; border-radius: 4px; text-transform: uppercase; }
+    .lc-internal     { display: inline-block; font-size: .63rem; font-weight: 700; background: #1a2f1a; color: #3fb950; border: 1px solid #238636; padding: 1px 6px; border-radius: 4px; text-transform: uppercase; }
+    .lc-admin        { display: inline-block; font-size: .63rem; font-weight: 700; background: #1e1b4b; color: #818cf8; border: 1px solid #4338ca; padding: 1px 6px; border-radius: 4px; text-transform: uppercase; }
+    .lc-analyst      { display: inline-block; font-size: .63rem; font-weight: 700; background: #1f3a5c; color: #58a6ff; border: 1px solid #1f6feb; padding: 1px 6px; border-radius: 4px; text-transform: uppercase; }
+
+    /* Insight strip */
+    .insight-strip { background: #13124a; border: 1px solid #4338ca; border-radius: 8px; padding: .85rem 1.1rem; margin-bottom: 1.25rem; font-size: .84rem; color: #c9d1d9; line-height: 1.7; }
+    .insight-strip strong { color: #818cf8; }
+
+    /* Export */
+    .export-btn { position: fixed; bottom: 1.5rem; right: 1.5rem; background: #4338ca; color: #fff; border: none; border-radius: 8px; padding: .55rem 1.1rem; font-size: .82rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: .4rem; box-shadow: 0 2px 12px rgba(0,0,0,.4); z-index: 100; }
+    .export-btn:hover { background: #6366f1; }
+
+    .site-footer { text-align: center; padding: 1.25rem; border-top: 1px solid #21262d; margin-top: 2rem; color: #484f58; font-size: .77rem; }
+
+    @media print {
+      @page { size: A4; margin: 1.2cm 1.4cm; }
+      body { background: #fff !important; color: #111 !important; font-size: 9pt; }
+      .navbar, .export-btn { display: none !important; }
+      .page-body { max-width: 100%; padding: 0; }
+      h1 { color: #111 !important; font-size: 16pt; }
+      .page-badge { background: #4338ca !important; color: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .progress-wrap { background: #f9f9f9 !important; border-color: #ccc !important; }
+      .step-pill.done { background: #f0fdf4 !important; border-color: #15803d !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .step-check { background: #15803d !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .notebook-viewer { border-color: #ccc !important; page-break-inside: avoid; }
+      .nb-gutter { background: #f3f4f6 !important; border-color: #ddd !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .nb-code { color: #111 !important; font-size: 7.5pt; }
+      .nb-display th { background: #e5e7eb !important; color: #374151 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .nb-display td { color: #111 !important; }
+      .insight-strip { background: #eef2ff !important; border-color: #4338ca !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .lc-pii, .lc-confidential, .lc-internal, .lc-admin, .lc-analyst { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+
+    @media (max-width: 680px) {
+      .progress-steps { flex-direction: column; }
+      .step-pill { min-width: unset; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="module-07.html">&#8592; Module 07 Lab Guide</a>
+  <span class="nav-pill">Data Governance &rsaquo; Module 07 &rsaquo; Deliverables</span>
+</nav>
+
+<div class="page-body">
+
+  <div class="breadcrumb">
+    <a href="../../index.html">Playground</a>
+    <span>/</span>
+    <a href="index.html">Data Governance</a>
+    <span>/</span>
+    <a href="module-07.html">Module 07</a>
+    <span>/</span>
+    <span>Deliverables</span>
+  </div>
+
+  <div class="page-badge">&#128274; Module 07</div>
+  <h1>Student Submission &mdash; Data Security &amp; RBAC</h1>
+  <p class="page-sub">Deliverables for the Enterprise Access Misconfiguration case study &mdash; Databricks notebook, OpenMetadata screenshots, and access matrix.</p>
+
+  <div class="progress-wrap">
+    <div class="progress-label">Submission Progress</div>
+    <div class="progress-steps">
+      <div class="step-pill done">
+        <span class="step-check">&#10003;</span>
+        <span class="step-text">D1 &mdash; Databricks Notebook</span>
+      </div>
+      <div class="step-pill">
+        <span class="step-check pending">2</span>
+        <span class="step-text">D2 &mdash; OpenMetadata Screenshots</span>
+      </div>
+      <div class="step-pill">
+        <span class="step-check pending">3</span>
+        <span class="step-text">D3 &mdash; Access Matrix</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── D1: Databricks Notebook ─────────────────── -->
+  <div class="deliverable" id="d1">
+    <div class="d-header">
+      <div class="d-num indigo">D1</div>
+      <div>
+        <div class="d-title">Databricks Notebook</div>
+        <div class="d-desc">Module_07_Data_Management_Security &mdash; load, restrict, authenticate, mask</div>
+      </div>
+      <span class="done-badge">&#10003; Submitted</span>
+    </div>
+
+    <div class="insight-strip">
+      <strong>Notebook coverage:</strong> Load Employees_500.csv (8 cols including salary &amp; SSN), create analyst restricted view (5 cols), save both admin and analyst tables, simulate login with role-based access control, and mask email addresses with <code style="background:#0d1117;color:#a5d6ff;padding:1px 5px;border-radius:3px;font-family:monospace;">regexp_replace</code>.
+    </div>
+
+    <div class="sub-label">Notebook &mdash; Module_07_Data_Management_Security.ipynb</div>
+    <div class="notebook-viewer">
+
+      <!-- [0] Markdown — Load Employee Data -->
+      <div class="notebook-cell">
+        <div class="nb-gutter"></div>
+        <div class="nb-content">
+          <div class="nb-md"><strong>### Load Employee Data</strong></div>
+        </div>
+      </div>
+
+      <!-- [1] Load employees_df -->
+      <div class="notebook-cell">
+        <div class="nb-gutter"><span class="nb-in">In [1]</span></div>
+        <div class="nb-content">
+          <div class="nb-code"><span class="cv">employees_df</span> = spark.read.csv(
+    <span class="cs">"/Volumes/workspace/default/Volume/Employees_500.csv"</span>,
+    header=<span class="ck">True</span>,
+    inferSchema=<span class="ck">True</span>
+)
+
+display(employees_df)</div>
+          <div class="nb-display">
+            <div class="nb-display-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th>employee_id</th><th>name</th><th>email</th><th>department</th>
+                    <th>salary <span class="lc-confidential">Confidential</span></th>
+                    <th>ssn <span class="lc-pii">PII</span></th>
+                    <th>role</th><th>country</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td>1001</td><td>Tqodyr Ofiopol</td><td>tqodyr.ofiopol@company.com</td><td>HR</td><td class="sensitive">94935</td><td class="sensitive">541-85-3769</td><td>Manager</td><td>USA</td></tr>
+                  <tr><td>1002</td><td>Itctc Qgnulliu</td><td>itctc.qgnulliu@company.com</td><td>Marketing</td><td class="sensitive">147183</td><td class="sensitive">612-87-7888</td><td>Engineer</td><td>India</td></tr>
+                  <tr><td>1003</td><td>Ukhmcdp Wbafqbha</td><td>ukhmcdp.wbafqbha@company.com</td><td>Finance</td><td class="sensitive">110631</td><td class="sensitive">180-50-8301</td><td>Manager</td><td>UK</td></tr>
+                  <tr><td>1004</td><td>Orvnv Jbxfinmx</td><td>orvnv.jbxfinmx@company.com</td><td>Finance</td><td class="sensitive">117257</td><td class="sensitive">398-85-1026</td><td>Auditor</td><td>UK</td></tr>
+                  <tr><td>1005</td><td>Pwini Maijisz</td><td>pwini.maijisz@company.com</td><td>Sales</td><td class="sensitive">71706</td><td class="sensitive">520-87-7233</td><td>Auditor</td><td>Australia</td></tr>
+                  <tr><td>1006</td><td>Jepewjn Exuuboi</td><td>jepewjn.exuuboi@company.com</td><td>HR</td><td class="sensitive">68434</td><td class="sensitive">393-64-8186</td><td>Auditor</td><td>Canada</td></tr>
+                  <tr><td>1007</td><td>Othqh Ckxvnfeje</td><td>othqh.ckxvnfeje@company.com</td><td>IT</td><td class="sensitive">139561</td><td class="sensitive">280-16-1354</td><td>Admin</td><td>Australia</td></tr>
+                  <tr><td>1008</td><td>Vjnqsmk Sfezgz</td><td>vjnqsmk.sfezgz@company.com</td><td>Operations</td><td class="sensitive">160510</td><td class="sensitive">480-38-7466</td><td>Manager</td><td>Canada</td></tr>
+                  <tr><td>1009</td><td>Fhdodok Szhmgacd</td><td>fhdodok.szhmgacd@company.com</td><td>Sales</td><td class="sensitive">164376</td><td class="sensitive">973-97-2745</td><td>Engineer</td><td>Canada</td></tr>
+                  <tr><td>1010</td><td>Eflgw Oawhmt</td><td>eflgw.oawhmt@company.com</td><td>Finance</td><td class="sensitive">111275</td><td class="sensitive">883-93-2466</td><td>Analyst</td><td>India</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="nb-display-footer">Showing 10 of 500 rows &mdash; 8 columns &mdash; salary &amp; SSN visible (Admin only)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- [2] Markdown — Identify Sensitive Data -->
+      <div class="notebook-cell">
+        <div class="nb-gutter"></div>
+        <div class="nb-content">
+          <div class="nb-md"><strong>### Identify Sensitive Data</strong> &mdash; salary <span class="lc-confidential">Confidential</span> &nbsp; ssn <span class="lc-pii">PII</span> &nbsp; email <span class="lc-pii">PII</span></div>
+        </div>
+      </div>
+
+      <!-- [3] analyst_view first build -->
+      <div class="notebook-cell">
+        <div class="nb-gutter"><span class="nb-in">In [2]</span></div>
+        <div class="nb-content">
+          <div class="nb-code"><span class="cv">analyst_view</span> = employees_df.select(
+    <span class="cs">"employee_id"</span>,
+    <span class="cs">"name"</span>,
+    <span class="cs">"department"</span>,
+    <span class="cs">"email"</span>,
+    <span class="cs">"role"</span>
+)
+
+display(analyst_view)</div>
+          <div class="nb-display">
+            <div class="nb-display-scroll">
+              <table>
+                <thead><tr><th>employee_id</th><th>name</th><th>department</th><th>email</th><th>role</th></tr></thead>
+                <tbody>
+                  <tr><td>1001</td><td>Tqodyr Ofiopol</td><td>HR</td><td>tqodyr.ofiopol@company.com</td><td>Manager</td></tr>
+                  <tr><td>1002</td><td>Itctc Qgnulliu</td><td>Marketing</td><td>itctc.qgnulliu@company.com</td><td>Engineer</td></tr>
+                  <tr><td>1003</td><td>Ukhmcdp Wbafqbha</td><td>Finance</td><td>ukhmcdp.wbafqbha@company.com</td><td>Manager</td></tr>
+                  <tr><td>1004</td><td>Orvnv Jbxfinmx</td><td>Finance</td><td>orvnv.jbxfinmx@company.com</td><td>Auditor</td></tr>
+                  <tr><td>1005</td><td>Pwini Maijisz</td><td>Sales</td><td>pwini.maijisz@company.com</td><td>Auditor</td></tr>
+                  <tr><td>1006</td><td>Jepewjn Exuuboi</td><td>HR</td><td>jepewjn.exuuboi@company.com</td><td>Auditor</td></tr>
+                  <tr><td>1007</td><td>Othqh Ckxvnfeje</td><td>IT</td><td>othqh.ckxvnfeje@company.com</td><td>Admin</td></tr>
+                  <tr><td>1008</td><td>Vjnqsmk Sfezgz</td><td>Operations</td><td>vjnqsmk.sfezgz@company.com</td><td>Manager</td></tr>
+                  <tr><td>1009</td><td>Fhdodok Szhmgacd</td><td>Sales</td><td>fhdodok.szhmgacd@company.com</td><td>Engineer</td></tr>
+                  <tr><td>1010</td><td>Eflgw Oawhmt</td><td>Finance</td><td>eflgw.oawhmt@company.com</td><td>Analyst</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="nb-display-footer">Showing 10 of 500 rows &mdash; 5 columns &mdash; salary &amp; SSN removed</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- [4] Markdown — Create Secure View -->
+      <div class="notebook-cell">
+        <div class="nb-gutter"></div>
+        <div class="nb-content">
+          <div class="nb-md"><strong>### Create Secure View for Analysts</strong> &mdash; Hide: salary, ssn</div>
+        </div>
+      </div>
+
+      <!-- [5] analyst_view confirmed -->
+      <div class="notebook-cell">
+        <div class="nb-gutter"><span class="nb-in">In [3]</span></div>
+        <div class="nb-content">
+          <div class="nb-code"><span class="cv">analyst_view</span> = employees_df.select(
+    <span class="cs">"employee_id"</span>,
+    <span class="cs">"name"</span>,
+    <span class="cs">"department"</span>,
+    <span class="cs">"email"</span>,
+    <span class="cs">"role"</span>
+)
+
+display(analyst_view)</div>
+          <div class="nb-display">
+            <div class="nb-display-scroll">
+              <table>
+                <thead><tr><th>employee_id</th><th>name</th><th>department</th><th>email</th><th>role</th></tr></thead>
+                <tbody>
+                  <tr><td>1001</td><td>Tqodyr Ofiopol</td><td>HR</td><td>tqodyr.ofiopol@company.com</td><td>Manager</td></tr>
+                  <tr><td>1002</td><td>Itctc Qgnulliu</td><td>Marketing</td><td>itctc.qgnulliu@company.com</td><td>Engineer</td></tr>
+                  <tr><td>1003</td><td>Ukhmcdp Wbafqbha</td><td>Finance</td><td>ukhmcdp.wbafqbha@company.com</td><td>Manager</td></tr>
+                  <tr><td>1004</td><td>Orvnv Jbxfinmx</td><td>Finance</td><td>orvnv.jbxfinmx@company.com</td><td>Auditor</td></tr>
+                  <tr><td>1005</td><td>Pwini Maijisz</td><td>Sales</td><td>pwini.maijisz@company.com</td><td>Auditor</td></tr>
+                  <tr><td>1006</td><td>Jepewjn Exuuboi</td><td>HR</td><td>jepewjn.exuuboi@company.com</td><td>Auditor</td></tr>
+                  <tr><td>1007</td><td>Othqh Ckxvnfeje</td><td>IT</td><td>othqh.ckxvnfeje@company.com</td><td>Admin</td></tr>
+                  <tr><td>1008</td><td>Vjnqsmk Sfezgz</td><td>Operations</td><td>vjnqsmk.sfezgz@company.com</td><td>Manager</td></tr>
+                  <tr><td>1009</td><td>Fhdodok Szhmgacd</td><td>Sales</td><td>fhdodok.szhmgacd@company.com</td><td>Engineer</td></tr>
+                  <tr><td>1010</td><td>Eflgw Oawhmt</td><td>Finance</td><td>eflgw.oawhmt@company.com</td><td>Analyst</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="nb-display-footer">Showing 10 of 500 rows &mdash; 5 columns</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- [6] Markdown — Save Restricted Table -->
+      <div class="notebook-cell">
+        <div class="nb-gutter"></div>
+        <div class="nb-content">
+          <div class="nb-md"><strong>### Save Restricted Table</strong></div>
+        </div>
+      </div>
+
+      <!-- [7] Save analyst view -->
+      <div class="notebook-cell">
+        <div class="nb-gutter"><span class="nb-in">In [4]</span></div>
+        <div class="nb-content">
+          <div class="nb-code">analyst_view.write.mode(<span class="cs">"overwrite"</span>).saveAsTable(
+    <span class="cs">"employees_analyst_view"</span>
+)</div>
+        </div>
+      </div>
+
+      <!-- [8] Markdown — Admin Full Access View -->
+      <div class="notebook-cell">
+        <div class="nb-gutter"></div>
+        <div class="nb-content">
+          <div class="nb-md"><strong>## Admin Full Access View &mdash; Save Admin Dataset</strong></div>
+        </div>
+      </div>
+
+      <!-- [9] Save admin view -->
+      <div class="notebook-cell">
+        <div class="nb-gutter"><span class="nb-in">In [5]</span></div>
+        <div class="nb-content">
+          <div class="nb-code">employees_df.write.mode(<span class="cs">"overwrite"</span>).saveAsTable(
+    <span class="cs">"employees_admin_view"</span>
+)</div>
+        </div>
+      </div>
+
+      <!-- [10] Markdown — Role concept table -->
+      <div class="notebook-cell">
+        <div class="nb-gutter"></div>
+        <div class="nb-content">
+          <div class="nb-md"><strong>Concept</strong> &mdash; <span class="lc-admin">Admin</span> Full dataset &nbsp;|&nbsp; <span class="lc-analyst">Analyst</span> Filtered dataset</div>
+        </div>
+      </div>
+
+      <!-- [11] Markdown — Simulate Authentication System -->
+      <div class="notebook-cell">
+        <div class="nb-gutter"></div>
+        <div class="nb-content">
+          <div class="nb-md"><strong>## Simulate Authentication System &mdash; Define Users</strong></div>
+        </div>
+      </div>
+
+      <!-- [12] users dict -->
+      <div class="notebook-cell">
+        <div class="nb-gutter"><span class="nb-in">In [6]</span></div>
+        <div class="nb-content">
+          <div class="nb-code"><span class="cv">users</span> = {
+    <span class="cs">"admin1"</span>: <span class="cs">"Admin"</span>,
+    <span class="cs">"analyst1"</span>: <span class="cs">"Analyst"</span>
+}</div>
+        </div>
+      </div>
+
+      <!-- [13] Markdown — Simulate Login -->
+      <div class="notebook-cell">
+        <div class="nb-gutter"></div>
+        <div class="nb-content">
+          <div class="nb-md"><strong>### Simulate Login</strong></div>
+        </div>
+      </div>
+
+      <!-- [14] Login print — stream output -->
+      <div class="notebook-cell">
+        <div class="nb-gutter"><span class="nb-in">In [7]</span></div>
+        <div class="nb-content">
+          <div class="nb-code"><span class="cv">username</span> = <span class="cs">"analyst1"</span>
+
+<span class="cv">role</span> = users.get(username)
+
+print(<span class="cs">"Logged in as:"</span>, role)</div>
+          <div class="nb-output">Logged in as: Analyst</div>
+        </div>
+      </div>
+
+      <!-- [15] Markdown — Access Logic -->
+      <div class="notebook-cell">
+        <div class="nb-gutter"></div>
+        <div class="nb-content">
+          <div class="nb-md"><strong>### Access Logic</strong></div>
+        </div>
+      </div>
+
+      <!-- [16] if/else display — shows analyst_view -->
+      <div class="notebook-cell">
+        <div class="nb-gutter"><span class="nb-in">In [8]</span></div>
+        <div class="nb-content">
+          <div class="nb-code"><span class="ck">if</span> role == <span class="cs">"Admin"</span>:
+    display(employees_df)
+<span class="ck">else</span>:
+    display(analyst_view)</div>
+          <div class="nb-display">
+            <div class="nb-display-scroll">
+              <table>
+                <thead><tr><th>employee_id</th><th>name</th><th>department</th><th>email</th><th>role</th></tr></thead>
+                <tbody>
+                  <tr><td>1001</td><td>Tqodyr Ofiopol</td><td>HR</td><td>tqodyr.ofiopol@company.com</td><td>Manager</td></tr>
+                  <tr><td>1002</td><td>Itctc Qgnulliu</td><td>Marketing</td><td>itctc.qgnulliu@company.com</td><td>Engineer</td></tr>
+                  <tr><td>1003</td><td>Ukhmcdp Wbafqbha</td><td>Finance</td><td>ukhmcdp.wbafqbha@company.com</td><td>Manager</td></tr>
+                  <tr><td>1004</td><td>Orvnv Jbxfinmx</td><td>Finance</td><td>orvnv.jbxfinmx@company.com</td><td>Auditor</td></tr>
+                  <tr><td>1005</td><td>Pwini Maijisz</td><td>Sales</td><td>pwini.maijisz@company.com</td><td>Auditor</td></tr>
+                  <tr><td>1006</td><td>Jepewjn Exuuboi</td><td>HR</td><td>jepewjn.exuuboi@company.com</td><td>Auditor</td></tr>
+                  <tr><td>1007</td><td>Othqh Ckxvnfeje</td><td>IT</td><td>othqh.ckxvnfeje@company.com</td><td>Admin</td></tr>
+                  <tr><td>1008</td><td>Vjnqsmk Sfezgz</td><td>Operations</td><td>vjnqsmk.sfezgz@company.com</td><td>Manager</td></tr>
+                  <tr><td>1009</td><td>Fhdodok Szhmgacd</td><td>Sales</td><td>fhdodok.szhmgacd@company.com</td><td>Engineer</td></tr>
+                  <tr><td>1010</td><td>Eflgw Oawhmt</td><td>Finance</td><td>eflgw.oawhmt@company.com</td><td>Analyst</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="nb-display-footer">role = "Analyst" &rarr; analyst_view displayed &mdash; 10 of 500 rows &mdash; 5 columns</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- [17] Markdown — Data Masking -->
+      <div class="notebook-cell">
+        <div class="nb-gutter"></div>
+        <div class="nb-content">
+          <div class="nb-md"><strong>## Data Masking &mdash; Mask Email</strong></div>
+        </div>
+      </div>
+
+      <!-- [18] masked_df -->
+      <div class="notebook-cell">
+        <div class="nb-gutter"><span class="nb-in">In [9]</span></div>
+        <div class="nb-content">
+          <div class="nb-code"><span class="ck">from</span> pyspark.sql.functions <span class="ck">import</span> regexp_replace
+
+<span class="cv">masked_df</span> = analyst_view.withColumn(
+    <span class="cs">"email"</span>,
+    regexp_replace(<span class="cs">"email"</span>, <span class="cs">r"(^.).*(@.*$)"</span>, <span class="cs">r"\1***\2"</span>)
+)
+
+display(masked_df)</div>
+          <div class="nb-display">
+            <div class="nb-display-scroll">
+              <table>
+                <thead><tr><th>employee_id</th><th>name</th><th>department</th><th>email</th><th>role</th></tr></thead>
+                <tbody>
+                  <tr><td>1001</td><td>Tqodyr Ofiopol</td><td>HR</td><td class="masked">1***2</td><td>Manager</td></tr>
+                  <tr><td>1002</td><td>Itctc Qgnulliu</td><td>Marketing</td><td class="masked">1***2</td><td>Engineer</td></tr>
+                  <tr><td>1003</td><td>Ukhmcdp Wbafqbha</td><td>Finance</td><td class="masked">1***2</td><td>Manager</td></tr>
+                  <tr><td>1004</td><td>Orvnv Jbxfinmx</td><td>Finance</td><td class="masked">1***2</td><td>Auditor</td></tr>
+                  <tr><td>1005</td><td>Pwini Maijisz</td><td>Sales</td><td class="masked">1***2</td><td>Auditor</td></tr>
+                  <tr><td>1006</td><td>Jepewjn Exuuboi</td><td>HR</td><td class="masked">1***2</td><td>Auditor</td></tr>
+                  <tr><td>1007</td><td>Othqh Ckxvnfeje</td><td>IT</td><td class="masked">1***2</td><td>Admin</td></tr>
+                  <tr><td>1008</td><td>Vjnqsmk Sfezgz</td><td>Operations</td><td class="masked">1***2</td><td>Manager</td></tr>
+                  <tr><td>1009</td><td>Fhdodok Szhmgacd</td><td>Sales</td><td class="masked">1***2</td><td>Engineer</td></tr>
+                  <tr><td>1010</td><td>Eflgw Oawhmt</td><td>Finance</td><td class="masked">1***2</td><td>Analyst</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="nb-display-footer">Showing 10 of 500 rows &mdash; 5 columns &mdash; email masked via regexp_replace</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /notebook-viewer -->
+  </div><!-- /d1 -->
+
+</div>
+
+<footer class="site-footer">&copy; Clark Ngo &mdash; Data Governance Classroom Activities</footer>
+
+<button class="export-btn" onclick="window.print()">&#128438; Export PDF</button>
+
+</body>
+</html>

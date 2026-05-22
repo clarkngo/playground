@@ -7,6 +7,18 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ## 2026-05-22
 
+### [feature] `classroom-activities/data-governance/module-07-deliverables.html` — Module 07 Deliverables Page
+- Created deliverables page: Data Security, RBAC &amp; Authentication (indigo theme)
+- 3 progress steps: D1 Notebook Execution (done/green), D2 OpenMetadata Screenshots (pending), D3 Access Matrix (pending)
+- Full 19-cell notebook viewer rendered from `Module_07_Data_Management_Security.ipynb`
+- Cell 1: employees_df load — 8 columns with salary (red .sensitive) and ssn (red .sensitive), sensitivity badges in headers, 10/500 rows
+- Cells 3 &amp; 5: analyst_view — salary/SSN removed, 5 cols, 10/500 rows
+- Cell 14: stream output "Logged in as: Analyst" (green .nb-output)
+- Cell 16: if/else access control → analyst_view displayed (Analyst branch)
+- Cell 18: masked_df with amber .masked email cells showing `1***2` regex output
+- Markdown cells rendered with .nb-md italic/grey style
+- `module-07/submission/Module_07_Data_Management_Security.ipynb` added
+
 ### [feature] `classroom-activities/data-governance/module-07.html` — Module 07 Lab Guide
 - Created full lab guide: Data Security, RBAC &amp; Authentication (indigo #4338ca theme)
 - Case study: "Enterprise Access Misconfiguration" — junior analyst exposed to salary/SSN/email due to excessive permissions
