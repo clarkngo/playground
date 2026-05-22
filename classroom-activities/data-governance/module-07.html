@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Module 07 &mdash; Data Security, RBAC &amp; Authentication</title>
+  <meta name="author" content="Clark Ngo">
+  <meta name="copyright" content="Clark Ngo">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0d1117; color: #c9d1d9; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; min-height: 100vh; }
+
+    .navbar { background: #161b22; border-bottom: 1px solid #30363d; padding: .75rem 1.5rem; display: flex; align-items: center; justify-content: space-between; }
+    .navbar a { color: #e6edf3; text-decoration: none; font-weight: 700; font-size: 1rem; }
+    .navbar a:hover { color: #818cf8; }
+    .nav-pill { font-size: .78rem; color: #8b949e; }
+
+    .page-body { max-width: 960px; margin: 0 auto; padding: 2rem; }
+
+    .breadcrumb { font-size: .78rem; color: #8b949e; display: flex; align-items: center; gap: .4rem; margin-bottom: .85rem; flex-wrap: wrap; }
+    .breadcrumb a { color: #818cf8; text-decoration: none; font-weight: 600; }
+    .breadcrumb a:hover { text-decoration: underline; }
+    .breadcrumb span { color: #484f58; }
+
+    .page-badge { display: inline-block; background: #4338ca; color: #fff; font-size: .72rem; font-weight: 700; padding: 3px 12px; border-radius: 12px; text-transform: uppercase; letter-spacing: .07em; margin-bottom: .6rem; }
+    .page-header h1 { color: #e6edf3; font-size: 1.85rem; font-weight: 800; margin-bottom: .3rem; }
+    .case-title { color: #818cf8; font-size: .95rem; font-weight: 600; margin-bottom: .65rem; font-style: italic; }
+    .page-desc { color: #8b949e; font-size: .88rem; line-height: 1.7; max-width: 720px; margin-bottom: .85rem; }
+    .tag-row { display: flex; gap: .4rem; flex-wrap: wrap; margin-bottom: 2rem; }
+    .tag { display: inline-block; font-size: .68rem; padding: 2px 8px; border-radius: 8px; font-weight: 600; }
+    .tag-blue   { background: #1f3a5c; color: #58a6ff; }
+    .tag-green  { background: #1a2f1a; color: #3fb950; }
+    .tag-yellow { background: #2d2009; color: #e3b341; }
+    .tag-indigo { background: #1e1b4b; color: #818cf8; }
+    .tag-red    { background: #2d1a1a; color: #f85149; }
+    .tag-teal   { background: #0a2028; color: #22d3ee; }
+    .tag-amber  { background: #2d1a00; color: #fbbf24; }
+
+    .section-label { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #8b949e; border-left: 3px solid #30363d; padding-left: .6rem; margin: 2rem 0 1rem; }
+
+    .obj-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: .65rem; margin-bottom: 1.25rem; }
+    .obj-card { background: #161b22; border: 1px solid #30363d; border-left: 3px solid #4338ca; border-radius: 8px; padding: .75rem 1rem; display: flex; align-items: flex-start; gap: .6rem; }
+    .obj-num { font-size: .68rem; font-weight: 700; color: #818cf8; background: #1e1b4b; padding: 2px 7px; border-radius: 5px; flex-shrink: 0; margin-top: .1rem; }
+    .obj-text { font-size: .83rem; color: #c9d1d9; line-height: 1.5; }
+
+    .breach-card { background: #1a1400; border: 1px solid #9e6a03; border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1.1rem; }
+    .breach-title { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: #e3b341; margin-bottom: .85rem; display: flex; align-items: center; gap: .5rem; }
+    .breach-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+    .breach-section-title { font-size: .75rem; font-weight: 700; color: #e6edf3; text-transform: uppercase; letter-spacing: .05em; margin-bottom: .6rem; }
+    .breach-list { list-style: none; display: flex; flex-direction: column; gap: .35rem; }
+    .breach-list li { font-size: .83rem; color: #c9d1d9; display: flex; align-items: flex-start; gap: .5rem; line-height: 1.5; }
+    .breach-dot-red    { width: 6px; height: 6px; border-radius: 50%; background: #f85149; flex-shrink: 0; margin-top: .45rem; }
+    .breach-dot-green  { width: 6px; height: 6px; border-radius: 50%; background: #3fb950; flex-shrink: 0; margin-top: .45rem; }
+
+    .mission-strip { background: #0f0d2e; border: 1px solid #4338ca; border-radius: 8px; padding: .85rem 1.1rem; margin-bottom: 1.5rem; }
+    .mission-label { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #818cf8; margin-bottom: .5rem; }
+    .mission-items { display: flex; gap: 1.25rem; flex-wrap: wrap; }
+    .mission-item { font-size: .82rem; color: #c9d1d9; display: flex; align-items: center; gap: .35rem; }
+    .mission-dot { width: 6px; height: 6px; border-radius: 50%; background: #818cf8; flex-shrink: 0; }
+
+    .card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1.1rem; }
+    .card-title { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: #3fb950; margin-bottom: .85rem; }
+
+    .data-table { width: 100%; border-collapse: collapse; font-size: .83rem; }
+    .data-table th { background: #0d1117; color: #8b949e; font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; padding: .5rem .75rem; text-align: left; border-bottom: 1px solid #30363d; white-space: nowrap; }
+    .data-table td { padding: .55rem .75rem; border-bottom: 1px solid #21262d; color: #c9d1d9; vertical-align: top; line-height: 1.55; }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover td { background: #1c2435; }
+    .data-table code { font-family: "Menlo","Monaco",monospace; font-size: .8em; background: #21262d; padding: 1px 5px; border-radius: 4px; color: #a5d6ff; }
+
+    .task-card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; margin-bottom: .85rem; overflow: hidden; }
+    .task-header { display: flex; align-items: center; gap: .75rem; padding: .9rem 1.25rem; cursor: pointer; user-select: none; transition: background .15s; }
+    .task-header:hover { background: #1c2435; }
+    .task-num { color: #fff; font-size: .68rem; font-weight: 700; padding: 2px 9px; border-radius: 8px; white-space: nowrap; flex-shrink: 0; }
+    .task-title { color: #e6edf3; font-weight: 700; font-size: .94rem; flex: 1; }
+    .task-deliv { font-size: .7rem; color: #8b949e; white-space: nowrap; }
+    .toggle-btn { color: #818cf8; font-size: 1.2rem; font-weight: 700; width: 22px; text-align: center; flex-shrink: 0; line-height: 1; }
+    .task-body { display: none; padding: 1.25rem 1.5rem; border-top: 1px solid #30363d; }
+    .task-body.open { display: block; }
+
+    .answer-label { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #3fb950; margin-bottom: 1rem; display: flex; align-items: center; gap: .5rem; }
+    .answer-label::after { content: ""; flex: 1; height: 1px; background: #21262d; }
+
+    .code-block-label { font-size: .69rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: #8b949e; margin-bottom: .35rem; margin-top: .85rem; }
+    .code-block { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 1rem 1.25rem; font-family: "Menlo","Monaco","Courier New",monospace; font-size: .79rem; color: #c9d1d9; line-height: 1.7; overflow-x: auto; margin-bottom: .5rem; white-space: pre; }
+    .ck { color: #ff7b72; }
+    .cs { color: #a5d6ff; }
+    .cf { color: #d2a8ff; }
+    .cv { color: #ffa657; }
+    .cm { color: #8b949e; }
+
+    .sql-block { background: #0d1117; border: 1px solid #30363d; border-left: 3px solid #4338ca; border-radius: 8px; padding: 1rem 1.25rem; font-family: "Menlo","Monaco","Courier New",monospace; font-size: .79rem; color: #c9d1d9; line-height: 1.7; overflow-x: auto; margin-bottom: .5rem; white-space: pre; }
+    .sk { color: #818cf8; }
+    .sv { color: #ffa657; }
+
+    /* Sensitivity badges */
+    .lc-pii         { display: inline-block; font-size: .63rem; font-weight: 700; background: #2d0a1e; color: #f9a8d4; border: 1px solid #9d174d; padding: 1px 6px; border-radius: 4px; text-transform: uppercase; }
+    .lc-confidential { display: inline-block; font-size: .63rem; font-weight: 700; background: #2d2200; color: #fbbf24; border: 1px solid #d97706; padding: 1px 6px; border-radius: 4px; text-transform: uppercase; }
+    .lc-internal    { display: inline-block; font-size: .63rem; font-weight: 700; background: #1a2f1a; color: #3fb950; border: 1px solid #238636; padding: 1px 6px; border-radius: 4px; text-transform: uppercase; }
+    .lc-admin       { display: inline-block; font-size: .63rem; font-weight: 700; background: #1e1b4b; color: #818cf8; border: 1px solid #4338ca; padding: 1px 6px; border-radius: 4px; text-transform: uppercase; }
+    .lc-analyst     { display: inline-block; font-size: .63rem; font-weight: 700; background: #1f3a5c; color: #58a6ff; border: 1px solid #1f6feb; padding: 1px 6px; border-radius: 4px; text-transform: uppercase; }
+
+    .concept-box { background: #0f0d2e; border: 1px solid #4338ca; border-radius: 8px; padding: .85rem 1.1rem; margin: .85rem 0; font-size: .82rem; color: #c9d1d9; line-height: 1.65; }
+    .concept-box strong { color: #818cf8; }
+
+    .deliv-list { list-style: none; padding: 0; }
+    .deliv-list li { display: flex; gap: .65rem; align-items: flex-start; padding: .6rem 0; border-bottom: 1px solid #21262d; font-size: .85rem; color: #c9d1d9; line-height: 1.6; }
+    .deliv-list li:last-child { border-bottom: none; }
+    .deliv-num { background: #21262d; color: #8b949e; font-size: .65rem; font-weight: 700; padding: 1px 7px; border-radius: 6px; white-space: nowrap; flex-shrink: 0; margin-top: .15rem; }
+    .deliv-link-bar { background: #0f0d2e; border: 1px solid #4338ca; border-radius: 10px; padding: 1rem 1.25rem; display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.1rem; }
+    .deliv-link-bar a { color: #818cf8; font-weight: 700; font-size: .88rem; text-decoration: none; display: flex; align-items: center; gap: .4rem; }
+    .deliv-link-bar a:hover { text-decoration: underline; }
+    .deliv-link-desc { font-size: .8rem; color: #8b949e; }
+
+    .explain-toggle { display: flex; align-items: center; gap: .55rem; margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid #21262d; cursor: pointer; user-select: none; width: fit-content; }
+    .explain-toggle:hover .explain-label { color: #818cf8; }
+    .explain-icon { font-size: .85rem; }
+    .explain-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #4338ca; transition: color .15s; }
+    .explain-chevron { font-size: .7rem; color: #4338ca; transition: transform .2s; }
+    .explain-chevron.open { transform: rotate(90deg); }
+    .explain-body { display: none; margin-top: .85rem; background: #0c0b1e; border: 1px solid #4338ca; border-radius: 8px; padding: 1.1rem 1.25rem; }
+    .explain-body.open { display: block; }
+    .explain-body h4 { font-size: .78rem; font-weight: 700; color: #818cf8; margin: .85rem 0 .3rem; text-transform: uppercase; letter-spacing: .05em; }
+    .explain-body h4:first-child { margin-top: 0; }
+    .explain-body p { font-size: .83rem; color: #c9d1d9; line-height: 1.72; margin-bottom: .5rem; }
+    .explain-body p:last-child { margin-bottom: 0; }
+    .explain-body ul { font-size: .83rem; color: #c9d1d9; line-height: 1.72; padding-left: 1.1rem; margin-bottom: .5rem; }
+    .explain-body ul li { margin-bottom: .25rem; }
+    .explain-body code { font-family: "Menlo","Monaco",monospace; font-size: .8em; background: #1e1b4b; border: 1px solid #4338ca; padding: 1px 5px; border-radius: 4px; color: #818cf8; }
+    .explain-body strong { color: #818cf8; font-weight: 700; }
+
+    .reflection-card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1.35rem 1.5rem; margin-bottom: 2rem; }
+    .reflection-q { font-size: .95rem; font-weight: 700; color: #e6edf3; margin-bottom: .8rem; border-left: 3px solid #4338ca; padding-left: .75rem; }
+    .reflection-a { font-size: .84rem; color: #c9d1d9; line-height: 1.75; }
+    .reflection-a p { margin-bottom: .65rem; }
+    .reflection-a p:last-child { margin-bottom: 0; }
+
+    .export-btn { position: fixed; bottom: 1.75rem; right: 1.75rem; display: flex; align-items: center; gap: .5rem; background: #4338ca; color: #fff; border: none; border-radius: 10px; padding: .65rem 1.1rem; font-size: .82rem; font-weight: 700; cursor: pointer; box-shadow: 0 4px 16px rgba(0,0,0,.4); transition: background .15s, transform .12s; z-index: 100; }
+    .export-btn:hover { background: #6366f1; transform: translateY(-2px); }
+
+    .site-footer { text-align: center; padding: 1.25rem; border-top: 1px solid #21262d; margin-top: 2rem; color: #484f58; font-size: .77rem; }
+
+    @media print {
+      @page { size: A4; margin: 1.4cm 1.6cm; }
+      *, *::before, *::after { box-sizing: border-box; }
+      body { background: #fff !important; color: #111 !important; font-size: 9.5pt; font-family: "Segoe UI", Helvetica, Arial, sans-serif; }
+      .navbar, .breadcrumb, .export-btn, .toggle-btn, .explain-toggle, .site-footer { display: none !important; }
+      .page-body { max-width: 100%; padding: 0; margin: 0; }
+      .page-badge { background: #4338ca !important; color: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      h1 { color: #111 !important; font-size: 16pt; }
+      .case-title { color: #4338ca !important; font-size: 10pt; }
+      .page-desc { color: #444 !important; font-size: 9pt; }
+      .tag { border: 1px solid #ccc; background: #f5f5f5 !important; color: #333 !important; font-size: 7pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .section-label { color: #555 !important; border-left-color: #999 !important; font-size: 7.5pt; margin: 1rem 0 .6rem; }
+      .card, .reflection-card { background: #fff !important; border: 1px solid #ccc !important; }
+      .breach-card { background: #fffbeb !important; border-color: #d97706 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .breach-title { color: #92400e !important; font-size: 7.5pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .breach-section-title { color: #111 !important; font-size: 8pt; }
+      .breach-list li { color: #222 !important; font-size: 8pt; }
+      .breach-dot-red { background: #b91c1c !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .breach-dot-green { background: #16a34a !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .mission-strip { background: #eef2ff !important; border-color: #4338ca !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .mission-label { color: #4338ca !important; font-size: 7pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .task-body { display: block !important; border-top: 1px solid #ccc !important; padding: .85rem 1rem !important; }
+      .task-card { background: #fff !important; border: 1px solid #ccc !important; border-radius: 6px; margin-bottom: .75rem; page-break-inside: avoid; }
+      .task-header { background: #f7f7f7 !important; padding: .6rem 1rem !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .task-num { color: #fff !important; font-size: 7pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .task-title { color: #111 !important; font-size: 9pt; }
+      .task-deliv { color: #666 !important; font-size: 7.5pt; }
+      .answer-label { color: #1a6b2a !important; font-size: 7pt; }
+      .code-block, .sql-block { background: #f8f9fa !important; border: 1px solid #ddd !important; color: #111 !important; font-size: 7.5pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .ck { color: #b91c1c !important; } .cs { color: #1a4fa0 !important; }
+      .cf { color: #5b21b6 !important; } .cv { color: #92400e !important; }
+      .cm { color: #6b7280 !important; } .sk { color: #4338ca !important; }
+      .concept-box { background: #eef2ff !important; border-color: #4338ca !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .explain-body { display: block !important; background: #eef2ff !important; border: 1px solid #4338ca !important; padding: .85rem 1rem !important; margin-top: .75rem; page-break-inside: avoid; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .explain-body h4 { color: #3730a3 !important; font-size: 7.5pt; }
+      .explain-body p, .explain-body ul { color: #222 !important; font-size: 8pt; }
+      .explain-body strong { color: #3730a3 !important; }
+      .data-table th { background: #f3f4f6 !important; color: #555 !important; font-size: 7pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .data-table td { color: #111 !important; font-size: 8pt; border-bottom: 1px solid #eee !important; }
+      .reflection-q { border-left-color: #4338ca !important; color: #111 !important; font-size: 9pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .reflection-a { color: #222 !important; font-size: 8pt; }
+      .lc-pii, .lc-confidential, .lc-internal, .lc-admin, .lc-analyst { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+
+    @media (max-width: 680px) {
+      .obj-grid    { grid-template-columns: 1fr; }
+      .breach-grid { grid-template-columns: 1fr; }
+      .mission-items { flex-direction: column; gap: .4rem; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="index.html">&#8592; Data Governance</a>
+  <span class="nav-pill">Module 07 &mdash; Data Security, RBAC &amp; Authentication</span>
+</nav>
+
+<div class="page-body">
+
+  <div class="breadcrumb">
+    <a href="../../index.html">Playground</a>
+    <span>/</span>
+    <a href="index.html">Data Governance</a>
+    <span>/</span>
+    <span>Module 07</span>
+  </div>
+
+  <div class="page-header">
+    <div class="page-badge">&#128274; Module 07</div>
+    <h1>Module 07 &mdash; Data Security, RBAC &amp; Authentication</h1>
+    <div class="case-title">&#128274; Case Study: &ldquo;Enterprise Access Misconfiguration&rdquo;</div>
+    <p class="page-desc">A global enterprise accidentally gave a junior analyst access to confidential HR data &mdash; salary, SSN, and email &mdash; due to excessive permissions. Students act as the Enterprise Security Governance Team to redesign the access model: implement RBAC, create restricted analyst views, simulate an authentication system, mask sensitive fields, and configure OpenMetadata roles, policies, and PII tags.</p>
+    <div class="tag-row">
+      <span class="tag tag-red">Data Security</span>
+      <span class="tag tag-indigo">RBAC</span>
+      <span class="tag tag-red">PII / SSN</span>
+      <span class="tag tag-green">Data Masking</span>
+      <span class="tag tag-blue">OpenMetadata</span>
+      <span class="tag tag-yellow">Least Privilege</span>
+      <span class="tag tag-indigo">Authentication</span>
+    </div>
+  </div>
+
+  <!-- ── OBJECTIVES ─────────────────────────── -->
+  <div class="section-label">Learning Objectives</div>
+  <div class="obj-grid">
+    <div class="obj-card">
+      <span class="obj-num">01</span>
+      <span class="obj-text">Understand RBAC concepts and how roles map to data access permissions</span>
+    </div>
+    <div class="obj-card">
+      <span class="obj-num">02</span>
+      <span class="obj-text">Implement secure access models by creating role-specific views in Databricks</span>
+    </div>
+    <div class="obj-card">
+      <span class="obj-num">03</span>
+      <span class="obj-text">Simulate authentication workflows using Python dictionaries and conditional logic</span>
+    </div>
+    <div class="obj-card">
+      <span class="obj-num">04</span>
+      <span class="obj-text">Restrict access to sensitive data by filtering columns for non-privileged roles</span>
+    </div>
+    <div class="obj-card">
+      <span class="obj-num">05</span>
+      <span class="obj-text">Create filtered views for non-privileged users that hide salary, SSN, and other PII</span>
+    </div>
+    <div class="obj-card">
+      <span class="obj-num">06</span>
+      <span class="obj-text">Design enterprise access matrices mapping roles to permitted tables and columns</span>
+    </div>
+    <div class="obj-card">
+      <span class="obj-num">07</span>
+      <span class="obj-text">Apply least privilege principles and tag sensitive columns in OpenMetadata</span>
+    </div>
+  </div>
+
+  <!-- ── SCENARIO ───────────────────────────── -->
+  <div class="section-label">Case Scenario</div>
+  <div class="breach-card">
+    <div class="breach-title">&#128274; Enterprise Access Misconfiguration &mdash; Global Enterprise</div>
+    <div class="breach-grid">
+      <div>
+        <div class="breach-section-title">Current State &mdash; What Went Wrong</div>
+        <ul class="breach-list">
+          <li><span class="breach-dot-red"></span>Junior analyst accessed confidential HR data without business justification</li>
+          <li><span class="breach-dot-red"></span>Excessive permissions assigned &mdash; no role boundaries enforced</li>
+          <li><span class="breach-dot-red"></span>SSN and salary fields exposed to non-privileged users in raw table</li>
+          <li><span class="breach-dot-red"></span>No column-level access control applied to sensitive fields</li>
+          <li><span class="breach-dot-red"></span>Compliance violations triggered &mdash; potential GDPR and HIPAA exposure</li>
+        </ul>
+      </div>
+      <div>
+        <div class="breach-section-title">Business Goals &mdash; What We Must Build</div>
+        <ul class="breach-list">
+          <li><span class="breach-dot-green"></span>Redesign access model with RBAC &mdash; Admin and Analyst roles defined</li>
+          <li><span class="breach-dot-green"></span>Apply least privilege &mdash; users access only what their role requires</li>
+          <li><span class="breach-dot-green"></span>Create role-specific views &mdash; analyst view hides salary, SSN, and PII</li>
+          <li><span class="breach-dot-green"></span>Mask PII fields &mdash; email partially masked for analyst consumption</li>
+          <li><span class="breach-dot-green"></span>Configure OpenMetadata policies and PII/Confidential column tags</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── DATASET ────────────────────────────── -->
+  <div class="section-label">Dataset Used</div>
+  <div class="card">
+    <div class="card-title">&#128196; Source File &mdash; Employees.csv</div>
+    <table class="data-table">
+      <thead><tr><th>Column</th><th>Type</th><th>Sensitivity</th></tr></thead>
+      <tbody>
+        <tr><td><code>employee_id</code></td><td>integer</td><td><span class="lc-internal">Internal</span></td></tr>
+        <tr><td><code>name</code></td><td>string</td><td><span class="lc-internal">Internal</span></td></tr>
+        <tr><td><code>email</code></td><td>string</td><td><span class="lc-pii">PII</span></td></tr>
+        <tr><td><code>department</code></td><td>string</td><td><span class="lc-internal">Internal</span></td></tr>
+        <tr><td><code>salary</code></td><td>double</td><td><span class="lc-confidential">Confidential</span></td></tr>
+        <tr><td><code>ssn</code></td><td>string</td><td><span class="lc-pii">PII</span></td></tr>
+        <tr><td><code>role</code></td><td>string</td><td><span class="lc-internal">Internal</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── MISSION STRIP ──────────────────────── -->
+  <div class="mission-strip">
+    <div class="mission-label">&#127919; Your Mission &mdash; Enterprise Security Governance Team</div>
+    <div class="mission-items">
+      <div class="mission-item"><span class="mission-dot"></span>Redesign access model</div>
+      <div class="mission-item"><span class="mission-dot"></span>Implement RBAC</div>
+      <div class="mission-item"><span class="mission-dot"></span>Create restricted views</div>
+      <div class="mission-item"><span class="mission-dot"></span>Simulate authentication</div>
+      <div class="mission-item"><span class="mission-dot"></span>Mask PII</div>
+      <div class="mission-item"><span class="mission-dot"></span>Tag in OpenMetadata</div>
+    </div>
+  </div>
+
+  <!-- ── PARTS ──────────────────────────────── -->
+  <div class="section-label">Lab Parts &mdash; Answer Key</div>
+
+  <!-- ─────────────────────────────────────────
+       PART 1 — Security Concepts Overview
+  ───────────────────────────────────────────── -->
+  <div class="task-card">
+    <div class="task-header" onclick="toggleTask('p1')">
+      <span class="task-num" style="background:#4338ca;">Part 1</span>
+      <span class="task-title">Security Concepts Overview</span>
+      <span class="task-deliv">Concepts &middot; Reference</span>
+      <span class="toggle-btn" id="btn-p1">+</span>
+    </div>
+    <div class="task-body" id="p1">
+      <div class="answer-label">&#10003; Key Concepts &amp; Definitions</div>
+
+      <p style="font-size:.83rem;color:#8b949e;margin-bottom:1rem;">Before implementing access controls, the team must understand the five foundational concepts that govern secure data consumption. Every design decision in this lab traces back to one of these principles.</p>
+
+      <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:1rem 1.25rem;margin-bottom:1rem;overflow-x:auto;">
+        <table class="data-table">
+          <thead><tr><th>Concept</th><th>Definition</th><th>How It Applies Here</th></tr></thead>
+          <tbody>
+            <tr><td><strong style="color:#818cf8;">Authentication</strong></td><td>Verify the identity of a user before granting any access</td><td>Login simulation with username-to-role mapping dictionary</td></tr>
+            <tr><td><strong style="color:#818cf8;">Authorization</strong></td><td>Verify what a verified user is permitted to access</td><td>Role check determines which table (admin or analyst view) is returned</td></tr>
+            <tr><td><strong style="color:#818cf8;">RBAC</strong></td><td>Role-Based Access Control &mdash; permissions attached to roles, not individual users</td><td>Admin and Analyst roles each have a distinct permitted table set</td></tr>
+            <tr><td><strong style="color:#818cf8;">Least Privilege</strong></td><td>Grant the minimum access required to perform the job, nothing more</td><td>Analyst view excludes salary, SSN &mdash; columns not needed for analyst tasks</td></tr>
+            <tr><td><strong style="color:#818cf8;">Secure Consumption</strong></td><td>Restrict how sensitive data surfaces in reporting and queries</td><td>Column masking and view-level restriction prevent raw PII from reaching analysts</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="explain-toggle" onclick="toggleExplain('exp-p1')">
+        <span class="explain-icon">&#128161;</span>
+        <span class="explain-label">Why This Answer?</span>
+        <span class="explain-chevron" id="chev-exp-p1">&#9654;</span>
+      </div>
+      <div class="explain-body" id="exp-p1">
+        <h4>Why must authentication and authorization be separate?</h4>
+        <p>Authentication answers "Who are you?" while authorization answers "What are you allowed to do?" Merging them creates a security gap: if you only check identity once at login without enforcing per-resource permissions, a verified user can access anything in the system. Separating the two means every data request is evaluated against the user's current role &mdash; even if their identity was verified hours ago. In enterprise IAM systems (Okta, Azure AD), authentication generates a token; authorization policies are evaluated at each resource boundary using that token.</p>
+        <h4>Why does RBAC scale better than per-user permissions?</h4>
+        <p>In a per-user model, adding a new analyst means individually configuring permissions for every table, column, and dataset they need. In RBAC, you assign the user to the Analyst role, and they inherit all permissions defined for that role. When a new table is added, you update the role definition once &mdash; all role members get the updated permissions automatically. This makes onboarding, offboarding, and audit compliance manageable at enterprise scale.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────
+       PART 2 — Databricks Setup
+  ───────────────────────────────────────────── -->
+  <div class="task-card">
+    <div class="task-header" onclick="toggleTask('p2')">
+      <span class="task-num" style="background:#1f6feb;">Part 2</span>
+      <span class="task-title">Databricks Setup &mdash; Upload &amp; Notebook</span>
+      <span class="task-deliv">Steps 1&ndash;2</span>
+      <span class="toggle-btn" id="btn-p2">+</span>
+    </div>
+    <div class="task-body" id="p2">
+      <div class="answer-label">&#10003; Setup Instructions &mdash; Steps 1&ndash;2</div>
+
+      <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.85rem 1.1rem;margin-bottom:.85rem;font-size:.82rem;">
+        <div style="font-size:.69rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8b949e;margin-bottom:.55rem;">Step 1 &mdash; Upload Employees.csv</div>
+        <table class="data-table" style="font-size:.8rem;">
+          <thead><tr><th>File</th><th>Upload Path</th></tr></thead>
+          <tbody>
+            <tr><td><code>Employees.csv</code></td><td><code>/FileStore/tables/Employees.csv</code></td></tr>
+          </tbody>
+        </table>
+        <p style="margin-top:.65rem;font-size:.8rem;color:#8b949e;">Navigate to <strong style="color:#c9d1d9;">Data &rarr; Add Data &rarr; Upload Files</strong> and select the CSV. Confirm the path before running any cells.</p>
+      </div>
+
+      <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.85rem 1.1rem;font-size:.82rem;">
+        <div style="font-size:.69rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8b949e;margin-bottom:.4rem;">Step 2 &mdash; Create Notebook</div>
+        <p style="font-size:.82rem;color:#c9d1d9;">Workspace &rarr; Create &rarr; Notebook &rarr; Name: <code style="background:#21262d;padding:2px 6px;border-radius:4px;color:#a5d6ff;">Module07_Data_Security</code> &rarr; Language: Python &rarr; Attach to your cluster.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────
+       PART 3 — Load Dataset
+  ───────────────────────────────────────────── -->
+  <div class="task-card">
+    <div class="task-header" onclick="toggleTask('p3')">
+      <span class="task-num" style="background:#4338ca;">Part 3</span>
+      <span class="task-title">Load Dataset</span>
+      <span class="task-deliv">Step 3</span>
+      <span class="toggle-btn" id="btn-p3">+</span>
+    </div>
+    <div class="task-body" id="p3">
+      <div class="answer-label">&#10003; Complete Answer &mdash; Step 3</div>
+
+      <div class="code-block-label">Step 3 &mdash; Load Employees.csv into Spark DataFrame</div>
+      <div class="code-block"><span class="cv">employees_df</span> = spark.read.csv(
+    <span class="cs">"/FileStore/tables/Employees.csv"</span>,
+    header=<span class="ck">True</span>,
+    inferSchema=<span class="ck">True</span>
+)
+display(employees_df)</div>
+
+      <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.85rem 1.1rem;margin:.85rem 0;font-size:.82rem;">
+        <div style="font-size:.69rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8b949e;margin-bottom:.55rem;">Expected Schema &mdash; employees_df</div>
+        <table class="data-table" style="font-size:.8rem;">
+          <thead><tr><th>Column</th><th>Inferred Type</th><th>Sensitivity</th></tr></thead>
+          <tbody>
+            <tr><td><code>employee_id</code></td><td>integer</td><td><span class="lc-internal">Internal</span></td></tr>
+            <tr><td><code>name</code></td><td>string</td><td><span class="lc-internal">Internal</span></td></tr>
+            <tr><td><code>email</code></td><td>string</td><td><span class="lc-pii">PII</span></td></tr>
+            <tr><td><code>department</code></td><td>string</td><td><span class="lc-internal">Internal</span></td></tr>
+            <tr><td><code>salary</code></td><td>double</td><td><span class="lc-confidential">Confidential</span></td></tr>
+            <tr><td><code>ssn</code></td><td>string</td><td><span class="lc-pii">PII</span></td></tr>
+            <tr><td><code>role</code></td><td>string</td><td><span class="lc-internal">Internal</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────
+       PART 4 — Identify Sensitive Data
+  ───────────────────────────────────────────── -->
+  <div class="task-card">
+    <div class="task-header" onclick="toggleTask('p4')">
+      <span class="task-num" style="background:#b91c1c;">Part 4</span>
+      <span class="task-title">Identify Sensitive Data</span>
+      <span class="task-deliv">Step 4</span>
+      <span class="toggle-btn" id="btn-p4">+</span>
+    </div>
+    <div class="task-body" id="p4">
+      <div class="answer-label">&#10003; Complete Answer &mdash; Step 4</div>
+
+      <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.85rem 1.1rem;margin-bottom:.85rem;">
+        <div style="font-size:.69rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8b949e;margin-bottom:.55rem;">Sensitive Fields in Employees Dataset</div>
+        <table class="data-table" style="font-size:.8rem;">
+          <thead><tr><th>Column</th><th>Classification</th><th>Why Sensitive</th></tr></thead>
+          <tbody>
+            <tr><td><code>salary</code></td><td><span class="lc-confidential">Confidential</span></td><td>Financial compensation data &mdash; restricted to HR and executive roles</td></tr>
+            <tr><td><code>ssn</code></td><td><span class="lc-pii">PII</span></td><td>Social Security Number &mdash; regulated personally identifiable information</td></tr>
+            <tr><td><code>email</code></td><td><span class="lc-pii">PII</span></td><td>Personal contact information linked to an individual identity</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="concept-box">
+        <strong>Column-Level Sensitivity Classification:</strong> You cannot restrict what you have not classified. Before any access control is designed, every column must be labeled with its sensitivity tier. Classification is the foundation of RBAC &mdash; roles are later granted access to columns based on their classification level, not their names.
+      </div>
+
+      <div class="explain-toggle" onclick="toggleExplain('exp-p4')">
+        <span class="explain-icon">&#128161;</span>
+        <span class="explain-label">Why This Answer?</span>
+        <span class="explain-chevron" id="chev-exp-p4">&#9654;</span>
+      </div>
+      <div class="explain-body" id="exp-p4">
+        <h4>Why classify columns before building access controls?</h4>
+        <p>Classification creates a shared contract between data engineers, compliance officers, and business owners. Without it, engineers make individual judgment calls about which fields need protection &mdash; and those calls diverge. When a new analyst view is requested, the classification tells engineers immediately which columns to exclude without requiring a policy meeting. It also powers downstream automation: tools like OpenMetadata can scan for columns tagged PII and alert when they appear in an unprotected table.</p>
+        <h4>What is the difference between PII and Confidential?</h4>
+        <p><strong>PII (Personally Identifiable Information)</strong> is any data that can identify a specific individual &mdash; name, email, SSN, date of birth. It is regulated under laws like GDPR and CCPA, which impose legal obligations on how it is stored, processed, and shared. <strong>Confidential</strong> describes business-sensitive data that is not necessarily personal but must still be restricted &mdash; salaries, financials, and trade secrets. Both categories require access controls, but the legal consequence of exposure differs: PII exposure can trigger regulatory fines; Confidential exposure triggers competitive or employment risk.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────
+       PART 5 — Create Restricted Dataset
+  ───────────────────────────────────────────── -->
+  <div class="task-card">
+    <div class="task-header" onclick="toggleTask('p5')">
+      <span class="task-num" style="background:#238636;">Part 5</span>
+      <span class="task-title">Create Restricted Dataset</span>
+      <span class="task-deliv">Steps 5&ndash;6</span>
+      <span class="toggle-btn" id="btn-p5">+</span>
+    </div>
+    <div class="task-body" id="p5">
+      <div class="answer-label">&#10003; Complete Answer &mdash; Steps 5&ndash;6</div>
+
+      <div class="code-block-label">Step 5 &mdash; Analyst View (salary and SSN hidden)</div>
+      <div class="code-block"><span class="cm"># Step 5: Analyst view -- salary and SSN hidden</span>
+<span class="cv">analyst_view</span> = employees_df.select(
+    <span class="cs">"employee_id"</span>,
+    <span class="cs">"name"</span>,
+    <span class="cs">"department"</span>,
+    <span class="cs">"email"</span>,
+    <span class="cs">"role"</span>
+)
+display(analyst_view)</div>
+
+      <div class="code-block-label">Step 6 &mdash; Save Restricted Table</div>
+      <div class="code-block"><span class="cm"># Step 6: Save restricted table</span>
+analyst_view.write.mode(<span class="cs">"overwrite"</span>).saveAsTable(
+    <span class="cs">"employees_analyst_view"</span>
+)</div>
+
+      <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.85rem 1.1rem;margin:.85rem 0;font-size:.82rem;">
+        <div style="font-size:.69rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8b949e;margin-bottom:.55rem;">Role Access Comparison</div>
+        <table class="data-table" style="font-size:.8rem;">
+          <thead><tr><th>Role</th><th>Table</th><th>Columns Accessible</th></tr></thead>
+          <tbody>
+            <tr><td><span class="lc-admin">Admin</span></td><td><code>employees_admin_view</code></td><td>All 7 columns including salary, SSN, email</td></tr>
+            <tr><td><span class="lc-analyst">Analyst</span></td><td><code>employees_analyst_view</code></td><td>employee_id, name, department, email (masked), role</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="explain-toggle" onclick="toggleExplain('exp-p5')">
+        <span class="explain-icon">&#128161;</span>
+        <span class="explain-label">Why This Answer?</span>
+        <span class="explain-chevron" id="chev-exp-p5">&#9654;</span>
+      </div>
+      <div class="explain-body" id="exp-p5">
+        <h4>Why restrict at the view level, not the UI layer?</h4>
+        <p>Hiding columns in a reporting dashboard or BI tool only affects what that specific tool displays &mdash; anyone with direct database access, API access, or a different BI connection still sees all columns. View-level restriction is enforced at the data store: when an analyst queries <code>employees_analyst_view</code>, the columns are absent from the table schema itself. There is no configuration in any tool that can reveal them, because the columns were never included in the view definition. This is the difference between a cosmetic restriction and a structural one.</p>
+        <h4>Why use saveAsTable instead of just displaying the filtered result?</h4>
+        <p>Persisting the view as a registered table lets the enterprise point BI tools, APIs, and downstream pipelines at <code>employees_analyst_view</code> as a stable, named resource. The analyst role is then granted SELECT on this table and SELECT is denied on <code>employees_admin_view</code>. If you only filter at query time, any analyst who writes their own query against the raw table bypasses the filter. A separate table ensures the restricted schema is the only schema analysts can address.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────
+       PART 6 — Admin Full Access View
+  ───────────────────────────────────────────── -->
+  <div class="task-card">
+    <div class="task-header" onclick="toggleTask('p6')">
+      <span class="task-num" style="background:#4338ca;">Part 6</span>
+      <span class="task-title">Admin Full Access View</span>
+      <span class="task-deliv">Step 7</span>
+      <span class="toggle-btn" id="btn-p6">+</span>
+    </div>
+    <div class="task-body" id="p6">
+      <div class="answer-label">&#10003; Complete Answer &mdash; Step 7</div>
+
+      <div class="code-block-label">Step 7 &mdash; Save Full Dataset for Admin Role</div>
+      <div class="code-block"><span class="cm"># Save full dataset for Admin role</span>
+employees_df.write.mode(<span class="cs">"overwrite"</span>).saveAsTable(
+    <span class="cs">"employees_admin_view"</span>
+)</div>
+
+      <div class="concept-box">
+        <strong>Admin vs. Analyst Tables:</strong> <code>employees_admin_view</code> is the unrestricted source containing all columns including salary and SSN. <code>employees_analyst_view</code> is the restricted derivative. Never allow analysts to query <code>employees_admin_view</code> &mdash; the separation must be enforced at the permission level, not by convention or trust.
+      </div>
+
+      <div class="explain-toggle" onclick="toggleExplain('exp-p6')">
+        <span class="explain-icon">&#128161;</span>
+        <span class="explain-label">Why This Answer?</span>
+        <span class="explain-chevron" id="chev-exp-p6">&#9654;</span>
+      </div>
+      <div class="explain-body" id="exp-p6">
+        <h4>Why maintain separate admin and analyst tables instead of one table with row-level permissions?</h4>
+        <p>Column-level permissions on a single table are supported in some platforms but create operational complexity: every new query tool must respect and enforce those permissions, and misconfiguration in any tool silently exposes sensitive columns. Separate tables make the access boundary structurally unambiguous. An analyst role with SELECT only on <code>employees_analyst_view</code> cannot reach salary data even if the BI tool they use has a configuration bug &mdash; the table does not contain those columns at all.</p>
+        <h4>Why is naming the admin table with a "view" suffix important?</h4>
+        <p>Naming both tables with the <code>_view</code> suffix communicates that both are derived consumption interfaces &mdash; neither should be modified by analysts directly. It also signals to future engineers that the raw source (e.g., an ingestion Bronze table) is a separate upstream object. This naming convention prevents confusion where someone mistakes the admin table for the raw source and begins modifying it.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────
+       PART 7 — Simulate Authentication System
+  ───────────────────────────────────────────── -->
+  <div class="task-card">
+    <div class="task-header" onclick="toggleTask('p7')">
+      <span class="task-num" style="background:#1f6feb;">Part 7</span>
+      <span class="task-title">Simulate Authentication System</span>
+      <span class="task-deliv">Steps 8&ndash;10</span>
+      <span class="toggle-btn" id="btn-p7">+</span>
+    </div>
+    <div class="task-body" id="p7">
+      <div class="answer-label">&#10003; Complete Answer &mdash; Steps 8&ndash;10</div>
+
+      <div class="code-block-label">Step 8 &mdash; Define Users and Roles</div>
+      <div class="code-block"><span class="cm"># Step 8: Define users and roles</span>
+<span class="cv">users</span> = {
+    <span class="cs">"admin1"</span>: <span class="cs">"Admin"</span>,
+    <span class="cs">"analyst1"</span>: <span class="cs">"Analyst"</span>
+}</div>
+
+      <div class="code-block-label">Step 9 &mdash; Simulate Login</div>
+      <div class="code-block"><span class="cm"># Step 9: Simulate login</span>
+<span class="cv">username</span> = <span class="cs">"analyst1"</span>
+<span class="cv">role</span> = users.get(username)
+print(<span class="cs">"Logged in as:"</span>, role)</div>
+
+      <div class="code-block-label">Step 10 &mdash; Access Control Logic</div>
+      <div class="code-block"><span class="cm"># Step 10: Access control logic</span>
+<span class="ck">if</span> role == <span class="cs">"Admin"</span>:
+    display(employees_df)
+<span class="ck">else</span>:
+    display(analyst_view)</div>
+
+      <div class="explain-toggle" onclick="toggleExplain('exp-p7')">
+        <span class="explain-icon">&#128161;</span>
+        <span class="explain-label">Why This Answer?</span>
+        <span class="explain-chevron" id="chev-exp-p7">&#9654;</span>
+      </div>
+      <div class="explain-body" id="exp-p7">
+        <h4>What does this simulation represent in a production system?</h4>
+        <p>The Python dictionary maps usernames to roles &mdash; this is exactly what an enterprise Identity and Access Management (IAM) system does, just at a larger scale. In production, the dictionary is replaced by a directory service (LDAP, Active Directory) or an OAuth/OIDC provider (Okta, Azure AD, Google Identity). At login, the IAM system issues a token containing the user role claim. Every subsequent data request presents that token, and the authorization layer checks the role claim before returning data.</p>
+        <h4>Why use a role string check rather than a username check?</h4>
+        <p>Checking role instead of username means adding a new admin user requires only adding them to the dictionary with the "Admin" value &mdash; the authorization logic does not change. If you checked <code>username == "admin1"</code>, every new admin would require a code change. This separation of identity (username) from permission (role) is the core benefit of RBAC over per-user access control lists.</p>
+        <h4>What should replace this dictionary in production?</h4>
+        <p>In a real enterprise deployment, user-to-role mapping is stored in LDAP groups, Azure AD security groups, or an OAuth server. The Databricks workspace integrates directly with these systems &mdash; when a user logs in, Databricks checks their group membership and maps it to a catalog-level role. The <code>if role == "Admin"</code> logic is replaced by table-level GRANT/REVOKE statements that enforce access without requiring application code.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────
+       PART 8 — Data Masking
+  ───────────────────────────────────────────── -->
+  <div class="task-card">
+    <div class="task-header" onclick="toggleTask('p8')">
+      <span class="task-num" style="background:#b91c1c;">Part 8</span>
+      <span class="task-title">Data Masking</span>
+      <span class="task-deliv">Step 11</span>
+      <span class="toggle-btn" id="btn-p8">+</span>
+    </div>
+    <div class="task-body" id="p8">
+      <div class="answer-label">&#10003; Complete Answer &mdash; Step 11</div>
+
+      <div class="code-block-label">Step 11 &mdash; Mask Email Field</div>
+      <div class="code-block"><span class="ck">from</span> pyspark.sql.functions <span class="ck">import</span> regexp_replace
+
+<span class="cm"># Mask email -- show first char and domain only</span>
+<span class="cv">masked_df</span> = analyst_view.withColumn(
+    <span class="cs">"email"</span>,
+    regexp_replace(<span class="cs">"email"</span>, <span class="cs">r"(^.).*(@.*$)"</span>, <span class="cs">r"\1***\2"</span>)
+)
+display(masked_df)</div>
+
+      <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.85rem 1.1rem;margin:.85rem 0;font-size:.82rem;">
+        <div style="font-size:.69rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8b949e;margin-bottom:.55rem;">Expected Output Example</div>
+        <table class="data-table" style="font-size:.8rem;">
+          <thead><tr><th>Original Email</th><th>Masked Email</th></tr></thead>
+          <tbody>
+            <tr><td><code>john.smith@company.com</code></td><td><code>j***@company.com</code></td></tr>
+            <tr><td><code>alice@example.org</code></td><td><code>a***@example.org</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="explain-toggle" onclick="toggleExplain('exp-p8')">
+        <span class="explain-icon">&#128161;</span>
+        <span class="explain-label">Why This Answer?</span>
+        <span class="explain-chevron" id="chev-exp-p8">&#9654;</span>
+      </div>
+      <div class="explain-body" id="exp-p8">
+        <h4>When should you mask data rather than hide it entirely?</h4>
+        <p>Masking preserves business utility while reducing privacy exposure. An analyst who needs to verify that an employee has an email address on file, or who needs to identify email domains for department analysis, can do so with <code>j***@company.com</code> without seeing the full personal identifier. If the column were hidden entirely, analysts would need to request exceptions or escalate to admins for every email-related task. Masking is appropriate when the analyst needs the shape or domain of the data, not the full value.</p>
+        <h4>How does the regex pattern work?</h4>
+        <p>The pattern <code>(^.).*(@.*$)</code> captures two groups: group 1 is the first character of the email (<code>^.</code>), and group 2 is the at-sign plus everything after it (<code>@.*$</code>). The replacement <code>\1***\2</code> outputs group 1, then three asterisks, then group 2. Everything between the first character and the domain is replaced with <code>***</code>. The result preserves the domain (business-useful for identifying email providers and departments) while masking the personal username portion.</p>
+        <h4>Why is masking at the DataFrame level stronger than masking in a dashboard?</h4>
+        <p>Dashboard-level masking is a display layer only &mdash; the underlying query still returns the full email, and any tool or API that reads the same data source sees the unmasked value. DataFrame-level masking applies the transformation at the data tier: the masked value is what gets persisted to <code>employees_analyst_view</code>. Any tool querying that table, regardless of its display settings, receives only the masked email.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────
+       PART 9 — OpenMetadata Access Policies
+  ───────────────────────────────────────────── -->
+  <div class="task-card">
+    <div class="task-header" onclick="toggleTask('p9')">
+      <span class="task-num" style="background:#6e40c9;">Part 9</span>
+      <span class="task-title">OpenMetadata Access Policies</span>
+      <span class="task-deliv">Steps 12&ndash;14 &middot; D2</span>
+      <span class="toggle-btn" id="btn-p9">+</span>
+    </div>
+    <div class="task-body" id="p9">
+      <div class="answer-label">&#10003; Complete Answer &mdash; Steps 12&ndash;14</div>
+
+      <p style="font-size:.83rem;color:#8b949e;margin-bottom:1rem;">OpenMetadata governance policies complement Databricks table-level restrictions by making access intent discoverable and auditable across the entire data catalog &mdash; not just enforced silently at the database layer.</p>
+
+      <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.85rem 1.1rem;margin-bottom:.85rem;">
+        <div style="font-size:.69rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8b949e;margin-bottom:.55rem;">Step 12 &mdash; Create Roles in OpenMetadata</div>
+        <p style="font-size:.82rem;color:#c9d1d9;margin-bottom:.5rem;">Navigate to <strong>Settings &rarr; Roles &rarr; Add Role</strong> and create the following two roles:</p>
+        <table class="data-table" style="font-size:.8rem;">
+          <thead><tr><th>Role Name</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><strong style="color:#818cf8;">Admin</strong></td><td>Full access to all tables including sensitive fields &mdash; HR and data engineering personnel</td></tr>
+            <tr><td><strong style="color:#58a6ff;">Analyst</strong></td><td>Read-only access to restricted tables &mdash; salary, SSN excluded</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.85rem 1.1rem;margin-bottom:.85rem;">
+        <div style="font-size:.69rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8b949e;margin-bottom:.55rem;">Step 13 &mdash; Create Policies</div>
+        <table class="data-table" style="font-size:.8rem;">
+          <thead><tr><th>Policy Name</th><th>Access Level</th><th>Applies To</th></tr></thead>
+          <tbody>
+            <tr><td><strong>AdminAccess</strong></td><td>Full access &mdash; read, write, view all metadata</td><td>Admin role</td></tr>
+            <tr><td><strong>AnalystRestricted</strong></td><td>Read-only access to restricted tables only</td><td>Analyst role</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.85rem 1.1rem;margin-bottom:.85rem;">
+        <div style="font-size:.69rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8b949e;margin-bottom:.55rem;">Step 14 &mdash; Assign Permissions</div>
+        <table class="data-table" style="font-size:.8rem;">
+          <thead><tr><th>Role</th><th>Policy Assigned</th><th>Effective Permission</th></tr></thead>
+          <tbody>
+            <tr><td><span class="lc-admin">Admin</span></td><td>AdminAccess</td><td>Full metadata access including sensitive column tags and lineage</td></tr>
+            <tr><td><span class="lc-analyst">Analyst</span></td><td>AnalystRestricted</td><td>Read-only access to <code>employees_analyst_view</code> metadata only</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="explain-toggle" onclick="toggleExplain('exp-p9')">
+        <span class="explain-icon">&#128161;</span>
+        <span class="explain-label">Why This Answer?</span>
+        <span class="explain-chevron" id="chev-exp-p9">&#9654;</span>
+      </div>
+      <div class="explain-body" id="exp-p9">
+        <h4>Why configure catalog-level policies when Databricks already restricts table access?</h4>
+        <p>Databricks enforces runtime data access &mdash; an analyst cannot SELECT from the admin table. OpenMetadata governs discoverability and intent: an analyst should not even be able to see the <em>existence</em> of <code>employees_admin_view</code> or its column metadata in the catalog. Without catalog-level policies, analysts can browse metadata for restricted tables, discover that salary and SSN columns exist, and potentially find indirect paths to that data (e.g., through exports, reports, or legacy pipelines). Catalog policies close that metadata exposure gap.</p>
+        <h4>Why are policies separate objects from roles in OpenMetadata?</h4>
+        <p>The policy-role separation follows the same RBAC principle as Databricks: permissions are defined once in a policy, and roles reference policies. If the AnalystRestricted policy changes (e.g., analysts are now allowed to see department budget summaries), updating the policy immediately affects all users assigned the Analyst role. This avoids the need to modify individual role configurations for every change to access rules.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────
+       PART 10 — Tag Sensitive Data
+  ───────────────────────────────────────────── -->
+  <div class="task-card">
+    <div class="task-header" onclick="toggleTask('p10')">
+      <span class="task-num" style="background:#b91c1c;">Part 10</span>
+      <span class="task-title">Tag Sensitive Data in OpenMetadata</span>
+      <span class="task-deliv">Steps 15&ndash;16 &middot; D2</span>
+      <span class="toggle-btn" id="btn-p10">+</span>
+    </div>
+    <div class="task-body" id="p10">
+      <div class="answer-label">&#10003; Complete Answer &mdash; Steps 15&ndash;16</div>
+
+      <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.85rem 1.1rem;margin-bottom:.85rem;">
+        <div style="font-size:.69rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8b949e;margin-bottom:.55rem;">Step 15 &mdash; Create Tags in OpenMetadata</div>
+        <p style="font-size:.82rem;color:#c9d1d9;margin-bottom:.5rem;">Navigate to <strong>Govern &rarr; Tags &rarr; Add Tag</strong> and create the following classification tags:</p>
+        <table class="data-table" style="font-size:.8rem;">
+          <thead><tr><th>Tag</th><th>Color / Style</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><span class="lc-pii">PII</span></td><td>Pink / Red</td><td>Marks personally identifiable information regulated under GDPR, CCPA</td></tr>
+            <tr><td><span class="lc-confidential">Confidential</span></td><td>Amber / Gold</td><td>Marks business-sensitive data restricted to privileged roles</td></tr>
+            <tr><td><span class="lc-internal">Internal</span></td><td>Green</td><td>Marks internal operational data not requiring special restriction</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.85rem 1.1rem;margin-bottom:.85rem;">
+        <div style="font-size:.69rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8b949e;margin-bottom:.55rem;">Step 16 &mdash; Apply Tags to Columns</div>
+        <table class="data-table" style="font-size:.8rem;">
+          <thead><tr><th>Column</th><th>Tag to Apply</th><th>Rationale</th></tr></thead>
+          <tbody>
+            <tr><td><code>ssn</code></td><td><span class="lc-pii">PII</span></td><td>Social Security Number &mdash; legally regulated personal identifier</td></tr>
+            <tr><td><code>email</code></td><td><span class="lc-pii">PII</span></td><td>Personal contact information directly linked to an individual</td></tr>
+            <tr><td><code>salary</code></td><td><span class="lc-confidential">Confidential</span></td><td>Compensation data &mdash; restricted to HR and executive roles only</td></tr>
+            <tr><td><code>employee_id</code>, <code>name</code>, <code>department</code>, <code>role</code></td><td><span class="lc-internal">Internal</span></td><td>Operational attributes accessible to all internal employees</td></tr>
+          </tbody>
+        </table>
+        <p style="margin-top:.65rem;font-size:.8rem;color:#8b949e;">To apply: open the table in OpenMetadata Explore &rarr; click the column name &rarr; Tags panel &rarr; search and apply the appropriate tag.</p>
+      </div>
+
+      <div class="explain-toggle" onclick="toggleExplain('exp-p10')">
+        <span class="explain-icon">&#128161;</span>
+        <span class="explain-label">Why This Answer?</span>
+        <span class="explain-chevron" id="chev-exp-p10">&#9654;</span>
+      </div>
+      <div class="explain-body" id="exp-p10">
+        <h4>Why do tags in OpenMetadata power downstream governance?</h4>
+        <p>Tags are metadata that other governance systems can read programmatically. A PII tag on the <code>ssn</code> column can trigger automatic alerts when that column appears in an unregistered query, block it from being included in an export job, or require it to appear in a GDPR data subject access report. Data lineage tools trace how PII flows through the pipeline &mdash; if <code>ssn</code> is tagged at the source, lineage tracking can flag every downstream table that inherits it, even through transformations.</p>
+        <h4>How do tags support regulatory compliance audits?</h4>
+        <p>When a GDPR auditor asks "where is personal data stored in your platform?", a tagged catalog returns a complete list in seconds: every column tagged PII, every table containing those columns, and every downstream table in the lineage chain. Without tags, answering that question requires manual review of table schemas by engineers &mdash; a process that takes days and is error-prone. Tagged catalogs make compliance evidence-gathering repeatable, automated, and defensible.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── REFLECTION ─────────────────────────── -->
+  <div class="section-label">Reflection Questions &amp; Answers</div>
+
+  <div class="reflection-card">
+    <div class="reflection-q">1. Why is it insufficient to hide sensitive columns only in the reporting layer rather than at the data store level?</div>
+    <div class="reflection-a">
+      <p>Hiding columns in a reporting tool or dashboard is a display-layer control only &mdash; it does not restrict what the underlying query returns. Any user with direct database access, API access, a different BI tool connection, or a custom SQL query against the same table will see all columns regardless of what the dashboard hides. This means the restriction is as strong as the weakest interface connecting to the data.</p>
+      <p>Restricting at the data store level (by creating a view that excludes sensitive columns) ensures that the schema itself does not contain those columns. No matter which tool, API, or query engine connects to <code>employees_analyst_view</code>, salary and SSN are absent from the result set. The restriction is structural, not cosmetic, and cannot be bypassed by switching interfaces or writing direct queries.</p>
+    </div>
+  </div>
+
+  <div class="reflection-card">
+    <div class="reflection-q">2. What is the difference between authentication and authorization, and why must both be implemented for secure data consumption?</div>
+    <div class="reflection-a">
+      <p><strong>Authentication</strong> verifies identity &mdash; it answers "Who are you?" by checking credentials (password, token, biometric). <strong>Authorization</strong> verifies permissions &mdash; it answers "What are you allowed to access?" by checking the authenticated user's role against a policy. The two operate independently and sequentially: authentication must succeed before authorization is evaluated.</p>
+      <p>Implementing only authentication creates a system where any verified user can access any resource &mdash; the misconfiguration in this case study. Implementing only authorization without authentication means permissions are evaluated for an unverified identity &mdash; any user can claim any role. Both must be present: authentication ensures you know who is making the request; authorization ensures their role permits the specific data they are requesting at that moment.</p>
+    </div>
+  </div>
+
+  <div class="reflection-card">
+    <div class="reflection-q">3. How does applying PII and Confidential tags in OpenMetadata support regulatory compliance?</div>
+    <div class="reflection-a">
+      <p>Regulations like GDPR, CCPA, and HIPAA require organizations to know exactly where personal data is stored, who has access to it, and how it flows through systems. PII and Confidential tags in OpenMetadata create a machine-readable record of exactly that information &mdash; every tagged column is tracked, every table containing it is cataloged, and data lineage traces how tagged data propagates downstream.</p>
+      <p>During a compliance audit, auditors ask for evidence of data inventories and access controls. A tagged catalog produces this evidence automatically: a search for PII-tagged columns returns a complete inventory with table names, column names, and associated access policies. Without tags, engineers must manually audit every table schema &mdash; a process that is slow, incomplete, and impossible to repeat consistently. Tags make compliance evidence-gathering automated, reproducible, and audit-ready.</p>
+    </div>
+  </div>
+
+  <!-- ── DELIVERABLES ───────────────────────── -->
+  <div class="section-label">Deliverables</div>
+
+  <div class="deliv-link-bar">
+    <div>
+      <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#818cf8;margin-bottom:.3rem;">&#127891; Student Submission</div>
+      <div class="deliv-link-desc">Complete the deliverables checklist to submit your Module 07 work</div>
+    </div>
+  </div>
+
+  <ul class="deliv-list">
+    <li>
+      <span class="deliv-num">D1</span>
+      <span>Databricks notebook (<code>Module07_Data_Security</code>) with all 11 steps executed &mdash; both views created, authentication simulation run, email masking applied and displayed</span>
+    </li>
+    <li>
+      <span class="deliv-num">D2</span>
+      <span>OpenMetadata screenshots showing Roles (Admin/Analyst), Policies (AdminAccess/AnalystRestricted), and column tags (PII/Confidential/Internal) applied to the Employees dataset</span>
+    </li>
+    <li>
+      <span class="deliv-num">D3</span>
+      <span>Access matrix table showing which roles can access which columns &mdash; map Admin and Analyst roles to each of the 7 columns with an access indicator (Full / Restricted / Hidden). Hand-drawn or digital.</span>
+    </li>
+  </ul>
+
+</div>
+
+<footer class="site-footer">&copy; Clark Ngo &mdash; Data Governance Classroom Activities</footer>
+
+<button class="export-btn" onclick="window.print()">&#128438; Export PDF</button>
+
+<script>
+  function toggleTask(id) {
+    var body = document.getElementById(id);
+    var btn  = document.getElementById("btn-" + id);
+    var isOpen = body.classList.toggle("open");
+    btn.textContent = isOpen ? "-" : "+";
+  }
+
+  function toggleExplain(id) {
+    var body = document.getElementById(id);
+    var chev = document.getElementById("chev-" + id);
+    var isOpen = body.classList.toggle("open");
+    chev.classList.toggle("open", isOpen);
+  }
+</script>
+
+</body>
+</html>

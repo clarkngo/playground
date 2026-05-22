@@ -5,6 +5,19 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-05-22
+
+### [feature] `classroom-activities/data-governance/module-07.html` — Module 07 Lab Guide
+- Created full lab guide: Data Security, RBAC &amp; Authentication (indigo #4338ca theme)
+- Case study: "Enterprise Access Misconfiguration" — junior analyst exposed to salary/SSN/email due to excessive permissions
+- 10 accordion parts: Security Concepts Overview, Databricks Setup, Load Dataset, Identify Sensitive Data, Restricted Analyst View, Admin Full Access View, Authentication Simulation, Data Masking, OpenMetadata Access Policies, Tag Sensitive Data
+- Key features: 5-concept security table, expected schema with sensitivity classification, role/access comparison, regexp_replace email masking with expected output, OpenMetadata roles/policies/tags steps
+- New CSS badges: lc-pii (pink), lc-confidential (amber), lc-internal (green), lc-admin (indigo)
+- 3 reflection Q&amp;A blocks; 3 deliverables; print-safe CSS; Export PDF button
+- `classroom-activities/data-governance/index.html`: Module 07 card added (indigo accent, RBAC/PII/Data Masking tags)
+
+---
+
 ## 2026-05-21
 
 ### [feature] `classroom-activities/data-governance/module-06.html` — Module 06 Lab Guide
