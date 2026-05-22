@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Module 06 &mdash; Data Architecture, Modeling &amp; Read-Only Data Stores</title>
+  <meta name="author" content="Clark Ngo">
+  <meta name="copyright" content="Clark Ngo">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0d1117; color: #c9d1d9; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; min-height: 100vh; }
+
+    .navbar { background: #161b22; border-bottom: 1px solid #30363d; padding: .75rem 1.5rem; display: flex; align-items: center; justify-content: space-between; }
+    .navbar a { color: #e6edf3; text-decoration: none; font-weight: 700; font-size: 1rem; }
+    .navbar a:hover { color: #58a6ff; }
+    .nav-pill { font-size: .78rem; color: #8b949e; }
+
+    .page-body { max-width: 960px; margin: 0 auto; padding: 2rem; }
+
+    .breadcrumb { font-size: .78rem; color: #8b949e; display: flex; align-items: center; gap: .4rem; margin-bottom: .85rem; flex-wrap: wrap; }
+    .breadcrumb a { color: #58a6ff; text-decoration: none; font-weight: 600; }
+    .breadcrumb a:hover { text-decoration: underline; }
+    .breadcrumb span { color: #484f58; }
+
+    .page-badge { display: inline-block; background: #b45309; color: #fff; font-size: .72rem; font-weight: 700; padding: 3px 12px; border-radius: 12px; text-transform: uppercase; letter-spacing: .07em; margin-bottom: .6rem; }
+    .page-header h1 { color: #e6edf3; font-size: 1.85rem; font-weight: 800; margin-bottom: .3rem; }
+    .case-title { color: #fbbf24; font-size: .95rem; font-weight: 600; margin-bottom: .65rem; font-style: italic; }
+    .page-desc { color: #8b949e; font-size: .88rem; line-height: 1.7; max-width: 720px; margin-bottom: .85rem; }
+    .tag-row { display: flex; gap: .4rem; flex-wrap: wrap; margin-bottom: 2rem; }
+    .tag { display: inline-block; font-size: .68rem; padding: 2px 8px; border-radius: 8px; font-weight: 600; }
+    .tag-blue   { background: #1f3a5c; color: #58a6ff; }
+    .tag-green  { background: #1a2f1a; color: #3fb950; }
+    .tag-yellow { background: #2d2009; color: #e3b341; }
+    .tag-purple { background: #24183a; color: #bc8cff; }
+    .tag-red    { background: #2d1a1a; color: #f85149; }
+    .tag-teal   { background: #0a2028; color: #22d3ee; }
+    .tag-amber  { background: #2d1a00; color: #fbbf24; }
+
+    .section-label { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #8b949e; border-left: 3px solid #30363d; padding-left: .6rem; margin: 2rem 0 1rem; }
+
+    .obj-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: .65rem; margin-bottom: 1.25rem; }
+    .obj-card { background: #161b22; border: 1px solid #30363d; border-left: 3px solid #b45309; border-radius: 8px; padding: .75rem 1rem; display: flex; align-items: flex-start; gap: .6rem; }
+    .obj-num { font-size: .68rem; font-weight: 700; color: #fbbf24; background: #2d1a00; padding: 2px 7px; border-radius: 5px; flex-shrink: 0; margin-top: .1rem; }
+    .obj-text { font-size: .83rem; color: #c9d1d9; line-height: 1.5; }
+
+    .breach-card { background: #1a1400; border: 1px solid #9e6a03; border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1.1rem; }
+    .breach-title { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: #e3b341; margin-bottom: .85rem; display: flex; align-items: center; gap: .5rem; }
+    .breach-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+    .breach-section-title { font-size: .75rem; font-weight: 700; color: #e6edf3; text-transform: uppercase; letter-spacing: .05em; margin-bottom: .6rem; }
+    .breach-list { list-style: none; display: flex; flex-direction: column; gap: .35rem; }
+    .breach-list li { font-size: .83rem; color: #c9d1d9; display: flex; align-items: flex-start; gap: .5rem; line-height: 1.5; }
+    .breach-dot-red    { width: 6px; height: 6px; border-radius: 50%; background: #f85149; flex-shrink: 0; margin-top: .45rem; }
+    .breach-dot-green  { width: 6px; height: 6px; border-radius: 50%; background: #3fb950; flex-shrink: 0; margin-top: .45rem; }
+
+    .mission-strip { background: #1c1200; border: 1px solid #b45309; border-radius: 8px; padding: .85rem 1.1rem; margin-bottom: 1.5rem; }
+    .mission-label { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #fbbf24; margin-bottom: .5rem; }
+    .mission-items { display: flex; gap: 1.25rem; flex-wrap: wrap; }
+    .mission-item { font-size: .82rem; color: #c9d1d9; display: flex; align-items: center; gap: .35rem; }
+    .mission-dot { width: 6px; height: 6px; border-radius: 50%; background: #fbbf24; flex-shrink: 0; }
+
+    .card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1.1rem; }
+    .card-title { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: #3fb950; margin-bottom: .85rem; }
+
+    .data-table { width: 100%; border-collapse: collapse; font-size: .83rem; }
+    .data-table th { background: #0d1117; color: #8b949e; font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; padding: .5rem .75rem; text-align: left; border-bottom: 1px solid #30363d; white-space: nowrap; }
+    .data-table td { padding: .55rem .75rem; border-bottom: 1px solid #21262d; color: #c9d1d9; vertical-align: top; line-height: 1.55; }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover td { background: #1c2435; }
+    .data-table code { font-family: "Menlo","Monaco",monospace; font-size: .8em; background: #21262d; padding: 1px 5px; border-radius: 4px; color: #a5d6ff; }
+
+    /* Architecture layer table */
+    .arch-table { width: 100%; border-collapse: collapse; font-size: .83rem; }
+    .arch-table th { background: #1c1200; color: #fbbf24; font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; padding: .55rem .75rem; text-align: left; border-bottom: 1px solid #92400e; }
+    .arch-table td { padding: .55rem .75rem; border-bottom: 1px solid #21262d; color: #c9d1d9; vertical-align: top; line-height: 1.55; }
+    .arch-table tr:last-child td { border-bottom: none; }
+    .arch-table tr:hover td { background: #1c1200; }
+
+    .task-card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; margin-bottom: .85rem; overflow: hidden; }
+    .task-header { display: flex; align-items: center; gap: .75rem; padding: .9rem 1.25rem; cursor: pointer; user-select: none; transition: background .15s; }
+    .task-header:hover { background: #1c2435; }
+    .task-num { color: #fff; font-size: .68rem; font-weight: 700; padding: 2px 9px; border-radius: 8px; white-space: nowrap; flex-shrink: 0; }
+    .task-title { color: #e6edf3; font-weight: 700; font-size: .94rem; flex: 1; }
+    .task-deliv { font-size: .7rem; color: #8b949e; white-space: nowrap; }
+    .toggle-btn { color: #58a6ff; font-size: 1.2rem; font-weight: 700; width: 22px; text-align: center; flex-shrink: 0; line-height: 1; }
+    .task-body { display: none; padding: 1.25rem 1.5rem; border-top: 1px solid #30363d; }
+    .task-body.open { display: block; }
+
+    .answer-label { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #3fb950; margin-bottom: 1rem; display: flex; align-items: center; gap: .5rem; }
+    .answer-label::after { content: ""; flex: 1; height: 1px; background: #21262d; }
+
+    .code-block-label { font-size: .69rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: #8b949e; margin-bottom: .35rem; margin-top: .85rem; }
+    .code-block { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 1rem 1.25rem; font-family: "Menlo","Monaco","Courier New",monospace; font-size: .79rem; color: #c9d1d9; line-height: 1.7; overflow-x: auto; margin-bottom: .5rem; white-space: pre; }
+    .ck { color: #ff7b72; }
+    .cs { color: #a5d6ff; }
+    .cf { color: #d2a8ff; }
+    .cv { color: #ffa657; }
+    .cm { color: #8b949e; }
+
+    .sql-block { background: #0d1117; border: 1px solid #30363d; border-left: 3px solid #b45309; border-radius: 8px; padding: 1rem 1.25rem; font-family: "Menlo","Monaco","Courier New",monospace; font-size: .79rem; color: #c9d1d9; line-height: 1.7; overflow-x: auto; margin-bottom: .5rem; white-space: pre; }
+    .sk { color: #fbbf24; }
+    .sv { color: #ffa657; }
+
+    /* Medallion layer badges */
+    .lc-bronze { display: inline-block; font-size: .63rem; font-weight: 700; background: #2d1a00; color: #cd7f32; border: 1px solid #92400e; padding: 1px 6px; border-radius: 4px; text-transform: uppercase; }
+    .lc-silver { display: inline-block; font-size: .63rem; font-weight: 700; background: #1e1e2d; color: #c0c0c0; border: 1px solid #6b7280; padding: 1px 6px; border-radius: 4px; text-transform: uppercase; }
+    .lc-gold   { display: inline-block; font-size: .63rem; font-weight: 700; background: #2d2200; color: #fbbf24; border: 1px solid #d97706; padding: 1px 6px; border-radius: 4px; text-transform: uppercase; }
+    .lc-delta  { display: inline-block; font-size: .63rem; font-weight: 700; background: #1f3a5c; color: #58a6ff; border: 1px solid #1f6feb; padding: 1px 6px; border-radius: 4px; text-transform: uppercase; }
+    .lc-readonly { display: inline-block; font-size: .63rem; font-weight: 700; background: #24183a; color: #bc8cff; border: 1px solid #6e40c9; padding: 1px 6px; border-radius: 4px; text-transform: uppercase; }
+
+    /* Architecture flow */
+    .arch-flow { display: flex; align-items: center; gap: .4rem; flex-wrap: wrap; padding: 1rem 0; }
+    .arch-node { display: flex; flex-direction: column; align-items: center; gap: .25rem; }
+    .arch-node-box { background: #1c2435; border: 1px solid #30363d; border-radius: 8px; padding: .5rem .85rem; font-size: .75rem; font-weight: 700; color: #e6edf3; white-space: nowrap; }
+    .arch-node-box.bronze-node { border-color: #92400e; color: #cd7f32; background: #2d1a00; }
+    .arch-node-box.silver-node { border-color: #6b7280; color: #c0c0c0; background: #1e1e2d; }
+    .arch-node-box.gold-node   { border-color: #d97706; color: #fbbf24; background: #2d2200; }
+    .arch-node-box.source-node { border-color: #b45309; color: #fbbf24; background: #1c1200; }
+    .arch-node-label { font-size: .6rem; color: #484f58; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
+    .arch-arrow { font-size: 1rem; color: #484f58; flex-shrink: 0; }
+
+    .concept-box { background: #1c1200; border: 1px solid #b45309; border-radius: 8px; padding: .85rem 1.1rem; margin: .85rem 0; font-size: .82rem; color: #c9d1d9; line-height: 1.65; }
+    .concept-box strong { color: #fbbf24; }
+
+    .deliv-list { list-style: none; padding: 0; }
+    .deliv-list li { display: flex; gap: .65rem; align-items: flex-start; padding: .6rem 0; border-bottom: 1px solid #21262d; font-size: .85rem; color: #c9d1d9; line-height: 1.6; }
+    .deliv-list li:last-child { border-bottom: none; }
+    .deliv-num { background: #21262d; color: #8b949e; font-size: .65rem; font-weight: 700; padding: 1px 7px; border-radius: 6px; white-space: nowrap; flex-shrink: 0; margin-top: .15rem; }
+    .deliv-link-bar { background: #1c1200; border: 1px solid #b45309; border-radius: 10px; padding: 1rem 1.25rem; display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.1rem; }
+    .deliv-link-bar a { color: #fbbf24; font-weight: 700; font-size: .88rem; text-decoration: none; display: flex; align-items: center; gap: .4rem; }
+    .deliv-link-bar a:hover { text-decoration: underline; }
+    .deliv-link-desc { font-size: .8rem; color: #8b949e; }
+
+    .explain-toggle { display: flex; align-items: center; gap: .55rem; margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid #21262d; cursor: pointer; user-select: none; width: fit-content; }
+    .explain-toggle:hover .explain-label { color: #fbbf24; }
+    .explain-icon { font-size: .85rem; }
+    .explain-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #9e6a03; transition: color .15s; }
+    .explain-chevron { font-size: .7rem; color: #9e6a03; transition: transform .2s; }
+    .explain-chevron.open { transform: rotate(90deg); }
+    .explain-body { display: none; margin-top: .85rem; background: #1d1600; border: 1px solid #9e6a03; border-radius: 8px; padding: 1.1rem 1.25rem; }
+    .explain-body.open { display: block; }
+    .explain-body h4 { font-size: .78rem; font-weight: 700; color: #e3b341; margin: .85rem 0 .3rem; text-transform: uppercase; letter-spacing: .05em; }
+    .explain-body h4:first-child { margin-top: 0; }
+    .explain-body p { font-size: .83rem; color: #c9d1d9; line-height: 1.72; margin-bottom: .5rem; }
+    .explain-body p:last-child { margin-bottom: 0; }
+    .explain-body ul { font-size: .83rem; color: #c9d1d9; line-height: 1.72; padding-left: 1.1rem; margin-bottom: .5rem; }
+    .explain-body ul li { margin-bottom: .25rem; }
+    .explain-body code { font-family: "Menlo","Monaco",monospace; font-size: .8em; background: #2a2000; border: 1px solid #9e6a03; padding: 1px 5px; border-radius: 4px; color: #ffa657; }
+    .explain-body strong { color: #e3b341; font-weight: 700; }
+
+    .reflection-card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1.35rem 1.5rem; margin-bottom: 2rem; }
+    .reflection-q { font-size: .95rem; font-weight: 700; color: #e6edf3; margin-bottom: .8rem; border-left: 3px solid #b45309; padding-left: .75rem; }
+    .reflection-a { font-size: .84rem; color: #c9d1d9; line-height: 1.75; }
+    .reflection-a p { margin-bottom: .65rem; }
+    .reflection-a p:last-child { margin-bottom: 0; }
+
+    .export-btn { position: fixed; bottom: 1.75rem; right: 1.75rem; display: flex; align-items: center; gap: .5rem; background: #b45309; color: #fff; border: none; border-radius: 10px; padding: .65rem 1.1rem; font-size: .82rem; font-weight: 700; cursor: pointer; box-shadow: 0 4px 16px rgba(0,0,0,.4); transition: background .15s, transform .12s; z-index: 100; }
+    .export-btn:hover { background: #d97706; transform: translateY(-2px); }
+
+    .site-footer { text-align: center; padding: 1.25rem; border-top: 1px solid #21262d; margin-top: 2rem; color: #484f58; font-size: .77rem; }
+
+    @media print {
+      @page { size: A4; margin: 1.4cm 1.6cm; }
+      *, *::before, *::after { box-sizing: border-box; }
+      body { background: #fff !important; color: #111 !important; font-size: 9.5pt; font-family: "Segoe UI", Helvetica, Arial, sans-serif; }
+      .navbar, .breadcrumb, .export-btn, .toggle-btn, .explain-toggle, .site-footer { display: none !important; }
+      .page-body { max-width: 100%; padding: 0; margin: 0; }
+      .page-badge { background: #b45309 !important; color: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      h1 { color: #111 !important; font-size: 16pt; }
+      .case-title { color: #b45309 !important; font-size: 10pt; }
+      .page-desc { color: #444 !important; font-size: 9pt; }
+      .tag { border: 1px solid #ccc; background: #f5f5f5 !important; color: #333 !important; font-size: 7pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .section-label { color: #555 !important; border-left-color: #999 !important; font-size: 7.5pt; margin: 1rem 0 .6rem; }
+      .card, .reflection-card { background: #fff !important; border: 1px solid #ccc !important; }
+      .breach-card { background: #fffbeb !important; border-color: #d97706 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .breach-title { color: #92400e !important; font-size: 7.5pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .breach-section-title { color: #111 !important; font-size: 8pt; }
+      .breach-list li { color: #222 !important; font-size: 8pt; }
+      .breach-dot-red { background: #b91c1c !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .breach-dot-green { background: #16a34a !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .mission-strip { background: #fffbeb !important; border-color: #b45309 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .mission-label { color: #b45309 !important; font-size: 7pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .task-body { display: block !important; border-top: 1px solid #ccc !important; padding: .85rem 1rem !important; }
+      .task-card { background: #fff !important; border: 1px solid #ccc !important; border-radius: 6px; margin-bottom: .75rem; page-break-inside: avoid; }
+      .task-header { background: #f7f7f7 !important; padding: .6rem 1rem !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .task-num { color: #fff !important; font-size: 7pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .task-title { color: #111 !important; font-size: 9pt; }
+      .task-deliv { color: #666 !important; font-size: 7.5pt; }
+      .answer-label { color: #1a6b2a !important; font-size: 7pt; }
+      .code-block, .sql-block { background: #f8f9fa !important; border: 1px solid #ddd !important; color: #111 !important; font-size: 7.5pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .ck { color: #b91c1c !important; } .cs { color: #1a4fa0 !important; }
+      .cf { color: #5b21b6 !important; } .cv { color: #92400e !important; }
+      .cm { color: #6b7280 !important; } .sk { color: #b45309 !important; }
+      .concept-box { background: #fffbeb !important; border-color: #b45309 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .explain-body { display: block !important; background: #fffbeb !important; border: 1px solid #d97706 !important; padding: .85rem 1rem !important; margin-top: .75rem; page-break-inside: avoid; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .explain-body h4 { color: #92400e !important; font-size: 7.5pt; }
+      .explain-body p, .explain-body ul { color: #222 !important; font-size: 8pt; }
+      .explain-body strong { color: #92400e !important; }
+      .data-table th, .arch-table th { background: #f3f4f6 !important; color: #555 !important; font-size: 7pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .data-table td, .arch-table td { color: #111 !important; font-size: 8pt; border-bottom: 1px solid #eee !important; }
+      .reflection-q { border-left-color: #b45309 !important; color: #111 !important; font-size: 9pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .reflection-a { color: #222 !important; font-size: 8pt; }
+      .lc-bronze, .lc-silver, .lc-gold, .lc-delta, .lc-readonly { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .arch-node-box { background: #f5f5f5 !important; border: 1px solid #ccc !important; color: #111 !important; font-size: 7pt; }
+    }
+
+    @media (max-width: 680px) {
+      .obj-grid    { grid-template-columns: 1fr; }
+      .breach-grid { grid-template-columns: 1fr; }
+      .mission-items { flex-direction: column; gap: .4rem; }
+      .arch-flow { gap: .25rem; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="index.html">&#8592; Data Governance</a>
+  <span class="nav-pill">Module 06 &mdash; Data Architecture, Modeling &amp; Read-Only Data Stores</span>
+</nav>
+
+<div class="page-body">
+
+  <div class="breadcrumb">
+    <a href="../../index.html">Playground</a>
+    <span>/</span>
+    <a href="index.html">Data Governance</a>
+    <span>/</span>
+    <span>Module 06</span>
+  </div>
+
+  <div class="page-header">
+    <div class="page-badge">&#127981; Module 06</div>
+    <h1>Data Architecture, Modeling &amp; Read-Only Data Stores</h1>
+    <div class="case-title">&#127978; Case Study: &ldquo;Retail Analytics Modernization&rdquo;</div>
+    <p class="page-desc">A global retail company is drowning in fragmented datasets, duplicated sources, and inconsistent reports. Students act as the Enterprise Data Architecture Team to design a layered analytics platform: build read-only Bronze, Silver, and Gold tables across two datasets, create dimensional data models with fact and dimension tables, implement Delta versioning, and register every layer in OpenMetadata with architecture tags.</p>
+    <div class="tag-row">
+      <span class="tag tag-amber">Data Architecture</span>
+      <span class="tag tag-teal">Databricks</span>
+      <span class="tag tag-blue">Delta Tables</span>
+      <span class="tag tag-green">Dimensional Modeling</span>
+      <span class="tag tag-purple">OpenMetadata</span>
+      <span class="tag tag-yellow">Read-Only Stores</span>
+      <span class="tag tag-red">Gold Layer</span>
+    </div>
+  </div>
+
+  <!-- ── READING MATERIALS ─────────────────────── -->
+  <div class="section-label">Reading Materials</div>
+  <div class="card" style="margin-bottom:1.25rem;">
+    <div class="card-title">&#128218; Assigned Chapters</div>
+    <table class="data-table">
+      <thead><tr><th>Chapter</th><th>Title</th><th>Focus</th></tr></thead>
+      <tbody>
+        <tr><td>Chapter 3</td><td>Managing Vast Amounts of Data &mdash; The Read-Only Data Stores Architecture</td><td>Read-only store design, analytical layers, immutability</td></tr>
+        <tr><td>Chapter 6</td><td>Connecting the Dots</td><td>Enterprise data integration, metadata, lineage</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── OBJECTIVES ─────────────────────────── -->
+  <div class="section-label">Learning Objectives</div>
+  <div class="obj-grid">
+    <div class="obj-card">
+      <span class="obj-num">01</span>
+      <span class="obj-text">Understand enterprise data architecture principles and how layered systems separate concerns</span>
+    </div>
+    <div class="obj-card">
+      <span class="obj-num">02</span>
+      <span class="obj-text">Design logical and physical data models using fact tables and dimension tables</span>
+    </div>
+    <div class="obj-card">
+      <span class="obj-num">03</span>
+      <span class="obj-text">Create read-only analytical data stores that preserve original data for governance and auditing</span>
+    </div>
+    <div class="obj-card">
+      <span class="obj-num">04</span>
+      <span class="obj-text">Implement layered architecture patterns: Bronze (raw), Silver (cleaned), Gold (aggregated)</span>
+    </div>
+    <div class="obj-card">
+      <span class="obj-num">05</span>
+      <span class="obj-text">Build dimensional models for analytics and aggregate business reporting using Gold tables</span>
+    </div>
+    <div class="obj-card">
+      <span class="obj-num">06</span>
+      <span class="obj-text">Document metadata, lineage, and architecture tags in OpenMetadata for all registered tables</span>
+    </div>
+    <div class="obj-card">
+      <span class="obj-num">07</span>
+      <span class="obj-text">Implement Delta Table versioning, run SQL updates, and inspect table history for audit trails</span>
+    </div>
+  </div>
+
+  <!-- ── SCENARIO ───────────────────────────── -->
+  <div class="section-label">Case Scenario</div>
+  <div class="breach-card">
+    <div class="breach-title">&#127978; Retail Analytics Modernization &mdash; Global Retail Company</div>
+    <div class="breach-grid">
+      <div>
+        <div class="breach-section-title">Current State &mdash; What Went Wrong</div>
+        <ul class="breach-list">
+          <li><span class="breach-dot-red"></span>Fragmented datasets &mdash; transaction and sensor data stored separately with no unified layer</li>
+          <li><span class="breach-dot-red"></span>Duplicated data sources &mdash; multiple teams maintain their own copies of the same CSV files</li>
+          <li><span class="breach-dot-red"></span>Inconsistent reporting &mdash; finance, operations, and logistics produce conflicting revenue figures</li>
+          <li><span class="breach-dot-red"></span>No read-only protection &mdash; analysts overwrite source data when preparing reports</li>
+          <li><span class="breach-dot-red"></span>Poor scalability &mdash; flat-file reporting cannot support growing transaction volumes</li>
+        </ul>
+      </div>
+      <div>
+        <div class="breach-section-title">Business Goals &mdash; What We Must Build</div>
+        <ul class="breach-list">
+          <li><span class="breach-dot-green"></span>Centralized analytics architecture &mdash; one source of truth for all reporting layers</li>
+          <li><span class="breach-dot-green"></span>Read-only reporting stores &mdash; Bronze tables that can never be modified by analysts</li>
+          <li><span class="breach-dot-green"></span>Dimensional data models &mdash; fact and dimension tables for structured querying</li>
+          <li><span class="breach-dot-green"></span>Gold layer aggregations &mdash; pre-built business summaries ready for dashboards</li>
+          <li><span class="breach-dot-green"></span>Scalable analytical environment &mdash; Delta format with versioning and audit history</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── DATASETS ────────────────────────────── -->
+  <div class="section-label">Datasets Used</div>
+  <div class="card">
+    <div class="card-title">&#128196; Two Source Files</div>
+    <table class="data-table">
+      <thead><tr><th>File</th><th>Key Columns</th><th>Used In</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><code>Transactions_500.csv</code></td>
+          <td><code>transaction_id</code>, <code>customer_id</code>, <code>country</code>, <code>amount</code>, <code>transaction_date</code>, <code>status</code></td>
+          <td>Parts 3, 4, 6, 7, 8</td>
+        </tr>
+        <tr>
+          <td><code>sensor_data_500.csv</code></td>
+          <td><code>sensor_id</code>, <code>machine_id</code>, <code>timestamp</code>, <code>temperature</code>, <code>pressure</code>, <code>vibration</code>, <code>status</code></td>
+          <td>Parts 5, 6</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── MISSION STRIP ──────────────────────── -->
+  <div class="mission-strip">
+    <div class="mission-label">&#127919; Your Mission &mdash; Enterprise Data Architecture Team</div>
+    <div class="mission-items">
+      <div class="mission-item"><span class="mission-dot"></span>Design architecture layers</div>
+      <div class="mission-item"><span class="mission-dot"></span>Build read-only Bronze stores</div>
+      <div class="mission-item"><span class="mission-dot"></span>Create dimensional models</div>
+      <div class="mission-item"><span class="mission-dot"></span>Aggregate Gold reporting</div>
+      <div class="mission-item"><span class="mission-dot"></span>Implement Delta versioning</div>
+      <div class="mission-item"><span class="mission-dot"></span>Register metadata in OpenMetadata</div>
+    </div>
+  </div>
+
+  <!-- ── PARTS ──────────────────────────────── -->
+  <div class="section-label">Lab Parts &mdash; Answer Key</div>
+
+  <!-- ─────────────────────────────────────────
+       PART 1 — Enterprise Data Architecture Overview
+  ───────────────────────────────────────────── -->
+  <div class="task-card">
+    <div class="task-header" onclick="toggleTask('p1')">
+      <span class="task-num" style="background:#b45309;">Part 1</span>
+      <span class="task-title">Enterprise Data Architecture Overview</span>
+      <span class="task-deliv">Architecture Diagram &middot; D1</span>
+      <span class="toggle-btn" id="btn-p1">+</span>
+    </div>
+    <div class="task-body" id="p1">
+      <div class="answer-label">&#10003; Architecture Layers &amp; Diagram</div>
+
+      <p style="font-size:.83rem;color:#8b949e;margin-bottom:1rem;">A well-designed enterprise data platform separates concerns across five distinct layers. Each layer has a single responsibility &mdash; mixing concerns (for example, running analytics directly on source data) creates the fragmentation this lab exists to solve.</p>
+
+      <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:1rem 1.25rem;margin-bottom:1rem;overflow-x:auto;">
+        <div style="font-size:.69rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8b949e;margin-bottom:.75rem;">Architecture Layers &mdash; Responsibilities</div>
+        <table class="arch-table">
+          <thead><tr><th>Layer</th><th>Purpose</th><th>Who Uses It</th><th>Example Tables</th></tr></thead>
+          <tbody>
+            <tr><td><strong style="color:#fbbf24;">Source Layer</strong></td><td>Raw operational data from upstream systems, APIs, and files</td><td>Data Engineers</td><td>CSV uploads, API responses</td></tr>
+            <tr><td><strong style="color:#cd7f32;">Ingestion Layer</strong></td><td>Data collection and landing zone &mdash; no transformation applied</td><td>Data Engineers</td><td>FileStore / Volumes</td></tr>
+            <tr><td><strong style="color:#cd7f32;">Storage Layer (Bronze)</strong></td><td>Raw immutable tables &mdash; exact copy of source data as ingested</td><td>Data Engineers</td><td><code>transactions_bronze</code>, <code>sensor_bronze</code></td></tr>
+            <tr><td><strong style="color:#c0c0c0;">Storage Layer (Silver)</strong></td><td>Cleaned, deduplicated, and standardized datasets ready for analysis</td><td>Data Analysts</td><td><code>transactions_silver</code>, <code>sensor_silver</code></td></tr>
+            <tr><td><strong style="color:#fbbf24;">Storage Layer (Gold)</strong></td><td>Aggregated, business-level summaries for reporting and BI</td><td>Business Users / BI Tools</td><td><code>sales_gold</code></td></tr>
+            <tr><td><strong style="color:#58a6ff;">Analytics Layer</strong></td><td>Reporting dashboards, ad hoc queries, and BI connections</td><td>Analysts, Executives</td><td>Power BI, Tableau</td></tr>
+            <tr><td><strong style="color:#bc8cff;">Governance Layer</strong></td><td>Metadata catalog, data policies, lineage, and access control</td><td>Data Stewards, Compliance</td><td>OpenMetadata</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div style="font-size:.69rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8b949e;margin-bottom:.6rem;">Architecture Flow Diagram</div>
+      <div class="arch-flow">
+        <div class="arch-node">
+          <div class="arch-node-box source-node">Sources</div>
+          <div class="arch-node-label">CSV / API</div>
+        </div>
+        <span class="arch-arrow">&#8594;</span>
+        <div class="arch-node">
+          <div class="arch-node-box source-node">Ingestion</div>
+          <div class="arch-node-label">Volumes</div>
+        </div>
+        <span class="arch-arrow">&#8594;</span>
+        <div class="arch-node">
+          <div class="arch-node-box bronze-node">Bronze</div>
+          <div class="arch-node-label">Raw / Immutable</div>
+        </div>
+        <span class="arch-arrow">&#8594;</span>
+        <div class="arch-node">
+          <div class="arch-node-box silver-node">Silver</div>
+          <div class="arch-node-label">Cleaned</div>
+        </div>
+        <span class="arch-arrow">&#8594;</span>
+        <div class="arch-node">
+          <div class="arch-node-box gold-node">Gold</div>
+          <div class="arch-node-label">Aggregated</div>
+        </div>
+        <span class="arch-arrow">&#8594;</span>
+        <div class="arch-node">
+          <div class="arch-node-box">Reporting</div>
+          <div class="arch-node-label">BI / Dashboards</div>
+        </div>
+      </div>
+
+      <div class="explain-toggle" onclick="toggleExplain('exp-p1')">
+        <span class="explain-icon">&#128161;</span>
+        <span class="explain-label">Why This Answer?</span>
+        <span class="explain-chevron" id="chev-exp-p1">&#9654;</span>
+      </div>
+      <div class="explain-body" id="exp-p1">
+        <h4>Why separate data into layers instead of one flat store?</h4>
+        <p>Layer separation enforces the single-responsibility principle for data. When reporting runs on Gold, it never touches Bronze &mdash; protecting the raw source from corruption. When a Gold aggregation is wrong, you rebuild it from Silver without touching Bronze. Each layer has a predictable contract: Bronze is immutable, Silver is query-safe, Gold is business-ready. This predictability is what makes large-scale analytics maintainable.</p>
+        <h4>Why does the Governance Layer span the entire stack?</h4>
+        <p>Governance is not a layer you reach at the end &mdash; it applies at every stage. Bronze tables need ownership and sensitivity tags. Silver tables need lineage back to Bronze. Gold tables need business definitions. OpenMetadata sits alongside the entire pipeline, cataloging metadata at each stage so auditors and data stewards have visibility from raw ingestion to reporting output.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────
+       PART 2 — Databricks Setup
+  ───────────────────────────────────────────── -->
+  <div class="task-card">
+    <div class="task-header" onclick="toggleTask('p2')">
+      <span class="task-num" style="background:#1f6feb;">Part 2</span>
+      <span class="task-title">Databricks Setup &mdash; Upload &amp; Notebook</span>
+      <span class="task-deliv">Steps 1&ndash;2</span>
+      <span class="toggle-btn" id="btn-p2">+</span>
+    </div>
+    <div class="task-body" id="p2">
+      <div class="answer-label">&#10003; Setup Instructions &mdash; Steps 1&ndash;2</div>
+
+      <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.85rem 1.1rem;margin-bottom:.85rem;font-size:.82rem;">
+        <div style="font-size:.69rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8b949e;margin-bottom:.55rem;">Step 1 &mdash; Upload Datasets to Databricks</div>
+        <table class="data-table" style="font-size:.8rem;">
+          <thead><tr><th>File</th><th>Upload Path</th></tr></thead>
+          <tbody>
+            <tr><td><code>Transactions_500.csv</code></td><td><code>/FileStore/tables/Transactions_500.csv</code></td></tr>
+            <tr><td><code>sensor_data_500.csv</code></td><td><code>/FileStore/tables/sensor_data_500.csv</code></td></tr>
+          </tbody>
+        </table>
+        <p style="margin-top:.65rem;font-size:.8rem;color:#8b949e;">Navigate to <strong style="color:#c9d1d9;">Data &rarr; Add Data &rarr; Upload Files</strong> and select both CSVs. Confirm paths before running any cells.</p>
+      </div>
+
+      <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.85rem 1.1rem;font-size:.82rem;">
+        <div style="font-size:.69rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8b949e;margin-bottom:.4rem;">Step 2 &mdash; Create Notebook</div>
+        <p style="font-size:.82rem;color:#c9d1d9;">Workspace &rarr; Create &rarr; Notebook &rarr; Name: <code style="background:#21262d;padding:2px 6px;border-radius:4px;color:#a5d6ff;">Module06_Data_Architecture</code> &rarr; Language: Python &rarr; Attach to your cluster.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────
+       PART 3 — Raw Read-Only Data Stores
+  ───────────────────────────────────────────── -->
+  <div class="task-card">
+    <div class="task-header" onclick="toggleTask('p3')">
+      <span class="task-num" style="background:#b45309;">Part 3</span>
+      <span class="task-title">Create Raw Read-Only Data Stores</span>
+      <span class="task-deliv">Steps 3&ndash;4 &middot; D1</span>
+      <span class="toggle-btn" id="btn-p3">+</span>
+    </div>
+    <div class="task-body" id="p3">
+      <div class="answer-label">&#10003; Complete Answer &mdash; Steps 3&ndash;4</div>
+
+      <div class="concept-box">
+        <strong>Read-Only Data Store:</strong> A Bronze table is written once at ingestion time and never modified. Analysts query it but cannot alter it. This preserves original data for governance, auditing, and pipeline replay &mdash; if Silver transformations are later found to be incorrect, you re-derive Silver from an unchanged Bronze.
+      </div>
+
+      <div class="code-block-label">Step 3 &mdash; Load Transactions Dataset</div>
+      <div class="code-block"><span class="cm"># Load raw CSV exactly as uploaded — no transformation</span>
+<span class="cv">transactions_df</span> = spark.read.csv(
+    <span class="cs">"/FileStore/tables/Transactions_500.csv"</span>,
+    header=<span class="ck">True</span>,
+    inferSchema=<span class="ck">True</span>
+)
+
+display(transactions_df)
+print(<span class="cf">f</span><span class="cs">"Row count: {transactions_df.count()}"</span>)
+print(<span class="cf">f</span><span class="cs">"Schema: {transactions_df.dtypes}"</span>)</div>
+
+      <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.85rem 1.1rem;margin:.85rem 0;font-size:.82rem;">
+        <div style="font-size:.69rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8b949e;margin-bottom:.55rem;">Expected Schema &mdash; transactions_df</div>
+        <table class="data-table" style="font-size:.8rem;">
+          <thead><tr><th>Column</th><th>Inferred Type</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td><code>transaction_id</code></td><td>string</td><td>Unique identifier per transaction</td></tr>
+            <tr><td><code>customer_id</code></td><td>string</td><td>Links to customer dimension</td></tr>
+            <tr><td><code>country</code></td><td>string</td><td>Customer country</td></tr>
+            <tr><td><code>amount</code></td><td>double</td><td>Transaction value in USD</td></tr>
+            <tr><td><code>transaction_date</code></td><td>string / date</td><td>Date of transaction</td></tr>
+            <tr><td><code>status</code></td><td>string</td><td>Completed, Pending, Failed</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="code-block-label">Step 4 &mdash; Save Bronze Table (Read-Only Store)</div>
+      <div class="code-block"><span class="cm"># Persist raw data as-is: Bronze is the immutable source of truth</span>
+transactions_df.write.mode(<span class="cs">"overwrite"</span>).saveAsTable(
+    <span class="cs">"transactions_bronze"</span>
+)
+print(<span class="cs">"Bronze table created: transactions_bronze"</span>)</div>
+
+      <div class="explain-toggle" onclick="toggleExplain('exp-p3')">
+        <span class="explain-icon">&#128161;</span>
+        <span class="explain-label">Why This Answer?</span>
+        <span class="explain-chevron" id="chev-exp-p3">&#9654;</span>
+      </div>
+      <div class="explain-body" id="exp-p3">
+        <h4>Why use inferSchema=True for Bronze?</h4>
+        <p>At the Bronze layer, Spark reads the file and infers column types automatically. This is intentional &mdash; Bronze stores data as-close-to-source as possible. If you hardcode types and the source changes (e.g., an amount field that was integer becomes decimal), the pipeline breaks. Bronze is resilient because it accepts what the source sends. Type enforcement happens in Silver.</p>
+        <h4>Why does "read-only" matter if we use .write.mode("overwrite")?</h4>
+        <p>The Bronze table is written exactly once per pipeline run (full overwrite). <strong>After</strong> the write, the table is read-only from the perspective of analysts and downstream processes &mdash; they can SELECT from it but have no path to UPDATE or DELETE rows. In production, this is enforced by granting only SELECT privileges on the Bronze catalog. The pipeline itself uses a service account with write access, but no human analyst can modify Bronze.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────
+       PART 4 — Dimensional Modeling (Transactions)
+  ───────────────────────────────────────────── -->
+  <div class="task-card">
+    <div class="task-header" onclick="toggleTask('p4')">
+      <span class="task-num" style="background:#238636;">Part 4</span>
+      <span class="task-title">Data Modeling &mdash; Dimensional Architecture</span>
+      <span class="task-deliv">Steps 5&ndash;6 &middot; D1</span>
+      <span class="toggle-btn" id="btn-p4">+</span>
+    </div>
+    <div class="task-body" id="p4">
+      <div class="answer-label">&#10003; Complete Answer &mdash; Steps 5&ndash;6</div>
+
+      <p style="font-size:.83rem;color:#8b949e;margin-bottom:1rem;">Dimensional modeling splits data into <strong style="color:#e6edf3;">Fact tables</strong> (measurable events &mdash; transactions, sales) and <strong style="color:#e6edf3;">Dimension tables</strong> (descriptive attributes &mdash; customers, products, locations). Facts are joined to dimensions at query time for flexible analytics.</p>
+
+      <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.85rem 1.1rem;margin-bottom:.85rem;font-size:.82rem;">
+        <div style="font-size:.69rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8b949e;margin-bottom:.55rem;">Dimensional Model &mdash; Transactions</div>
+        <table class="data-table" style="font-size:.8rem;">
+          <thead><tr><th>Table</th><th>Type</th><th>Columns</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><code>customer_dim</code></td><td><span class="lc-silver">Dimension</span></td><td><code>customer_id</code>, <code>country</code></td><td>Unique customer attributes &mdash; descriptive</td></tr>
+            <tr><td><code>fact_transactions</code></td><td><span class="lc-gold">Fact</span></td><td><code>transaction_id</code>, <code>customer_id</code>, <code>amount</code>, <code>transaction_date</code>, <code>status</code></td><td>Measurable events with foreign key to dimension</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="code-block-label">Step 5 &mdash; Create Customer Dimension Table</div>
+      <div class="code-block"><span class="cm"># Dimension: unique customer attributes — deduplicated</span>
+<span class="cv">customer_dim</span> = transactions_df.select(
+    <span class="cs">"customer_id"</span>,
+    <span class="cs">"country"</span>
+).dropDuplicates()
+
+display(customer_dim)
+print(<span class="cf">f</span><span class="cs">"Unique customers: {customer_dim.count()}"</span>)</div>
+
+      <div class="code-block-label">Step 6 &mdash; Create Transaction Fact Table</div>
+      <div class="code-block"><span class="cm"># Fact: measurable events with foreign key to customer_dim</span>
+<span class="cv">fact_transactions</span> = transactions_df.select(
+    <span class="cs">"transaction_id"</span>,
+    <span class="cs">"customer_id"</span>,
+    <span class="cs">"amount"</span>,
+    <span class="cs">"transaction_date"</span>,
+    <span class="cs">"status"</span>
+)
+
+display(fact_transactions)
+print(<span class="cf">f</span><span class="cs">"Total transactions: {fact_transactions.count()}"</span>)</div>
+
+      <div class="explain-toggle" onclick="toggleExplain('exp-p4')">
+        <span class="explain-icon">&#128161;</span>
+        <span class="explain-label">Why This Answer?</span>
+        <span class="explain-chevron" id="chev-exp-p4">&#9654;</span>
+      </div>
+      <div class="explain-body" id="exp-p4">
+        <h4>Why use dropDuplicates() on the dimension?</h4>
+        <p>A dimension table must have one row per unique entity. If a customer appears in 50 transactions, the dimension should still have one row for that customer. <code>dropDuplicates()</code> on <code>customer_id</code> ensures the dimension contains each customer exactly once. Without this, joins to the dimension produce duplicate rows in the fact table, inflating metrics like total sales.</p>
+        <h4>Why does the fact table NOT include country?</h4>
+        <p>Country is a customer attribute, not a transaction attribute &mdash; it belongs in the dimension. This is the normalization principle of dimensional modeling: store descriptive attributes in dimensions, store measurable values in facts. When an analyst needs country-level sales, they JOIN fact_transactions to customer_dim on customer_id. This means country information is defined in one place; if a country code changes, you update the dimension, not every fact row.</p>
+        <h4>What is the relationship between fact and dimension tables?</h4>
+        <p>The fact table holds a foreign key (<code>customer_id</code>) that links to the primary key of the dimension table. This is called a <strong>star schema</strong> when one fact is surrounded by multiple dimensions. The query pattern is: SELECT SUM(amount) FROM fact_transactions JOIN customer_dim ON customer_id WHERE country = "USA". The fact table provides the numbers; dimensions provide the filters and labels.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────
+       PART 5 — Sensor Architecture Modeling
+  ───────────────────────────────────────────── -->
+  <div class="task-card">
+    <div class="task-header" onclick="toggleTask('p5')">
+      <span class="task-num" style="background:#0e7490;">Part 5</span>
+      <span class="task-title">Sensor Architecture Modeling</span>
+      <span class="task-deliv">Steps 7&ndash;9 &middot; D1</span>
+      <span class="toggle-btn" id="btn-p5">+</span>
+    </div>
+    <div class="task-body" id="p5">
+      <div class="answer-label">&#10003; Complete Answer &mdash; Steps 7&ndash;9</div>
+
+      <p style="font-size:.83rem;color:#8b949e;margin-bottom:1rem;">The sensor dataset follows the same dimensional pattern: a dimension for device identity attributes and a fact table for measurable sensor readings over time.</p>
+
+      <div class="code-block-label">Step 7 &mdash; Load Sensor Dataset</div>
+      <div class="code-block"><span class="cm"># Load IoT sensor CSV — raw, no transformation</span>
+<span class="cv">sensor_df</span> = spark.read.csv(
+    <span class="cs">"/FileStore/tables/sensor_data_500.csv"</span>,
+    header=<span class="ck">True</span>,
+    inferSchema=<span class="ck">True</span>
+)
+
+display(sensor_df)
+print(<span class="cf">f</span><span class="cs">"Row count: {sensor_df.count()}"</span>)</div>
+
+      <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.85rem 1.1rem;margin:.85rem 0;font-size:.82rem;">
+        <div style="font-size:.69rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8b949e;margin-bottom:.55rem;">Expected Schema &mdash; sensor_df</div>
+        <table class="data-table" style="font-size:.8rem;">
+          <thead><tr><th>Column</th><th>Type</th><th>Dimension or Fact?</th></tr></thead>
+          <tbody>
+            <tr><td><code>sensor_id</code></td><td>string</td><td><span class="lc-silver">Dimension</span> &mdash; device identity</td></tr>
+            <tr><td><code>machine_id</code></td><td>string</td><td><span class="lc-silver">Dimension</span> &mdash; machine identity</td></tr>
+            <tr><td><code>timestamp</code></td><td>string</td><td><span class="lc-gold">Fact</span> &mdash; when reading occurred</td></tr>
+            <tr><td><code>temperature</code></td><td>double</td><td><span class="lc-gold">Fact</span> &mdash; measurable reading</td></tr>
+            <tr><td><code>pressure</code></td><td>double</td><td><span class="lc-gold">Fact</span> &mdash; measurable reading</td></tr>
+            <tr><td><code>vibration</code></td><td>double</td><td><span class="lc-gold">Fact</span> &mdash; measurable reading</td></tr>
+            <tr><td><code>status</code></td><td>string</td><td><span class="lc-gold">Fact</span> &mdash; operational state at reading time</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="code-block-label">Step 8 &mdash; Create Sensor Dimension Table</div>
+      <div class="code-block"><span class="cm"># Dimension: unique sensor-to-machine mappings</span>
+<span class="cv">sensor_dim</span> = sensor_df.select(
+    <span class="cs">"sensor_id"</span>,
+    <span class="cs">"machine_id"</span>
+).dropDuplicates()
+
+display(sensor_dim)
+print(<span class="cf">f</span><span class="cs">"Unique sensor-machine pairs: {sensor_dim.count()}"</span>)</div>
+
+      <div class="code-block-label">Step 9 &mdash; Create Sensor Fact Table</div>
+      <div class="code-block"><span class="cm"># Fact: timestamped sensor readings with foreign key sensor_id</span>
+<span class="cv">sensor_fact</span> = sensor_df.select(
+    <span class="cs">"sensor_id"</span>,
+    <span class="cs">"timestamp"</span>,
+    <span class="cs">"temperature"</span>,
+    <span class="cs">"pressure"</span>,
+    <span class="cs">"vibration"</span>,
+    <span class="cs">"status"</span>
+)
+
+display(sensor_fact)
+print(<span class="cf">f</span><span class="cs">"Total sensor readings: {sensor_fact.count()}"</span>)</div>
+
+      <div class="explain-toggle" onclick="toggleExplain('exp-p5')">
+        <span class="explain-icon">&#128161;</span>
+        <span class="explain-label">Why This Answer?</span>
+        <span class="explain-chevron" id="chev-exp-p5">&#9654;</span>
+      </div>
+      <div class="explain-body" id="exp-p5">
+        <h4>Why does sensor_fact keep sensor_id but not machine_id?</h4>
+        <p><code>sensor_id</code> is the foreign key linking each reading to the sensor dimension. <code>machine_id</code> is stored in the dimension (alongside <code>sensor_id</code>) &mdash; if an analyst needs machine-level aggregation, they JOIN sensor_fact to sensor_dim on sensor_id. Keeping machine_id in the fact would denormalize it &mdash; if a sensor is reassigned to a different machine, every historical fact row would need updating. With the dimension pattern, only one row in sensor_dim changes.</p>
+        <h4>Why is status included in the fact, not the dimension?</h4>
+        <p>Machine status (Running, Warning, Maintenance) changes on every reading &mdash; it is an <strong>event attribute</strong>, not a stable descriptor of the sensor device. Stable device identity attributes belong in the dimension; time-varying measurement attributes belong in the fact. Always ask: "does this value change per reading, or is it constant across all readings for this device?"</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────
+       PART 6 — Silver Layer Architecture
+  ───────────────────────────────────────────── -->
+  <div class="task-card">
+    <div class="task-header" onclick="toggleTask('p6')">
+      <span class="task-num" style="background:#238636;">Part 6</span>
+      <span class="task-title">Silver Layer Architecture &mdash; Processed Tables</span>
+      <span class="task-deliv">Step 10 &middot; D1</span>
+      <span class="toggle-btn" id="btn-p6">+</span>
+    </div>
+    <div class="task-body" id="p6">
+      <div class="answer-label">&#10003; Complete Answer &mdash; Step 10</div>
+
+      <div class="concept-box">
+        <strong>Silver Layer:</strong> Contains cleaned, standardized, analytics-ready datasets derived from Bronze. Silver tables are the primary source for BI tools and ad hoc queries. They are NOT the same as Bronze &mdash; they have been filtered, typed, and structured for querying.
+      </div>
+
+      <div class="code-block-label">Step 10 &mdash; Save Silver Tables</div>
+      <div class="code-block"><span class="cm"># Persist transaction fact as Silver — analytics-ready</span>
+fact_transactions.write.mode(<span class="cs">"overwrite"</span>).saveAsTable(
+    <span class="cs">"transactions_silver"</span>
+)
+print(<span class="cs">"Silver table created: transactions_silver"</span>)
+
+<span class="cm"># Persist sensor fact as Silver</span>
+sensor_fact.write.mode(<span class="cs">"overwrite"</span>).saveAsTable(
+    <span class="cs">"sensor_silver"</span>
+)
+print(<span class="cs">"Silver table created: sensor_silver"</span>)</div>
+
+      <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.85rem 1.1rem;margin-top:.85rem;font-size:.82rem;">
+        <div style="font-size:.69rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8b949e;margin-bottom:.55rem;">Silver Layer Properties</div>
+        <table class="data-table" style="font-size:.8rem;">
+          <thead><tr><th>Property</th><th>Bronze</th><th>Silver</th></tr></thead>
+          <tbody>
+            <tr><td>Schema enforcement</td><td>Inferred at load</td><td>Enforced &mdash; types cast</td></tr>
+            <tr><td>Duplicates</td><td>Preserved as-is</td><td>Removed via dropDuplicates</td></tr>
+            <tr><td>Null rows</td><td>Preserved</td><td>Filtered or flagged</td></tr>
+            <tr><td>Column set</td><td>All source columns</td><td>Curated for analytics use</td></tr>
+            <tr><td>Target users</td><td>Data Engineers</td><td>Analysts, BI tools</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="explain-toggle" onclick="toggleExplain('exp-p6')">
+        <span class="explain-icon">&#128161;</span>
+        <span class="explain-label">Why This Answer?</span>
+        <span class="explain-chevron" id="chev-exp-p6">&#9654;</span>
+      </div>
+      <div class="explain-body" id="exp-p6">
+        <h4>Why does Silver use fact_transactions rather than re-reading Bronze?</h4>
+        <p>The dimensional model was already built from Bronze in Part 4. Saving <code>fact_transactions</code> as Silver persists that already-structured DataFrame &mdash; the selection of analytics columns is the "cleaning" step. In a full production pipeline, Silver would also cast types (e.g., parse <code>transaction_date</code> as a proper DateType), standardize country codes, and validate amount ranges. This lab keeps Silver simple to focus on the architectural pattern.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────
+       PART 7 — Gold Layer: Aggregated Reporting
+  ───────────────────────────────────────────── -->
+  <div class="task-card">
+    <div class="task-header" onclick="toggleTask('p7')">
+      <span class="task-num" style="background:#b45309;">Part 7</span>
+      <span class="task-title">Gold Layer &mdash; Aggregated Reporting</span>
+      <span class="task-deliv">Steps 11&ndash;12 &middot; D1</span>
+      <span class="toggle-btn" id="btn-p7">+</span>
+    </div>
+    <div class="task-body" id="p7">
+      <div class="answer-label">&#10003; Complete Answer &mdash; Steps 11&ndash;12</div>
+
+      <p style="font-size:.83rem;color:#8b949e;margin-bottom:1rem;">Gold tables are pre-aggregated summaries designed for direct use in dashboards and executive reporting. They are the output of business logic &mdash; not raw data, not cleaned data, but <em>answered questions</em>.</p>
+
+      <div class="code-block-label">Step 11 &mdash; Aggregate Transaction Data by Country</div>
+      <div class="code-block"><span class="ck">from</span> pyspark.sql.functions <span class="ck">import</span> sum
+
+<span class="cm"># Gold: total sales by country — business-level summary</span>
+<span class="cv">gold_sales</span> = transactions_df.groupBy(
+    <span class="cs">"country"</span>
+).agg(
+    sum(<span class="cs">"amount"</span>).alias(<span class="cs">"total_sales"</span>)
+)
+
+display(gold_sales)
+print(<span class="cf">f</span><span class="cs">"Countries in Gold: {gold_sales.count()}"</span>)</div>
+
+      <div class="code-block-label">Step 12 &mdash; Save Gold Table</div>
+      <div class="code-block"><span class="cm"># Persist Gold table — read by BI tools and dashboards</span>
+gold_sales.write.mode(<span class="cs">"overwrite"</span>).saveAsTable(
+    <span class="cs">"sales_gold"</span>
+)
+print(<span class="cs">"Gold table created: sales_gold"</span>)</div>
+
+      <div class="explain-toggle" onclick="toggleExplain('exp-p7')">
+        <span class="explain-icon">&#128161;</span>
+        <span class="explain-label">Why This Answer?</span>
+        <span class="explain-chevron" id="chev-exp-p7">&#9654;</span>
+      </div>
+      <div class="explain-body" id="exp-p7">
+        <h4>Why aggregate at the Gold layer rather than in the dashboard query?</h4>
+        <p>Pre-aggregating in Gold means a dashboard query reads one row per country instead of scanning 500 transaction rows on every page load. As data volumes grow to millions of rows, the performance difference becomes critical. Gold tables are also versioned: if your aggregation logic changes, you can compare the old Gold table to the new one using Delta history before promoting the change to production.</p>
+        <h4>Why does Gold read from transactions_df (Bronze) rather than Silver?</h4>
+        <p>In this lab, Gold is built directly from the loaded DataFrame because Silver and Gold are constructed in the same session. In production, Gold is typically derived from Silver (or a combination of Silver tables) to ensure it benefits from Silver-level cleaning. The architectural rule is: each layer is derived from the layer immediately below it &mdash; Gold reads Silver, Silver reads Bronze, Bronze reads source.</p>
+        <h4>What other Gold aggregations would be useful for this retailer?</h4>
+        <p>Common Gold patterns include: <code>monthly_revenue_gold</code> (sales grouped by month), <code>customer_lifetime_value_gold</code> (total spend per customer), <code>failed_transactions_gold</code> (count of failed status by country for fraud monitoring), and <code>sensor_alert_gold</code> (count of Maintenance or Warning readings per machine per day).</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────
+       PART 8 — Delta Architecture & Versioning
+  ───────────────────────────────────────────── -->
+  <div class="task-card">
+    <div class="task-header" onclick="toggleTask('p8')">
+      <span class="task-num" style="background:#1f6feb;">Part 8</span>
+      <span class="task-title">Delta Architecture &amp; Versioning</span>
+      <span class="task-deliv">Steps 13&ndash;15 &middot; D1</span>
+      <span class="toggle-btn" id="btn-p8">+</span>
+    </div>
+    <div class="task-body" id="p8">
+      <div class="answer-label">&#10003; Complete Answer &mdash; Steps 13&ndash;15</div>
+
+      <p style="font-size:.83rem;color:#8b949e;margin-bottom:1rem;">Delta Lake extends Parquet with an ACID transaction log. Every write, update, or delete is recorded as a versioned entry. You can query historical versions and roll back to any point &mdash; essential for audit compliance.</p>
+
+      <div class="code-block-label">Step 13 &mdash; Save Delta Table (Explicit Format)</div>
+      <div class="code-block"><span class="cm"># Save as Delta format explicitly — enables versioning and history</span>
+transactions_df.write.format(<span class="cs">"delta"</span>) \
+    .mode(<span class="cs">"overwrite"</span>) \
+    .saveAsTable(<span class="cs">"transactions_delta_arch"</span>)
+
+print(<span class="cs">"Delta table created: transactions_delta_arch"</span>)</div>
+
+      <div class="code-block-label">Step 14 &mdash; Update Records with SQL (Simulated Archival)</div>
+      <div class="sql-block"><span class="sk">UPDATE</span> transactions_delta_arch
+<span class="sk">SET</span> status = <span class="sv">'Archived'</span>
+<span class="sk">WHERE</span> amount &lt; 100;</div>
+      <p style="font-size:.8rem;color:#8b949e;margin-top:.4rem;margin-bottom:.85rem;">Run this in a SQL cell (switch cell language to SQL) or use <code>spark.sql()</code> in Python.</p>
+
+      <div class="code-block-label">Step 14 (Python Alternative) &mdash; spark.sql() for Updates</div>
+      <div class="code-block">spark.sql(<span class="cs">"""
+    UPDATE transactions_delta_arch
+    SET status = 'Archived'
+    WHERE amount &lt; 100
+"""</span>)
+print(<span class="cs">"Low-value transactions archived"</span>)</div>
+
+      <div class="code-block-label">Step 15 &mdash; View Table History</div>
+      <div class="sql-block"><span class="sk">DESCRIBE HISTORY</span> transactions_delta_arch;</div>
+
+      <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.85rem 1.1rem;margin-top:.85rem;font-size:.82rem;">
+        <div style="font-size:.69rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8b949e;margin-bottom:.55rem;">Expected History Output &mdash; Two Versions</div>
+        <table class="data-table" style="font-size:.8rem;">
+          <thead><tr><th>Version</th><th>Operation</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>0</td><td>WRITE</td><td>Initial overwrite from transactions_df &mdash; 500 rows written</td></tr>
+            <tr><td>1</td><td>UPDATE</td><td>status set to Archived WHERE amount &lt; 100</td></tr>
+          </tbody>
+        </table>
+        <p style="margin-top:.65rem;font-size:.8rem;color:#8b949e;">To restore the original data: <code style="background:#21262d;padding:2px 5px;border-radius:4px;color:#a5d6ff;">RESTORE TABLE transactions_delta_arch TO VERSION AS OF 0;</code></p>
+      </div>
+
+      <div class="explain-toggle" onclick="toggleExplain('exp-p8')">
+        <span class="explain-icon">&#128161;</span>
+        <span class="explain-label">Why This Answer?</span>
+        <span class="explain-chevron" id="chev-exp-p8">&#9654;</span>
+      </div>
+      <div class="explain-body" id="exp-p8">
+        <h4>Why use Delta format instead of plain Parquet?</h4>
+        <p>Delta adds an ACID transaction log on top of Parquet files. This enables: <strong>atomicity</strong> (writes succeed or fail completely &mdash; no partial writes), <strong>versioning</strong> (every write is a new version you can query or roll back to), <strong>schema evolution</strong> (safely add columns without breaking readers), and <strong>MERGE/UPDATE/DELETE</strong> operations that plain Parquet cannot do. For compliance use cases, the history log is the audit trail a regulator asks for.</p>
+        <h4>Why archive by amount rather than by date?</h4>
+        <p>This lab uses amount &lt; 100 as a simple filter to demonstrate the UPDATE operation and produce a visible history entry. In production, archival policies are typically time-based (transactions older than 7 years) aligned with regulatory retention requirements. The mechanism is identical &mdash; a WHERE clause targeting the rows to be archived.</p>
+        <h4>Why is time travel important for a compliance audit?</h4>
+        <p>Regulators may ask: "What did your customer records look like on March 15, 2025?" With Delta, you answer: <code>SELECT * FROM transactions_delta_arch TIMESTAMP AS OF '2025-03-15'</code>. Without versioning, you would have to restore from backup &mdash; a process that can take hours. Delta time travel answers that question in seconds from a live table.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────
+       PART 9 — OpenMetadata Integration
+  ───────────────────────────────────────────── -->
+  <div class="task-card">
+    <div class="task-header" onclick="toggleTask('p9')">
+      <span class="task-num" style="background:#6e40c9;">Part 9</span>
+      <span class="task-title">OpenMetadata Integration</span>
+      <span class="task-deliv">Steps 16&ndash;18 &middot; D2</span>
+      <span class="toggle-btn" id="btn-p9">+</span>
+    </div>
+    <div class="task-body" id="p9">
+      <div class="answer-label">&#10003; Complete Answer &mdash; Steps 16&ndash;18</div>
+
+      <p style="font-size:.83rem;color:#8b949e;margin-bottom:1rem;">OpenMetadata is the governance layer that spans the entire architecture. Every table you created in Databricks must be registered here with descriptions, architecture tags, and lineage so data stewards and auditors have full visibility.</p>
+
+      <div class="code-block-label">Step 16 &mdash; Tables to Register in OpenMetadata</div>
+      <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.85rem 1.1rem;margin-bottom:.85rem;">
+        <table class="data-table" style="font-size:.8rem;">
+          <thead><tr><th>Table Name</th><th>Layer</th><th>Source Dataset</th></tr></thead>
+          <tbody>
+            <tr><td><code>transactions_bronze</code></td><td><span class="lc-bronze">Bronze</span></td><td>Transactions_500.csv</td></tr>
+            <tr><td><code>transactions_silver</code></td><td><span class="lc-silver">Silver</span></td><td>Derived from transactions_bronze</td></tr>
+            <tr><td><code>sales_gold</code></td><td><span class="lc-gold">Gold</span></td><td>Derived from transactions_silver</td></tr>
+            <tr><td><code>sensor_silver</code></td><td><span class="lc-silver">Silver</span></td><td>sensor_data_500.csv</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p style="font-size:.82rem;color:#8b949e;margin-bottom:.85rem;">To register: OpenMetadata &rarr; Explore &rarr; Add Table &rarr; enter the table name and connect to your Databricks catalog.</p>
+
+      <div class="code-block-label">Step 17 &mdash; Metadata Descriptions (Add in OpenMetadata UI)</div>
+      <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.85rem 1.1rem;margin-bottom:.85rem;">
+        <table class="data-table" style="font-size:.8rem;">
+          <thead><tr><th>Table</th><th>Description to Enter</th></tr></thead>
+          <tbody>
+            <tr><td><code>transactions_bronze</code></td><td>Raw operational ingestion &mdash; immutable source record of all retail transactions loaded from Transactions_500.csv</td></tr>
+            <tr><td><code>transactions_silver</code></td><td>Cleaned analytical data &mdash; fact table with selected columns ready for dimensional queries and BI tools</td></tr>
+            <tr><td><code>sales_gold</code></td><td>Business reporting layer &mdash; pre-aggregated total sales by country for executive dashboards</td></tr>
+            <tr><td><code>sensor_silver</code></td><td>Processed IoT sensor readings &mdash; timestamped fact table derived from sensor_data_500.csv for machine monitoring analytics</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="code-block-label">Step 18 &mdash; Architecture Tags to Create and Apply</div>
+      <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:.85rem 1.1rem;margin-bottom:.85rem;">
+        <table class="data-table" style="font-size:.8rem;">
+          <thead><tr><th>Tag</th><th>Apply To</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><span class="lc-bronze">Bronze</span></td><td><code>transactions_bronze</code></td><td>Marks raw immutable ingestion layer</td></tr>
+            <tr><td><span class="lc-silver">Silver</span></td><td><code>transactions_silver</code>, <code>sensor_silver</code></td><td>Marks cleaned analytics-ready layer</td></tr>
+            <tr><td><span class="lc-gold">Gold</span></td><td><code>sales_gold</code></td><td>Marks aggregated business reporting layer</td></tr>
+            <tr><td><span class="lc-readonly">ReadOnly</span></td><td>All four tables</td><td>Signals that tables are governance-protected from analyst writes</td></tr>
+            <tr><td><span class="lc-delta">Analytics</span></td><td><code>sales_gold</code>, <code>transactions_silver</code></td><td>Flags tables approved for BI tool connection</td></tr>
+          </tbody>
+        </table>
+        <p style="margin-top:.65rem;font-size:.8rem;color:#8b949e;">To create tags: Settings &rarr; Tags &rarr; Add Tag &rarr; enter name and color. To apply: open the table in Explore &rarr; Tags panel &rarr; search and apply each tag.</p>
+      </div>
+
+      <div class="explain-toggle" onclick="toggleExplain('exp-p9')">
+        <span class="explain-icon">&#128161;</span>
+        <span class="explain-label">Why This Answer?</span>
+        <span class="explain-chevron" id="chev-exp-p9">&#9654;</span>
+      </div>
+      <div class="explain-body" id="exp-p9">
+        <h4>Why is metadata-driven architecture important?</h4>
+        <p>A table without metadata is invisible to governance. OpenMetadata makes every table discoverable by description, owner, and tag. When a compliance auditor asks "which tables contain customer transaction data?", a metadata-tagged catalog returns the answer in seconds &mdash; without that catalog, engineers must grep codebases and interview team members.</p>
+        <h4>Why apply ReadOnly tags in OpenMetadata if Databricks already controls access?</h4>
+        <p>Tags in OpenMetadata serve a communication and governance purpose beyond access control. They signal intent to everyone who discovers the table in the catalog: "this table is not meant to be written to." Even if a user technically has write access in Databricks, the tag creates a policy contract that appears in data quality dashboards, lineage diagrams, and audit reports.</p>
+        <h4>What is data lineage and how does it connect these tables?</h4>
+        <p>Lineage tracks the derivation chain: <strong>CSV file &rarr; transactions_bronze &rarr; transactions_silver &rarr; sales_gold</strong>. In OpenMetadata, you can draw or auto-detect this lineage from pipeline metadata. When <code>sales_gold</code> produces wrong numbers, lineage tells you exactly which upstream table to investigate &mdash; you follow the chain backwards until you find the corrupted step.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── REFLECTION ─────────────────────────── -->
+  <div class="section-label">Reflection Questions &amp; Answers</div>
+
+  <div class="reflection-card">
+    <div class="reflection-q">1. What is the difference between a fact table and a dimension table, and why does dimensional modeling benefit analytics?</div>
+    <div class="reflection-a">
+      <p>A <strong>fact table</strong> stores measurable business events &mdash; each row is a transaction, a sensor reading, or a sale with numeric values (amount, temperature, count). A <strong>dimension table</strong> stores descriptive attributes of the entities involved &mdash; each row describes a customer, a sensor device, or a product with categorical labels (country, machine type, category name).</p>
+      <p>Dimensional modeling benefits analytics because facts and dimensions can be joined flexibly at query time. Instead of storing country in every transaction row (which wastes storage and creates update anomalies), country lives once in customer_dim. Analytics can then group facts by any dimension without schema changes &mdash; add a region hierarchy to customer_dim and every existing query gains region-level grouping automatically.</p>
+    </div>
+  </div>
+
+  <div class="reflection-card">
+    <div class="reflection-q">2. Why is read-only access important for Bronze tables in an enterprise analytics platform?</div>
+    <div class="reflection-a">
+      <p>Bronze tables are the raw source of truth. If analysts could modify Bronze, the pipeline loses the ability to replay: when a Silver or Gold transformation is found to be wrong, you re-run it from Bronze. If Bronze has been altered, you no longer know what the original source data contained.</p>
+      <p>Read-only Bronze also satisfies governance requirements. Regulators (GDPR, SOX, HIPAA) often require proof that source records have not been tampered with. An immutable Bronze table with Delta history provides that proof &mdash; the transaction log records every write and shows that no UPDATE or DELETE has occurred on Bronze rows after the initial load.</p>
+    </div>
+  </div>
+
+  <div class="reflection-card">
+    <div class="reflection-q">3. How does Delta Table versioning support enterprise data governance?</div>
+    <div class="reflection-a">
+      <p>Delta versioning creates an ACID transaction log that records every write, update, and delete as a numbered version. This supports governance in three ways: <strong>auditability</strong> &mdash; you can show regulators exactly what data looked like at any past point using time travel; <strong>recoverability</strong> &mdash; if a bad update corrupts data, RESTORE TABLE rolls back to a known good version in seconds; and <strong>pipeline confidence</strong> &mdash; engineers can run UPDATE operations knowing that nothing is permanently lost because the previous version is retained in the log.</p>
+      <p>For the retail case study, Delta history lets compliance answer: "Which transactions were archived, when, and by what operation?" &mdash; without maintaining separate audit log tables.</p>
+    </div>
+  </div>
+
+  <!-- ── DELIVERABLES ───────────────────────── -->
+  <div class="section-label">Deliverables</div>
+
+  <div class="deliv-link-bar">
+    <div>
+      <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#fbbf24;margin-bottom:.3rem;">&#127891; Student Submission</div>
+      <div class="deliv-link-desc">Complete the deliverables checklist to submit your Module 06 work</div>
+    </div>
+    <a href="module-06-deliverables.html">&#128203; Open Deliverables &#8594;</a>
+  </div>
+
+  <ul class="deliv-list">
+    <li>
+      <span class="deliv-num">D1</span>
+      <span>Databricks notebook (<code>Module06_Data_Architecture</code>) with all 15 steps executed &mdash; Bronze, Silver, Gold, Dimension, Fact, and Delta tables created and verified</span>
+    </li>
+    <li>
+      <span class="deliv-num">D2</span>
+      <span>OpenMetadata screenshots showing all four tables registered with descriptions and architecture tags (Bronze, Silver, Gold, ReadOnly, Analytics)</span>
+    </li>
+    <li>
+      <span class="deliv-num">D3</span>
+      <span>Architecture diagram showing the full flow: Sources &rarr; Ingestion &rarr; Bronze &rarr; Silver &rarr; Gold &rarr; Reporting (hand-drawn, diagramming tool, or ASCII art)</span>
+    </li>
+  </ul>
+
+</div>
+
+<footer class="site-footer">&copy; Clark Ngo &mdash; Data Governance Classroom Activities</footer>
+
+<button class="export-btn" onclick="window.print()">&#128438; Export PDF</button>
+
+<script>
+  function toggleTask(id) {
+    var body = document.getElementById(id);
+    var btn  = document.getElementById("btn-" + id);
+    var isOpen = body.classList.toggle("open");
+    btn.textContent = isOpen ? "-" : "+";
+  }
+
+  function toggleExplain(id) {
+    var body = document.getElementById(id);
+    var chev = document.getElementById("chev-" + id);
+    var isOpen = body.classList.toggle("open");
+    chev.classList.toggle("open", isOpen);
+  }
+</script>
+
+</body>
+</html>
