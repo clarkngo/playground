@@ -5,6 +5,22 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-05-21
+
+### [feature] `classroom-activities/data-governance/module-06.html` — Module 06 Lab Guide
+- Created full lab guide: Data Architecture, Modeling &amp; Read-Only Data Stores (amber #b45309 theme)
+- Case study: "Retail Analytics Modernization" &mdash; global retailer with fragmented data and no analytics layer
+- 9 accordion parts: Architecture Overview, Databricks Setup, Bronze Raw Stores, Dimensional Modeling (Transactions), Sensor Architecture Modeling, Silver Layer, Gold Aggregated Reporting, Delta Versioning, OpenMetadata Integration
+- Architecture layer table (7 layers: Source &rarr; Ingestion &rarr; Bronze &rarr; Silver &rarr; Gold &rarr; Analytics &rarr; Governance)
+- Visual architecture flow diagram with color-coded layer nodes
+- Dimensional model explainer: customer_dim + fact_transactions, sensor_dim + sensor_fact
+- Delta versioning: explicit .format("delta"), SQL UPDATE, DESCRIBE HISTORY, expected 2-version output table
+- OpenMetadata: 4 tables registered, descriptions table, 5 architecture tags (Bronze/Silver/Gold/ReadOnly/Analytics)
+- 3 reflection Q&amp;A blocks; 3 deliverables; print-safe CSS; Export PDF button
+- `classroom-activities/data-governance/index.html`: Module 06 card added (amber accent, Data Architecture/Delta Tables/Dimensional Modeling tags)
+
+---
+
 ## 2026-05-17
 
 ### [feature] `team-project/hdd-failure/meeting.html` — Team Meeting Guide

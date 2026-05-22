@@ -7,6 +7,10 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-05-21
+
+- [feature] `classroom-activities/data-governance/module-06.html` — Module 06 lab guide: Data Architecture, Modeling &amp; Read-Only Data Stores; amber theme; 9 parts covering Bronze/Silver/Gold layers, dimensional modeling, Delta versioning, OpenMetadata integration; index.html updated with Module 06 card
+
 ## 2026-05-17
 
 - [feature] `team-project/hdd-failure/viewer.html` — New Jupyter notebook viewer: 5-notebook sidebar, dark gold theme, markdown + syntax-highlighted code cells, Databricks table parsing, large HTML toggle, auto-loads NB01
