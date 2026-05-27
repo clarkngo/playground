@@ -103,6 +103,32 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 - Tags: Medallion Architecture, OpenWeather API, Databricks, PySpark, IoT Sensors, OpenMetadata
 - Links to `module-05.html` and `module-05-deliverables.html`
 
+## 2026-05-26
+
+### [feature] Class notes — Module 8: Integration
+- Created `class-notes/data-governance/module-08.html` — 17-section notes with GitHub dark theme
+- Section 1: What Is Integration? — definition, bridge metaphor, connectivity vs semantic alignment, integration as a governance problem
+- Section 2: Integration Pattern Taxonomy — 5 patterns (API, streaming, event-driven, service RPC, batch) with timing/volume/consumer availability comparison table
+- Section 3: Service-Oriented Architecture (SOA) — definition, 6 design principles (standardized contract, loose coupling, abstraction, reusability, composability, discoverability), SOA vs microservices distinction
+- Section 4: Enterprise Service Bus (ESB) — hub-and-spoke topology, 5 core capabilities, when to use vs avoid, smart pipes anti-pattern
+- Section 5: Service Orchestration — centralized coordinator pattern, three placement options (consumer / producer / dedicated), why dedicated orchestration layer is recommended, pros/cons
+- Section 6: Service Choreography — decentralized event reactions, orchestration vs choreography side-by-side comparison, decision guide
+- Section 7: API Architecture — definition, OSI Layer 3 vs Layer 7 explained, request-response synchronous model, CRUD, REST vs GraphQL vs gRPC vs SOAP comparison table, sync coupling warning
+- Section 8: API Gateway — core functions (auth, rate limiting, routing, SSL termination, caching), single vs nested domain gateways, ~1000 interface limit, internal (intra-domain) vs external (inter-domain) consumers corrected
+- Section 9: Microservices — definition, benefits vs challenges, the "each service owns its data" rule, no shared databases
+- Section 10: Functions as a Service (FaaS) — stateless/ephemeral/trigger-driven model, when to use vs avoid, Prime Video case study (serverless → ECS monolith, ~90% cost reduction)
+- Section 11: Service Mesh — sidecar proxy pattern, Envoy/Istio, mTLS, traffic management, circuit breaking, observability
+- Section 12: Data Integration vs Data Interoperability — definitions, 6-row comparison table (goal, approach, result, healthcare/finance examples, governance need)
+- Section 13: Streaming Architecture — pub-sub model, TV broadcast analogy, three delivery guarantees (at-most-once / at-least-once / exactly-once), log-based replay
+- Section 14: Streaming Pipelines and CDC — bidirectional pipeline design (forward + return), log-based/trigger-based/timestamp-based CDC methods, sensor data vs stock market data use cases
+- Section 15: Apache Flink — DataStream API, state management, event time vs processing time, tumbling/sliding/session windows, exactly-once via checkpointing, Flink vs Spark Streaming comparison
+- Section 16: Event-Driven Architecture — mediator topology vs broker topology side-by-side, 6-row comparison table, decision guide
+- Section 17: Integration Governance Model — API lifecycle flow, interface standards (OpenAPI, AsyncAPI, protobuf, Avro), producer-owned vs consumer-driven contracts, security standards (OAuth/mTLS/schema registry), SLA table, anti-patterns
+- New CSS: `.pattern-grid`/`.pattern-card` (integration pattern cards), `.orch-wrap`/`.orch-side` (orchestration vs choreography), `.layer-stack`/`.layer-badge` (OSI layer diagram), `.topology-wrap`/`.topology-card` (mediator vs broker), `.case-study`/`.case-cols`/`.case-result` (Prime Video case study), `.delivery-row`/`.delivery-card` (guarantee badges), `.mesh-wrap`/`.mesh-service` (service mesh sidecar), `.gw-wrap`/`.gw-card` (gateway comparison)
+- `class-notes/data-governance/index.html`: Module 08 card added, progress updated to "8 of 8 modules"
+- `class-notes/index.html`: badge updated to "8 Modules"
+- JS syntax check: passed; no console errors
+
 ## 2026-05-19
 
 ### [ux] `index.html` — Class Notes section redesigned as course hub
