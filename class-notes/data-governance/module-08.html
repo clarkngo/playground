@@ -1,0 +1,1459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Data Governance &mdash; Module 8 Class Notes</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0d1117; color: #c9d1d9; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; min-height: 100vh; }
+
+    .navbar { background: #161b22; border-bottom: 1px solid #30363d; padding: .75rem 1.5rem; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 200; }
+    .navbar a { color: #e6edf3; text-decoration: none; font-weight: 700; font-size: 1rem; }
+    .navbar a:hover { color: #58a6ff; }
+    .nav-pill { font-size: .78rem; color: #8b949e; }
+
+    .layout { display: flex; max-width: 1280px; margin: 0 auto; padding: 0 1rem; gap: 2rem; }
+
+    .sidebar { width: 220px; flex-shrink: 0; position: sticky; top: 56px; align-self: flex-start; height: calc(100vh - 64px); overflow-y: auto; padding: 1.5rem 0; }
+    .toc-label { font-size: .67rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #484f58; margin-bottom: .65rem; padding-left: .5rem; }
+    .toc { display: flex; flex-direction: column; gap: 2px; }
+    .toc-link { font-size: .78rem; color: #8b949e; text-decoration: none; padding: .3rem .5rem; border-radius: 5px; border-left: 2px solid transparent; line-height: 1.4; transition: all .15s; }
+    .toc-link:hover { color: #e6edf3; background: #161b22; }
+    .toc-link.active { color: #58a6ff; border-left-color: #58a6ff; background: #0c1e38; font-weight: 600; }
+    .toc-group { font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: #484f58; margin: .85rem 0 .25rem .5rem; }
+
+    .content { flex: 1; min-width: 0; padding: 2rem 0 4rem; }
+
+    .breadcrumb { font-size: .78rem; color: #8b949e; display: flex; align-items: center; gap: .4rem; margin-bottom: .85rem; flex-wrap: wrap; }
+    .breadcrumb a { color: #58a6ff; text-decoration: none; font-weight: 600; }
+    .breadcrumb a:hover { text-decoration: underline; }
+    .breadcrumb span { color: #484f58; }
+
+    .page-badge { display: inline-block; background: #1f6feb; color: #fff; font-size: .72rem; font-weight: 700; padding: 3px 12px; border-radius: 12px; text-transform: uppercase; letter-spacing: .07em; margin-bottom: .6rem; }
+    .page-header h1 { color: #e6edf3; font-size: 1.85rem; font-weight: 800; margin-bottom: .3rem; line-height: 1.2; }
+    .page-subtitle { color: #8b949e; font-size: .9rem; margin-bottom: .65rem; }
+    .tag-row { display: flex; gap: .4rem; flex-wrap: wrap; margin-bottom: 2rem; }
+    .tag { display: inline-block; font-size: .68rem; padding: 2px 8px; border-radius: 8px; font-weight: 600; }
+    .tag-blue   { background: #1f3a5c; color: #58a6ff; }
+    .tag-green  { background: #1a2f1a; color: #3fb950; }
+    .tag-yellow { background: #2d2009; color: #e3b341; }
+    .tag-purple { background: #24183a; color: #bc8cff; }
+    .tag-red    { background: #2d1313; color: #f85149; }
+
+    .notes-section { margin-bottom: 3rem; scroll-margin-top: 72px; }
+    .section-header { display: flex; align-items: baseline; gap: .75rem; margin-bottom: 1.35rem; padding-bottom: .75rem; border-bottom: 1px solid #21262d; }
+    .section-num { font-size: .72rem; font-weight: 700; color: #484f58; background: #161b22; border: 1px solid #30363d; padding: 2px 9px; border-radius: 8px; white-space: nowrap; }
+    .section-title { font-size: 1.25rem; font-weight: 800; color: #e6edf3; }
+
+    .prose { font-size: .875rem; color: #c9d1d9; line-height: 1.8; margin-bottom: 1rem; }
+    .prose strong { color: #e6edf3; }
+    .prose em { color: #8b949e; font-style: italic; }
+
+    .def-card { background: #0c1e38; border: 1px solid #1f6feb; border-left: 4px solid #1f6feb; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+    .def-label { font-size: .67rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #58a6ff; margin-bottom: .4rem; }
+    .def-term { font-size: 1rem; font-weight: 800; color: #a5d6ff; margin-bottom: .35rem; }
+    .def-text { font-size: .85rem; color: #c9d1d9; line-height: 1.75; }
+    .def-text ul { padding-left: 1.1rem; margin-top: .4rem; }
+    .def-text li { margin-bottom: .25rem; }
+
+    .concept-card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: .85rem; }
+    .concept-title { font-size: .85rem; font-weight: 700; color: #e6edf3; margin-bottom: .4rem; }
+    .concept-text { font-size: .84rem; color: #c9d1d9; line-height: 1.75; }
+    .concept-text ul { padding-left: 1.1rem; }
+    .concept-text li { margin-bottom: .3rem; }
+
+    .example-card { background: #0b1f0b; border: 1px solid #238636; border-left: 4px solid #3fb950; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+    .example-label { font-size: .67rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #3fb950; margin-bottom: .4rem; }
+    .example-title { font-size: .9rem; font-weight: 700; color: #56d364; margin-bottom: .35rem; }
+    .example-text { font-size: .84rem; color: #c9d1d9; line-height: 1.75; }
+    .example-text ul, .example-text ol { padding-left: 1.1rem; }
+    .example-text li { margin-bottom: .3rem; }
+    .example-text strong { color: #56d364; }
+
+    .insight-card { background: #1d1600; border: 1px solid #9e6a03; border-left: 4px solid #e3b341; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+    .insight-label { font-size: .67rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #e3b341; margin-bottom: .4rem; }
+    .insight-text { font-size: .85rem; color: #c9d1d9; line-height: 1.75; }
+    .insight-text strong { color: #f0c674; }
+    .insight-text ul { padding-left: 1.1rem; }
+    .insight-text li { margin-bottom: .3rem; }
+
+    .warn-card { background: #2d1a1a; border: 1px solid #f85149; border-left: 4px solid #f85149; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+    .warn-label { font-size: .67rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #f85149; margin-bottom: .4rem; }
+    .warn-text { font-size: .85rem; color: #c9d1d9; line-height: 1.75; }
+    .warn-text ul { padding-left: 1.1rem; }
+    .warn-text li { margin-bottom: .3rem; }
+    .warn-text strong { color: #ff7b72; }
+
+    .compare-table { width: 100%; border-collapse: collapse; font-size: .84rem; margin-bottom: 1.1rem; }
+    .compare-table th { background: #0d1117; color: #8b949e; font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; padding: .55rem .85rem; text-align: left; border-bottom: 2px solid #30363d; }
+    .compare-table td { padding: .6rem .85rem; border-bottom: 1px solid #21262d; color: #c9d1d9; vertical-align: top; line-height: 1.6; }
+    .compare-table tr:last-child td { border-bottom: none; }
+    .compare-table tr:hover td { background: #161b22; }
+    .compare-table .col-a { color: #58a6ff; font-weight: 700; }
+    .compare-table .col-b { color: #3fb950; font-weight: 700; }
+    .compare-table .col-c { color: #bc8cff; font-weight: 700; }
+    .compare-table .col-d { color: #e3b341; font-weight: 700; }
+    .compare-table .col-r { color: #ff7b72; font-weight: 700; }
+
+    .pill { display: inline-block; font-size: .67rem; font-weight: 700; padding: 2px 8px; border-radius: 10px; white-space: nowrap; }
+    .pill-green  { background: #1a3a1a; color: #3fb950; border: 1px solid #238636; }
+    .pill-red    { background: #2d1a1a; color: #f85149; border: 1px solid #da3633; }
+    .pill-yellow { background: #2d2009; color: #e3b341; border: 1px solid #9e6a03; }
+    .pill-blue   { background: #1f3a5c; color: #58a6ff; border: 1px solid #1f6feb; }
+    .pill-purple { background: #24183a; color: #bc8cff; border: 1px solid #6e40c9; }
+
+    .flow-wrap { overflow-x: auto; margin-bottom: 1.25rem; }
+    .flow { display: flex; align-items: stretch; gap: 0; flex-wrap: nowrap; min-width: max-content; padding: .5rem 0; }
+    .flow-node { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: .65rem 1rem; font-size: .78rem; font-weight: 700; color: #e6edf3; text-align: center; min-width: 110px; display: flex; flex-direction: column; align-items: center; gap: .25rem; }
+    .flow-node .fn-sub { font-size: .67rem; font-weight: 400; color: #8b949e; margin-top: .1rem; }
+    .flow-arrow { display: flex; align-items: center; color: #30363d; font-size: 1.1rem; padding: 0 .2rem; }
+    .flow-node.blue   { border-color: #1f6feb; background: #0c1e38; color: #a5d6ff; }
+    .flow-node.green  { border-color: #238636; background: #0b1f0b; color: #56d364; }
+    .flow-node.yellow { border-color: #9e6a03; background: #1d1600; color: #f0c674; }
+    .flow-node.purple { border-color: #6e40c9; background: #18102d; color: #d2a8ff; }
+    .flow-node.red    { border-color: #da3633; background: #2d1a1a; color: #ff7b72; }
+
+    .two-col   { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.1rem; }
+    .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.1rem; }
+
+    .num-list { display: flex; flex-direction: column; gap: .6rem; margin-bottom: 1rem; }
+    .num-item { display: flex; gap: .85rem; align-items: flex-start; }
+    .num-badge { width: 26px; height: 26px; border-radius: 50%; background: #1f6feb; color: #fff; font-size: .75rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: .1rem; }
+    .num-badge.green  { background: #238636; }
+    .num-badge.purple { background: #6e40c9; }
+    .num-badge.yellow { background: #9e6a03; }
+    .num-badge.red    { background: #b91c1c; }
+    .num-content { flex: 1; }
+    .num-title { font-size: .88rem; font-weight: 700; color: #e6edf3; margin-bottom: .2rem; }
+    .num-text  { font-size: .82rem; color: #c9d1d9; line-height: 1.65; }
+
+    .sub-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: #8b949e; border-left: 3px solid #30363d; padding-left: .6rem; margin: 1.5rem 0 .85rem; }
+    .divider { border: none; border-top: 1px solid #21262d; margin: 1.75rem 0; }
+
+    .term   { color: #a5d6ff; font-weight: 700; }
+    .term-g { color: #56d364; font-weight: 700; }
+    .term-y { color: #f0c674; font-weight: 700; }
+    .term-p { color: #d2a8ff; font-weight: 700; }
+    .term-r { color: #ff7b72; font-weight: 700; }
+
+    /* ── Module-8 specific ───────────────────────────── */
+
+    /* Integration pattern cards */
+    .pattern-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: .75rem; margin-bottom: 1.25rem; }
+    .pattern-card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1rem; }
+    .pattern-card.blue   { border-top: 3px solid #1f6feb; }
+    .pattern-card.green  { border-top: 3px solid #238636; }
+    .pattern-card.purple { border-top: 3px solid #6e40c9; }
+    .pattern-card.yellow { border-top: 3px solid #9e6a03; }
+    .pattern-card.red    { border-top: 3px solid #da3633; }
+    .pattern-name { font-size: .88rem; font-weight: 800; color: #e6edf3; margin-bottom: .3rem; }
+    .pattern-mode { font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #8b949e; margin-bottom: .45rem; }
+    .pattern-desc { font-size: .78rem; color: #8b949e; line-height: 1.55; }
+
+    /* Orchestration vs Choreography split */
+    .orch-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem; }
+    .orch-side { border-radius: 10px; padding: 1.1rem 1.25rem; }
+    .orch-side.orchestration { background: #0c1e38; border: 1px solid #1f6feb; }
+    .orch-side.choreography  { background: #18102d; border: 1px solid #6e40c9; }
+    .orch-side-title { font-size: .88rem; font-weight: 800; margin-bottom: .7rem; }
+    .orch-side.orchestration .orch-side-title { color: #a5d6ff; }
+    .orch-side.choreography  .orch-side-title { color: #d2a8ff; }
+    .orch-side ul { padding-left: 1rem; font-size: .82rem; color: #c9d1d9; line-height: 1.7; }
+    .orch-side li { margin-bottom: .3rem; }
+
+    /* API layer diagram */
+    .layer-stack { display: flex; flex-direction: column; gap: .4rem; margin-bottom: 1.25rem; }
+    .layer-row { display: flex; align-items: center; gap: .65rem; }
+    .layer-badge { width: 90px; flex-shrink: 0; text-align: center; font-size: .67rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; padding: 4px 8px; border-radius: 5px; }
+    .layer-badge.l7 { background: #1f3a5c; color: #58a6ff; border: 1px solid #1f6feb; }
+    .layer-badge.l3 { background: #24183a; color: #bc8cff; border: 1px solid #6e40c9; }
+    .layer-body { flex: 1; background: #161b22; border: 1px solid #30363d; border-radius: 7px; padding: .5rem .9rem; font-size: .82rem; color: #c9d1d9; }
+    .layer-body strong { color: #e6edf3; }
+
+    /* Topology comparison */
+    .topology-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem; }
+    .topology-card { border-radius: 10px; padding: 1.1rem 1.25rem; }
+    .topology-card.mediator { background: #1d1600; border: 1px solid #9e6a03; }
+    .topology-card.broker   { background: #0b1f0b; border: 1px solid #238636; }
+    .topology-title { font-size: .9rem; font-weight: 800; margin-bottom: .25rem; }
+    .topology-card.mediator .topology-title { color: #f0c674; }
+    .topology-card.broker   .topology-title { color: #56d364; }
+    .topology-sub { font-size: .72rem; color: #8b949e; margin-bottom: .7rem; }
+    .topology-card ul { padding-left: 1rem; font-size: .82rem; color: #c9d1d9; line-height: 1.7; }
+    .topology-card li { margin-bottom: .3rem; }
+
+    /* FaaS Prime Video case study */
+    .case-study { background: #161b22; border: 1px solid #30363d; border-radius: 12px; overflow: hidden; margin-bottom: 1.25rem; }
+    .case-header { background: #1d1600; border-bottom: 1px solid #9e6a03; padding: .75rem 1.25rem; display: flex; align-items: center; gap: .75rem; }
+    .case-badge { font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; background: #9e6a03; color: #fff; padding: 2px 8px; border-radius: 6px; }
+    .case-co { font-size: .88rem; font-weight: 800; color: #f0c674; }
+    .case-body { padding: 1rem 1.25rem; }
+    .case-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: .75rem; }
+    .case-col-head { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; margin-bottom: .4rem; }
+    .case-col-head.before { color: #f85149; }
+    .case-col-head.after  { color: #3fb950; }
+    .case-col ul { padding-left: 1rem; font-size: .82rem; color: #c9d1d9; line-height: 1.7; }
+    .case-col li { margin-bottom: .25rem; }
+    .case-result { margin-top: .85rem; background: #1a3a1a; border: 1px solid #238636; border-radius: 7px; padding: .65rem 1rem; font-size: .83rem; color: #56d364; }
+    .case-result strong { color: #3fb950; }
+
+    /* Delivery guarantee badges */
+    .delivery-row { display: flex; gap: .75rem; flex-wrap: wrap; margin-bottom: 1rem; }
+    .delivery-card { flex: 1; min-width: 150px; border-radius: 9px; padding: .85rem 1rem; }
+    .delivery-card.at-most  { background: #2d1a1a; border: 1px solid #da3633; }
+    .delivery-card.at-least { background: #2d2009; border: 1px solid #9e6a03; }
+    .delivery-card.exactly  { background: #0b1f0b; border: 1px solid #238636; }
+    .delivery-name { font-size: .78rem; font-weight: 800; margin-bottom: .25rem; }
+    .delivery-card.at-most  .delivery-name { color: #ff7b72; }
+    .delivery-card.at-least .delivery-name { color: #f0c674; }
+    .delivery-card.exactly  .delivery-name { color: #56d364; }
+    .delivery-desc { font-size: .75rem; color: #8b949e; line-height: 1.5; }
+
+    /* Service mesh sidecar diagram */
+    .mesh-wrap { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
+    .mesh-service { border: 1px solid #30363d; border-radius: 10px; overflow: hidden; min-width: 140px; }
+    .mesh-app { background: #161b22; padding: .55rem .85rem; font-size: .78rem; font-weight: 700; color: #e6edf3; text-align: center; border-bottom: 1px solid #30363d; }
+    .mesh-proxy { background: #18102d; padding: .45rem .85rem; font-size: .7rem; font-weight: 700; color: #d2a8ff; text-align: center; letter-spacing: .04em; }
+    .mesh-arrow-row { display: flex; align-items: center; gap: .25rem; color: #6e40c9; font-size: .8rem; }
+
+    /* Gateway comparison */
+    .gw-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem; }
+    .gw-card { border-radius: 10px; padding: 1rem 1.25rem; }
+    .gw-card.single { background: #0c1e38; border: 1px solid #1f6feb; }
+    .gw-card.nested { background: #18102d; border: 1px solid #6e40c9; }
+    .gw-title { font-size: .9rem; font-weight: 800; margin-bottom: .65rem; }
+    .gw-card.single .gw-title { color: #a5d6ff; }
+    .gw-card.nested .gw-title { color: #d2a8ff; }
+    .gw-card ul { padding-left: 1rem; font-size: .82rem; color: #c9d1d9; line-height: 1.7; }
+    .gw-card li { margin-bottom: .3rem; }
+
+    .site-footer { text-align: center; padding: 1.5rem; border-top: 1px solid #21262d; color: #484f58; font-size: .77rem; margin-top: 2rem; }
+
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .two-col, .three-col, .orch-wrap, .topology-wrap, .gw-wrap, .case-cols { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 620px) {
+      .pattern-grid { grid-template-columns: 1fr; }
+    }
+    @media print {
+      @page { size: A4; margin: 1.4cm 1.6cm; }
+      body { background: #fff !important; color: #111 !important; font-size: 9pt; }
+      .navbar, .sidebar, .site-footer { display: none !important; }
+      .layout { max-width: 100%; padding: 0; gap: 0; }
+      .content { padding: 0; }
+      .notes-section { margin-bottom: 1.5rem; page-break-inside: avoid; }
+      .section-header { border-bottom-color: #ccc !important; }
+      .section-num { background: #eee !important; color: #555 !important; border-color: #ccc !important; }
+      .section-title { color: #111 !important; font-size: 13pt; }
+      .def-card, .concept-card, .example-card, .insight-card, .warn-card { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .def-text, .concept-text, .example-text, .insight-text, .warn-text, .prose { color: #222 !important; font-size: 8.5pt; }
+      .compare-table th { background: #f3f4f6 !important; color: #555 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .compare-table td { color: #111 !important; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="../../index.html">Playground</a>
+  <span class="nav-pill">Class Notes &rsaquo; Data Governance &rsaquo; Module 8</span>
+</nav>
+
+<div class="layout">
+
+  <!-- ── TOC SIDEBAR ─────────────────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="toc-label">Contents</div>
+    <nav class="toc">
+      <div class="toc-group">Integration Fundamentals</div>
+      <a href="#s1"  class="toc-link">1. What Is Integration?</a>
+      <a href="#s2"  class="toc-link">2. Integration Pattern Taxonomy</a>
+      <div class="toc-group">Service Patterns</div>
+      <a href="#s3"  class="toc-link">3. Service-Oriented Architecture</a>
+      <a href="#s4"  class="toc-link">4. Enterprise Service Bus</a>
+      <a href="#s5"  class="toc-link">5. Service Orchestration</a>
+      <a href="#s6"  class="toc-link">6. Service Choreography</a>
+      <div class="toc-group">API &amp; Gateway</div>
+      <a href="#s7"  class="toc-link">7. API Architecture</a>
+      <a href="#s8"  class="toc-link">8. API Gateway</a>
+      <a href="#s9"  class="toc-link">9. Microservices</a>
+      <div class="toc-group">Serverless &amp; Mesh</div>
+      <a href="#s10" class="toc-link">10. Functions as a Service</a>
+      <a href="#s11" class="toc-link">11. Service Mesh</a>
+      <div class="toc-group">Data Integration</div>
+      <a href="#s12" class="toc-link">12. Integration vs Interoperability</a>
+      <a href="#s13" class="toc-link">13. Streaming Architecture</a>
+      <a href="#s14" class="toc-link">14. Streaming Pipelines &amp; CDC</a>
+      <div class="toc-group">Event Architecture</div>
+      <a href="#s15" class="toc-link">15. Apache Flink</a>
+      <a href="#s16" class="toc-link">16. Event-Driven Architecture</a>
+      <div class="toc-group">Governance</div>
+      <a href="#s17" class="toc-link">17. Integration Governance Model</a>
+    </nav>
+  </aside>
+
+  <!-- ── MAIN CONTENT ────────────────────────────────────────── -->
+  <main class="content">
+
+    <div class="breadcrumb">
+      <a href="../../index.html">Playground</a>
+      <span>/</span>
+      <a href="../index.html">Class Notes</a>
+      <span>/</span>
+      <a href="index.html">Data Governance</a>
+      <span>/</span>
+      <span>Module 8</span>
+    </div>
+
+    <div class="page-badge">Module 8</div>
+    <div class="page-header">
+      <h1>Integration</h1>
+    </div>
+    <p class="page-subtitle">Bridging heterogeneous systems — service patterns, API and gateway design, streaming architecture, event-driven topologies, and integration governance</p>
+    <div class="tag-row">
+      <span class="tag tag-blue">API / SOA</span>
+      <span class="tag tag-green">Streaming</span>
+      <span class="tag tag-purple">Event-Driven</span>
+      <span class="tag tag-yellow">CDC / Flink</span>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+         SECTION 1 — What Is Integration?
+    ════════════════════════════════════════════════════════════ -->
+    <section class="notes-section" id="s1">
+      <div class="section-header">
+        <span class="section-num">01</span>
+        <span class="section-title">What Is Integration?</span>
+      </div>
+
+      <div class="def-card">
+        <div class="def-label">Definition</div>
+        <div class="def-term">Integration</div>
+        <div class="def-text">The practice of connecting disparate applications, systems, and data sources so they can exchange information and work together as a cohesive whole — without requiring each system to be rewritten or exposed internally.</div>
+      </div>
+
+      <p class="prose">Every organization runs multiple systems: a CRM, an ERP, a data warehouse, a streaming platform, legacy mainframes, and SaaS tools. None of these were designed to work together. <strong>Integration is the bridge that establishes communication between these heterogeneous applications</strong> — treating each system as a black box, interacting only through its external interface.</p>
+
+      <p class="prose">Integration also solves the <strong>legacy-to-modern communication problem</strong>: a decades-old COBOL mainframe needs to send transactions to a cloud-native microservice. The integration layer translates, routes, and mediates without requiring either system to change.</p>
+
+      <div class="sub-label">The Two Core Integration Challenges</div>
+
+      <div class="two-col">
+        <div class="concept-card">
+          <div class="concept-title">&#128279; Connectivity</div>
+          <div class="concept-text">Can two systems physically exchange data? This is a protocol problem — HTTP vs SOAP vs MQ vs file transfer. Integration middleware handles protocol translation so each system speaks in its own language while still communicating.</div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">&#128202; Semantic Alignment</div>
+          <div class="concept-text">Can two systems understand each other's data? A "customer ID" in the CRM may differ from "client code" in the ERP. Integration must map, transform, and validate data so the receiving system interprets it correctly.</div>
+        </div>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-label">&#128161; Integration as a Governance Problem</div>
+        <div class="insight-text">Poor integration creates <strong>shadow data flows</strong> — undocumented point-to-point connections that bypass governance controls. Every integration point is a potential data quality, security, and compliance risk. This is why integration governance is as important as the integration technology itself.</div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════
+         SECTION 2 — Integration Pattern Taxonomy
+    ════════════════════════════════════════════════════════════ -->
+    <section class="notes-section" id="s2">
+      <div class="section-header">
+        <span class="section-num">02</span>
+        <span class="section-title">Integration Pattern Taxonomy</span>
+      </div>
+
+      <p class="prose">Integration is not one-size-fits-all. Different patterns suit different communication needs. Choosing the wrong pattern leads to latency, data loss, tight coupling, or unnecessary complexity.</p>
+
+      <div class="pattern-grid">
+        <div class="pattern-card blue">
+          <div class="pattern-name">API / Request-Response</div>
+          <div class="pattern-mode">Synchronous &middot; HTTP</div>
+          <div class="pattern-desc">Client sends a request and waits for a response. Suited for small data, real-time queries, and CRUD operations. The consuming system must be available.</div>
+        </div>
+        <div class="pattern-card green">
+          <div class="pattern-name">Streaming / Pub-Sub</div>
+          <div class="pattern-mode">Asynchronous &middot; Continuous</div>
+          <div class="pattern-desc">Producers publish events to a channel; all subscribers receive them. Suited for high-volume, continuous flows like telemetry, feeds, and CDC.</div>
+        </div>
+        <div class="pattern-card purple">
+          <div class="pattern-name">Event-Driven</div>
+          <div class="pattern-mode">Asynchronous &middot; Decoupled</div>
+          <div class="pattern-desc">Components react to events without direct coupling. Workflows emerge from event reactions rather than direct calls. Suited for complex, decoupled business processes.</div>
+        </div>
+        <div class="pattern-card yellow">
+          <div class="pattern-name">Service-Based (RPC / Messaging)</div>
+          <div class="pattern-mode">Sync or Async &middot; Service</div>
+          <div class="pattern-desc">Services communicate via remote procedure calls or message queues. Used in microservices and SOA architectures to coordinate distributed capabilities.</div>
+        </div>
+        <div class="pattern-card red">
+          <div class="pattern-name">Batch / Data Integration</div>
+          <div class="pattern-mode">Scheduled &middot; Bulk</div>
+          <div class="pattern-desc">Large volumes of data transferred at scheduled intervals. Suited for ETL pipelines, reporting, and analytics loads where near-real-time is not required.</div>
+        </div>
+      </div>
+
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th>Pattern</th>
+            <th>Timing</th>
+            <th>Data Volume</th>
+            <th>Consumer Must Be Online?</th>
+            <th>Best For</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="col-a">API / REST</td><td>Synchronous</td><td>Small</td><td>Yes</td><td>CRUD, real-time lookups</td></tr>
+          <tr><td class="col-b">Streaming / Pub-Sub</td><td>Asynchronous</td><td>Large / continuous</td><td>No</td><td>Events, telemetry, feeds</td></tr>
+          <tr><td class="col-c">Event-Driven</td><td>Asynchronous</td><td>Variable</td><td>No</td><td>Decoupled workflows</td></tr>
+          <tr><td class="col-d">Service RPC</td><td>Synchronous</td><td>Small–Medium</td><td>Yes</td><td>Microservices coordination</td></tr>
+          <tr><td class="col-r">Batch ETL</td><td>Scheduled</td><td>Large</td><td>No</td><td>Analytics, reporting loads</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════
+         SECTION 3 — Service-Oriented Architecture (SOA)
+    ════════════════════════════════════════════════════════════ -->
+    <section class="notes-section" id="s3">
+      <div class="section-header">
+        <span class="section-num">03</span>
+        <span class="section-title">Service-Oriented Architecture (SOA)</span>
+      </div>
+
+      <div class="def-card">
+        <div class="def-label">Definition</div>
+        <div class="def-term">Service-Oriented Architecture (SOA)</div>
+        <div class="def-text">An architectural style where software capabilities are packaged as discrete, interoperable <strong>services</strong> — each with a well-defined interface — that can be discovered, composed, and reused across the enterprise regardless of the underlying platform or language.</div>
+      </div>
+
+      <p class="prose">SOA emerged in the 2000s as a response to monolithic enterprise applications that were impossible to reuse or integrate. The core idea: instead of building point-to-point integrations between every pair of systems, define a <strong>common service interface</strong> so any authorized consumer can call any service.</p>
+
+      <div class="sub-label">SOA Design Principles</div>
+      <div class="num-list">
+        <div class="num-item">
+          <div class="num-badge">1</div>
+          <div class="num-content">
+            <div class="num-title">Standardized Service Contract</div>
+            <div class="num-text">Services express their purpose and capabilities through a formal contract (WSDL, OpenAPI) that any consumer can read and use.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge">2</div>
+          <div class="num-content">
+            <div class="num-title">Loose Coupling</div>
+            <div class="num-text">Services minimize dependencies on each other's internals. A change to a service implementation must not break its consumers.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge green">3</div>
+          <div class="num-content">
+            <div class="num-title">Abstraction</div>
+            <div class="num-text">The service hides its internal logic. Consumers interact only with the published interface — the underlying technology is invisible.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge green">4</div>
+          <div class="num-content">
+            <div class="num-title">Reusability</div>
+            <div class="num-text">A "Customer" service built once can be called by CRM, billing, support, and analytics — no per-integration rewrites.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge purple">5</div>
+          <div class="num-content">
+            <div class="num-title">Composability</div>
+            <div class="num-text">Complex processes are assembled by orchestrating or choreographing simpler services — the "LEGO brick" model of software.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge yellow">6</div>
+          <div class="num-content">
+            <div class="num-title">Discoverability &amp; Statelessness</div>
+            <div class="num-text">Services are registered in a directory so they can be found. Ideally, each call is self-contained — the service does not retain session state between calls.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-label">&#128161; SOA vs Microservices</div>
+        <div class="insight-text">SOA is often described as <strong>"services sharing a common platform and ESB"</strong> while microservices are <strong>"independently deployable services with their own data stores."</strong> SOA tends toward larger, coarser-grained services; microservices are fine-grained and autonomous. Both apply the same service contract principle — the scale and deployment model differ.</div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════
+         SECTION 4 — Enterprise Service Bus (ESB)
+    ════════════════════════════════════════════════════════════ -->
+    <section class="notes-section" id="s4">
+      <div class="section-header">
+        <span class="section-num">04</span>
+        <span class="section-title">Enterprise Service Bus (ESB)</span>
+      </div>
+
+      <div class="def-card">
+        <div class="def-label">Definition</div>
+        <div class="def-term">Enterprise Service Bus (ESB)</div>
+        <div class="def-text">A centralized middleware infrastructure — the "bus" — through which all services in a SOA communicate. The ESB handles message routing, protocol translation, data transformation, security enforcement, and monitoring so services do not need to know how to reach each other directly.</div>
+      </div>
+
+      <p class="prose">Without an ESB, every system that needs to talk to another must build a custom adapter: System A talks to B in XML over FTP, to C in JSON over HTTP, to D via JDBC. With an ESB, every system connects to the bus once, and the bus handles the translation and routing. This replaces an N-squared web of point-to-point connections with a hub-and-spoke topology.</p>
+
+      <div class="sub-label">ESB Hub-and-Spoke Architecture</div>
+      <div class="flow-wrap">
+        <div class="flow">
+          <div class="flow-node blue">CRM<div class="fn-sub">SOAP/XML</div></div>
+          <div class="flow-arrow">&#8594;</div>
+          <div class="flow-node yellow" style="min-width:140px;">Enterprise Service Bus<div class="fn-sub">route &middot; transform &middot; mediate</div></div>
+          <div class="flow-arrow">&#8594;</div>
+          <div class="flow-node green">ERP<div class="fn-sub">REST/JSON</div></div>
+        </div>
+      </div>
+      <div class="flow-wrap">
+        <div class="flow">
+          <div class="flow-node blue">Legacy DB<div class="fn-sub">JDBC / SQL</div></div>
+          <div class="flow-arrow">&#8594;</div>
+          <div class="flow-node yellow" style="min-width:140px;">Enterprise Service Bus<div class="fn-sub">route &middot; transform &middot; mediate</div></div>
+          <div class="flow-arrow">&#8594;</div>
+          <div class="flow-node purple">Analytics<div class="fn-sub">gRPC</div></div>
+        </div>
+      </div>
+
+      <div class="sub-label">ESB Capabilities</div>
+      <div class="concept-card">
+        <div class="concept-text">
+          <ul>
+            <li><strong>Message routing:</strong> content-based routing, header-based routing, load-balanced routing</li>
+            <li><strong>Protocol translation:</strong> HTTP ↔ SOAP ↔ JMS ↔ MQ ↔ FTP ↔ JDBC</li>
+            <li><strong>Data transformation:</strong> XML ↔ JSON, field mapping, schema conversion</li>
+            <li><strong>Security enforcement:</strong> authentication, authorization, encryption at the bus level</li>
+            <li><strong>Monitoring &amp; auditing:</strong> centralized log of all messages flowing through the enterprise</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="sub-label">When to Use vs Avoid</div>
+      <table class="compare-table">
+        <thead><tr><th>Use ESB When</th><th>Avoid ESB When</th></tr></thead>
+        <tbody>
+          <tr><td>Many heterogeneous systems with different protocols</td><td>Greenfield cloud-native microservices architecture</td></tr>
+          <tr><td>Centralized governance and auditing is required</td><td>High agility is needed — ESB changes require central team</td></tr>
+          <tr><td>Complex data transformation between systems</td><td>Low-latency requirements — the bus adds hop overhead</td></tr>
+          <tr><td>Legacy enterprise with established SOA investment</td><td>Event-driven architecture (prefer a message broker instead)</td></tr>
+        </tbody>
+      </table>
+
+      <div class="warn-card">
+        <div class="warn-label">&#9888; ESB Anti-Pattern: Smart Pipes, Dumb Endpoints</div>
+        <div class="warn-text">An over-engineered ESB with too much business logic embedded in routing rules becomes a bottleneck and a <strong>single point of failure</strong>. Governance principle: keep the bus as infrastructure (dumb pipes) and keep business logic in the services (smart endpoints).</div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════
+         SECTION 5 — Service Orchestration
+    ════════════════════════════════════════════════════════════ -->
+    <section class="notes-section" id="s5">
+      <div class="section-header">
+        <span class="section-num">05</span>
+        <span class="section-title">Service Orchestration</span>
+      </div>
+
+      <div class="def-card">
+        <div class="def-label">Definition</div>
+        <div class="def-term">Service Orchestration</div>
+        <div class="def-text">A pattern in which a central <strong>orchestrator</strong> coordinates the sequence of service calls to fulfill a business process. The orchestrator knows the full workflow — it calls services, handles responses, manages errors, and decides what to do next. Services themselves are unaware of the larger process.</div>
+      </div>
+
+      <p class="prose">Orchestration is analogous to a <strong>conductor directing an orchestra</strong>: the conductor knows the full score and signals each section when to play. Each instrument plays its part without knowing the others' parts. In software, the orchestrator is a process engine or workflow service that calls Service A, waits for the result, then calls Service B with that result.</p>
+
+      <div class="sub-label">Where Should the Orchestrator Live?</div>
+      <p class="prose">This is a critical architectural decision. There are three options — each with trade-offs:</p>
+
+      <div class="num-list">
+        <div class="num-item">
+          <div class="num-badge red">&#10005;</div>
+          <div class="num-content">
+            <div class="num-title">Consumer-Level Orchestration</div>
+            <div class="num-text">The consuming application manages the workflow inline. Problem: the consumer becomes tightly coupled to the internal mechanics of every service it coordinates. Any change to a downstream service breaks the consumer's orchestration logic.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge red">&#10005;</div>
+          <div class="num-content">
+            <div class="num-title">Producer-Level Orchestration</div>
+            <div class="num-text">A producing service coordinates downstream delivery. Problem: the producer now knows too much about its consumers — violating the principle of loose coupling. The producer becomes responsible for a workflow it should not own.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge green">&#10003;</div>
+          <div class="num-content">
+            <div class="num-title">Dedicated Orchestration Layer (Recommended)</div>
+            <div class="num-text">A separate orchestration service or workflow engine manages the process independently. Producers and consumers are unaware of each other. Examples: AWS Step Functions, Temporal, Apache Airflow, Camunda BPM, Azure Logic Apps.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sub-label">Orchestration Flow</div>
+      <div class="flow-wrap">
+        <div class="flow">
+          <div class="flow-node blue">Client Request</div>
+          <div class="flow-arrow">&#8594;</div>
+          <div class="flow-node yellow" style="min-width:130px;">Orchestrator<div class="fn-sub">workflow engine</div></div>
+          <div class="flow-arrow">&#8594;</div>
+          <div class="flow-node green">Service A<div class="fn-sub">validate order</div></div>
+          <div class="flow-arrow">&#8594;</div>
+          <div class="flow-node green">Service B<div class="fn-sub">charge payment</div></div>
+          <div class="flow-arrow">&#8594;</div>
+          <div class="flow-node green">Service C<div class="fn-sub">ship item</div></div>
+        </div>
+      </div>
+
+      <div class="concept-card">
+        <div class="concept-title">Pros &amp; Cons of Orchestration</div>
+        <div class="concept-text">
+          <ul>
+            <li><strong>Pros:</strong> easy to track process state, centralized error handling, clear workflow visualization, auditable execution history</li>
+            <li><strong>Cons:</strong> orchestrator can become a bottleneck under load, single point of failure if not replicated, risk of embedding business logic in the orchestrator rather than services</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════
+         SECTION 6 — Service Choreography
+    ════════════════════════════════════════════════════════════ -->
+    <section class="notes-section" id="s6">
+      <div class="section-header">
+        <span class="section-num">06</span>
+        <span class="section-title">Service Choreography</span>
+      </div>
+
+      <div class="def-card">
+        <div class="def-label">Definition</div>
+        <div class="def-term">Service Choreography</div>
+        <div class="def-text">A decentralized coordination pattern where each service reacts to events and decides independently what to do next. There is <strong>no central coordinator</strong> — services communicate through published events, and the overall process emerges from these local decisions.</div>
+      </div>
+
+      <p class="prose">Choreography is analogous to a <strong>flash mob</strong> or a dance troupe where each dancer knows their steps and reacts to the others' cues without a conductor. In software: Service A completes its work and emits an "OrderValidated" event. Service B, which subscribes to that event, picks it up and processes payment. Service C subscribes to "PaymentConfirmed" and initiates shipping — without A or B knowing C exists.</p>
+
+      <div class="sub-label">Orchestration vs Choreography</div>
+      <div class="orch-wrap">
+        <div class="orch-side orchestration">
+          <div class="orch-side-title">&#127917; Orchestration — Central Conductor</div>
+          <ul>
+            <li>One entity (orchestrator) knows and controls the entire workflow</li>
+            <li>Services are called explicitly in sequence</li>
+            <li>Easy to visualize and debug — the orchestrator has the full state</li>
+            <li>Single point of control and potential failure</li>
+            <li>Good for: complex multi-step workflows with conditional branching, compensating transactions, auditability</li>
+            <li>Tools: Step Functions, Temporal, Camunda, Airflow</li>
+          </ul>
+        </div>
+        <div class="orch-side choreography">
+          <div class="orch-side-title">&#128131; Choreography — Distributed Dancers</div>
+          <ul>
+            <li>No central coordinator — each service reacts to events</li>
+            <li>Services publish events; others subscribe and react</li>
+            <li>Highly decoupled — adding a new participant means subscribing to an event</li>
+            <li>Harder to trace overall workflow — state is distributed across services</li>
+            <li>Good for: simple event chains, high-autonomy teams, adding consumers without changing producers</li>
+            <li>Tools: Kafka, RabbitMQ, AWS EventBridge</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-label">&#128161; Choosing Between Them</div>
+        <div class="insight-text">Use <strong>orchestration</strong> when you need to see and control the entire process — e.g., an order fulfillment workflow with payments, inventory, and shipping. Use <strong>choreography</strong> when services should be autonomous and the process is a simple chain of reactions — e.g., a new user signup triggers a welcome email, a CRM update, and a Slack notification, each independently.</div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════
+         SECTION 7 — API Architecture
+    ════════════════════════════════════════════════════════════ -->
+    <section class="notes-section" id="s7">
+      <div class="section-header">
+        <span class="section-num">07</span>
+        <span class="section-title">API Architecture</span>
+      </div>
+
+      <div class="def-card">
+        <div class="def-label">Definition</div>
+        <div class="def-term">API (Application Programming Interface)</div>
+        <div class="def-text">A contract that defines how external systems can interact with a service — specifying the available operations, the format of requests and responses, authentication requirements, and error behavior. The API is the public face of a service; the implementation behind it is opaque.</div>
+      </div>
+
+      <p class="prose">In integration, APIs operate at <strong>two OSI model layers</strong>, each with different capabilities and use cases:</p>
+
+      <div class="layer-stack">
+        <div class="layer-row">
+          <div class="layer-badge l7">Layer 7<br>Application</div>
+          <div class="layer-body"><strong>HTTP-based APIs (REST, GraphQL, gRPC)</strong> — content-aware; can inspect request headers and body to make routing, auth, and throttling decisions. The vast majority of modern APIs operate here. API gateways, load balancers, and WAFs typically work at Layer 7.</div>
+        </div>
+        <div class="layer-row">
+          <div class="layer-badge l3">Layer 3<br>Network</div>
+          <div class="layer-body"><strong>IP-based routing</strong> — operates on packet headers (source/destination IP and port) without reading the payload. Used for low-level TCP/UDP services and network-based load balancing. Not content-aware — cannot distinguish one API call from another based on path or method.</div>
+        </div>
+      </div>
+
+      <div class="sub-label">Request-Response Model (Synchronous)</div>
+      <p class="prose">API architecture is fundamentally <strong>request-response</strong>: the client sends a request and blocks (waits) until the server returns a response. This is the dominant integration style for:</p>
+      <div class="concept-card">
+        <div class="concept-text">
+          <ul>
+            <li><strong>CRUD operations</strong> — Create, Read, Update, Delete actions on resources (e.g., GET /users/123, POST /orders)</li>
+            <li><strong>Small amounts of data</strong> — a discrete object or list, not a continuous data stream</li>
+            <li><strong>Real-time lookups</strong> — the caller needs the answer immediately before proceeding</li>
+            <li><strong>Service-oriented integrations</strong> — calling a downstream microservice during a request lifecycle</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="sub-label">REST vs GraphQL vs gRPC</div>
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th>API Style</th>
+            <th>Protocol</th>
+            <th>Best For</th>
+            <th>Trade-off</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="col-a">REST</td><td>HTTP/1.1</td><td>CRUD resources, wide compatibility</td><td>Over-fetching / under-fetching common</td></tr>
+          <tr><td class="col-b">GraphQL</td><td>HTTP/1.1</td><td>Flexible queries, consumer-driven shape</td><td>Complex caching, query cost attacks</td></tr>
+          <tr><td class="col-c">gRPC</td><td>HTTP/2 + protobuf</td><td>High-performance microservices comms</td><td>Binary format — harder to debug</td></tr>
+          <tr><td class="col-d">SOAP</td><td>HTTP / SMTP</td><td>Enterprise legacy, financial, B2B</td><td>Verbose XML, heavy schema</td></tr>
+        </tbody>
+      </table>
+
+      <div class="warn-card">
+        <div class="warn-label">&#9888; Synchronous APIs Are Not Always Right</div>
+        <div class="warn-text">If the consuming system does not need the result immediately — or if the producing system is slow or unreliable — a <strong>synchronous API call creates a temporal coupling</strong>: both systems must be up and responsive at the same moment. For fire-and-forget operations, or processes that take more than a few seconds, an asynchronous pattern (queue, event, streaming) is more resilient.</div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════
+         SECTION 8 — API Gateway
+    ════════════════════════════════════════════════════════════ -->
+    <section class="notes-section" id="s8">
+      <div class="section-header">
+        <span class="section-num">08</span>
+        <span class="section-title">API Gateway</span>
+      </div>
+
+      <div class="def-card">
+        <div class="def-label">Definition</div>
+        <div class="def-term">API Gateway</div>
+        <div class="def-text">A managed reverse proxy that serves as the single entry point for all API traffic. It enforces cross-cutting concerns — authentication, rate limiting, routing, SSL termination, logging, and caching — so individual services do not have to implement them independently.</div>
+      </div>
+
+      <div class="sub-label">Core Functions of an API Gateway</div>
+      <div class="concept-card">
+        <div class="concept-text">
+          <ul>
+            <li><strong>Authentication &amp; Authorization:</strong> validate JWT tokens, OAuth 2.0 access tokens, or API keys before any request reaches a backend service</li>
+            <li><strong>Rate Limiting &amp; Throttling:</strong> enforce per-consumer quotas to prevent abuse and protect downstream services</li>
+            <li><strong>Request Routing:</strong> direct traffic to the appropriate microservice based on path, header, or method</li>
+            <li><strong>SSL Termination:</strong> decrypt HTTPS at the gateway; internal traffic may run over plain HTTP within a trusted network</li>
+            <li><strong>Response Caching:</strong> cache frequent GET responses at the gateway to reduce backend load</li>
+            <li><strong>Observability:</strong> centralized access logs, latency metrics, and distributed trace injection</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="sub-label">Single Gateway vs Nested Domain Gateways</div>
+      <p class="prose">As the number of services grows, a single gateway hits practical limits — both technical (configuration size, routing rule management) and organizational (one team controls all routes).</p>
+
+      <div class="gw-wrap">
+        <div class="gw-card single">
+          <div class="gw-title">Single API Gateway</div>
+          <ul>
+            <li>All traffic enters through one gateway instance</li>
+            <li>Simpler to manage at small scale</li>
+            <li>Becomes a bottleneck and configuration nightmare at scale</li>
+            <li><strong>Practical limit: ~1,000 routes/interfaces</strong> — beyond this, route management complexity and memory footprint cause issues</li>
+            <li>One team owns all route configurations — slows down teams</li>
+          </ul>
+        </div>
+        <div class="gw-card nested">
+          <div class="gw-title">Nested / Domain Gateways</div>
+          <ul>
+            <li>A top-level gateway routes to domain-specific child gateways</li>
+            <li>Each domain team owns and manages its own gateway</li>
+            <li>Aligns with Data Mesh and domain-driven design</li>
+            <li>Each domain gateway can scale independently</li>
+            <li>Slightly more network hops — but dramatically better governance isolation</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="sub-label">Internal vs External Consumers Through the Gateway</div>
+      <div class="concept-card">
+        <div class="concept-text">
+          <ul>
+            <li><strong>Internal consumers</strong> (within the same domain): access domain-specific APIs directly or through the domain gateway. Contracts are tighter, versioning is managed within the team, governance overhead is lower.</li>
+            <li><strong>External consumers</strong> (cross-domain, <em>inter-domain</em>): access published APIs through the top-level gateway. Stricter contracts, mandatory versioning, schema registries, and SLA agreements required.</li>
+          </ul>
+          <p style="margin-top:.5rem; font-size:.82rem; color:#8b949e;">Note: <em>intra-</em>domain means within a domain; <em>inter-</em>domain means across domains. External consumers cross a domain boundary, making the correct term <strong>inter-domain</strong>.</p>
+        </div>
+      </div>
+
+      <div class="example-card">
+        <div class="example-label">Scenario</div>
+        <div class="example-title">When to Use Nested Gateways</div>
+        <div class="example-text">A financial services company has domains: Payments, Accounts, Fraud, and Reporting. Each domain has 50–100 microservices. A single gateway would accumulate 400+ route configurations maintained by one platform team — a change request backlog measured in weeks. Switching to nested gateways lets each domain team deploy routes independently, with the top-level gateway simply routing <code>/payments/*</code> to the Payments gateway, <code>/accounts/*</code> to the Accounts gateway, and so on.</div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════
+         SECTION 9 — Microservices
+    ════════════════════════════════════════════════════════════ -->
+    <section class="notes-section" id="s9">
+      <div class="section-header">
+        <span class="section-num">09</span>
+        <span class="section-title">Microservices</span>
+      </div>
+
+      <div class="def-card">
+        <div class="def-label">Definition</div>
+        <div class="def-term">Microservices Architecture</div>
+        <div class="def-text">An architectural style where a large application is structured as a suite of small, independently deployable services — each owning a single bounded capability, its own data store, and its own deployment lifecycle — communicating via APIs or messages.</div>
+      </div>
+
+      <p class="prose">Microservices are the contemporary evolution of SOA, pushed to finer granularity. Where an SOA "Order Management Service" might handle everything related to orders, a microservices architecture might split that into an Order Creation Service, an Order Status Service, a Fulfillment Service, and a Cancellation Service — each deployable and scalable independently.</p>
+
+      <div class="two-col">
+        <div class="concept-card">
+          <div class="concept-title">&#9989; Microservices Benefits</div>
+          <div class="concept-text">
+            <ul>
+              <li><strong>Independent deployment:</strong> release one service without touching others</li>
+              <li><strong>Independent scaling:</strong> scale only the services under load</li>
+              <li><strong>Technology heterogeneity:</strong> each service can use the best language/stack for its job</li>
+              <li><strong>Fault isolation:</strong> a failure in one service does not cascade if circuit-breakers are in place</li>
+              <li><strong>Team autonomy:</strong> small teams own services end-to-end</li>
+            </ul>
+          </div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">&#9888; Microservices Challenges</div>
+          <div class="concept-text">
+            <ul>
+              <li><strong>Distributed systems complexity:</strong> network failures, partial failures, retries</li>
+              <li><strong>Data consistency:</strong> no shared database — eventual consistency across services</li>
+              <li><strong>Observability:</strong> a single user request may span 20 services — tracing is essential</li>
+              <li><strong>Operational overhead:</strong> hundreds of services to deploy, monitor, and upgrade</li>
+              <li><strong>Not suitable for small teams:</strong> the overhead outweighs the benefits at low scale</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-label">&#128161; The Key Rule: Each Service Owns Its Data</div>
+        <div class="insight-text">Microservices <strong>must not share a database</strong>. If two services share a database, they are coupled at the data layer — a schema change in one breaks the other. Each service owns its own data store (which may be a different technology: PostgreSQL, Redis, DynamoDB, etc.). Cross-service data access happens <strong>only through APIs</strong>, never through direct DB queries.</div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════
+         SECTION 10 — Functions as a Service (FaaS)
+    ════════════════════════════════════════════════════════════ -->
+    <section class="notes-section" id="s10">
+      <div class="section-header">
+        <span class="section-num">10</span>
+        <span class="section-title">Functions as a Service (FaaS)</span>
+      </div>
+
+      <div class="def-card">
+        <div class="def-label">Definition</div>
+        <div class="def-term">Functions as a Service (FaaS) / Serverless</div>
+        <div class="def-text">An execution model where individual functions are deployed as the unit of compute. The cloud platform manages all infrastructure — provisioning, scaling, and teardown. Functions are <strong>stateless</strong>, <strong>ephemeral</strong>, and triggered by events. Developers pay per invocation, not for idle servers.</div>
+      </div>
+
+      <div class="sub-label">FaaS Characteristics</div>
+      <div class="concept-card">
+        <div class="concept-text">
+          <ul>
+            <li><strong>Trigger-driven:</strong> functions run in response to HTTP requests, queue messages, database change events, scheduled timers, or file uploads</li>
+            <li><strong>Stateless:</strong> each invocation is independent — no in-memory state persists between calls (use a database or cache for state)</li>
+            <li><strong>Auto-scaled:</strong> the platform scales from zero to thousands of concurrent executions automatically</li>
+            <li><strong>Per-invocation billing:</strong> cost is proportional to the number and duration of function executions</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="sub-label">When to Use vs Avoid FaaS</div>
+      <table class="compare-table">
+        <thead><tr><th>Use FaaS When</th><th>Avoid FaaS When</th></tr></thead>
+        <tbody>
+          <tr><td>Workloads are infrequent or unpredictable in volume</td><td>High-throughput, continuous processing is required</td></tr>
+          <tr><td>Event-triggered processing (file upload, queue message)</td><td>Workload is latency-sensitive (cold start adds 100–3000 ms)</td></tr>
+          <tr><td>"Glue code" between services — lightweight transformations</td><td>Stateful workflows — FaaS functions cannot persist state</td></tr>
+          <tr><td>Cost optimization: spiky workloads with long idle periods</td><td>Long-running processes — functions time out (15 min on Lambda)</td></tr>
+        </tbody>
+      </table>
+
+      <div class="sub-label">&#128247; Case Study: Amazon Prime Video</div>
+      <div class="case-study">
+        <div class="case-header">
+          <span class="case-badge">Real-World Case Study</span>
+          <span class="case-co">Amazon Prime Video — Moving Away From FaaS (2023)</span>
+        </div>
+        <div class="case-body">
+          <p style="font-size:.84rem; color:#c9d1d9; line-height:1.75;">Prime Video built a <strong>video quality monitoring tool</strong> (the Defect Detection system) using a fully serverless architecture: AWS Step Functions orchestrated a pipeline of AWS Lambda functions that analyzed each video frame for artifacts, encoding errors, and audio sync issues.</p>
+          <div class="case-cols">
+            <div class="case-col">
+              <div class="case-col-head before">Before — Serverless Architecture</div>
+              <ul>
+                <li>AWS Step Functions orchestrated multiple Lambda functions per frame</li>
+                <li>Each state transition in Step Functions incurred a per-transition cost</li>
+                <li>Processing millions of frames per day meant billions of state transitions</li>
+                <li>Hitting AWS Step Functions account limits at scale</li>
+                <li>Intermediate results stored in Amazon S3 between Lambda calls — network I/O overhead</li>
+              </ul>
+            </div>
+            <div class="case-col">
+              <div class="case-col-head after">After — Monolithic Service on ECS</div>
+              <ul>
+                <li>Consolidated all processing into a single containerized service on Amazon ECS</li>
+                <li>In-process function calls replaced distributed Lambda invocations</li>
+                <li>Shared in-memory buffers replaced S3 for intermediate results</li>
+                <li>No state-transition pricing — one long-running container per stream</li>
+                <li>Simpler architecture, easier debugging and local development</li>
+              </ul>
+            </div>
+          </div>
+          <div class="case-result">
+            <strong>Result:</strong> ~90% infrastructure cost reduction. Simpler codebase. Better performance. The team noted that microservices and serverless are powerful tools — but for high-throughput, compute-intensive, continuous workloads, a well-architected monolith can be dramatically more cost-effective.
+          </div>
+        </div>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-label">&#128161; The Lesson: Match Pattern to Workload</div>
+        <div class="insight-text">FaaS is <strong>not universally superior</strong> to traditional services. It excels at event-driven, sporadic, low-duration workloads. For continuous, compute-heavy, or latency-critical workloads, the overhead of cold starts, per-invocation cost, and distributed coordination can make FaaS <strong>more expensive and more complex</strong> than a containerized monolith or a small set of dedicated services.</div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════
+         SECTION 11 — Service Mesh
+    ════════════════════════════════════════════════════════════ -->
+    <section class="notes-section" id="s11">
+      <div class="section-header">
+        <span class="section-num">11</span>
+        <span class="section-title">Service Mesh</span>
+      </div>
+
+      <div class="def-card">
+        <div class="def-label">Definition</div>
+        <div class="def-term">Service Mesh</div>
+        <div class="def-text">A dedicated infrastructure layer that manages service-to-service communication within a microservices deployment. It handles traffic management, mutual TLS (mTLS), load balancing, circuit breaking, retries, and observability — without requiring application code changes, by injecting a <strong>sidecar proxy</strong> alongside every service.</div>
+      </div>
+
+      <p class="prose">As the number of microservices grows, managing network concerns inside each service becomes unscalable. Every team must independently implement retries, timeouts, circuit breakers, and mTLS — leading to duplication and inconsistency. A service mesh moves all of this to the <strong>infrastructure layer</strong> using the sidecar pattern.</p>
+
+      <div class="sub-label">Sidecar Proxy Pattern</div>
+      <div class="mesh-wrap">
+        <div class="mesh-service">
+          <div class="mesh-app">Service A</div>
+          <div class="mesh-proxy">Envoy Proxy</div>
+        </div>
+        <div style="display:flex; align-items:center; color:#6e40c9; font-size:1.2rem; padding: 0 .5rem;">&#8596;</div>
+        <div class="mesh-service">
+          <div class="mesh-app">Service B</div>
+          <div class="mesh-proxy">Envoy Proxy</div>
+        </div>
+        <div style="display:flex; align-items:center; color:#6e40c9; font-size:1.2rem; padding: 0 .5rem;">&#8596;</div>
+        <div class="mesh-service">
+          <div class="mesh-app">Service C</div>
+          <div class="mesh-proxy">Envoy Proxy</div>
+        </div>
+      </div>
+      <p class="prose" style="margin-top:.25rem;">Each service pod gets an <strong>Envoy proxy injected as a sidecar container</strong>. All inbound and outbound traffic flows through the proxy — the application itself never makes raw network calls. The <strong>control plane</strong> (Istio, Linkerd) pushes configuration to all proxies centrally.</p>
+
+      <div class="sub-label">Service Mesh Capabilities</div>
+      <div class="concept-card">
+        <div class="concept-text">
+          <ul>
+            <li><strong>Mutual TLS (mTLS):</strong> every service-to-service call is encrypted and both sides authenticate — zero-trust networking within the cluster</li>
+            <li><strong>Traffic management:</strong> canary releases, A/B traffic splits, blue-green deployments at the proxy level without code changes</li>
+            <li><strong>Circuit breaking:</strong> automatically stop sending requests to a failing service; prevent cascading failures</li>
+            <li><strong>Retries and timeouts:</strong> configurable per route — enforce SLA behavior without embedding it in application code</li>
+            <li><strong>Observability:</strong> automatic metrics (latency, error rate, request volume), distributed traces, and access logs for every service-to-service call</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="example-card">
+        <div class="example-label">Scenario — When to Add a Service Mesh</div>
+        <div class="example-title">10+ microservices, inconsistent retry logic, no mTLS</div>
+        <div class="example-text">A platform team discovers that 12 microservices each implement retry logic differently — some retry 3 times, some once, some not at all. mTLS is implemented in 4 out of 12 services. Introducing Istio with Envoy sidecars enforces consistent retry policies and mTLS cluster-wide from a single control-plane configuration — no service code changes required.</div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════
+         SECTION 12 — Data Integration vs Data Interoperability
+    ════════════════════════════════════════════════════════════ -->
+    <section class="notes-section" id="s12">
+      <div class="section-header">
+        <span class="section-num">12</span>
+        <span class="section-title">Data Integration vs Data Interoperability</span>
+      </div>
+
+      <p class="prose">These two terms are often used interchangeably but represent fundamentally different goals with different governance implications.</p>
+
+      <div class="two-col">
+        <div class="def-card">
+          <div class="def-label">Definition</div>
+          <div class="def-term">Data Integration</div>
+          <div class="def-text">The technical process of <strong>combining data from multiple sources</strong> into a unified view. Integration moves, copies, or links data — it is a pipeline problem. The result is consolidated data in one place or format, accessible to consumers.</div>
+        </div>
+        <div class="def-card">
+          <div class="def-label">Definition</div>
+          <div class="def-term">Data Interoperability</div>
+          <div class="def-text">The ability of <strong>systems to exchange and meaningfully use data</strong> without custom integration work. Interoperability is a standards problem — when systems share a common vocabulary and format, they can communicate directly.</div>
+        </div>
+      </div>
+
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th>Dimension</th>
+            <th class="col-a">Data Integration</th>
+            <th class="col-b">Data Interoperability</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Primary goal</td><td class="col-a">Unified access — get data into one place</td><td class="col-b">Seamless exchange — systems understand each other</td></tr>
+          <tr><td>Approach</td><td class="col-a">Technical pipelines (ETL, CDC, federation)</td><td class="col-b">Standards and semantics (schemas, ontologies, formats)</td></tr>
+          <tr><td>Result</td><td class="col-a">Consolidated or synchronized dataset</td><td class="col-b">Systems that can communicate without custom adapters</td></tr>
+          <tr><td>Healthcare example</td><td class="col-a">ETL from hospital EHR to data warehouse</td><td class="col-b">All EHRs speak FHIR — direct exchange without adapters</td></tr>
+          <tr><td>Finance example</td><td class="col-a">Aggregating trades from 5 brokers into a risk DB</td><td class="col-b">All participants use the FIX protocol — direct messaging</td></tr>
+          <tr><td>Governance need</td><td class="col-a">Pipeline ownership, lineage, quality controls</td><td class="col-b">Schema standards, ontology governance, certification</td></tr>
+        </tbody>
+      </table>
+
+      <div class="insight-card">
+        <div class="insight-label">&#128161; The Goal Is Interoperability; Integration Is the Workaround</div>
+        <div class="insight-text">Every custom ETL pipeline built to connect two systems that use different data models is a symptom of <strong>missing interoperability</strong>. The more systems adopt common standards — JSON-LD, FHIR, AsyncAPI schemas, ISO date formats — the less bespoke integration work is required. Governance teams should invest in <strong>semantic standards first</strong> to reduce long-term integration debt.</div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════
+         SECTION 13 — Streaming Architecture
+    ════════════════════════════════════════════════════════════ -->
+    <section class="notes-section" id="s13">
+      <div class="section-header">
+        <span class="section-num">13</span>
+        <span class="section-title">Streaming Architecture</span>
+      </div>
+
+      <div class="def-card">
+        <div class="def-label">Definition</div>
+        <div class="def-term">Streaming Architecture</div>
+        <div class="def-text">An asynchronous integration pattern in which data is produced continuously as an ordered sequence of events or records — and consumed by subscribers in near-real time. Unlike request-response, the producer does not wait for a consumer acknowledgement; unlike batch, there is no collection period — data flows as it arrives.</div>
+      </div>
+
+      <p class="prose">Think of streaming like <strong>television broadcasting</strong>: a TV station (producer) transmits on a channel continuously. Any viewer (subscriber) who tunes in receives the broadcast. A viewer who is not watching misses what aired. The station does not know — or care — who is watching. This is the publish-subscribe model at its core.</p>
+
+      <div class="sub-label">Publish-Subscribe Model</div>
+      <div class="flow-wrap">
+        <div class="flow">
+          <div class="flow-node blue">Producer A<div class="fn-sub">IoT sensor</div></div>
+          <div class="flow-arrow">&#8594;</div>
+          <div class="flow-node yellow" style="min-width:130px;">Topic / Channel<div class="fn-sub">broker (Kafka, Pulsar)</div></div>
+          <div class="flow-arrow">&#8594;</div>
+          <div class="flow-node green">Subscriber 1<div class="fn-sub">real-time dashboard</div></div>
+        </div>
+      </div>
+      <div class="flow-wrap">
+        <div class="flow">
+          <div class="flow-node blue">Producer B<div class="fn-sub">clickstream</div></div>
+          <div class="flow-arrow">&#8594;</div>
+          <div class="flow-node yellow" style="min-width:130px;">Topic / Channel<div class="fn-sub">broker (Kafka, Pulsar)</div></div>
+          <div class="flow-arrow">&#8594;</div>
+          <div class="flow-node purple">Subscriber 2<div class="fn-sub">ML pipeline</div></div>
+        </div>
+      </div>
+
+      <p class="prose">All subscribers receive a copy of every message published to the topic. <strong>The broker (mediator) is essential</strong> — it manages subscriptions, buffers messages, and ensures delivery. Without a mediator, the producer would need to know every consumer and push to each directly, creating tight coupling.</p>
+
+      <div class="sub-label">Delivery Guarantees</div>
+      <p class="prose">Not all streaming platforms deliver messages the same way. The guarantee chosen affects reliability, performance, and cost:</p>
+
+      <div class="delivery-row">
+        <div class="delivery-card at-most">
+          <div class="delivery-name">At-Most-Once</div>
+          <div class="delivery-desc">Fire-and-forget. Messages may be lost if the broker or consumer fails. Packets are not guaranteed. Lowest overhead. Acceptable for telemetry where missing one in a thousand readings is tolerable.</div>
+        </div>
+        <div class="delivery-card at-least">
+          <div class="delivery-name">At-Least-Once</div>
+          <div class="delivery-desc">Messages are retried on failure — guaranteed delivery, but duplicates may appear. Consumers must be idempotent. Most common default in Kafka, RabbitMQ, and SQS.</div>
+        </div>
+        <div class="delivery-card exactly">
+          <div class="delivery-name">Exactly-Once</div>
+          <div class="delivery-desc">Each message is processed exactly one time. Most complex and costly. Required for financial transactions and inventory changes. Supported by Kafka Transactions and Apache Flink.</div>
+        </div>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-label">&#128161; Once Broadcast, It Is Difficult to Rebroadcast</div>
+        <div class="insight-text">In a pure broadcast model, a consumer that was offline during a message misses it permanently — like missing a live TV show. <strong>Log-based streaming platforms (Kafka, Pulsar)</strong> solve this by retaining messages for a configurable period — consumers can replay from any offset. This turns the stream into a replayable log, enabling backfill, reprocessing, and multiple independent consumers at different offsets.</div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════
+         SECTION 14 — Streaming Data Pipelines & CDC
+    ════════════════════════════════════════════════════════════ -->
+    <section class="notes-section" id="s14">
+      <div class="section-header">
+        <span class="section-num">14</span>
+        <span class="section-title">Streaming Data Pipelines &amp; CDC</span>
+      </div>
+
+      <p class="prose">Streaming data pipelines are the plumbing that moves continuously generated data — sensor readings, database changes, market ticks, clickstreams — from sources to consumers. They can flow in two directions.</p>
+
+      <div class="sub-label">Bidirectional Pipeline Design</div>
+      <div class="flow-wrap">
+        <div class="flow">
+          <div class="flow-node blue">Source<div class="fn-sub">DB / IoT / API</div></div>
+          <div class="flow-arrow">&#8594;</div>
+          <div class="flow-node yellow">Stream Processor<div class="fn-sub">filter, transform, enrich</div></div>
+          <div class="flow-arrow">&#8594;</div>
+          <div class="flow-node green">Sink<div class="fn-sub">warehouse / lake / dashboard</div></div>
+        </div>
+      </div>
+      <div class="flow-wrap">
+        <div class="flow">
+          <div class="flow-node green">Sink / Recovery<div class="fn-sub">replay trigger</div></div>
+          <div class="flow-arrow">&#8594;</div>
+          <div class="flow-node purple">Return Pipeline<div class="fn-sub">reprocess / reconcile</div></div>
+          <div class="flow-arrow">&#8594;</div>
+          <div class="flow-node blue">Source / Archive<div class="fn-sub">re-ingest</div></div>
+        </div>
+      </div>
+      <p class="prose">One forward pipeline carries data from source to sink. A <strong>return (backward) pipeline</strong> is used when the sink needs to signal corrections, replay data for reprocessing, or reconcile discrepancies back to the source system. This is common in financial settlement, healthcare reconciliation, and IoT firmware update acknowledgements.</p>
+
+      <div class="sub-label">Change Data Capture (CDC)</div>
+
+      <div class="def-card">
+        <div class="def-label">Definition</div>
+        <div class="def-term">Change Data Capture (CDC)</div>
+        <div class="def-text">A streaming integration technique that captures every <strong>insert, update, and delete</strong> from a source database and publishes those changes as an ordered stream of events — enabling downstream systems to stay synchronized in near-real time without polling.</div>
+      </div>
+
+      <table class="compare-table">
+        <thead><tr><th>CDC Method</th><th>How It Works</th><th>Pros</th><th>Cons</th></tr></thead>
+        <tbody>
+          <tr><td class="col-a">Log-based CDC</td><td>Reads the database write-ahead log (WAL / binlog) — Debezium + Kafka</td><td>Zero impact on source DB; captures all changes</td><td>Requires DB log access; schema changes need handling</td></tr>
+          <tr><td class="col-b">Trigger-based CDC</td><td>DB triggers fire on INSERT/UPDATE/DELETE and write to a change table</td><td>Works on any relational DB</td><td>Adds write overhead; triggers are hard to maintain</td></tr>
+          <tr><td class="col-c">Timestamp-based CDC</td><td>Polls for rows where <code>updated_at &gt; last_poll_time</code></td><td>Simple; no special DB access required</td><td>Misses deletes; polling delay; high DB load at scale</td></tr>
+        </tbody>
+      </table>
+
+      <div class="sub-label">Streaming Use Cases by Data Type</div>
+
+      <div class="two-col">
+        <div class="concept-card">
+          <div class="concept-title">&#128268; Sensor / IoT Data</div>
+          <div class="concept-text">
+            <ul>
+              <li>High-frequency, small payloads (temperature, pressure, vibration readings)</li>
+              <li>Time-windowing required: aggregate readings over 1-minute or 5-minute windows</li>
+              <li>Typically at-most-once or at-least-once delivery — occasional loss acceptable</li>
+              <li>Edge processing (on-device filtering) before streaming to reduce bandwidth</li>
+              <li>Examples: factory floor monitoring, autonomous vehicle telemetry, smart grid</li>
+            </ul>
+          </div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">&#128202; Stock Market Data</div>
+          <div class="concept-text">
+            <ul>
+              <li>Ultra-low latency requirements — microseconds matter for trading decisions</li>
+              <li>Strict ordering: event sequence must be preserved for trade-time reconstruction</li>
+              <li>Complex event processing (CEP): detect patterns across multiple instruments (e.g., arbitrage signals)</li>
+              <li>Exactly-once critical: a duplicate tick price can trigger incorrect trades</li>
+              <li>Often uses specialized protocols (FAST, FIX) rather than general-purpose Kafka</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════
+         SECTION 15 — Apache Flink
+    ════════════════════════════════════════════════════════════ -->
+    <section class="notes-section" id="s15">
+      <div class="section-header">
+        <span class="section-num">15</span>
+        <span class="section-title">Apache Flink</span>
+      </div>
+
+      <div class="def-card">
+        <div class="def-label">Definition</div>
+        <div class="def-term">Apache Flink</div>
+        <div class="def-text">An open-source distributed stream processing framework designed for <strong>stateful computations over unbounded (streaming) and bounded (batch) data</strong>. Flink provides exactly-once processing guarantees, sub-second latency, and fault-tolerant stateful operations at massive scale.</div>
+      </div>
+
+      <p class="prose">Flink distinguishes itself from most stream processors by being a <strong>true stream-first engine</strong>. Batch processing in Flink is modeled as a special case of streaming over a finite dataset — not the reverse. This means the same code handles both real-time and historical data.</p>
+
+      <div class="sub-label">Core Flink Concepts</div>
+      <div class="num-list">
+        <div class="num-item">
+          <div class="num-badge">1</div>
+          <div class="num-content">
+            <div class="num-title">DataStream API</div>
+            <div class="num-text">The primary API for processing unbounded streams. Supports transformations (map, filter, flatMap), aggregations, joins across streams, and custom operators.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge">2</div>
+          <div class="num-content">
+            <div class="num-title">State Management</div>
+            <div class="num-text">Flink maintains <strong>stateful operators</strong> — a running count, a session window, a running average. State is stored in Flink state backends (RocksDB for large state, heap for small) and is automatically checkpointed.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge green">3</div>
+          <div class="num-content">
+            <div class="num-title">Time Concepts</div>
+            <div class="num-text"><strong>Event time:</strong> when the event actually occurred (from the record timestamp) — used for correct out-of-order handling. <strong>Processing time:</strong> when Flink processes the record — simpler but inaccurate for late data.</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge green">4</div>
+          <div class="num-content">
+            <div class="num-title">Windowing</div>
+            <div class="num-text">Groups events for aggregation: <strong>Tumbling windows</strong> (fixed, non-overlapping, e.g., 1-minute buckets), <strong>Sliding windows</strong> (overlapping, e.g., last 5 minutes updated every 1 minute), <strong>Session windows</strong> (grouped by activity gaps).</div>
+          </div>
+        </div>
+        <div class="num-item">
+          <div class="num-badge purple">5</div>
+          <div class="num-content">
+            <div class="num-title">Exactly-Once via Checkpointing</div>
+            <div class="num-text">Flink periodically snapshots the full operator state to durable storage (S3, HDFS). On failure, it restores from the last checkpoint and replays input from the corresponding offset — guaranteeing exactly-once output without duplicates.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sub-label">Flink vs Spark Streaming</div>
+      <table class="compare-table">
+        <thead><tr><th>Dimension</th><th class="col-a">Apache Flink</th><th class="col-b">Spark Structured Streaming</th></tr></thead>
+        <tbody>
+          <tr><td>Processing model</td><td class="col-a">True streaming (record-by-record)</td><td class="col-b">Micro-batch (collects records, then processes)</td></tr>
+          <tr><td>Latency</td><td class="col-a">Sub-second (milliseconds)</td><td class="col-b">Seconds (batch interval)</td></tr>
+          <tr><td>State management</td><td class="col-a">First-class, built-in (RocksDB backend)</td><td class="col-b">Supported but less mature</td></tr>
+          <tr><td>Batch processing</td><td class="col-a">Supported (stream is the primitive)</td><td class="col-b">Native — Spark is batch-first</td></tr>
+          <tr><td>Best for</td><td class="col-a">Low-latency streaming, complex event processing</td><td class="col-b">Mixed batch/streaming workloads, ML pipelines</td></tr>
+        </tbody>
+      </table>
+
+      <div class="example-card">
+        <div class="example-label">Flink Use Cases</div>
+        <div class="example-title">Real-time fraud detection, CDC processing, IoT analytics</div>
+        <div class="example-text">
+          <ul>
+            <li><strong>Fraud detection:</strong> a Flink job maintains a stateful model of each user's recent transaction history; when a new transaction arrives, it is evaluated against the pattern in real time</li>
+            <li><strong>CDC processing:</strong> Debezium publishes database changes to Kafka; Flink consumes and applies transformations before writing to the data lake — with exactly-once guarantees</li>
+            <li><strong>IoT analytics:</strong> 10,000 sensors emit temperature readings; Flink computes per-device 5-minute averages and emits alerts when thresholds are exceeded</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════
+         SECTION 16 — Event-Driven Architecture (EDA)
+    ════════════════════════════════════════════════════════════ -->
+    <section class="notes-section" id="s16">
+      <div class="section-header">
+        <span class="section-num">16</span>
+        <span class="section-title">Event-Driven Architecture</span>
+      </div>
+
+      <div class="def-card">
+        <div class="def-label">Definition</div>
+        <div class="def-term">Event-Driven Architecture (EDA)</div>
+        <div class="def-text">An architectural pattern in which components communicate by producing and consuming <strong>events</strong> — immutable, timestamped records of something that happened. Producers emit events without knowing who consumes them; consumers react without knowing who produced them. The architecture is inherently asynchronous and decoupled.</div>
+      </div>
+
+      <p class="prose">An <strong>event</strong> is not a command. A command says "do this." An event says "this happened." This distinction matters: a command fails if the recipient is unavailable; an event is recorded and the consumer reacts when ready. EDA enables resilience and decoupling that direct-call architectures cannot achieve.</p>
+
+      <div class="sub-label">The Two Topologies</div>
+      <p class="prose">EDA is implemented through two distinct routing topologies, each suited to different levels of workflow complexity:</p>
+
+      <div class="topology-wrap">
+        <div class="topology-card mediator">
+          <div class="topology-title">&#127917; Mediator Topology</div>
+          <div class="topology-sub">Centralized event orchestration</div>
+          <ul>
+            <li>A central <strong>event mediator</strong> receives all incoming events and routes them to the correct event processors in the correct sequence</li>
+            <li>The mediator knows the workflow — it manages conditional routing, parallel execution, and error handling</li>
+            <li>Event processors send results back to the mediator, which decides the next step</li>
+            <li><strong>When to use:</strong> complex workflows with conditional branching, parallel steps, or compensation (rollback) logic</li>
+            <li><strong>Tools:</strong> Apache Camel, MuleSoft, WSO2 ESB, AWS Step Functions</li>
+            <li><strong>Pros:</strong> visible, auditable workflow; centralized error recovery</li>
+            <li><strong>Cons:</strong> mediator is a bottleneck and single point of failure</li>
+          </ul>
+        </div>
+        <div class="topology-card broker">
+          <div class="topology-title">&#128240; Broker Topology</div>
+          <div class="topology-sub">Decentralized event routing</div>
+          <ul>
+            <li>Events are published to a <strong>message broker</strong>; there is no central coordinator — the broker just routes by topic</li>
+            <li>Event processors subscribe to topics they care about and react independently, often emitting new events that trigger further processing</li>
+            <li>The overall workflow is implicit — it emerges from the chain of reactions</li>
+            <li><strong>When to use:</strong> high-throughput, simple event chains, maximum decoupling, adding consumers without changing producers</li>
+            <li><strong>Tools:</strong> Apache Kafka, RabbitMQ, AWS EventBridge, Google Pub/Sub</li>
+            <li><strong>Pros:</strong> highly scalable, decoupled, no single point of failure</li>
+            <li><strong>Cons:</strong> difficult to trace the full workflow; no centralized error handling</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="sub-label">Mediator vs Broker — Decision Guide</div>
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th>Dimension</th>
+            <th class="col-d">Mediator Topology</th>
+            <th class="col-b">Broker Topology</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Workflow visibility</td><td class="col-d">High — mediator has full state</td><td class="col-b">Low — distributed across processors</td></tr>
+          <tr><td>Coupling</td><td class="col-d">Processors coupled to mediator</td><td class="col-b">Producers and consumers fully decoupled</td></tr>
+          <tr><td>Error handling</td><td class="col-d">Centralized — mediator manages retries and compensation</td><td class="col-b">Per-processor — each handles its own failures</td></tr>
+          <tr><td>Scalability</td><td class="col-d">Limited by mediator capacity</td><td class="col-b">Scales independently per topic / consumer group</td></tr>
+          <tr><td>Complexity of workflow</td><td class="col-d">Better for complex, conditional flows</td><td class="col-b">Better for simple, linear event chains</td></tr>
+          <tr><td>Adding new consumers</td><td class="col-d">Must update mediator routing rules</td><td class="col-b">New consumer subscribes to topic — no change to producers</td></tr>
+        </tbody>
+      </table>
+
+      <div class="insight-card">
+        <div class="insight-label">&#128161; Choose Topology by Workflow Complexity</div>
+        <div class="insight-text">If you can draw your event workflow as a simple linear chain — A triggers B, B triggers C — use the <strong>broker topology</strong>. If your workflow has conditions ("if payment fails, route to refund processor; if it succeeds, route to fulfillment and notification in parallel"), use the <strong>mediator topology</strong>. Many production systems use both: a broker for high-throughput event ingestion and a mediator for complex business process workflows triggered by those events.</div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════
+         SECTION 17 — Integration Governance Model
+    ════════════════════════════════════════════════════════════ -->
+    <section class="notes-section" id="s17">
+      <div class="section-header">
+        <span class="section-num">17</span>
+        <span class="section-title">Integration Governance Model</span>
+      </div>
+
+      <p class="prose">Integration without governance creates <strong>integration debt</strong>: undocumented connections, inconsistent schemas, unknown data flows, and brittle pipelines that nobody dares change. An integration governance model applies the same ownership, standards, and lifecycle management to integration points that data governance applies to data assets.</p>
+
+      <div class="sub-label">API Lifecycle Governance</div>
+      <div class="flow-wrap">
+        <div class="flow">
+          <div class="flow-node blue">Design<div class="fn-sub">OpenAPI / AsyncAPI spec</div></div>
+          <div class="flow-arrow">&#8594;</div>
+          <div class="flow-node green">Publish<div class="fn-sub">API catalog / gateway</div></div>
+          <div class="flow-arrow">&#8594;</div>
+          <div class="flow-node yellow">Version<div class="fn-sub">semver &amp; changelog</div></div>
+          <div class="flow-arrow">&#8594;</div>
+          <div class="flow-node purple">Monitor<div class="fn-sub">SLA, errors, latency</div></div>
+          <div class="flow-arrow">&#8594;</div>
+          <div class="flow-node red">Deprecate &#8594; Retire<div class="fn-sub">sunset policy</div></div>
+        </div>
+      </div>
+
+      <div class="sub-label">Interface Standards</div>
+      <table class="compare-table">
+        <thead><tr><th>Standard</th><th>Applies To</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td class="col-a">OpenAPI 3.x</td><td>REST APIs</td><td>Machine-readable spec: endpoints, parameters, request/response schemas, auth</td></tr>
+          <tr><td class="col-b">AsyncAPI 2.x</td><td>Event / streaming APIs</td><td>Specifies channels, message schemas, and broker bindings for event-driven interfaces</td></tr>
+          <tr><td class="col-c">GraphQL Schema</td><td>GraphQL APIs</td><td>Self-documenting type system; introspection-based discovery</td></tr>
+          <tr><td class="col-d">Protocol Buffers (protobuf)</td><td>gRPC services</td><td>Binary schema for high-performance RPC interfaces; strongly typed</td></tr>
+          <tr><td>JSON Schema / Avro</td><td>Kafka / streaming</td><td>Schema registry-enforced contracts for message format and evolution</td></tr>
+        </tbody>
+      </table>
+
+      <div class="sub-label">Ownership: Who Owns the Interface?</div>
+      <div class="two-col">
+        <div class="concept-card">
+          <div class="concept-title">Producer-Owned Contracts</div>
+          <div class="concept-text">The producing team defines and publishes the interface. Consumers adapt to what the producer offers. Simpler for the producer, but consumers may get fields they do not need and miss fields they do. Risk: producer changes break consumers silently.</div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-title">Consumer-Driven Contracts (CDC Testing)</div>
+          <div class="concept-text">Consumers specify what they need from the producer; the producer's test suite verifies it satisfies all consumer contracts. Tools: Pact, Spring Cloud Contract. Risk: coordination overhead. Benefit: no breaking changes reach consumers.</div>
+        </div>
+      </div>
+
+      <div class="sub-label">Security Standards for Integration</div>
+      <div class="concept-card">
+        <div class="concept-text">
+          <ul>
+            <li><strong>OAuth 2.0 / OIDC at the API Gateway:</strong> all external API consumers must present a valid access token; the gateway validates before forwarding to the backend service</li>
+            <li><strong>mTLS within the service mesh:</strong> service-to-service calls inside the cluster are encrypted and mutually authenticated — both client and server prove identity</li>
+            <li><strong>Schema registry enforcement for streams:</strong> Kafka producers must register their schema; consumers validate incoming messages against the registered schema — preventing malformed data from propagating</li>
+            <li><strong>IP allowlisting for partner integrations:</strong> B2B integrations may combine OAuth with network-level IP restrictions for defense-in-depth</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="sub-label">Integration SLAs and Monitoring</div>
+      <table class="compare-table">
+        <thead><tr><th>SLA Dimension</th><th>What to Measure</th><th>Example Target</th></tr></thead>
+        <tbody>
+          <tr><td class="col-a">Availability</td><td>Percentage of time the API or pipeline is operational</td><td>99.9% uptime (8.7 hrs downtime/yr)</td></tr>
+          <tr><td class="col-b">Latency (API)</td><td>p50 / p95 / p99 response time</td><td>p95 &lt; 200 ms</td></tr>
+          <tr><td class="col-c">Throughput</td><td>Requests per second or events per second</td><td>10,000 events/sec sustained</td></tr>
+          <tr><td class="col-d">Consumer Lag (Streaming)</td><td>How far behind the slowest consumer is from the latest event</td><td>Lag &lt; 30 seconds</td></tr>
+          <tr><td>Error Rate</td><td>Percentage of requests resulting in 5xx or poison-pill events</td><td>&lt; 0.1% error rate</td></tr>
+        </tbody>
+      </table>
+
+      <div class="warn-card">
+        <div class="warn-label">&#9888; Integration Anti-Patterns to Avoid</div>
+        <div class="warn-text">
+          <ul>
+            <li><strong>Spaghetti integrations:</strong> point-to-point connections between every pair of systems — grows as O(N²), impossible to govern</li>
+            <li><strong>Undocumented APIs:</strong> if it is not in the API catalog with an owner, it does not officially exist — and cannot be governed or monitored</li>
+            <li><strong>Shared mutable databases:</strong> two services writing to the same database table — coupling that defeats service independence</li>
+            <li><strong>No versioning strategy:</strong> breaking API changes without a deprecation period destroys consumer trust and causes production outages</li>
+            <li><strong>Missing schema evolution rules:</strong> a Kafka producer adding a required field without a migration plan breaks all downstream consumers</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-label">&#128161; Treat Every Integration as a Governed Asset</div>
+        <div class="insight-text">An integration point — whether an API endpoint, a Kafka topic, or a CDC pipeline — is a <strong>data delivery contract</strong>. It has an owner, a schema, a versioning policy, a security posture, and an SLA. Registering every integration in a catalog and assigning an owner is the difference between a governed integration landscape and an undocumented web of hidden dependencies.</div>
+      </div>
+    </section>
+
+    <footer class="site-footer">Data Governance &mdash; Module 8 Class Notes</footer>
+
+  </main>
+</div>
+
+<script>
+  const links = document.querySelectorAll(".toc-link");
+  const sections = document.querySelectorAll(".notes-section");
+
+  const observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        var id = entry.target.id;
+        links.forEach(function(l) { l.classList.remove("active"); });
+        var active = document.querySelector(".toc-link[href='#" + id + "']");
+        if (active) active.classList.add("active");
+      }
+    });
+  }, { rootMargin: "-20% 0px -70% 0px" });
+
+  sections.forEach(function(s) { observer.observe(s); });
+</script>
+</body>
+</html>

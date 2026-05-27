@@ -37,6 +37,10 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 - [feature] `wild-rift/thex-mecha.html` — T-Hex Mecha mini-game (WASD pilot, F mount, G dismount, Q/W/E/R abilities, enemy cubes, skill bar with cooldowns); Wild Rift section added to homepage
 
+## 2026-05-26
+
+- [feature] `class-notes/data-governance/module-08.html` — 17-section class notes on "Integration": SOA, ESB, orchestration vs choreography, API architecture (L3/L7), API gateway (single vs nested), microservices, FaaS (Prime Video case study), service mesh, data integration vs interoperability, streaming architecture, CDC, Apache Flink, event-driven architecture (mediator vs broker topology), and integration governance model; index updated to 8 modules
+
 ## 2026-05-19
 
 - [ux] `index.html` — Class Notes section: replaced two individual module cards with a single "Data Governance" hub card (links to 7-module index) + Classroom Activities card; nav badge updated to 2
