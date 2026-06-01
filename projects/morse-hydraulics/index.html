@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Morse Hydraulics — Project Reference</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f1117; color: #e2e8f0; min-height: 100vh; }
+
+  .top-bar { background: #1a1d27; border-bottom: 1px solid #2d3148; padding: 12px 24px; display: flex; align-items: center; gap: 12px; }
+  .top-bar .label { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: #64748b; }
+  .top-bar .company { font-size: 15px; font-weight: 600; color: #f1f5f9; }
+  .status-badge { font-size: 11px; padding: 2px 8px; border-radius: 99px; background: #1e3a5f; color: #60a5fa; border: 1px solid #2563eb44; margin-left: auto; }
+
+  .page-header { padding: 32px 32px 0; }
+  .page-header h1 { font-size: 24px; font-weight: 700; color: #f1f5f9; }
+  .page-header .sub { color: #94a3b8; font-size: 14px; margin-top: 4px; }
+  .tag-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+  .tag { font-size: 11px; padding: 3px 10px; border-radius: 99px; background: #1e293b; color: #94a3b8; border: 1px solid #334155; }
+  .tag.blue { background: #1e3a5f; color: #60a5fa; border-color: #2563eb44; }
+  .tag.green { background: #14291f; color: #4ade80; border-color: #16a34a44; }
+  .tag.amber { background: #292110; color: #fbbf24; border-color: #d9770644; }
+
+  .tab-nav { display: flex; gap: 2px; padding: 24px 32px 0; border-bottom: 1px solid #1e293b; overflow-x: auto; }
+  .tab-btn { font-size: 13px; padding: 8px 16px; border: none; background: none; color: #64748b; cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; transition: color .15s; }
+  .tab-btn:hover { color: #94a3b8; }
+  .tab-btn.active { color: #60a5fa; border-bottom-color: #60a5fa; }
+
+  .tab-section { display: none; padding: 28px 32px; }
+  .tab-section.active { display: block; }
+
+  /* Cards */
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; margin-top: 16px; }
+  .card { background: #1a1d27; border: 1px solid #2d3148; border-radius: 10px; padding: 16px; }
+  .card .card-icon { font-size: 22px; margin-bottom: 8px; }
+  .card h3 { font-size: 13px; font-weight: 600; color: #f1f5f9; margin-bottom: 6px; }
+  .card p { font-size: 12px; color: #94a3b8; line-height: 1.6; }
+  .card.highlight { border-color: #2563eb44; background: #1e3a5f22; }
+  .card.warn { border-color: #d9770644; background: #29211022; }
+  .card.good { border-color: #16a34a44; background: #14291f22; }
+
+  /* Section headings */
+  .section-label { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: #60a5fa; margin-bottom: 12px; margin-top: 28px; }
+  .section-label:first-child { margin-top: 0; }
+
+  /* Table */
+  .data-table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 13px; }
+  .data-table th { text-align: left; padding: 8px 12px; background: #1a1d27; color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; border-bottom: 1px solid #2d3148; }
+  .data-table td { padding: 10px 12px; border-bottom: 1px solid #1e293b; color: #cbd5e1; vertical-align: top; line-height: 1.5; }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table td:first-child { color: #f1f5f9; font-weight: 500; white-space: nowrap; }
+  .cat-row td { background: #12141c; color: #60a5fa !important; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; font-weight: 600 !important; }
+
+  /* Opportunity cards */
+  .opp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; margin-top: 16px; }
+  .opp-card { background: #1a1d27; border: 1px solid #2d3148; border-radius: 10px; padding: 18px; }
+  .opp-card .opp-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+  .opp-card h3 { font-size: 14px; font-weight: 600; color: #f1f5f9; }
+  .effort-badge { font-size: 10px; padding: 2px 8px; border-radius: 99px; white-space: nowrap; }
+  .effort-badge.low { background: #14291f; color: #4ade80; border: 1px solid #16a34a44; }
+  .effort-badge.med { background: #292110; color: #fbbf24; border: 1px solid #d9770644; }
+  .effort-badge.high { background: #291020; color: #f87171; border: 1px solid #dc262644; }
+  .opp-card .opp-desc { font-size: 12px; color: #94a3b8; line-height: 1.6; margin-bottom: 10px; }
+  .opp-card .opp-impact { font-size: 11px; color: #60a5fa; }
+  .opp-card .opp-impact span { color: #94a3b8; }
+
+  /* Competitor table chips */
+  .chip { display: inline-block; font-size: 11px; padding: 2px 7px; border-radius: 4px; background: #1e293b; color: #94a3b8; border: 1px solid #334155; margin: 2px 2px 2px 0; }
+  .chip.blue { background: #1e3a5f; color: #60a5fa; border-color: #2563eb44; }
+  .chip.green { background: #14291f; color: #4ade80; border-color: #16a34a44; }
+
+  /* Notes / log */
+  .note-block { background: #1a1d27; border: 1px solid #2d3148; border-left: 3px solid #60a5fa; border-radius: 6px; padding: 14px 16px; margin-bottom: 12px; }
+  .note-block .note-date { font-size: 11px; color: #64748b; margin-bottom: 4px; }
+  .note-block p { font-size: 13px; color: #cbd5e1; line-height: 1.6; }
+  .note-block.pending { border-left-color: #fbbf24; }
+  .note-block.done { border-left-color: #4ade80; }
+
+  /* Progress bar */
+  .progress-section { background: #1a1d27; border: 1px solid #2d3148; border-radius: 10px; padding: 16px; margin-bottom: 20px; }
+  .progress-section h3 { font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 10px; }
+  .progress-items { display: flex; flex-direction: column; gap: 8px; }
+  .progress-item { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+  .progress-item .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .dot.done { background: #4ade80; }
+  .dot.pending { background: #fbbf24; }
+  .dot.todo { background: #334155; }
+  .progress-item .item-label { color: #cbd5e1; }
+
+  /* Locations */
+  .loc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin-top: 12px; }
+  .loc-card { background: #1a1d27; border: 1px solid #2d3148; border-radius: 8px; padding: 12px 14px; }
+  .loc-card .loc-city { font-size: 14px; font-weight: 600; color: #f1f5f9; }
+  .loc-card .loc-state { font-size: 11px; color: #60a5fa; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 4px; }
+  .loc-card .loc-phone { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: #0f1117; }
+  ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div>
+    <div class="label">Project Reference</div>
+    <div class="company">Morse Hydraulics</div>
+  </div>
+  <span class="status-badge">Active Prospect</span>
+</div>
+
+<div class="page-header">
+  <h1>🔧 Morse Hydraulics</h1>
+  <div class="sub">Hydraulic hoses, fittings & mobile services — 7 locations across CA, WA, OR, TX</div>
+  <div class="tag-row">
+    <span class="tag blue">Hydraulics</span>
+    <span class="tag blue">Industrial Distribution</span>
+    <span class="tag green">AI Prospect</span>
+    <span class="tag amber">Discovery Phase</span>
+    <span class="tag">Multi-location</span>
+    <span class="tag">B2B</span>
+  </div>
+</div>
+
+<div class="tab-nav">
+  <button class="tab-btn active" onclick="showTab('overview', 0)">Company Overview</button>
+  <button class="tab-btn" onclick="showTab('industry', 1)">Industry Primer</button>
+  <button class="tab-btn" onclick="showTab('operations', 2)">Operations Map</button>
+  <button class="tab-btn" onclick="showTab('ai-opps', 3)">AI Opportunities</button>
+  <button class="tab-btn" onclick="showTab('competitors', 4)">Comparable Companies</button>
+  <button class="tab-btn" onclick="showTab('log', 5)">Engagement Log</button>
+  <button class="tab-btn" onclick="showTab('refs', 6)">Reference Materials</button>
+</div>
+
+<!-- TAB 0: Company Overview -->
+<div id="tab-overview" class="tab-section active">
+  <div class="section-label">Who They Are</div>
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-icon">🏢</div>
+      <h3>Business Model</h3>
+      <p>Distributor and fabricator of hydraulic hoses, fittings, and related components. Sells over-the-counter and via mobile emergency services. B2B-focused serving industrial, construction, agriculture, and fleet clients.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">📍</div>
+      <h3>Footprint</h3>
+      <p>7 locations: Fremont CA, Hayward CA, Seattle WA, Kent WA, Tacoma WA, Portland OR, Austin TX. Ships to all U.S. states.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">⏰</div>
+      <h3>Hours & Access</h3>
+      <p>Mon–Fri 7am–5pm counter service. Saturday varies by location. Mobile emergency services available. Sunday/holiday by arrangement.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🎯</div>
+      <h3>Mission</h3>
+      <p>"Provide the right solutions with world class product by exceeding customer's expectations on product and service." Emphasizes fast, innovative solutions.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🛠️</div>
+      <h3>Core Products</h3>
+      <p>High-pressure hydraulic hoses, adaptors & fittings, brake lines, hose crimpers, quick connect systems, pressure gauges, greaser systems, data center quick disconnects.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">📦</div>
+      <h3>Differentiators</h3>
+      <p>Hard-to-find fittings & connectors. Mobile emergency response. Wide product range. Technical professionals on staff for custom solutions.</p>
+    </div>
+  </div>
+
+  <div class="section-label" style="margin-top:28px;">Locations</div>
+  <div class="loc-grid">
+    <div class="loc-card">
+      <div class="loc-state">California</div>
+      <div class="loc-city">Fremont</div>
+      <div class="loc-phone">(510) 623-1420</div>
+    </div>
+    <div class="loc-card">
+      <div class="loc-state">California</div>
+      <div class="loc-city">Hayward</div>
+      <div class="loc-phone">(510) 600-2804</div>
+    </div>
+    <div class="loc-card">
+      <div class="loc-state">Washington</div>
+      <div class="loc-city">Kent</div>
+      <div class="loc-phone">(253) 220-4404</div>
+    </div>
+    <div class="loc-card">
+      <div class="loc-state">Washington</div>
+      <div class="loc-city">Tacoma</div>
+      <div class="loc-phone">(253) 507-5252</div>
+    </div>
+    <div class="loc-card">
+      <div class="loc-state">Washington</div>
+      <div class="loc-city">Seattle</div>
+      <div class="loc-phone">(341) 257-8612</div>
+    </div>
+    <div class="loc-card">
+      <div class="loc-state">Oregon</div>
+      <div class="loc-city">Portland</div>
+      <div class="loc-phone">(971) 278-3201</div>
+    </div>
+    <div class="loc-card">
+      <div class="loc-state">Texas</div>
+      <div class="loc-city">Austin</div>
+      <div class="loc-phone">(737) 900-3559</div>
+    </div>
+  </div>
+
+  <div class="section-label" style="margin-top:28px;">Open Questions (Pre-Visit)</div>
+  <div class="card-grid">
+    <div class="card warn">
+      <div class="card-icon">❓</div>
+      <h3>Current Software Stack</h3>
+      <p>What ERP or POS system do they use? How do they track inventory across 7 locations?</p>
+    </div>
+    <div class="card warn">
+      <div class="card-icon">❓</div>
+      <h3>Order Volume & Mix</h3>
+      <p>Walk-in vs. phone vs. repeat/contract customers? What percentage is emergency mobile callout?</p>
+    </div>
+    <div class="card warn">
+      <div class="card-icon">❓</div>
+      <h3>Pain Points</h3>
+      <p>Where do they lose time or money today? Stockouts? Quoting delays? Tech knowledge gaps?</p>
+    </div>
+    <div class="card warn">
+      <div class="card-icon">❓</div>
+      <h3>Team Structure</h3>
+      <p>How many staff per location? Dedicated tech vs. counter staff? How is knowledge shared across branches?</p>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 1: Industry Primer -->
+<div id="tab-industry" class="tab-section">
+  <div class="section-label">What Is This Industry</div>
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-icon">⚙️</div>
+      <h3>Hydraulic Systems</h3>
+      <p>Use pressurized fluid to transmit force. Found in construction equipment, industrial machinery, agriculture, manufacturing, aerospace, and vehicles. Hoses and fittings are consumable components — they fail under pressure, heat, and wear.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🏪</div>
+      <h3>Hose & Fitting Distributors</h3>
+      <p>Source hoses and fittings from manufacturers, cut and crimp hoses to spec, and sell over-the-counter or via mobile services. Speed and breadth of inventory are key competitive advantages.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🚨</div>
+      <h3>Emergency Repair Context</h3>
+      <p>A blown hydraulic hose on a job site can halt $50k/day of equipment. Customers need fast replacement — often same-day or within hours. This makes the "hard to find fittings" value prop critical.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">📐</div>
+      <h3>Custom Fabrication</h3>
+      <p>Unlike commodity retail, hose assemblies are often custom — specific length, end fittings, pressure rating. Staff need technical knowledge to match specifications from worn or unlabeled parts.</p>
+    </div>
+  </div>
+
+  <div class="section-label" style="margin-top:28px;">Key Industry Terminology</div>
+  <table class="data-table">
+    <thead>
+      <tr><th>Term</th><th>What It Means</th></tr>
+    </thead>
+    <tbody>
+      <tr class="cat-row"><td colspan="2">Hose & Fittings</td></tr>
+      <tr><td>Hose Assembly</td><td>A hose cut to length with fittings crimped on each end — the finished product sold to customers.</td></tr>
+      <tr><td>Crimping</td><td>The process of mechanically compressing a metal ferrule (sleeve) onto the hose end to secure a fitting. Requires a hose crimper machine and die sets.</td></tr>
+      <tr><td>JIC / NPT / BSP / SAE</td><td>Thread standards for fittings. Each system is incompatible — matching the right standard is critical. JIC (flare), NPT (tapered pipe), BSP (British), SAE O-ring are common types.</td></tr>
+      <tr><td>Working Pressure / Burst Pressure</td><td>Working pressure = max safe operating pressure. Burst pressure = 4x working pressure by safety standard. Mismatching causes failures.</td></tr>
+      <tr><td>OAL (Overall Length)</td><td>Total length of the finished hose assembly including fittings. Customers often specify this from a failed hose they bring in.</td></tr>
+      <tr class="cat-row"><td colspan="2">Operations</td></tr>
+      <tr><td>VMI (Vendor Managed Inventory)</td><td>Supplier manages and restocks the customer's on-site inventory. Reduces customer stockouts and ties them to the supplier.</td></tr>
+      <tr><td>Counter Sales</td><td>Walk-in customers purchasing over the counter — often emergency or routine maintenance buyers from nearby job sites or fleets.</td></tr>
+      <tr><td>Mobile Emergency Service</td><td>A technician goes to the customer site with materials and a crimper to fabricate and install on-the-spot. High value, time-sensitive.</td></tr>
+      <tr><td>Hose ID (Identification)</td><td>Identifying an unknown hose by its outer diameter, layer construction, and markings. A common skill challenge — customers bring in worn/unlabeled hoses.</td></tr>
+      <tr class="cat-row"><td colspan="2">Market Context</td></tr>
+      <tr><td>OEM vs. Aftermarket</td><td>OEM = original manufacturer parts (expensive, long lead time). Aftermarket = compatible alternatives (faster, cheaper). Distributors like Morse sell aftermarket.</td></tr>
+      <tr><td>Fluid Power</td><td>The broader industry term covering hydraulics (liquid) and pneumatics (air). Hydraulics carry much higher pressures and forces.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="section-label" style="margin-top:28px;">Industry Trends</div>
+  <div class="card-grid">
+    <div class="card highlight">
+      <div class="card-icon">🤖</div>
+      <h3>AI & Predictive Maintenance</h3>
+      <p>Siemens and Parker Hannifin are investing heavily. AI on sensor data can predict hose/component failure before it happens — reducing emergency downtime by up to 50%.</p>
+    </div>
+    <div class="card highlight">
+      <div class="card-icon">📱</div>
+      <h3>Digital Self-Service</h3>
+      <p>ARG Industrial built "IntelliBuild" — a SaaS tool letting customers spec and order custom hose assemblies online. Royal Brass saw 33% monthly sales growth after launching ecommerce.</p>
+    </div>
+    <div class="card highlight">
+      <div class="card-icon">📦</div>
+      <h3>Product Data Management</h3>
+      <p>Hydroscand manages 30,000+ SKUs across 20+ countries. Centralizing product data (PIM systems) is a growing need to support digital sales and reduce errors.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">📊</div>
+      <h3>Low AI Adoption So Far</h3>
+      <p>Only 16% of fluid power companies say AI has major impact on their operations (2024 survey). Early movers have a real advantage window right now.</p>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 2: Operations Map -->
+<div id="tab-operations" class="tab-section">
+  <div class="section-label">Core Business Processes (Hypothesized — Confirm On-Site)</div>
+  <table class="data-table">
+    <thead>
+      <tr><th>Process</th><th>Description</th><th>Likely Pain Points</th></tr>
+    </thead>
+    <tbody>
+      <tr class="cat-row"><td colspan="3">Customer-Facing</td></tr>
+      <tr>
+        <td>Counter Sales</td>
+        <td>Customer walks in with a failed hose or part number. Staff identifies it, cuts, crimps, and sells the assembly.</td>
+        <td>Hose ID when no markings exist. Staff knowledge dependency. Inconsistency across branches.</td>
+      </tr>
+      <tr>
+        <td>Phone Quoting</td>
+        <td>Customer calls with specs or a description. Staff quotes price and availability.</td>
+        <td>Manual lookup. No online self-service. Hard to quote unusual fittings quickly.</td>
+      </tr>
+      <tr>
+        <td>Mobile Emergency Dispatch</td>
+        <td>Technician dispatched to job site with materials + crimper. Fabricates on location.</td>
+        <td>Scheduling, parts availability on the truck, routing efficiency, service documentation.</td>
+      </tr>
+      <tr>
+        <td>Customer Reorders</td>
+        <td>Repeat customers (fleets, contractors) reorder the same assemblies periodically.</td>
+        <td>Manual process, no stored specs, customer has to re-explain or re-bring the hose each time.</td>
+      </tr>
+      <tr class="cat-row"><td colspan="3">Internal Operations</td></tr>
+      <tr>
+        <td>Inventory Management</td>
+        <td>Stock hoses, fittings, and accessories across 7 locations. Reorder when low.</td>
+        <td>Stockouts on unusual fittings. Overstock on slow movers. No real-time visibility across branches.</td>
+      </tr>
+      <tr>
+        <td>Hose Fabrication</td>
+        <td>Cut hose to length, select correct dies, crimp fittings. Inspect for correct crimp diameter.</td>
+        <td>Die selection errors. Quality consistency. No digital record of what was made.</td>
+      </tr>
+      <tr>
+        <td>Purchasing / Ordering</td>
+        <td>Reorder from suppliers when stock runs low. Manage supplier relationships.</td>
+        <td>Manual reorder triggers. Lead time visibility. Supplier price changes.</td>
+      </tr>
+      <tr>
+        <td>Knowledge Management</td>
+        <td>Technical know-how lives in the heads of experienced staff. New staff ramp slowly.</td>
+        <td>No structured knowledge base. If an expert leaves, knowledge walks out the door.</td>
+      </tr>
+      <tr class="cat-row"><td colspan="3">Cross-Location</td></tr>
+      <tr>
+        <td>Inter-Branch Stock Sharing</td>
+        <td>When one branch is out, they may source from another or expedite from supplier.</td>
+        <td>No real-time visibility into what other branches have. Relies on phone calls.</td>
+      </tr>
+      <tr>
+        <td>Reporting & Performance</td>
+        <td>Management visibility into sales, margins, and inventory across all locations.</td>
+        <td>Likely manual or spreadsheet-based. Slow, inconsistent reporting.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- TAB 3: AI Opportunities -->
+<div id="tab-ai-opps" class="tab-section">
+  <div class="section-label">Recommended Starting Points — Easiest Wins First</div>
+  <div class="opp-grid">
+
+    <div class="opp-card good">
+      <div class="opp-header">
+        <h3>🔍 AI Hose Identification Assistant</h3>
+        <span class="effort-badge low">Low Effort</span>
+      </div>
+      <div class="opp-desc">Customer brings in an unlabeled or worn hose. Staff takes a photo — AI identifies hose type, diameter, pressure rating, and compatible fittings. Reduces reliance on senior staff expertise and speeds up counter service.</div>
+      <div class="opp-impact">Impact: <span>Faster service, consistent accuracy, enables junior staff to handle complex IDs.</span></div>
+    </div>
+
+    <div class="opp-card good">
+      <div class="opp-header">
+        <h3>💬 Internal Knowledge Chatbot</h3>
+        <span class="effort-badge low">Low Effort</span>
+      </div>
+      <div class="opp-desc">An AI assistant trained on product catalogs, fitting specs, and compatibility tables. Staff asks in plain English: "What fitting adapts a JIC -6 to NPT 3/8 female?" — gets the answer instantly. Reduces dependency on one or two experts.</div>
+      <div class="opp-impact">Impact: <span>Faster onboarding, consistent answers, knowledge retained when staff leave.</span></div>
+    </div>
+
+    <div class="opp-card good">
+      <div class="opp-header">
+        <h3>📦 Inventory Demand Forecasting</h3>
+        <span class="effort-badge low">Low Effort</span>
+      </div>
+      <div class="opp-desc">Analyze historical sales data to predict which SKUs will be needed by location and season. Auto-flag reorder points. Reduces stockouts on fast movers and overstock on slow movers.</div>
+      <div class="opp-impact">Impact: <span>Reduce emergency orders, lower carrying costs, improve fill rate.</span></div>
+    </div>
+
+    <div class="opp-card">
+      <div class="opp-header">
+        <h3>🛒 Online Self-Service Quoting</h3>
+        <span class="effort-badge med">Medium Effort</span>
+      </div>
+      <div class="opp-desc">A web tool where customers can spec and request a quote for hose assemblies — similar to what ARG Industrial built (IntelliBuild). Frees up counter staff from phone quotes and opens a new sales channel.</div>
+      <div class="opp-impact">Impact: <span>ARG saw major order volume growth. Royal Brass saw 33% monthly sales growth with ecommerce.</span></div>
+    </div>
+
+    <div class="opp-card">
+      <div class="opp-header">
+        <h3>🗂️ Customer Assembly History</h3>
+        <span class="effort-badge med">Medium Effort</span>
+      </div>
+      <div class="opp-desc">Store every custom assembly made for each customer — specs, photos, crimp settings. Repeat orders become one-click. Customer no longer needs to bring in the hose again.</div>
+      <div class="opp-impact">Impact: <span>Faster repeat orders, higher customer retention, reduced errors on reorders.</span></div>
+    </div>
+
+    <div class="opp-card">
+      <div class="opp-header">
+        <h3>🚐 Mobile Dispatch Optimization</h3>
+        <span class="effort-badge med">Medium Effort</span>
+      </div>
+      <div class="opp-desc">AI routing and parts recommendation for mobile emergency calls. Predict what fittings to load based on call details. Optimize routing across multiple calls in a day.</div>
+      <div class="opp-impact">Impact: <span>Fewer return trips, faster first-time fix, more calls handled per tech per day.</span></div>
+    </div>
+
+    <div class="opp-card">
+      <div class="opp-header">
+        <h3>📊 Cross-Location Visibility Dashboard</h3>
+        <span class="effort-badge med">Medium Effort</span>
+      </div>
+      <div class="opp-desc">Real-time view of inventory, sales, and margins across all 7 locations. AI surfaces anomalies — a branch running low, a fast mover not being reordered, a location underperforming.</div>
+      <div class="opp-impact">Impact: <span>Management insight without manual reporting. Faster decisions.</span></div>
+    </div>
+
+    <div class="opp-card">
+      <div class="opp-header">
+        <h3>🔮 Predictive Maintenance Offering</h3>
+        <span class="effort-badge high">High Effort</span>
+      </div>
+      <div class="opp-desc">Offer client-facing predictive maintenance as a service — IoT sensors on customer equipment detect pressure anomalies and alert Morse before hose failure. Expands from reactive to proactive revenue model.</div>
+      <div class="opp-impact">Impact: <span>Siemens data shows 50% downtime reduction, 30% maintenance cost reduction for customers. New recurring revenue stream.</span></div>
+    </div>
+
+  </div>
+
+  <div class="section-label" style="margin-top:28px;">Suggested Conversation Sequence</div>
+  <table class="data-table">
+    <thead>
+      <tr><th>#</th><th>Step</th><th>Goal</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>Discovery visit — observe counter operations, ask about biggest daily frustrations</td><td>Validate which pain points are real vs. hypothesized</td></tr>
+      <tr><td>2</td><td>Ask about current software — what ERP/POS they use, how they do inventory</td><td>Understand integration surface before proposing anything</td></tr>
+      <tr><td>3</td><td>Propose the two low-effort wins: hose ID assistant + internal knowledge chatbot</td><td>Show immediate tangible value with minimal disruption</td></tr>
+      <tr><td>4</td><td>Pilot at one location (suggest Fremont or Hayward — closest to each other)</td><td>Prove ROI before rolling out to all 7 branches</td></tr>
+      <tr><td>5</td><td>Expand inventory forecasting if data is accessible</td><td>Larger systemic value, ties you in deeper</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- TAB 4: Comparable Companies -->
+<div id="tab-competitors" class="tab-section">
+  <div class="section-label">Similar Companies &amp; What They Did</div>
+  <table class="data-table">
+    <thead>
+      <tr><th>Company</th><th>Profile</th><th>AI / Digital Initiative</th><th>Result</th></tr>
+    </thead>
+    <tbody>
+      <tr class="cat-row"><td colspan="4">Hose &amp; Fitting Distributors</td></tr>
+      <tr>
+        <td>ARG Industrial</td>
+        <td>Regional distributor of industrial and hydraulic hoses, fittings, rigging. Serves AK, OR, WA, ID. Very similar profile to Morse.</td>
+        <td>Built "IntelliBuild" — a SaaS platform for custom hose fabrication online. Customers without technical expertise can spec and order custom assemblies themselves.</td>
+        <td>Opened a new sales channel. Reduced counter staff burden for spec work. <span class="chip blue">B2B ecommerce</span></td>
+      </tr>
+      <tr>
+        <td>Royal Brass &amp; Hose</td>
+        <td>Distributes hydraulic/pneumatic hoses, fittings, fasteners for mobile equipment. Multi-location.</td>
+        <td>Launched ecommerce platform with self-service product catalog and ordering. Worked with Ntara to transform product data.</td>
+        <td>33% month-over-month sales increase on launch. Business was ready for COVID pivot to virtual. <span class="chip green">ecommerce</span></td>
+      </tr>
+      <tr>
+        <td>Hydroscand</td>
+        <td>Global provider of hydraulic hose solutions. 20+ countries, 30,000+ SKUs.</td>
+        <td>Implemented Akeneo PIM (product information management) system. Built Digital Showroom for faster product discovery by sales teams and distributors.</td>
+        <td>Centralized product data, faster sales cycles, reduced customer downtime from part confusion. <span class="chip blue">PIM / Data</span></td>
+      </tr>
+      <tr>
+        <td>Cross Company (CrossCo)</td>
+        <td>Industrial distributor with hose and fitting services. Multi-location US.</td>
+        <td>Vendor-managed inventory (VMI) program — manages stock at customer sites, uses data to auto-reorder.</td>
+        <td>Increased customer stickiness. Reduced emergency orders. <span class="chip green">VMI</span></td>
+      </tr>
+      <tr class="cat-row"><td colspan="4">OEMs &amp; Tier-1 Manufacturers (for trend context)</td></tr>
+      <tr>
+        <td>Bosch Rexroth</td>
+        <td>Major hydraulic systems manufacturer.</td>
+        <td>"Hydraulic Hub" — AI-based Smart Assistant for product info queries + Smart Diagnosis for fault identification from symptom descriptions.</td>
+        <td>Service personnel can resolve faults faster without deep expertise. <span class="chip blue">AI diagnostics</span></td>
+      </tr>
+      <tr>
+        <td>Parker Hannifin</td>
+        <td>Global leader in motion and control technologies including hydraulics.</td>
+        <td>Predicts that by 2030, 70% of new hydraulic systems will have smart monitoring built in. Investing in IoT and predictive failure tools.</td>
+        <td>Setting the direction for the whole industry. Distributors who adapt early will capture value. <span class="chip blue">IoT / predictive</span></td>
+      </tr>
+      <tr>
+        <td>Siemens Digital Industries</td>
+        <td>Industrial automation and digital twin leader.</td>
+        <td>AI-driven predictive maintenance for hydraulic systems using sensor data and machine learning.</td>
+        <td>Research shows 50% reduction in downtime, 30% reduction in maintenance costs. <span class="chip blue">Predictive MX</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="section-label" style="margin-top:28px;">Key Takeaway for Morse</div>
+  <div class="card-grid">
+    <div class="card highlight">
+      <div class="card-icon">💡</div>
+      <h3>The Distributor Gap</h3>
+      <p>Most AI innovation is happening at the OEM/manufacturer level (Bosch, Parker, Siemens). Regional distributors like ARG and Royal Brass are just beginning digital transformation. Morse has a real first-mover window at the local distributor level.</p>
+    </div>
+    <div class="card highlight">
+      <div class="card-icon">📈</div>
+      <h3>Low Adoption = Opportunity</h3>
+      <p>Only 16% of fluid power companies report AI having major impact (2024). The companies that move now capture the efficiency gains while competitors are still figuring it out.</p>
+    </div>
+    <div class="card good">
+      <div class="card-icon">🎯</div>
+      <h3>Start Where ARG Started</h3>
+      <p>ARG Industrial is the closest analog to Morse — similar geography (Pacific Northwest), similar product mix. Their IntelliBuild journey is the most relevant case study to reference in the first conversation.</p>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 5: Engagement Log -->
+<div id="tab-log" class="tab-section">
+  <div class="progress-section">
+    <h3>Engagement Progress</h3>
+    <div class="progress-items">
+      <div class="progress-item"><div class="dot done"></div><div class="item-label">Initial outreach received from client</div></div>
+      <div class="progress-item"><div class="dot done"></div><div class="item-label">Domain research completed</div></div>
+      <div class="progress-item"><div class="dot pending"></div><div class="item-label">Discovery visit / site walkthrough scheduled</div></div>
+      <div class="progress-item"><div class="dot todo"></div><div class="item-label">Pain points validated on-site</div></div>
+      <div class="progress-item"><div class="dot todo"></div><div class="item-label">Proposal drafted</div></div>
+      <div class="progress-item"><div class="dot todo"></div><div class="item-label">Pilot scope agreed</div></div>
+      <div class="progress-item"><div class="dot todo"></div><div class="item-label">Pilot kicked off</div></div>
+    </div>
+  </div>
+
+  <div class="section-label">Log</div>
+  <div class="note-block done">
+    <div class="note-date">2026-06-01 — Initial Contact</div>
+    <p>Received inquiry from client. They acknowledge zero knowledge of AI. Open to a site visit to identify starting points. Tone is exploratory and open — good entry point. They want to know where AI can apply and what you specifically can implement.</p>
+  </div>
+  <div class="note-block">
+    <div class="note-date">2026-06-01 — Research Completed</div>
+    <p>Compiled company profile, industry primer, operations map, and AI opportunity assessment. Identified ARG Industrial as closest comparable for case study reference. Key hypothesis: hose ID assistant and internal knowledge chatbot are the lowest-effort, highest-credibility starting points to propose.</p>
+  </div>
+</div>
+
+<!-- TAB 6: Reference Materials -->
+<div id="tab-refs" class="tab-section">
+  <div class="section-label">Reference Documents</div>
+  <div class="card-grid" style="margin-bottom:20px;">
+    <div class="card highlight">
+      <div class="card-icon">📄</div>
+      <h3>Gates Hydraulics 201</h3>
+      <p>Introduction to Hydraulic Hose and Fittings — Gates Professional Development Series. 80 pages covering hose construction, selection criteria, SAE nomenclature, coupling identification, crimping, failure troubleshooting, and glossary. The best single document to ramp up on this domain.</p>
+    </div>
+  </div>
+  <div style="background:#1a1d27;border:1px solid #2d3148;border-radius:10px;overflow:hidden;">
+    <div style="padding:10px 16px;border-bottom:1px solid #2d3148;display:flex;align-items:center;gap:10px;">
+      <span style="font-size:12px;color:#64748b;">Gates — Introduction to Hydraulic Hose and Fittings.pdf</span>
+      <a href="file:///Users/clark/cityu-mba/books/Introduction%20to%20Hydraulic%20Hose%20and%20Fittings.pdf" target="_blank" style="margin-left:auto;font-size:11px;color:#60a5fa;text-decoration:none;padding:3px 10px;border:1px solid #2563eb44;border-radius:4px;background:#1e3a5f;">Open in new tab ↗</a>
+    </div>
+    <iframe src="file:///Users/clark/cityu-mba/books/Introduction%20to%20Hydraulic%20Hose%20and%20Fittings.pdf" style="width:100%;height:78vh;border:none;display:block;" title="Gates Hydraulics 201"></iframe>
+  </div>
+</div>
+
+<script>
+  function showTab(name, idx) {
+    document.querySelectorAll(".tab-section").forEach(function(s) { s.classList.remove("active"); });
+    document.querySelectorAll(".tab-btn").forEach(function(b) { b.classList.remove("active"); });
+    document.getElementById("tab-" + name).classList.add("active");
+    document.querySelectorAll(".tab-btn")[idx].classList.add("active");
+  }
+</script>
+
+</body>
+</html>

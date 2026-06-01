@@ -7,6 +7,10 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-06-01
+
+- [feature] `projects/morse-hydraulics/index.html` — New client project reference: Morse Hydraulics. 6-tab visual brief covering company overview, industry primer, operations map, AI opportunities, comparable companies, and engagement log.
+
 ## 2026-05-22
 
 - [feature] `classroom-activities/data-governance/module-07-deliverables.html` — Module 07 deliverables page; indigo theme; 19-cell notebook viewer with employees_df (salary/SSN sensitivity), analyst_view, login simulation, masked_df email output; notebook file added to submission folder

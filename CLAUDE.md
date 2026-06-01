@@ -236,6 +236,7 @@ After **any** file is created or edited in this project, update the changelog be
 | `database-labs/` | `changelog/database-labs.md` |
 | `cityu-tools/` | `changelog/cityu-tools.md` |
 | `primer/` | `changelog/primer.md` |
+| `projects/` | `changelog/projects.md` |
 | `lessons-learned/` | `changelog/root-playground.md` |
 | `index.html`, `CLAUDE.md`, shared infra | `changelog/root-playground.md` |
 
