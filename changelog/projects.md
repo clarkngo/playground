@@ -5,6 +5,20 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-06-02
+
+### [feature] `projects/morse-hydraulics/index.html` — Visit 1 Findings Update
+- Status badge updated to "1st Visit Complete" (green)
+- Subtitle updated to 8 branches (confirmed on-site, was 7)
+- Tags updated: replaced "Discovery Phase" with "1st Visit Done" + "Proposal Phase"
+- Company Overview: replaced 4 open-question cards with 6 confirmed-findings cards (SAP B1/Azure migration, 3–4% inventory loss, 30-min counter avg, change management gap, manual BOM entry, mobile van blind spot)
+- All "7 locations" references updated to "8 branches"
+- AI Opportunities tab fully rewritten around confirmed pain points: 3 primary projects (Inventory/Van Reconciliation, SAP Automation, Computer Vision Part ID, Change Management) + secondary opportunities + "Your Unique Positioning" table mapping background to each project
+- Engagement Log: progress tracker updated (visit + pain point validation now marked done, proposal phase marked pending); visit 1 note added at top with detailed findings summary
+- Site Visit Prep tab: placeholder note updated to "Visit Complete"
+
+---
+
 ## 2026-06-01
 
 ### [feature] `projects/morse-hydraulics/index.html` — Morse Hydraulics Project Reference

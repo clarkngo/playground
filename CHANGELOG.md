@@ -7,6 +7,10 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-06-02
+
+- [feature] `projects/morse-hydraulics/index.html` — Visit 1 findings: confirmed 8 branches, 3–4% inventory loss, SAP B1/Azure migration, 30-min counter avg, change management gap; AI Opportunities rewritten around confirmed projects; Engagement Log updated
+
 ## 2026-06-01
 
 - [feature] `projects/morse-hydraulics/index.html` — New client project reference: Morse Hydraulics. 6-tab visual brief covering company overview, industry primer, operations map, AI opportunities, comparable companies, and engagement log.
