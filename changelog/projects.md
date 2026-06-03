@@ -5,6 +5,13 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-06-02 (update 2)
+
+### [feature] `projects/morse-hydraulics/index.html` — Visit 1 Pain Points Detail
+- Company Overview confirmed-findings cards updated with fuller detail (5,000–6,000 PSI, international vendors Italy/Poland/Iran, free-consulting margin problem)
+- Operations Map tab fully rewritten with confirmed data: 4 pain point sections (Inventory & Supply Chain, Walk-In Bottlenecks, IT Systems, Change Management), each with detailed cards + root causes; core process table updated with confirmed descriptions and pain
+- Removed all "hypothesized" language from Operations Map
+
 ## 2026-06-02
 
 ### [feature] `projects/morse-hydraulics/index.html` — Visit 1 Findings Update
