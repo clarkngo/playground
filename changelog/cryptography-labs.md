@@ -5,6 +5,17 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-06-04
+
+### [bug] Lab 09 — Reflection not unlocking when objectives complete or on page reload
+- **Symptom:** Submission area stayed locked even after all 5 objectives were done; only cleared after a manual page refresh
+- **Root cause 1:** `checkReflectionLock()` was called before `updateObj()` in the quiz handler, so it read stale `obj-count` text and never saw the `✅` state
+- **Root cause 2:** Other objective handlers (`timingDone`, `kdfDone`, `mistakesDone`, `lifecycleDone`) called `updateObj()` but never `checkReflectionLock()`, so completing those objectives never triggered the unlock
+- **Root cause 3:** `checkReflectionLock()` was not called after `loadState()` on page load
+- **Fix:** Moved `checkReflectionLock()` to the end of `updateObj()` so it always fires after the count text is updated; removed the now-redundant call from the quiz handler; added a call after `loadState()` in `DOMContentLoaded`
+
+---
+
 ## 2026-05-05
 
 ### [bug] Lab 01 — State not persisting on refresh; Export PDF not appearing
