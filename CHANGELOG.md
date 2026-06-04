@@ -7,6 +7,13 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-06-04
+
+### [bug] Lab 09 — Reflection unlock broken on completion and on reload
+- `cryptography-labs/09-secure-implementation.html`: moved `checkReflectionLock()` inside `updateObj()` so it fires immediately when the last objective is completed; also added call after `loadState()` for the reload case
+
+---
+
 ## 2026-06-02
 
 - [feature] `projects/morse-hydraulics/index.html` — Visit 1 findings: confirmed 8 branches, 3–4% inventory loss, SAP B1/Azure migration, 30-min counter avg, change management gap; AI Opportunities rewritten around confirmed projects; Engagement Log updated
