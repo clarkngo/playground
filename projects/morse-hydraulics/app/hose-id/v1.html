@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Hose ID — Morse Hydraulics</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0a0c12; color: #e2e8f0; min-height: 100vh; max-width: 480px; margin: 0 auto; }
+
+  .hdr { background: #0f1117; border-bottom: 1px solid #1e293b; padding: 12px 18px; display: flex; align-items: center; gap: 10px; position: sticky; top: 0; z-index: 10; }
+  .back-btn { background: none; border: 1px solid #1e293b; color: #475569; padding: 7px 12px; border-radius: 8px; font-size: 13px; cursor: pointer; transition: all .15s; }
+  .back-btn:hover:not(:disabled) { border-color: #f97316; color: #fb923c; }
+  .back-btn:disabled { opacity: 0.2; cursor: default; }
+  .hdr-title { font-size: 14px; font-weight: 600; color: #f1f5f9; }
+  .hdr-sub { font-size: 11px; color: #334155; margin-left: 6px; }
+  .hdr-step { font-size: 11px; color: #475569; margin-left: auto; }
+
+  .prog { display: flex; gap: 4px; padding: 12px 18px 0; }
+  .pdot { height: 3px; flex: 1; border-radius: 99px; background: #1e293b; transition: background .25s; }
+  .pdot.done { background: #f97316; }
+  .pdot.active { background: #fb923c; }
+
+  .screen { display: none; padding: 20px 16px 48px; }
+  .screen.active { display: block; }
+  .screen-q { font-size: 20px; font-weight: 700; color: #f8fafc; margin-bottom: 4px; line-height: 1.3; }
+  .screen-sub { font-size: 13px; color: #475569; margin-bottom: 20px; line-height: 1.5; }
+
+  .tip { display: inline-flex; align-items: center; gap: 6px; background: #1a0e00; border: 1px solid #f9731622; border-radius: 6px; padding: 5px 10px; font-size: 11px; color: #64748b; margin-bottom: 18px; }
+  .tip-dot { width: 6px; height: 6px; border-radius: 50%; background: #f97316; flex-shrink: 0; }
+
+  .vis-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .vis-grid.one-col { grid-template-columns: 1fr; }
+  .vis-card { background: #0f1117; border: 2px solid #1e293b; border-radius: 16px; padding: 14px 10px 12px; cursor: pointer; transition: border-color .12s, transform .12s, background .12s; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .vis-card:active { transform: scale(.97); }
+  .vis-card.sel { border-color: var(--accent, #f97316); background: color-mix(in srgb, var(--accent, #f97316) 8%, #0f1117); }
+  .vis-card svg { width: 100%; max-width: 160px; height: 90px; }
+  .vis-label { font-size: 14px; font-weight: 700; color: #f1f5f9; text-align: center; }
+  .vis-tag { font-size: 10px; color: #475569; text-align: center; letter-spacing: .04em; text-transform: uppercase; }
+  .vis-tbd { font-size: 10px; color: #f97316; text-align: center; letter-spacing: .03em; margin-top: -4px; }
+
+  /* Size screen — 4 large cards */
+  .size-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .size-card { background: #0f1117; border: 2px solid #1e293b; border-radius: 16px; padding: 16px 12px 14px; cursor: pointer; transition: all .12s; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .size-card:active { transform: scale(.97); }
+  .size-card.sel { border-color: #f97316; background: #1a0e0022; }
+  .size-card svg { width: 100%; height: 70px; }
+  .size-label { font-size: 14px; font-weight: 700; color: #f1f5f9; }
+  .size-dash { font-size: 11px; color: #64748b; }
+
+  /* Result */
+  .result-wrap { border: 2px solid #f9731633; border-radius: 18px; background: #110800; padding: 22px 18px; margin-bottom: 14px; }
+  .result-ok { font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: #f97316; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 7px; }
+  .result-ok::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: #f97316; display: block; }
+  .result-id { font-size: 20px; font-weight: 800; color: #f8fafc; line-height: 1.4; margin-bottom: 16px; }
+  .result-chips { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 16px; }
+  .chip { background: #0a0c12; border: 1px solid #1e293b; border-radius: 6px; padding: 5px 11px; font-size: 12px; }
+  .chip-k { color: #64748b; }
+  .chip-v { color: #f1f5f9; font-weight: 600; }
+
+  /* Series matches */
+  .series-title { font-size: 11px; text-transform: uppercase; letter-spacing: .07em; color: #475569; margin-bottom: 8px; font-weight: 600; }
+  .series-list { display: flex; flex-direction: column; gap: 6px; }
+  .series-row { background: #0f1117; border: 1px solid #1e293b; border-radius: 10px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; }
+  .series-name { font-size: 14px; font-weight: 700; color: #f1f5f9; }
+  .series-desc { font-size: 11px; color: #64748b; margin-top: 2px; }
+  .series-badge { font-size: 10px; padding: 3px 8px; border-radius: 99px; white-space: nowrap; }
+  .badge-confirm { background: #14291f; color: #4ade80; border: 1px solid #16a34a44; }
+  .badge-tbd { background: #1a0e00; color: #f97316; border: 1px solid #f9731633; }
+
+  .tbd-note { background: #1a0e00; border: 1px solid #f9731633; border-radius: 12px; padding: 13px 16px; margin-bottom: 14px; font-size: 13px; color: #94a3b8; line-height: 1.6; }
+  .tbd-note strong { color: #f97316; }
+
+  .restart-btn { width: 100%; background: #0f1117; border: 1px solid #1e293b; color: #475569; padding: 15px; border-radius: 12px; font-size: 14px; cursor: pointer; transition: all .15s; }
+  .restart-btn:hover { border-color: #f97316; color: #fb923c; }
+
+  /* Unsure screen */
+  .unsure-wrap { border: 1px solid #f9731633; border-radius: 16px; background: #110800; padding: 22px 18px; margin-bottom: 18px; }
+  .unsure-title { font-size: 15px; font-weight: 700; color: #fb923c; margin-bottom: 14px; }
+  .unsure-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  .unsure-list li { font-size: 13px; color: #94a3b8; padding-left: 20px; position: relative; line-height: 1.5; }
+  .unsure-list li::before { content: "→"; position: absolute; left: 0; color: #f97316; }
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <button class="back-btn" id="back-btn" onclick="goBack()" disabled>← Back</button>
+  <span class="hdr-title">Hose ID</span>
+  <span class="hdr-step" id="step-lbl">1 of 4</span>
+</div>
+<div class="prog">
+  <div class="pdot active" id="p0"></div>
+  <div class="pdot" id="p1"></div>
+  <div class="pdot" id="p2"></div>
+  <div class="pdot" id="p3"></div>
+</div>
+
+<!-- ─── SCREEN 1: WIRE CONSTRUCTION ───────────────────── -->
+<div class="screen active" id="s-wire">
+  <div class="screen-q">What does the wire layer look like?</div>
+  <div class="screen-sub">Look at the hose where the rubber cover is worn or cut. The wire reinforcement pattern identifies the construction type.</div>
+  <div class="tip"><div class="tip-dot"></div>If cover is intact, try to feel — braided is flexible, spiral is stiff</div>
+
+  <div class="vis-grid">
+
+    <!-- Braided -->
+    <div class="vis-card" style="--accent:#60a5fa" onclick="pick('wire','braided',this)">
+      <svg viewBox="0 0 160 90" fill="none">
+        <!-- hose body -->
+        <rect x="8" y="28" width="144" height="34" rx="4" fill="#1e293b"/>
+        <!-- braided pattern — forward diagonals -->
+        <line x1="8"  y1="62" x2="28" y2="28" stroke="#60a5fa" stroke-width="1.2" opacity=".7"/>
+        <line x1="22" y1="62" x2="42" y2="28" stroke="#60a5fa" stroke-width="1.2" opacity=".7"/>
+        <line x1="36" y1="62" x2="56" y2="28" stroke="#60a5fa" stroke-width="1.2" opacity=".7"/>
+        <line x1="50" y1="62" x2="70" y2="28" stroke="#60a5fa" stroke-width="1.2" opacity=".7"/>
+        <line x1="64" y1="62" x2="84" y2="28" stroke="#60a5fa" stroke-width="1.2" opacity=".7"/>
+        <line x1="78" y1="62" x2="98" y2="28" stroke="#60a5fa" stroke-width="1.2" opacity=".7"/>
+        <line x1="92" y1="62" x2="112" y2="28" stroke="#60a5fa" stroke-width="1.2" opacity=".7"/>
+        <line x1="106" y1="62" x2="126" y2="28" stroke="#60a5fa" stroke-width="1.2" opacity=".7"/>
+        <line x1="120" y1="62" x2="140" y2="28" stroke="#60a5fa" stroke-width="1.2" opacity=".7"/>
+        <line x1="134" y1="62" x2="152" y2="28" stroke="#60a5fa" stroke-width="1.2" opacity=".7"/>
+        <!-- braided pattern — back diagonals -->
+        <line x1="8"  y1="28" x2="28" y2="62" stroke="#93c5fd" stroke-width="1.2" opacity=".5"/>
+        <line x1="22" y1="28" x2="42" y2="62" stroke="#93c5fd" stroke-width="1.2" opacity=".5"/>
+        <line x1="36" y1="28" x2="56" y2="62" stroke="#93c5fd" stroke-width="1.2" opacity=".5"/>
+        <line x1="50" y1="28" x2="70" y2="62" stroke="#93c5fd" stroke-width="1.2" opacity=".5"/>
+        <line x1="64" y1="28" x2="84" y2="62" stroke="#93c5fd" stroke-width="1.2" opacity=".5"/>
+        <line x1="78" y1="28" x2="98" y2="62" stroke="#93c5fd" stroke-width="1.2" opacity=".5"/>
+        <line x1="92" y1="28" x2="112" y2="62" stroke="#93c5fd" stroke-width="1.2" opacity=".5"/>
+        <line x1="106" y1="28" x2="126" y2="62" stroke="#93c5fd" stroke-width="1.2" opacity=".5"/>
+        <line x1="120" y1="28" x2="140" y2="62" stroke="#93c5fd" stroke-width="1.2" opacity=".5"/>
+        <line x1="134" y1="28" x2="152" y2="62" stroke="#93c5fd" stroke-width="1.2" opacity=".5"/>
+        <!-- border -->
+        <rect x="8" y="28" width="144" height="34" rx="4" fill="none" stroke="#60a5fa" stroke-width="1.5"/>
+        <!-- end caps -->
+        <rect x="4" y="24" width="4" height="42" rx="1" fill="#60a5fa"/>
+        <rect x="152" y="24" width="4" height="42" rx="1" fill="#60a5fa"/>
+        <text x="80" y="82" text-anchor="middle" font-size="9" fill="#3b82f6" font-family="system-ui" font-weight="700">DIAGONAL CRISS-CROSS</text>
+      </svg>
+      <div class="vis-label">Braided</div>
+      <div class="vis-tag">flexible · medium pressure</div>
+    </div>
+
+    <!-- Spiral -->
+    <div class="vis-card" style="--accent:#f87171" onclick="pick('wire','spiral',this)">
+      <svg viewBox="0 0 160 90" fill="none">
+        <!-- hose body -->
+        <rect x="8" y="28" width="144" height="34" rx="4" fill="#1e293b"/>
+        <!-- spiral rings — vertical bands -->
+        <line x1="24"  y1="28" x2="24"  y2="62" stroke="#f87171" stroke-width="2.5"/>
+        <line x1="38"  y1="28" x2="38"  y2="62" stroke="#f87171" stroke-width="2.5"/>
+        <line x1="52"  y1="28" x2="52"  y2="62" stroke="#f87171" stroke-width="2.5"/>
+        <line x1="66"  y1="28" x2="66"  y2="62" stroke="#f87171" stroke-width="2.5"/>
+        <line x1="80"  y1="28" x2="80"  y2="62" stroke="#f87171" stroke-width="2.5"/>
+        <line x1="94"  y1="28" x2="94"  y2="62" stroke="#f87171" stroke-width="2.5"/>
+        <line x1="108" y1="28" x2="108" y2="62" stroke="#f87171" stroke-width="2.5"/>
+        <line x1="122" y1="28" x2="122" y2="62" stroke="#f87171" stroke-width="2.5"/>
+        <line x1="136" y1="28" x2="136" y2="62" stroke="#f87171" stroke-width="2.5"/>
+        <!-- border -->
+        <rect x="8" y="28" width="144" height="34" rx="4" fill="none" stroke="#f87171" stroke-width="1.5"/>
+        <!-- end caps -->
+        <rect x="4" y="24" width="4" height="42" rx="1" fill="#f87171"/>
+        <rect x="152" y="24" width="4" height="42" rx="1" fill="#f87171"/>
+        <text x="80" y="82" text-anchor="middle" font-size="9" fill="#f87171" font-family="system-ui" font-weight="700">STRAIGHT RINGS</text>
+      </svg>
+      <div class="vis-label">Spiral</div>
+      <div class="vis-tag">stiff · high pressure</div>
+    </div>
+
+    <!-- Can't tell -->
+    <div class="vis-card" style="--accent:#475569;grid-column:1/-1;" onclick="pick('wire','unknown',this)">
+      <svg viewBox="0 0 160 60" fill="none">
+        <!-- hose with intact cover — no wire visible -->
+        <rect x="8" y="14" width="144" height="32" rx="6" fill="#1e293b" stroke="#334155" stroke-width="1.5" stroke-dasharray="6,4"/>
+        <text x="80" y="35" text-anchor="middle" font-size="12" fill="#475569" font-family="system-ui">cover intact — wire not visible</text>
+        <rect x="4" y="10" width="4" height="40" rx="1" fill="#334155"/>
+        <rect x="152" y="10" width="4" height="40" rx="1" fill="#334155"/>
+      </svg>
+      <div class="vis-label">Can not tell</div>
+      <div class="vis-tag">cover intact or too worn to see pattern</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ─── SCREEN 2: COVER COLOR ──────────────────────────── -->
+<div class="screen" id="s-cover">
+  <div class="screen-q">What color is the outer cover?</div>
+  <div class="screen-sub">Look at the rubber jacket on the outside of the hose.</div>
+
+  <div class="vis-grid">
+
+    <!-- Black standard -->
+    <div class="vis-card" style="--accent:#94a3b8" onclick="pick('cover','black',this)">
+      <svg viewBox="0 0 160 90" fill="none">
+        <rect x="8" y="28" width="144" height="34" rx="4" fill="#1e293b" stroke="#94a3b8" stroke-width="1.5"/>
+        <rect x="4" y="24" width="4" height="42" rx="1" fill="#64748b"/>
+        <rect x="152" y="24" width="4" height="42" rx="1" fill="#64748b"/>
+        <!-- layline text suggestion -->
+        <text x="80" y="48" text-anchor="middle" font-size="9" fill="#475569" font-family="monospace">MANULI ··· R2AT ··· -08</text>
+        <text x="80" y="82" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="system-ui" font-weight="700">STANDARD BLACK</text>
+      </svg>
+      <div class="vis-label">Black</div>
+      <div class="vis-tag">most common</div>
+    </div>
+
+    <!-- Orange -->
+    <div class="vis-card" style="--accent:#f97316" onclick="pick('cover','orange',this)">
+      <svg viewBox="0 0 160 90" fill="none">
+        <rect x="8" y="28" width="144" height="34" rx="4" fill="#431407" stroke="#f97316" stroke-width="1.5"/>
+        <rect x="4" y="24" width="4" height="42" rx="1" fill="#f97316"/>
+        <rect x="152" y="24" width="4" height="42" rx="1" fill="#f97316"/>
+        <text x="80" y="82" text-anchor="middle" font-size="9" fill="#f97316" font-family="system-ui" font-weight="700">ORANGE / SPECIALTY</text>
+      </svg>
+      <div class="vis-label">Orange</div>
+      <div class="vis-tag">specialty series</div>
+      <div class="vis-tbd">⚠ verify at Kent</div>
+    </div>
+
+    <!-- Blue -->
+    <div class="vis-card" style="--accent:#38bdf8" onclick="pick('cover','blue',this)">
+      <svg viewBox="0 0 160 90" fill="none">
+        <rect x="8" y="28" width="144" height="34" rx="4" fill="#0c1a2e" stroke="#38bdf8" stroke-width="1.5"/>
+        <rect x="4" y="24" width="4" height="42" rx="1" fill="#38bdf8"/>
+        <rect x="152" y="24" width="4" height="42" rx="1" fill="#38bdf8"/>
+        <text x="80" y="82" text-anchor="middle" font-size="9" fill="#38bdf8" font-family="system-ui" font-weight="700">BLUE / SPECIALTY</text>
+      </svg>
+      <div class="vis-label">Blue</div>
+      <div class="vis-tag">specialty series</div>
+      <div class="vis-tbd">⚠ verify at Kent</div>
+    </div>
+
+    <!-- Other / Unknown -->
+    <div class="vis-card" style="--accent:#475569" onclick="pick('cover','other',this)">
+      <svg viewBox="0 0 160 90" fill="none">
+        <rect x="8" y="28" width="144" height="34" rx="4" fill="#1e293b" stroke="#475569" stroke-width="1.5" stroke-dasharray="5,4"/>
+        <text x="80" y="49" text-anchor="middle" font-size="11" fill="#475569" font-family="system-ui">other / damaged</text>
+        <text x="80" y="82" text-anchor="middle" font-size="9" fill="#475569" font-family="system-ui" font-weight="700">OTHER / UNSURE</text>
+      </svg>
+      <div class="vis-label">Other</div>
+      <div class="vis-tag">damaged or unknown color</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ─── SCREEN 3: SIZE ─────────────────────────────────── -->
+<div class="screen" id="s-size">
+  <div class="screen-q">How big is the hose?</div>
+  <div class="screen-sub">Compare the hose opening (inside diameter) to the sizes below. Dash number = ID in 16ths of an inch.</div>
+  <div class="tip"><div class="tip-dot"></div>If cut is available — measure the inner bore with a ruler or caliper</div>
+
+  <div class="size-grid">
+
+    <!-- Small -->
+    <div class="size-card" onclick="pickSize('small','-4 to -6',this)">
+      <svg viewBox="0 0 160 70" fill="none">
+        <!-- small circle cross section -->
+        <circle cx="80" cy="35" r="12" fill="#1e293b" stroke="#f97316" stroke-width="2"/>
+        <circle cx="80" cy="35" r="6"  fill="#0a0c12" stroke="#f97316" stroke-width="1"/>
+        <text x="80" y="64" text-anchor="middle" font-size="9" fill="#f97316" font-family="system-ui" font-weight="700">1/4" — 3/8" ID</text>
+      </svg>
+      <div class="size-label">Small</div>
+      <div class="size-dash">-4 · -6</div>
+    </div>
+
+    <!-- Medium -->
+    <div class="size-card" onclick="pickSize('medium','-8 to -10',this)">
+      <svg viewBox="0 0 160 70" fill="none">
+        <circle cx="80" cy="35" r="18" fill="#1e293b" stroke="#f97316" stroke-width="2"/>
+        <circle cx="80" cy="35" r="10" fill="#0a0c12" stroke="#f97316" stroke-width="1"/>
+        <text x="80" y="64" text-anchor="middle" font-size="9" fill="#f97316" font-family="system-ui" font-weight="700">1/2" — 5/8" ID</text>
+      </svg>
+      <div class="size-label">Medium</div>
+      <div class="size-dash">-8 · -10</div>
+    </div>
+
+    <!-- Large -->
+    <div class="size-card" onclick="pickSize('large','-12 to -16',this)">
+      <svg viewBox="0 0 160 70" fill="none">
+        <circle cx="80" cy="36" r="24" fill="#1e293b" stroke="#f97316" stroke-width="2"/>
+        <circle cx="80" cy="36" r="14" fill="#0a0c12" stroke="#f97316" stroke-width="1"/>
+        <text x="80" y="67" text-anchor="middle" font-size="9" fill="#f97316" font-family="system-ui" font-weight="700">3/4" — 1" ID</text>
+      </svg>
+      <div class="size-label">Large</div>
+      <div class="size-dash">-12 · -16</div>
+    </div>
+
+    <!-- XL -->
+    <div class="size-card" onclick="pickSize('xl','-20 to -32',this)">
+      <svg viewBox="0 0 160 70" fill="none">
+        <circle cx="80" cy="38" r="30" fill="#1e293b" stroke="#f97316" stroke-width="2"/>
+        <circle cx="80" cy="38" r="20" fill="#0a0c12" stroke="#f97316" stroke-width="1"/>
+        <text x="80" y="70" text-anchor="middle" font-size="9" fill="#f97316" font-family="system-ui" font-weight="700">1-1/4" — 2" ID</text>
+      </svg>
+      <div class="size-label">XL</div>
+      <div class="size-dash">-20 · -24 · -32</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ─── SCREEN 4: RESULT ───────────────────────────────── -->
+<div class="screen" id="s-result">
+  <div class="result-wrap">
+    <div class="result-ok">Hose Narrowed Down</div>
+    <div class="result-id" id="res-id">—</div>
+    <div class="result-chips" id="res-chips"></div>
+    <div class="series-title">Likely Manuli series at Kent</div>
+    <div class="series-list" id="res-series"></div>
+  </div>
+  <div class="tbd-note" id="res-tbd">
+    <strong>⚠ Verify with staff:</strong> Manuli series specs are not yet fully mapped for Kent. Use this as a starting point, then confirm against the spool label or ask a senior tech.
+  </div>
+  <button class="restart-btn" onclick="restart()">↺ Identify Another Hose</button>
+</div>
+
+<!-- ─── SCREEN: UNSURE ─────────────────────────────────── -->
+<div class="screen" id="s-unsure">
+  <div class="unsure-wrap">
+    <div class="unsure-title">Cannot identify from visual inspection</div>
+    <ul class="unsure-list">
+      <li>Cut the hose end and measure the inner bore (ID) with a caliper</li>
+      <li>Look for any remaining layline text on the hose body</li>
+      <li>Compare OD against a known hose on the spool rack</li>
+      <li>Ask a senior tech for assistance</li>
+    </ul>
+  </div>
+  <button class="restart-btn" onclick="restart()">↺ Start Over</button>
+</div>
+
+<script>
+  var S = {};
+  var stk = [];
+  var cur = 'wire';
+  var TOTAL = 4;
+
+  var SERIES_MAP = {
+    braided: {
+      small:  [ { name:'GISO/13', desc:'2-wire braid, standard pressure, compact', tbd:false },
+                { name:'FM/35',   desc:'Flexible, compact routing applications',    tbd:true  } ],
+      medium: [ { name:'GISO/13', desc:'2-wire braid, standard hydraulic duty',     tbd:false },
+                { name:'GISO/21', desc:'2-wire braid, higher pressure rating',      tbd:true  } ],
+      large:  [ { name:'GISO/21', desc:'2-wire braid, higher pressure rating',      tbd:true  },
+                { name:'GISO/13', desc:'2-wire braid, standard hydraulic duty',     tbd:false } ],
+      xl:     [ { name:'GISO/21', desc:'2-wire braid, high flow applications',      tbd:true  } ]
+    },
+    spiral: {
+      small:  [ { name:'GISO/3SXF',   desc:'Spiral wire, high pressure, flexible cover', tbd:true  } ],
+      medium: [ { name:'ROCK/4SH',    desc:'4-spiral wire, very high pressure',          tbd:false },
+                { name:'GISO/3SXF',   desc:'Spiral wire, high pressure',                 tbd:true  } ],
+      large:  [ { name:'ROCK/4SH',    desc:'4-spiral wire, very high pressure',          tbd:false },
+                { name:'DIAMONDSPIR', desc:'Spiral, high pressure — orange spool',       tbd:false },
+                { name:'ROCK/45H',    desc:'4-spiral, high pressure variant',            tbd:true  } ],
+      xl:     [ { name:'ROCK/4SH',    desc:'4-spiral wire, very high pressure',          tbd:false },
+                { name:'ROCK/45H',    desc:'4-spiral, high pressure variant',            tbd:true  } ]
+    },
+    unknown: {
+      small:  [ { name:'GISO/13 or GISO/3SXF', desc:'Confirm construction type first', tbd:true } ],
+      medium: [ { name:'GISO/13, GISO/21, or ROCK/4SH', desc:'Confirm construction type first', tbd:true } ],
+      large:  [ { name:'GISO/21, ROCK/4SH, or DIAMONDSPIR', desc:'Confirm construction type first', tbd:true } ],
+      xl:     [ { name:'ROCK/4SH or ROCK/45H', desc:'Confirm construction type first', tbd:true } ]
+    }
+  };
+
+  var WIRE_LABELS = { braided:'Braided', spiral:'Spiral', unknown:'Unknown' };
+  var COVER_LABELS = { black:'Black', orange:'Orange', blue:'Blue', other:'Other' };
+  var SIZE_LABELS  = { small:'Small (-4 · -6)', medium:'Medium (-8 · -10)', large:'Large (-12 · -16)', xl:'XL (-20 to -32)' };
+
+  function show(id) {
+    document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
+    document.getElementById('s-'+id).classList.add('active');
+    cur = id;
+    window.scrollTo(0,0);
+  }
+
+  function prog(n) {
+    document.getElementById('step-lbl').textContent = n + ' of ' + TOTAL;
+    for (var i=0;i<TOTAL;i++) {
+      var d = document.getElementById('p'+i);
+      d.className = 'pdot'+(i<n-1?' done':i===n-1?' active':'');
+    }
+    document.getElementById('back-btn').disabled = (stk.length===0);
+  }
+
+  function pick(attr, val, el) {
+    S[attr] = val;
+    var grid = el.closest('.vis-grid');
+    if (grid) grid.querySelectorAll('.vis-card').forEach(function(c){c.classList.remove('sel');});
+    el.classList.add('sel');
+    setTimeout(next, 180);
+  }
+
+  function next() {
+    stk.push(cur);
+    if (cur==='wire')  { show('cover'); prog(2); }
+    else if (cur==='cover') { show('size');  prog(3); }
+    else if (cur==='size')  { showResult(); }
+  }
+
+  function pickSize(cat, label, el) {
+    S.sizecat = cat;
+    S.sizelabel = label;
+    el.closest('.size-grid').querySelectorAll('.size-card').forEach(function(c){c.classList.remove('sel');});
+    el.classList.add('sel');
+    setTimeout(next, 180);
+  }
+
+  function showResult() {
+    var wireLabel  = WIRE_LABELS[S.wire]   || S.wire;
+    var coverLabel = COVER_LABELS[S.cover] || S.cover;
+    var sizeLabel  = SIZE_LABELS[S.sizecat] || S.sizecat;
+
+    document.getElementById('res-id').textContent = wireLabel + '  |  ' + coverLabel + '  |  ' + sizeLabel;
+
+    var chips = [
+      { k:'Construction', v: wireLabel },
+      { k:'Cover',        v: coverLabel },
+      { k:'Size range',   v: S.sizelabel }
+    ];
+    document.getElementById('res-chips').innerHTML = chips.map(function(c){
+      return '<div class="chip"><span class="chip-k">'+c.k+': </span><span class="chip-v">'+c.v+'</span></div>';
+    }).join('');
+
+    var wireKey  = S.wire || 'unknown';
+    var sizeKey  = S.sizecat || 'medium';
+    var matches  = (SERIES_MAP[wireKey] && SERIES_MAP[wireKey][sizeKey]) || [];
+
+    // orange cover hint
+    if (S.cover === 'orange') {
+      var already = matches.some(function(m){ return m.name === 'DIAMONDSPIR'; });
+      if (!already) matches = [{ name:'DIAMONDSPIR', desc:'Orange spool — spiral high pressure', tbd:false }].concat(matches);
+    }
+
+    document.getElementById('res-series').innerHTML = matches.map(function(m){
+      return '<div class="series-row">' +
+        '<div><div class="series-name">'+m.name+'</div><div class="series-desc">'+m.desc+'</div></div>' +
+        '<span class="series-badge '+(m.tbd?'badge-tbd':'badge-confirm')+'">'+(m.tbd?'verify':'stocked')+'</span>' +
+        '</div>';
+    }).join('') || '<div style="font-size:13px;color:#475569;padding:8px 0;">No match — confirm specs with staff</div>';
+
+    show('result'); prog(4);
+  }
+
+  function goBack() {
+    if (!stk.length) return;
+    var p = stk.pop();
+    show(p);
+    var stepMap = { wire:1, cover:2, size:3 };
+    prog(stepMap[p]||1);
+  }
+
+  function restart() {
+    S={}; stk=[];
+    document.querySelectorAll('.vis-card').forEach(function(c){c.classList.remove('sel');});
+    document.querySelectorAll('.size-card').forEach(function(c){c.classList.remove('sel');});
+    show('wire'); prog(1);
+  }
+
+  prog(1);
+</script>
+</body>
+</html>

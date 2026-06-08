@@ -9,6 +9,12 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ## 2026-06-07
 
+### [feature] Morse Hydraulics — Hose ID prototype + app hub + folder restructure
+- `projects/morse-hydraulics/app/hose-id/v1.html` — new Hose ID wizard: 4-screen visual flow (wire construction → cover color → size → result); SVG braided/spiral wire pattern diagrams; circle cross-section size picker; result maps to Manuli series stocked at Kent (GISO/13, GISO/21, ROCK/4SH, DIAMONDSPIR, etc.) with stocked/verify badges
+- `projects/morse-hydraulics/app/index.html` — app hub landing page listing all built prototypes (Fitting ID v1+v2, Hose ID v1) and planned apps (Assembly Builder, Crimp Spec, Customer Reorder, Van Load)
+- `projects/morse-hydraulics/app/fitting-id/` — fitting-id prototypes moved into named subfolder
+- `projects/morse-hydraulics/index.html` — Blueprint tab prototype link updated to point to hub
+
 ### [feature] Morse Hydraulics — v2 visual card prototype
 - `projects/morse-hydraulics/app/v2.html` — alternate UI approach: 2-col SVG illustration cards on every screen; Screen 3 (connection type) shows color-coded diagrams of each tip shape (cone seat, parallel, flat face+O-ring, wide flare, tapered) so staff can hold fitting next to screen and match by shape; same wizard logic as v1
 - `projects/morse-hydraulics/index.html` — Blueprint tab now links to both v1 (text wizard) and v2 (visual cards)
