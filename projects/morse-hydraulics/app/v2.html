@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Fitting ID v2 — Morse Hydraulics</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0a0c12; color: #e2e8f0; min-height: 100vh; max-width: 480px; margin: 0 auto; }
+
+  /* Header */
+  .hdr { background: #0f1117; border-bottom: 1px solid #1e293b; padding: 12px 18px; display: flex; align-items: center; gap: 10px; position: sticky; top: 0; z-index: 10; }
+  .back-btn { background: none; border: 1px solid #1e293b; color: #475569; padding: 7px 12px; border-radius: 8px; font-size: 13px; cursor: pointer; transition: all .15s; }
+  .back-btn:hover:not(:disabled) { border-color: #3b82f6; color: #60a5fa; }
+  .back-btn:disabled { opacity: 0.2; cursor: default; }
+  .hdr-title { font-size: 14px; font-weight: 600; color: #f1f5f9; letter-spacing: .01em; }
+  .hdr-step { font-size: 11px; color: #475569; margin-left: auto; }
+
+  /* Progress */
+  .prog { display: flex; gap: 4px; padding: 12px 18px 0; }
+  .pdot { height: 3px; flex: 1; border-radius: 99px; background: #1e293b; transition: background .25s; }
+  .pdot.done { background: #22c55e; }
+  .pdot.active { background: #3b82f6; }
+
+  /* Screens */
+  .screen { display: none; padding: 20px 16px 48px; }
+  .screen.active { display: block; }
+  .screen-q { font-size: 20px; font-weight: 700; color: #f8fafc; margin-bottom: 4px; line-height: 1.3; }
+  .screen-sub { font-size: 13px; color: #475569; margin-bottom: 20px; line-height: 1.5; }
+  .match-hint { display: inline-flex; align-items: center; gap: 6px; background: #1e293b; border-radius: 6px; padding: 5px 10px; font-size: 11px; color: #64748b; margin-bottom: 18px; }
+  .match-hint .dot { width: 6px; height: 6px; border-radius: 50%; background: #3b82f6; }
+
+  /* 2-col visual grid */
+  .vis-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .vis-card { background: #0f1117; border: 2px solid #1e293b; border-radius: 16px; padding: 14px 10px 12px; cursor: pointer; transition: border-color .12s, transform .12s, background .12s; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .vis-card:active { transform: scale(.97); }
+  .vis-card.sel { border-color: var(--accent, #3b82f6); background: color-mix(in srgb, var(--accent, #3b82f6) 8%, #0f1117); }
+  .vis-card svg { width: 100%; max-width: 140px; height: 80px; }
+  .vis-label { font-size: 14px; font-weight: 700; color: #f1f5f9; text-align: center; }
+  .vis-tag { font-size: 10px; color: #475569; text-align: center; letter-spacing: .04em; text-transform: uppercase; }
+
+  /* Full-width card (gender) */
+  .vis-grid.wide { grid-template-columns: 1fr 1fr; gap: 12px; }
+  .vis-card.tall { padding: 20px 16px; }
+  .vis-card.tall svg { height: 100px; }
+
+  /* Size grid */
+  .size-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .size-btn { background: #0f1117; border: 2px solid #1e293b; border-radius: 12px; padding: 16px 6px; cursor: pointer; transition: border-color .12s; text-align: center; }
+  .size-btn:active { border-color: #3b82f6; }
+  .size-val { font-size: 16px; font-weight: 700; color: #f1f5f9; }
+  .size-sub { font-size: 11px; color: #475569; margin-top: 3px; }
+
+  /* Metric class */
+  .class-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .class-card { background: #0f1117; border: 2px solid #1e293b; border-radius: 16px; padding: 20px 14px; cursor: pointer; transition: all .12s; text-align: center; }
+  .class-card .class-dot { width: 28px; height: 28px; border-radius: 50%; margin: 0 auto 10px; }
+  .class-card .class-label { font-size: 15px; font-weight: 700; color: #f1f5f9; margin-bottom: 4px; }
+  .class-card .class-desc { font-size: 11px; color: #475569; line-height: 1.5; }
+
+  /* Result */
+  .result-wrap { border: 2px solid #16a34a55; border-radius: 18px; background: #0d1f12; padding: 24px 20px; margin-bottom: 14px; }
+  .result-ok { font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: #22c55e; font-weight: 700; margin-bottom: 14px; display: flex; align-items: center; gap: 7px; }
+  .result-ok::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: #22c55e; display: block; }
+  .result-id { font-size: 22px; font-weight: 800; color: #f8fafc; line-height: 1.4; margin-bottom: 18px; }
+  .result-chips { display: flex; flex-wrap: wrap; gap: 7px; }
+  .chip { background: #0a0c12; border: 1px solid #1e293b; border-radius: 6px; padding: 5px 11px; font-size: 12px; }
+  .chip-k { color: #64748b; }
+  .chip-v { color: #f1f5f9; font-weight: 600; }
+
+  .result-note { background: #1a1200; border: 1px solid #fbbf2433; border-radius: 12px; padding: 13px 16px; margin-bottom: 14px; font-size: 13px; color: #94a3b8; line-height: 1.6; }
+  .result-note strong { color: #fbbf24; }
+
+  .restart-btn { width: 100%; background: #0f1117; border: 1px solid #1e293b; color: #475569; padding: 15px; border-radius: 12px; font-size: 14px; cursor: pointer; transition: all .15s; }
+  .restart-btn:hover { border-color: #3b82f6; color: #60a5fa; }
+
+  /* Unsure */
+  .unsure-wrap { border: 1px solid #d9770633; border-radius: 16px; background: #1a0e00; padding: 22px 18px; margin-bottom: 18px; }
+  .unsure-title { font-size: 15px; font-weight: 700; color: #f59e0b; margin-bottom: 14px; }
+  .unsure-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  .unsure-list li { font-size: 13px; color: #94a3b8; padding-left: 20px; position: relative; line-height: 1.5; }
+  .unsure-list li::before { content: '→'; position: absolute; left: 0; color: #f59e0b; }
+
+  /* Brand stub */
+  .stub-wrap { border: 1px solid #3b82f633; border-radius: 16px; background: #040d1a; padding: 22px 18px; margin-bottom: 14px; }
+  .stub-title { font-size: 15px; font-weight: 700; color: #60a5fa; margin-bottom: 10px; }
+  .stub-body { font-size: 13px; color: #64748b; line-height: 1.7; }
+  .stub-continue { width: 100%; background: #0d1f38; border: 1px solid #3b82f644; color: #60a5fa; padding: 14px; border-radius: 12px; font-size: 14px; cursor: pointer; margin-bottom: 10px; font-weight: 600; }
+
+  /* Brand chips on screen 1 */
+  .brand-bar { margin-bottom: 20px; }
+  .brand-label { font-size: 11px; text-transform: uppercase; letter-spacing: .07em; color: #334155; margin-bottom: 8px; font-weight: 600; }
+  .brand-chips { display: flex; gap: 8px; }
+  .brand-chip { background: #0f1117; border: 1px solid #1e293b; color: #64748b; padding: 7px 14px; border-radius: 99px; font-size: 13px; cursor: pointer; font-weight: 500; transition: all .12s; }
+  .brand-chip:hover { border-color: #3b82f6; color: #60a5fa; }
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <button class="back-btn" id="back-btn" onclick="goBack()" disabled>← Back</button>
+  <span class="hdr-title">Fitting ID</span>
+  <span class="hdr-step" id="step-lbl">1 of 5</span>
+</div>
+<div class="prog">
+  <div class="pdot active" id="p0"></div>
+  <div class="pdot" id="p1"></div>
+  <div class="pdot" id="p2"></div>
+  <div class="pdot" id="p3"></div>
+  <div class="pdot" id="p4"></div>
+</div>
+
+<!-- ─── SCREEN 1: ORIENTATION ─────────────────────────── -->
+<div class="screen active" id="s-orient">
+  <div class="screen-q">What shape is the fitting?</div>
+  <div class="screen-sub">Look at the overall body.</div>
+
+  <div class="brand-bar">
+    <div class="brand-label">Know the equipment brand?</div>
+    <div class="brand-chips">
+      <div class="brand-chip" onclick="brandShortcut('komatsu')">Komatsu</div>
+      <div class="brand-chip" onclick="brandShortcut('toyota')">Toyota</div>
+      <div class="brand-chip" onclick="brandShortcut('cat')">CAT</div>
+    </div>
+  </div>
+
+  <div class="vis-grid">
+    <!-- Straight -->
+    <div class="vis-card" style="--accent:#3b82f6" onclick="pick('orientation','straight',this)">
+      <svg viewBox="0 0 140 80" fill="none">
+        <!-- hex nut center -->
+        <polygon points="70,28 82,21 94,28 94,52 82,59 70,52" fill="#1e293b" stroke="#3b82f6" stroke-width="1.5"/>
+        <!-- left thread tube -->
+        <rect x="10" y="34" width="60" height="12" fill="#1e293b"/>
+        <line x1="20" y1="34" x2="20" y2="46" stroke="#3b82f6" stroke-width="1"/>
+        <line x1="30" y1="34" x2="30" y2="46" stroke="#3b82f6" stroke-width="1"/>
+        <line x1="40" y1="34" x2="40" y2="46" stroke="#3b82f6" stroke-width="1"/>
+        <line x1="50" y1="34" x2="50" y2="46" stroke="#3b82f6" stroke-width="1"/>
+        <line x1="60" y1="34" x2="60" y2="46" stroke="#3b82f6" stroke-width="1"/>
+        <rect x="10" y="34" width="60" height="12" fill="none" stroke="#3b82f6" stroke-width="1.5"/>
+        <!-- right thread tube -->
+        <rect x="94" y="34" width="36" height="12" fill="#1e293b"/>
+        <line x1="104" y1="34" x2="104" y2="46" stroke="#3b82f6" stroke-width="1"/>
+        <line x1="114" y1="34" x2="114" y2="46" stroke="#3b82f6" stroke-width="1"/>
+        <line x1="124" y1="34" x2="124" y2="46" stroke="#3b82f6" stroke-width="1"/>
+        <rect x="94" y="34" width="36" height="12" fill="none" stroke="#3b82f6" stroke-width="1.5"/>
+        <!-- end caps -->
+        <rect x="6" y="31" width="4" height="18" rx="1" fill="#3b82f6"/>
+        <rect x="130" y="31" width="4" height="18" rx="1" fill="#3b82f6"/>
+      </svg>
+      <div class="vis-label">Straight</div>
+      <div class="vis-tag">inline</div>
+    </div>
+
+    <!-- 45° elbow -->
+    <div class="vis-card" style="--accent:#a78bfa" onclick="pick('orientation','45-elbow',this)">
+      <svg viewBox="0 0 140 80" fill="none">
+        <!-- horizontal tube -->
+        <rect x="6" y="34" width="50" height="12" fill="#1e293b"/>
+        <line x1="16" y1="34" x2="16" y2="46" stroke="#a78bfa" stroke-width="1"/>
+        <line x1="26" y1="34" x2="26" y2="46" stroke="#a78bfa" stroke-width="1"/>
+        <line x1="36" y1="34" x2="36" y2="46" stroke="#a78bfa" stroke-width="1"/>
+        <line x1="46" y1="34" x2="46" y2="46" stroke="#a78bfa" stroke-width="1"/>
+        <rect x="6" y="34" width="50" height="12" fill="none" stroke="#a78bfa" stroke-width="1.5"/>
+        <rect x="2" y="31" width="4" height="18" rx="1" fill="#a78bfa"/>
+        <!-- bend body -->
+        <path d="M56,34 Q80,34 95,16 L103,24 Q86,44 66,46 L56,46 Z" fill="#1e293b" stroke="#a78bfa" stroke-width="1.5"/>
+        <!-- angled tube (top right) -->
+        <line x1="95" y1="16" x2="103" y2="24" stroke="#a78bfa" stroke-width="1.5"/>
+        <line x1="104" y1="12" x2="128" y2="36" stroke="#a78bfa" stroke-width="1"/>
+        <line x1="112" y1="8" x2="130" y2="28" stroke="#a78bfa" stroke-width="1"/>
+        <path d="M95,16 L128,6 L134,14 L103,24 Z" fill="#1e293b" stroke="#a78bfa" stroke-width="1.5"/>
+        <line x1="101" y1="8" x2="111" y2="18" stroke="#a78bfa" stroke-width="1"/>
+        <line x1="112" y1="6" x2="122" y2="16" stroke="#a78bfa" stroke-width="1"/>
+        <line x1="122" y1="5" x2="128" y2="11" stroke="#a78bfa" stroke-width="1"/>
+        <rect x="126" y="3" width="10" height="14" rx="1" fill="#a78bfa" transform="rotate(45 131 10)"/>
+      </svg>
+      <div class="vis-label">45° Elbow</div>
+      <div class="vis-tag">gentle bend</div>
+    </div>
+
+    <!-- 90° elbow -->
+    <div class="vis-card" style="--accent:#f59e0b" onclick="pick('orientation','90-elbow',this)">
+      <svg viewBox="0 0 140 80" fill="none">
+        <!-- horizontal tube -->
+        <rect x="6" y="44" width="50" height="12" fill="#1e293b"/>
+        <line x1="16" y1="44" x2="16" y2="56" stroke="#f59e0b" stroke-width="1"/>
+        <line x1="26" y1="44" x2="26" y2="56" stroke="#f59e0b" stroke-width="1"/>
+        <line x1="36" y1="44" x2="36" y2="56" stroke="#f59e0b" stroke-width="1"/>
+        <line x1="46" y1="44" x2="46" y2="56" stroke="#f59e0b" stroke-width="1"/>
+        <rect x="6" y="44" width="50" height="12" fill="none" stroke="#f59e0b" stroke-width="1.5"/>
+        <rect x="2" y="41" width="4" height="18" rx="1" fill="#f59e0b"/>
+        <!-- corner block -->
+        <path d="M56,44 Q72,44 72,28 L84,28 Q84,56 56,56 Z" fill="#1e293b" stroke="#f59e0b" stroke-width="1.5"/>
+        <!-- vertical tube -->
+        <rect x="66" y="6" width="12" height="22" fill="#1e293b"/>
+        <line x1="66" y1="14" x2="78" y2="14" stroke="#f59e0b" stroke-width="1"/>
+        <line x1="66" y1="20" x2="78" y2="20" stroke="#f59e0b" stroke-width="1"/>
+        <line x1="66" y1="26" x2="78" y2="26" stroke="#f59e0b" stroke-width="1"/>
+        <rect x="66" y="6" width="12" height="22" fill="none" stroke="#f59e0b" stroke-width="1.5"/>
+        <rect x="63" y="2" width="18" height="4" rx="1" fill="#f59e0b"/>
+      </svg>
+      <div class="vis-label">90° Elbow</div>
+      <div class="vis-tag">right angle</div>
+    </div>
+
+    <!-- Tee -->
+    <div class="vis-card" style="--accent:#4ade80" onclick="pick('orientation','tee',this)">
+      <svg viewBox="0 0 140 80" fill="none">
+        <!-- horizontal tube -->
+        <rect x="6" y="34" width="128" height="12" fill="#1e293b"/>
+        <line x1="16" y1="34" x2="16" y2="46" stroke="#4ade80" stroke-width="1"/>
+        <line x1="26" y1="34" x2="26" y2="46" stroke="#4ade80" stroke-width="1"/>
+        <line x1="36" y1="34" x2="36" y2="46" stroke="#4ade80" stroke-width="1"/>
+        <line x1="104" y1="34" x2="104" y2="46" stroke="#4ade80" stroke-width="1"/>
+        <line x1="114" y1="34" x2="114" y2="46" stroke="#4ade80" stroke-width="1"/>
+        <line x1="124" y1="34" x2="124" y2="46" stroke="#4ade80" stroke-width="1"/>
+        <rect x="6" y="34" width="128" height="12" fill="none" stroke="#4ade80" stroke-width="1.5"/>
+        <rect x="2" y="31" width="4" height="18" rx="1" fill="#4ade80"/>
+        <rect x="134" y="31" width="4" height="18" rx="1" fill="#4ade80"/>
+        <!-- vertical branch -->
+        <rect x="64" y="6" width="12" height="28" fill="#1e293b"/>
+        <line x1="64" y1="12" x2="76" y2="12" stroke="#4ade80" stroke-width="1"/>
+        <line x1="64" y1="18" x2="76" y2="18" stroke="#4ade80" stroke-width="1"/>
+        <line x1="64" y1="24" x2="76" y2="24" stroke="#4ade80" stroke-width="1"/>
+        <rect x="64" y="6" width="12" height="28" fill="none" stroke="#4ade80" stroke-width="1.5"/>
+        <rect x="61" y="2" width="18" height="4" rx="1" fill="#4ade80"/>
+      </svg>
+      <div class="vis-label">Tee</div>
+      <div class="vis-tag">3 ends</div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── SCREEN 2: GENDER ───────────────────────────────── -->
+<div class="screen" id="s-gender">
+  <div class="screen-q">Where are the threads?</div>
+  <div class="screen-sub">Look at the threaded end of the fitting.</div>
+  <div class="vis-grid wide">
+    <!-- Male -->
+    <div class="vis-card tall" style="--accent:#60a5fa" onclick="pick('gender','male',this)">
+      <svg viewBox="0 0 140 100" fill="none">
+        <!-- shaft with external threads -->
+        <rect x="30" y="40" width="80" height="20" fill="#1e293b"/>
+        <!-- thread peaks (external - bumpy outline) -->
+        <path d="M30,40 L36,33 L42,40 L48,33 L54,40 L60,33 L66,40 L72,33 L78,40 L84,33 L90,40 L96,33 L102,40 L108,33 L110,40" fill="none" stroke="#60a5fa" stroke-width="1.5" stroke-linejoin="round"/>
+        <path d="M30,60 L36,67 L42,60 L48,67 L54,60 L60,67 L66,60 L72,67 L78,60 L84,67 L90,60 L96,67 L102,60 L108,67 L110,60" fill="none" stroke="#60a5fa" stroke-width="1.5" stroke-linejoin="round"/>
+        <line x1="30" y1="40" x2="30" y2="60" stroke="#60a5fa" stroke-width="1.5"/>
+        <line x1="110" y1="40" x2="110" y2="60" stroke="#60a5fa" stroke-width="1.5"/>
+        <!-- tip end cap -->
+        <rect x="110" y="36" width="6" height="28" rx="2" fill="#60a5fa"/>
+        <!-- hex base -->
+        <polygon points="30,35 18,42 18,58 30,65 42,58 42,42" fill="#0f1117" stroke="#60a5fa" stroke-width="1.5"/>
+        <!-- label -->
+        <text x="70" y="91" text-anchor="middle" font-size="10" fill="#475569" font-family="system-ui">EXTERNAL THREADS</text>
+      </svg>
+      <div class="vis-label">Male</div>
+      <div class="vis-tag">threads on outside</div>
+    </div>
+
+    <!-- Female -->
+    <div class="vis-card tall" style="--accent:#f472b6" onclick="pick('gender','female',this)">
+      <svg viewBox="0 0 140 100" fill="none">
+        <!-- outer body / socket -->
+        <rect x="20" y="30" width="90" height="40" rx="3" fill="#1e293b" stroke="#f472b6" stroke-width="1.5"/>
+        <!-- hollow inside (socket hole) -->
+        <rect x="70" y="38" width="38" height="24" rx="1" fill="#0a0c12"/>
+        <!-- internal threads (inside the hole) -->
+        <line x1="76" y1="38" x2="76" y2="62" stroke="#f472b6" stroke-width="1"/>
+        <line x1="82" y1="38" x2="82" y2="62" stroke="#f472b6" stroke-width="1"/>
+        <line x1="88" y1="38" x2="88" y2="62" stroke="#f472b6" stroke-width="1"/>
+        <line x1="94" y1="38" x2="94" y2="62" stroke="#f472b6" stroke-width="1"/>
+        <line x1="100" y1="38" x2="100" y2="62" stroke="#f472b6" stroke-width="1"/>
+        <!-- left hex -->
+        <polygon points="20,40 10,50 20,60" fill="#0f1117" stroke="#f472b6" stroke-width="1.5"/>
+        <!-- label -->
+        <text x="70" y="88" text-anchor="middle" font-size="10" fill="#475569" font-family="system-ui">INTERNAL THREADS</text>
+      </svg>
+      <div class="vis-label">Female</div>
+      <div class="vis-tag">threads inside</div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── SCREEN 3: CONNECTION TYPE ─────────────────────── -->
+<div class="screen" id="s-type">
+  <div class="screen-q">What does the tip look like?</div>
+  <div class="screen-sub">Hold the fitting next to your screen. Tap the closest match.</div>
+  <div class="match-hint"><div class="dot"></div>Match the shape of the threaded end</div>
+
+  <div class="vis-grid">
+    <!-- Metric DIN -->
+    <div class="vis-card" style="--accent:#3b82f6" onclick="pick('type','metric',this)">
+      <svg viewBox="0 0 140 80" fill="none">
+        <!-- body/threads -->
+        <rect x="40" y="28" width="80" height="24" fill="#1e293b"/>
+        <line x1="52" y1="28" x2="52" y2="52" stroke="#3b82f6" stroke-width="1"/>
+        <line x1="64" y1="28" x2="64" y2="52" stroke="#3b82f6" stroke-width="1"/>
+        <line x1="76" y1="28" x2="76" y2="52" stroke="#3b82f6" stroke-width="1"/>
+        <line x1="88" y1="28" x2="88" y2="52" stroke="#3b82f6" stroke-width="1"/>
+        <line x1="100" y1="28" x2="100" y2="52" stroke="#3b82f6" stroke-width="1"/>
+        <rect x="40" y="28" width="80" height="24" fill="none" stroke="#3b82f6" stroke-width="1.5"/>
+        <!-- cone tip (24° internal cone - DIN) -->
+        <path d="M18,40 L40,28 L40,52 Z" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1.5"/>
+        <!-- inner cone highlight -->
+        <path d="M30,40 L40,32 L40,48 Z" fill="#3b82f644"/>
+        <!-- base -->
+        <rect x="120" y="24" width="8" height="32" rx="1" fill="#1e293b" stroke="#3b82f6" stroke-width="1.5"/>
+        <!-- label -->
+        <text x="70" y="72" text-anchor="middle" font-size="9" fill="#3b82f6" font-family="system-ui" font-weight="700">CONE SEAT</text>
+      </svg>
+      <div class="vis-label">Metric</div>
+      <div class="vis-tag">inner cone at tip</div>
+    </div>
+
+    <!-- BSP -->
+    <div class="vis-card" style="--accent:#a78bfa" onclick="pick('type','bsp',this)">
+      <svg viewBox="0 0 140 80" fill="none">
+        <!-- perfectly parallel body -->
+        <rect x="20" y="28" width="96" height="24" fill="#1e293b"/>
+        <line x1="32" y1="28" x2="32" y2="52" stroke="#a78bfa" stroke-width="1"/>
+        <line x1="44" y1="28" x2="44" y2="52" stroke="#a78bfa" stroke-width="1"/>
+        <line x1="56" y1="28" x2="56" y2="52" stroke="#a78bfa" stroke-width="1"/>
+        <line x1="68" y1="28" x2="68" y2="52" stroke="#a78bfa" stroke-width="1"/>
+        <line x1="80" y1="28" x2="80" y2="52" stroke="#a78bfa" stroke-width="1"/>
+        <line x1="92" y1="28" x2="92" y2="52" stroke="#a78bfa" stroke-width="1"/>
+        <!-- perfectly flat end cap (no cone, no taper) -->
+        <rect x="116" y="24" width="6" height="32" rx="1" fill="#a78bfa"/>
+        <rect x="20" y="28" width="96" height="24" fill="none" stroke="#a78bfa" stroke-width="1.5"/>
+        <!-- hex base -->
+        <polygon points="20,28 10,34 10,46 20,52 20,28" fill="#1e293b" stroke="#a78bfa" stroke-width="1.5"/>
+        <!-- "parallel" indicator arrows -->
+        <line x1="24" y1="20" x2="116" y2="20" stroke="#a78bfa55" stroke-width="1" stroke-dasharray="3,3"/>
+        <line x1="24" y1="60" x2="116" y2="60" stroke="#a78bfa55" stroke-width="1" stroke-dasharray="3,3"/>
+        <text x="70" y="72" text-anchor="middle" font-size="9" fill="#a78bfa" font-family="system-ui" font-weight="700">PARALLEL THREAD</text>
+      </svg>
+      <div class="vis-label">BSP</div>
+      <div class="vis-tag">flat tip, no taper</div>
+    </div>
+
+    <!-- ORFS -->
+    <div class="vis-card" style="--accent:#4ade80" onclick="pick('type','orfs',this)">
+      <svg viewBox="0 0 140 80" fill="none">
+        <!-- body -->
+        <rect x="20" y="28" width="80" height="24" fill="#1e293b"/>
+        <line x1="32" y1="28" x2="32" y2="52" stroke="#4ade80" stroke-width="1"/>
+        <line x1="44" y1="28" x2="44" y2="52" stroke="#4ade80" stroke-width="1"/>
+        <line x1="56" y1="28" x2="56" y2="52" stroke="#4ade80" stroke-width="1"/>
+        <line x1="68" y1="28" x2="68" y2="52" stroke="#4ade80" stroke-width="1"/>
+        <line x1="80" y1="28" x2="80" y2="52" stroke="#4ade80" stroke-width="1"/>
+        <rect x="20" y="28" width="80" height="24" fill="none" stroke="#4ade80" stroke-width="1.5"/>
+        <!-- flat face -->
+        <rect x="100" y="24" width="8" height="32" rx="0" fill="#1e293b" stroke="#4ade80" stroke-width="1.5"/>
+        <!-- O-ring groove (the key detail) -->
+        <rect x="108" y="32" width="6" height="16" fill="#0a0c12" stroke="#4ade80" stroke-width="1.5" rx="1"/>
+        <!-- flat face cap -->
+        <rect x="114" y="24" width="4" height="32" rx="1" fill="#4ade80"/>
+        <!-- hex -->
+        <polygon points="20,28 10,34 10,46 20,52 20,28" fill="#1e293b" stroke="#4ade80" stroke-width="1.5"/>
+        <!-- o-ring callout -->
+        <line x1="111" y1="40" x2="128" y2="28" stroke="#4ade8066" stroke-width="1"/>
+        <text x="118" y="25" font-size="8" fill="#4ade80" font-family="system-ui">O-ring</text>
+        <text x="70" y="72" text-anchor="middle" font-size="9" fill="#4ade80" font-family="system-ui" font-weight="700">FLAT FACE + O-RING</text>
+      </svg>
+      <div class="vis-label">ORFS</div>
+      <div class="vis-tag">flat face, groove visible</div>
+    </div>
+
+    <!-- JIC 37° -->
+    <div class="vis-card" style="--accent:#fbbf24" onclick="pick('type','jic',this)">
+      <svg viewBox="0 0 140 80" fill="none">
+        <!-- body/threads -->
+        <rect x="50" y="28" width="72" height="24" fill="#1e293b"/>
+        <line x1="62" y1="28" x2="62" y2="52" stroke="#fbbf24" stroke-width="1"/>
+        <line x1="74" y1="28" x2="74" y2="52" stroke="#fbbf24" stroke-width="1"/>
+        <line x1="86" y1="28" x2="86" y2="52" stroke="#fbbf24" stroke-width="1"/>
+        <line x1="98" y1="28" x2="98" y2="52" stroke="#fbbf24" stroke-width="1"/>
+        <line x1="110" y1="28" x2="110" y2="52" stroke="#fbbf24" stroke-width="1"/>
+        <rect x="50" y="28" width="72" height="24" fill="none" stroke="#fbbf24" stroke-width="1.5"/>
+        <!-- JIC external flare cone (37° = wide angle) -->
+        <path d="M50,28 L16,12 L16,68 L50,52 Z" fill="#292009" stroke="#fbbf24" stroke-width="2"/>
+        <!-- flare highlight -->
+        <path d="M50,40 L16,12 L16,68 Z" fill="#fbbf2415"/>
+        <!-- base -->
+        <rect x="122" y="24" width="8" height="32" rx="1" fill="#1e293b" stroke="#fbbf24" stroke-width="1.5"/>
+        <!-- angle label -->
+        <path d="M22,40 A14,14 0 0,1 30,28" fill="none" stroke="#fbbf2466" stroke-width="1"/>
+        <text x="26" y="25" font-size="8" fill="#fbbf24" font-family="system-ui">37°</text>
+        <text x="70" y="72" text-anchor="middle" font-size="9" fill="#fbbf24" font-family="system-ui" font-weight="700">WIDE FLARE CONE</text>
+      </svg>
+      <div class="vis-label">JIC 37°</div>
+      <div class="vis-tag">wide cone at tip</div>
+    </div>
+
+    <!-- NPT -->
+    <div class="vis-card" style="--accent:#f87171" onclick="pick('type','npt',this)">
+      <svg viewBox="0 0 140 80" fill="none">
+        <!-- tapered body (wider at left, narrower at right = tapers toward tip) -->
+        <path d="M14,22 L110,30 L110,50 L14,58 Z" fill="#1e293b" stroke="#f87171" stroke-width="1.5"/>
+        <!-- thread lines on taper -->
+        <line x1="30" y1="24" x2="30" y2="56" stroke="#f87171" stroke-width="1"/>
+        <line x1="46" y1="25" x2="46" y2="55" stroke="#f87171" stroke-width="1"/>
+        <line x1="62" y1="26" x2="62" y2="54" stroke="#f87171" stroke-width="1"/>
+        <line x1="78" y1="27" x2="78" y2="53" stroke="#f87171" stroke-width="1"/>
+        <line x1="94" y1="28" x2="94" y2="52" stroke="#f87171" stroke-width="1"/>
+        <!-- taper indicator arrows -->
+        <path d="M14,22 L14,14 M110,30 L110,22" stroke="#f8717166" stroke-width="1"/>
+        <line x1="14" y1="18" x2="110" y2="26" stroke="#f8717166" stroke-width="1" stroke-dasharray="3,3"/>
+        <text x="56" y="16" font-size="8" fill="#f87171" font-family="system-ui" text-anchor="middle">NARROWS TOWARD TIP →</text>
+        <!-- tip end -->
+        <rect x="110" y="28" width="6" height="24" rx="1" fill="#f87171"/>
+        <text x="70" y="72" text-anchor="middle" font-size="9" fill="#f87171" font-family="system-ui" font-weight="700">TAPERED THREAD</text>
+      </svg>
+      <div class="vis-label">NPT</div>
+      <div class="vis-tag">threads narrow toward tip</div>
+    </div>
+
+    <!-- Not sure -->
+    <div class="vis-card" style="--accent:#475569" onclick="pick('type','unsure',this)">
+      <svg viewBox="0 0 140 80" fill="none">
+        <text x="70" y="38" text-anchor="middle" font-size="32" fill="#334155">?</text>
+        <text x="70" y="58" text-anchor="middle" font-size="11" fill="#334155" font-family="system-ui">Cannot tell</text>
+      </svg>
+      <div class="vis-label">Not Sure</div>
+      <div class="vis-tag">need a gauge</div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── SCREEN 4: SIZE ─────────────────────────────────── -->
+<div class="screen" id="s-size">
+  <div class="screen-q" id="size-q">What size?</div>
+  <div class="screen-sub" id="size-sub">Measure the thread OD, or compare to a known fitting.</div>
+  <div id="size-opts"></div>
+</div>
+
+<!-- ─── SCREEN 4b: METRIC CLASS ───────────────────────── -->
+<div class="screen" id="s-mclass">
+  <div class="screen-q">Light or Heavy series?</div>
+  <div class="screen-sub">Check the drawer label colour at Kent.</div>
+  <div class="class-grid">
+    <div class="class-card" onclick="pickClass('light',this)">
+      <div class="class-dot" style="background:#3b82f6;"></div>
+      <div class="class-label">Light</div>
+      <div class="class-desc">Blue label<br>drawer at Kent</div>
+    </div>
+    <div class="class-card" onclick="pickClass('heavy',this)">
+      <div class="class-dot" style="background:#ef4444;"></div>
+      <div class="class-label">Heavy</div>
+      <div class="class-desc">Red label<br>drawer at Kent</div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── SCREEN 5: RESULT ───────────────────────────────── -->
+<div class="screen" id="s-result">
+  <div class="result-wrap">
+    <div class="result-ok">Fitting Identified</div>
+    <div class="result-id" id="res-id">—</div>
+    <div class="result-chips" id="res-chips"></div>
+  </div>
+  <div class="result-note" id="res-note" style="display:none;"></div>
+  <button class="restart-btn" onclick="restart()">↺ Identify Another Fitting</button>
+</div>
+
+<!-- ─── SCREEN: UNSURE ─────────────────────────────────── -->
+<div class="screen" id="s-unsure">
+  <div class="unsure-wrap">
+    <div class="unsure-title">Cannot identify visually</div>
+    <ul class="unsure-list">
+      <li>Use a thread pitch gauge to measure thread pitch</li>
+      <li>Compare against a known fitting from the drawer</li>
+      <li>Measure the thread OD with calipers</li>
+      <li>Ask a senior tech for assistance</li>
+    </ul>
+  </div>
+  <button class="restart-btn" onclick="restart()">↺ Start Over</button>
+</div>
+
+<!-- ─── SCREEN: BRAND STUB ────────────────────────────── -->
+<div class="screen" id="s-brand">
+  <div class="stub-wrap">
+    <div class="stub-title" id="stub-title">Brand-specific fitting</div>
+    <div class="stub-body" id="stub-body">Specs being added.</div>
+  </div>
+  <button class="stub-continue" onclick="continueWizard()">Use full wizard instead →</button>
+  <button class="restart-btn" onclick="restart()">↺ Start Over</button>
+</div>
+
+<script>
+  var S = {};
+  var stk = [];
+  var cur = 'orient';
+
+  var STEPS = { orient:1, gender:2, type:3, size:4, mclass:5, result:5, unsure:5, brand:1 };
+
+  var SIZES = {
+    metric: { q:'Metric thread size?', sub:'Measure the OD of the male thread.', items:[
+      {v:'M12',s:'12mm'},{v:'M14',s:'14mm'},{v:'M16',s:'16mm'},
+      {v:'M18',s:'18mm'},{v:'M22',s:'22mm'},{v:'M26',s:'26mm'},{v:'M30',s:'30mm'}]},
+    bsp: { q:'BSP size?', sub:'Nominal pipe size (not actual OD).', items:[
+      {v:'1/8"',s:'BSP'},{v:'1/4"',s:'BSP'},{v:'3/8"',s:'BSP'},
+      {v:'1/2"',s:'BSP'},{v:'3/4"',s:'BSP'},{v:'1"',s:'BSP'}]},
+    orfs: { q:'Dash size? (ORFS)', sub:'Dash = thread OD in 16ths of an inch.', items:[
+      {v:'-4',s:'7/16"'},{v:'-6',s:'9/16"'},{v:'-8',s:'3/4"'},
+      {v:'-10',s:'7/8"'},{v:'-12',s:'1-1/16"'},{v:'-16',s:'1-5/16"'}]},
+    jic: { q:'Dash size? (JIC)', sub:'Dash = thread OD in 16ths of an inch.', items:[
+      {v:'-4',s:'7/16"'},{v:'-6',s:'9/16"'},{v:'-8',s:'3/4"'},
+      {v:'-10',s:'7/8"'},{v:'-12',s:'1-1/16"'},{v:'-16',s:'1-5/16"'}]},
+    npt: { q:'NPT size?', sub:'Nominal pipe size.', items:[
+      {v:'1/8"',s:'NPT'},{v:'1/4"',s:'NPT'},{v:'3/8"',s:'NPT'},
+      {v:'1/2"',s:'NPT'},{v:'3/4"',s:'NPT'},{v:'1"',s:'NPT'}]}
+  };
+
+  var TLABELS = {metric:'Metric DIN',bsp:'BSP',orfs:'ORFS',jic:'JIC 37°',npt:'NPT'};
+  var OLABELS = {straight:'Straight','45-elbow':'45° Elbow','90-elbow':'90° Elbow',tee:'Tee'};
+
+  function show(id) {
+    document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
+    document.getElementById('s-'+id).classList.add('active');
+    cur = id;
+    window.scrollTo(0,0);
+  }
+
+  function prog(n) {
+    document.getElementById('step-lbl').textContent = n + ' of 5';
+    for (var i=0;i<5;i++) {
+      var d = document.getElementById('p'+i);
+      d.className = 'pdot' + (i<n-1?' done':i===n-1?' active':'');
+    }
+    document.getElementById('back-btn').disabled = (stk.length === 0);
+  }
+
+  function pick(attr, val, el) {
+    S[attr] = val;
+    el.closest('.vis-grid').querySelectorAll('.vis-card').forEach(function(c){c.classList.remove('sel');});
+    el.classList.add('sel');
+    setTimeout(next, 180);
+  }
+
+  function next() {
+    stk.push(cur);
+    if (cur==='orient') { show('gender'); prog(2); }
+    else if (cur==='gender') { show('type'); prog(3); }
+    else if (cur==='type') {
+      if (S.type==='unsure') { show('unsure'); prog(5); }
+      else { buildSizes(); show('size'); prog(4); }
+    }
+    else if (cur==='size') {
+      if (S.type==='metric') { show('mclass'); prog(5); }
+      else { showResult(); }
+    }
+    else if (cur==='mclass') { showResult(); }
+  }
+
+  function buildSizes() {
+    var d = SIZES[S.type]; if(!d) return;
+    document.getElementById('size-q').textContent = d.q;
+    document.getElementById('size-sub').textContent = d.sub;
+    var html = '<div class="size-grid">';
+    d.items.forEach(function(it) {
+      html += '<button class="size-btn" onclick="pickSize(\''+it.v+'\',this)">' +
+        '<div class="size-val">'+it.v+'</div><div class="size-sub">'+it.s+'</div></button>';
+    });
+    html += '</div>';
+    document.getElementById('size-opts').innerHTML = html;
+  }
+
+  function pickSize(v, el) {
+    S.size = v;
+    el.closest('.size-grid').querySelectorAll('.size-btn').forEach(function(b){b.style.borderColor='';});
+    el.style.borderColor = '#3b82f6';
+    setTimeout(next, 180);
+  }
+
+  function pickClass(v, el) {
+    S.mclass = v;
+    el.closest('.class-grid').querySelectorAll('.class-card').forEach(function(c){c.style.borderColor='';});
+    el.style.borderColor = (v==='light'?'#3b82f6':'#ef4444');
+    setTimeout(showResult, 180);
+  }
+
+  function showResult() {
+    var tl = TLABELS[S.type]||S.type;
+    var mc = S.type==='metric'&&S.mclass ? ' '+(S.mclass==='light'?'Light':'Heavy') : '';
+    var gl = S.gender==='male'?'Male':'Female';
+    var ol = OLABELS[S.orientation]||S.orientation;
+    document.getElementById('res-id').textContent = tl+mc+'  |  '+gl+'  |  '+ol+'  |  '+S.size;
+    var attrs = [{k:'Type',v:tl+mc},{k:'Gender',v:gl},{k:'Orientation',v:ol},{k:'Size',v:S.size}];
+    if (S.brand) attrs.push({k:'Equipment',v:S.brand.charAt(0).toUpperCase()+S.brand.slice(1)});
+    document.getElementById('res-chips').innerHTML = attrs.map(function(a){
+      return '<div class="chip"><span class="chip-k">'+a.k+': </span><span class="chip-v">'+a.v+'</span></div>';
+    }).join('');
+    var note = document.getElementById('res-note');
+    if (S.brand==='komatsu'||S.brand==='toyota') {
+      note.style.display='block';
+      note.innerHTML='<strong>Note:</strong> Cross-check with the <strong>'+(S.brand.charAt(0).toUpperCase()+S.brand.slice(1))+' Caps &amp; Plugs</strong> drawer at Kent — brand-specific fittings may differ from standard sizing.';
+    } else { note.style.display='none'; }
+    show('result'); prog(5);
+  }
+
+  function brandShortcut(b) {
+    S.brand = b;
+    var names = {komatsu:'Komatsu',toyota:'Toyota',cat:'CAT'};
+    var notes = {
+      komatsu:'Komatsu uses JIS (Japanese Industrial Standard) fittings. Visually similar to BSP but NOT interchangeable. A dedicated Komatsu drawer exists at Kent. Continue with the full wizard to get the closest standard match.',
+      toyota:'Toyota-specific fittings are stocked at Kent. Thread specs TBD. Continue with the full wizard to identify thread type, then verify against the Toyota drawer.',
+      cat:'CAT uses proprietary fitting specs on some lines. Continue with the full wizard to identify thread type, then verify against CAT-specific inventory.'
+    };
+    stk.push('orient');
+    document.getElementById('stub-title').textContent = names[b]+' — equipment-specific fitting';
+    document.getElementById('stub-body').textContent = notes[b];
+    show('brand'); prog(1);
+  }
+
+  function continueWizard() { show('orient'); prog(1); }
+
+  function goBack() {
+    if (!stk.length) return;
+    var p = stk.pop();
+    show(p);
+    prog(STEPS[p]||1);
+  }
+
+  function restart() {
+    S = {}; stk = [];
+    document.querySelectorAll('.vis-card').forEach(function(c){c.classList.remove('sel');});
+    document.querySelectorAll('.size-btn').forEach(function(b){b.style.borderColor='';});
+    document.querySelectorAll('.class-card').forEach(function(c){c.style.borderColor='';});
+    show('orient'); prog(1);
+  }
+
+  prog(1);
+</script>
+</body>
+</html>

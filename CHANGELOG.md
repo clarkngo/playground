@@ -7,6 +7,16 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-06-07
+
+### [feature] Morse Hydraulics — v2 visual card prototype
+- `projects/morse-hydraulics/app/v2.html` — alternate UI approach: 2-col SVG illustration cards on every screen; Screen 3 (connection type) shows color-coded diagrams of each tip shape (cone seat, parallel, flat face+O-ring, wide flare, tapered) so staff can hold fitting next to screen and match by shape; same wizard logic as v1
+- `projects/morse-hydraulics/index.html` — Blueprint tab now links to both v1 (text wizard) and v2 (visual cards)
+
+### [feature] Morse Hydraulics — Fitting ID wizard prototype + App Blueprint tab
+- `projects/morse-hydraulics/app/index.html` — new mobile-first wizard prototype: 5-screen guided flow (orientation → gender → connection type → size → result), covers Metric Light/Heavy, BSP, ORFS, JIC 37°, NPT; brand shortcut chips for Komatsu/Toyota/CAT; back navigation; "not sure" escape hatch
+- `projects/morse-hydraulics/index.html` — added App Blueprint tab (tab 8) documenting locked decisions, fitting families by evidence, wizard flow, open questions for next Kent visit, and Phase 2 roadmap
+
 ## 2026-06-04
 
 ### [bug] Lab 09 — Reflection unlock broken on completion and on reload
