@@ -5,6 +5,17 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-06-08
+
+### [feature] Assembly Builder — `app/assembly/v1.html`
+- 4-screen wizard: hose series (7 Manuli series with braided/spiral tags) → dash size (-4 to -24) → End 1 fitting (5 types × size variants) → End 2 fitting (with "Same as End 1" shortcut) → OAL length picker → spec summary card
+- Inline SVG assembly diagram: hose body with wire pattern (diagonal=braided, vertical=spiral), fitting shapes on each end, OAL label shows actual entered value
+- Length screen: 4 common presets (12/18/24/36") plus custom number input with ±1" stepper buttons
+- Spec card shows: hose series + dash, both end fittings with type hints, OAL in inches and feet
+- `app/index.html` — Assembly Builder promoted from Planned → Built
+
+---
+
 ## 2026-06-02 (update 2)
 
 ### [feature] `projects/morse-hydraulics/index.html` — Visit 1 Pain Points Detail

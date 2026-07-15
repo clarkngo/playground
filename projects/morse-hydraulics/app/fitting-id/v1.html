@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Fitting ID — Morse Hydraulics</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f1117; color: #e2e8f0; min-height: 100vh; max-width: 480px; margin: 0 auto; }
+
+  /* Header */
+  .app-header { background: #1a1d27; border-bottom: 1px solid #2d3148; padding: 14px 20px; display: flex; align-items: center; gap: 10px; position: sticky; top: 0; z-index: 10; }
+  .back-btn { background: none; border: 1px solid #334155; color: #94a3b8; padding: 7px 13px; border-radius: 8px; font-size: 13px; cursor: pointer; transition: border-color .15s, color .15s; white-space: nowrap; }
+  .back-btn:hover:not(:disabled) { border-color: #60a5fa; color: #60a5fa; }
+  .back-btn:disabled { opacity: 0.25; cursor: default; }
+  .header-title { font-size: 15px; font-weight: 600; color: #f1f5f9; }
+  .header-step { font-size: 12px; color: #64748b; margin-left: auto; white-space: nowrap; }
+
+  /* Progress dots */
+  .progress-bar { padding: 14px 20px 0; display: flex; gap: 5px; }
+  .progress-dot { height: 3px; flex: 1; border-radius: 99px; background: #1e293b; transition: background .2s; }
+  .progress-dot.done { background: #4ade80; }
+  .progress-dot.active { background: #60a5fa; }
+
+  /* Screen container */
+  .screen { display: none; padding: 22px 20px 40px; }
+  .screen.active { display: block; }
+
+  .screen-q { font-size: 19px; font-weight: 700; color: #f1f5f9; margin-bottom: 6px; line-height: 1.35; }
+  .screen-hint { font-size: 13px; color: #64748b; margin-bottom: 22px; line-height: 1.6; }
+
+  /* Option cards */
+  .option-list { display: flex; flex-direction: column; gap: 10px; }
+  .option-btn { background: #1a1d27; border: 2px solid #2d3148; border-radius: 14px; padding: 16px; text-align: left; cursor: pointer; transition: border-color .12s, background .12s; display: flex; align-items: center; gap: 14px; width: 100%; }
+  .option-btn:active { background: #1e3a5f33; border-color: #3b82f6; }
+  .option-icon { font-size: 28px; flex-shrink: 0; width: 40px; text-align: center; line-height: 1; }
+  .option-label { font-size: 15px; font-weight: 600; color: #f1f5f9; }
+  .option-desc { font-size: 12px; color: #94a3b8; margin-top: 3px; line-height: 1.5; }
+
+  /* Size grid */
+  .size-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .size-btn { background: #1a1d27; border: 2px solid #2d3148; border-radius: 12px; padding: 18px 8px; text-align: center; cursor: pointer; transition: border-color .12s, background .12s; }
+  .size-btn:active { background: #1e3a5f33; border-color: #3b82f6; }
+  .size-val { font-size: 17px; font-weight: 700; color: #f1f5f9; }
+  .size-label { font-size: 11px; color: #64748b; margin-top: 4px; }
+
+  /* Brand shortcut bar */
+  .shortcut-bar { background: #1e3a5f18; border: 1px solid #2563eb33; border-radius: 12px; padding: 14px 16px; margin-bottom: 22px; }
+  .shortcut-title { font-size: 11px; text-transform: uppercase; letter-spacing: .07em; color: #60a5fa; margin-bottom: 10px; font-weight: 600; }
+  .shortcut-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .shortcut-chip { background: #1e293b; border: 1px solid #334155; color: #cbd5e1; padding: 8px 16px; border-radius: 99px; font-size: 13px; cursor: pointer; font-weight: 500; transition: border-color .12s, color .12s; }
+  .shortcut-chip:active { border-color: #60a5fa; color: #60a5fa; }
+
+  /* Type color accents */
+  .type-metric .option-icon { color: #60a5fa; }
+  .type-bsp .option-icon { color: #a78bfa; }
+  .type-orfs .option-icon { color: #4ade80; }
+  .type-jic .option-icon { color: #fbbf24; }
+  .type-npt .option-icon { color: #f87171; }
+
+  /* Result screen */
+  .result-card { background: #14291f; border: 1px solid #16a34a55; border-radius: 16px; padding: 24px; margin-bottom: 16px; }
+  .result-badge { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: #4ade80; font-weight: 600; margin-bottom: 14px; display: flex; align-items: center; gap: 6px; }
+  .result-main { font-size: 20px; font-weight: 700; color: #f1f5f9; line-height: 1.5; margin-bottom: 18px; }
+  .result-attrs { display: flex; flex-wrap: wrap; gap: 8px; }
+  .result-attr { background: #0f1117; border: 1px solid #2d3148; border-radius: 6px; padding: 5px 12px; font-size: 12px; }
+  .result-attr .attr-key { color: #64748b; }
+  .result-attr .attr-val { color: #f1f5f9; font-weight: 600; }
+
+  .result-note { background: #1a1d27; border: 1px solid #2d3148; border-radius: 12px; padding: 14px 16px; margin-bottom: 16px; font-size: 13px; color: #94a3b8; line-height: 1.6; }
+  .result-note strong { color: #fbbf24; }
+
+  .restart-btn { width: 100%; background: #1a1d27; border: 1px solid #334155; color: #94a3b8; padding: 15px; border-radius: 12px; font-size: 14px; cursor: pointer; transition: border-color .15s, color .15s; }
+  .restart-btn:active { border-color: #60a5fa; color: #60a5fa; }
+
+  /* Unsure screen */
+  .unsure-card { background: #29211022; border: 1px solid #d9770644; border-radius: 14px; padding: 22px; margin-bottom: 20px; }
+  .unsure-title { font-size: 16px; font-weight: 700; color: #fbbf24; margin-bottom: 12px; }
+  .unsure-steps { font-size: 13px; color: #94a3b8; line-height: 2; }
+  .unsure-steps li { list-style: none; padding-left: 4px; }
+  .unsure-steps li::before { content: "→ "; color: #fbbf24; }
+
+  /* Brand stub screen */
+  .stub-card { background: #1e3a5f22; border: 1px solid #2563eb44; border-radius: 14px; padding: 22px; margin-bottom: 20px; }
+  .stub-title { font-size: 16px; font-weight: 700; color: #60a5fa; margin-bottom: 10px; }
+  .stub-body { font-size: 13px; color: #94a3b8; line-height: 1.7; }
+  .stub-continue { width: 100%; background: #1e3a5f; border: 1px solid #2563eb55; color: #60a5fa; padding: 14px; border-radius: 12px; font-size: 14px; cursor: pointer; margin-bottom: 12px; font-weight: 500; }
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <button class="back-btn" id="back-btn" onclick="goBack()" disabled>← Back</button>
+  <div class="header-title">Fitting ID</div>
+  <div class="header-step" id="step-label">Step 1 of 5</div>
+</div>
+
+<div class="progress-bar" id="progress-bar">
+  <div class="progress-dot active" id="dot-0"></div>
+  <div class="progress-dot" id="dot-1"></div>
+  <div class="progress-dot" id="dot-2"></div>
+  <div class="progress-dot" id="dot-3"></div>
+  <div class="progress-dot" id="dot-4"></div>
+</div>
+
+<!-- SCREEN: Orientation -->
+<div class="screen active" id="screen-orientation">
+  <div class="screen-q">What shape is the fitting?</div>
+  <div class="screen-hint">Look at the overall body — how many ends and at what angle?</div>
+
+  <div class="shortcut-bar">
+    <div class="shortcut-title">Quick lookup — known equipment brand?</div>
+    <div class="shortcut-chips">
+      <div class="shortcut-chip" onclick="brandShortcut('komatsu')">Komatsu</div>
+      <div class="shortcut-chip" onclick="brandShortcut('toyota')">Toyota</div>
+      <div class="shortcut-chip" onclick="brandShortcut('cat')">CAT</div>
+    </div>
+  </div>
+
+  <div class="option-list">
+    <button class="option-btn" onclick="pick('orientation','straight',this)">
+      <div class="option-icon">⟶</div>
+      <div>
+        <div class="option-label">Straight</div>
+        <div class="option-desc">Both ends point the same direction — one line through</div>
+      </div>
+    </button>
+    <button class="option-btn" onclick="pick('orientation','45-elbow',this)">
+      <div class="option-icon">↗</div>
+      <div>
+        <div class="option-label">45° Elbow</div>
+        <div class="option-desc">Gentle bend — halfway between straight and a right angle</div>
+      </div>
+    </button>
+    <button class="option-btn" onclick="pick('orientation','90-elbow',this)">
+      <div class="option-icon">↩</div>
+      <div>
+        <div class="option-label">90° Elbow</div>
+        <div class="option-desc">Sharp right-angle bend — ends are perpendicular</div>
+      </div>
+    </button>
+    <button class="option-btn" onclick="pick('orientation','tee',this)">
+      <div class="option-icon">⊤</div>
+      <div>
+        <div class="option-label">Tee</div>
+        <div class="option-desc">Three ends — T-shaped body</div>
+      </div>
+    </button>
+  </div>
+</div>
+
+<!-- SCREEN: Gender -->
+<div class="screen" id="screen-gender">
+  <div class="screen-q">Where are the threads?</div>
+  <div class="screen-hint">Look at the threaded end of the fitting.</div>
+  <div class="option-list">
+    <button class="option-btn" onclick="pick('gender','male',this)">
+      <div class="option-icon">🔩</div>
+      <div>
+        <div class="option-label">Male</div>
+        <div class="option-desc">Threads wrap around the outside — visible when looking at the tip</div>
+      </div>
+    </button>
+    <button class="option-btn" onclick="pick('gender','female',this)">
+      <div class="option-icon">⬡</div>
+      <div>
+        <div class="option-label">Female</div>
+        <div class="option-desc">Threads are on the inside — socket or hole shape</div>
+      </div>
+    </button>
+  </div>
+</div>
+
+<!-- SCREEN: Connection Type -->
+<div class="screen" id="screen-type">
+  <div class="screen-q">What does the tip look like?</div>
+  <div class="screen-hint">Look closely at the end that connects to the hose or port. Match it to one of these.</div>
+  <div class="option-list">
+    <button class="option-btn type-metric" onclick="pick('type','metric',this)">
+      <div class="option-icon">◉</div>
+      <div>
+        <div class="option-label">Metric — Cone seat</div>
+        <div class="option-desc">Inner cone or funnel visible at the tip. Common on European and construction equipment. Stored as Light or Heavy caps at Kent.</div>
+      </div>
+    </button>
+    <button class="option-btn type-bsp" onclick="pick('type','bsp',this)">
+      <div class="option-icon">◎</div>
+      <div>
+        <div class="option-label">BSP — Parallel thread</div>
+        <div class="option-desc">Straight parallel threads, flat or slightly rounded tip, no cone. British standard. BSP Plugs and Caps are stocked at Kent.</div>
+      </div>
+    </button>
+    <button class="option-btn type-orfs" onclick="pick('type','orfs',this)">
+      <div class="option-icon">⬤</div>
+      <div>
+        <div class="option-label">ORFS — Flat face</div>
+        <div class="option-desc">Completely flat face with a rubber O-ring groove visible on the face. Common on modern high-pressure systems.</div>
+      </div>
+    </button>
+    <button class="option-btn type-jic" onclick="pick('type','jic',this)">
+      <div class="option-icon">▽</div>
+      <div>
+        <div class="option-label">JIC 37° — Flare</div>
+        <div class="option-desc">Cone-shaped tip with a wide 37° flare. Most common on American equipment. If unsure between flare types, try this first.</div>
+      </div>
+    </button>
+    <button class="option-btn type-npt" onclick="pick('type','npt',this)">
+      <div class="option-icon">▼</div>
+      <div>
+        <div class="option-label">NPT — Tapered pipe</div>
+        <div class="option-desc">Threads visibly narrow and taper toward the tip. American pipe thread standard.</div>
+      </div>
+    </button>
+    <button class="option-btn" onclick="pick('type','unsure',this)">
+      <div class="option-icon">?</div>
+      <div>
+        <div class="option-label">Not sure</div>
+        <div class="option-desc">Cannot identify from visual inspection alone</div>
+      </div>
+    </button>
+  </div>
+</div>
+
+<!-- SCREEN: Size -->
+<div class="screen" id="screen-size">
+  <div class="screen-q" id="size-q">What size is the thread?</div>
+  <div class="screen-hint" id="size-hint">Measure the OD or compare to a known fitting on the shelf.</div>
+  <div id="size-options"></div>
+</div>
+
+<!-- SCREEN: Metric class (light / heavy) -->
+<div class="screen" id="screen-metric-class">
+  <div class="screen-q">Light or Heavy series?</div>
+  <div class="screen-hint">Check the drawer label — Metric Light and Metric Heavy are stored separately at Kent. Light caps have blue labels, Heavy caps have red labels.</div>
+  <div class="option-list">
+    <button class="option-btn" onclick="pick('metricClass','light',this)">
+      <div class="option-icon" style="color:#60a5fa;">◉</div>
+      <div>
+        <div class="option-label">Metric Light</div>
+        <div class="option-desc">Lighter wall thickness, lower pressure rating. Blue label drawer at Kent.</div>
+      </div>
+    </button>
+    <button class="option-btn" onclick="pick('metricClass','heavy',this)">
+      <div class="option-icon" style="color:#f87171;">◉</div>
+      <div>
+        <div class="option-label">Metric Heavy</div>
+        <div class="option-desc">Thicker wall, higher pressure rating. Red label drawer at Kent.</div>
+      </div>
+    </button>
+  </div>
+</div>
+
+<!-- SCREEN: Result -->
+<div class="screen" id="screen-result">
+  <div class="result-card">
+    <div class="result-badge">✓ Fitting Identified</div>
+    <div class="result-main" id="result-main">—</div>
+    <div class="result-attrs" id="result-attrs"></div>
+  </div>
+  <div class="result-note" id="result-note" style="display:none;"></div>
+  <button class="restart-btn" onclick="restart()">↺ Identify Another Fitting</button>
+</div>
+
+<!-- SCREEN: Unsure -->
+<div class="screen" id="screen-unsure">
+  <div class="unsure-card">
+    <div class="unsure-title">Cannot identify visually</div>
+    <ul class="unsure-steps">
+      <li>Use a thread pitch gauge to measure thread pitch</li>
+      <li>Compare against a known fitting from the drawer</li>
+      <li>Check if the thread is metric or inch with a caliper</li>
+      <li>Ask a senior tech for assistance</li>
+    </ul>
+  </div>
+  <button class="restart-btn" onclick="restart()">↺ Start Over</button>
+</div>
+
+<!-- SCREEN: Brand stub -->
+<div class="screen" id="screen-brand-stub">
+  <div class="stub-card">
+    <div class="stub-title" id="stub-title">Brand-specific fitting</div>
+    <div class="stub-body" id="stub-body">Specs being added.</div>
+  </div>
+  <button class="stub-continue" onclick="continuFromBrand()">Continue with full wizard instead →</button>
+  <button class="restart-btn" onclick="restart()">↺ Start Over</button>
+</div>
+
+<script>
+  var state = {};
+  var navStack = [];
+  var currentScreen = 'orientation';
+  var TOTAL_STEPS = 5;
+
+  var SIZE_DATA = {
+    metric: {
+      q: 'What metric size?',
+      hint: 'Measure the outside diameter (OD) of the male thread, or inside for female.',
+      sizes: [
+        { val: 'M12', label: '12mm OD' },
+        { val: 'M14', label: '14mm OD' },
+        { val: 'M16', label: '16mm OD' },
+        { val: 'M18', label: '18mm OD' },
+        { val: 'M22', label: '22mm OD' },
+        { val: 'M26', label: '26mm OD' },
+        { val: 'M30', label: '30mm OD' }
+      ]
+    },
+    bsp: {
+      q: 'What BSP size?',
+      hint: 'BSP nominal pipe size (not actual thread OD).',
+      sizes: [
+        { val: '1/8"', label: 'BSP 1/8' },
+        { val: '1/4"', label: 'BSP 1/4' },
+        { val: '3/8"', label: 'BSP 3/8' },
+        { val: '1/2"', label: 'BSP 1/2' },
+        { val: '3/4"', label: 'BSP 3/4' },
+        { val: '1"',   label: 'BSP 1' }
+      ]
+    },
+    orfs: {
+      q: 'What dash size? (ORFS)',
+      hint: 'Dash size = thread OD in sixteenths of an inch.',
+      sizes: [
+        { val: '-4',  label: '7/16" OD' },
+        { val: '-6',  label: '9/16" OD' },
+        { val: '-8',  label: '3/4" OD' },
+        { val: '-10', label: '7/8" OD' },
+        { val: '-12', label: '1-1/16" OD' },
+        { val: '-16', label: '1-5/16" OD' }
+      ]
+    },
+    jic: {
+      q: 'What dash size? (JIC)',
+      hint: 'Dash size = thread OD in sixteenths of an inch.',
+      sizes: [
+        { val: '-4',  label: '7/16" OD' },
+        { val: '-6',  label: '9/16" OD' },
+        { val: '-8',  label: '3/4" OD' },
+        { val: '-10', label: '7/8" OD' },
+        { val: '-12', label: '1-1/16" OD' },
+        { val: '-16', label: '1-5/16" OD' }
+      ]
+    },
+    npt: {
+      q: 'What NPT size?',
+      hint: 'Nominal pipe size.',
+      sizes: [
+        { val: '1/8"', label: 'NPT 1/8' },
+        { val: '1/4"', label: 'NPT 1/4' },
+        { val: '3/8"', label: 'NPT 3/8' },
+        { val: '1/2"', label: 'NPT 1/2' },
+        { val: '3/4"', label: 'NPT 3/4' },
+        { val: '1"',   label: 'NPT 1' }
+      ]
+    }
+  };
+
+  var TYPE_LABELS = {
+    metric: 'Metric DIN',
+    bsp: 'BSP',
+    orfs: 'ORFS',
+    jic: 'JIC 37°',
+    npt: 'NPT'
+  };
+
+  var ORIENT_LABELS = {
+    straight: 'Straight',
+    '45-elbow': '45° Elbow',
+    '90-elbow': '90° Elbow',
+    tee: 'Tee'
+  };
+
+  var STEP_MAP = {
+    'orientation': 1,
+    'gender': 2,
+    'type': 3,
+    'size': 4,
+    'metric-class': 5,
+    'result': 5,
+    'unsure': 5,
+    'brand-stub': 1
+  };
+
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
+    document.getElementById('screen-' + id).classList.add('active');
+    currentScreen = id;
+    window.scrollTo(0, 0);
+  }
+
+  function updateProgress(step) {
+    document.getElementById('step-label').textContent = 'Step ' + step + ' of ' + TOTAL_STEPS;
+    for (var i = 0; i < TOTAL_STEPS; i++) {
+      var dot = document.getElementById('dot-' + i);
+      if (!dot) continue;
+      if (i < step - 1) dot.className = 'progress-dot done';
+      else if (i === step - 1) dot.className = 'progress-dot active';
+      else dot.className = 'progress-dot';
+    }
+    document.getElementById('back-btn').disabled = (navStack.length === 0);
+  }
+
+  function pick(attr, val, btn) {
+    state[attr] = val;
+    btn.closest('.option-list').querySelectorAll('.option-btn').forEach(function(b) {
+      b.style.borderColor = '';
+      b.style.background = '';
+    });
+    btn.style.borderColor = '#3b82f6';
+    btn.style.background = '#1e3a5f22';
+    setTimeout(advance, 160);
+  }
+
+  function advance() {
+    navStack.push(currentScreen);
+
+    if (currentScreen === 'orientation') {
+      showScreen('gender');
+      updateProgress(2);
+
+    } else if (currentScreen === 'gender') {
+      showScreen('type');
+      updateProgress(3);
+
+    } else if (currentScreen === 'type') {
+      if (state.type === 'unsure') {
+        showScreen('unsure');
+        updateProgress(5);
+      } else {
+        buildSizeScreen();
+        showScreen('size');
+        updateProgress(4);
+      }
+
+    } else if (currentScreen === 'size') {
+      if (state.type === 'metric') {
+        showScreen('metric-class');
+        updateProgress(5);
+      } else {
+        showResult();
+      }
+
+    } else if (currentScreen === 'metric-class') {
+      showResult();
+    }
+  }
+
+  function buildSizeScreen() {
+    var d = SIZE_DATA[state.type];
+    if (!d) return;
+    document.getElementById('size-q').textContent = d.q;
+    document.getElementById('size-hint').textContent = d.hint;
+    var html = '<div class="size-grid">';
+    d.sizes.forEach(function(s) {
+      html += '<button class="size-btn" onclick="pickSize(\'' + s.val + '\', this)">' +
+        '<div class="size-val">' + s.val + '</div>' +
+        '<div class="size-label">' + s.label + '</div>' +
+        '</button>';
+    });
+    html += '</div>';
+    document.getElementById('size-options').innerHTML = html;
+  }
+
+  function pickSize(val, btn) {
+    state.size = val;
+    btn.closest('.size-grid').querySelectorAll('.size-btn').forEach(function(b) {
+      b.style.borderColor = '';
+    });
+    btn.style.borderColor = '#3b82f6';
+    setTimeout(advance, 160);
+  }
+
+  function showResult() {
+    var typeLabel = TYPE_LABELS[state.type] || state.type;
+    var metricSuffix = (state.type === 'metric' && state.metricClass) ? ' ' + (state.metricClass === 'light' ? 'Light' : 'Heavy') : '';
+    var genderLabel = state.gender === 'male' ? 'Male' : 'Female';
+    var orientLabel = ORIENT_LABELS[state.orientation] || state.orientation;
+
+    document.getElementById('result-main').textContent =
+      typeLabel + metricSuffix + '  |  ' + genderLabel + '  |  ' + orientLabel + '  |  ' + state.size;
+
+    var attrs = [
+      { key: 'Type', val: typeLabel + metricSuffix },
+      { key: 'Gender', val: genderLabel },
+      { key: 'Orientation', val: orientLabel },
+      { key: 'Size', val: state.size }
+    ];
+    if (state.brand) attrs.push({ key: 'Equipment', val: state.brand.charAt(0).toUpperCase() + state.brand.slice(1) });
+
+    document.getElementById('result-attrs').innerHTML = attrs.map(function(a) {
+      return '<div class="result-attr"><span class="attr-key">' + a.key + ': </span><span class="attr-val">' + a.val + '</span></div>';
+    }).join('');
+
+    var noteEl = document.getElementById('result-note');
+    if (state.brand === 'komatsu' || state.brand === 'toyota') {
+      noteEl.style.display = 'block';
+      noteEl.innerHTML = '<strong>Note:</strong> Verify against the <strong>' +
+        (state.brand.charAt(0).toUpperCase() + state.brand.slice(1)) +
+        ' Caps &amp; Plugs</strong> drawer at Kent. Brand-specific fitments may differ from standard metric sizing.';
+    } else {
+      noteEl.style.display = 'none';
+    }
+
+    showScreen('result');
+    updateProgress(5);
+  }
+
+  function brandShortcut(brand) {
+    state.brand = brand;
+    var brandNames = { komatsu: 'Komatsu', toyota: 'Toyota', cat: 'CAT' };
+    var brandNotes = {
+      komatsu: 'Komatsu uses JIS (Japanese Industrial Standard) fittings — visually similar to BSP but NOT interchangeable. A dedicated Komatsu Caps & Plugs drawer exists at Kent. Specs for this branch are being added.',
+      toyota:  'Toyota-specific fittings are stocked at Kent in a dedicated drawer. Thread specs TBD — continue with full wizard to get the closest standard match.',
+      cat:     'CAT (Caterpillar) uses proprietary fitting specs in some lines. Continue with the full wizard to identify thread type, then verify against CAT-specific inventory.'
+    };
+    navStack.push('orientation');
+    document.getElementById('stub-title').textContent = brandNames[brand] + ' — equipment-specific fitting';
+    document.getElementById('stub-body').textContent = brandNotes[brand];
+    showScreen('brand-stub');
+  }
+
+  function continuFromBrand() {
+    showScreen('orientation');
+    updateProgress(1);
+  }
+
+  function goBack() {
+    if (navStack.length === 0) return;
+    var prev = navStack.pop();
+    showScreen(prev);
+    updateProgress(STEP_MAP[prev] || 1);
+  }
+
+  function restart() {
+    state = {};
+    navStack = [];
+    document.querySelectorAll('.option-btn').forEach(function(b) {
+      b.style.borderColor = '';
+      b.style.background = '';
+    });
+    document.querySelectorAll('.size-btn').forEach(function(b) {
+      b.style.borderColor = '';
+    });
+    showScreen('orientation');
+    updateProgress(1);
+  }
+
+  updateProgress(1);
+</script>
+
+</body>
+</html>
