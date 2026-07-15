@@ -1,5 +1,23 @@
 # Primer Changelog
 
+## 2026-07-15
+
+### [feature] Aviation — new industry primer (12 tabs)
+- New file: `primer/industry/aviation/index.html` — commercial airlines, aircraft OEMs, MRO, and air traffic control; 12 tabs following the standard primer format
+- **Tab 1 — Overview:** 6 sub-sector cards (Commercial Airlines, Aircraft Manufacturing/OEMs, MRO, ATC & Airports, Air Cargo & Freight, General Aviation & Business Jets); value chain (OEM → Leasing/Purchase → Airline Operations → Airport/Ground Ops → Flight Operations → MRO → Retirement); 6 market context cards (Delta, Southwest, Boeing/Airbus duopoly, market size, regulatory environment, fuel & labor)
+- **Tab 2 — Key Terminology:** 22 glossary terms covering ASM, RPM, Load Factor, CASM, RASM/PRASM, Yield, Hub-and-Spoke, Point-to-Point, Codeshare, Slot, AOG, MEL, ETOPS, Type Certificate, Wet/Dry Lease, MRO check types (A/B/C/D), Ancillary Revenue, GDS, NOTAM, FAA Part 121/135/91, TCAS, IROPS
+- **Tab 3 — Major Players:** US network carriers (Delta, American, United, Southwest, Spirit/Frontier); aircraft & engine OEMs (Boeing, Airbus, Embraer, GE Aerospace/CFM, Pratt & Whitney, Rolls-Royce); lessors/MRO/distribution (AerCap, Air Lease Corp, Sabre/Amadeus, FAA/EASA)
+- **Tab 4 — Core Metrics:** Capacity & demand (ASM, RPM, Load Factor); unit economics (CASM, CASM-ex-fuel, RASM/PRASM, Yield, Ancillary Revenue %); operational reliability (OTP, Completion Factor, Turnaround Time, Dispatch Reliability, Aircraft Utilization)
+- **Tab 5 — Technology Stack:** 7 layers — Reservations/PSS (Sabre, Amadeus, Navitaire), Flight Planning/Dispatch (Jeppesen, Lido), MRO (AMOS, TRAX, Ramco), Crew Scheduling, Air Traffic Management (FAA NextGen, SESAR), Revenue Management (PROS), Avionics
+- **Tab 6 — Common Workflows:** Flight Planning & Dispatch, Aircraft Turnaround, Heavy Maintenance Check (C-Check/D-Check) — 5 steps each
+- **Tab 7 — Trends & Challenges:** Engine/supply chain constraints (Pratt GTF recall), pilot/mechanic shortage, Sustainable Aviation Fuel, ATC modernization/staffing, Boeing quality crisis, loyalty programs as profit centers
+- **Tab 8 — Market Dynamics:** 5 pain point cards (fuel volatility, OEM duopoly risk, labor costs, slot constraints, thin margins); monetization table (ticket revenue, ancillary fees, loyalty/co-brand, cargo, MRO service contracts, leasing)
+- **Tab 9 — Evolution:** 6 foundational works table (Chicago Convention, Federal Aviation Act, Airline Deregulation Act, "Hard Landing", ICAO Annex 13, Airworthiness Directive system); 8-card timeline (1903 Wright Brothers → 1978 Deregulation → 2018-19 737 MAX grounding → 2020+ COVID/supply-constrained recovery)
+- **Tab 10 — Data Governance:** Non-punitive safety reporting, aircraft records custody, multi-party data (OEM/MRO/lessor/airline), legacy PSS/GDS metadata
+- **Tab 11 — Data Architecture:** 7 data domains; end-to-end flow diagram (Booking → PNR → Flight Planning → Dispatch → ATC → FDR → Maintenance Log → Safety Analysis); protocols table (ARINC, ADS-B, ACARS, NDC, ATA Spec 2000)
+- **Tab 12 — Failure Modes & Incidents:** 6 real incident cards — 737 MAX MCAS crashes, Southwest Dec 2022 IROPS meltdown, FAA NOTAM outage (Jan 2023), Alaska Airlines door-plug blowout, Pratt & Whitney GTF powder-metal recall, CrowdStrike/Delta outage (July 2024)
+- `primer/index.html`: added sidebar nav link (with "New" badge, moved from Predictive Maintenance) + industry card with full `data-search` keywords
+
 ## 2026-04-14
 
 ### [feature] Predictive Maintenance primer — Domain Knowledge tab added (tab 13)

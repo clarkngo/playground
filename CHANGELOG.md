@@ -7,6 +7,17 @@ Tags: `[bug]` `[feature]` `[ux]` `[refactor]`
 
 ---
 
+## 2026-07-15
+
+### [feature] Aviation — new industry primer
+- `primer/industry/aviation/index.html` — 12-tab primer covering airlines, aircraft OEMs (Boeing/Airbus), MRO, and air traffic control; added to `primer/index.html` sidebar and grid
+
+## 2026-06-08
+
+### [feature] Morse Hydraulics — Assembly Builder prototype
+- `projects/morse-hydraulics/app/assembly/v1.html` — new 4-step Assembly Builder wizard: hose series picker (7 Manuli series) → dash size (-4 to -24) → End 1 fitting (type + size) → End 2 fitting (with "same as End 1" shortcut) → OAL length (common presets + custom ±stepper) → spec summary card with inline SVG assembly diagram; wire pattern in diagram switches braided/spiral based on selected series
+- `projects/morse-hydraulics/app/index.html` — moved Assembly Builder from Planned → Built section; added card with v1 link
+
 ## 2026-06-07
 
 ### [feature] Morse Hydraulics — Hose ID prototype + app hub + folder restructure

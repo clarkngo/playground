@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Assembly Builder — Morse Hydraulics</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0a0c12; color: #e2e8f0; min-height: 100vh; max-width: 480px; margin: 0 auto; }
+
+  /* Header */
+  .hdr { background: #0f1117; border-bottom: 1px solid #1e293b; padding: 12px 18px; display: flex; align-items: center; gap: 10px; position: sticky; top: 0; z-index: 10; }
+  .back-btn { background: none; border: 1px solid #1e293b; color: #475569; padding: 7px 12px; border-radius: 8px; font-size: 13px; cursor: pointer; transition: all .15s; }
+  .back-btn:hover:not(:disabled) { border-color: #a78bfa; color: #c4b5fd; }
+  .back-btn:disabled { opacity: 0.2; cursor: default; }
+  .hdr-title { font-size: 14px; font-weight: 600; color: #f1f5f9; }
+  .hdr-step { font-size: 11px; color: #475569; margin-left: auto; }
+
+  /* Progress */
+  .prog { display: flex; gap: 4px; padding: 12px 18px 0; }
+  .pdot { height: 3px; flex: 1; border-radius: 99px; background: #1e293b; transition: background .25s; }
+  .pdot.done { background: #a78bfa; }
+  .pdot.active { background: #c4b5fd; }
+
+  /* Screens */
+  .screen { display: none; padding: 20px 16px 48px; }
+  .screen.active { display: block; }
+  .screen-q { font-size: 20px; font-weight: 700; color: #f8fafc; margin-bottom: 4px; line-height: 1.3; }
+  .screen-sub { font-size: 13px; color: #475569; margin-bottom: 20px; line-height: 1.5; }
+
+  /* Step breadcrumb */
+  .breadcrumb { display: flex; align-items: center; gap: 6px; margin-bottom: 20px; flex-wrap: wrap; }
+  .bc-item { font-size: 12px; color: #334155; display: flex; align-items: center; gap: 6px; }
+  .bc-item.done { color: #a78bfa; }
+  .bc-item.active { color: #f1f5f9; font-weight: 600; }
+  .bc-sep { color: #1e293b; font-size: 12px; }
+  .bc-val { font-size: 11px; background: #1e293b; border-radius: 4px; padding: 2px 7px; color: #94a3b8; }
+  .bc-item.done .bc-val { background: #2e1065; color: #c4b5fd; }
+
+  /* Hose series grid */
+  .series-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 20px; }
+  .series-card { background: #0f1117; border: 2px solid #1e293b; border-radius: 14px; padding: 14px 12px; cursor: pointer; transition: all .12s; }
+  .series-card:active { transform: scale(.97); }
+  .series-card.sel { border-color: #a78bfa; background: #2e106522; }
+  .series-name { font-size: 15px; font-weight: 700; color: #f1f5f9; margin-bottom: 6px; }
+  .series-tags { display: flex; gap: 5px; flex-wrap: wrap; }
+  .stag { font-size: 10px; padding: 2px 7px; border-radius: 99px; font-weight: 500; }
+  .stag-braided { background: #1e3a5f; color: #60a5fa; }
+  .stag-spiral  { background: #2d0f0f; color: #f87171; }
+  .stag-med     { background: #1e293b; color: #94a3b8; }
+  .stag-high    { background: #292010; color: #fbbf24; }
+  .stag-vhigh   { background: #2d0f0f; color: #f87171; }
+
+  /* Dash size grid */
+  .dash-label { font-size: 11px; text-transform: uppercase; letter-spacing: .07em; color: #475569; margin-bottom: 10px; font-weight: 600; }
+  .dash-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; }
+  .dash-btn { background: #0f1117; border: 2px solid #1e293b; border-radius: 10px; padding: 12px 6px; cursor: pointer; text-align: center; transition: all .12s; }
+  .dash-btn:active { border-color: #a78bfa; }
+  .dash-btn.sel { border-color: #a78bfa; background: #2e106522; }
+  .dash-val { font-size: 15px; font-weight: 700; color: #f1f5f9; }
+  .dash-sub { font-size: 10px; color: #475569; margin-top: 3px; }
+
+  /* Fitting type grid */
+  .type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+  .type-btn { background: #0f1117; border: 2px solid #1e293b; border-radius: 12px; padding: 14px 12px; cursor: pointer; transition: all .12s; display: flex; align-items: center; gap: 10px; }
+  .type-btn:active { transform: scale(.97); }
+  .type-btn.sel { border-color: var(--c); background: color-mix(in srgb, var(--c) 10%, #0f1117); }
+  .type-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .type-name { font-size: 14px; font-weight: 700; color: #f1f5f9; }
+  .type-hint { font-size: 10px; color: #475569; margin-top: 2px; }
+
+  /* Same as end 1 button */
+  .same-btn { width: 100%; background: #2e106522; border: 2px solid #a78bfa44; border-radius: 14px; padding: 16px; cursor: pointer; text-align: center; margin-bottom: 14px; transition: all .12s; }
+  .same-btn:hover { border-color: #a78bfa; }
+  .same-btn .same-title { font-size: 14px; font-weight: 700; color: #c4b5fd; margin-bottom: 4px; }
+  .same-btn .same-desc  { font-size: 12px; color: #64748b; }
+  .divider { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .divider-line { flex: 1; height: 1px; background: #1e293b; }
+  .divider-text { font-size: 11px; color: #334155; text-transform: uppercase; letter-spacing: .06em; }
+
+  /* Length screen */
+  .length-quick { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; margin-bottom: 20px; }
+  .len-btn { background: #0f1117; border: 2px solid #1e293b; border-radius: 10px; padding: 14px 6px; text-align: center; cursor: pointer; transition: all .12s; }
+  .len-btn.sel { border-color: #a78bfa; background: #2e106522; }
+  .len-val { font-size: 16px; font-weight: 700; color: #f1f5f9; }
+  .len-sub { font-size: 10px; color: #475569; margin-top: 2px; }
+
+  .custom-length { margin-bottom: 16px; }
+  .custom-label { font-size: 12px; color: #475569; margin-bottom: 8px; }
+  .len-input-row { display: flex; align-items: center; gap: 10px; }
+  .len-minus, .len-plus { background: #0f1117; border: 1px solid #1e293b; color: #94a3b8; width: 44px; height: 44px; border-radius: 10px; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .12s; flex-shrink: 0; }
+  .len-minus:hover, .len-plus:hover { border-color: #a78bfa; color: #c4b5fd; }
+  .len-input { flex: 1; background: #0f1117; border: 2px solid #334155; border-radius: 10px; padding: 10px 14px; font-size: 20px; font-weight: 700; color: #f1f5f9; text-align: center; outline: none; }
+  .len-input:focus { border-color: #a78bfa; }
+  .len-unit { font-size: 14px; color: #475569; flex-shrink: 0; }
+
+  .len-continue { width: 100%; background: #2e1065; border: 1px solid #a78bfa44; color: #c4b5fd; padding: 15px; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; transition: all .15s; margin-top: 8px; }
+  .len-continue:hover { background: #3b1a8a; border-color: #a78bfa; }
+
+  /* Result */
+  .spec-card { background: #0f1117; border: 2px solid #a78bfa44; border-radius: 18px; overflow: hidden; margin-bottom: 14px; }
+  .spec-header { background: #2e1065; padding: 16px 18px; display: flex; align-items: center; justify-content: space-between; }
+  .spec-header-title { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: #c4b5fd; font-weight: 700; }
+  .spec-header-id { font-size: 11px; color: #7c3aed; }
+
+  .spec-body { padding: 18px; display: flex; flex-direction: column; gap: 0; }
+  .spec-row { display: flex; align-items: stretch; padding: 12px 0; border-bottom: 1px solid #1e293b; gap: 14px; }
+  .spec-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .spec-icon { font-size: 20px; flex-shrink: 0; width: 28px; text-align: center; padding-top: 1px; }
+  .spec-content { flex: 1; }
+  .spec-key { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: #475569; margin-bottom: 4px; font-weight: 600; }
+  .spec-val { font-size: 15px; font-weight: 700; color: #f1f5f9; line-height: 1.3; }
+  .spec-sub { font-size: 11px; color: #64748b; margin-top: 3px; }
+
+  /* Assembly diagram */
+  .diagram-wrap { padding: 0 18px 18px; }
+  .diagram-label { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: #475569; margin-bottom: 10px; font-weight: 600; }
+  .diagram-svg { width: 100%; }
+
+  .restart-btn { width: 100%; background: #0f1117; border: 1px solid #1e293b; color: #475569; padding: 15px; border-radius: 12px; font-size: 14px; cursor: pointer; transition: all .15s; }
+  .restart-btn:hover { border-color: #a78bfa; color: #c4b5fd; }
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <button class="back-btn" id="back-btn" onclick="goBack()" disabled>← Back</button>
+  <span class="hdr-title">Assembly Builder</span>
+  <span class="hdr-step" id="step-lbl">1 of 4</span>
+</div>
+<div class="prog">
+  <div class="pdot active" id="p0"></div>
+  <div class="pdot" id="p1"></div>
+  <div class="pdot" id="p2"></div>
+  <div class="pdot" id="p3"></div>
+</div>
+
+<!-- ─── SCREEN 1: HOSE ─────────────────────────────────── -->
+<div class="screen active" id="s-hose">
+  <div class="screen-q">Select the hose</div>
+  <div class="screen-sub">Pick a Manuli series from Kent stock, then the dash size.</div>
+
+  <div class="series-grid" id="series-grid">
+    <div class="series-card" onclick="pickSeries('GISO/13','2-wire braid','braided','med',this)">
+      <div class="series-name">GISO/13</div>
+      <div class="series-tags">
+        <span class="stag stag-braided">Braided</span>
+        <span class="stag stag-med">Med pressure</span>
+      </div>
+    </div>
+    <div class="series-card" onclick="pickSeries('GISO/21','2-wire braid','braided','high',this)">
+      <div class="series-name">GISO/21</div>
+      <div class="series-tags">
+        <span class="stag stag-braided">Braided</span>
+        <span class="stag stag-high">High pressure</span>
+      </div>
+    </div>
+    <div class="series-card" onclick="pickSeries('GISO/3SXF','Spiral wire','spiral','high',this)">
+      <div class="series-name">GISO/3SXF</div>
+      <div class="series-tags">
+        <span class="stag stag-spiral">Spiral</span>
+        <span class="stag stag-high">High pressure</span>
+      </div>
+    </div>
+    <div class="series-card" onclick="pickSeries('FM/35','Flexible compact','braided','med',this)">
+      <div class="series-name">FM/35</div>
+      <div class="series-tags">
+        <span class="stag stag-braided">Braided</span>
+        <span class="stag stag-med">Compact</span>
+      </div>
+    </div>
+    <div class="series-card" onclick="pickSeries('DIAMONDSPIR','Spiral — orange spool','spiral','high',this)">
+      <div class="series-name">DIAMONDSPIR</div>
+      <div class="series-tags">
+        <span class="stag stag-spiral">Spiral</span>
+        <span class="stag stag-high">High pressure</span>
+      </div>
+    </div>
+    <div class="series-card" onclick="pickSeries('ROCK/4SH','4-spiral wire','spiral','vhigh',this)">
+      <div class="series-name">ROCK/4SH</div>
+      <div class="series-tags">
+        <span class="stag stag-spiral">Spiral</span>
+        <span class="stag stag-vhigh">Very high</span>
+      </div>
+    </div>
+    <div class="series-card" onclick="pickSeries('ROCK/45H','4-spiral variant','spiral','vhigh',this)">
+      <div class="series-name">ROCK/45H</div>
+      <div class="series-tags">
+        <span class="stag stag-spiral">Spiral</span>
+        <span class="stag stag-vhigh">Very high</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dash size — revealed after series pick -->
+  <div id="dash-section" style="display:none;">
+    <div class="dash-label">Dash size (inside diameter)</div>
+    <div class="dash-grid">
+      <div class="dash-btn" onclick="pickDash('-4','1/4"',this)"><div class="dash-val">-4</div><div class="dash-sub">1/4"</div></div>
+      <div class="dash-btn" onclick="pickDash('-6','3/8"',this)"><div class="dash-val">-6</div><div class="dash-sub">3/8"</div></div>
+      <div class="dash-btn" onclick="pickDash('-8','1/2"',this)"><div class="dash-val">-8</div><div class="dash-sub">1/2"</div></div>
+      <div class="dash-btn" onclick="pickDash('-10','5/8"',this)"><div class="dash-val">-10</div><div class="dash-sub">5/8"</div></div>
+      <div class="dash-btn" onclick="pickDash('-12','3/4"',this)"><div class="dash-val">-12</div><div class="dash-sub">3/4"</div></div>
+      <div class="dash-btn" onclick="pickDash('-16','1"',this)"><div class="dash-val">-16</div><div class="dash-sub">1"</div></div>
+      <div class="dash-btn" onclick="pickDash('-20','1-1/4"',this)"><div class="dash-val">-20</div><div class="dash-sub">1-1/4"</div></div>
+      <div class="dash-btn" onclick="pickDash('-24','1-1/2"',this)"><div class="dash-val">-24</div><div class="dash-sub">1-1/2"</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── SCREEN 2: END 1 ────────────────────────────────── -->
+<div class="screen" id="s-end1">
+  <div class="screen-q">End 1 — fitting type</div>
+  <div class="screen-sub">Select the fitting type and size for the first end of the hose.</div>
+  <div id="bc-end1" class="breadcrumb"></div>
+
+  <div class="type-grid" id="type-grid-e1">
+    <div class="type-btn" style="--c:#60a5fa" onclick="pickType('e1','Metric DIN','cone seat',this)">
+      <div class="type-dot" style="background:#60a5fa"></div>
+      <div><div class="type-name">Metric</div><div class="type-hint">cone seat</div></div>
+    </div>
+    <div class="type-btn" style="--c:#a78bfa" onclick="pickType('e1','BSP','parallel thread',this)">
+      <div class="type-dot" style="background:#a78bfa"></div>
+      <div><div class="type-name">BSP</div><div class="type-hint">parallel thread</div></div>
+    </div>
+    <div class="type-btn" style="--c:#4ade80" onclick="pickType('e1','ORFS','flat face',this)">
+      <div class="type-dot" style="background:#4ade80"></div>
+      <div><div class="type-name">ORFS</div><div class="type-hint">flat face + O-ring</div></div>
+    </div>
+    <div class="type-btn" style="--c:#fbbf24" onclick="pickType('e1','JIC 37°','wide flare',this)">
+      <div class="type-dot" style="background:#fbbf24"></div>
+      <div><div class="type-name">JIC 37°</div><div class="type-hint">wide flare</div></div>
+    </div>
+    <div class="type-btn" style="--c:#f87171" onclick="pickType('e1','NPT','tapered pipe',this)">
+      <div class="type-dot" style="background:#f87171"></div>
+      <div><div class="type-name">NPT</div><div class="type-hint">tapered thread</div></div>
+    </div>
+  </div>
+
+  <div id="size-section-e1" style="display:none;">
+    <div class="dash-label">Size</div>
+    <div id="size-grid-e1" class="dash-grid"></div>
+  </div>
+</div>
+
+<!-- ─── SCREEN 3: END 2 ────────────────────────────────── -->
+<div class="screen" id="s-end2">
+  <div class="screen-q">End 2 — fitting type</div>
+  <div class="screen-sub">Select the fitting type and size for the second end.</div>
+  <div id="bc-end2" class="breadcrumb"></div>
+
+  <button class="same-btn" onclick="sameAsEnd1()">
+    <div class="same-title">↩ Same as End 1</div>
+    <div class="same-desc" id="same-desc">—</div>
+  </button>
+
+  <div class="divider"><div class="divider-line"></div><div class="divider-text">or pick different</div><div class="divider-line"></div></div>
+
+  <div class="type-grid" id="type-grid-e2">
+    <div class="type-btn" style="--c:#60a5fa" onclick="pickType('e2','Metric DIN','cone seat',this)">
+      <div class="type-dot" style="background:#60a5fa"></div>
+      <div><div class="type-name">Metric</div><div class="type-hint">cone seat</div></div>
+    </div>
+    <div class="type-btn" style="--c:#a78bfa" onclick="pickType('e2','BSP','parallel thread',this)">
+      <div class="type-dot" style="background:#a78bfa"></div>
+      <div><div class="type-name">BSP</div><div class="type-hint">parallel thread</div></div>
+    </div>
+    <div class="type-btn" style="--c:#4ade80" onclick="pickType('e2','ORFS','flat face',this)">
+      <div class="type-dot" style="background:#4ade80"></div>
+      <div><div class="type-name">ORFS</div><div class="type-hint">flat face + O-ring</div></div>
+    </div>
+    <div class="type-btn" style="--c:#fbbf24" onclick="pickType('e2','JIC 37°','wide flare',this)">
+      <div class="type-dot" style="background:#fbbf24"></div>
+      <div><div class="type-name">JIC 37°</div><div class="type-hint">wide flare</div></div>
+    </div>
+    <div class="type-btn" style="--c:#f87171" onclick="pickType('e2','NPT','tapered pipe',this)">
+      <div class="type-dot" style="background:#f87171"></div>
+      <div><div class="type-name">NPT</div><div class="type-hint">tapered thread</div></div>
+    </div>
+  </div>
+
+  <div id="size-section-e2" style="display:none;">
+    <div class="dash-label">Size</div>
+    <div id="size-grid-e2" class="dash-grid"></div>
+  </div>
+</div>
+
+<!-- ─── SCREEN 4: LENGTH ───────────────────────────────── -->
+<div class="screen" id="s-length">
+  <div class="screen-q">Overall length (OAL)</div>
+  <div class="screen-sub">Total length of the finished assembly including fittings, in inches.</div>
+  <div id="bc-length" class="breadcrumb"></div>
+
+  <div class="dash-label">Common lengths</div>
+  <div class="length-quick">
+    <div class="len-btn" onclick="setLen(12,this)"><div class="len-val">12</div><div class="len-sub">inches</div></div>
+    <div class="len-btn" onclick="setLen(18,this)"><div class="len-val">18</div><div class="len-sub">inches</div></div>
+    <div class="len-btn" onclick="setLen(24,this)"><div class="len-val">24</div><div class="len-sub">inches</div></div>
+    <div class="len-btn" onclick="setLen(36,this)"><div class="len-val">36</div><div class="len-sub">inches</div></div>
+  </div>
+
+  <div class="custom-length">
+    <div class="custom-label">Or enter custom length</div>
+    <div class="len-input-row">
+      <button class="len-minus" onclick="adjustLen(-1)">−</button>
+      <input class="len-input" type="number" id="len-val" value="24" min="1" max="240" oninput="syncLen(this.value)">
+      <span class="len-unit">inches</span>
+      <button class="len-plus" onclick="adjustLen(1)">+</button>
+    </div>
+  </div>
+
+  <button class="len-continue" onclick="goLength()">Build assembly →</button>
+</div>
+
+<!-- ─── SCREEN 5: RESULT ───────────────────────────────── -->
+<div class="screen" id="s-result">
+  <div class="spec-card">
+    <div class="spec-header">
+      <span class="spec-header-title">Assembly Spec</span>
+      <span class="spec-header-id" id="spec-id"></span>
+    </div>
+
+    <!-- Inline assembly diagram -->
+    <div class="diagram-wrap">
+      <div class="diagram-label">Assembly diagram</div>
+      <svg class="diagram-svg" viewBox="0 0 360 60" fill="none" id="diag-svg">
+        <!-- End 1 fitting -->
+        <polygon points="10,20 28,10 28,50 10,40" fill="#2e1065" stroke="#a78bfa" stroke-width="1.5" id="diag-e1"/>
+        <rect x="28" y="18" width="30" height="24" fill="#1e293b" stroke="#a78bfa" stroke-width="1.5"/>
+        <!-- Hose body -->
+        <rect x="58" y="22" width="244" height="16" fill="#1a1d27" stroke="#334155" stroke-width="1.5" id="diag-hose"/>
+        <!-- wire pattern (braided by default) -->
+        <line x1="80"  y1="22" x2="90"  y2="38" stroke="#475569" stroke-width="1" id="dw1"/>
+        <line x1="96"  y1="22" x2="106" y2="38" stroke="#475569" stroke-width="1" id="dw2"/>
+        <line x1="112" y1="22" x2="122" y2="38" stroke="#475569" stroke-width="1" id="dw3"/>
+        <line x1="128" y1="22" x2="138" y2="38" stroke="#475569" stroke-width="1" id="dw4"/>
+        <line x1="144" y1="22" x2="154" y2="38" stroke="#475569" stroke-width="1" id="dw5"/>
+        <line x1="160" y1="22" x2="170" y2="38" stroke="#475569" stroke-width="1" id="dw6"/>
+        <line x1="176" y1="22" x2="186" y2="38" stroke="#475569" stroke-width="1" id="dw7"/>
+        <line x1="192" y1="22" x2="202" y2="38" stroke="#475569" stroke-width="1" id="dw8"/>
+        <line x1="208" y1="22" x2="218" y2="38" stroke="#475569" stroke-width="1" id="dw9"/>
+        <line x1="224" y1="22" x2="234" y2="38" stroke="#475569" stroke-width="1" id="dw10"/>
+        <line x1="240" y1="22" x2="250" y2="38" stroke="#475569" stroke-width="1" id="dw11"/>
+        <line x1="256" y1="22" x2="266" y2="38" stroke="#475569" stroke-width="1" id="dw12"/>
+        <line x1="272" y1="22" x2="282" y2="38" stroke="#475569" stroke-width="1" id="dw13"/>
+        <!-- End 2 fitting -->
+        <rect x="302" y="18" width="30" height="24" fill="#1e293b" stroke="#a78bfa" stroke-width="1.5"/>
+        <polygon points="332,10 350,20 350,40 332,50" fill="#2e1065" stroke="#a78bfa" stroke-width="1.5" id="diag-e2"/>
+        <!-- OAL arrow -->
+        <line x1="10" y1="55" x2="350" y2="55" stroke="#334155" stroke-width="1"/>
+        <polygon points="10,53 10,57 6,55" fill="#475569"/>
+        <polygon points="350,53 350,57 354,55" fill="#475569"/>
+        <text x="180" y="58" text-anchor="middle" font-size="8" fill="#475569" font-family="system-ui" id="diag-oal">OAL</text>
+      </svg>
+    </div>
+
+    <div class="spec-body">
+      <div class="spec-row">
+        <div class="spec-icon">🟠</div>
+        <div class="spec-content">
+          <div class="spec-key">Hose</div>
+          <div class="spec-val" id="res-hose">—</div>
+          <div class="spec-sub" id="res-hose-sub">—</div>
+        </div>
+      </div>
+      <div class="spec-row">
+        <div class="spec-icon">🔵</div>
+        <div class="spec-content">
+          <div class="spec-key">End 1</div>
+          <div class="spec-val" id="res-e1">—</div>
+        </div>
+      </div>
+      <div class="spec-row">
+        <div class="spec-icon">🔵</div>
+        <div class="spec-content">
+          <div class="spec-key">End 2</div>
+          <div class="spec-val" id="res-e2">—</div>
+        </div>
+      </div>
+      <div class="spec-row">
+        <div class="spec-icon">📏</div>
+        <div class="spec-content">
+          <div class="spec-key">Overall Length (OAL)</div>
+          <div class="spec-val" id="res-len">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <button class="restart-btn" onclick="restart()">↺ Build Another Assembly</button>
+</div>
+
+<script>
+  var S = {};
+  var stk = [];
+  var cur = 'hose';
+  var TOTAL = 4;
+
+  var SIZE_OPTS = {
+    'Metric DIN': [{v:'M12'},{v:'M14'},{v:'M16'},{v:'M18'},{v:'M22'},{v:'M26'},{v:'M30'}],
+    'BSP':        [{v:'1/8"'},{v:'1/4"'},{v:'3/8"'},{v:'1/2"'},{v:'3/4"'},{v:'1"'}],
+    'ORFS':       [{v:'-4'},{v:'-6'},{v:'-8'},{v:'-10'},{v:'-12'},{v:'-16'}],
+    'JIC 37°':    [{v:'-4'},{v:'-6'},{v:'-8'},{v:'-10'},{v:'-12'},{v:'-16'}],
+    'NPT':        [{v:'1/8"'},{v:'1/4"'},{v:'3/8"'},{v:'1/2"'},{v:'3/4"'},{v:'1"'}]
+  };
+
+  function show(id) {
+    document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
+    document.getElementById('s-'+id).classList.add('active');
+    cur = id;
+    window.scrollTo(0,0);
+  }
+
+  function prog(n) {
+    document.getElementById('step-lbl').textContent = n + ' of ' + TOTAL;
+    for (var i=0;i<TOTAL;i++) {
+      var d=document.getElementById('p'+i);
+      d.className='pdot'+(i<n-1?' done':i===n-1?' active':'');
+    }
+    document.getElementById('back-btn').disabled=(stk.length===0);
+  }
+
+  function pickSeries(name, desc, wire, pressure, el) {
+    S.series = name; S.seriesDesc = desc; S.wire = wire;
+    document.querySelectorAll('#series-grid .series-card').forEach(function(c){c.classList.remove('sel');});
+    el.classList.add('sel');
+    document.getElementById('dash-section').style.display = 'block';
+    el.scrollIntoView({behavior:'smooth', block:'nearest'});
+  }
+
+  function pickDash(dash, inches, el) {
+    S.dash = dash; S.dashInches = inches;
+    document.querySelectorAll('.dash-btn').forEach(function(b){b.classList.remove('sel');});
+    el.classList.add('sel');
+    setTimeout(function() {
+      stk.push('hose');
+      updateBreadcrumb('end1');
+      show('end1'); prog(2);
+    }, 180);
+  }
+
+  function pickType(end, type, hint, el) {
+    S[end+'Type'] = type; S[end+'Hint'] = hint;
+    var grid = document.getElementById('type-grid-'+end);
+    grid.querySelectorAll('.type-btn').forEach(function(b){b.classList.remove('sel');});
+    el.classList.add('sel');
+
+    var sec = document.getElementById('size-section-'+end);
+    var sgrid = document.getElementById('size-grid-'+end);
+    var opts = SIZE_OPTS[type] || [];
+    sgrid.innerHTML = opts.map(function(o){
+      return '<div class="dash-btn" onclick="pickSize(\''+end+'\',\''+o.v+'\',this)"><div class="dash-val">'+o.v+'</div></div>';
+    }).join('');
+    sec.style.display = 'block';
+    sec.scrollIntoView({behavior:'smooth', block:'nearest'});
+  }
+
+  function pickSize(end, size, el) {
+    S[end+'Size'] = size;
+    var sgrid = document.getElementById('size-grid-'+end);
+    sgrid.querySelectorAll('.dash-btn').forEach(function(b){b.classList.remove('sel');});
+    el.classList.add('sel');
+    setTimeout(function() {
+      stk.push(end==='e1'?'end1':'end2');
+      if (end === 'e1') {
+        document.getElementById('same-desc').textContent = S.e1Type + ' ' + S.e1Size;
+        updateBreadcrumb('end2');
+        show('end2'); prog(3);
+      } else {
+        updateBreadcrumb('length');
+        show('length'); prog(4);
+      }
+    }, 180);
+  }
+
+  function sameAsEnd1() {
+    S.e2Type = S.e1Type; S.e2Hint = S.e1Hint; S.e2Size = S.e1Size;
+    stk.push('end2');
+    updateBreadcrumb('length');
+    show('length'); prog(4);
+  }
+
+  function setLen(val, el) {
+    document.getElementById('len-val').value = val;
+    document.querySelectorAll('.len-btn').forEach(function(b){b.classList.remove('sel');});
+    if (el) el.classList.add('sel');
+  }
+
+  function adjustLen(delta) {
+    var inp = document.getElementById('len-val');
+    var v = parseInt(inp.value)||24;
+    v = Math.max(1, Math.min(240, v + delta));
+    inp.value = v;
+    document.querySelectorAll('.len-btn').forEach(function(b){b.classList.remove('sel');});
+  }
+
+  function syncLen(val) {
+    document.querySelectorAll('.len-btn').forEach(function(b){b.classList.remove('sel');});
+    var common = [12,18,24,36];
+    var v = parseInt(val);
+    var btns = document.querySelectorAll('.len-btn');
+    common.forEach(function(c,i){ if(c===v && btns[i]) btns[i].classList.add('sel'); });
+  }
+
+  function goLength() {
+    S.length = parseInt(document.getElementById('len-val').value) || 24;
+    stk.push('length');
+    showResult();
+  }
+
+  function updateBreadcrumb(screen) {
+    var items = [];
+    if (S.series) items.push({ label:'Hose', val: S.series + ' ' + (S.dash||''), done: true });
+    if (screen === 'end2' || screen === 'length') {
+      if (S.e1Type) items.push({ label:'End 1', val: S.e1Type + ' ' + (S.e1Size||''), done: true });
+    }
+    if (screen === 'length') {
+      if (S.e2Type) items.push({ label:'End 2', val: S.e2Type + ' ' + (S.e2Size||''), done: true });
+    }
+
+    var el = document.getElementById('bc-'+screen);
+    if (!el) return;
+    el.innerHTML = items.map(function(it, i) {
+      return (i>0?'<span class="bc-sep">›</span>':'')+
+        '<span class="bc-item done">'+it.label+' <span class="bc-val">'+it.val+'</span></span>';
+    }).join('');
+  }
+
+  function showResult() {
+    var specId = 'MH-' + Date.now().toString(36).toUpperCase().slice(-5);
+    document.getElementById('spec-id').textContent = specId;
+    document.getElementById('res-hose').textContent = S.series + ' ' + S.dash;
+    document.getElementById('res-hose-sub').textContent = S.seriesDesc + ' · ' + S.dashInches + ' ID';
+    document.getElementById('res-e1').textContent = S.e1Type + ' ' + S.e1Size + ' (' + S.e1Hint + ')';
+    document.getElementById('res-e2').textContent = S.e2Type + ' ' + S.e2Size + ' (' + S.e2Hint + ')';
+    document.getElementById('res-len').textContent = S.length + ' inches (' + (S.length/12).toFixed(2).replace(/\.?0+$/,'') + ' ft)';
+
+    // Update diagram OAL label
+    document.getElementById('diag-oal').textContent = S.length + '"';
+
+    // Update wire pattern in diagram
+    var spiral = S.wire === 'spiral';
+    for (var i=1;i<=13;i++) {
+      var line = document.getElementById('dw'+i);
+      if (!line) continue;
+      var x = 68 + (i-1)*16;
+      if (spiral) {
+        line.setAttribute('x1', x); line.setAttribute('y1', '22');
+        line.setAttribute('x2', x); line.setAttribute('y2', '38');
+        line.setAttribute('stroke', '#f87171');
+      } else {
+        var x2 = x + 10;
+        line.setAttribute('x1', x); line.setAttribute('y1', '22');
+        line.setAttribute('x2', x2); line.setAttribute('y2', '38');
+        line.setAttribute('stroke', '#60a5fa');
+      }
+    }
+
+    show('result'); prog(4);
+  }
+
+  function goBack() {
+    if (!stk.length) return;
+    var p = stk.pop();
+    var stepMap = { hose:1, end1:2, end2:3, length:4 };
+    show(p); prog(stepMap[p]||1);
+    // Reset sub-selections on that screen
+    if (p==='hose') { document.getElementById('dash-section').style.display='none'; }
+    if (p==='end1') { document.getElementById('size-section-e1').style.display='none'; }
+    if (p==='end2') { document.getElementById('size-section-e2').style.display='none'; }
+  }
+
+  function restart() {
+    S={}; stk=[];
+    document.querySelectorAll('.series-card,.dash-btn,.type-btn,.len-btn').forEach(function(e){e.classList.remove('sel');});
+    document.getElementById('dash-section').style.display='none';
+    document.getElementById('size-section-e1').style.display='none';
+    document.getElementById('size-section-e2').style.display='none';
+    document.getElementById('len-val').value = 24;
+    show('hose'); prog(1);
+  }
+
+  prog(1);
+</script>
+</body>
+</html>
